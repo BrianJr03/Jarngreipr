@@ -126,6 +126,5 @@ This project is open source and available under the [MIT License](LICENSE).
 If you enjoy using Járngreipr, consider supporting me. ☕ [Buy Me a Coffee](https://www.buymeacoffee.com/brianjr03)
 
 ## 🗺️ Roadmap
-- [ Pending ] Widgets support
-
+- [ Pending ] Enhanced widgets support
 ---
