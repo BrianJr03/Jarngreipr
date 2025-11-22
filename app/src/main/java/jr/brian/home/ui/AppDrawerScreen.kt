@@ -126,23 +126,18 @@ fun AppDrawerScreen(
                 .systemBarsPadding(),
     ) {
         when {
-            wallpaperUri == WALLPAPER_TRANSPARENT -> {
-                // Transparent - system wallpaper shows through
-                // No background needed
-            }
+            wallpaperUri == WALLPAPER_TRANSPARENT -> {}
 
             wallpaperUri != null -> {
-                // Custom image wallpaper
                 Image(
                     painter = rememberAsyncImagePainter(wallpaperUri.toUri()),
-                    contentDescription = "Wallpaper",
+                    contentDescription = stringResource(R.string.wallpaper),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
 
             else -> {
-                // Default background
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -207,7 +202,7 @@ private fun openAppInfo(
 ) {
     try {
         val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:$packageName")
+            data = "package:$packageName".toUri()
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)

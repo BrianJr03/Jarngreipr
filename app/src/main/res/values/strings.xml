@@ -13,8 +13,12 @@
     <string name="keyboard_button_backspace">Backspace</string>
     <string name="keyboard_label_space">Space</string>
     <string name="keyboard_label_clear">Clear</string>
+    <string name="keyboard_label_search">Search…</string>
+    <string name="keyboard_label_settings">Settings…</string>
+    <string name="keyboard_label_arrow_left">←</string>
 
     <string name="dialog_cancel">Cancel</string>
+    <string name="wallpaper">"Wallpaper"</string>
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
     <string name="add_app_message">Add this app to your home page?</string>

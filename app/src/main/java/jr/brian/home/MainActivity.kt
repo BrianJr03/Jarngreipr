@@ -28,6 +28,7 @@ import jr.brian.home.ui.AppDrawerScreen
 import jr.brian.home.ui.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.util.Routes
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,10 +62,9 @@ private fun MainContent() {
     val wallpaperManager = LocalWallpaperManager.current
 
     LaunchedEffect(Unit) {
-        viewModel.loadAllApps(context, includeSystemApps = false)
+        viewModel.loadAllApps(context)
     }
 
-    // Listen for app install/uninstall events
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -72,8 +72,7 @@ private fun MainContent() {
                     Intent.ACTION_PACKAGE_ADDED,
                     Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
-                        // Reload apps when any package event occurs
-                        viewModel.loadAllApps(context!!, includeSystemApps = false)
+                        viewModel.loadAllApps(context!!)
                     }
                 }
             }
@@ -103,19 +102,19 @@ private fun MainContent() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = "appDrawer"
+            startDestination = Routes.APP_DRAWER
         ) {
-            composable("appDrawer") {
+            composable(Routes.APP_DRAWER) {
                 AppDrawerScreen(
                     apps = uiState.allApps,
                     isLoading = uiState.isLoading,
                     onSettingsClick = {
-                        navController.navigate("settings")
+                        navController.navigate(Routes.SETTINGS)
                     }
                 )
             }
 
-            composable("settings") {
+            composable(Routes.SETTINGS) {
                 SettingsScreen()
             }
         }

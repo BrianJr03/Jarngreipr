@@ -76,7 +76,7 @@ fun OnScreenKeyboard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = searchQuery.ifEmpty { "Search..." },
+                text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
@@ -88,7 +88,7 @@ fun OnScreenKeyboard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.keyboard_label_settings),
                     tint = Color.White,
                     modifier = Modifier.size(24.dp),
                 )
@@ -106,7 +106,7 @@ fun OnScreenKeyboard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     KeyboardButton(
-                        label = "←",
+                        label = stringResource(R.string.keyboard_label_arrow_left),
                         onClick = { onQueryChange(searchQuery.dropLast(1)) },
                         modifier =
                             Modifier
