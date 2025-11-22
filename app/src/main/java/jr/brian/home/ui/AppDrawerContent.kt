@@ -1,6 +1,5 @@
 package jr.brian.home.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,7 +50,7 @@ fun AppSelectionContent(
         }
 
     Row(modifier = modifier.fillMaxSize()) {
-        AnimatedVisibility(keyboardVisible) {
+        if (keyboardVisible) {
             OnScreenKeyboard(
                 searchQuery = searchQuery,
                 onQueryChange = onSearchQueryChange,

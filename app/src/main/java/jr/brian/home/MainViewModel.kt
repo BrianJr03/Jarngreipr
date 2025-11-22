@@ -19,7 +19,7 @@ class HomeViewModel : ViewModel() {
 
     fun loadAllApps(
         context: Context,
-        includeSystemApps: Boolean = false,
+        includeSystemApps: Boolean = true,
     ) {
         viewModelScope.launch(Dispatchers.Default) {
             _uiState.value = _uiState.value.copy(isLoading = true)
@@ -44,8 +44,10 @@ class HomeViewModel : ViewModel() {
                         val packageName = resolveInfo.activityInfo.packageName
 
                         val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                        val isUpdatedSystemApp =
+                            (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
 
-                        if (isSystemApp && !includeSystemApps) {
+                        if (isSystemApp && !isUpdatedSystemApp && !includeSystemApps) {
                             return@mapNotNull null
                         }
 
