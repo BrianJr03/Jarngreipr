@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Járngreipr</string>
+    <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
+
+    <string name="keyboard_button_select">Select Button</string>
+    <string name="keyboard_button_d_pad">D-Pad</string>
+    <string name="keyboard_button_long_press">Long Press</string>
+    <string name="keyboard_button_enter">Enter</string>
+    <string name="keyboard_button_a">A Button</string>
+    <string name="keyboard_button_back">Back Button</string>
+    <string name="keyboard_button_space_bar">Space Bar</string>
+    <string name="keyboard_button_clear">Clear</string>
+    <string name="keyboard_button_backspace">Backspace</string>
+    <string name="keyboard_label_space">Space</string>
+    <string name="keyboard_label_clear">Clear</string>
+
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_add_to_home">Add to Home</string>
+    <string name="dialog_app_info">App Info</string>
+    <string name="add_app_message">Add this app to your home page?</string>
+    <string name="app_info_title">App Options</string>
+    <string name="app_info_message">Open app info for %1$s?</string>
+
+    <string name="settings_color_theme_title">Color Theme</string>
+    <string name="settings_color_theme_description">Only visible when using gamepad</string>
+
+    <string name="settings_wallpaper_title">Wallpaper</string>
+    <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
+    <string name="settings_wallpaper_default">Default</string>
+    <string name="settings_wallpaper_transparent">System Wallpaper</string>
+    <string name="settings_wallpaper_image_picker">Choose from Gallery</string>
+
+    <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
+    <string name="settings_buy_me_coffee_description">☕ is always appreciated</string>
+</resources>
