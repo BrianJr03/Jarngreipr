@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.viewmodels.WidgetViewModel
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlin.math.ceil
 
@@ -80,7 +82,10 @@ fun WidgetPageScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val data = result.data
-        val appWidgetId = data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) ?: -1
+        val appWidgetId = data?.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            -1
+        ) ?: -1
 
         if (appWidgetId != -1) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -89,9 +94,11 @@ fun WidgetPageScreen(
             if (appWidgetInfo != null) {
                 val cellSize = 70
                 val widgetWidth =
-                    ceil(appWidgetInfo.minWidth.toFloat() / cellSize).toInt().coerceAtLeast(1)
+                    ceil(appWidgetInfo.minWidth.toFloat() / cellSize).toInt()
+                        .coerceAtLeast(1)
                 val widgetHeight =
-                    ceil(appWidgetInfo.minHeight.toFloat() / cellSize).toInt().coerceAtLeast(1)
+                    ceil(appWidgetInfo.minHeight.toFloat() / cellSize).toInt()
+                        .coerceAtLeast(1)
 
                 val widgetInfo = WidgetInfo(
                     widgetId = appWidgetId,
@@ -115,7 +122,9 @@ fun WidgetPageScreen(
     }
 
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .blockHorizontalNavigation()
     ) {
         if (widgets.isEmpty()) {
             Column(
@@ -237,7 +246,6 @@ fun WidgetPageScreen(
     }
 }
 
-@Suppress("unused_value")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WidgetItem(
@@ -247,49 +255,43 @@ private fun WidgetItem(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-
     var showOptionsDialog by remember { mutableStateOf(false) }
 
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
 
+    val widgetHeightDp = remember(currentProviderInfo) {
+        currentProviderInfo.minHeight.toFloat().dp
+    }
+
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 2.dp,
+                color = ThemePrimaryColor.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp)
+            )
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = 0.dp,
-                bottomEnd = 0.dp
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            key(currentWidgetId) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-
-                    AndroidView(
-                        factory = { ctx ->
-
-                            val host = viewModel.getAppWidgetHost()
-                            val widgetView = host?.createView(
-                                ctx,
-                                currentWidgetId,
-                                currentProviderInfo
-                            )
-
-
-                            widgetView ?: ComposeView(ctx)
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                        update = { _ -> }
-                    )
-                }
+        key(currentWidgetId) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(widgetHeightDp)
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        val host = viewModel.getAppWidgetHost()
+                        val widgetView = host?.createView(
+                            ctx,
+                            currentWidgetId,
+                            currentProviderInfo
+                        )
+                        widgetView ?: ComposeView(ctx)
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                    update = { _ -> }
+                )
             }
         }
 
@@ -297,17 +299,15 @@ private fun WidgetItem(
             onClick = { showOptionsDialog = true },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(20.dp),
+                .height(32.dp),
             shape = RoundedCornerShape(
                 topStart = 0.dp,
                 topEnd = 0.dp,
-                bottomStart = 16.dp,
-                bottomEnd = 16.dp
+                bottomStart = 14.dp,
+                bottomEnd = 14.dp
             ),
-            colors = CardDefaults.cardColors(
-                containerColor = ThemePrimaryColor
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -536,31 +536,31 @@ private fun AddWidgetCard(
     Card(
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
-            .height(180.dp),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+        colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor)
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 8.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.White
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.widget_add_widget),
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = Color.White
                 )
             }
         }

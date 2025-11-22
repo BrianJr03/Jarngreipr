@@ -312,3 +312,19 @@ fun Modifier.handleRightNavigation(onNavigateRight: () -> Unit): Modifier {
         }
     }
 }
+
+/**
+ * Blocks horizontal (left/right) directional navigation
+ * @return Modifier that consumes left/right directional key events
+ */
+fun Modifier.blockHorizontalNavigation(): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionLeft || event.key == Key.DirectionRight) -> {
+                true
+            }
+            else -> false
+        }
+    }
+}
