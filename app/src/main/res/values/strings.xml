@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Járngreipr</string>
+    <string name="app_name">Jarngreipr</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
     <string name="keyboard_button_select">Select Button</string>
