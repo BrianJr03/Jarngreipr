@@ -40,8 +40,13 @@ this launcher helps you grip control of your Thor device's bottom screen.
 - **Wallpaper Options** - Default, Custom Image, or System Wallpaper
 
 ## 📸 Screenshots
+Here's the markdown to align the images in a row with each image centered vertically relative to the others:
 
-*(Add your screenshots here)*
+<p>
+  <img src="https://github.com/user-attachments/assets/42614030-fb34-4f09-9482-40d35bfcd684" alt="Screenshot 3" width="30%" style="vertical-align: middle;" />
+  <img src="https://github.com/user-attachments/assets/3a33d2ee-d9b4-4f20-bed5-80d8c65cd4f6" alt="Screenshot 1" width="30%" style="vertical-align: middle;" />
+  <img src="https://github.com/user-attachments/assets/0094fd26-0aad-47c0-87e0-cf947af00586" alt="Screenshot 2" width="30%" style="vertical-align: middle;" />
+</p>
 
 ## 📋 Requirements
 
