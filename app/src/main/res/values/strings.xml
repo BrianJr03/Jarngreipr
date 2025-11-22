@@ -35,5 +35,33 @@
     <string name="settings_wallpaper_image_picker">Choose from Gallery</string>
 
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
+    <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
     <string name="settings_buy_me_coffee_description">☕ is always appreciated</string>
+
+    <!-- Widget Page Screen -->
+    <string name="widget_no_widgets_title">No Widgets Yet</string>
+    <string name="widget_no_widgets_description">Tap the button below to add your first widget</string>
+    <string name="widget_add_widget">Add Widget</string>
+    <string name="widget_loading">Loading widget…</string>
+    <string name="widget_edit_description">Edit widget</string>
+    <string name="widget_options_title">Widget Options</string>
+    <string name="widget_replace_title">Replace Widget</string>
+    <string name="widget_replace_coming_soon">Coming Soon!</string>
+    <string name="widget_delete_title">Delete Widget</string>
+    <string name="widget_delete_description">Remove from this page</string>
+    <string name="widget_move_section_title">Move to Another Page</string>
+    <string name="widget_move_page_title">Widget Page %1$d</string>
+    <string name="widget_move_description">Move widget here</string>
+    <string name="widget_toast_coming_soon">Coming Soon!</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_palette_icon_description">Theme palette icon</string>
+    <string name="settings_wallpaper_icon_description">Wallpaper icon</string>
+    <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
+
+    <!-- App Grid Item -->
+    <string name="app_icon_description">App icon for %1$s</string>
+
+    <!-- Version Info -->
+    <string name="settings_version_label">Version %1$s (Beta)</string>
 </resources>

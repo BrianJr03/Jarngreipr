@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import androidx.compose.ui.graphics.Color as GraphicsColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,19 +15,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import jr.brian.home.ui.AppDrawerScreen
-import jr.brian.home.ui.SettingsScreen
+import jr.brian.home.ui.screens.LauncherPagerScreen
+import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.util.Routes
+import jr.brian.home.viewmodels.HomeViewModel
+import jr.brian.home.viewmodels.WidgetViewModel
+import androidx.compose.ui.graphics.Color as GraphicsColor
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,14 +55,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun MainContent() {
-    val viewModel: HomeViewModel = viewModel()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val homeViewModel: HomeViewModel = viewModel()
+    val widgetViewModel: WidgetViewModel = viewModel()
     val context = LocalContext.current
     val navController = rememberNavController()
     val wallpaperManager = LocalWallpaperManager.current
 
     LaunchedEffect(Unit) {
-        viewModel.loadAllApps(context)
+        homeViewModel.loadAllApps(context)
+        widgetViewModel.initializeWidgetHost(context)
     }
 
     DisposableEffect(context) {
@@ -72,7 +73,7 @@ private fun MainContent() {
                     Intent.ACTION_PACKAGE_ADDED,
                     Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
-                        viewModel.loadAllApps(context!!)
+                        homeViewModel.loadAllApps(context!!)
                     }
                 }
             }
@@ -102,12 +103,12 @@ private fun MainContent() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = Routes.APP_DRAWER
+            startDestination = Routes.LAUNCHER
         ) {
-            composable(Routes.APP_DRAWER) {
-                AppDrawerScreen(
-                    apps = uiState.allApps,
-                    isLoading = uiState.isLoading,
+            composable(Routes.LAUNCHER) {
+                LauncherPagerScreen(
+                    homeViewModel = homeViewModel,
+                    widgetViewModel = widgetViewModel,
                     onSettingsClick = {
                         navController.navigate(Routes.SETTINGS)
                     }

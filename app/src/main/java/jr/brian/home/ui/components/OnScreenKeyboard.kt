@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -41,6 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.ui.animations.animatedRotation
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.extensions.handleRightNavigation
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -56,7 +60,9 @@ fun OnScreenKeyboard(
     onNavigateRight: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
+    val settingsIndex = -1
     val letters = ('A'..'Z').toList()
+    var isSettingsFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         keyboardFocusRequesters[0]?.requestFocus()
@@ -82,17 +88,28 @@ fun OnScreenKeyboard(
                 color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(
-                onClick = onSettingsClick,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.keyboard_label_settings),
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.keyboard_label_settings),
+                modifier = Modifier
+                    .size(24.dp)
+                    .focusRequester(
+                        remember(settingsIndex) {
+                            FocusRequester().also { keyboardFocusRequesters[settingsIndex] = it }
+                        }
+                    )
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && !isSettingsFocused) {
+                            onFocusChanged(settingsIndex)
+                        }
+                        isSettingsFocused = focusState.isFocused
+                    }
+                    .clickable { onSettingsClick() }
+                    .rotate(animatedRotation(isSettingsFocused))
+                    .focusable()
+                    .handleRightNavigation(onNavigateRight),
+                tint = if (isSettingsFocused) ThemeAccentColor else Color.White,
+            )
         }
 
         LazyColumn(

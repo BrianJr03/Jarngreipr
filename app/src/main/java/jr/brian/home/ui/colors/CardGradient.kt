@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.colors
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush

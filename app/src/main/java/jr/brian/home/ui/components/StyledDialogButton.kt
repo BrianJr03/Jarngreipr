@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -81,7 +82,11 @@ fun StyledDialogButton(
                         if (isFocused) {
                             borderBrush(
                                 isFocused = true,
-                                colors = listOf(ThemeAccentColor, ThemePrimaryColor, ThemeSecondaryColor),
+                                colors = listOf(
+                                    ThemeAccentColor,
+                                    ThemePrimaryColor,
+                                    ThemeSecondaryColor
+                                ),
                             )
                         } else {
                             Brush.linearGradient(

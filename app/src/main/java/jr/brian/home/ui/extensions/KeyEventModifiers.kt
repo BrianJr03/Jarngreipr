@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.extensions
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key

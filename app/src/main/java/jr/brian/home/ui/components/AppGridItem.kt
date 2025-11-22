@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -21,9 +21,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import jr.brian.home.R
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemeAccentColor
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -45,7 +49,7 @@ fun AppGridItem(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
             painter = rememberAsyncImagePainter(model = app.icon),
-            contentDescription = app.label,
+            contentDescription = stringResource(R.string.app_icon_description, app.label),
             modifier =
                 Modifier
                     .size(64.dp)

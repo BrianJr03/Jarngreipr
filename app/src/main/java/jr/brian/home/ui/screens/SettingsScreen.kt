@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.screens
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -56,20 +56,26 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.animatedRotation
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.LocalThemeManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.WALLPAPER_TRANSPARENT
 import kotlinx.coroutines.delay
+import java.io.File
 
 @Composable
 fun SettingsScreen() {
@@ -83,7 +89,10 @@ fun SettingsScreen() {
                     .padding(innerPadding)
                     .systemBarsPadding(),
         ) {
-            SettingsContent()
+            Column {
+                VersionInfo()
+                SettingsContent()
+            }
         }
     }
 }
@@ -102,7 +111,7 @@ private fun SettingsContent() {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp, vertical = 16.dp),
+            .padding(horizontal = 32.dp, vertical = 4.dp),
         contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
@@ -115,6 +124,7 @@ private fun SettingsContent() {
         }
 
         item {
+            val url = stringResource(R.string.settings_buy_me_coffee_url)
             SettingItem(
                 title = stringResource(id = R.string.settings_buy_me_coffee_title),
                 description = stringResource(id = R.string.settings_buy_me_coffee_description),
@@ -122,7 +132,7 @@ private fun SettingsContent() {
                 onClick = {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        "https://www.buymeacoffee.com/brianjr03".toUri()
+                        url.toUri()
                     )
                     context.startActivity(intent)
                 },
@@ -214,7 +224,7 @@ private fun ThemeSelectorItem(focusRequester: FocusRequester? = null) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Palette,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.settings_palette_icon_description),
                         modifier =
                             Modifier
                                 .size(32.dp)
@@ -353,7 +363,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                 try {
                     val inputStream = context.contentResolver.openInputStream(it)
                     val fileName = "wallpaper_${System.currentTimeMillis()}.jpg"
-                    val outputFile = java.io.File(context.filesDir, fileName)
+                    val outputFile = File(context.filesDir, fileName)
                     inputStream?.use { input ->
                         outputFile.outputStream().use { output ->
                             input.copyTo(output)
@@ -439,7 +449,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Wallpaper,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.settings_wallpaper_icon_description),
                         modifier =
                             Modifier
                                 .size(32.dp)
@@ -643,7 +653,7 @@ private fun SettingItem(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.settings_coffee_icon_description),
                 modifier =
                     Modifier
                         .size(32.dp)
@@ -668,5 +678,30 @@ private fun SettingItem(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun VersionInfo() {
+    val context = LocalContext.current
+    val versionName = try {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.1"
+    } catch (_: Exception) {
+        "0.1"
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, end = 32.dp),
+        contentAlignment = Alignment.TopEnd
+    ) {
+        Text(
+            text = stringResource(R.string.settings_version_label, versionName),
+            color = ThemeAccentColor,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
     }
 }

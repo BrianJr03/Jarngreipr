@@ -1,4 +1,4 @@
-package jr.brian.home
+package jr.brian.home.viewmodels
 
 import android.content.Context
 import android.content.Intent

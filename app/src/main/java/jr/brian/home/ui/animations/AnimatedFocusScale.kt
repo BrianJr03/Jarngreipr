@@ -1,4 +1,4 @@
-package jr.brian.home.ui
+package jr.brian.home.ui.animations
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
