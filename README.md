@@ -39,13 +39,11 @@ this launcher helps you grip control of your Thor device's bottom screen.
 - **Theme Selection** - Choose your preferred color scheme
 - **Wallpaper Options** - Default, Custom Image, or System Wallpaper
 
-## 📸 Screenshots
-Here's the markdown to align the images in a row with each image centered vertically relative to the others:
-
+## 📸 Screenshots (taken on AYN Thor's bottom screen)
 <p>
-  <img src="https://github.com/user-attachments/assets/42614030-fb34-4f09-9482-40d35bfcd684" alt="Screenshot 3" width="30%" style="vertical-align: middle;" />
-  <img src="https://github.com/user-attachments/assets/3a33d2ee-d9b4-4f20-bed5-80d8c65cd4f6" alt="Screenshot 1" width="30%" style="vertical-align: middle;" />
-  <img src="https://github.com/user-attachments/assets/0094fd26-0aad-47c0-87e0-cf947af00586" alt="Screenshot 2" width="30%" style="vertical-align: middle;" />
+  <img src="https://github.com/user-attachments/assets/1722b8b4-0273-4a1a-afcf-1af6d7b19bae" alt="Screenshot 2025-11-22 at 4 29 11 PM" width="30%" style="vertical-align: middle;" />
+  <img src="https://github.com/user-attachments/assets/f3c2b859-850f-4101-8824-6800aa676845" alt="Screenshot 2025-11-22 at 4 28 53 PM" width="30%" style="vertical-align: middle;" />
+  <img src="https://github.com/user-attachments/assets/57ad5108-97ce-4ef5-bbeb-f9c5010ca12f" alt="Screenshot 2025-11-22 at 4 29 50 PM" width="30%" style="vertical-align: middle;" />
 </p>
 
 ## 📋 Requirements
