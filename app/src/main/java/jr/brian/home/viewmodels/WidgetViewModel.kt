@@ -6,21 +6,25 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import jr.brian.home.data.WidgetConfig
+import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.WidgetPreferences
+import jr.brian.home.model.WidgetConfig
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.model.WidgetPage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class WidgetViewModel : ViewModel() {
+@HiltViewModel
+class WidgetViewModel @Inject constructor(
+    private val widgetPreferences: WidgetPreferences
+) : ViewModel() {
     private val _uiState = MutableStateFlow(WidgetUIState())
     val uiState = _uiState.asStateFlow()
 
     private var appWidgetHost: AppWidgetHost? = null
     private var appWidgetManager: AppWidgetManager? = null
-    private var widgetPreferences: WidgetPreferences? = null
 
     companion object {
         private const val APPWIDGET_HOST_ID = 1024
@@ -31,7 +35,6 @@ class WidgetViewModel : ViewModel() {
     fun initializeWidgetHost(context: Context) {
         appWidgetHost = AppWidgetHost(context, APPWIDGET_HOST_ID)
         appWidgetManager = AppWidgetManager.getInstance(context)
-        widgetPreferences = WidgetPreferences(context)
 
         appWidgetHost?.startListening()
 
@@ -49,7 +52,7 @@ class WidgetViewModel : ViewModel() {
 
     private fun loadSavedWidgets() {
         viewModelScope.launch {
-            widgetPreferences?.widgetConfigs?.collect { configs ->
+            widgetPreferences.widgetConfigs.collect { configs ->
                 val currentPages = _uiState.value.widgetPages.toMutableList()
 
                 currentPages.forEachIndexed { index, page ->
@@ -76,7 +79,7 @@ class WidgetViewModel : ViewModel() {
                             currentPages[pageIndex] = page.copy(widgets = page.widgets + widgetInfo)
                         } else {
                             appWidgetHost?.deleteAppWidgetId(config.widgetId)
-                            widgetPreferences?.removeWidgetConfig(config.widgetId)
+                            widgetPreferences.removeWidgetConfig(config.widgetId)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error restoring widget ${config.widgetId}", e)
@@ -113,7 +116,7 @@ class WidgetViewModel : ViewModel() {
                     height = widgetInfo.height,
                     pageIndex = widgetInfo.pageIndex
                 )
-                widgetPreferences?.addWidgetConfig(config)
+                widgetPreferences.addWidgetConfig(config)
                 Log.d(TAG, "Saved widget config: ${config.providerClassName}")
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving widget config", e)
@@ -128,7 +131,7 @@ class WidgetViewModel : ViewModel() {
             val updatedWidgets = pageToUpdate.widgets.filter { it.widgetId != widgetId }
             currentPages[pageIndex] = pageToUpdate.copy(widgets = updatedWidgets)
             _uiState.value = _uiState.value.copy(widgetPages = currentPages)
-            widgetPreferences?.removeWidgetConfig(widgetId)
+            widgetPreferences.removeWidgetConfig(widgetId)
             appWidgetHost?.deleteAppWidgetId(widgetId)
         }
     }
@@ -145,7 +148,7 @@ class WidgetViewModel : ViewModel() {
             val oldWidgetIndex = pageToUpdate.widgets.indexOfFirst { it.widgetId == oldWidgetId }
 
             if (oldWidgetIndex != -1) {
-                widgetPreferences?.removeWidgetConfig(oldWidgetId)
+                widgetPreferences.removeWidgetConfig(oldWidgetId)
                 appWidgetHost?.deleteAppWidgetId(oldWidgetId)
                 val updatedWidgets = pageToUpdate.widgets.toMutableList()
                 updatedWidgets[oldWidgetIndex] = newWidgetInfo.copy(

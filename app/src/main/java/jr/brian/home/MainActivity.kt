@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,21 +28,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.ui.components.AppOverlay
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.ui.theme.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import javax.inject.Inject
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var appVisibilityManager: AppVisibilityManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -65,7 +77,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                MainContent()
+                CompositionLocalProvider(
+                    LocalAppVisibilityManager provides appVisibilityManager
+                ) {
+                    MainContent()
+                }
             }
         }
     }
@@ -73,11 +89,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun MainContent() {
-    val homeViewModel: HomeViewModel = viewModel()
-    val widgetViewModel: WidgetViewModel = viewModel()
     val context = LocalContext.current
     val navController = rememberNavController()
+    val homeViewModel: HomeViewModel = viewModel()
+    val widgetViewModel: WidgetViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
+    val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
 
     val displayManager =
         remember { context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager }
@@ -86,6 +105,12 @@ private fun MainContent() {
     }
 
     var showWelcomeOverlay by remember { mutableStateOf(hasExternalDisplays) }
+
+    LaunchedEffect(hiddenApps) {
+        homeViewModel.loadAllApps(context)
+    }
+
+    BackHandler(enabled = showWelcomeOverlay) {}
 
     LaunchedEffect(Unit) {
         homeViewModel.loadAllApps(context)
@@ -138,12 +163,15 @@ private fun MainContent() {
                         widgetViewModel = widgetViewModel,
                         onSettingsClick = {
                             navController.navigate(Routes.SETTINGS)
-                        }
+                        },
+                        isOverlayShown = showWelcomeOverlay
                     )
                 }
 
                 composable(Routes.SETTINGS) {
-                    SettingsScreen()
+                    SettingsScreen(
+                        allApps = homeUiState.allAppsUnfiltered
+                    )
                 }
             }
         }

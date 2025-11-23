@@ -31,7 +31,8 @@ fun LauncherPagerScreen(
     homeViewModel: HomeViewModel,
     widgetViewModel: WidgetViewModel,
     onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOverlayShown: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -43,7 +44,7 @@ fun LauncherPagerScreen(
         pageCount = { totalPages }
     )
 
-    BackHandler {
+    BackHandler(enabled = !isOverlayShown) {
         if (pagerState.currentPage != 0) {
             scope.launch {
                 pagerState.animateScrollToPage(0)
@@ -73,7 +74,8 @@ fun LauncherPagerScreen(
     ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = !isOverlayShown
         ) { page ->
             when (page) {
                 0 -> {
