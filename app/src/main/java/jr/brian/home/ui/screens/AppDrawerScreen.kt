@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,10 +12,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,6 +46,7 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.PageIndicators
 import jr.brian.home.ui.components.StyledDialogButton
 import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.theme.AppCardDark
@@ -52,11 +57,14 @@ import kotlinx.coroutines.launch
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_KEYBOARD_VISIBLE = "keyboard_visible"
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppDrawerScreen(
     apps: List<AppInfo>,
     isLoading: Boolean = false,
     onSettingsClick: () -> Unit = {},
+    totalPages: Int = 1,
+    pagerState: PagerState? = null,
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -179,11 +187,14 @@ fun AppDrawerScreen(
                 },
                 keyboardVisible = keyboardVisible,
                 onSettingsClick = onSettingsClick,
+                totalPages = totalPages,
+                pagerState = pagerState,
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppSelectionContent(
     apps: List<AppInfo>,
@@ -201,6 +212,8 @@ private fun AppSelectionContent(
     onAppLongClick: (AppInfo) -> Unit = {},
     keyboardVisible: Boolean = true,
     onSettingsClick: () -> Unit = {},
+    totalPages: Int = 1,
+    pagerState: PagerState? = null,
 ) {
     val filteredApps =
         remember(apps, searchQuery) {
@@ -244,10 +257,13 @@ private fun AppSelectionContent(
             onAppClick = onAppClick,
             onAppLongClick = onAppLongClick,
             keyboardVisible = keyboardVisible,
+            totalPages = totalPages,
+            pagerState = pagerState,
         )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppGrid(
     columns: Int,
@@ -259,6 +275,8 @@ private fun AppGrid(
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
     keyboardVisible: Boolean = true,
+    totalPages: Int = 1,
+    pagerState: PagerState? = null,
 ) {
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
@@ -278,6 +296,15 @@ private fun AppGrid(
         horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
         verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
     ) {
+        if (pagerState != null) {
+            item(span = { GridItemSpan(columns) }) {
+                PageIndicators(
+                    totalPages = totalPages,
+                    pagerState = pagerState,
+                )
+            }
+        }
+
         items(apps.size) { index ->
             val app = apps[index]
             val itemFocusRequester =
