@@ -118,8 +118,8 @@ private fun PagerIndicators(
 ) {
     Row(
         modifier = Modifier
-            .padding(bottom = 8.dp)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(top = 8.dp)
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
