@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,7 +17,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
@@ -37,8 +41,6 @@ import jr.brian.home.viewmodels.WidgetViewModel
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
 class MainActivity : ComponentActivity() {
-    private val showWelcomeOverlay = mutableStateOf(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -63,32 +65,27 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                MainContent(
-                    showWelcomeOverlay = showWelcomeOverlay.value,
-                    onDismissOverlay = {
-                        showWelcomeOverlay.value = false
-                    }
-                )
+                MainContent()
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        showWelcomeOverlay.value = true
     }
 }
 
 @Composable
-private fun MainContent(
-    showWelcomeOverlay: Boolean,
-    onDismissOverlay: () -> Unit
-) {
+private fun MainContent() {
     val homeViewModel: HomeViewModel = viewModel()
     val widgetViewModel: WidgetViewModel = viewModel()
     val context = LocalContext.current
     val navController = rememberNavController()
     val wallpaperManager = LocalWallpaperManager.current
+
+    val displayManager =
+        remember { context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager }
+    val hasExternalDisplays = remember {
+        displayManager.displays.size > 1
+    }
+
+    var showWelcomeOverlay by remember { mutableStateOf(hasExternalDisplays) }
 
     LaunchedEffect(Unit) {
         homeViewModel.loadAllApps(context)
@@ -152,7 +149,11 @@ private fun MainContent(
         }
 
         if (showWelcomeOverlay) {
-            AppOverlay(onDismissOverlay)
+            AppOverlay(
+                onDismissOverlay = {
+                    showWelcomeOverlay = false
+                }
+            )
         }
     }
 }

@@ -66,7 +66,8 @@
     <string name="settings_version_label">Version %1$s (Beta)</string>
 
     <!-- Welcome Overlay -->
-    <string name="welcome_overlay_title">Welcome!</string>
-    <string name="welcome_overlay_message">Tap below to start using Jarngreipr</string>
-    <string name="welcome_overlay_button">Tap to Use</string>
+    <string name="welcome_overlay_title">Important Note</string>
+    <string name="welcome_overlay_message_line1">To use the keyboard on the bottom, tap the screen once.</string>
+    <string name="welcome_overlay_message_line2">It will then appear when requested.</string>
+    <string name="welcome_overlay_button">Got It</string>
 </resources>

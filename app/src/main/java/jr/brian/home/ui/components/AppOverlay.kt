@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as GraphicsColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
@@ -40,13 +41,22 @@ fun AppOverlay(onDismissOverlay: () -> Unit) {
                 text = stringResource(R.string.welcome_overlay_title),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold,
-                color = GraphicsColor.White
+                color = GraphicsColor.White,
+                textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = stringResource(R.string.welcome_overlay_message),
+                text = stringResource(R.string.welcome_overlay_message_line1),
                 fontSize = 18.sp,
-                color = GraphicsColor.White.copy(alpha = 0.8f)
+                color = GraphicsColor.White.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.welcome_overlay_message_line2),
+                fontSize = 18.sp,
+                color = GraphicsColor.White.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
