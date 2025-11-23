@@ -60,10 +60,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
-import jr.brian.home.viewmodels.WidgetViewModel
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.viewmodels.WidgetViewModel
 import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
