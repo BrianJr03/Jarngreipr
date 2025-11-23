@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -64,6 +65,7 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.AppVisibilityDialog
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
@@ -78,7 +80,9 @@ import kotlinx.coroutines.delay
 import java.io.File
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    allApps: List<jr.brian.home.model.AppInfo> = emptyList()
+) {
     Scaffold(
         containerColor = AppBackgroundDark,
     ) { innerPadding ->
@@ -91,21 +95,31 @@ fun SettingsScreen() {
         ) {
             Column {
                 VersionInfo()
-                SettingsContent()
+                SettingsContent(allApps = allApps)
             }
         }
     }
 }
 
 @Composable
-private fun SettingsContent() {
+private fun SettingsContent(
+    allApps: List<jr.brian.home.model.AppInfo> = emptyList()
+) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
     val wallpaperFocusRequester = remember { FocusRequester() }
+    var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         delay(10)
         firstItemFocusRequester.requestFocus()
+    }
+
+    if (showAppVisibilityDialog) {
+        AppVisibilityDialog(
+            apps = allApps,
+            onDismiss = { showAppVisibilityDialog = false }
+        )
     }
 
     LazyColumn(
@@ -121,6 +135,17 @@ private fun SettingsContent() {
 
         item {
             WallpaperSelectorItem(focusRequester = wallpaperFocusRequester)
+        }
+
+        item {
+            SettingItem(
+                title = stringResource(id = R.string.settings_app_visibility_title),
+                description = stringResource(id = R.string.settings_app_visibility_description),
+                icon = Icons.Default.Visibility,
+                onClick = {
+                    showAppVisibilityDialog = true
+                },
+            )
         }
 
         item {
@@ -175,11 +200,7 @@ private fun ThemeSelectorItem(focusRequester: FocusRequester? = null) {
                 },
         )
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth(),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         AnimatedVisibility(
             visible = !isExpanded,
             enter = expandVertically() + fadeIn(),

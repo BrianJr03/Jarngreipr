@@ -7,13 +7,19 @@ import android.content.pm.PackageManager
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.model.AppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeViewModel : ViewModel() {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val appVisibilityManager: AppVisibilityManager
+) : ViewModel() {
     private val _uiState = MutableStateFlow(AppDrawerUIState())
     val uiState = _uiState.asStateFlow()
 
@@ -37,7 +43,7 @@ class HomeViewModel : ViewModel() {
                     PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong()),
                 )
 
-            val appInfos =
+            val allAppInfos =
                 resolveInfos
                     .mapNotNull { resolveInfo ->
                         val appInfo = resolveInfo.activityInfo.applicationInfo
@@ -63,19 +69,22 @@ class HomeViewModel : ViewModel() {
                     }.distinctBy { it.packageName }
                     .sortedBy { it.label.lowercase() }
 
+            val visibleApps = allAppInfos.filter { app ->
+                !appVisibilityManager.isAppHidden(app.packageName)
+            }
 
             _uiState.value =
                 _uiState.value.copy(
-                    allApps = appInfos,
+                    allApps = visibleApps,
+                    allAppsUnfiltered = allAppInfos,
                     isLoading = false,
                 )
-
-            Log.d("AppDrawer", "Loaded ${appInfos.size} total apps")
         }
     }
 }
 
 data class AppDrawerUIState(
     val allApps: List<AppInfo> = emptyList(),
+    val allAppsUnfiltered: List<AppInfo> = emptyList(),
     val isLoading: Boolean = false,
 )

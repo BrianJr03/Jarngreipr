@@ -38,6 +38,18 @@
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
     <string name="settings_buy_me_coffee_description">☕ is always appreciated</string>
 
+    <string name="settings_app_visibility_title">App Visibility</string>
+    <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
+    <string name="settings_app_visibility_icon_description">App visibility icon</string>
+
+    <!-- App Visibility Dialog -->
+    <string name="dialog_app_visibility_title">Manage App Visibility</string>
+    <string name="dialog_app_visibility_search">Search apps…</string>
+    <string name="dialog_app_visibility_close">Close</string>
+    <string name="dialog_app_visibility_hidden_count">%1$d apps hidden</string>
+    <string name="dialog_app_visibility_show_all">Show All</string>
+    <string name="dialog_app_visibility_hide_all">Hide All</string>
+
     <!-- Widget Page Screen -->
     <string name="widget_no_widgets_title">No Widgets Yet</string>
     <string name="widget_no_widgets_description">Tap the button below to add your first widget</string>
@@ -67,7 +79,57 @@
 
     <!-- Welcome Overlay -->
     <string name="welcome_overlay_title">Important Note</string>
-    <string name="welcome_overlay_message_line1">To use the keyboard on the bottom, tap the screen once.</string>
-    <string name="welcome_overlay_message_line2">It will then appear when requested.</string>
     <string name="welcome_overlay_button">Got It</string>
+
+    <!-- Thor Facts -->
+    <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
+    <string name="thor_fact_2">Thor wields Mjolnir, a hammer so powerful it can level mountains.</string>
+    <string name="thor_fact_3">Thursday is named after Thor, derived from Thor\'s Day.</string>
+    <string name="thor_fact_4">Thor rides a chariot pulled by two goats named Tanngrisnir and Tanngnjóstr.</string>
+    <string name="thor_fact_5">Thor is the son of Odin, the All-Father, and Jord, the personification of Earth.</string>
+    <string name="thor_fact_6">Mjolnir always returns to Thor\'s hand after being thrown.</string>
+    <string name="thor_fact_7">Thor\'s wife is Sif, known for her golden hair that shines like wheat fields.</string>
+    <string name="thor_fact_8">Thor is said to have immense strength, even among the gods.</string>
+    <string name="thor_fact_9">Thor\'s hammer Mjolnir was forged by the dwarven brothers Brokkr and Eitri.</string>
+    <string name="thor_fact_10">Thor protects both gods and humans from the giants.</string>
+    <string name="thor_fact_11">Thor owns a belt called Megingjord that doubles his already incredible strength.</string>
+    <string name="thor_fact_12">Thor is one of the most popular and widely worshipped gods in Norse mythology.</string>
+    <string name="thor_fact_13">Thor\'s hall in Asgard is called Bilskirnir, which has 540 rooms.</string>
+    <string name="thor_fact_14">Thor once disguised himself as the goddess Freyja to retrieve Mjolnir from giants.</string>
+    <string name="thor_fact_15">Thor\'s red beard is one of his most distinctive features in Norse tales.</string>
+    <string name="thor_fact_16">Thor is prophesied to die fighting the serpent Jormungandr during Ragnarok.</string>
+    <string name="thor_fact_17">Thor uses iron gloves called Járngreipr to wield Mjolnir.</string>
+    <string name="thor_fact_18">Thor is known for his hearty appetite and can consume entire oxen.</string>
+    <string name="thor_fact_19">Thor once tried to drink the ocean in a challenge from a giant king.</string>
+    <string name="thor_fact_20">Thor\'s mother Jord is the earth itself, making Thor part divine and part elemental.</string>
+    <string name="thor_fact_21">Thor has two sons, Modi and Magni, who will survive Ragnarok.</string>
+    <string name="thor_fact_22">Thor is often depicted as having fierce eyes that glow when angered.</string>
+    <string name="thor_fact_23">Thor\'s goats can be eaten and then brought back to life the next day.</string>
+    <string name="thor_fact_24">Thor is the defender of Midgard, the realm of humans.</string>
+    <string name="thor_fact_25">Thor has a daughter named Thrud, whose name means strength.</string>
+    <string name="thor_fact_26">Thor is second only to Odin in the Norse pantheon hierarchy.</string>
+    <string name="thor_fact_27">Thor\'s hammer Mjolnir is so heavy that only he can lift it.</string>
+    <string name="thor_fact_28">Thor once lifted a cat that was actually the Midgard Serpent in disguise.</string>
+    <string name="thor_fact_29">Thor travels between worlds using the rainbow bridge Bifrost.</string>
+    <string name="thor_fact_30">Thor is known for his straightforward, honest nature and quick temper.</string>
+    <string name="thor_fact_31">Thor\'s symbol, the hammer, was worn by Vikings for protection.</string>
+    <string name="thor_fact_32">Thor once wrestled an old woman who was actually Old Age personified.</string>
+    <string name="thor_fact_33">Thor is associated with oak trees, which are sacred to him.</string>
+    <string name="thor_fact_34">Thor\'s name means thunder in Old Norse.</string>
+    <string name="thor_fact_35">Thor is known to have a simple, direct approach to problem-solving.</string>
+    <string name="thor_fact_36">Thor\'s hammer makes the sound of thunder when striking.</string>
+    <string name="thor_fact_37">Thor once fought and defeated countless giants single-handedly.</string>
+    <string name="thor_fact_38">Thor is the god most commonly invoked for protection by common folk.</string>
+    <string name="thor_fact_39">Thor\'s strength is so great he must wear iron gloves to handle Mjolnir.</string>
+    <string name="thor_fact_40">Thor is destined to kill the Midgard Serpent but die from its venom.</string>
+    <string name="thor_fact_41">Thor\'s chariot creates thunder when riding across the sky.</string>
+    <string name="thor_fact_42">Thor is married to Sif in one of Norse mythology\'s most stable marriages.</string>
+    <string name="thor_fact_43">Thor\'s hall Bilskirnir is the largest building in existence.</string>
+    <string name="thor_fact_44">Thor once drank so much that he lowered the sea level noticeably.</string>
+    <string name="thor_fact_45">Thor represents the common warrior rather than the noble or wise leader.</string>
+    <string name="thor_fact_46">Thor\'s stepson is Ullr, the god of skiing and archery.</string>
+    <string name="thor_fact_47">Thor is said to have a voracious appetite matching his legendary strength.</string>
+    <string name="thor_fact_48">Thor\'s adventures often involve outwitting or outfighting giants.</string>
+    <string name="thor_fact_49">Thor is the protector of the consecration of marriages and sacred oaths.</string>
+    <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 </resources>

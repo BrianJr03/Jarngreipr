@@ -6,28 +6,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import jr.brian.home.model.WidgetConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "widget_preferences")
 
-@Serializable
-data class WidgetConfig(
-    val widgetId: Int,
-    val providerClassName: String,
-    val providerPackageName: String,
-    val x: Int = 0,
-    val y: Int = 0,
-    val width: Int = 1,
-    val height: Int = 1,
-    val pageIndex: Int = 0
-)
-
 class WidgetPreferences(private val context: Context) {
-
     companion object {
         private val WIDGET_CONFIGS_KEY = stringPreferencesKey("widget_configs")
         private val json = Json {
