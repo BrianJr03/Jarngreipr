@@ -42,6 +42,11 @@
     <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
 
+    <string name="settings_grid_columns_title">Grid Layout</string>
+    <string name="settings_grid_columns_description">Adjust the number of columns in the app grid</string>
+    <string name="settings_grid_columns_icon_description">Grid layout icon</string>
+    <string name="settings_grid_columns_option">%1$d × %1$d Grid</string>
+
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
@@ -78,8 +83,12 @@
     <string name="settings_version_label">Version %1$s (Beta)</string>
 
     <!-- Welcome Overlay -->
-    <string name="welcome_overlay_title">Important Note</string>
+    <string name="welcome_overlay_title">Welcome to Járngreipr</string>
     <string name="welcome_overlay_button">Got It</string>
+    <string name="launch_settings_overlay_button">Settings</string>
+    <string name="welcome_overlay_thor_fact_label">⚡ Thor Fact</string>
+    <string name="welcome_overlay_info_label">ℹ️ Quick Tip</string>
+    <string name="welcome_overlay_extra_info">Customize your launcher by adjusting grid layout, themes, wallpapers, and app visibility in Settings.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>

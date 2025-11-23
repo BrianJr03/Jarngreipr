@@ -43,12 +43,13 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
+import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.StyledDialogButton
-import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
+import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.WALLPAPER_TRANSPARENT
 import kotlinx.coroutines.launch
@@ -63,6 +64,7 @@ fun AppDrawerScreen(
     onSettingsClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val gridSettingsManager = LocalGridSettingsManager.current
     var searchQuery by remember { mutableStateOf("") }
 
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
@@ -171,7 +173,7 @@ fun AppDrawerScreen(
                 apps = apps,
                 searchQuery = searchQuery,
                 onSearchQueryChange = { searchQuery = it },
-                columns = 4,
+                columns = gridSettingsManager.columnCount,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 appFocusRequesters = appFocusRequesters,
                 savedKeyboardIndex = savedKeyboardIndex,

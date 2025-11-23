@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
@@ -66,10 +67,12 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.AppVisibilityDialog
+import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ColorTheme
+import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalThemeManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -135,6 +138,10 @@ private fun SettingsContent(
 
         item {
             WallpaperSelectorItem(focusRequester = wallpaperFocusRequester)
+        }
+
+        item {
+            GridColumnSelectorItem()
         }
 
         item {
@@ -699,6 +706,202 @@ private fun SettingItem(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun GridColumnSelectorItem(focusRequester: FocusRequester? = null) {
+    val gridSettingsManager = LocalGridSettingsManager.current
+    var isFocused by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
+    val mainCardFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) {
+            mainCardFocusRequester.requestFocus()
+        }
+    }
+
+    val cardGradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.8f),
+                    )
+                } else {
+                    listOf(
+                        AppCardLight,
+                        AppCardDark,
+                    )
+                },
+        )
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+    ) {
+        AnimatedVisibility(
+            visible = !isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester ?: mainCardFocusRequester)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        }
+                        .background(
+                            brush = cardGradient,
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .border(
+                            width = if (isFocused) 2.dp else 0.dp,
+                            brush =
+                                borderBrush(
+                                    isFocused = isFocused,
+                                    colors =
+                                        listOf(
+                                            ThemePrimaryColor.copy(alpha = 0.8f),
+                                            ThemeSecondaryColor.copy(alpha = 0.6f),
+                                        ),
+                                ),
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            isExpanded = true
+                        }
+                        .focusable()
+                        .padding(16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.GridView,
+                        contentDescription = stringResource(R.string.settings_grid_columns_icon_description),
+                        modifier =
+                            Modifier
+                                .size(32.dp)
+                                .rotate(animatedRotation(isFocused)),
+                        tint = Color.White,
+                    )
+
+                    Spacer(modifier = Modifier.size(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(id = R.string.settings_grid_columns_title),
+                            color = Color.White,
+                            fontSize = if (isFocused) 18.sp else 16.sp,
+                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(id = R.string.settings_grid_columns_description),
+                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                for (columns in GridSettingsManager.MIN_COLUMNS..GridSettingsManager.MAX_COLUMNS) {
+                    GridColumnOptionButton(
+                        columns = columns,
+                        isSelected = gridSettingsManager.columnCount == columns,
+                        onClick = {
+                            gridSettingsManager.updateColumnCount(columns)
+                            isExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GridColumnOptionButton(
+    columns: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val gradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.6f),
+                    )
+                } else {
+                    listOf(
+                        AppCardLight,
+                        AppCardDark,
+                    )
+                },
+        )
+
+    val borderColor = when {
+        isSelected -> Color.White
+        isFocused -> Color.LightGray.copy(alpha = 0.8f)
+        else -> Color.Transparent
+    }
+
+    val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .scale(animatedFocusedScale(isFocused))
+                .onFocusChanged {
+                    isFocused = it.isFocused
+                }
+                .background(
+                    brush = gradient,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .border(
+                    width = borderWidth,
+                    color = borderColor,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() }
+                .focusable()
+                .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = stringResource(id = R.string.settings_grid_columns_option, columns),
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+        )
     }
 }
 

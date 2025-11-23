@@ -35,11 +35,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.components.AppOverlay
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.HomeViewModel
@@ -52,6 +54,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var appVisibilityManager: AppVisibilityManager
+
+    @Inject
+    lateinit var gridSettingsManager: GridSettingsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +83,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 CompositionLocalProvider(
-                    LocalAppVisibilityManager provides appVisibilityManager
+                    LocalAppVisibilityManager provides appVisibilityManager,
+                    LocalGridSettingsManager provides gridSettingsManager
                 ) {
                     MainContent()
                 }
@@ -180,6 +186,9 @@ private fun MainContent() {
             AppOverlay(
                 onDismissOverlay = {
                     showWelcomeOverlay = false
+                },
+                onOpenSettings = {
+                    navController.navigate(Routes.SETTINGS)
                 }
             )
         }
