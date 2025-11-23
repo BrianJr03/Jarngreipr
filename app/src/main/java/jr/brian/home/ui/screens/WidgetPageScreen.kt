@@ -179,20 +179,20 @@ fun WidgetPageScreen(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(4),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item(span = { GridItemSpan(2) }) {
-                    if (showWidgetPicker) {
+                if (showWidgetPicker) {
+                    item(span = { GridItemSpan(4) }) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            shape = RoundedCornerShape(16.dp),
+                                .height(60.dp),
+                            shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = ThemePrimaryColor.copy(alpha = 0.15f)
                             )
@@ -222,7 +222,8 @@ fun WidgetPageScreen(
 
                 widgets.forEachIndexed { index, widget ->
                     item(
-                        key = "${pageIndex}_pos_$index"
+                        key = "${pageIndex}_pos_$index",
+                        span = { GridItemSpan(widget.width.coerceIn(1, 4)) }
                     ) {
                         key(widget.widgetId) {
                             WidgetItem(
@@ -234,7 +235,7 @@ fun WidgetPageScreen(
                     }
                 }
 
-                item {
+                item(span = { GridItemSpan(2) }) {
                     AddWidgetCard(
                         onClick = { showWidgetPicker = true }
                     )
@@ -270,9 +271,11 @@ private fun WidgetItem(
 
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
-
-    val widgetHeightDp = remember(currentProviderInfo) {
-        currentProviderInfo.minHeight.toFloat().dp
+    
+    val widgetHeightDp = remember(widgetInfo.height) {
+        val cellHeight = 80.dp
+        val calculatedHeight = (widgetInfo.height * cellHeight.value).dp
+        calculatedHeight.coerceAtLeast(80.dp)
     }
 
     Column(
@@ -280,8 +283,8 @@ private fun WidgetItem(
             .fillMaxWidth()
             .border(
                 width = 2.dp,
-                color = ThemePrimaryColor.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp)
+                color = ThemePrimaryColor,
+                shape = RoundedCornerShape(12.dp)
             )
     ) {
         key(currentWidgetId) {
@@ -314,8 +317,8 @@ private fun WidgetItem(
             shape = RoundedCornerShape(
                 topStart = 0.dp,
                 topEnd = 0.dp,
-                bottomStart = 14.dp,
-                bottomEnd = 14.dp
+                bottomStart = 10.dp,
+                bottomEnd = 10.dp
             ),
             colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -328,7 +331,7 @@ private fun WidgetItem(
                     imageVector = Icons.Default.Edit,
                     contentDescription = stringResource(R.string.widget_edit_description),
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -547,14 +550,13 @@ private fun AddWidgetCard(
     Card(
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+            .fillMaxWidth()
+            .height(80.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor)
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Row(
