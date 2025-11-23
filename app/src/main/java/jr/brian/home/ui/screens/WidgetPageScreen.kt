@@ -61,7 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlin.math.ceil
@@ -75,6 +77,7 @@ fun WidgetPageScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val wallpaperManager = LocalWallpaperManager.current
     var showWidgetPicker by remember { mutableStateOf(false) }
     var widgetIdToReplace by remember { mutableStateOf<Int?>(null) }
 
@@ -126,6 +129,11 @@ fun WidgetPageScreen(
             .fillMaxSize()
             .blockHorizontalNavigation()
     ) {
+        WallpaperDisplay(
+            wallpaperUri = wallpaperManager.getWallpaperUri(),
+            wallpaperType = wallpaperManager.getWallpaperType(),
+            modifier = Modifier.fillMaxSize()
+        )
         if (showWidgetPicker) {
             Box(
                 modifier = Modifier.fillMaxSize(),

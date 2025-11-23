@@ -8,7 +8,21 @@ import androidx.core.content.edit
 
 private const val PREFS_NAME = "launcher_prefs"
 private const val KEY_WALLPAPER = "selected_wallpaper"
+private const val KEY_WALLPAPER_TYPE = "wallpaper_type"
 const val WALLPAPER_TRANSPARENT = "TRANSPARENT"
+
+enum class WallpaperType {
+    NONE,
+    IMAGE,
+    GIF,
+    VIDEO,
+    TRANSPARENT
+}
+
+data class WallpaperInfo(
+    val uri: String?,
+    val type: WallpaperType
+)
 
 class WallpaperManager(
     private val context: Context,
@@ -16,32 +30,50 @@ class WallpaperManager(
     var currentWallpaper by mutableStateOf(loadWallpaper())
         private set
 
-    private fun loadWallpaper(): String? {
+    private fun loadWallpaper(): WallpaperInfo {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_WALLPAPER, null)
+        val uri = prefs.getString(KEY_WALLPAPER, null)
+        val typeString = prefs.getString(KEY_WALLPAPER_TYPE, WallpaperType.NONE.name)
+        val type = try {
+            WallpaperType.valueOf(typeString ?: WallpaperType.NONE.name)
+        } catch (_: IllegalArgumentException) {
+            WallpaperType.NONE
+        }
+
+        return WallpaperInfo(uri, type)
     }
 
-    fun setWallpaper(uri: String?) {
-        currentWallpaper = uri
+    fun setWallpaper(uri: String?, type: WallpaperType) {
+        currentWallpaper = WallpaperInfo(uri, type)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit {
             if (uri != null) {
                 putString(KEY_WALLPAPER, uri)
+                putString(KEY_WALLPAPER_TYPE, type.name)
             } else {
                 remove(KEY_WALLPAPER)
+                remove(KEY_WALLPAPER_TYPE)
             }
         }
     }
 
     fun setTransparent() {
-        setWallpaper(WALLPAPER_TRANSPARENT)
+        setWallpaper(WALLPAPER_TRANSPARENT, WallpaperType.TRANSPARENT)
     }
 
     fun clearWallpaper() {
-        setWallpaper(null)
+        setWallpaper(null, WallpaperType.NONE)
     }
 
     fun isTransparent(): Boolean {
-        return currentWallpaper == WALLPAPER_TRANSPARENT
+        return currentWallpaper.type == WallpaperType.TRANSPARENT
+    }
+
+    fun getWallpaperType(): WallpaperType {
+        return currentWallpaper.type
+    }
+
+    fun getWallpaperUri(): String? {
+        return currentWallpaper.uri
     }
 }
