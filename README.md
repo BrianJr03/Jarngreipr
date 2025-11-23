@@ -1,5 +1,8 @@
 # Járngreipr 🧤
 
+![Total Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/total?style=flat-square)
+![Latest Release Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/latest/total?style=flat-square)
+
 **A modern, customizable Android launcher designed for the AYN Thor (and other dual screen devices).**
 
 Járngreipr is a sleek, gamepad-friendly
