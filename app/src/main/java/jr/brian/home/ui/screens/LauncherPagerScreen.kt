@@ -2,28 +2,17 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
-import jr.brian.home.ui.extensions.handleShoulderButtons
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -73,36 +62,34 @@ fun LauncherPagerScreen(
                 }
             )
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            PagerIndicators(
-                totalPages = totalPages,
-                pagerState = pagerState
-            )
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = !isOverlayShown
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        AppDrawerScreen(
-                            apps = homeUiState.allApps,
-                            isLoading = homeUiState.isLoading,
-                            onSettingsClick = onSettingsClick
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = !isOverlayShown
+        ) { page ->
+            when (page) {
+                0 -> {
+                    AppDrawerScreen(
+                        apps = homeUiState.allApps,
+                        isLoading = homeUiState.isLoading,
+                        onSettingsClick = onSettingsClick,
+                        totalPages = totalPages,
+                        pagerState = pagerState
+                    )
+                }
+
+                else -> {
+                    val widgetPageIndex = page - 1
+                    val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                    if (widgetPage != null) {
+                        WidgetPageScreen(
+                            pageIndex = widgetPageIndex,
+                            widgets = widgetPage.widgets,
+                            viewModel = widgetViewModel,
+                            totalPages = totalPages,
+                            pagerState = pagerState
                         )
-                    }
-
-                    else -> {
-                        val widgetPageIndex = page - 1
-                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                        if (widgetPage != null) {
-                            WidgetPageScreen(
-                                pageIndex = widgetPageIndex,
-                                widgets = widgetPage.widgets,
-                                viewModel = widgetViewModel
-                            )
-                        }
                     }
                 }
             }
@@ -110,47 +97,3 @@ fun LauncherPagerScreen(
     }
 }
 
-@Composable
-@Suppress("SameParameterValue")
-private fun PagerIndicators(
-    totalPages: Int = 3,
-    pagerState: PagerState
-) {
-    Row(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(totalPages) { index ->
-            val isSelected = pagerState.currentPage == index
-            if (index == 0) {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(if (isSelected) 16.dp else 12.dp),
-                    tint = if (isSelected) {
-                        ThemePrimaryColor
-                    } else {
-                        Color.White.copy(alpha = 0.4f)
-                    }
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(if (isSelected) 16.dp else 12.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isSelected) {
-                                ThemePrimaryColor
-                            } else {
-                                Color.White.copy(alpha = 0.4f)
-                            }
-                        )
-                )
-            }
-        }
-    }
-}

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.components.PageIndicators
 import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.LocalWallpaperManager
@@ -75,10 +77,14 @@ fun WidgetPageScreen(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    totalPages: Int = 1,
+    pagerState: PagerState? = null,
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
+    val gridSettingsManager = jr.brian.home.ui.theme.LocalGridSettingsManager.current
+    val columns = gridSettingsManager.columnCount
     var showWidgetPicker by remember { mutableStateOf(false) }
     var widgetIdToReplace by remember { mutableStateOf<Int?>(null) }
 
@@ -200,15 +206,24 @@ fun WidgetPageScreen(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
+                columns = GridCells.Fixed(columns),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (pagerState != null) {
+                    item(span = { GridItemSpan(columns) }) {
+                        PageIndicators(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                        )
+                    }
+                }
+
                 if (showWidgetPicker) {
-                    item(span = { GridItemSpan(4) }) {
+                    item(span = { GridItemSpan(columns) }) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -244,7 +259,7 @@ fun WidgetPageScreen(
                 widgets.forEachIndexed { index, widget ->
                     item(
                         key = "${pageIndex}_pos_$index",
-                        span = { GridItemSpan(widget.width.coerceIn(1, 4)) }
+                        span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
                     ) {
                         key(widget.widgetId) {
                             WidgetItem(
@@ -302,6 +317,10 @@ private fun WidgetItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .background(
+                color = Color(0xFF2A2A2A),
+                shape = RoundedCornerShape(12.dp)
+            )
             .border(
                 width = 2.dp,
                 color = ThemePrimaryColor,
@@ -313,6 +332,7 @@ private fun WidgetItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(widgetHeightDp)
+                    .background(Color(0xFF2A2A2A))
             ) {
                 AndroidView(
                     factory = { ctx ->
