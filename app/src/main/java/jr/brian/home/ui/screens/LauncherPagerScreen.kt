@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -72,73 +73,83 @@ fun LauncherPagerScreen(
                 }
             )
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = !isOverlayShown
-        ) { page ->
-            when (page) {
-                0 -> {
-                    AppDrawerScreen(
-                        apps = homeUiState.allApps,
-                        isLoading = homeUiState.isLoading,
-                        onSettingsClick = onSettingsClick
-                    )
-                }
-
-                else -> {
-                    val widgetPageIndex = page - 1
-                    val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                    if (widgetPage != null) {
-                        WidgetPageScreen(
-                            pageIndex = widgetPageIndex,
-                            widgets = widgetPage.widgets,
-                            viewModel = widgetViewModel
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            PagerIndicators(
+                totalPages = totalPages,
+                pagerState = pagerState
+            )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = !isOverlayShown
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        AppDrawerScreen(
+                            apps = homeUiState.allApps,
+                            isLoading = homeUiState.isLoading,
+                            onSettingsClick = onSettingsClick
                         )
+                    }
+
+                    else -> {
+                        val widgetPageIndex = page - 1
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                        if (widgetPage != null) {
+                            WidgetPageScreen(
+                                pageIndex = widgetPageIndex,
+                                widgets = widgetPage.widgets,
+                                viewModel = widgetViewModel
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
 
-        if (pagerState.currentPage != 0) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(bottom = 8.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                repeat(totalPages) { index ->
-                    val isSelected = pagerState.currentPage == index
-                    if (index == 0) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(if (isSelected) 16.dp else 12.dp),
-                            tint = if (isSelected) {
+@Composable
+@Suppress("SameParameterValue")
+private fun PagerIndicators(
+    totalPages: Int = 3,
+    pagerState: PagerState
+) {
+    Row(
+        modifier = Modifier
+            .padding(bottom = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(totalPages) { index ->
+            val isSelected = pagerState.currentPage == index
+            if (index == 0) {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(if (isSelected) 16.dp else 12.dp),
+                    tint = if (isSelected) {
+                        ThemePrimaryColor
+                    } else {
+                        Color.White.copy(alpha = 0.4f)
+                    }
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(if (isSelected) 16.dp else 12.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSelected) {
                                 ThemePrimaryColor
                             } else {
                                 Color.White.copy(alpha = 0.4f)
                             }
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(if (isSelected) 10.dp else 8.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isSelected) {
-                                        ThemePrimaryColor
-                                    } else {
-                                        Color.White.copy(alpha = 0.4f)
-                                    }
-                                )
-                        )
-                    }
-                }
+                )
             }
         }
     }

@@ -126,7 +126,18 @@ fun WidgetPageScreen(
             .fillMaxSize()
             .blockHorizontalNavigation()
     ) {
-        if (widgets.isEmpty()) {
+        if (showWidgetPicker) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = ThemePrimaryColor,
+                    strokeWidth = 4.dp
+                )
+            }
+        } else if (widgets.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
