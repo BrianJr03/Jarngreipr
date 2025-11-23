@@ -78,7 +78,8 @@ import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.ui.theme.WALLPAPER_TRANSPARENT
+import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.util.WallpaperUtils
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -379,25 +380,34 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
     var isExpanded by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
+            val detectedType = WallpaperUtils.detectWallpaperType(context, it)
             try {
                 val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 context.contentResolver.takePersistableUriPermission(it, flags)
-                wallpaperManager.setWallpaper(it.toString())
+                wallpaperManager.setWallpaper(it.toString(), detectedType)
             } catch (_: SecurityException) {
                 try {
                     val inputStream = context.contentResolver.openInputStream(it)
-                    val fileName = "wallpaper_${System.currentTimeMillis()}.jpg"
+                    val extension = when (detectedType) {
+                        WallpaperType.GIF -> "gif"
+                        WallpaperType.VIDEO -> "mp4"
+                        else -> "jpg"
+                    }
+                    val fileName = "wallpaper_${System.currentTimeMillis()}.$extension"
                     val outputFile = File(context.filesDir, fileName)
                     inputStream?.use { input ->
                         outputFile.outputStream().use { output ->
                             input.copyTo(output)
                         }
                     }
-                    wallpaperManager.setWallpaper("file://${outputFile.absolutePath}")
+                    wallpaperManager.setWallpaper(
+                        "file://${outputFile.absolutePath}",
+                        detectedType
+                    )
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -518,7 +528,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
             ) {
                 WallpaperOptionButton(
                     text = stringResource(id = R.string.settings_wallpaper_default),
-                    isSelected = wallpaperManager.currentWallpaper == null,
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.NONE,
                     onClick = {
                         wallpaperManager.clearWallpaper()
                         isExpanded = false
@@ -527,16 +537,31 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
 
                 WallpaperOptionButton(
                     text = stringResource(id = R.string.settings_wallpaper_image_picker),
-                    isSelected = wallpaperManager.currentWallpaper != null &&
-                            wallpaperManager.currentWallpaper != WALLPAPER_TRANSPARENT,
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.IMAGE,
                     onClick = {
-                        imagePickerLauncher.launch(arrayOf("image/*"))
+                        mediaPickerLauncher.launch(arrayOf("image/*"))
+                    }
+                )
+
+                WallpaperOptionButton(
+                    text = stringResource(id = R.string.settings_wallpaper_gif_picker),
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.GIF,
+                    onClick = {
+                        mediaPickerLauncher.launch(arrayOf("image/gif"))
+                    }
+                )
+
+                WallpaperOptionButton(
+                    text = stringResource(id = R.string.settings_wallpaper_video_picker),
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.VIDEO,
+                    onClick = {
+                        mediaPickerLauncher.launch(arrayOf("video/*"))
                     }
                 )
 
                 WallpaperOptionButton(
                     text = stringResource(id = R.string.settings_wallpaper_transparent),
-                    isSelected = wallpaperManager.currentWallpaper == WALLPAPER_TRANSPARENT,
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
                     onClick = {
                         wallpaperManager.setTransparent()
                         isExpanded = false

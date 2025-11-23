@@ -32,7 +32,9 @@
     <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
     <string name="settings_wallpaper_default">Default</string>
     <string name="settings_wallpaper_transparent">System Wallpaper</string>
-    <string name="settings_wallpaper_image_picker">Choose from Gallery</string>
+    <string name="settings_wallpaper_image_picker">Choose Image</string>
+    <string name="settings_wallpaper_gif_picker">Choose GIF</string>
+    <string name="settings_wallpaper_video_picker">Choose Video</string>
 
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
