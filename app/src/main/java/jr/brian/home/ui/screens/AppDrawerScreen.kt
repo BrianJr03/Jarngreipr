@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,23 +33,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.StyledDialogButton
-import jr.brian.home.ui.theme.AppBackgroundDark
+import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
-import jr.brian.home.ui.theme.WALLPAPER_TRANSPARENT
 import kotlinx.coroutines.launch
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
@@ -67,7 +62,12 @@ fun AppDrawerScreen(
     val gridSettingsManager = LocalGridSettingsManager.current
     var searchQuery by remember { mutableStateOf("") }
 
-    val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    val prefs = remember {
+        context.getSharedPreferences(
+            PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+    }
     var keyboardVisible by remember {
         mutableStateOf(prefs.getBoolean(KEY_KEYBOARD_VISIBLE, true))
     }
@@ -101,7 +101,10 @@ fun AppDrawerScreen(
             },
             text = {
                 Text(
-                    text = stringResource(id = R.string.app_info_message, selectedApp!!.label),
+                    text = stringResource(
+                        id = R.string.app_info_message,
+                        selectedApp!!.label
+                    ),
                     color = Color.White.copy(alpha = 0.8f),
                 )
             },
@@ -132,7 +135,6 @@ fun AppDrawerScreen(
     }
 
     val wallpaperManager = LocalWallpaperManager.current
-    val wallpaperUri = wallpaperManager.currentWallpaper
 
     Box(
         modifier =
@@ -140,26 +142,11 @@ fun AppDrawerScreen(
                 .fillMaxSize()
                 .systemBarsPadding(),
     ) {
-        when {
-            wallpaperUri == WALLPAPER_TRANSPARENT -> {}
-
-            wallpaperUri != null -> {
-                Image(
-                    painter = rememberAsyncImagePainter(wallpaperUri.toUri()),
-                    contentDescription = stringResource(R.string.wallpaper),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            else -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(AppBackgroundDark)
-                )
-            }
-        }
+        WallpaperDisplay(
+            wallpaperUri = wallpaperManager.getWallpaperUri(),
+            wallpaperType = wallpaperManager.getWallpaperType(),
+            modifier = Modifier.fillMaxSize()
+        )
 
         if (isLoading) {
             Box(
