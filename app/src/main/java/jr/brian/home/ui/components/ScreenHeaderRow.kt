@@ -1,8 +1,6 @@
 package jr.brian.home.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -55,27 +51,20 @@ fun ScreenHeaderRow(
             .blockHorizontalNavigation()
     ) {
         if (leadingIcon != null) {
-            IconBox(isFocused = isLeadingFocused) {
+            IconBox(
+                isFocused = isLeadingFocused,
+                modifier = Modifier.handleRightNavigation(onNavigateToGrid),
+                focusRequester = leadingIconFocusRequester,
+                onFocusChanged = { isLeadingFocused = it },
+                onClick = onLeadingIconClick
+            ) {
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = leadingIconContentDescription,
                     tint = Color.White.copy(alpha = 0.6f),
                     modifier = Modifier
                         .size(24.dp)
-                        .then(
-                            if (leadingIconFocusRequester != null) {
-                                Modifier.focusRequester(leadingIconFocusRequester)
-                            } else {
-                                Modifier
-                            }
-                        )
-                        .onFocusChanged {
-                            isLeadingFocused = it.isFocused
-                        }
                         .rotate(animatedRotation(isLeadingFocused))
-                        .clickable { onLeadingIconClick() }
-                        .focusable()
-                        .handleRightNavigation(onNavigateToGrid)
                 )
             }
         }
@@ -90,31 +79,24 @@ fun ScreenHeaderRow(
         Spacer(modifier = Modifier.weight(1f))
 
         if (trailingIcon != null) {
-            IconBox(isFocused = isTrailingFocused) {
+            IconBox(
+                isFocused = isTrailingFocused,
+                modifier = Modifier.handleFullNavigation(
+                    onNavigateLeft = onNavigateFromGrid,
+                    onNavigateDown = onNavigateToGrid,
+                    onEnterPress = onTrailingIconClick
+                ),
+                focusRequester = trailingIconFocusRequester,
+                onFocusChanged = { isTrailingFocused = it },
+                onClick = onTrailingIconClick
+            ) {
                 Icon(
                     imageVector = trailingIcon,
                     contentDescription = trailingIconContentDescription,
                     tint = Color.White.copy(alpha = 0.6f),
                     modifier = Modifier
                         .size(24.dp)
-                        .then(
-                            if (trailingIconFocusRequester != null) {
-                                Modifier.focusRequester(trailingIconFocusRequester)
-                            } else {
-                                Modifier
-                            }
-                        )
-                        .onFocusChanged {
-                            isTrailingFocused = it.isFocused
-                        }
                         .rotate(animatedRotation(isTrailingFocused))
-                        .clickable { onTrailingIconClick() }
-                        .focusable()
-                        .handleFullNavigation(
-                            onNavigateLeft = onNavigateFromGrid,
-                            onNavigateDown = onNavigateToGrid,
-                            onEnterPress = onTrailingIconClick
-                        )
                 )
             }
         }

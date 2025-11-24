@@ -25,6 +25,13 @@
     <string name="app_info_title">App Options</string>
     <string name="app_info_message">Open app info for %1$s?</string>
 
+    <!-- App Options Menu -->
+    <string name="app_options_menu_title">App Options</string>
+    <string name="app_options_app_info">Open App Info</string>
+    <string name="app_options_launch_current">Launch on Current Display</string>
+    <string name="app_options_launch_primary">Launch on Primary Display</string>
+    <string name="app_options_selected">Selected</string>
+
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Only visible when using gamepad</string>
 
