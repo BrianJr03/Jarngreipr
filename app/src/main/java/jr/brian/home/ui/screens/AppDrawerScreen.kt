@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -30,7 +32,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -46,13 +47,12 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.OnScreenKeyboard
-import jr.brian.home.ui.components.PageIndicators
+import jr.brian.home.ui.components.ScreenHeaderRow
 import jr.brian.home.ui.components.StyledDialogButton
 import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
-import kotlinx.coroutines.launch
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_KEYBOARD_VISIBLE = "keyboard_visible"
@@ -239,7 +239,6 @@ private fun AppSelectionContent(
                 onNavigateRight = {
                     appFocusRequesters[savedAppIndex]?.requestFocus()
                 },
-                onSettingsClick = onSettingsClick,
             )
         }
 
@@ -259,6 +258,7 @@ private fun AppSelectionContent(
             keyboardVisible = keyboardVisible,
             totalPages = totalPages,
             pagerState = pagerState,
+            onSettingsClick = onSettingsClick,
         )
     }
 }
@@ -277,34 +277,50 @@ private fun AppGrid(
     keyboardVisible: Boolean = true,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    onSettingsClick: () -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
+    val settingsIconFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         appFocusRequesters[0]?.requestFocus()
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = gridState,
-        modifier = modifier,
-        contentPadding = PaddingValues(
-            horizontal = if (keyboardVisible) 16.dp else 32.dp,
-            vertical = if (keyboardVisible) 0.dp else 16.dp,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
-        verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
+    Column(
+        modifier = modifier
     ) {
         if (pagerState != null) {
-            item(span = { GridItemSpan(columns) }) {
-                PageIndicators(
-                    totalPages = totalPages,
-                    pagerState = pagerState,
+            ScreenHeaderRow(
+                totalPages = totalPages,
+                pagerState = pagerState,
+                trailingIcon = Icons.Default.Settings,
+                trailingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                onTrailingIconClick = onSettingsClick,
+                trailingIconFocusRequester = settingsIconFocusRequester,
+                onNavigateToGrid = {
+                    appFocusRequesters[0]?.requestFocus()
+                },
+                onNavigateFromGrid = {
+                    settingsIconFocusRequester.requestFocus()
+                },
+                modifier = Modifier.padding(
+                    horizontal = if (keyboardVisible) 16.dp else 32.dp,
+                    vertical = if (keyboardVisible) 8.dp else 16.dp
                 )
-            }
+            )
         }
 
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            state = gridState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                horizontal = if (keyboardVisible) 16.dp else 32.dp,
+                vertical = if (keyboardVisible) 0.dp else 0.dp,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
+            verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
+        ) {
         items(apps.size) { index ->
             val app = apps[index]
             val itemFocusRequester =
@@ -323,18 +339,14 @@ private fun AppGrid(
                     val prevIndex = index - columns
                     if (prevIndex >= 0) {
                         appFocusRequesters[prevIndex]?.requestFocus()
-                        scope.launch {
-                            gridState.animateScrollToItem(prevIndex)
-                        }
+                    } else if (index < columns) {
+                        settingsIconFocusRequester.requestFocus()
                     }
                 },
                 onNavigateDown = {
                     val nextIndex = index + columns
                     if (nextIndex < apps.size) {
                         appFocusRequesters[nextIndex]?.requestFocus()
-                        scope.launch {
-                            gridState.animateScrollToItem(nextIndex)
-                        }
                     }
                 },
                 onNavigateLeft = {
@@ -356,8 +368,9 @@ private fun AppGrid(
             )
         }
 
-        item {
-            Spacer(modifier = Modifier.height(80.dp))
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
+            }
         }
     }
 }

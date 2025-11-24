@@ -54,6 +54,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -63,8 +64,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
-import jr.brian.home.ui.components.PageIndicators
+import jr.brian.home.ui.components.ScreenHeaderRow
 import jr.brian.home.ui.components.WallpaperDisplay
+import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -85,6 +87,7 @@ fun WidgetPageScreen(
     val wallpaperManager = LocalWallpaperManager.current
     val gridSettingsManager = jr.brian.home.ui.theme.LocalGridSettingsManager.current
     val columns = gridSettingsManager.columnCount
+    val addWidgetIconFocusRequester = remember { FocusRequester() }
     var showWidgetPicker by remember { mutableStateOf(false) }
     var widgetIdToReplace by remember { mutableStateOf<Int?>(null) }
 
@@ -134,7 +137,13 @@ fun WidgetPageScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .blockHorizontalNavigation()
+            .then(
+                if (showWidgetPicker || widgets.isEmpty()) {
+                    Modifier.blockAllNavigation()
+                } else {
+                    Modifier.blockHorizontalNavigation()
+                }
+            )
     ) {
         WallpaperDisplay(
             wallpaperUri = wallpaperManager.getWallpaperUri(),
@@ -205,76 +214,81 @@ fun WidgetPageScreen(
                 }
             }
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
                 if (pagerState != null) {
-                    item(span = { GridItemSpan(columns) }) {
-                        PageIndicators(
-                            totalPages = totalPages,
-                            pagerState = pagerState,
-                        )
-                    }
+                    ScreenHeaderRow(
+                        totalPages = totalPages,
+                        pagerState = pagerState,
+                        trailingIcon = Icons.Default.Add,
+                        trailingIconContentDescription = "Add Widget",
+                        onTrailingIconClick = { showWidgetPicker = true },
+                        trailingIconFocusRequester = addWidgetIconFocusRequester,
+                        onNavigateToGrid = {},
+                        onNavigateFromGrid = {
+                            addWidgetIconFocusRequester.requestFocus()
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    )
                 }
 
-                if (showWidgetPicker) {
-                    item(span = { GridItemSpan(columns) }) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = ThemePrimaryColor.copy(alpha = 0.15f)
-                            )
-                        ) {
-                            Row(
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (showWidgetPicker) {
+                        item(span = { GridItemSpan(columns) }) {
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = ThemePrimaryColor,
-                                    strokeWidth = 3.dp
+                                    .height(60.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = ThemePrimaryColor.copy(alpha = 0.15f)
                                 )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = stringResource(R.string.widget_loading),
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = ThemePrimaryColor,
+                                        strokeWidth = 3.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = stringResource(R.string.widget_loading),
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    widgets.forEachIndexed { index, widget ->
+                        item(
+                            key = "${pageIndex}_pos_$index",
+                            span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
+                        ) {
+                            key(widget.widgetId) {
+                                WidgetItem(
+                                    widgetInfo = widget,
+                                    viewModel = viewModel,
+                                    pageIndex = pageIndex
                                 )
                             }
                         }
                     }
-                }
-
-                widgets.forEachIndexed { index, widget ->
-                    item(
-                        key = "${pageIndex}_pos_$index",
-                        span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
-                    ) {
-                        key(widget.widgetId) {
-                            WidgetItem(
-                                widgetInfo = widget,
-                                viewModel = viewModel,
-                                pageIndex = pageIndex
-                            )
-                        }
-                    }
-                }
-
-                item(span = { GridItemSpan(2) }) {
-                    AddWidgetCard(
-                        onClick = { showWidgetPicker = true }
-                    )
                 }
             }
         }
@@ -307,7 +321,7 @@ private fun WidgetItem(
 
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
-    
+
     val widgetHeightDp = remember(widgetInfo.height) {
         val cellHeight = 80.dp
         val calculatedHeight = (widgetInfo.height * cellHeight.value).dp

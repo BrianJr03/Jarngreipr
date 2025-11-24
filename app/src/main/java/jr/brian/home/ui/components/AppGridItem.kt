@@ -1,6 +1,6 @@
 package jr.brian.home.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -26,9 +26,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -81,15 +80,21 @@ fun AppGridItem(
                         },
                     )
                     .focusable()
-                    .scale(animatedFocusedScale(isFocused)),
         )
 
         if (!keyboardVisible) {
             Spacer(Modifier.height(12.dp))
         }
 
-        AnimatedVisibility(isFocused) {
-            HorizontalDivider(color = ThemeAccentColor, thickness = 4.dp)
-        }
+        val dividerAlpha by animateFloatAsState(
+            targetValue = if (isFocused) 1f else 0f,
+            label = "dividerAlpha"
+        )
+
+        HorizontalDivider(
+            color = ThemePrimaryColor,
+            thickness = 4.dp,
+            modifier = Modifier.alpha(dividerAlpha)
+        )
     }
 }

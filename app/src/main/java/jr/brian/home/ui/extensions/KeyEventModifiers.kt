@@ -314,6 +314,25 @@ fun Modifier.handleRightNavigation(onNavigateRight: () -> Unit): Modifier {
 }
 
 /**
+ * Handles left directional navigation only
+ * @param onNavigateLeft Callback when left direction is pressed
+ * @return Modifier with key event handling
+ */
+@Suppress("unused")
+fun Modifier.handleLeftNavigation(onNavigateLeft: () -> Unit): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown && event.key == Key.DirectionLeft -> {
+                onNavigateLeft()
+                true
+            }
+
+            else -> false
+        }
+    }
+}
+
+/**
  * Blocks horizontal (left/right) directional navigation
  * @return Modifier that consumes left/right directional key events
  */
@@ -322,6 +341,43 @@ fun Modifier.blockHorizontalNavigation(): Modifier {
         when {
             event.type == KeyEventType.KeyDown &&
                     (event.key == Key.DirectionLeft || event.key == Key.DirectionRight) -> {
+                true
+            }
+            else -> false
+        }
+    }
+}
+
+/**
+ * Blocks vertical (up/down) directional navigation
+ * @return Modifier that consumes up/down directional key events
+ */
+@Suppress("unused")
+fun Modifier.blockVerticalNavigation(): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionUp || event.key == Key.DirectionDown) -> {
+                true
+            }
+
+            else -> false
+        }
+    }
+}
+
+/**
+ * Blocks all directional navigation (up/down/left/right)
+ * @return Modifier that consumes all directional key events
+ */
+fun Modifier.blockAllNavigation(): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionUp ||
+                            event.key == Key.DirectionDown ||
+                            event.key == Key.DirectionLeft ||
+                            event.key == Key.DirectionRight) -> {
                 true
             }
             else -> false
