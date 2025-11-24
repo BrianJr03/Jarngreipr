@@ -59,15 +59,15 @@ fun DrawerOptionsDialog(
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let {
-            val detectedType = WallpaperUtils.detectWallpaperType(context, it)
+        if (uri != null) {
+            val detectedType = WallpaperUtils.detectWallpaperType(context, uri)
             try {
                 val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.takePersistableUriPermission(it, flags)
-                wallpaperManager.setWallpaper(it.toString(), detectedType)
+                context.contentResolver.takePersistableUriPermission(uri, flags)
+                wallpaperManager.setWallpaper(uri.toString(), detectedType)
             } catch (_: SecurityException) {
                 try {
-                    val inputStream = context.contentResolver.openInputStream(it)
+                    val inputStream = context.contentResolver.openInputStream(uri)
                     val extension = when (detectedType) {
                         WallpaperType.GIF -> "gif"
                         WallpaperType.VIDEO -> "mp4"
@@ -89,7 +89,6 @@ fun DrawerOptionsDialog(
                 }
             }
         }
-        onDismiss()
     }
 
     Dialog(

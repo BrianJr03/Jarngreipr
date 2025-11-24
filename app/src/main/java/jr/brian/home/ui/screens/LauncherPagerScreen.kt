@@ -7,10 +7,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
+import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -27,6 +29,8 @@ fun LauncherPagerScreen(
     val scope = rememberCoroutineScope()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
+    val wallpaperManager = LocalWallpaperManager.current
+    val currentWallpaper = wallpaperManager.currentWallpaper
 
     val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
     val pagerState = rememberPagerState(
@@ -62,34 +66,36 @@ fun LauncherPagerScreen(
                 }
             )
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = !isOverlayShown
-        ) { page ->
-            when (page) {
-                0 -> {
-                    AppDrawerScreen(
-                        apps = homeUiState.allApps,
-                        isLoading = homeUiState.isLoading,
-                        onSettingsClick = onSettingsClick,
-                        totalPages = totalPages,
-                        pagerState = pagerState
-                    )
-                }
-
-                else -> {
-                    val widgetPageIndex = page - 1
-                    val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                    if (widgetPage != null) {
-                        WidgetPageScreen(
-                            pageIndex = widgetPageIndex,
-                            widgets = widgetPage.widgets,
-                            viewModel = widgetViewModel,
+        key(currentWallpaper) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = !isOverlayShown
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        AppDrawerScreen(
+                            apps = homeUiState.allApps,
+                            isLoading = homeUiState.isLoading,
+                            onSettingsClick = onSettingsClick,
                             totalPages = totalPages,
                             pagerState = pagerState
                         )
+                    }
+
+                    else -> {
+                        val widgetPageIndex = page - 1
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                        if (widgetPage != null) {
+                            WidgetPageScreen(
+                                pageIndex = widgetPageIndex,
+                                widgets = widgetPage.widgets,
+                                viewModel = widgetViewModel,
+                                totalPages = totalPages,
+                                pagerState = pagerState
+                            )
+                        }
                     }
                 }
             }
