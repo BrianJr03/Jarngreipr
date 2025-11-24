@@ -1,15 +1,22 @@
 package jr.brian.home.ui.screens
 
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.LocalWallpaperManager
@@ -26,11 +33,25 @@ fun LauncherPagerScreen(
     modifier: Modifier = Modifier,
     isOverlayShown: Boolean = false
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
+
+    val prefs = remember {
+        context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
+    }
+    var keyboardVisible by remember {
+        mutableStateOf(prefs.getBoolean("keyboard_visible", true))
+    }
+
+    LaunchedEffect(keyboardVisible) {
+        prefs.edit {
+            putBoolean("keyboard_visible", keyboardVisible)
+        }
+    }
 
     val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
     val pagerState = rememberPagerState(
@@ -43,6 +64,8 @@ fun LauncherPagerScreen(
             scope.launch {
                 pagerState.animateScrollToPage(0)
             }
+        } else {
+            keyboardVisible = !keyboardVisible
         }
     }
 
@@ -79,7 +102,8 @@ fun LauncherPagerScreen(
                             isLoading = homeUiState.isLoading,
                             onSettingsClick = onSettingsClick,
                             totalPages = totalPages,
-                            pagerState = pagerState
+                            pagerState = pagerState,
+                            keyboardVisible = keyboardVisible
                         )
                     }
 
