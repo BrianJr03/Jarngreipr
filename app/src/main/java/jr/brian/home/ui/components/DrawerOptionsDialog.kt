@@ -108,20 +108,12 @@ fun DrawerOptionsDialog(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.drawer_options_title),
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                    CloseButton(onClick = onDismiss)
-                }
+                Text(
+                    text = stringResource(R.string.drawer_options_title),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
 
                 Text(
                     text = stringResource(R.string.drawer_options_wallpaper_section),
@@ -174,45 +166,6 @@ fun DrawerOptionsDialog(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun CloseButton(onClick: () -> Unit) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .background(
-                brush = if (isFocused) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.3f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.1f),
-                            Color.White.copy(alpha = 0.05f)
-                        )
-                    )
-                }
-            )
-            .clickable { onClick() }
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused },
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Close,
-            contentDescription = stringResource(R.string.drawer_options_close),
-            tint = Color.White,
-            modifier = Modifier.size(20.dp)
-        )
     }
 }
 
