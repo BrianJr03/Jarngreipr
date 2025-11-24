@@ -34,12 +34,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.components.AppOverlay
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.ui.theme.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
@@ -57,6 +59,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var gridSettingsManager: GridSettingsManager
+
+    @Inject
+    lateinit var appDisplayPreferenceManager: AppDisplayPreferenceManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +89,8 @@ class MainActivity : ComponentActivity() {
 
                 CompositionLocalProvider(
                     LocalAppVisibilityManager provides appVisibilityManager,
-                    LocalGridSettingsManager provides gridSettingsManager
+                    LocalGridSettingsManager provides gridSettingsManager,
+                    LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager
                 ) {
                     MainContent()
                 }

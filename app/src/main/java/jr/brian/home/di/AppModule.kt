@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.WidgetPreferences
@@ -37,5 +38,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): GridSettingsManager {
         return GridSettingsManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppDisplayPreferenceManager(
+        @ApplicationContext context: Context
+    ): AppDisplayPreferenceManager {
+        return AppDisplayPreferenceManager(context)
     }
 }

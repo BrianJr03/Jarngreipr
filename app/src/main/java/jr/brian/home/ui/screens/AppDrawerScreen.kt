@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -19,12 +20,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,20 +35,20 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
+import jr.brian.home.ui.components.AppOptionsMenu
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.ScreenHeaderRow
-import jr.brian.home.ui.components.StyledDialogButton
 import jr.brian.home.ui.components.WallpaperDisplay
-import jr.brian.home.ui.theme.AppCardDark
+import jr.brian.home.ui.theme.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 
@@ -68,7 +66,14 @@ fun AppDrawerScreen(
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var searchQuery by remember { mutableStateOf("") }
+
+    val hasExternalDisplay = remember {
+        val displayManager =
+            context.getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        displayManager.displays.size > 1
+    }
 
     val prefs = remember {
         context.getSharedPreferences(
@@ -81,7 +86,7 @@ fun AppDrawerScreen(
     }
 
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var showAppInfoDialog by remember { mutableStateOf(false) }
+    var showAppOptionsMenu by remember { mutableStateOf(false) }
 
     val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
@@ -98,47 +103,23 @@ fun AppDrawerScreen(
         keyboardVisible = !keyboardVisible
     }
 
-    if (showAppInfoDialog && selectedApp != null) {
-        AlertDialog(
-            onDismissRequest = { showAppInfoDialog = false },
-            title = {
-                Text(
-                    text = stringResource(id = R.string.app_info_title),
-                    color = Color.White,
+    if (showAppOptionsMenu && selectedApp != null) {
+        AppOptionsMenu(
+            appLabel = selectedApp!!.label,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                selectedApp!!.packageName
+            ),
+            onDismiss = { showAppOptionsMenu = false },
+            onAppInfoClick = {
+                openAppInfo(context, selectedApp!!.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    selectedApp!!.packageName,
+                    preference
                 )
             },
-            text = {
-                Text(
-                    text = stringResource(
-                        id = R.string.app_info_message,
-                        selectedApp!!.label
-                    ),
-                    color = Color.White.copy(alpha = 0.8f),
-                )
-            },
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    StyledDialogButton(
-                        text = stringResource(id = R.string.dialog_cancel),
-                        onClick = { showAppInfoDialog = false },
-                    )
-                    StyledDialogButton(
-                        text = stringResource(id = R.string.dialog_app_info),
-                        onClick = {
-                            selectedApp?.let { app ->
-                                openAppInfo(context, app.packageName)
-                            }
-                            showAppInfoDialog = false
-                        },
-                        isPrimary = true,
-                    )
-                }
-            },
-            dismissButton = {},
-            containerColor = AppCardDark,
-            shape = RoundedCornerShape(16.dp),
+            hasExternalDisplay = hasExternalDisplay
         )
     }
 
@@ -176,14 +157,20 @@ fun AppDrawerScreen(
                 onKeyboardFocusChanged = { savedKeyboardIndex = it },
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppClick = { app ->
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    } else {
+                        AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+                    }
                     launchApp(
                         context = context,
-                        packageName = app.packageName
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
                     )
                 },
                 onAppLongClick = { app ->
                     selectedApp = app
-                    showAppInfoDialog = true
+                    showAppOptionsMenu = true
                 },
                 keyboardVisible = keyboardVisible,
                 onSettingsClick = onSettingsClick,
@@ -377,12 +364,25 @@ private fun AppGrid(
 
 private fun launchApp(
     context: Context,
-    packageName: String
+    packageName: String,
+    displayPreference: AppDisplayPreferenceManager.DisplayPreference = AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
 ) {
     try {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
-            context.startActivity(intent)
+            when (displayPreference) {
+                AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY -> {
+                    // Launch on the primary (top) display
+                    val options = ActivityOptions.makeBasic()
+                    options.launchDisplayId = 0 // Display ID 0 is typically the primary display
+                    context.startActivity(intent, options.toBundle())
+                }
+
+                AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY -> {
+                    // Launch on current display (default behavior)
+                    context.startActivity(intent)
+                }
+            }
         }
     } catch (e: Exception) {
         e.printStackTrace()
