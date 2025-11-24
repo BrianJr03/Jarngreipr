@@ -4,7 +4,6 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +39,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager
@@ -66,6 +64,7 @@ fun AppDrawerScreen(
     onSettingsClick: () -> Unit = {},
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    keyboardVisible: Boolean = true,
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -78,16 +77,6 @@ fun AppDrawerScreen(
         displayManager.displays.size > 1
     }
 
-    val prefs = remember {
-        context.getSharedPreferences(
-            PREFS_NAME,
-            Context.MODE_PRIVATE
-        )
-    }
-    var keyboardVisible by remember {
-        mutableStateOf(prefs.getBoolean(KEY_KEYBOARD_VISIBLE, true))
-    }
-
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
     var showAppOptionsMenu by remember { mutableStateOf(false) }
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
@@ -96,16 +85,6 @@ fun AppDrawerScreen(
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedKeyboardIndex by remember { mutableIntStateOf(0) }
     var savedAppIndex by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(keyboardVisible) {
-        prefs.edit {
-            putBoolean(KEY_KEYBOARD_VISIBLE, keyboardVisible)
-        }
-    }
-
-    BackHandler {
-        keyboardVisible = !keyboardVisible
-    }
 
     if (showAppOptionsMenu && selectedApp != null) {
         AppOptionsMenu(
