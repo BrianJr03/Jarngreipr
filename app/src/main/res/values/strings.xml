@@ -24,6 +24,9 @@
     <string name="add_app_message">Add this app to your home page?</string>
     <string name="app_info_title">App Options</string>
     <string name="app_info_message">Open app info for %1$s?</string>
+    <string name="drawer_options_title">Drawer Options</string>
+    <string name="drawer_options_close">Close</string>
+    <string name="drawer_options_wallpaper_section">Wallpaper</string>
 
     <!-- App Options Menu -->
     <string name="app_options_menu_title">App Options</string>

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.AppOptionsMenu
+import jr.brian.home.ui.components.DrawerOptionsDialog
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.ScreenHeaderRow
 import jr.brian.home.ui.components.WallpaperDisplay
@@ -87,6 +90,7 @@ fun AppDrawerScreen(
 
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
     var showAppOptionsMenu by remember { mutableStateOf(false) }
+    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
 
     val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
@@ -123,13 +127,26 @@ fun AppDrawerScreen(
         )
     }
 
+    if (showDrawerOptionsDialog) {
+        DrawerOptionsDialog(
+            onDismiss = { showDrawerOptionsDialog = false }
+        )
+    }
+
     val wallpaperManager = LocalWallpaperManager.current
 
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .systemBarsPadding(),
+                .systemBarsPadding()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            showDrawerOptionsDialog = true
+                        }
+                    )
+                },
     ) {
         WallpaperDisplay(
             wallpaperUri = wallpaperManager.getWallpaperUri(),
