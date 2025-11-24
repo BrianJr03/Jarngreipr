@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -29,6 +31,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,25 +96,28 @@ fun AppOverlay(
             },
         contentAlignment = Alignment.Center
     ) {
-        Card(
+        Box(
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = AppCardDark.copy(alpha = 0.95f)
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 16.dp
-            )
+                .padding(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(40.dp)
-                    .verticalScroll(scrollState)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = AppCardDark.copy(alpha = 0.95f)
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 16.dp
+                )
             ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .padding(40.dp)
+                        .verticalScroll(scrollState)
+                ) {
                 Text(
                     text = stringResource(R.string.welcome_overlay_title),
                     fontSize = 24.sp,
@@ -259,6 +265,27 @@ fun AppOverlay(
                         )
                     }
                 }
+            }
+            }
+
+            // Close button at top right
+            IconButton(
+                onClick = onDismissOverlay,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(48.dp)
+                    .background(
+                        color = ThemePrimaryColor.copy(alpha = 0.9f),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = GraphicsColor.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
 

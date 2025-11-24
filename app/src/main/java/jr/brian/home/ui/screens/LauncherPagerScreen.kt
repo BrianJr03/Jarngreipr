@@ -47,14 +47,14 @@ fun LauncherPagerScreen(
             .fillMaxSize()
             .handleShoulderButtons(
                 onLeftShoulder = {
-                    if (pagerState.currentPage > 0) {
+                    if (!isOverlayShown && pagerState.currentPage > 0) {
                         scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage - 1)
                         }
                     }
                 },
                 onRightShoulder = {
-                    if (pagerState.currentPage < totalPages - 1) {
+                    if (!isOverlayShown && pagerState.currentPage < totalPages - 1) {
                         scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }

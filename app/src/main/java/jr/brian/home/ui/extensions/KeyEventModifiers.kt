@@ -69,6 +69,46 @@ fun Modifier.handleNavigationAndSelect(
 }
 
 /**
+ * Handles D-pad navigation with enter key support
+ * @param onNavigateUp Callback when up direction is pressed (optional)
+ * @param onNavigateDown Callback when down direction is pressed (optional)
+ * @param onEnterPress Callback when enter key is pressed (optional)
+ * @return Modifier with key event handling
+ */
+fun Modifier.handleDPadNavigation(
+    onNavigateUp: (() -> Unit)? = null,
+    onNavigateDown: (() -> Unit)? = null,
+    onEnterPress: (() -> Unit)? = null,
+): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    event.key == Key.DirectionUp &&
+                    onNavigateUp != null -> {
+                onNavigateUp()
+                true
+            }
+
+            event.type == KeyEventType.KeyDown &&
+                    event.key == Key.DirectionDown &&
+                    onNavigateDown != null -> {
+                onNavigateDown()
+                true
+            }
+
+            event.type == KeyEventType.KeyDown &&
+                    event.key == Key.Enter &&
+                    onEnterPress != null -> {
+                onEnterPress()
+                true
+            }
+
+            else -> false
+        }
+    }
+}
+
+/**
  * Handles full directional navigation with enter and menu key support
  * @param onNavigateUp Callback when up direction is pressed (optional)
  * @param onNavigateDown Callback when down direction is pressed (optional)
@@ -314,6 +354,25 @@ fun Modifier.handleRightNavigation(onNavigateRight: () -> Unit): Modifier {
 }
 
 /**
+ * Handles left directional navigation only
+ * @param onNavigateLeft Callback when left direction is pressed
+ * @return Modifier with key event handling
+ */
+@Suppress("unused")
+fun Modifier.handleLeftNavigation(onNavigateLeft: () -> Unit): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown && event.key == Key.DirectionLeft -> {
+                onNavigateLeft()
+                true
+            }
+
+            else -> false
+        }
+    }
+}
+
+/**
  * Blocks horizontal (left/right) directional navigation
  * @return Modifier that consumes left/right directional key events
  */
@@ -322,6 +381,43 @@ fun Modifier.blockHorizontalNavigation(): Modifier {
         when {
             event.type == KeyEventType.KeyDown &&
                     (event.key == Key.DirectionLeft || event.key == Key.DirectionRight) -> {
+                true
+            }
+            else -> false
+        }
+    }
+}
+
+/**
+ * Blocks vertical (up/down) directional navigation
+ * @return Modifier that consumes up/down directional key events
+ */
+@Suppress("unused")
+fun Modifier.blockVerticalNavigation(): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionUp || event.key == Key.DirectionDown) -> {
+                true
+            }
+
+            else -> false
+        }
+    }
+}
+
+/**
+ * Blocks all directional navigation (up/down/left/right)
+ * @return Modifier that consumes all directional key events
+ */
+fun Modifier.blockAllNavigation(): Modifier {
+    return this.onKeyEvent { event ->
+        when {
+            event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionUp ||
+                            event.key == Key.DirectionDown ||
+                            event.key == Key.DirectionLeft ||
+                            event.key == Key.DirectionRight) -> {
                 true
             }
             else -> false

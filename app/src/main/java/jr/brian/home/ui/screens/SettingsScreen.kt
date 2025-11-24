@@ -63,11 +63,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.AppVisibilityDialog
-import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.ui.components.WallpaperOptionButton
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
@@ -113,6 +114,7 @@ private fun SettingsContent(
     val firstItemFocusRequester = remember { FocusRequester() }
     val wallpaperFocusRequester = remember { FocusRequester() }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
+    var expandedItem by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         delay(10)
@@ -134,15 +136,26 @@ private fun SettingsContent(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item {
-            ThemeSelectorItem(focusRequester = firstItemFocusRequester)
+            ThemeSelectorItem(
+                focusRequester = firstItemFocusRequester,
+                isExpanded = expandedItem == "theme",
+                onExpandChanged = { expandedItem = if (it) "theme" else null }
+            )
         }
 
         item {
-            WallpaperSelectorItem(focusRequester = wallpaperFocusRequester)
+            WallpaperSelectorItem(
+                focusRequester = wallpaperFocusRequester,
+                isExpanded = expandedItem == "wallpaper",
+                onExpandChanged = { expandedItem = if (it) "wallpaper" else null }
+            )
         }
 
         item {
-            GridColumnSelectorItem()
+            GridColumnSelectorItem(
+                isExpanded = expandedItem == "grid",
+                onExpandChanged = { expandedItem = if (it) "grid" else null }
+            )
         }
 
         item {
@@ -151,6 +164,7 @@ private fun SettingsContent(
                 description = stringResource(id = R.string.settings_app_visibility_description),
                 icon = Icons.Default.Visibility,
                 onClick = {
+                    expandedItem = null
                     showAppVisibilityDialog = true
                 },
             )
@@ -163,6 +177,7 @@ private fun SettingsContent(
                 description = stringResource(id = R.string.settings_buy_me_coffee_description),
                 icon = Icons.Default.Coffee,
                 onClick = {
+                    expandedItem = null
                     val intent = Intent(
                         Intent.ACTION_VIEW,
                         url.toUri()
@@ -175,10 +190,13 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun ThemeSelectorItem(focusRequester: FocusRequester? = null) {
+private fun ThemeSelectorItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
     val themeManager = LocalThemeManager.current
     var isFocused by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
     val selectedThemeFocusRequesters =
         remember { ColorTheme.allThemes.associateWith { FocusRequester() } }
@@ -241,7 +259,7 @@ private fun ThemeSelectorItem(focusRequester: FocusRequester? = null) {
                         )
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            isExpanded = true
+                            onExpandChanged(true)
                         }
                         .focusable()
                         .padding(16.dp),
@@ -300,7 +318,7 @@ private fun ThemeSelectorItem(focusRequester: FocusRequester? = null) {
                         isSelected = themeManager.currentTheme.id == theme.id,
                         onClick = {
                             themeManager.setTheme(theme)
-                            isExpanded = false
+                            onExpandChanged(false)
                         },
                         focusRequester = selectedThemeFocusRequesters[theme],
                     )
@@ -373,11 +391,14 @@ private fun ThemeCard(
 }
 
 @Composable
-private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
+private fun WallpaperSelectorItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
     val wallpaperManager = LocalWallpaperManager.current
     val context = LocalContext.current
     var isFocused by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
@@ -413,7 +434,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                 }
             }
         }
-        isExpanded = false
+        onExpandChanged(false)
     }
 
     LaunchedEffect(isExpanded) {
@@ -475,7 +496,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                         )
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            isExpanded = true
+                            onExpandChanged(true)
                         }
                         .focusable()
                         .padding(16.dp),
@@ -531,7 +552,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                     isSelected = wallpaperManager.getWallpaperType() == WallpaperType.NONE,
                     onClick = {
                         wallpaperManager.clearWallpaper()
-                        isExpanded = false
+                        onExpandChanged(false)
                     }
                 )
 
@@ -564,7 +585,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
                     isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
                     onClick = {
                         wallpaperManager.setTransparent()
-                        isExpanded = false
+                        onExpandChanged(false)
                     }
                 )
             }
@@ -572,68 +593,7 @@ private fun WallpaperSelectorItem(focusRequester: FocusRequester? = null) {
     }
 }
 
-@Composable
-private fun WallpaperOptionButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    var isFocused by remember { mutableStateOf(false) }
 
-    val gradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                } else {
-                    listOf(
-                        AppCardLight,
-                        AppCardDark,
-                    )
-                },
-        )
-
-    val borderColor = when {
-        isSelected -> Color.White
-        isFocused -> Color.LightGray.copy(alpha = 0.8f)
-        else -> Color.Transparent
-    }
-
-    val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
-                .onFocusChanged {
-                }
-                .background(
-                    brush = gradient,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .border(
-                    width = borderWidth,
-                    color = borderColor,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() }
-                .focusable()
-                .padding(16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-        )
-    }
-}
 
 @Composable
 private fun SettingItem(
@@ -735,10 +695,13 @@ private fun SettingItem(
 }
 
 @Composable
-private fun GridColumnSelectorItem(focusRequester: FocusRequester? = null) {
+private fun GridColumnSelectorItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
     val gridSettingsManager = LocalGridSettingsManager.current
     var isFocused by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isExpanded) {
@@ -800,7 +763,7 @@ private fun GridColumnSelectorItem(focusRequester: FocusRequester? = null) {
                         )
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            isExpanded = true
+                            onExpandChanged(true)
                         }
                         .focusable()
                         .padding(16.dp),
@@ -857,7 +820,7 @@ private fun GridColumnSelectorItem(focusRequester: FocusRequester? = null) {
                         isSelected = gridSettingsManager.columnCount == columns,
                         onClick = {
                             gridSettingsManager.updateColumnCount(columns)
-                            isExpanded = false
+                            onExpandChanged(false)
                         }
                     )
                 }
