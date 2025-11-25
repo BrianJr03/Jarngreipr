@@ -11,6 +11,7 @@ import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.model.WidgetConfig
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.model.WidgetPage
+import jr.brian.home.model.state.WidgetUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -306,9 +307,3 @@ class WidgetViewModel @Inject constructor(
         appWidgetHost?.stopListening()
     }
 }
-
-data class WidgetUIState(
-    val widgetPages: List<WidgetPage> = emptyList(),
-    val isInitialized: Boolean = false,
-    val currentPage: Int = 0
-)

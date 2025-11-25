@@ -1,13 +1,14 @@
-package jr.brian.home
+package jr.brian.home.viewmodels
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import io.mockk.every
 import io.mockk.mockk
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.model.WidgetPage
-import jr.brian.home.viewmodels.WidgetUIState
-import jr.brian.home.viewmodels.WidgetViewModel
+import jr.brian.home.model.state.WidgetUIState
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,18 +17,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import io.mockk.every
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WidgetViewModelTest {
-
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
 
@@ -60,9 +56,9 @@ class WidgetViewModelTest {
             val state = awaitItem()
 
             // Then
-            assertEquals(emptyList<WidgetPage>(), state.widgetPages)
-            assertFalse(state.isInitialized)
-            assertEquals(0, state.currentPage)
+            Assert.assertEquals(emptyList<WidgetPage>(), state.widgetPages)
+            Assert.assertFalse(state.isInitialized)
+            Assert.assertEquals(0, state.currentPage)
         }
     }
 
@@ -82,11 +78,11 @@ class WidgetViewModelTest {
         )
 
         // Then
-        assertEquals(2, state.widgetPages.size)
-        assertEquals(true, state.isInitialized)
-        assertEquals(1, state.currentPage)
-        assertEquals(0, state.widgetPages[0].index)
-        assertEquals(1, state.widgetPages[1].index)
+        Assert.assertEquals(2, state.widgetPages.size)
+        Assert.assertEquals(true, state.isInitialized)
+        Assert.assertEquals(1, state.currentPage)
+        Assert.assertEquals(0, state.widgetPages[0].index)
+        Assert.assertEquals(1, state.widgetPages[1].index)
     }
 
     @Test
@@ -95,9 +91,9 @@ class WidgetViewModelTest {
         val state = WidgetUIState()
 
         // Then
-        assertEquals(emptyList<WidgetPage>(), state.widgetPages)
-        assertEquals(false, state.isInitialized)
-        assertEquals(0, state.currentPage)
+        Assert.assertEquals(emptyList<WidgetPage>(), state.widgetPages)
+        Assert.assertEquals(false, state.isInitialized)
+        Assert.assertEquals(0, state.currentPage)
     }
 
     @Test
@@ -106,7 +102,7 @@ class WidgetViewModelTest {
         val maxPages = WidgetViewModel.MAX_WIDGET_PAGES
 
         // Then
-        assertEquals(2, maxPages)
+        Assert.assertEquals(2, maxPages)
     }
 
     @Test
@@ -115,7 +111,7 @@ class WidgetViewModelTest {
         val result = viewModel.allocateAppWidgetId()
 
         // Then
-        assertEquals(-1, result)
+        Assert.assertEquals(-1, result)
     }
 
     @Test
@@ -124,7 +120,7 @@ class WidgetViewModelTest {
         val result = viewModel.getAppWidgetHost()
 
         // Then
-        assertEquals(null, result)
+        Assert.assertEquals(null, result)
     }
 
     @Test
@@ -143,10 +139,10 @@ class WidgetViewModelTest {
         )
 
         // Then
-        assertEquals(false, originalState.isInitialized)
-        assertEquals(0, originalState.currentPage)
-        assertEquals(true, newState.isInitialized)
-        assertEquals(1, newState.currentPage)
+        Assert.assertEquals(false, originalState.isInitialized)
+        Assert.assertEquals(0, originalState.currentPage)
+        Assert.assertEquals(true, newState.isInitialized)
+        Assert.assertEquals(1, newState.currentPage)
     }
 
     @Test
@@ -182,8 +178,8 @@ class WidgetViewModelTest {
         )
 
         // Then
-        assertEquals(1, page.index)
-        assertEquals(0, page.widgets.size)
+        Assert.assertEquals(1, page.index)
+        Assert.assertEquals(0, page.widgets.size)
     }
 
     @Test
@@ -194,9 +190,9 @@ class WidgetViewModelTest {
         }
 
         // Then
-        assertEquals(WidgetViewModel.MAX_WIDGET_PAGES, pages.size)
+        Assert.assertEquals(WidgetViewModel.MAX_WIDGET_PAGES, pages.size)
         pages.forEachIndexed { expectedIndex, page ->
-            assertEquals(expectedIndex, page.index)
+            Assert.assertEquals(expectedIndex, page.index)
         }
     }
 
@@ -205,8 +201,8 @@ class WidgetViewModelTest {
         // When/Then
         viewModel.uiState.test {
             val initialState = awaitItem()
-            assertFalse(initialState.isInitialized)
-            assertEquals(0, initialState.currentPage)
+            Assert.assertFalse(initialState.isInitialized)
+            Assert.assertEquals(0, initialState.currentPage)
         }
     }
 
@@ -242,7 +238,7 @@ class WidgetViewModelTest {
         val hash2 = state.hashCode()
 
         // Then
-        assertEquals(hash1, hash2)
+        Assert.assertEquals(hash1, hash2)
     }
 
     @Test
@@ -259,7 +255,7 @@ class WidgetViewModelTest {
 
         // Then
         assert(vm1 !== vm2) // Different instances
-        assertEquals(vm1.uiState.value, vm2.uiState.value) // Same initial state
+        Assert.assertEquals(vm1.uiState.value, vm2.uiState.value) // Same initial state
     }
 
     @Test
@@ -268,7 +264,7 @@ class WidgetViewModelTest {
         val result = viewModel.allocateAppWidgetId()
 
         // Then
-        assertEquals(-1, result)
+        Assert.assertEquals(-1, result)
     }
 
     @Test
@@ -277,7 +273,7 @@ class WidgetViewModelTest {
         val host = viewModel.getAppWidgetHost()
 
         // Then
-        assertEquals(null, host)
+        Assert.assertEquals(null, host)
     }
 
     @Test
@@ -286,8 +282,7 @@ class WidgetViewModelTest {
         val maxPages = WidgetViewModel.MAX_WIDGET_PAGES
 
         // Then
-        assertEquals(2, maxPages)
-        assertTrue(maxPages > 0)
+        Assert.assertEquals(2, maxPages)
     }
 
     @Test
@@ -306,9 +301,9 @@ class WidgetViewModelTest {
         )
 
         // Then
-        assertEquals(2, state.widgetPages.size)
-        assertTrue(state.isInitialized)
-        assertEquals(1, state.currentPage)
+        Assert.assertEquals(2, state.widgetPages.size)
+        Assert.assertTrue(state.isInitialized)
+        Assert.assertEquals(1, state.currentPage)
     }
 
     @Test
@@ -325,10 +320,10 @@ class WidgetViewModelTest {
         val copied = original.copy(currentPage = 1)
 
         // Then
-        assertEquals(pages, copied.widgetPages)
-        assertTrue(copied.isInitialized)
-        assertEquals(1, copied.currentPage)
-        assertEquals(0, original.currentPage)
+        Assert.assertEquals(pages, copied.widgetPages)
+        Assert.assertTrue(copied.isInitialized)
+        Assert.assertEquals(1, copied.currentPage)
+        Assert.assertEquals(0, original.currentPage)
     }
 
     @Test
@@ -339,8 +334,8 @@ class WidgetViewModelTest {
         val page3 = WidgetPage(index = 1, widgets = emptyList())
 
         // Then
-        assertEquals(page1, page2)
-        assertNotEquals(page1, page3)
+        Assert.assertEquals(page1, page2)
+        Assert.assertNotEquals(page1, page3)
     }
 
     @Test
@@ -358,7 +353,7 @@ class WidgetViewModelTest {
         )
 
         // Then
-        assertNotEquals(state1, state2)
+        Assert.assertNotEquals(state1, state2)
     }
 
     @Test
@@ -368,7 +363,7 @@ class WidgetViewModelTest {
         val state2 = WidgetUIState(currentPage = 1)
 
         // Then
-        assertNotEquals(state1, state2)
+        Assert.assertNotEquals(state1, state2)
     }
 
     @Test
@@ -378,7 +373,7 @@ class WidgetViewModelTest {
         val state2 = WidgetUIState(isInitialized = false)
 
         // Then
-        assertNotEquals(state1, state2)
+        Assert.assertNotEquals(state1, state2)
     }
 
     @Test
@@ -387,8 +382,8 @@ class WidgetViewModelTest {
         val page = WidgetPage(index = 0, widgets = emptyList())
 
         // Then
-        assertEquals(0, page.index)
-        assertTrue(page.widgets.isEmpty())
+        Assert.assertEquals(0, page.index)
+        Assert.assertTrue(page.widgets.isEmpty())
     }
 
     @Test
@@ -401,7 +396,7 @@ class WidgetViewModelTest {
 
         // Then
         pages.forEachIndexed { idx, page ->
-            assertEquals(indices[idx], page.index)
+            Assert.assertEquals(indices[idx], page.index)
         }
     }
 
@@ -421,7 +416,7 @@ class WidgetViewModelTest {
 
         // Then
         assertEquals(state1, state2)
-        assertEquals(state1.hashCode(), state2.hashCode())
+        Assert.assertEquals(state1.hashCode(), state2.hashCode())
     }
 
     @Test
@@ -433,9 +428,9 @@ class WidgetViewModelTest {
         val copied = original.copy(index = 1)
 
         // Then
-        assertEquals(1, copied.index)
-        assertEquals(0, original.index)
-        assertEquals(original.widgets, copied.widgets)
+        Assert.assertEquals(1, copied.index)
+        Assert.assertEquals(0, original.index)
+        Assert.assertEquals(original.widgets, copied.widgets)
     }
 
     @Test
@@ -451,10 +446,10 @@ class WidgetViewModelTest {
         val string = state.toString()
 
         // Then
-        assertTrue(string.contains("WidgetUIState"))
-        assertTrue(string.contains("widgetPages"))
-        assertTrue(string.contains("isInitialized"))
-        assertTrue(string.contains("currentPage"))
+        Assert.assertTrue(string.contains("WidgetUIState"))
+        Assert.assertTrue(string.contains("widgetPages"))
+        Assert.assertTrue(string.contains("isInitialized"))
+        Assert.assertTrue(string.contains("currentPage"))
     }
 
     @Test
@@ -466,9 +461,9 @@ class WidgetViewModelTest {
         val string = page.toString()
 
         // Then
-        assertTrue(string.contains("WidgetPage"))
-        assertTrue(string.contains("index"))
-        assertTrue(string.contains("widgets"))
+        Assert.assertTrue(string.contains("WidgetPage"))
+        Assert.assertTrue(string.contains("index"))
+        Assert.assertTrue(string.contains("widgets"))
     }
 
     @Test
@@ -478,8 +473,8 @@ class WidgetViewModelTest {
             val state = awaitItem()
 
             // Then
-            assertTrue(state.widgetPages.isEmpty())
-            assertFalse(state.isInitialized)
+            Assert.assertTrue(state.widgetPages.isEmpty())
+            Assert.assertFalse(state.isInitialized)
         }
     }
 
@@ -488,12 +483,12 @@ class WidgetViewModelTest {
         // When/Then
         viewModel.uiState.test {
             val state1 = awaitItem()
-            assertFalse(state1.isInitialized)
+            Assert.assertFalse(state1.isInitialized)
         }
 
         viewModel.uiState.test {
             val state2 = awaitItem()
-            assertFalse(state2.isInitialized)
+            Assert.assertFalse(state2.isInitialized)
         }
     }
 
@@ -503,9 +498,9 @@ class WidgetViewModelTest {
         val state = WidgetUIState()
 
         // Then
-        assertTrue(state.widgetPages.isEmpty())
-        assertFalse(state.isInitialized)
-        assertEquals(0, state.currentPage)
+        Assert.assertTrue(state.widgetPages.isEmpty())
+        Assert.assertFalse(state.isInitialized)
+        Assert.assertEquals(0, state.currentPage)
     }
 
     @Test
@@ -514,8 +509,8 @@ class WidgetViewModelTest {
         val page = WidgetPage(0)
 
         // Then
-        assertEquals(0, page.index)
-        assertTrue(page.widgets.isEmpty())
+        Assert.assertEquals(0, page.index)
+        Assert.assertTrue(page.widgets.isEmpty())
     }
 
     @Test
@@ -527,7 +522,7 @@ class WidgetViewModelTest {
         val state = WidgetUIState(widgetPages = pages)
 
         // Then
-        assertEquals(6, state.widgetPages.size)
+        Assert.assertEquals(6, state.widgetPages.size)
         state.widgetPages.forEachIndexed { idx, page ->
             assertEquals(idx, page.index)
         }
@@ -541,9 +536,9 @@ class WidgetViewModelTest {
         val state2 = WidgetUIState(currentPage = 2)
 
         // Then
-        assertEquals(0, state0.currentPage)
-        assertEquals(1, state1.currentPage)
-        assertEquals(2, state2.currentPage)
+        Assert.assertEquals(0, state0.currentPage)
+        Assert.assertEquals(1, state1.currentPage)
+        Assert.assertEquals(2, state2.currentPage)
     }
 
     @Test
@@ -553,7 +548,7 @@ class WidgetViewModelTest {
         val initialized = uninitialized.copy(isInitialized = true)
 
         // Then
-        assertFalse(uninitialized.isInitialized)
-        assertTrue(initialized.isInitialized)
+        Assert.assertFalse(uninitialized.isInitialized)
+        Assert.assertTrue(initialized.isInitialized)
     }
 }

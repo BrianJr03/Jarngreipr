@@ -61,7 +61,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -70,7 +69,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
@@ -82,8 +80,8 @@ import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.components.WidgetPageAppSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
-import jr.brian.home.ui.theme.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -320,6 +318,7 @@ fun WidgetPageScreen(
                                 )
                             }
 
+                            @Suppress("UNCHECKED_CAST")
                             (items as List<AppInfo>).forEach { app ->
                                 item(key = "app_${app.packageName}") {
                                     AppItem(
@@ -336,6 +335,7 @@ fun WidgetPageScreen(
                                 )
                             }
 
+                            @Suppress("UNCHECKED_CAST")
                             (items as List<WidgetInfo>).forEachIndexed { index, widget ->
                                 item(
                                     key = "widget_${widget.widgetId}_${pageIndex}_$index",

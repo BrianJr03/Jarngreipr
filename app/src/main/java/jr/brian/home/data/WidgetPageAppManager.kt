@@ -40,12 +40,6 @@ class WidgetPageAppManager(private val context: Context) {
         }
     }
 
-    suspend fun setVisibleApps(pageIndex: Int, packageNames: Set<String>) {
-        context.widgetPageAppDataStore.edit { preferences ->
-            preferences[visibleAppsKey(pageIndex)] = packageNames.joinToString(",")
-        }
-    }
-
     suspend fun addVisibleApp(pageIndex: Int, packageName: String) {
         context.widgetPageAppDataStore.edit { preferences ->
             val current = preferences[visibleAppsKey(pageIndex)] ?: ""

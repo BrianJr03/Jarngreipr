@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -142,112 +143,149 @@ fun OnScreenKeyboard(
                     )
                 }
             }
-
             if (isNumericMode) {
-                items(numbers.chunked(4).size) { index ->
-                    val rowNumbers = numbers.chunked(4)[index]
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        rowNumbers.forEachIndexed { numberIndex, number ->
-                            val combinedIndex = index * 4 + numberIndex + 3
-                            KeyboardButton(
-                                label = number.toString(),
-                                onClick = { onQueryChange(searchQuery + number) },
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                focusRequester =
-                                    remember(combinedIndex) {
-                                        FocusRequester().also {
-                                            keyboardFocusRequesters[combinedIndex] = it
-                                        }
-                                    },
-                                onFocusChanged = { onFocusChanged(combinedIndex) },
-                                onNavigateRight = onNavigateRight,
-                            )
-                        }
-                        // Add swap button at the end of the last row
-                        if (index == numbers.chunked(4).size - 1) {
-                            KeyboardButton(
-                                label = stringResource(R.string.keyboard_label_swap),
-                                onClick = { isNumericMode = false },
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                icon = Icons.Default.SwapHoriz,
-                                focusRequester =
-                                    remember(13) {
-                                        FocusRequester().also { keyboardFocusRequesters[13] = it }
-                                    },
-                                onFocusChanged = { onFocusChanged(13) },
-                                onNavigateRight = onNavigateRight,
-                            )
-                        }
-                        repeat(if (index == numbers.chunked(4).size - 1) 0 else 4 - rowNumbers.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
+                numericKeyboard(
+                    numbers = numbers,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    keyboardFocusRequesters = keyboardFocusRequesters,
+                    onFocusChanged = onFocusChanged,
+                    onNavigateRight = onNavigateRight,
+                    onSwapMode = { isNumericMode = false }
+                )
             } else {
-                items(letters.chunked(3).size) { index ->
-                    val rowLetters = letters.chunked(3)[index]
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        rowLetters.forEachIndexed { letterIndex, letter ->
-                            val combinedIndex = index * 3 + letterIndex + 3
-                            KeyboardButton(
-                                label = letter.toString(),
-                                onClick = { onQueryChange(searchQuery + letter) },
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                focusRequester =
-                                    remember(combinedIndex) {
-                                        FocusRequester().also {
-                                            keyboardFocusRequesters[combinedIndex] = it
-                                        }
-                                    },
-                                onFocusChanged = { onFocusChanged(combinedIndex) },
-                                onNavigateRight = onNavigateRight,
-                            )
-                        }
-                        // Add swap button after Z (in the last row with X, Y, Z)
-                        if (index == letters.chunked(3).size - 1) {
-                            KeyboardButton(
-                                label = stringResource(R.string.keyboard_label_swap),
-                                onClick = { isNumericMode = true },
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                icon = Icons.Default.SwapHoriz,
-                                focusRequester =
-                                    remember(29) {
-                                        FocusRequester().also { keyboardFocusRequesters[29] = it }
-                                    },
-                                onFocusChanged = { onFocusChanged(29) },
-                                onNavigateRight = onNavigateRight,
-                            )
-                        }
-                        repeat(if (index == letters.chunked(3).size - 1) 0 else 3 - rowLetters.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
+                alphabetKeyboard(
+                    letters = letters,
+                    searchQuery = searchQuery,
+                    onQueryChange = onQueryChange,
+                    keyboardFocusRequesters = keyboardFocusRequesters,
+                    onFocusChanged = onFocusChanged,
+                    onNavigateRight = onNavigateRight,
+                    onSwapMode = { isNumericMode = true }
+                )
+            }
+        }
+    }
+}
+
+private fun LazyListScope.alphabetKeyboard(
+    letters: List<Char>,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit,
+    onNavigateRight: () -> Unit,
+    onSwapMode: () -> Unit,
+) {
+    items(letters.chunked(3).size) { index ->
+        val rowLetters = letters.chunked(3)[index]
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            rowLetters.forEachIndexed { letterIndex, letter ->
+                val combinedIndex = index * 3 + letterIndex + 3
+                KeyboardButton(
+                    label = letter.toString(),
+                    onClick = { onQueryChange(searchQuery + letter) },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                    focusRequester =
+                        remember(combinedIndex) {
+                            FocusRequester().also {
+                                keyboardFocusRequesters[combinedIndex] = it
+                            }
+                        },
+                    onFocusChanged = { onFocusChanged(combinedIndex) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            if (index == letters.chunked(3).size - 1) {
+                KeyboardButton(
+                    label = stringResource(R.string.keyboard_label_swap),
+                    onClick = onSwapMode,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                    icon = Icons.Default.SwapHoriz,
+                    focusRequester =
+                        remember(29) {
+                            FocusRequester().also { keyboardFocusRequesters[29] = it }
+                        },
+                    onFocusChanged = { onFocusChanged(29) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            repeat(if (index == letters.chunked(3).size - 1) 0 else 3 - rowLetters.size) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+private fun LazyListScope.numericKeyboard(
+    numbers: List<Int>,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit,
+    onNavigateRight: () -> Unit,
+    onSwapMode: () -> Unit,
+) {
+    items(numbers.chunked(4).size) { index ->
+        val rowNumbers = numbers.chunked(4)[index]
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            rowNumbers.forEachIndexed { numberIndex, number ->
+                val combinedIndex = index * 4 + numberIndex + 3
+                KeyboardButton(
+                    label = number.toString(),
+                    onClick = { onQueryChange(searchQuery + number) },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                    focusRequester =
+                        remember(combinedIndex) {
+                            FocusRequester().also {
+                                keyboardFocusRequesters[combinedIndex] = it
+                            }
+                        },
+                    onFocusChanged = { onFocusChanged(combinedIndex) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            if (index == numbers.chunked(4).size - 1) {
+                KeyboardButton(
+                    label = stringResource(R.string.keyboard_label_swap),
+                    onClick = onSwapMode,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                    icon = Icons.Default.SwapHoriz,
+                    focusRequester =
+                        remember(13) {
+                            FocusRequester().also { keyboardFocusRequesters[13] = it }
+                        },
+                    onFocusChanged = { onFocusChanged(13) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            repeat(if (index == numbers.chunked(4).size - 1) 0 else 4 - rowNumbers.size) {
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-fun KeyboardButton(
+private fun KeyboardButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
