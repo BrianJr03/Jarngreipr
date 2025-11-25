@@ -86,6 +86,11 @@
     <string name="widget_move_description">Move widget here</string>
     <string name="widget_resize_title">Resize Widget</string>
     <string name="widget_resize_description">Adjust widget dimensions</string>
+    <string name="widget_swap_title">Swap Position</string>
+    <string name="widget_swap_description">Swap with another widget</string>
+    <string name="widget_swap_mode_title">Select Widget to Swap With</string>
+    <string name="widget_swap_mode_instructions">Tap on a widget to swap positions</string>
+    <string name="widget_swap_cancel">Cancel</string>
     <string name="widget_resize_mode_title">Resize Mode</string>
     <string name="widget_resize_mode_instructions">Use the + and - buttons below to adjust size</string>
     <string name="widget_resize_done">Done</string>

@@ -59,11 +59,6 @@ fun WidgetResizeScreen(
     var currentWidth by remember { mutableStateOf(widgetInfo.width) }
     var currentHeight by remember { mutableStateOf(widgetInfo.height) }
 
-    // Create a live updated widget info for preview
-    val previewWidgetInfo = remember(widgetInfo.widgetId, currentWidth, currentHeight) {
-        widgetInfo.copy(width = currentWidth, height = currentHeight)
-    }
-
     val widgetHeightDp = remember(currentHeight) {
         val cellHeight = 80.dp
         (currentHeight * cellHeight.value).dp.coerceAtLeast(80.dp)
@@ -81,7 +76,6 @@ fun WidgetResizeScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,7 +100,6 @@ fun WidgetResizeScreen(
                 }
             }
 
-            // Divider
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,14 +111,12 @@ fun WidgetResizeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Instructions
                 Text(
                     text = stringResource(R.string.widget_resize_mode_instructions),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.7f)
                 )
 
-                // Widget preview - shows current size visually
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,7 +131,6 @@ fun WidgetResizeScreen(
                             shape = RoundedCornerShape(16.dp)
                         )
                 ) {
-                    // Show the actual widget (static)
                     key("resize_static_${widgetInfo.widgetId}") {
                         AndroidView(
                             factory = { ctx ->
@@ -158,7 +148,6 @@ fun WidgetResizeScreen(
                         )
                     }
 
-                    // Overlay showing the new dimensions
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -189,7 +178,6 @@ fun WidgetResizeScreen(
                     }
                 }
 
-                // Width controls
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -242,7 +230,6 @@ fun WidgetResizeScreen(
                     }
                 }
 
-                // Height controls
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -296,7 +283,6 @@ fun WidgetResizeScreen(
                 }
             }
 
-            // Action Buttons at bottom
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

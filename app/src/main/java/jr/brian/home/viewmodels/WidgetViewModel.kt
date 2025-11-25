@@ -54,7 +54,6 @@ class WidgetViewModel @Inject constructor(
     private fun loadSavedWidgets() {
         viewModelScope.launch {
             widgetPreferences.widgetConfigs.collect { configs ->
-                // Skip if we're currently saving to prevent reload loops
                 if (isLoadingFromPreferences) {
                     return@collect
                 }
@@ -154,7 +153,6 @@ class WidgetViewModel @Inject constructor(
     }
 
 
-
     fun moveWidgetToPage(widgetId: Int, fromPageIndex: Int, toPageIndex: Int) {
         viewModelScope.launch {
             val currentPages = _uiState.value.widgetPages.toMutableList()
@@ -173,6 +171,66 @@ class WidgetViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(widgetPages = currentPages)
 
             saveWidgetConfig(updatedWidget)
+        }
+    }
+
+    fun swapWidgets(
+        widget1Id: Int,
+        widget2Id: Int,
+        pageIndex: Int
+    ) {
+        viewModelScope.launch {
+            isLoadingFromPreferences = true
+            try {
+                val currentPages = _uiState.value.widgetPages.toMutableList()
+                val page = currentPages.getOrNull(pageIndex) ?: return@launch
+
+                val widget1Index = page.widgets.indexOfFirst { it.widgetId == widget1Id }
+                val widget2Index = page.widgets.indexOfFirst { it.widgetId == widget2Id }
+
+                if (widget1Index != -1 && widget2Index != -1) {
+                    val updatedWidgets = page.widgets.toMutableList()
+                    val temp = updatedWidgets[widget1Index]
+                    updatedWidgets[widget1Index] = updatedWidgets[widget2Index]
+                    updatedWidgets[widget2Index] = temp
+
+                    currentPages[pageIndex] = page.copy(widgets = updatedWidgets)
+                    _uiState.value = _uiState.value.copy(widgetPages = currentPages)
+
+                    updatedWidgets[widget1Index].let { widget ->
+                        val config = WidgetConfig(
+                            widgetId = widget.widgetId,
+                            providerClassName = widget.providerInfo.provider.className,
+                            providerPackageName = widget.providerInfo.provider.packageName,
+                            x = widget.x,
+                            y = widget.y,
+                            width = widget.width,
+                            height = widget.height,
+                            pageIndex = widget.pageIndex
+                        )
+                        widgetPreferences.addWidgetConfig(config)
+                    }
+                    updatedWidgets[widget2Index].let { widget ->
+                        val config = WidgetConfig(
+                            widgetId = widget.widgetId,
+                            providerClassName = widget.providerInfo.provider.className,
+                            providerPackageName = widget.providerInfo.provider.packageName,
+                            x = widget.x,
+                            y = widget.y,
+                            width = widget.width,
+                            height = widget.height,
+                            pageIndex = widget.pageIndex
+                        )
+                        widgetPreferences.addWidgetConfig(config)
+                    }
+
+                    Log.d(TAG, "Swapped widgets: $widget1Id <-> $widget2Id")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error swapping widgets", e)
+            } finally {
+                isLoadingFromPreferences = false
+            }
         }
     }
 
@@ -196,7 +254,6 @@ class WidgetViewModel @Inject constructor(
                     currentPages[pageIndex] = page.copy(widgets = updatedWidgets)
                     _uiState.value = _uiState.value.copy(widgetPages = currentPages)
 
-                    // Save the updated config (which will now replace the old one)
                     val config = WidgetConfig(
                         widgetId = updatedWidget.widgetId,
                         providerClassName = updatedWidget.providerInfo.provider.className,
