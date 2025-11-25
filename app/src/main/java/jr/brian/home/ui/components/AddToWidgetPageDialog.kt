@@ -164,7 +164,7 @@ private fun AddOptionCard(
                 width = if (isFocused) 3.dp else 2.dp,
                 brush = if (isFocused) {
                     borderBrush(
-                        isFocused = isFocused,
+                        isFocused = true,
                         colors = listOf(
                             ThemePrimaryColor.copy(alpha = 0.8f),
                             ThemeSecondaryColor.copy(alpha = 0.6f)
