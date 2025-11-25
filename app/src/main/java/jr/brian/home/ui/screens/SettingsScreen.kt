@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -74,12 +76,14 @@ import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.LocalThemeManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.WallpaperUtils
 import kotlinx.coroutines.delay
 import java.io.File
@@ -115,6 +119,10 @@ private fun SettingsContent(
     val wallpaperFocusRequester = remember { FocusRequester() }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var expandedItem by remember { mutableStateOf<String?>(null) }
+
+    val isThorDevice = remember {
+        android.os.Build.MODEL == DeviceModel.THOR
+    }
 
     LaunchedEffect(Unit) {
         delay(10)
@@ -156,6 +164,15 @@ private fun SettingsContent(
                 isExpanded = expandedItem == "grid",
                 onExpandChanged = { expandedItem = if (it) "grid" else null }
             )
+        }
+
+        if (isThorDevice) {
+            item {
+                ThorSettingsItem(
+                    isExpanded = expandedItem == "thor",
+                    onExpandChanged = { expandedItem = if (it) "thor" else null }
+                )
+            }
         }
 
         item {
@@ -890,6 +907,217 @@ private fun GridColumnOptionButton(
             fontSize = 16.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
         )
+    }
+}
+
+@Composable
+private fun ThorSettingsItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    var isFocused by remember { mutableStateOf(false) }
+    val mainCardFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) {
+            mainCardFocusRequester.requestFocus()
+        }
+    }
+
+    val cardGradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.8f),
+                    )
+                } else {
+                    listOf(
+                        AppCardLight,
+                        AppCardDark,
+                    )
+                },
+        )
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+    ) {
+        AnimatedVisibility(
+            visible = !isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester ?: mainCardFocusRequester)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        }
+                        .background(
+                            brush = cardGradient,
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .border(
+                            width = if (isFocused) 2.dp else 0.dp,
+                            brush =
+                                borderBrush(
+                                    isFocused = isFocused,
+                                    colors =
+                                        listOf(
+                                            ThemePrimaryColor.copy(alpha = 0.8f),
+                                            ThemeSecondaryColor.copy(alpha = 0.6f),
+                                        ),
+                                ),
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            onExpandChanged(true)
+                        }
+                        .focusable()
+                        .padding(16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PowerSettingsNew,
+                        contentDescription = stringResource(R.string.settings_thor_icon_description),
+                        modifier =
+                            Modifier
+                                .size(32.dp)
+                                .rotate(animatedRotation(isFocused)),
+                        tint = Color.White,
+                    )
+
+                    Spacer(modifier = Modifier.size(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(id = R.string.settings_thor_title),
+                            color = Color.White,
+                            fontSize = if (isFocused) 18.sp else 16.sp,
+                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(id = R.string.settings_thor_description),
+                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ThorSettingToggleButton(
+                    text = stringResource(id = R.string.settings_thor_power_button),
+                    isChecked = isPowerButtonVisible,
+                    onClick = {
+                        powerSettingsManager.setPowerButtonVisibility(!isPowerButtonVisible)
+                        onExpandChanged(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThorSettingToggleButton(
+    text: String,
+    isChecked: Boolean,
+    onClick: () -> Unit,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val gradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.6f),
+                    )
+                } else {
+                    listOf(
+                        AppCardLight,
+                        AppCardDark,
+                    )
+                },
+        )
+
+    val borderColor = when {
+        isChecked -> Color.White
+        isFocused -> Color.LightGray.copy(alpha = 0.8f)
+        else -> Color.Transparent
+    }
+
+    val borderWidth = if (isChecked || isFocused) 2.dp else 0.dp
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .scale(animatedFocusedScale(isFocused))
+                .onFocusChanged {
+                    isFocused = it.isFocused
+                }
+                .background(
+                    brush = gradient,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .border(
+                    width = borderWidth,
+                    color = borderColor,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() }
+                .focusable()
+                .padding(16.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Medium,
+            )
+
+            Text(
+                text = if (isChecked) "ON" else "OFF",
+                color = if (isChecked) Color.Green else Color.Gray,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 

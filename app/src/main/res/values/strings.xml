@@ -59,6 +59,11 @@
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
     <string name="settings_grid_columns_option">%1$d × %1$d Grid</string>
 
+    <string name="settings_thor_title">Thor Settings</string>
+    <string name="settings_thor_description">Settings exclusive to the Thor</string>
+    <string name="settings_thor_power_button">Show Power Button</string>
+    <string name="settings_thor_icon_description">Thor settings icon</string>
+
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>

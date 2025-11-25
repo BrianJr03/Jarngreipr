@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.viewmodels.HomeViewModel
+import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 
@@ -29,6 +30,7 @@ import kotlinx.coroutines.launch
 fun LauncherPagerScreen(
     homeViewModel: HomeViewModel,
     widgetViewModel: WidgetViewModel,
+    powerViewModel: PowerViewModel,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     isOverlayShown: Boolean = false
@@ -101,6 +103,7 @@ fun LauncherPagerScreen(
                             apps = homeUiState.allApps,
                             isLoading = homeUiState.isLoading,
                             onSettingsClick = onSettingsClick,
+                            powerViewModel = powerViewModel,
                             totalPages = totalPages,
                             pagerState = pagerState,
                             keyboardVisible = keyboardVisible

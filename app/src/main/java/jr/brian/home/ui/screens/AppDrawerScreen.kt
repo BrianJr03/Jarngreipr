@@ -51,10 +51,10 @@ import jr.brian.home.ui.components.ScreenHeaderRow
 import jr.brian.home.ui.components.WallpaperDisplay
 import jr.brian.home.ui.theme.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
-
-private const val PREFS_NAME = "gaming_launcher_prefs"
-private const val KEY_KEYBOARD_VISIBLE = "keyboard_visible"
+import jr.brian.home.viewmodels.PowerViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -62,6 +62,7 @@ fun AppDrawerScreen(
     apps: List<AppInfo>,
     isLoading: Boolean = false,
     onSettingsClick: () -> Unit = {},
+    powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     keyboardVisible: Boolean = true,
@@ -170,6 +171,7 @@ fun AppDrawerScreen(
                 },
                 keyboardVisible = keyboardVisible,
                 onSettingsClick = onSettingsClick,
+                powerViewModel = powerViewModel,
                 totalPages = totalPages,
                 pagerState = pagerState,
             )
@@ -195,6 +197,7 @@ private fun AppSelectionContent(
     onAppLongClick: (AppInfo) -> Unit = {},
     keyboardVisible: Boolean = true,
     onSettingsClick: () -> Unit = {},
+    powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
 ) {
@@ -242,6 +245,7 @@ private fun AppSelectionContent(
             totalPages = totalPages,
             pagerState = pagerState,
             onSettingsClick = onSettingsClick,
+            powerViewModel = powerViewModel,
         )
     }
 }
@@ -261,9 +265,12 @@ private fun AppGrid(
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
+    powerViewModel: PowerViewModel? = null,
 ) {
     val gridState = rememberLazyGridState()
     val settingsIconFocusRequester = remember { FocusRequester() }
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         appFocusRequesters[0]?.requestFocus()
@@ -286,6 +293,8 @@ private fun AppGrid(
                 onNavigateFromGrid = {
                     settingsIconFocusRequester.requestFocus()
                 },
+                powerViewModel = powerViewModel,
+                showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(
                     horizontal = if (keyboardVisible) 16.dp else 32.dp,
                     vertical = if (keyboardVisible) 8.dp else 16.dp
@@ -368,14 +377,12 @@ private fun launchApp(
         if (intent != null) {
             when (displayPreference) {
                 AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY -> {
-                    // Launch on the primary (top) display
                     val options = ActivityOptions.makeBasic()
-                    options.launchDisplayId = 0 // Display ID 0 is typically the primary display
+                    options.launchDisplayId = 0
                     context.startActivity(intent, options.toBundle())
                 }
 
                 AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY -> {
-                    // Launch on current display (default behavior)
                     context.startActivity(intent)
                 }
             }

@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPreferences
 import javax.inject.Singleton
 
@@ -46,5 +47,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): AppDisplayPreferenceManager {
         return AppDisplayPreferenceManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun providePowerSettingsManager(
+        @ApplicationContext context: Context
+    ): PowerSettingsManager {
+        return PowerSettingsManager(context)
     }
 }
