@@ -1,9 +1,7 @@
 package jr.brian.home.ui.screens
 
 import android.appwidget.AppWidgetManager
-import android.content.Context
 import android.content.Intent
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -34,7 +32,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoveDown
 import androidx.compose.material.icons.filled.OpenInFull
-
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,7 +53,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -92,6 +89,8 @@ fun WidgetPageScreen(
     val columns = gridSettingsManager.columnCount
     val addWidgetIconFocusRequester = remember { FocusRequester() }
     var showWidgetPicker by remember { mutableStateOf(false) }
+    var swapModeEnabled by remember { mutableStateOf(false) }
+    var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
 
     val widgetPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -132,7 +131,7 @@ fun WidgetPageScreen(
         modifier = modifier
             .fillMaxSize()
             .then(
-                if (showWidgetPicker || widgets.isEmpty()) {
+                if (showWidgetPicker || widgets.isEmpty() || swapModeEnabled) {
                     Modifier.blockAllNavigation()
                 } else {
                     Modifier.blockHorizontalNavigation()
@@ -211,7 +210,49 @@ fun WidgetPageScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                if (pagerState != null) {
+                if (swapModeEnabled) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.widget_swap_mode_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = stringResource(R.string.widget_swap_mode_instructions),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                            TextButton(
+                                onClick = {
+                                    swapModeEnabled = false
+                                    swapSourceWidgetId = null
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(stringResource(R.string.widget_swap_cancel))
+                            }
+                        }
+                    }
+                } else if (pagerState != null) {
                     ScreenHeaderRow(
                         totalPages = totalPages,
                         pagerState = pagerState,
@@ -278,7 +319,24 @@ fun WidgetPageScreen(
                                 widgetInfo = widget,
                                 viewModel = viewModel,
                                 pageIndex = pageIndex,
-                                onNavigateToResize = onNavigateToResize
+                                onNavigateToResize = onNavigateToResize,
+                                swapModeEnabled = swapModeEnabled,
+                                isSwapSource = swapSourceWidgetId == widget.widgetId,
+                                onSwapSelect = { selectedWidgetId ->
+                                    if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
+                                        viewModel.swapWidgets(
+                                            swapSourceWidgetId!!,
+                                            selectedWidgetId,
+                                            pageIndex
+                                        )
+                                        swapModeEnabled = false
+                                        swapSourceWidgetId = null
+                                    }
+                                },
+                                onEnableSwapMode = {
+                                    swapModeEnabled = true
+                                    swapSourceWidgetId = widget.widgetId
+                                }
                             )
                         }
                     }
@@ -308,7 +366,11 @@ private fun WidgetItem(
     viewModel: WidgetViewModel,
     pageIndex: Int,
     modifier: Modifier = Modifier,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
+    swapModeEnabled: Boolean = false,
+    isSwapSource: Boolean = false,
+    onSwapSelect: (Int) -> Unit = {},
+    onEnableSwapMode: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showOptionsDialog by remember { mutableStateOf(false) }
@@ -327,16 +389,17 @@ private fun WidgetItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFF2A2A2A),
+                color = if (swapModeEnabled && !isSwapSource) Color(0xFF3A3A3A) else Color(
+                    0xFF2A2A2A
+                ),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
-                width = 2.dp,
-                color = ThemePrimaryColor,
+                width = if (isSwapSource) 4.dp else 2.dp,
+                color = if (isSwapSource) Color.Yellow else ThemePrimaryColor,
                 shape = RoundedCornerShape(12.dp)
             )
     ) {
-        // Key by both widgetId and dimensions to force recomposition
         key("${currentWidgetId}_${widgetInfo.width}x${widgetInfo.height}") {
             Box(
                 modifier = Modifier
@@ -364,7 +427,13 @@ private fun WidgetItem(
         }
 
         Card(
-            onClick = { showOptionsDialog = true },
+            onClick = {
+                if (swapModeEnabled && !isSwapSource) {
+                    onSwapSelect(widgetInfo.widgetId)
+                } else if (!swapModeEnabled) {
+                    showOptionsDialog = true
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp),
@@ -374,29 +443,45 @@ private fun WidgetItem(
                 bottomStart = 10.dp,
                 bottomEnd = 10.dp
             ),
-            colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isSwapSource) Color.Yellow else ThemePrimaryColor
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.widget_edit_description),
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
+                if (swapModeEnabled) {
+                    if (isSwapSource) {
+                        Text(
+                            text = "Selected",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Black
+                        )
+                    } else {
+                        Text(
+                            text = "Tap to Swap",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White
+                        )
+                    }
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.widget_edit_description),
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
 
-    // Show options dialog
-    if (showOptionsDialog) {
+    if (showOptionsDialog && !swapModeEnabled) {
         WidgetOptionsDialog(
             widgetInfo = widgetInfo,
             currentPageIndex = pageIndex,
-            context = context,
             onDismiss = { showOptionsDialog = false },
             onDelete = {
                 viewModel.removeWidgetFromPage(widgetInfo.widgetId, pageIndex)
@@ -413,6 +498,10 @@ private fun WidgetItem(
             onResize = {
                 showOptionsDialog = false
                 onNavigateToResize(widgetInfo, pageIndex)
+            },
+            onSwap = {
+                showOptionsDialog = false
+                onEnableSwapMode()
             }
         )
     }
@@ -422,11 +511,11 @@ private fun WidgetItem(
 private fun WidgetOptionsDialog(
     widgetInfo: WidgetInfo,
     currentPageIndex: Int,
-    context: Context,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onMove: (Int) -> Unit,
-    onResize: () -> Unit
+    onResize: () -> Unit,
+    onSwap: () -> Unit
 ) {
     AlertDialog(
 
@@ -488,6 +577,42 @@ private fun WidgetOptionsDialog(
                             )
                             Text(
                                 text = stringResource(R.string.widget_resize_description),
+                                color = Color.White.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+
+                Card(
+                    onClick = onSwap,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = ThemePrimaryColor.copy(alpha = 0.15f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            tint = ThemePrimaryColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.widget_swap_title),
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.widget_swap_description),
                                 color = Color.White.copy(alpha = 0.6f),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -596,42 +721,4 @@ private fun WidgetOptionsDialog(
             }
         }
     )
-}
-
-@Composable
-private fun AddWidgetCard(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(80.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = ThemePrimaryColor)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = Color.White
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.widget_add_widget),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
-                )
-            }
-        }
-    }
 }
