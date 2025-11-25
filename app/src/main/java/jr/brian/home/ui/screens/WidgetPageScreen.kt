@@ -5,8 +5,10 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoveDown
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -49,27 +52,42 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
+import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.components.AddToWidgetPageDialog
 import jr.brian.home.ui.components.ScreenHeaderRow
 import jr.brian.home.ui.components.WallpaperDisplay
+import jr.brian.home.ui.components.WidgetPageAppSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.theme.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -78,19 +96,35 @@ fun WidgetPageScreen(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
+    allApps: List<AppInfo> = emptyList(),
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
+    onLaunchApp: (AppInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
+    val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = jr.brian.home.ui.theme.LocalGridSettingsManager.current
     val columns = gridSettingsManager.columnCount
+    val scope = rememberCoroutineScope()
+
     val addWidgetIconFocusRequester = remember { FocusRequester() }
+    var showAddOptionsDialog by remember { mutableStateOf(false) }
+    var showAppSelectionDialog by remember { mutableStateOf(false) }
     var showWidgetPicker by remember { mutableStateOf(false) }
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
+
+    val visibleApps by widgetPageAppManager.getVisibleApps(pageIndex)
+        .collectAsStateWithLifecycle(initialValue = emptySet())
+    val appsFirst by widgetPageAppManager.getAppsFirstOrder(pageIndex)
+        .collectAsStateWithLifecycle(initialValue = false)
+
+    val displayedApps = remember(allApps, visibleApps) {
+        allApps.filter { it.packageName in visibleApps }
+    }
 
     val widgetPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -131,7 +165,9 @@ fun WidgetPageScreen(
         modifier = modifier
             .fillMaxSize()
             .then(
-                if (showWidgetPicker || widgets.isEmpty() || swapModeEnabled) {
+                if (showWidgetPicker || showAddOptionsDialog || showAppSelectionDialog ||
+                    (widgets.isEmpty() && displayedApps.isEmpty()) || swapModeEnabled
+                ) {
                     Modifier.blockAllNavigation()
                 } else {
                     Modifier.blockHorizontalNavigation()
@@ -143,6 +179,7 @@ fun WidgetPageScreen(
             wallpaperType = wallpaperManager.getWallpaperType(),
             modifier = Modifier.fillMaxSize()
         )
+
         if (showWidgetPicker) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -154,7 +191,7 @@ fun WidgetPageScreen(
                     strokeWidth = 4.dp
                 )
             }
-        } else if (widgets.isEmpty()) {
+        } else if (widgets.isEmpty() && displayedApps.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -178,16 +215,9 @@ fun WidgetPageScreen(
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.widget_no_widgets_description),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { showWidgetPicker = true },
+                        onClick = { showAddOptionsDialog = true },
                         modifier = Modifier
                             .fillMaxWidth(0.6f)
                             .height(56.dp),
@@ -256,9 +286,9 @@ fun WidgetPageScreen(
                     ScreenHeaderRow(
                         totalPages = totalPages,
                         pagerState = pagerState,
-                        trailingIcon = Icons.Default.Add,
-                        trailingIconContentDescription = "Add Widget",
-                        onTrailingIconClick = { showWidgetPicker = true },
+                        trailingIcon = Icons.Default.Info,
+                        trailingIconContentDescription = null,
+                        onTrailingIconClick = { showAddOptionsDialog = true },
                         trailingIconFocusRequester = addWidgetIconFocusRequester,
                         onNavigateToGrid = {},
                         onNavigateFromGrid = {
@@ -276,73 +306,105 @@ fun WidgetPageScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (showWidgetPicker) {
-                        item(span = { GridItemSpan(columns) }) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(60.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = ThemePrimaryColor.copy(alpha = 0.15f)
+                    val sections = if (appsFirst) {
+                        listOf("apps" to displayedApps, "widgets" to widgets)
+                    } else {
+                        listOf("widgets" to widgets, "apps" to displayedApps)
+                    }
+
+                    sections.forEach { (sectionType, items) ->
+                        if (sectionType == "apps" && displayedApps.isNotEmpty()) {
+                            item(span = { GridItemSpan(columns) }) {
+                                SectionHeader(
+                                    title = stringResource(R.string.widget_page_section_apps)
                                 )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        color = ThemePrimaryColor,
-                                        strokeWidth = 3.dp
+                            }
+
+                            (items as List<AppInfo>).forEach { app ->
+                                item(key = "app_${app.packageName}") {
+                                    AppItem(
+                                        app = app,
+                                        pageIndex = pageIndex,
+                                        onLaunchApp = onLaunchApp
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = stringResource(R.string.widget_loading),
-                                        color = Color.White,
-                                        style = MaterialTheme.typography.bodyMedium
+                                }
+                            }
+                        } else if (sectionType == "widgets" && widgets.isNotEmpty()) {
+                            item(span = { GridItemSpan(columns) }) {
+                                SectionHeader(
+                                    title = stringResource(R.string.widget_page_section_widgets)
+                                )
+                            }
+
+                            (items as List<WidgetInfo>).forEachIndexed { index, widget ->
+                                item(
+                                    key = "widget_${widget.widgetId}_${pageIndex}_$index",
+                                    span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
+                                ) {
+                                    WidgetItem(
+                                        widgetInfo = widget,
+                                        viewModel = viewModel,
+                                        pageIndex = pageIndex,
+                                        onNavigateToResize = onNavigateToResize,
+                                        swapModeEnabled = swapModeEnabled,
+                                        isSwapSource = swapSourceWidgetId == widget.widgetId,
+                                        onSwapSelect = { selectedWidgetId ->
+                                            if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
+                                                viewModel.swapWidgets(
+                                                    swapSourceWidgetId!!,
+                                                    selectedWidgetId,
+                                                    pageIndex
+                                                )
+                                                swapModeEnabled = false
+                                                swapSourceWidgetId = null
+                                            }
+                                        },
+                                        onEnableSwapMode = {
+                                            swapModeEnabled = true
+                                            swapSourceWidgetId = widget.widgetId
+                                        }
                                     )
                                 }
                             }
                         }
                     }
 
-                    widgets.forEachIndexed { index, widget ->
-                        item(
-                            key = "widget_${widget.widgetId}_${pageIndex}_$index",
-                            span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
-                        ) {
-                            WidgetItem(
-                                widgetInfo = widget,
-                                viewModel = viewModel,
-                                pageIndex = pageIndex,
-                                onNavigateToResize = onNavigateToResize,
-                                swapModeEnabled = swapModeEnabled,
-                                isSwapSource = swapSourceWidgetId == widget.widgetId,
-                                onSwapSelect = { selectedWidgetId ->
-                                    if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
-                                        viewModel.swapWidgets(
-                                            swapSourceWidgetId!!,
-                                            selectedWidgetId,
-                                            pageIndex
-                                        )
-                                        swapModeEnabled = false
-                                        swapSourceWidgetId = null
-                                    }
-                                },
-                                onEnableSwapMode = {
-                                    swapModeEnabled = true
-                                    swapSourceWidgetId = widget.widgetId
-                                }
-                            )
-                        }
+                    item {
+                        Spacer(Modifier.height(16.dp))
                     }
                 }
             }
         }
+    }
+
+    if (showAddOptionsDialog) {
+        AddToWidgetPageDialog(
+            onDismiss = { showAddOptionsDialog = false },
+            onAddWidget = { showWidgetPicker = true },
+            onAddApp = { showAppSelectionDialog = true },
+            onSwapSections = {
+                scope.launch {
+                    widgetPageAppManager.toggleSectionOrder(pageIndex)
+                }
+            }
+        )
+    }
+
+    if (showAppSelectionDialog) {
+        WidgetPageAppSelectionDialog(
+            apps = allApps,
+            visibleApps = visibleApps,
+            onDismiss = { showAppSelectionDialog = false },
+            onToggleApp = { packageName ->
+                scope.launch {
+                    if (packageName in visibleApps) {
+                        widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
+                    } else {
+                        widgetPageAppManager.addVisibleApp(pageIndex, packageName)
+                    }
+                }
+            }
+        )
     }
 
     if (showWidgetPicker) {
@@ -359,6 +421,191 @@ fun WidgetPageScreen(
     }
 }
 
+@Composable
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.6f)
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppItem(
+    app: AppInfo,
+    pageIndex: Int,
+    onLaunchApp: (AppInfo) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val widgetPageAppManager = LocalWidgetPageAppManager.current
+    val scope = rememberCoroutineScope()
+    var showOptionsDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = Color(0xFF2A2A2A),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = 2.dp,
+                color = ThemePrimaryColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .combinedClickable(
+                onClick = { onLaunchApp(app) },
+                onLongClick = { showOptionsDialog = true }
+            )
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = rememberAsyncImagePainter(model = app.icon),
+            contentDescription = stringResource(R.string.app_icon_description, app.label),
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = app.label,
+            color = Color.White,
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            fontWeight = FontWeight.Medium
+        )
+    }
+
+    if (showOptionsDialog) {
+        AppOptionsDialog(
+            app = app,
+            onDismiss = { showOptionsDialog = false },
+            onRemove = {
+                scope.launch {
+                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
+                }
+                showOptionsDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun AppOptionsDialog(
+    app: AppInfo,
+    onDismiss: () -> Unit,
+    onRemove: () -> Unit
+) {
+    AlertDialog(
+        modifier = Modifier.fillMaxSize(),
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1E1E2E),
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.widget_page_app_options_title),
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = app.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    onClick = onRemove,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.widget_page_app_remove),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.widget_page_app_remove_description),
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ThemePrimaryColor
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.dialog_cancel),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WidgetItem(
@@ -372,13 +619,11 @@ private fun WidgetItem(
     onSwapSelect: (Int) -> Unit = {},
     onEnableSwapMode: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     var showOptionsDialog by remember { mutableStateOf(false) }
 
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
 
-    // Use widgetInfo directly for height calculation so it updates when widget changes
     val widgetHeightDp = remember(widgetInfo.height) {
         val cellHeight = 80.dp
         val calculatedHeight = (widgetInfo.height * cellHeight.value).dp
@@ -419,7 +664,6 @@ private fun WidgetItem(
                     },
                     modifier = Modifier.fillMaxSize(),
                     update = { view ->
-                        // Force the widget to update its layout when dimensions change
                         view.requestLayout()
                     }
                 )
@@ -518,7 +762,6 @@ private fun WidgetOptionsDialog(
     onSwap: () -> Unit
 ) {
     AlertDialog(
-
         modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E1E2E),

@@ -134,12 +134,20 @@ fun LauncherPagerScreen(
                                     pageIndex = widgetPageIndex,
                                     widgets = widgetPage.widgets,
                                     viewModel = widgetViewModel,
+                                    allApps = homeUiState.allAppsUnfiltered,
                                     totalPages = totalPages,
                                     pagerState = pagerState,
                                     onNavigateToResize = { widgetInfo, pageIdx ->
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx
                                         showResizeScreen = true
+                                    },
+                                    onLaunchApp = { app ->
+                                        val intent =
+                                            context.packageManager.getLaunchIntentForPackage(app.packageName)
+                                        if (intent != null) {
+                                            context.startActivity(intent)
+                                        }
                                     }
                                 )
                             }

@@ -10,6 +10,7 @@ import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import javax.inject.Singleton
 
@@ -55,5 +56,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): PowerSettingsManager {
         return PowerSettingsManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWidgetPageAppManager(
+        @ApplicationContext context: Context
+    ): WidgetPageAppManager {
+        return WidgetPageAppManager(context)
     }
 }

@@ -44,6 +44,7 @@ import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.components.AppOverlay
 import jr.brian.home.ui.components.BlackScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
@@ -54,6 +55,7 @@ import jr.brian.home.ui.theme.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.LocalWidgetPageAppManager
 import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.PowerViewModel
@@ -75,6 +77,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var powerSettingsManager: PowerSettingsManager
+
+    @Inject
+    lateinit var widgetPageAppManager: WidgetPageAppManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,7 +109,8 @@ class MainActivity : ComponentActivity() {
                     LocalAppVisibilityManager provides appVisibilityManager,
                     LocalGridSettingsManager provides gridSettingsManager,
                     LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
-                    LocalPowerSettingsManager provides powerSettingsManager
+                    LocalPowerSettingsManager provides powerSettingsManager,
+                    LocalWidgetPageAppManager provides widgetPageAppManager
                 ) {
                     MainContent()
                 }
