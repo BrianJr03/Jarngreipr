@@ -16,6 +16,7 @@
     <string name="keyboard_label_search">Search…</string>
     <string name="keyboard_label_settings">Settings…</string>
     <string name="keyboard_label_arrow_left">←</string>
+    <string name="keyboard_label_swap">Swap</string>
 
     <string name="dialog_cancel">Cancel</string>
     <string name="wallpaper">"Wallpaper"</string>
@@ -36,7 +37,7 @@
     <string name="app_options_selected">Selected</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
-    <string name="settings_color_theme_description">Only visible when using gamepad</string>
+    <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
@@ -55,9 +56,14 @@
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
 
     <string name="settings_grid_columns_title">Grid Layout</string>
-    <string name="settings_grid_columns_description">Adjust the number of columns in the app grid</string>
+    <string name="settings_grid_columns_description">Customize columns and rows (1×1 to 10×10)</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
-    <string name="settings_grid_columns_option">%1$d × %1$d Grid</string>
+    <string name="settings_grid_size_option">%1$d × %2$d</string>
+
+    <string name="settings_thor_title">Thor Settings</string>
+    <string name="settings_thor_description">Settings exclusive to the Thor</string>
+    <string name="settings_thor_power_button">Show Power Button</string>
+    <string name="settings_thor_icon_description">Thor settings icon</string>
 
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
@@ -68,20 +74,27 @@
     <string name="dialog_app_visibility_hide_all">Hide All</string>
 
     <!-- Widget Page Screen -->
-    <string name="widget_no_widgets_title">No Widgets Yet</string>
-    <string name="widget_no_widgets_description">Tap the button below to add your first widget</string>
-    <string name="widget_add_widget">Add Widget</string>
+    <string name="widget_no_widgets_title">No Apps or Widgets Yet</string>
+    <string name="widget_add_widget">App or Widget</string>
     <string name="widget_loading">Loading widget…</string>
     <string name="widget_edit_description">Edit widget</string>
     <string name="widget_options_title">Widget Options</string>
-    <string name="widget_replace_title">Replace Widget</string>
-    <string name="widget_replace_coming_soon">Coming Soon!</string>
     <string name="widget_delete_title">Delete Widget</string>
     <string name="widget_delete_description">Remove from this page</string>
     <string name="widget_move_section_title">Move to Another Page</string>
     <string name="widget_move_page_title">Widget Page %1$d</string>
     <string name="widget_move_description">Move widget here</string>
-    <string name="widget_toast_coming_soon">Coming Soon!</string>
+    <string name="widget_resize_title">Resize Widget</string>
+    <string name="widget_resize_description">Adjust widget dimensions</string>
+    <string name="widget_swap_title">Swap Position</string>
+    <string name="widget_swap_description">Swap with another widget</string>
+    <string name="widget_swap_mode_title">Select Widget to Swap With</string>
+    <string name="widget_swap_mode_instructions">Tap on a widget to swap positions</string>
+    <string name="widget_swap_cancel">Cancel</string>
+    <string name="widget_resize_mode_title">Resize Mode</string>
+    <string name="widget_resize_mode_instructions">Use the + and - buttons below to adjust size</string>
+    <string name="widget_resize_done">Done</string>
+    <string name="widget_resize_dimensions">%1$d × %2$d cells</string>
 
     <!-- Settings Screen -->
     <string name="settings_palette_icon_description">Theme palette icon</string>
@@ -153,4 +166,20 @@
     <string name="thor_fact_48">Thor\'s adventures often involve outwitting or outfighting giants.</string>
     <string name="thor_fact_49">Thor is the protector of the consecration of marriages and sacred oaths.</string>
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
+
+    <!-- Widget Page Apps and Sections -->
+    <string name="widget_page_section_apps">Apps</string>
+    <string name="widget_page_section_widgets">Widgets</string>
+    <string name="widget_page_add_options_title">Add to Page</string>
+    <string name="widget_page_add_widget">Add Widget</string>
+    <string name="widget_page_add_widget_description">Add a system widget</string>
+    <string name="widget_page_add_app">Add App</string>
+    <string name="widget_page_add_app_description">Choose apps to display</string>
+    <string name="widget_page_swap_sections">Swap Sections</string>
+    <string name="widget_page_swap_sections_description">Reorder sections on this page</string>
+    <string name="widget_page_no_apps">No Apps Selected</string>
+    <string name="widget_page_no_apps_description">Tap the + button to add apps</string>
+    <string name="widget_page_app_options_title">App Options</string>
+    <string name="widget_page_app_remove">Remove from Page</string>
+    <string name="widget_page_app_remove_description">Remove this app from the page</string>
 </resources>

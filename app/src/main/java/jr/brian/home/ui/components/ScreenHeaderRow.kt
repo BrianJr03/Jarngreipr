@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +25,7 @@ import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.extensions.handleRightNavigation
+import jr.brian.home.viewmodels.PowerViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -40,9 +43,13 @@ fun ScreenHeaderRow(
     trailingIconFocusRequester: FocusRequester? = null,
     onNavigateToGrid: () -> Unit = {},
     onNavigateFromGrid: () -> Unit = {},
+    powerViewModel: PowerViewModel? = null,
+    showPowerButton: Boolean = false,
 ) {
     var isLeadingFocused by remember { mutableStateOf(false) }
+    var isPowerFocused by remember { mutableStateOf(false) }
     var isTrailingFocused by remember { mutableStateOf(false) }
+    val powerIconFocusRequester = remember { FocusRequester() }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -78,11 +85,49 @@ fun ScreenHeaderRow(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        if (showPowerButton && powerViewModel != null) {
+            IconBox(
+                isFocused = isPowerFocused,
+                modifier = Modifier.handleFullNavigation(
+                    onNavigateLeft = onNavigateFromGrid,
+                    onNavigateRight = {
+                        trailingIconFocusRequester?.requestFocus()
+                    },
+                    onNavigateDown = onNavigateToGrid,
+                    onEnterPress = {
+                        powerViewModel.togglePower()
+                    }
+                ),
+                focusRequester = powerIconFocusRequester,
+                onFocusChanged = { isPowerFocused = it },
+                onClick = {
+                    powerViewModel.togglePower()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PowerSettingsNew,
+                    contentDescription = "Power Button",
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(animatedRotation(isPowerFocused))
+                )
+            }
+
+            Spacer(modifier = Modifier.size(16.dp))
+        }
+
         if (trailingIcon != null) {
             IconBox(
                 isFocused = isTrailingFocused,
                 modifier = Modifier.handleFullNavigation(
-                    onNavigateLeft = onNavigateFromGrid,
+                    onNavigateLeft = {
+                        if (showPowerButton) {
+                            powerIconFocusRequester.requestFocus()
+                        } else {
+                            onNavigateFromGrid()
+                        }
+                    },
                     onNavigateDown = onNavigateToGrid,
                     onEnterPress = onTrailingIconClick
                 ),

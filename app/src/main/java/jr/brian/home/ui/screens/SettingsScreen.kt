@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -74,12 +76,14 @@ import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.LocalThemeManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.WallpaperUtils
 import kotlinx.coroutines.delay
 import java.io.File
@@ -115,6 +119,10 @@ private fun SettingsContent(
     val wallpaperFocusRequester = remember { FocusRequester() }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var expandedItem by remember { mutableStateOf<String?>(null) }
+
+    val isThorDevice = remember {
+        android.os.Build.MODEL == DeviceModel.THOR
+    }
 
     LaunchedEffect(Unit) {
         delay(10)
@@ -156,6 +164,15 @@ private fun SettingsContent(
                 isExpanded = expandedItem == "grid",
                 onExpandChanged = { expandedItem = if (it) "grid" else null }
             )
+        }
+
+        if (isThorDevice) {
+            item {
+                ThorSettingsItem(
+                    isExpanded = expandedItem == "thor",
+                    onExpandChanged = { expandedItem = if (it) "thor" else null }
+                )
+            }
         }
 
         item {
@@ -703,9 +720,12 @@ private fun GridColumnSelectorItem(
     val gridSettingsManager = LocalGridSettingsManager.current
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
+    val columnsMinusFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isExpanded) {
-        if (!isExpanded) {
+        if (isExpanded) {
+            columnsMinusFocusRequester.requestFocus()
+        } else {
             mainCardFocusRequester.requestFocus()
         }
     }
@@ -812,27 +832,359 @@ private fun GridColumnSelectorItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                for (columns in GridSettingsManager.MIN_COLUMNS..GridSettingsManager.MAX_COLUMNS) {
-                    GridColumnOptionButton(
-                        columns = columns,
-                        isSelected = gridSettingsManager.columnCount == columns,
-                        onClick = {
-                            gridSettingsManager.updateColumnCount(columns)
-                            onExpandChanged(false)
-                        }
-                    )
+                GridDimensionSelector(
+                    label = "Columns",
+                    value = gridSettingsManager.columnCount,
+                    minValue = GridSettingsManager.MIN_COLUMNS,
+                    maxValue = GridSettingsManager.MAX_COLUMNS,
+                    onValueChange = { newValue ->
+                        gridSettingsManager.updateColumnCount(newValue)
+                    },
+                    minusFocusRequester = columnsMinusFocusRequester,
+                )
+
+                GridDimensionSelector(
+                    label = "Rows",
+                    value = gridSettingsManager.rowCount,
+                    minValue = GridSettingsManager.MIN_ROWS,
+                    maxValue = GridSettingsManager.MAX_ROWS,
+                    onValueChange = { newValue ->
+                        gridSettingsManager.updateRowCount(newValue)
+                    },
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = ThemePrimaryColor.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "${gridSettingsManager.columnCount} × ${gridSettingsManager.rowCount}",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "${gridSettingsManager.columnCount * gridSettingsManager.rowCount} apps total",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp,
+                        )
+                    }
                 }
+
+                GridControlButton(
+                    text = "Done",
+                    onClick = { onExpandChanged(false) },
+                    isPrimary = true
+                )
             }
         }
     }
 }
 
 @Composable
-private fun GridColumnOptionButton(
-    columns: Int,
-    isSelected: Boolean,
+private fun GridDimensionSelector(
+    label: String,
+    value: Int,
+    minValue: Int,
+    maxValue: Int,
+    onValueChange: (Int) -> Unit,
+    minusFocusRequester: FocusRequester? = null,
+    plusFocusRequester: FocusRequester? = null,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GridControlButton(
+                text = "−",
+                onClick = {
+                    if (value > minValue) {
+                        onValueChange(value - 1)
+                    }
+                },
+                enabled = value > minValue,
+                modifier = Modifier.weight(1f),
+                focusRequester = minusFocusRequester
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        color = AppCardDark,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = ThemePrimaryColor.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = value.toString(),
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            GridControlButton(
+                text = "+",
+                onClick = {
+                    if (value < maxValue) {
+                        onValueChange(value + 1)
+                    }
+                },
+                enabled = value < maxValue,
+                modifier = Modifier.weight(1f),
+                focusRequester = plusFocusRequester
+            )
+        }
+    }
+}
+
+@Composable
+private fun GridControlButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isPrimary: Boolean = false,
+    focusRequester: FocusRequester? = null,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val gradient = Brush.linearGradient(
+        colors = when {
+            !enabled -> listOf(Color.Gray.copy(alpha = 0.3f), Color.Gray.copy(alpha = 0.3f))
+            isFocused -> listOf(
+                ThemePrimaryColor.copy(alpha = 0.9f),
+                ThemeSecondaryColor.copy(alpha = 0.7f),
+            )
+
+            isPrimary -> listOf(
+                ThemePrimaryColor.copy(alpha = 0.6f),
+                ThemeSecondaryColor.copy(alpha = 0.4f),
+            )
+
+            else -> listOf(
+                AppCardLight,
+                AppCardDark,
+            )
+        }
+    )
+
+    val borderColor = when {
+        !enabled -> Color.Gray.copy(alpha = 0.3f)
+        isFocused -> Color.White
+        else -> Color.Transparent
+    }
+
+    Box(
+        modifier = modifier
+            .height(56.dp)
+            .scale(if (isFocused) 1.05f else 1f)
+            .then(
+                if (focusRequester != null) {
+                    Modifier.focusRequester(focusRequester)
+                } else {
+                    Modifier
+                }
+            )
+            .onFocusChanged {
+                isFocused = it.isFocused
+            }
+            .background(
+                brush = gradient,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled) { onClick() }
+            .focusable(enabled = enabled),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (enabled) Color.White else Color.Gray,
+            fontSize = if (isPrimary) 18.sp else 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun ThorSettingsItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    var isFocused by remember { mutableStateOf(false) }
+    val mainCardFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) {
+            mainCardFocusRequester.requestFocus()
+        }
+    }
+
+    val cardGradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.8f),
+                    )
+                } else {
+                    listOf(
+                        AppCardLight,
+                        AppCardDark,
+                    )
+                },
+        )
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+    ) {
+        AnimatedVisibility(
+            visible = !isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester ?: mainCardFocusRequester)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        }
+                        .background(
+                            brush = cardGradient,
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .border(
+                            width = if (isFocused) 2.dp else 0.dp,
+                            brush =
+                                borderBrush(
+                                    isFocused = isFocused,
+                                    colors =
+                                        listOf(
+                                            ThemePrimaryColor.copy(alpha = 0.8f),
+                                            ThemeSecondaryColor.copy(alpha = 0.6f),
+                                        ),
+                                ),
+                            shape = RoundedCornerShape(16.dp),
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            onExpandChanged(true)
+                        }
+                        .focusable()
+                        .padding(16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PowerSettingsNew,
+                        contentDescription = stringResource(R.string.settings_thor_icon_description),
+                        modifier =
+                            Modifier
+                                .size(32.dp)
+                                .rotate(animatedRotation(isFocused)),
+                        tint = Color.White,
+                    )
+
+                    Spacer(modifier = Modifier.size(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(id = R.string.settings_thor_title),
+                            color = Color.White,
+                            fontSize = if (isFocused) 18.sp else 16.sp,
+                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(id = R.string.settings_thor_description),
+                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ThorSettingToggleButton(
+                    text = stringResource(id = R.string.settings_thor_power_button),
+                    isChecked = isPowerButtonVisible,
+                    onClick = {
+                        powerSettingsManager.setPowerButtonVisibility(!isPowerButtonVisible)
+                        onExpandChanged(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThorSettingToggleButton(
+    text: String,
+    isChecked: Boolean,
     onClick: () -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -854,12 +1206,12 @@ private fun GridColumnOptionButton(
         )
 
     val borderColor = when {
-        isSelected -> Color.White
+        isChecked -> Color.White
         isFocused -> Color.LightGray.copy(alpha = 0.8f)
         else -> Color.Transparent
     }
 
-    val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
+    val borderWidth = if (isChecked || isFocused) 2.dp else 0.dp
 
     Box(
         modifier =
@@ -882,14 +1234,27 @@ private fun GridColumnOptionButton(
                 .clickable { onClick() }
                 .focusable()
                 .padding(16.dp),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterStart,
     ) {
-        Text(
-            text = stringResource(id = R.string.settings_grid_columns_option, columns),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Medium,
+            )
+
+            Text(
+                text = if (isChecked) "ON" else "OFF",
+                color = if (isChecked) Color.Green else Color.Gray,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 

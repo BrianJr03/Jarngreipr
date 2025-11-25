@@ -4,12 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.model.AppInfo
+import jr.brian.home.model.state.AppDrawerUIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,9 +82,3 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
-
-data class AppDrawerUIState(
-    val allApps: List<AppInfo> = emptyList(),
-    val allAppsUnfiltered: List<AppInfo> = emptyList(),
-    val isLoading: Boolean = false,
-)

@@ -268,7 +268,6 @@ fun AppOverlay(
             }
             }
 
-            // Close button at top right
             IconButton(
                 onClick = onDismissOverlay,
                 modifier = Modifier
