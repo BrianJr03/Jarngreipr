@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoveDown
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -284,7 +285,7 @@ fun WidgetPageScreen(
                     ScreenHeaderRow(
                         totalPages = totalPages,
                         pagerState = pagerState,
-                        trailingIcon = Icons.Default.Info,
+                        trailingIcon = Icons.Default.Menu,
                         trailingIconContentDescription = null,
                         onTrailingIconClick = { showAddOptionsDialog = true },
                         trailingIconFocusRequester = addWidgetIconFocusRequester,

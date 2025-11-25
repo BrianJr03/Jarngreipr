@@ -133,13 +133,23 @@ private fun MainContent() {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
+    val prefs = remember {
+        context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
+    }
+
+    val hasSeenOverlay = remember {
+        prefs.getBoolean("has_seen_welcome_overlay", false)
+    }
+
     val displayManager =
         remember { context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager }
     val hasExternalDisplays = remember {
         displayManager.displays.size > 1
     }
 
-    var showWelcomeOverlay by remember { mutableStateOf(hasExternalDisplays) }
+    var showWelcomeOverlay by remember {
+        mutableStateOf(hasExternalDisplays && !hasSeenOverlay)
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -223,8 +233,15 @@ private fun MainContent() {
 
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
-                            allApps = homeUiState.allAppsUnfiltered
+                            allApps = homeUiState.allAppsUnfiltered,
+                            onNavigateToFAQ = {
+                                navController.navigate(Routes.FAQ)
+                            }
                         )
+                    }
+
+                    composable(Routes.FAQ) {
+                        jr.brian.home.ui.screens.FAQScreen()
                     }
                 }
             }
@@ -246,6 +263,7 @@ private fun MainContent() {
             AppOverlay(
                 onDismissOverlay = {
                     showWelcomeOverlay = false
+                    prefs.edit().putBoolean("has_seen_welcome_overlay", true).apply()
                 },
                 onOpenSettings = {
                     navController.navigate(Routes.SETTINGS)
