@@ -720,9 +720,12 @@ private fun GridColumnSelectorItem(
     val gridSettingsManager = LocalGridSettingsManager.current
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
+    val columnsMinusFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isExpanded) {
-        if (!isExpanded) {
+        if (isExpanded) {
+            columnsMinusFocusRequester.requestFocus()
+        } else {
             mainCardFocusRequester.requestFocus()
         }
     }
@@ -829,83 +832,217 @@ private fun GridColumnSelectorItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                for (columns in GridSettingsManager.MIN_COLUMNS..GridSettingsManager.MAX_COLUMNS) {
-                    GridColumnOptionButton(
-                        columns = columns,
-                        isSelected = gridSettingsManager.columnCount == columns,
-                        onClick = {
-                            gridSettingsManager.updateColumnCount(columns)
-                            onExpandChanged(false)
-                        }
-                    )
+                GridDimensionSelector(
+                    label = "Columns",
+                    value = gridSettingsManager.columnCount,
+                    minValue = GridSettingsManager.MIN_COLUMNS,
+                    maxValue = GridSettingsManager.MAX_COLUMNS,
+                    onValueChange = { newValue ->
+                        gridSettingsManager.updateColumnCount(newValue)
+                    },
+                    minusFocusRequester = columnsMinusFocusRequester,
+                )
+
+                GridDimensionSelector(
+                    label = "Rows",
+                    value = gridSettingsManager.rowCount,
+                    minValue = GridSettingsManager.MIN_ROWS,
+                    maxValue = GridSettingsManager.MAX_ROWS,
+                    onValueChange = { newValue ->
+                        gridSettingsManager.updateRowCount(newValue)
+                    },
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = ThemePrimaryColor.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "${gridSettingsManager.columnCount} × ${gridSettingsManager.rowCount}",
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "${gridSettingsManager.columnCount * gridSettingsManager.rowCount} apps total",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp,
+                        )
+                    }
                 }
+
+                GridControlButton(
+                    text = "Done",
+                    onClick = { onExpandChanged(false) },
+                    isPrimary = true
+                )
             }
         }
     }
 }
 
 @Composable
-private fun GridColumnOptionButton(
-    columns: Int,
-    isSelected: Boolean,
+private fun GridDimensionSelector(
+    label: String,
+    value: Int,
+    minValue: Int,
+    maxValue: Int,
+    onValueChange: (Int) -> Unit,
+    minusFocusRequester: FocusRequester? = null,
+    plusFocusRequester: FocusRequester? = null,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GridControlButton(
+                text = "−",
+                onClick = {
+                    if (value > minValue) {
+                        onValueChange(value - 1)
+                    }
+                },
+                enabled = value > minValue,
+                modifier = Modifier.weight(1f),
+                focusRequester = minusFocusRequester
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        color = AppCardDark,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = ThemePrimaryColor.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = value.toString(),
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            GridControlButton(
+                text = "+",
+                onClick = {
+                    if (value < maxValue) {
+                        onValueChange(value + 1)
+                    }
+                },
+                enabled = value < maxValue,
+                modifier = Modifier.weight(1f),
+                focusRequester = plusFocusRequester
+            )
+        }
+    }
+}
+
+@Composable
+private fun GridControlButton(
+    text: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isPrimary: Boolean = false,
+    focusRequester: FocusRequester? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                } else {
-                    listOf(
-                        AppCardLight,
-                        AppCardDark,
-                    )
-                },
-        )
+    val gradient = Brush.linearGradient(
+        colors = when {
+            !enabled -> listOf(Color.Gray.copy(alpha = 0.3f), Color.Gray.copy(alpha = 0.3f))
+            isFocused -> listOf(
+                ThemePrimaryColor.copy(alpha = 0.9f),
+                ThemeSecondaryColor.copy(alpha = 0.7f),
+            )
+
+            isPrimary -> listOf(
+                ThemePrimaryColor.copy(alpha = 0.6f),
+                ThemeSecondaryColor.copy(alpha = 0.4f),
+            )
+
+            else -> listOf(
+                AppCardLight,
+                AppCardDark,
+            )
+        }
+    )
 
     val borderColor = when {
-        isSelected -> Color.White
-        isFocused -> Color.LightGray.copy(alpha = 0.8f)
+        !enabled -> Color.Gray.copy(alpha = 0.3f)
+        isFocused -> Color.White
         else -> Color.Transparent
     }
 
-    val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
-
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
-                .onFocusChanged {
-                    isFocused = it.isFocused
+        modifier = modifier
+            .height(56.dp)
+            .scale(if (isFocused) 1.05f else 1f)
+            .then(
+                if (focusRequester != null) {
+                    Modifier.focusRequester(focusRequester)
+                } else {
+                    Modifier
                 }
-                .background(
-                    brush = gradient,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .border(
-                    width = borderWidth,
-                    color = borderColor,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() }
-                .focusable()
-                .padding(16.dp),
-        contentAlignment = Alignment.Center,
+            )
+            .onFocusChanged {
+                isFocused = it.isFocused
+            }
+            .background(
+                brush = gradient,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled) { onClick() }
+            .focusable(enabled = enabled),
+        contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(id = R.string.settings_grid_columns_option, columns),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            text = text,
+            color = if (enabled) Color.White else Color.Gray,
+            fontSize = if (isPrimary) 18.sp else 24.sp,
+            fontWeight = FontWeight.Bold,
         )
     }
 }

@@ -201,6 +201,10 @@ private fun AppSelectionContent(
     totalPages: Int = 1,
     pagerState: PagerState? = null,
 ) {
+    val gridSettingsManager = LocalGridSettingsManager.current
+    val rows = gridSettingsManager.rowCount
+    val maxAppsPerPage = columns * rows
+
     val filteredApps =
         remember(apps, searchQuery) {
             if (searchQuery.isBlank()) {
@@ -231,6 +235,7 @@ private fun AppSelectionContent(
         AppGrid(
             apps = filteredApps,
             columns = columns,
+            maxAppsPerPage = maxAppsPerPage,
             modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
             appFocusRequesters = appFocusRequesters,
             onFocusChanged = onAppFocusChanged,
@@ -254,6 +259,7 @@ private fun AppSelectionContent(
 @Composable
 private fun AppGrid(
     columns: Int,
+    maxAppsPerPage: Int,
     apps: List<AppInfo>,
     modifier: Modifier = Modifier,
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
@@ -271,6 +277,10 @@ private fun AppGrid(
     val settingsIconFocusRequester = remember { FocusRequester() }
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+    val displayedApps = remember(apps, maxAppsPerPage) {
+        apps.take(maxAppsPerPage)
+    }
 
     LaunchedEffect(Unit) {
         appFocusRequesters[0]?.requestFocus()
@@ -313,47 +323,47 @@ private fun AppGrid(
             horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
             verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
         ) {
-        items(apps.size) { index ->
-            val app = apps[index]
-            val itemFocusRequester =
-                remember(index) {
-                    FocusRequester().also { appFocusRequesters[index] = it }
-                }
+            items(displayedApps.size) { index ->
+                val app = displayedApps[index]
+                val itemFocusRequester =
+                    remember(index) {
+                        FocusRequester().also { appFocusRequesters[index] = it }
+                    }
 
-            AppGridItem(
-                app = app,
-                keyboardVisible = keyboardVisible,
-                focusRequester = itemFocusRequester,
-                onClick = { onAppClick(app) },
-                onLongClick = { onAppLongClick(app) },
-                onFocusChanged = { onFocusChanged(index) },
-                onNavigateUp = {
-                    val prevIndex = index - columns
-                    if (prevIndex >= 0) {
-                        appFocusRequesters[prevIndex]?.requestFocus()
-                    } else if (index < columns) {
-                        settingsIconFocusRequester.requestFocus()
-                    }
-                },
-                onNavigateDown = {
-                    val nextIndex = index + columns
-                    if (nextIndex < apps.size) {
-                        appFocusRequesters[nextIndex]?.requestFocus()
-                    }
-                },
-                onNavigateLeft = {
-                    if (index % columns == 0) {
-                        onNavigateLeft()
-                    } else {
-                        val prevIndex = index - 1
+                AppGridItem(
+                    app = app,
+                    keyboardVisible = keyboardVisible,
+                    focusRequester = itemFocusRequester,
+                    onClick = { onAppClick(app) },
+                    onLongClick = { onAppLongClick(app) },
+                    onFocusChanged = { onFocusChanged(index) },
+                    onNavigateUp = {
+                        val prevIndex = index - columns
                         if (prevIndex >= 0) {
                             appFocusRequesters[prevIndex]?.requestFocus()
+                        } else if (index < columns) {
+                            settingsIconFocusRequester.requestFocus()
                         }
-                    }
-                },
-                onNavigateRight = {
-                    val nextIndex = index + 1
-                    if (nextIndex < apps.size && nextIndex / columns == index / columns) {
+                    },
+                    onNavigateDown = {
+                        val nextIndex = index + columns
+                        if (nextIndex < displayedApps.size) {
+                            appFocusRequesters[nextIndex]?.requestFocus()
+                        }
+                    },
+                    onNavigateLeft = {
+                        if (index % columns == 0) {
+                            onNavigateLeft()
+                        } else {
+                            val prevIndex = index - 1
+                            if (prevIndex >= 0) {
+                                appFocusRequesters[prevIndex]?.requestFocus()
+                            }
+                        }
+                    },
+                    onNavigateRight = {
+                        val nextIndex = index + 1
+                        if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
                         appFocusRequesters[nextIndex]?.requestFocus()
                     }
                 },
