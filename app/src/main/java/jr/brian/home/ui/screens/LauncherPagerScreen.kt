@@ -42,6 +42,10 @@ fun LauncherPagerScreen(
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
 
+    var showResizeScreen by remember { mutableStateOf(false) }
+    var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
+    var resizePageIndex by remember { mutableStateOf(0) }
+
     val prefs = remember {
         context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
     }
@@ -71,57 +75,74 @@ fun LauncherPagerScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .handleShoulderButtons(
-                onLeftShoulder = {
-                    if (!isOverlayShown && pagerState.currentPage > 0) {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+    if (showResizeScreen && resizeWidgetInfo != null) {
+        WidgetResizeScreen(
+            widgetInfo = resizeWidgetInfo!!,
+            pageIndex = resizePageIndex,
+            viewModel = widgetViewModel,
+            onNavigateBack = {
+                showResizeScreen = false
+                resizeWidgetInfo = null
+            }
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .handleShoulderButtons(
+                    onLeftShoulder = {
+                        if (!isOverlayShown && pagerState.currentPage > 0) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
+                        }
+                    },
+                    onRightShoulder = {
+                        if (!isOverlayShown && pagerState.currentPage < totalPages - 1) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         }
                     }
-                },
-                onRightShoulder = {
-                    if (!isOverlayShown && pagerState.currentPage < totalPages - 1) {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    }
-                }
-            )
-    ) {
-        key(currentWallpaper) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = !isOverlayShown
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        AppDrawerScreen(
-                            apps = homeUiState.allApps,
-                            isLoading = homeUiState.isLoading,
-                            onSettingsClick = onSettingsClick,
-                            powerViewModel = powerViewModel,
-                            totalPages = totalPages,
-                            pagerState = pagerState,
-                            keyboardVisible = keyboardVisible
-                        )
-                    }
-
-                    else -> {
-                        val widgetPageIndex = page - 1
-                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                        if (widgetPage != null) {
-                            WidgetPageScreen(
-                                pageIndex = widgetPageIndex,
-                                widgets = widgetPage.widgets,
-                                viewModel = widgetViewModel,
+                )
+        ) {
+            key(currentWallpaper) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    userScrollEnabled = !isOverlayShown
+                ) { page ->
+                    when (page) {
+                        0 -> {
+                            AppDrawerScreen(
+                                apps = homeUiState.allApps,
+                                isLoading = homeUiState.isLoading,
+                                onSettingsClick = onSettingsClick,
+                                powerViewModel = powerViewModel,
                                 totalPages = totalPages,
-                                pagerState = pagerState
+                                pagerState = pagerState,
+                                keyboardVisible = keyboardVisible
                             )
+                        }
+
+                        else -> {
+                            val widgetPageIndex = page - 1
+                            val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                            if (widgetPage != null) {
+                                WidgetPageScreen(
+                                    pageIndex = widgetPageIndex,
+                                    widgets = widgetPage.widgets,
+                                    viewModel = widgetViewModel,
+                                    totalPages = totalPages,
+                                    pagerState = pagerState,
+                                    onNavigateToResize = { widgetInfo, pageIdx ->
+                                        resizeWidgetInfo = widgetInfo
+                                        resizePageIndex = pageIdx
+                                        showResizeScreen = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -129,4 +150,5 @@ fun LauncherPagerScreen(
         }
     }
 }
+
 

@@ -33,7 +33,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoveDown
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.OpenInFull
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,6 +55,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -82,6 +84,7 @@ fun WidgetPageScreen(
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -89,7 +92,6 @@ fun WidgetPageScreen(
     val columns = gridSettingsManager.columnCount
     val addWidgetIconFocusRequester = remember { FocusRequester() }
     var showWidgetPicker by remember { mutableStateOf(false) }
-    var widgetIdToReplace by remember { mutableStateOf<Int?>(null) }
 
     val widgetPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -121,15 +123,7 @@ fun WidgetPageScreen(
                     height = widgetHeight
                 )
 
-                if (widgetIdToReplace != null) {
-                    viewModel.replaceWidgetAtPosition(
-                        oldWidgetId = widgetIdToReplace!!,
-                        newWidgetInfo = widgetInfo, pageIndex
-                    )
-                    widgetIdToReplace = null
-                } else {
-                    viewModel.addWidgetToPage(widgetInfo, pageIndex)
-                }
+                viewModel.addWidgetToPage(widgetInfo, pageIndex)
             }
         }
     }
@@ -277,16 +271,15 @@ fun WidgetPageScreen(
 
                     widgets.forEachIndexed { index, widget ->
                         item(
-                            key = "${pageIndex}_pos_$index",
+                            key = "widget_${widget.widgetId}_${pageIndex}_$index",
                             span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
                         ) {
-                            key(widget.widgetId) {
-                                WidgetItem(
-                                    widgetInfo = widget,
-                                    viewModel = viewModel,
-                                    pageIndex = pageIndex
-                                )
-                            }
+                            WidgetItem(
+                                widgetInfo = widget,
+                                viewModel = viewModel,
+                                pageIndex = pageIndex,
+                                onNavigateToResize = onNavigateToResize
+                            )
                         }
                     }
                 }
@@ -314,7 +307,8 @@ private fun WidgetItem(
     widgetInfo: WidgetInfo,
     viewModel: WidgetViewModel,
     pageIndex: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     var showOptionsDialog by remember { mutableStateOf(false) }
@@ -322,6 +316,7 @@ private fun WidgetItem(
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
 
+    // Use widgetInfo directly for height calculation so it updates when widget changes
     val widgetHeightDp = remember(widgetInfo.height) {
         val cellHeight = 80.dp
         val calculatedHeight = (widgetInfo.height * cellHeight.value).dp
@@ -341,7 +336,8 @@ private fun WidgetItem(
                 shape = RoundedCornerShape(12.dp)
             )
     ) {
-        key(currentWidgetId) {
+        // Key by both widgetId and dimensions to force recomposition
+        key("${currentWidgetId}_${widgetInfo.width}x${widgetInfo.height}") {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -359,7 +355,10 @@ private fun WidgetItem(
                         widgetView ?: ComposeView(ctx)
                     },
                     modifier = Modifier.fillMaxSize(),
-                    update = { _ -> }
+                    update = { view ->
+                        // Force the widget to update its layout when dimensions change
+                        view.requestLayout()
+                    }
                 )
             }
         }
@@ -392,6 +391,7 @@ private fun WidgetItem(
         }
     }
 
+    // Show options dialog
     if (showOptionsDialog) {
         WidgetOptionsDialog(
             widgetInfo = widgetInfo,
@@ -409,6 +409,10 @@ private fun WidgetItem(
                     toPageIndex = targetPage
                 )
                 showOptionsDialog = false
+            },
+            onResize = {
+                showOptionsDialog = false
+                onNavigateToResize(widgetInfo, pageIndex)
             }
         )
     }
@@ -421,9 +425,12 @@ private fun WidgetOptionsDialog(
     context: Context,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onMove: (Int) -> Unit
+    onMove: (Int) -> Unit,
+    onResize: () -> Unit
 ) {
     AlertDialog(
+
+        modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E1E2E),
         shape = RoundedCornerShape(24.dp),
@@ -453,13 +460,7 @@ private fun WidgetOptionsDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Card(
-                    onClick = {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.widget_toast_coming_soon),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    },
+                    onClick = onResize,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
@@ -473,7 +474,7 @@ private fun WidgetOptionsDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.SwapHoriz,
+                            imageVector = Icons.Default.OpenInFull,
                             contentDescription = null,
                             tint = ThemePrimaryColor,
                             modifier = Modifier.size(24.dp)
@@ -481,12 +482,12 @@ private fun WidgetOptionsDialog(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = stringResource(R.string.widget_replace_title),
+                                text = stringResource(R.string.widget_resize_title),
                                 color = Color.White,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = stringResource(R.string.widget_replace_coming_soon),
+                                text = stringResource(R.string.widget_resize_description),
                                 color = Color.White.copy(alpha = 0.6f),
                                 style = MaterialTheme.typography.bodySmall
                             )
