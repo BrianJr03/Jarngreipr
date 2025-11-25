@@ -41,7 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import jr.brian.home.R
-import jr.brian.home.data.AppDisplayPreferenceManager
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.AppGridItem
 import jr.brian.home.ui.components.AppOptionsMenu
@@ -157,7 +157,7 @@ fun AppDrawerScreen(
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     } else {
-                        AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+                        DisplayPreference.CURRENT_DISPLAY
                     }
                     launchApp(
                         context = context,
@@ -364,11 +364,11 @@ private fun AppGrid(
                     onNavigateRight = {
                         val nextIndex = index + 1
                         if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
-                        appFocusRequesters[nextIndex]?.requestFocus()
-                    }
-                },
-            )
-        }
+                            appFocusRequesters[nextIndex]?.requestFocus()
+                        }
+                    },
+                )
+            }
 
             item {
                 Spacer(modifier = Modifier.height(80.dp))
@@ -380,19 +380,19 @@ private fun AppGrid(
 private fun launchApp(
     context: Context,
     packageName: String,
-    displayPreference: AppDisplayPreferenceManager.DisplayPreference = AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
 ) {
     try {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
             when (displayPreference) {
-                AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY -> {
+                DisplayPreference.PRIMARY_DISPLAY -> {
                     val options = ActivityOptions.makeBasic()
                     options.launchDisplayId = 0
                     context.startActivity(intent, options.toBundle())
                 }
 
-                AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY -> {
+                DisplayPreference.CURRENT_DISPLAY -> {
                     context.startActivity(intent)
                 }
             }
