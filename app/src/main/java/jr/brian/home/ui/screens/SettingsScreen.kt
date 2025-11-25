@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Palette
@@ -90,7 +91,8 @@ import java.io.File
 
 @Composable
 fun SettingsScreen(
-    allApps: List<jr.brian.home.model.AppInfo> = emptyList()
+    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    onNavigateToFAQ: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = AppBackgroundDark,
@@ -104,7 +106,10 @@ fun SettingsScreen(
         ) {
             Column {
                 VersionInfo()
-                SettingsContent(allApps = allApps)
+                SettingsContent(
+                    allApps = allApps,
+                    onNavigateToFAQ = onNavigateToFAQ
+                )
             }
         }
     }
@@ -112,7 +117,8 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
-    allApps: List<jr.brian.home.model.AppInfo> = emptyList()
+    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    onNavigateToFAQ: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -183,6 +189,18 @@ private fun SettingsContent(
                 onClick = {
                     expandedItem = null
                     showAppVisibilityDialog = true
+                },
+            )
+        }
+
+        item {
+            SettingItem(
+                title = stringResource(id = R.string.settings_faq_title),
+                description = stringResource(id = R.string.settings_faq_description),
+                icon = Icons.AutoMirrored.Filled.Help,
+                onClick = {
+                    expandedItem = null
+                    onNavigateToFAQ()
                 },
             )
         }
@@ -835,7 +853,7 @@ private fun GridColumnSelectorItem(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 GridDimensionSelector(
-                    label = "Columns",
+                    label = stringResource(R.string.settings_grid_columns_label),
                     value = gridSettingsManager.columnCount,
                     minValue = GridSettingsManager.MIN_COLUMNS,
                     maxValue = GridSettingsManager.MAX_COLUMNS,
@@ -846,7 +864,7 @@ private fun GridColumnSelectorItem(
                 )
 
                 GridDimensionSelector(
-                    label = "Rows",
+                    label = stringResource(R.string.settings_grid_rows_label),
                     value = gridSettingsManager.rowCount,
                     minValue = GridSettingsManager.MIN_ROWS,
                     maxValue = GridSettingsManager.MAX_ROWS,
@@ -876,7 +894,10 @@ private fun GridColumnSelectorItem(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "${gridSettingsManager.columnCount * gridSettingsManager.rowCount} apps total",
+                            text = stringResource(
+                                R.string.settings_grid_apps_total,
+                                gridSettingsManager.columnCount * gridSettingsManager.rowCount
+                            ),
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 14.sp,
                         )
@@ -884,9 +905,12 @@ private fun GridColumnSelectorItem(
                 }
 
                 GridControlButton(
-                    text = "Done",
+                    text = stringResource(R.string.settings_grid_done),
                     onClick = { onExpandChanged(false) },
-                    isPrimary = true
+                    isPrimary = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 )
             }
         }
@@ -920,7 +944,7 @@ private fun GridDimensionSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             GridControlButton(
-                text = "−",
+                text = stringResource(R.string.settings_grid_minus),
                 onClick = {
                     if (value > minValue) {
                         onValueChange(value - 1)
@@ -959,7 +983,7 @@ private fun GridDimensionSelector(
             Spacer(modifier = Modifier.width(16.dp))
 
             GridControlButton(
-                text = "+",
+                text = stringResource(R.string.settings_grid_plus),
                 onClick = {
                     if (value < maxValue) {
                         onValueChange(value + 1)

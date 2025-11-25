@@ -59,6 +59,12 @@
     <string name="settings_grid_columns_description">Customize columns and rows (1×1 to 10×10)</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
     <string name="settings_grid_size_option">%1$d × %2$d</string>
+    <string name="settings_grid_columns_label">Columns</string>
+    <string name="settings_grid_rows_label">Rows</string>
+    <string name="settings_grid_apps_total">%1$d apps total</string>
+    <string name="settings_grid_done">Done</string>
+    <string name="settings_grid_minus">−</string>
+    <string name="settings_grid_plus">+</string>
 
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
@@ -112,8 +118,16 @@
     <string name="welcome_overlay_button">Got It</string>
     <string name="launch_settings_overlay_button">Settings</string>
     <string name="welcome_overlay_thor_fact_label">⚡ Thor Fact</string>
-    <string name="welcome_overlay_info_label">ℹ️ Quick Tip</string>
-    <string name="welcome_overlay_extra_info">Customize your launcher by adjusting grid layout, themes, wallpapers, and app visibility in Settings.</string>
+    <string name="welcome_overlay_note_label">📌 Important Note</string>
+    <string name="welcome_overlay_keyboard_note">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen and then try again.</string>
+
+    <!-- FAQ Screen -->
+    <string name="settings_faq_title">FAQ</string>
+    <string name="settings_faq_description">Frequently asked questions</string>
+    <string name="settings_faq_icon_description">FAQ icon</string>
+    <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
+    <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
