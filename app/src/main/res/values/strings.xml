@@ -79,14 +79,17 @@
     <string name="widget_loading">Loading widget…</string>
     <string name="widget_edit_description">Edit widget</string>
     <string name="widget_options_title">Widget Options</string>
-    <string name="widget_replace_title">Replace Widget</string>
-    <string name="widget_replace_coming_soon">Coming Soon!</string>
     <string name="widget_delete_title">Delete Widget</string>
     <string name="widget_delete_description">Remove from this page</string>
     <string name="widget_move_section_title">Move to Another Page</string>
     <string name="widget_move_page_title">Widget Page %1$d</string>
     <string name="widget_move_description">Move widget here</string>
-    <string name="widget_toast_coming_soon">Coming Soon!</string>
+    <string name="widget_resize_title">Resize Widget</string>
+    <string name="widget_resize_description">Adjust widget dimensions</string>
+    <string name="widget_resize_mode_title">Resize Mode</string>
+    <string name="widget_resize_mode_instructions">Use the + and - buttons below to adjust size</string>
+    <string name="widget_resize_done">Done</string>
+    <string name="widget_resize_dimensions">%1$d × %2$d cells</string>
 
     <!-- Settings Screen -->
     <string name="settings_palette_icon_description">Theme palette icon</string>
