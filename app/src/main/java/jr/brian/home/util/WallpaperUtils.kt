@@ -9,7 +9,10 @@ object WallpaperUtils {
     /**
      * Detects the wallpaper type based on MIME type or file extension
      */
-    fun detectWallpaperType(context: Context, uri: Uri): WallpaperType {
+    fun detectWallpaperType(
+        context: Context,
+        uri: Uri
+    ): WallpaperType {
         val mimeType = context.contentResolver.getType(uri)
 
         if (mimeType != null) {
@@ -17,7 +20,7 @@ object WallpaperUtils {
                 mimeType.startsWith("image/gif") -> WallpaperType.GIF
                 mimeType.startsWith("video/") -> WallpaperType.VIDEO
                 mimeType.startsWith("image/") -> WallpaperType.IMAGE
-                else -> WallpaperType.IMAGE // Default to image
+                else -> WallpaperType.IMAGE
             }
         }
 
@@ -26,7 +29,7 @@ object WallpaperUtils {
             "gif" -> WallpaperType.GIF
             "mp4", "mov", "avi", "mkv", "webm", "m4v" -> WallpaperType.VIDEO
             "jpg", "jpeg", "png", "bmp", "webp" -> WallpaperType.IMAGE
-            else -> WallpaperType.IMAGE // Default to image
+            else -> WallpaperType.IMAGE
         }
     }
 }

@@ -49,7 +49,8 @@ class WidgetPreferences(private val context: Context) {
                 emptyList()
             }
 
-            val updatedConfigs = currentConfigs + config
+            val filteredConfigs = currentConfigs.filter { it.widgetId != config.widgetId }
+            val updatedConfigs = filteredConfigs + config
             preferences[WIDGET_CONFIGS_KEY] = json.encodeToString(updatedConfigs)
         }
     }
