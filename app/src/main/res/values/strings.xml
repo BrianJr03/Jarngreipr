@@ -16,6 +16,7 @@
     <string name="keyboard_label_search">Search…</string>
     <string name="keyboard_label_settings">Settings…</string>
     <string name="keyboard_label_arrow_left">←</string>
+    <string name="keyboard_label_swap">Swap</string>
 
     <string name="dialog_cancel">Cancel</string>
     <string name="wallpaper">"Wallpaper"</string>
