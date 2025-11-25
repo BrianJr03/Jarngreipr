@@ -129,87 +129,20 @@ fun AppOverlay(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    ThemePrimaryColor.copy(alpha = 0.15f),
-                                    ThemeSecondaryColor.copy(alpha = 0.15f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .border(
-                            width = 2.dp,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    ThemePrimaryColor.copy(alpha = 0.5f),
-                                    ThemeSecondaryColor.copy(alpha = 0.5f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(20.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.welcome_overlay_thor_fact_label),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ThemePrimaryColor,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(randomMessage),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = GraphicsColor.White.copy(alpha = 0.95f),
-                            textAlign = TextAlign.Start,
-                            lineHeight = 26.sp
-                        )
-                    }
-                }
+                    InfoBox(
+                        label = stringResource(R.string.welcome_overlay_thor_fact_label),
+                        content = stringResource(randomMessage),
+                        isPrimary = true
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = AppCardLight.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = GraphicsColor.White.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(20.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.welcome_overlay_info_label),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GraphicsColor.White.copy(alpha = 0.8f),
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.welcome_overlay_extra_info),
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = GraphicsColor.White.copy(alpha = 0.75f),
-                            textAlign = TextAlign.Start,
-                            lineHeight = 24.sp
-                        )
-                    }
-                }
+                    InfoBox(
+                        label = stringResource(R.string.welcome_overlay_note_label),
+                        content = stringResource(R.string.welcome_overlay_keyboard_note),
+                        isPrimary = false,
+                        isWarning = true
+                    )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -265,7 +198,7 @@ fun AppOverlay(
                         )
                     }
                 }
-            }
+                }
             }
 
             IconButton(
@@ -328,6 +261,102 @@ fun AppOverlay(
                     modifier = Modifier.size(28.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun InfoBox(
+    label: String,
+    content: String,
+    isPrimary: Boolean = false,
+    isWarning: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = when {
+        isPrimary -> Brush.linearGradient(
+            colors = listOf(
+                ThemePrimaryColor.copy(alpha = 0.15f),
+                ThemeSecondaryColor.copy(alpha = 0.15f)
+            )
+        )
+
+        isWarning -> Brush.linearGradient(
+            colors = listOf(
+                GraphicsColor(0xFFFF9800).copy(alpha = 0.2f),
+                GraphicsColor(0xFFFFC107).copy(alpha = 0.2f)
+            )
+        )
+
+        else -> Brush.linearGradient(
+            colors = listOf(
+                GraphicsColor.White.copy(alpha = 0.1f),
+                GraphicsColor.White.copy(alpha = 0.05f)
+            )
+        )
+    }
+
+    val borderBrush = when {
+        isPrimary -> Brush.linearGradient(
+            colors = listOf(
+                ThemePrimaryColor.copy(alpha = 0.5f),
+                ThemeSecondaryColor.copy(alpha = 0.5f)
+            )
+        )
+
+        isWarning -> Brush.linearGradient(
+            colors = listOf(
+                GraphicsColor(0xFFFF9800).copy(alpha = 0.8f),
+                GraphicsColor(0xFFFFC107).copy(alpha = 0.8f)
+            )
+        )
+
+        else -> Brush.linearGradient(
+            colors = listOf(
+                GraphicsColor.White.copy(alpha = 0.2f),
+                GraphicsColor.White.copy(alpha = 0.2f)
+            )
+        )
+    }
+
+    val labelColor = when {
+        isPrimary -> ThemePrimaryColor
+        isWarning -> GraphicsColor(0xFFFF9800)
+        else -> GraphicsColor.White.copy(alpha = 0.8f)
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                brush = backgroundColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = 2.dp,
+                brush = borderBrush,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(20.dp)
+    ) {
+        Column {
+            Text(
+                text = label,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = labelColor,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = content,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Normal,
+                color = GraphicsColor.White.copy(alpha = 0.95f),
+                textAlign = TextAlign.Start,
+                lineHeight = 26.sp
+            )
         }
     }
 }
