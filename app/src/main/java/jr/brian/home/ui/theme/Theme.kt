@@ -11,10 +11,12 @@ fun LauncherTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val themeManager = remember { ThemeManager(context) }
     val wallpaperManager = remember { WallpaperManager(context) }
+    val oledModeManager = remember { OledModeManager(context) }
 
     CompositionLocalProvider(
         LocalThemeManager provides themeManager,
-        LocalWallpaperManager provides wallpaperManager
+        LocalWallpaperManager provides wallpaperManager,
+        LocalOledModeManager provides oledModeManager
     ) {
         MaterialTheme(
             colorScheme =

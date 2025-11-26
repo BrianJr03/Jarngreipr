@@ -46,6 +46,8 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -65,7 +67,7 @@ fun AddToWidgetPageDialog(
                 .fillMaxWidth(0.85f)
                 .padding(vertical = 16.dp)
                 .background(
-                    color = AppCardDark,
+                    color = OledCardColor,
                     shape = RoundedCornerShape(24.dp)
                 )
                 .border(
@@ -229,8 +231,8 @@ private fun CancelButton(onClick: () -> Unit) {
             )
         } else {
             listOf(
-                AppCardLight.copy(alpha = 0.8f),
-                AppCardDark.copy(alpha = 0.8f)
+                OledCardLightColor.copy(alpha = 0.8f),
+                OledCardColor.copy(alpha = 0.8f)
             )
         }
     )
