@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.theme.LocalGridSettingsManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 
@@ -52,7 +53,7 @@ fun WidgetResizeScreen(
     viewModel: WidgetViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val gridSettingsManager = jr.brian.home.ui.theme.LocalGridSettingsManager.current
+    val gridSettingsManager = LocalGridSettingsManager.current
     val maxColumns = gridSettingsManager.columnCount
     val maxRows = 10
 
