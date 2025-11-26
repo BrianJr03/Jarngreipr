@@ -55,6 +55,7 @@ fun FAQScreen() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(OledBackgroundColor)
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
