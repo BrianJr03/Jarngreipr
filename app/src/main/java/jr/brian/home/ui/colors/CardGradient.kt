@@ -13,7 +13,6 @@ fun cardGradient(isFocused: Boolean): Brush {
     val oledManager = LocalOledModeManager.current
 
     return if (oledManager.isOledModeEnabled) {
-        // In OLED mode, use pure black with white accents when focused
         Brush.linearGradient(
             colors = if (isFocused) {
                 listOf(
@@ -28,7 +27,6 @@ fun cardGradient(isFocused: Boolean): Brush {
             }
         )
     } else {
-        // Normal mode with original behavior
         Brush.linearGradient(
             colors = if (isFocused) {
                 listOf(
