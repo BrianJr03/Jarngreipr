@@ -64,6 +64,15 @@ data class ColorTheme(
                 lightTextColor = Color(0xFF00FF00),
             )
 
+        val OLED_BLACK_WHITE =
+            ColorTheme(
+                id = "oled_black_white",
+                name = "OLED Black & White",
+                primaryColor = Color(0xFFFFFFFF),
+                secondaryColor = Color(0xFFE0E0E0),
+                lightTextColor = Color(0xFFFFFFFF),
+            )
+
         val allThemes =
             listOf(
                 PINK_VIOLET,
@@ -72,6 +81,7 @@ data class ColorTheme(
                 PURPLE_ORANGE,
                 RED_BLUE,
                 MAGENTA_LIME,
+                OLED_BLACK_WHITE,
             )
 
         fun fromId(id: String): ColorTheme = allThemes.find { it.id == id } ?: PINK_VIOLET

@@ -39,6 +39,9 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
 
+    <string name="settings_oled_mode_title">OLED Black Mode</string>
+    <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
+
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
     <string name="settings_wallpaper_default">Default</string>

@@ -78,9 +78,13 @@ import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.LocalOledModeManager
 import jr.brian.home.ui.theme.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.LocalThemeManager
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -97,7 +101,7 @@ fun SettingsScreen(
     onNavigateToFAQ: () -> Unit = {}
 ) {
     Scaffold(
-        containerColor = AppBackgroundDark,
+        containerColor = OledBackgroundColor,
     ) { innerPadding ->
         Box(
             modifier =
@@ -158,6 +162,13 @@ private fun SettingsContent(
                 focusRequester = firstItemFocusRequester,
                 isExpanded = expandedItem == "theme",
                 onExpandChanged = { expandedItem = if (it) "theme" else null }
+            )
+        }
+
+        item {
+            OledModeToggleItem(
+                isExpanded = expandedItem == "oled",
+                onExpandChanged = { expandedItem = if (it) "oled" else null }
             )
         }
 
@@ -260,8 +271,8 @@ private fun ThemeSelectorItem(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -493,8 +504,8 @@ private fun WallpaperSelectorItem(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -654,8 +665,8 @@ private fun SettingItem(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -763,8 +774,8 @@ private fun GridColumnSelectorItem(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -943,7 +954,7 @@ private fun GridDimensionSelector(
                 modifier = Modifier
                     .weight(1f)
                     .background(
-                        color = AppCardDark,
+                        color = OledCardColor,
                         shape = RoundedCornerShape(12.dp)
                     )
                     .border(
@@ -1072,8 +1083,8 @@ private fun GridControlButton(
             )
 
             else -> listOf(
-                AppCardLight,
-                AppCardDark,
+                OledCardLightColor,
+                OledCardColor,
             )
         }
     )
@@ -1148,8 +1159,8 @@ private fun ThorSettingsItem(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -1273,8 +1284,8 @@ private fun ThorSettingToggleButton(
                     )
                 } else {
                     listOf(
-                        AppCardLight,
-                        AppCardDark,
+                        OledCardLightColor,
+                        OledCardColor,
                     )
                 },
         )
@@ -1328,6 +1339,125 @@ private fun ThorSettingToggleButton(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
             )
+        }
+    }
+}
+
+@Composable
+private fun OledModeToggleItem(
+    focusRequester: FocusRequester? = null,
+    isExpanded: Boolean = false,
+    onExpandChanged: (Boolean) -> Unit = {}
+) {
+    val oledManager = LocalOledModeManager.current
+    val isOledEnabled = oledManager.isOledModeEnabled
+    var isFocused by remember { mutableStateOf(false) }
+    val mainCardFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isExpanded) {
+        if (!isExpanded) {
+            mainCardFocusRequester.requestFocus()
+        }
+    }
+
+    val cardGradient =
+        Brush.linearGradient(
+            colors =
+                if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.8f),
+                    )
+                } else {
+                    listOf(
+                        OledCardLightColor,
+                        OledCardColor,
+                    )
+                },
+        )
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester ?: mainCardFocusRequester)
+                    .onFocusChanged {
+                        isFocused = it.isFocused
+                    }
+                    .background(
+                        brush = cardGradient,
+                        shape = RoundedCornerShape(16.dp),
+                    )
+                    .border(
+                        width = if (isFocused) 2.dp else 0.dp,
+                        brush =
+                            borderBrush(
+                                isFocused = isFocused,
+                                colors =
+                                    listOf(
+                                        ThemePrimaryColor.copy(alpha = 0.8f),
+                                        ThemeSecondaryColor.copy(alpha = 0.6f),
+                                    ),
+                            ),
+                        shape = RoundedCornerShape(16.dp),
+                    )
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable {
+                        oledManager.toggleOledMode()
+                    }
+                    .focusable()
+                    .padding(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = "OLED Mode",
+                        modifier =
+                            Modifier
+                                .size(32.dp)
+                                .rotate(animatedRotation(isFocused)),
+                        tint = Color.White,
+                    )
+
+                    Spacer(modifier = Modifier.size(16.dp))
+
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.settings_oled_mode_title),
+                            color = Color.White,
+                            fontSize = if (isFocused) 18.sp else 16.sp,
+                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(id = R.string.settings_oled_mode_description),
+                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+
+                Text(
+                    text = if (isOledEnabled) "ON" else "OFF",
+                    color = if (isOledEnabled) Color.Green else Color.Gray,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

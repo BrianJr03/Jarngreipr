@@ -43,6 +43,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 
@@ -68,7 +70,7 @@ fun WidgetResizeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1E1E2E))
+            .background(OledBackgroundColor)
     ) {
         Column(
             modifier = Modifier
@@ -123,7 +125,7 @@ fun WidgetResizeScreen(
                         .fillMaxWidth()
                         .height(widgetHeightDp.coerceAtMost(400.dp))
                         .background(
-                            color = Color(0xFF2A2A2A),
+                            color = OledCardColor,
                             shape = RoundedCornerShape(16.dp)
                         )
                         .border(
@@ -183,7 +185,7 @@ fun WidgetResizeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF2A2A2A)
+                        containerColor = OledCardColor
                     )
                 ) {
                     Row(
@@ -235,7 +237,7 @@ fun WidgetResizeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF2A2A2A)
+                        containerColor = OledCardColor
                     )
                 ) {
                     Row(
