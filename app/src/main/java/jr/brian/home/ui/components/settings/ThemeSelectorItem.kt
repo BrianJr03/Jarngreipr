@@ -253,9 +253,15 @@ private fun ThemeCard(
                 },
         contentAlignment = Alignment.Center,
     ) {
+        val themeName = stringResource(id = theme.nameResId)
+        val color = if (themeName == stringResource(R.string.theme_white_gray)) {
+            Color.Black
+        } else {
+            Color.White
+        }
         Text(
-            text = theme.name,
-            color = Color.White,
+            text = themeName,
+            color = color,
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
         )

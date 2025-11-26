@@ -39,6 +39,15 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
 
+    <!-- Color Theme Names -->
+    <string name="theme_pink_violet">Pink &amp; Violet</string>
+    <string name="theme_blue_yellow">Blue &amp; Yellow</string>
+    <string name="theme_green_cyan">Green &amp; Cyan</string>
+    <string name="theme_purple_orange">Purple &amp; Orange</string>
+    <string name="theme_red_blue">Red &amp; Blue</string>
+    <string name="theme_magenta_lime">Magenta &amp; Lime</string>
+    <string name="theme_white_gray">White &amp; Gray</string>
+
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
 

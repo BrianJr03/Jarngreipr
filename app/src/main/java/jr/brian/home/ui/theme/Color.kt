@@ -12,7 +12,6 @@ val AppCardDark = Color(0xFF1E1E2E)
 
 val AppCardLight = Color(0xFF16213E)
 
-// OLED Black theme color
 val ThemeBlack = Color(0xFF000000)
 
 @Composable
