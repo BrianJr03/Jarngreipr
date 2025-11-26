@@ -254,7 +254,7 @@ private fun ThemeCard(
         contentAlignment = Alignment.Center,
     ) {
         val themeName = stringResource(id = theme.nameResId)
-        val color = if (themeName == stringResource(R.string.theme_white_gray)) {
+        val color = if (themeName == stringResource(R.string.theme_light_gray)) {
             Color.Black
         } else {
             Color.White

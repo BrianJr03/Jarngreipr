@@ -46,7 +46,7 @@
     <string name="theme_purple_orange">Purple &amp; Orange</string>
     <string name="theme_red_blue">Red &amp; Blue</string>
     <string name="theme_magenta_lime">Magenta &amp; Lime</string>
-    <string name="theme_white_gray">White &amp; Gray</string>
+    <string name="theme_light_gray">Light Gray</string>
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
