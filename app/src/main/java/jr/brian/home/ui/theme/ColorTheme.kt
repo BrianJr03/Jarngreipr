@@ -69,10 +69,10 @@ data class ColorTheme(
         val OLED_BLACK_WHITE =
             ColorTheme(
                 id = "oled_black_white",
-                nameResId = R.string.theme_white_gray,
-                primaryColor = Color(0xFFFFFFFF),
-                secondaryColor = Color(0xFFE0E0E0),
-                lightTextColor = Color(0xFFFFFFFF),
+                nameResId = R.string.theme_light_gray,
+                primaryColor = Color.LightGray,
+                secondaryColor = Color.LightGray,
+                lightTextColor = Color.LightGray,
             )
 
         val allThemes =
