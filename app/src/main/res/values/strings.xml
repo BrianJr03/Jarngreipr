@@ -61,7 +61,12 @@
     <string name="settings_grid_size_option">%1$d × %2$d</string>
     <string name="settings_grid_columns_label">Columns</string>
     <string name="settings_grid_rows_label">Rows</string>
-    <string name="settings_grid_apps_total">%1$d apps total</string>
+    <string name="settings_grid_apps_total_singular">%1$d app total</string>
+    <string name="settings_grid_apps_total_plural">%1$d apps total</string>
+    <string name="settings_grid_apps_hidden_singular">%1$d app will be displayed. %2$d selected app will be hidden</string>
+    <string name="settings_grid_apps_hidden_plural">%1$d apps will be displayed. %2$d selected apps will be hidden</string>
+    <string name="settings_grid_all_apps_visible_singular"> %1$d app will be displayed. All selected apps will be visible</string>
+    <string name="settings_grid_all_apps_visible_plural">%1$d apps will be displayed. All selected apps will be visible</string>
     <string name="settings_grid_done">Done</string>
     <string name="settings_grid_minus">−</string>
     <string name="settings_grid_plus">+</string>
