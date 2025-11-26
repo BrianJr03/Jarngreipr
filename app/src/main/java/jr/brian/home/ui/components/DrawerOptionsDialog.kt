@@ -35,6 +35,7 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.WallpaperType
 import jr.brian.home.util.WallpaperUtils
@@ -91,7 +92,7 @@ fun DrawerOptionsDialog(
         )
     ) {
         Surface(
-            color = AppBackgroundDark,
+            color = OledBackgroundColor,
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(

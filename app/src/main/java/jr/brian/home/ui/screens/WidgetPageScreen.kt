@@ -83,6 +83,7 @@ import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.LocalWallpaperManager
 import jr.brian.home.ui.theme.LocalWidgetPageAppManager
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -469,7 +470,7 @@ private fun AppItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFF2A2A2A),
+                color = OledCardColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -527,7 +528,7 @@ private fun AppOptionsDialog(
     AlertDialog(
         modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E1E2E),
+        containerColor = OledCardColor,
         shape = RoundedCornerShape(24.dp),
         title = {
             Column(
@@ -635,9 +636,11 @@ private fun WidgetItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (swapModeEnabled && !isSwapSource) Color(0xFF3A3A3A) else Color(
-                    0xFF2A2A2A
-                ),
+                color = if (swapModeEnabled && !isSwapSource) {
+                    OledCardColor.copy(alpha = 0.8f)
+                } else {
+                    OledCardColor
+                },
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -651,7 +654,7 @@ private fun WidgetItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(widgetHeightDp)
-                    .background(Color(0xFF2A2A2A))
+                    .background(OledCardColor)
             ) {
                 AndroidView(
                     factory = { ctx ->
@@ -765,7 +768,7 @@ private fun WidgetOptionsDialog(
     AlertDialog(
         modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1E1E2E),
+        containerColor = OledCardColor,
         shape = RoundedCornerShape(24.dp),
         title = {
             Column(

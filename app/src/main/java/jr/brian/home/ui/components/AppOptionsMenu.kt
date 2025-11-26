@@ -38,6 +38,7 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.ui.extensions.handleDPadNavigation
 import jr.brian.home.ui.theme.AppCardDark
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
@@ -149,7 +150,7 @@ fun AppOptionsMenu(
         },
         confirmButton = {},
         dismissButton = {},
-        containerColor = AppCardDark,
+        containerColor = OledCardColor,
         shape = RoundedCornerShape(16.dp),
     )
 }
