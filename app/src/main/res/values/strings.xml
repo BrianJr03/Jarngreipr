@@ -39,11 +39,20 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
 
+    <!-- Color Theme Names -->
+    <string name="theme_pink_violet">Pink &amp; Violet</string>
+    <string name="theme_blue_yellow">Blue &amp; Yellow</string>
+    <string name="theme_green_cyan">Green &amp; Cyan</string>
+    <string name="theme_purple_orange">Purple &amp; Orange</string>
+    <string name="theme_red_blue">Red &amp; Blue</string>
+    <string name="theme_magenta_lime">Magenta &amp; Lime</string>
+    <string name="theme_white_gray">White &amp; Gray</string>
+
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
-    <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
+    <string name="settings_wallpaper_description">Choose a wallpaper</string>
     <string name="settings_wallpaper_default">Default</string>
     <string name="settings_wallpaper_transparent">System Wallpaper</string>
     <string name="settings_wallpaper_image_picker">Choose Image</string>
@@ -59,7 +68,7 @@
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
 
     <string name="settings_grid_columns_title">Grid Layout</string>
-    <string name="settings_grid_columns_description">Customize columns and rows (1×1 to 10×10)</string>
+    <string name="settings_grid_columns_description">Customize columns and rows</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
     <string name="settings_grid_size_option">%1$d × %2$d</string>
     <string name="settings_grid_columns_label">Columns</string>

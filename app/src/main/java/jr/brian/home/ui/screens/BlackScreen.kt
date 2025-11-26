@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.header
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background

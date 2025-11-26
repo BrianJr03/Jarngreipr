@@ -5,6 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.OledModeManager
+import jr.brian.home.ui.theme.managers.ThemeManager
+import jr.brian.home.ui.theme.managers.WallpaperManager
 
 @Composable
 fun LauncherTheme(content: @Composable () -> Unit) {

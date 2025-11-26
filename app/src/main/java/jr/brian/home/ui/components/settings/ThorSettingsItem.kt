@@ -48,7 +48,7 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

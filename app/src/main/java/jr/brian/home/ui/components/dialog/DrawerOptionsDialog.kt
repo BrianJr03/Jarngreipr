@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.dialog
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -33,11 +33,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.ui.theme.AppBackgroundDark
-import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.WallpaperUtils
 import java.io.File
 

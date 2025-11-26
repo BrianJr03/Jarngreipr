@@ -52,7 +52,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.ColorTheme
-import jr.brian.home.ui.theme.LocalThemeManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -253,9 +253,15 @@ private fun ThemeCard(
                 },
         contentAlignment = Alignment.Center,
     ) {
+        val themeName = stringResource(id = theme.nameResId)
+        val color = if (themeName == stringResource(R.string.theme_white_gray)) {
+            Color.Black
+        } else {
+            Color.White
+        }
         Text(
-            text = theme.name,
-            color = Color.White,
+            text = themeName,
+            color = color,
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
         )

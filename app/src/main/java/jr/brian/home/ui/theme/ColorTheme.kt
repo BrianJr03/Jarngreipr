@@ -1,10 +1,12 @@
 package jr.brian.home.ui.theme
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
+import jr.brian.home.R
 
 data class ColorTheme(
     val id: String,
-    val name: String,
+    @param:StringRes val nameResId: Int,
     val primaryColor: Color,
     val secondaryColor: Color,
     val lightTextColor: Color,
@@ -13,7 +15,7 @@ data class ColorTheme(
         val PINK_VIOLET =
             ColorTheme(
                 id = "pink_violet",
-                name = "Pink & Violet",
+                nameResId = R.string.theme_pink_violet,
                 primaryColor = Color(0xFF8A2BE2),
                 secondaryColor = Color(0xFFFF69B4),
                 lightTextColor = Color(0xFFFF69B4),
@@ -22,7 +24,7 @@ data class ColorTheme(
         val BLUE_YELLOW =
             ColorTheme(
                 id = "blue_yellow",
-                name = "Blue & Yellow",
+                nameResId = R.string.theme_blue_yellow,
                 primaryColor = Color(0xFF4169E1),
                 secondaryColor = Color(0xFFFFD700),
                 lightTextColor = Color(0xFFFFD700),
@@ -31,7 +33,7 @@ data class ColorTheme(
         val GREEN_CYAN =
             ColorTheme(
                 id = "green_cyan",
-                name = "Green & Cyan",
+                nameResId = R.string.theme_green_cyan,
                 primaryColor = Color(0xFF008B45),
                 secondaryColor = Color(0xFF00CED1),
                 lightTextColor = Color(0xFF00CED1),
@@ -40,7 +42,7 @@ data class ColorTheme(
         val PURPLE_ORANGE =
             ColorTheme(
                 id = "purple_orange",
-                name = "Purple & Orange",
+                nameResId = R.string.theme_purple_orange,
                 primaryColor = Color(0xFF6A0DAD),
                 secondaryColor = Color(0xFFFF8C00),
                 lightTextColor = Color(0xFFFF8C00),
@@ -49,7 +51,7 @@ data class ColorTheme(
         val RED_BLUE =
             ColorTheme(
                 id = "red_blue",
-                name = "Red & Blue",
+                nameResId = R.string.theme_red_blue,
                 primaryColor = Color(0xFF4169E1),
                 secondaryColor = Color(0xFFE94560),
                 lightTextColor = Color(0xFFE94560),
@@ -58,7 +60,7 @@ data class ColorTheme(
         val MAGENTA_LIME =
             ColorTheme(
                 id = "magenta_lime",
-                name = "Magenta & Lime",
+                nameResId = R.string.theme_magenta_lime,
                 primaryColor = Color(0xFFAA00FF),
                 secondaryColor = Color(0xFF00FF00),
                 lightTextColor = Color(0xFF00FF00),
@@ -67,7 +69,7 @@ data class ColorTheme(
         val OLED_BLACK_WHITE =
             ColorTheme(
                 id = "oled_black_white",
-                name = "OLED Black & White",
+                nameResId = R.string.theme_white_gray,
                 primaryColor = Color(0xFFFFFFFF),
                 secondaryColor = Color(0xFFE0E0E0),
                 lightTextColor = Color(0xFFFFFFFF),

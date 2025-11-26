@@ -1,4 +1,4 @@
-package jr.brian.home.ui.theme
+package jr.brian.home.ui.theme.managers
 
 import android.content.Context
 import androidx.compose.runtime.compositionLocalOf
@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
+import jr.brian.home.ui.theme.ColorTheme
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_THEME = "selected_theme"
@@ -19,8 +20,8 @@ class ThemeManager(
     private fun loadTheme(): ColorTheme {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val themeId =
-            prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id) ?: ColorTheme.PINK_VIOLET.id
-        return ColorTheme.fromId(themeId)
+            prefs.getString(KEY_THEME, ColorTheme.Companion.PINK_VIOLET.id) ?: ColorTheme.Companion.PINK_VIOLET.id
+        return ColorTheme.Companion.fromId(themeId)
     }
 
     fun setTheme(theme: ColorTheme) {

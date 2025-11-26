@@ -1,5 +1,6 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.wallpaper
 
+import android.os.Build
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.Image
@@ -24,7 +25,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import jr.brian.home.ui.theme.AppBackgroundDark
-import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.ui.theme.managers.WallpaperType
 
 @Composable
 fun WallpaperDisplay(
@@ -62,7 +63,7 @@ fun WallpaperDisplay(
                 val imageLoader = remember {
                     ImageLoader.Builder(context)
                         .components {
-                            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                            if (Build.VERSION.SDK_INT >= 28) {
                                 add(ImageDecoderDecoder.Factory())
                             } else {
                                 add(GifDecoder.Factory())

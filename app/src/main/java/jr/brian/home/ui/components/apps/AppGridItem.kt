@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi

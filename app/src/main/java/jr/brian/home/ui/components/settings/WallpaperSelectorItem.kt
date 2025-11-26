@@ -49,13 +49,13 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.components.WallpaperOptionButton
-import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.components.wallpaper.WallpaperOptionButton
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.WallpaperUtils
 import java.io.File
 
