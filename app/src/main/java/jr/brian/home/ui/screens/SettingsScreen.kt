@@ -856,67 +856,10 @@ private fun GridColumnSelectorItem(
                 val gridCapacity = gridSettingsManager.columnCount * gridSettingsManager.rowCount
                 val hiddenAppsCount = (totalAppsCount - gridCapacity).coerceAtLeast(0)
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = if (hiddenAppsCount > 0) {
-                                ThemeSecondaryColor.copy(alpha = 0.15f)
-                            } else {
-                                ThemePrimaryColor.copy(alpha = 0.15f)
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = if (hiddenAppsCount > 0) {
-                                ThemeSecondaryColor.copy(alpha = 0.5f)
-                            } else {
-                                ThemePrimaryColor.copy(alpha = 0.5f)
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = if (hiddenAppsCount > 0) {
-                            if (gridCapacity == 1 && hiddenAppsCount == 1) {
-                                stringResource(
-                                    R.string.settings_grid_apps_hidden_singular,
-                                    gridCapacity,
-                                    hiddenAppsCount
-                                )
-                            } else {
-                                stringResource(
-                                    R.string.settings_grid_apps_hidden_plural,
-                                    gridCapacity,
-                                    hiddenAppsCount
-                                )
-                            }
-                        } else {
-                            if (gridCapacity == 1) {
-                                stringResource(
-                                    R.string.settings_grid_all_apps_visible_singular,
-                                    gridCapacity
-                                )
-                            } else {
-                                stringResource(
-                                    R.string.settings_grid_all_apps_visible_plural,
-                                    gridCapacity
-                                )
-                            }
-                        },
-                        color = if (hiddenAppsCount > 0) {
-                            ThemeSecondaryColor
-                        } else {
-                            ThemePrimaryColor
-                        },
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                GridLayoutLabel(
+                    gridCapacity = gridCapacity,
+                    hiddenAppsCount = hiddenAppsCount
+                )
 
                 GridDimensionSelector(
                     label = stringResource(R.string.settings_grid_columns_label),
@@ -1029,6 +972,74 @@ private fun GridDimensionSelector(
                 focusRequester = plusFocusRequester
             )
         }
+    }
+}
+
+@Composable
+private fun GridLayoutLabel(
+    gridCapacity: Int,
+    hiddenAppsCount: Int
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = if (hiddenAppsCount > 0) {
+                    ThemeSecondaryColor.copy(alpha = 0.15f)
+                } else {
+                    ThemePrimaryColor.copy(alpha = 0.15f)
+                },
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = if (hiddenAppsCount > 0) {
+                    ThemeSecondaryColor.copy(alpha = 0.5f)
+                } else {
+                    ThemePrimaryColor.copy(alpha = 0.5f)
+                },
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp)
+    ) {
+        Text(
+            text = if (hiddenAppsCount > 0) {
+                if (gridCapacity == 1 && hiddenAppsCount == 1) {
+                    stringResource(
+                        R.string.settings_grid_apps_hidden_singular,
+                        gridCapacity,
+                        hiddenAppsCount
+                    )
+                } else {
+                    stringResource(
+                        R.string.settings_grid_apps_hidden_plural,
+                        gridCapacity,
+                        hiddenAppsCount
+                    )
+                }
+            } else {
+                if (gridCapacity == 1) {
+                    stringResource(
+                        R.string.settings_grid_all_apps_visible_singular,
+                        gridCapacity
+                    )
+                } else {
+                    stringResource(
+                        R.string.settings_grid_all_apps_visible_plural,
+                        gridCapacity
+                    )
+                }
+            },
+            color = if (hiddenAppsCount > 0) {
+                ThemeSecondaryColor
+            } else {
+                ThemePrimaryColor
+            },
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
