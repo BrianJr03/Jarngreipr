@@ -67,6 +67,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
@@ -91,7 +92,8 @@ import java.io.File
 
 @Composable
 fun SettingsScreen(
-    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    allApps: List<AppInfo> = emptyList(),
+    allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
     Scaffold(
@@ -108,6 +110,7 @@ fun SettingsScreen(
                 VersionInfo()
                 SettingsContent(
                     allApps = allApps,
+                    allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ
                 )
             }
@@ -117,7 +120,8 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
-    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    allApps: List<AppInfo> = emptyList(),
+    allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -137,7 +141,7 @@ private fun SettingsContent(
 
     if (showAppVisibilityDialog) {
         AppVisibilityDialog(
-            apps = allApps,
+            apps = allAppsUnfiltered,
             onDismiss = { showAppVisibilityDialog = false }
         )
     }
