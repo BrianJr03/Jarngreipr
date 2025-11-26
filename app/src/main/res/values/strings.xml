@@ -39,6 +39,9 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
 
+    <string name="settings_oled_mode_title">OLED Black Mode</string>
+    <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
+
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper for your launcher</string>
     <string name="settings_wallpaper_default">Default</string>
@@ -75,6 +78,8 @@
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
     <string name="settings_thor_power_button">Show Power Button</string>
     <string name="settings_thor_icon_description">Thor settings icon</string>
+    <string name="settings_toggle_on">ON</string>
+    <string name="settings_toggle_off">OFF</string>
 
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
@@ -111,6 +116,9 @@
     <string name="settings_palette_icon_description">Theme palette icon</string>
     <string name="settings_wallpaper_icon_description">Wallpaper icon</string>
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_layout">Layout</string>
+    <string name="settings_section_support">Support</string>
 
     <!-- App Grid Item -->
     <string name="app_icon_description">App icon for %1$s</string>

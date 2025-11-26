@@ -12,6 +12,9 @@ val AppCardDark = Color(0xFF1E1E2E)
 
 val AppCardLight = Color(0xFF16213E)
 
+// OLED Black theme color
+val ThemeBlack = Color(0xFF000000)
+
 @Composable
 fun themePrimaryColor(): Color = LocalThemeManager.current.currentTheme.primaryColor
 
@@ -24,3 +27,25 @@ fun themeAccentColor(): Color = LocalThemeManager.current.currentTheme.lightText
 val ThemePrimaryColor @Composable get() = themePrimaryColor()
 val ThemeSecondaryColor @Composable get() = themeSecondaryColor()
 val ThemeAccentColor @Composable get() = themeAccentColor()
+
+@Composable
+fun oledBackgroundColor(): Color {
+    val oledManager = LocalOledModeManager.current
+    return if (oledManager.isOledModeEnabled) ThemeBlack else AppBackgroundDark
+}
+
+@Composable
+fun oledCardColor(): Color {
+    val oledManager = LocalOledModeManager.current
+    return if (oledManager.isOledModeEnabled) ThemeBlack else AppCardDark
+}
+
+@Composable
+fun oledCardLightColor(): Color {
+    val oledManager = LocalOledModeManager.current
+    return if (oledManager.isOledModeEnabled) ThemeBlack else AppCardLight
+}
+
+val OledBackgroundColor @Composable get() = oledBackgroundColor()
+val OledCardColor @Composable get() = oledCardColor()
+val OledCardLightColor @Composable get() = oledCardLightColor()

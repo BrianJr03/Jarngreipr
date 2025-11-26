@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.theme.AppCardDark
-import jr.brian.home.ui.theme.AppCardLight
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.util.OverlayInfoUtil
@@ -105,7 +105,7 @@ fun AppOverlay(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = AppCardDark.copy(alpha = 0.95f)
+                    containerColor = OledCardColor.copy(alpha = 0.95f)
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 16.dp

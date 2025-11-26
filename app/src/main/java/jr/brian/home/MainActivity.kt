@@ -234,6 +234,7 @@ private fun MainContent() {
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
                             allApps = homeUiState.allApps,
+                            allAppsUnfiltered = homeUiState.allAppsUnfiltered,
                             onNavigateToFAQ = {
                                 navController.navigate(Routes.FAQ)
                             }

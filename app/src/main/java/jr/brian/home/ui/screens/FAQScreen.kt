@@ -29,6 +29,9 @@ import jr.brian.home.R
 import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
+import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -47,11 +50,12 @@ fun FAQScreen() {
     )
 
     Scaffold(
-        containerColor = AppBackgroundDark,
+        containerColor = OledBackgroundColor,
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(OledBackgroundColor)
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
@@ -94,8 +98,8 @@ private fun FAQCard(
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        AppCardLight,
-                        AppCardDark
+                        OledCardLightColor,
+                        OledCardColor
                     )
                 ),
                 shape = RoundedCornerShape(16.dp)

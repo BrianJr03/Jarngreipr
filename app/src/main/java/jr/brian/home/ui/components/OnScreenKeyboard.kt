@@ -45,6 +45,7 @@ import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.extensions.handleRightNavigation
 import jr.brian.home.ui.theme.AppCardDark
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -75,7 +76,7 @@ fun OnScreenKeyboard(
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
-                    .background(AppCardDark, RoundedCornerShape(8.dp))
+                    .background(OledCardColor, RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

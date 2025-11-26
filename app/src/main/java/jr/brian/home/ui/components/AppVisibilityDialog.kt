@@ -54,6 +54,8 @@ import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -87,7 +89,7 @@ fun AppVisibilityDialog(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .background(
-                    color = AppCardDark,
+                    color = OledCardColor,
                     shape = RoundedCornerShape(16.dp)
                 )
                 .border(
@@ -183,8 +185,8 @@ private fun AppVisibilityItem(
             )
         } else {
             listOf(
-                AppCardLight.copy(alpha = 0.5f),
-                AppCardDark.copy(alpha = 0.5f),
+                OledCardLightColor.copy(alpha = 0.5f),
+                OledCardColor.copy(alpha = 0.5f),
             )
         }
     )
@@ -266,8 +268,8 @@ private fun ActionButton(
             )
         } else {
             listOf(
-                AppCardLight.copy(alpha = 0.7f),
-                AppCardDark.copy(alpha = 0.7f),
+                OledCardLightColor.copy(alpha = 0.7f),
+                OledCardColor.copy(alpha = 0.7f),
             )
         }
     )
@@ -312,8 +314,8 @@ private fun CloseButton(onClick: () -> Unit) {
             )
         } else {
             listOf(
-                AppCardLight,
-                AppCardDark,
+                OledCardLightColor,
+                OledCardColor,
             )
         }
     )
