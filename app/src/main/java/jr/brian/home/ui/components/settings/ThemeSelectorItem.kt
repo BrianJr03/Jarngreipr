@@ -52,7 +52,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.ColorTheme
-import jr.brian.home.ui.theme.LocalThemeManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

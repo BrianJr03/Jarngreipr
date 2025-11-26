@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,9 +51,7 @@ import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.AppCardDark
-import jr.brian.home.ui.theme.AppCardLight
-import jr.brian.home.ui.theme.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

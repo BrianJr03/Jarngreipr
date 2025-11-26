@@ -2,7 +2,7 @@ package jr.brian.home.ui.colors
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
-import jr.brian.home.ui.theme.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

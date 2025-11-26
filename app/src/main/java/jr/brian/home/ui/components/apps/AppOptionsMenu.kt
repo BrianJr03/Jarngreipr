@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.ui.extensions.handleDPadNavigation
-import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 

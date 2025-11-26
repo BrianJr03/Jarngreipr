@@ -3,7 +3,7 @@ package jr.brian.home.util
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
-import jr.brian.home.ui.theme.WallpaperType
+import jr.brian.home.ui.theme.managers.WallpaperType
 
 object WallpaperUtils {
     /**

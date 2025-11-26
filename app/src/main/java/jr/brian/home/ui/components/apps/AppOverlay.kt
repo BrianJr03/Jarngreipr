@@ -1,10 +1,11 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -50,7 +51,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -167,7 +167,7 @@ fun AppOverlay(
                         modifier = Modifier
                             .weight(1f)
                             .height(56.dp),
-                        border = androidx.compose.foundation.BorderStroke(
+                        border = BorderStroke(
                             2.dp,
                             ThemePrimaryColor.copy(alpha = 0.6f)
                         )

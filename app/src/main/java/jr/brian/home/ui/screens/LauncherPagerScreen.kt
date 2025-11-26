@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
-import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel

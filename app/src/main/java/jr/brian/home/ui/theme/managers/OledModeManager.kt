@@ -1,4 +1,4 @@
-package jr.brian.home.ui.theme
+package jr.brian.home.ui.theme.managers
 
 import android.content.Context
 import androidx.compose.runtime.getValue

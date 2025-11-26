@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.dialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,8 +44,6 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.AppCardDark
-import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

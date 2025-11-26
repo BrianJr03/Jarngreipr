@@ -43,16 +43,16 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.components.AppGridItem
-import jr.brian.home.ui.components.AppOptionsMenu
-import jr.brian.home.ui.components.DrawerOptionsDialog
+import jr.brian.home.ui.components.apps.AppGridItem
+import jr.brian.home.ui.components.apps.AppOptionsMenu
+import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.OnScreenKeyboard
-import jr.brian.home.ui.components.ScreenHeaderRow
-import jr.brian.home.ui.components.WallpaperDisplay
-import jr.brian.home.ui.theme.LocalAppDisplayPreferenceManager
-import jr.brian.home.ui.theme.LocalGridSettingsManager
-import jr.brian.home.ui.theme.LocalPowerSettingsManager
-import jr.brian.home.ui.theme.LocalWallpaperManager
+import jr.brian.home.ui.components.header.ScreenHeaderRow
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.PowerViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 

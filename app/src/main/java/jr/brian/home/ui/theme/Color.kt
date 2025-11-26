@@ -2,6 +2,8 @@ package jr.brian.home.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 
 val AppRed = Color(0xFFE94560)
 val AppBlue = Color(0xFF0F3460)

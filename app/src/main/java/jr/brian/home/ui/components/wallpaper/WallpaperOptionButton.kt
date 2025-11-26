@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components
+package jr.brian.home.ui.components.wallpaper
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,8 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.theme.AppCardDark
-import jr.brian.home.ui.theme.AppCardLight
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor

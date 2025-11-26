@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.components.AppVisibilityDialog
+import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem

@@ -49,7 +49,7 @@ import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
