@@ -43,6 +43,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.components.apps.AppOverlay
@@ -53,6 +54,7 @@ import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -80,6 +82,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var widgetPageAppManager: WidgetPageAppManager
+
+    @Inject
+    lateinit var homeTabManager: HomeTabManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,7 +115,8 @@ class MainActivity : ComponentActivity() {
                     LocalGridSettingsManager provides gridSettingsManager,
                     LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
                     LocalPowerSettingsManager provides powerSettingsManager,
-                    LocalWidgetPageAppManager provides widgetPageAppManager
+                    LocalWidgetPageAppManager provides widgetPageAppManager,
+                    LocalHomeTabManager provides homeTabManager
                 ) {
                     MainContent()
                 }
@@ -129,9 +135,11 @@ private fun MainContent() {
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val homeTabManager = LocalHomeTabManager.current
     val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+    val homeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
 
     val prefs = remember {
         context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
@@ -227,7 +235,8 @@ private fun MainContent() {
                             onSettingsClick = {
                                 navController.navigate(Routes.SETTINGS)
                             },
-                            isOverlayShown = showWelcomeOverlay
+                            isOverlayShown = showWelcomeOverlay,
+                            initialPage = homeTabIndex
                         )
                     }
 

@@ -26,6 +26,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 @Composable
 fun PageIndicators(
     totalPages: Int,
+    homeTabIndex: Int,
     pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
@@ -52,7 +53,7 @@ fun PageIndicators(
             ) {
                 repeat(totalPages) { index ->
                     val isSelected = pagerState.currentPage == index
-                    if (index == 0) {
+                    if (index == homeTabIndex) {
                         Icon(
                             imageVector = Icons.Default.Home,
                             contentDescription = null,

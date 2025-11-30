@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,6 +67,8 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
@@ -76,10 +79,12 @@ fun WidgetPageScreen(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
+    powerViewModel: PowerViewModel,
     allApps: List<AppInfo> = emptyList(),
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    onSettingsClick: () -> Unit = {},
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
@@ -107,6 +112,11 @@ fun WidgetPageScreen(
     val displayedApps = remember(allApps, visibleApps) {
         allApps.filter { it.packageName in visibleApps }
     }
+
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+    val settingsIconFocusRequester = remember { FocusRequester() }
 
     val widgetPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -302,6 +312,12 @@ fun WidgetPageScreen(
                     ScreenHeaderRow(
                         totalPages = totalPages,
                         pagerState = pagerState,
+                        powerViewModel = powerViewModel,
+                        showPowerButton = isPowerButtonVisible,
+                        leadingIcon = Icons.Default.Settings,
+                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                        onLeadingIconClick = onSettingsClick,
+                        leadingIconFocusRequester = settingsIconFocusRequester,
                         trailingIcon = Icons.Default.Menu,
                         trailingIconContentDescription = null,
                         onTrailingIconClick = { showAddOptionsDialog = true },

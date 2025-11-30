@@ -1,6 +1,7 @@
 package jr.brian.home.ui.components.header
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,11 +22,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.components.IconBox
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.extensions.handleRightNavigation
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.viewmodels.PowerViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -51,12 +55,27 @@ fun ScreenHeaderRow(
     var isPowerFocused by remember { mutableStateOf(false) }
     var isTrailingFocused by remember { mutableStateOf(false) }
     val powerIconFocusRequester = remember { FocusRequester() }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val homeTabManager = LocalHomeTabManager.current
+    val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+
+    if (showHomeTabDialog) {
+        HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            onTabSelected = { index ->
+                homeTabManager.setHomeTabIndex(index)
+            },
+            onDismiss = { showHomeTabDialog = false }
+        )
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .blockHorizontalNavigation()
+            .clickable { showHomeTabDialog = true }
     ) {
         if (leadingIcon != null) {
             IconBox(
@@ -80,6 +99,7 @@ fun ScreenHeaderRow(
         Spacer(modifier = Modifier.weight(1f))
 
         PageIndicators(
+            homeTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
             pagerState = pagerState,
         )

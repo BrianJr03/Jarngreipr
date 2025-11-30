@@ -33,7 +33,8 @@ fun LauncherPagerScreen(
     powerViewModel: PowerViewModel,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isOverlayShown: Boolean = false
+    isOverlayShown: Boolean = false,
+    initialPage: Int = 0
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -60,15 +61,27 @@ fun LauncherPagerScreen(
     }
 
     val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
+
+    var savedPage by remember {
+        mutableStateOf(prefs.getInt("last_page", initialPage))
+    }
+
     val pagerState = rememberPagerState(
-        initialPage = 0,
+        initialPage = savedPage,
         pageCount = { totalPages }
     )
 
+    LaunchedEffect(pagerState.currentPage) {
+        savedPage = pagerState.currentPage
+        prefs.edit {
+            putInt("last_page", pagerState.currentPage)
+        }
+    }
+
     BackHandler(enabled = !isOverlayShown) {
-        if (pagerState.currentPage != 0) {
+        if (pagerState.currentPage > 0) {
             scope.launch {
-                pagerState.animateScrollToPage(0)
+                pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
         } else {
             keyboardVisible = !keyboardVisible
@@ -134,9 +147,11 @@ fun LauncherPagerScreen(
                                     pageIndex = widgetPageIndex,
                                     widgets = widgetPage.widgets,
                                     viewModel = widgetViewModel,
+                                    powerViewModel = powerViewModel,
                                     allApps = homeUiState.allAppsUnfiltered,
                                     totalPages = totalPages,
                                     pagerState = pagerState,
+                                    onSettingsClick = onSettingsClick,
                                     onNavigateToResize = { widgetInfo, pageIdx ->
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx

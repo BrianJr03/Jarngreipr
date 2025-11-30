@@ -202,6 +202,15 @@
     <string name="thor_fact_49">Thor is the protector of the consecration of marriages and sacred oaths.</string>
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 
+    <!-- Home Tab Selection -->
+    <string name="home_tab_dialog_title">Select Home Tab</string>
+    <string name="home_tab_app_drawer">App Drawer</string>
+    <string name="home_tab_widget_page">Widget Page %1$d</string>
+    <string name="home_tab_select">Select</string>
+
+    <!-- App Drawer Options -->
+    <string name="app_drawer_options_title">Options</string>
+
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
     <string name="widget_page_section_widgets">Widgets</string>
