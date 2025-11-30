@@ -23,7 +23,6 @@
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
     <string name="add_app_message">Add this app to your home page?</string>
-    <string name="app_info_title">App Options</string>
     <string name="app_info_message">Open app info for %1$s?</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
@@ -75,10 +74,10 @@
     <string name="settings_grid_rows_label">Rows</string>
     <string name="settings_grid_apps_total_singular">%1$d app total</string>
     <string name="settings_grid_apps_total_plural">%1$d apps total</string>
-    <string name="settings_grid_apps_hidden_singular">%1$d app will be displayed. %2$d selected app will be hidden.</string>
-    <string name="settings_grid_apps_hidden_plural">%1$d apps will be displayed. %2$d selected apps will be hidden.</string>
-    <string name="settings_grid_all_apps_visible_singular"> %1$d app will be displayed. All selected apps will be visible.</string>
-    <string name="settings_grid_all_apps_visible_plural">%1$d apps will be displayed. All selected apps will be visible.</string>
+    <string name="settings_grid_apps_hidden_singular">%1$d app can be displayed. %2$d selected app will be hidden.</string>
+    <string name="settings_grid_apps_hidden_plural">%1$d apps can be displayed. %2$d selected apps will be hidden.</string>
+    <string name="settings_grid_all_apps_visible_singular"> %1$d app can be displayed. All selected apps will be visible.</string>
+    <string name="settings_grid_all_apps_visible_plural">%1$d apps can be displayed. All selected apps will be visible.</string>
     <string name="settings_grid_done">Done</string>
     <string name="settings_grid_minus">−</string>
     <string name="settings_grid_plus">+</string>

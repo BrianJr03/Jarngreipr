@@ -80,8 +80,7 @@ fun WidgetPageScreen(
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
-    onLaunchApp: (AppInfo) -> Unit = {}
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -305,8 +304,7 @@ fun WidgetPageScreen(
                                 item(key = "app_${app.packageName}") {
                                     AppItem(
                                         app = app,
-                                        pageIndex = pageIndex,
-                                        onLaunchApp = onLaunchApp
+                                        pageIndex = pageIndex
                                     )
                                 }
                             }
