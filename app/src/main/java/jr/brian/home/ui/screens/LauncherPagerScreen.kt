@@ -141,13 +141,6 @@ fun LauncherPagerScreen(
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx
                                         showResizeScreen = true
-                                    },
-                                    onLaunchApp = { app ->
-                                        val intent =
-                                            context.packageManager.getLaunchIntentForPackage(app.packageName)
-                                        if (intent != null) {
-                                            context.startActivity(intent)
-                                        }
                                     }
                                 )
                             }

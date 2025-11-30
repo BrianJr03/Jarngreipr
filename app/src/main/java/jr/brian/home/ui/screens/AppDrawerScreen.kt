@@ -221,9 +221,7 @@ private fun AppSelectionContent(
             OnScreenKeyboard(
                 searchQuery = searchQuery,
                 onQueryChange = onSearchQueryChange,
-                modifier =
-                    Modifier
-                        .weight(0.5f),
+                modifier = Modifier.weight(0.5f),
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = onKeyboardFocusChanged,
                 onNavigateRight = {
@@ -282,6 +280,9 @@ private fun AppGrid(
         apps.take(maxAppsPerPage)
     }
 
+    val horizontalHeaderPadding = if (keyboardVisible) 16.dp else 32.dp
+
+
     LaunchedEffect(Unit) {
         appFocusRequesters[0]?.requestFocus()
     }
@@ -306,8 +307,10 @@ private fun AppGrid(
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(
-                    horizontal = if (keyboardVisible) 16.dp else 32.dp,
-                    vertical = if (keyboardVisible) 8.dp else 16.dp
+                    start = horizontalHeaderPadding,
+                    end = horizontalHeaderPadding,
+                    top = 8.dp,
+                    bottom = 16.dp
                 )
             )
         }
