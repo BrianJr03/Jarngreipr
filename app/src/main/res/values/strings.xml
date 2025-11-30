@@ -205,7 +205,7 @@
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
     <string name="widget_page_section_widgets">Widgets</string>
-    <string name="widget_page_add_options_title">Add to Page</string>
+    <string name="widget_page_add_options_title">Options</string>
     <string name="widget_page_add_widget">Add Widget</string>
     <string name="widget_page_add_widget_description">Add a system widget</string>
     <string name="widget_page_add_app">Add App</string>
@@ -217,4 +217,8 @@
     <string name="widget_page_app_options_title">App Options</string>
     <string name="widget_page_app_remove">Remove from Page</string>
     <string name="widget_page_app_remove_description">Remove this app from the page</string>
+    <string name="widget_page_edit_mode">Edit Page</string>
+    <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
+    <string name="widget_page_edit_mode_active">Edit Mode Active</string>
+    <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>
 </resources>

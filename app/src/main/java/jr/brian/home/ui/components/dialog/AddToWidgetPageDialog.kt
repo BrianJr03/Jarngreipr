@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,7 +57,9 @@ fun AddToWidgetPageDialog(
     onDismiss: () -> Unit,
     onAddWidget: () -> Unit,
     onAddApp: () -> Unit,
-    onSwapSections: () -> Unit
+    onSwapSections: () -> Unit,
+    onToggleEditMode: () -> Unit,
+    isEditModeActive: Boolean = false
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -76,7 +81,9 @@ fun AddToWidgetPageDialog(
                 .padding(24.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -89,6 +96,19 @@ fun AddToWidgetPageDialog(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                AddOptionCard(
+                    title = stringResource(
+                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
+                        else R.string.widget_page_edit_mode
+                    ),
+                    description = stringResource(R.string.widget_page_edit_mode_description),
+                    icon = Icons.Default.Edit,
+                    onClick = {
+                        onDismiss()
+                        onToggleEditMode()
+                    }
+                )
 
                 AddOptionCard(
                     title = stringResource(R.string.widget_page_add_widget),

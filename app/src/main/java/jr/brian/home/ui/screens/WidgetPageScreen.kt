@@ -96,6 +96,9 @@ fun WidgetPageScreen(
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
 
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
+
     val visibleApps by widgetPageAppManager.getVisibleApps(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptySet())
     val appsFirst by widgetPageAppManager.getAppsFirstOrder(pageIndex)
@@ -261,6 +264,40 @@ fun WidgetPageScreen(
                             }
                         }
                     }
+                } else if (editModeEnabled && pagerState != null) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.widget_page_edit_mode_active),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                            TextButton(
+                                onClick = {
+                                    viewModel.toggleEditMode(pageIndex)
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(stringResource(R.string.widget_page_edit_mode_exit))
+                            }
+                        }
+                    }
                 } else if (pagerState != null) {
                     ScreenHeaderRow(
                         totalPages = totalPages,
@@ -342,7 +379,8 @@ fun WidgetPageScreen(
                                         onEnableSwapMode = {
                                             swapModeEnabled = true
                                             swapSourceWidgetId = widget.widgetId
-                                        }
+                                        },
+                                        editModeEnabled = editModeEnabled
                                     )
                                 }
                             }
@@ -366,7 +404,11 @@ fun WidgetPageScreen(
                 scope.launch {
                     widgetPageAppManager.toggleSectionOrder(pageIndex)
                 }
-            }
+            },
+            onToggleEditMode = {
+                viewModel.toggleEditMode(pageIndex)
+            },
+            isEditModeActive = editModeEnabled
         )
     }
 
