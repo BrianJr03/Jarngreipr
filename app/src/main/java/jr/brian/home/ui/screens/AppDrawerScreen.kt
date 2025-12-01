@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -323,7 +324,7 @@ private fun AppGrid(
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
     onMenuClick: () -> Unit = {},
-    keyboardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null,
+    keyboardCoordinates: LayoutCoordinates? = null,
     keyboardContent: @Composable (() -> Unit)? = null
 ) {
     val gridState = rememberLazyGridState()

@@ -47,7 +47,7 @@ fun HeaderOnboardingOverlay(
     val density = LocalDensity.current
 
     LaunchedEffect(Unit) {
-        delay(500)
+        delay(10)
         isVisible = true
     }
 

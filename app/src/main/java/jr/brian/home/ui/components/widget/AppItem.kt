@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
-import jr.brian.home.data.AppDisplayPreferenceManager
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.theme.OledCardColor
@@ -82,7 +82,7 @@ fun AppItem(
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     } else {
-                        AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+                        DisplayPreference.CURRENT_DISPLAY
                     }
                     launchApp(
                         context = context,
@@ -145,19 +145,19 @@ fun AppItem(
 private fun launchApp(
     context: Context,
     packageName: String,
-    displayPreference: AppDisplayPreferenceManager.DisplayPreference = AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
 ) {
     try {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
             when (displayPreference) {
-                AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY -> {
+                DisplayPreference.PRIMARY_DISPLAY -> {
                     val options = ActivityOptions.makeBasic()
                     options.launchDisplayId = 0
                     context.startActivity(intent, options.toBundle())
                 }
 
-                AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY -> {
+                DisplayPreference.CURRENT_DISPLAY -> {
                     context.startActivity(intent)
                 }
             }

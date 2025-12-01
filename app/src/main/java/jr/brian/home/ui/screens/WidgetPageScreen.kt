@@ -233,80 +233,13 @@ fun WidgetPageScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 if (swapModeEnabled) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.widget_swap_mode_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = stringResource(R.string.widget_swap_mode_instructions),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                            TextButton(
-                                onClick = {
-                                    swapModeEnabled = false
-                                    swapSourceWidgetId = null
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text(stringResource(R.string.widget_swap_cancel))
-                            }
-                        }
-                    }
+                   WidgetSwapModeHeaderCard {
+                       swapModeEnabled = false
+                       swapSourceWidgetId = null
+                   }
                 } else if (editModeEnabled && pagerState != null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(R.string.widget_page_edit_mode_active),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
-                            )
-                            TextButton(
-                                onClick = {
-                                    viewModel.toggleEditMode(pageIndex)
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text(stringResource(R.string.widget_page_edit_mode_exit))
-                            }
-                        }
+                    WidgetEditModeHeaderCard {
+                        viewModel.toggleEditMode(pageIndex)
                     }
                 } else if (pagerState != null) {
                     ScreenHeaderRow(
@@ -455,6 +388,83 @@ fun WidgetPageScreen(
                 widgetPickerLauncher.launch(pickIntent)
             }
             showWidgetPicker = false
+        }
+    }
+}
+
+@Composable
+private fun WidgetSwapModeHeaderCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.widget_swap_mode_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = stringResource(R.string.widget_swap_mode_instructions),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+            TextButton(
+                onClick = onClick,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.widget_swap_cancel))
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetEditModeHeaderCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.widget_page_edit_mode_active),
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+            TextButton(
+                onClick = onClick,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.widget_page_edit_mode_exit))
+            }
         }
     }
 }
