@@ -31,7 +31,6 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.viewmodels.WidgetViewModel
 
 @Composable
 fun HomeTabSelectionDialog(
@@ -65,15 +64,15 @@ fun HomeTabSelectionDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                for (i in 0 until totalPages) {
+                repeat(totalPages) { index ->
                     TabOption(
                         text = stringResource(
                             R.string.home_tab_widget_page,
-                            i+1
+                            index + 1
                         ),
-                        isSelected = currentTabIndex == i,
+                        isSelected = currentTabIndex == index,
                         onClick = {
-                            onTabSelected(i)
+                            onTabSelected(index)
                             onDismiss()
                         }
                     )

@@ -1,6 +1,5 @@
 package jr.brian.home.ui.components.header
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -42,7 +41,6 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.viewmodels.PowerViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ScreenHeaderRow(
     totalPages: Int,
@@ -97,10 +95,14 @@ fun ScreenHeaderRow(
     }
 
     val onboardingSteps = remember(
-        settingsTitle, settingsDescription,
-        pageIndicatorsTitle, pageIndicatorsDescription,
-        optionsTitle, optionsDescription,
-        keyboardTitle, keyboardDescription,
+        settingsTitle,
+        settingsDescription,
+        pageIndicatorsTitle,
+        pageIndicatorsDescription,
+        optionsTitle,
+        optionsDescription,
+        keyboardTitle,
+        keyboardDescription,
         keyboardContent
     ) {
         buildList {
