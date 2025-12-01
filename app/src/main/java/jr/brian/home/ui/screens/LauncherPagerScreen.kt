@@ -51,7 +51,7 @@ fun LauncherPagerScreen(
         context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
     }
     var keyboardVisible by remember {
-        mutableStateOf(prefs.getBoolean("keyboard_visible", true))
+        mutableStateOf(prefs.getBoolean("keyboard_visible", false))
     }
 
     LaunchedEffect(keyboardVisible) {

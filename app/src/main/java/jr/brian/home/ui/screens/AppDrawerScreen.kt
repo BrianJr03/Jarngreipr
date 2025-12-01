@@ -37,19 +37,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
-import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -57,7 +59,6 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.PowerViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -226,6 +227,12 @@ private fun AppSelectionContent(
     val rows = gridSettingsManager.rowCount
     val maxAppsPerPage = columns * rows
 
+    var keyboardCoordinates by remember {
+        mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(
+            null
+        )
+    }
+
     val filteredApps =
         remember(apps, searchQuery) {
             if (searchQuery.isBlank()) {
@@ -239,16 +246,23 @@ private fun AppSelectionContent(
 
     Row(modifier = modifier.fillMaxSize()) {
         if (keyboardVisible) {
-            OnScreenKeyboard(
-                searchQuery = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                modifier = Modifier.weight(0.5f),
-                keyboardFocusRequesters = keyboardFocusRequesters,
-                onFocusChanged = onKeyboardFocusChanged,
-                onNavigateRight = {
-                    appFocusRequesters[savedAppIndex]?.requestFocus()
-                },
-            )
+            Box(
+                modifier = Modifier
+                    .weight(0.5f)
+                    .onGloballyPositioned { coordinates ->
+                        keyboardCoordinates = coordinates
+                    }
+            ) {
+                OnScreenKeyboard(
+                    searchQuery = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    keyboardFocusRequesters = keyboardFocusRequesters,
+                    onFocusChanged = onKeyboardFocusChanged,
+                    onNavigateRight = {
+                        appFocusRequesters[savedAppIndex]?.requestFocus()
+                    },
+                )
+            }
         }
 
         AppGrid(
@@ -270,7 +284,19 @@ private fun AppSelectionContent(
             pagerState = pagerState,
             onSettingsClick = onSettingsClick,
             powerViewModel = powerViewModel,
-            onMenuClick = onMenuClick
+            onMenuClick = onMenuClick,
+            keyboardCoordinates = keyboardCoordinates,
+            keyboardContent = if (!keyboardVisible) {
+                {
+                    OnScreenKeyboard(
+                        searchQuery = "",
+                        onQueryChange = {},
+                        keyboardFocusRequesters = remember { mutableStateMapOf() },
+                        onFocusChanged = {},
+                        onNavigateRight = {},
+                    )
+                }
+            } else null
         )
     }
 }
@@ -292,7 +318,9 @@ private fun AppGrid(
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    keyboardCoordinates: androidx.compose.ui.layout.LayoutCoordinates? = null,
+    keyboardContent: @Composable (() -> Unit)? = null
 ) {
     val gridState = rememberLazyGridState()
     val settingsIconFocusRequester = remember { FocusRequester() }
@@ -331,7 +359,9 @@ private fun AppGrid(
                 },
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                keyboardCoordinates = keyboardCoordinates,
+                keyboardContent = keyboardContent
             )
         }
 

@@ -208,6 +208,18 @@
     <string name="home_tab_widget_page">Widget Page %1$d</string>
     <string name="home_tab_select">Select</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_settings_title">Settings</string>
+    <string name="onboarding_settings_description">Access app settings, themes, wallpapers, and customization options.</string>
+    <string name="onboarding_page_indicators_title">Page Indicators</string>
+    <string name="onboarding_page_indicators_description">Shows current page position. Click to quickly change your home tab.</string>
+    <string name="onboarding_options_title">Options</string>
+    <string name="onboarding_options_description">Access quick actions and page-specific options.</string>
+    <string name="onboarding_keyboard_title">Search Keyboard</string>
+    <string name="onboarding_keyboard_description">On the first tab, press (or gesture) Back to toggle the on-screen keyboard.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Got It</string>
+
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Options</string>
 

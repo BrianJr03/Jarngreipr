@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.hardware.display.DisplayManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -44,6 +43,7 @@ import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.components.apps.AppOverlay
@@ -55,6 +55,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -86,6 +87,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var homeTabManager: HomeTabManager
 
+    @Inject
+    lateinit var onboardingManager: OnboardingManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -116,7 +120,8 @@ class MainActivity : ComponentActivity() {
                     LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
                     LocalPowerSettingsManager provides powerSettingsManager,
                     LocalWidgetPageAppManager provides widgetPageAppManager,
-                    LocalHomeTabManager provides homeTabManager
+                    LocalHomeTabManager provides homeTabManager,
+                    LocalOnboardingManager provides onboardingManager
                 ) {
                     MainContent()
                 }
@@ -145,18 +150,8 @@ private fun MainContent() {
         context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
     }
 
-    val hasSeenOverlay = remember {
-        prefs.getBoolean("has_seen_welcome_overlay", false)
-    }
-
-    val displayManager =
-        remember { context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager }
-    val hasExternalDisplays = remember {
-        displayManager.displays.size > 1
-    }
-
     var showWelcomeOverlay by remember {
-        mutableStateOf(hasExternalDisplays && !hasSeenOverlay)
+        mutableStateOf(false)
     }
 
     DisposableEffect(lifecycleOwner) {
