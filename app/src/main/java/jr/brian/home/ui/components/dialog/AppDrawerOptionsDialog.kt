@@ -19,9 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,13 +52,9 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun AddToWidgetPageDialog(
+fun AppDrawerOptionsDialog(
     onDismiss: () -> Unit,
-    onAddWidget: () -> Unit,
-    onAddApp: () -> Unit,
-    onSwapSections: () -> Unit,
-    onToggleEditMode: () -> Unit,
-    isEditModeActive: Boolean = false
+    onShowAppVisibility: () -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -88,7 +83,7 @@ fun AddToWidgetPageDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.widget_page_add_options_title),
+                    text = stringResource(R.string.app_drawer_options_title),
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
@@ -97,46 +92,13 @@ fun AddToWidgetPageDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                AddOptionCard(
-                    title = stringResource(
-                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
-                        else R.string.widget_page_edit_mode
-                    ),
-                    description = stringResource(R.string.widget_page_edit_mode_description),
-                    icon = Icons.Default.Edit,
+                DrawerOptionCard(
+                    title = stringResource(R.string.settings_app_visibility_title),
+                    description = stringResource(R.string.settings_app_visibility_description),
+                    icon = Icons.Default.Visibility,
                     onClick = {
                         onDismiss()
-                        onToggleEditMode()
-                    }
-                )
-
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_add_widget),
-                    description = stringResource(R.string.widget_page_add_widget_description),
-                    icon = Icons.Default.Add,
-                    onClick = {
-                        onDismiss()
-                        onAddWidget()
-                    }
-                )
-
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_add_app),
-                    description = stringResource(R.string.widget_page_add_app_description),
-                    icon = Icons.Default.Apps,
-                    onClick = {
-                        onDismiss()
-                        onAddApp()
-                    }
-                )
-
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_swap_sections),
-                    description = stringResource(R.string.widget_page_swap_sections_description),
-                    icon = Icons.Default.SwapVert,
-                    onClick = {
-                        onDismiss()
-                        onSwapSections()
+                        onShowAppVisibility()
                     }
                 )
 
@@ -149,7 +111,7 @@ fun AddToWidgetPageDialog(
 }
 
 @Composable
-private fun AddOptionCard(
+private fun DrawerOptionCard(
     title: String,
     description: String,
     icon: ImageVector,

@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -30,23 +31,29 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
+import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
-import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -54,12 +61,13 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.PowerViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppDrawerScreen(
     apps: List<AppInfo>,
+    appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
@@ -81,6 +89,8 @@ fun AppDrawerScreen(
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
     var showAppOptionsMenu by remember { mutableStateOf(false) }
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
     val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
@@ -110,6 +120,20 @@ fun AppDrawerScreen(
     if (showDrawerOptionsDialog) {
         DrawerOptionsDialog(
             onDismiss = { showDrawerOptionsDialog = false }
+        )
+    }
+
+    if (showAppDrawerOptionsDialog) {
+        AppDrawerOptionsDialog(
+            onDismiss = { showAppDrawerOptionsDialog = false },
+            onShowAppVisibility = { showAppVisibilityDialog = true }
+        )
+    }
+
+    if (showAppVisibilityDialog) {
+        AppVisibilityDialog(
+            apps = appsUnfiltered,
+            onDismiss = { showAppVisibilityDialog = false }
         )
     }
 
@@ -174,6 +198,7 @@ fun AppDrawerScreen(
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
                 pagerState = pagerState,
+                onMenuClick = { showAppDrawerOptionsDialog = true }
             )
         }
     }
@@ -200,10 +225,18 @@ private fun AppSelectionContent(
     powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    onMenuClick: () -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
-    val maxAppsPerPage = columns * rows
+    val unlimitedMode = gridSettingsManager.unlimitedMode
+    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
+
+    var keyboardCoordinates by remember {
+        mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(
+            null
+        )
+    }
 
     val filteredApps =
         remember(apps, searchQuery) {
@@ -218,18 +251,23 @@ private fun AppSelectionContent(
 
     Row(modifier = modifier.fillMaxSize()) {
         if (keyboardVisible) {
-            OnScreenKeyboard(
-                searchQuery = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                modifier =
-                    Modifier
-                        .weight(0.5f),
-                keyboardFocusRequesters = keyboardFocusRequesters,
-                onFocusChanged = onKeyboardFocusChanged,
-                onNavigateRight = {
-                    appFocusRequesters[savedAppIndex]?.requestFocus()
-                },
-            )
+            Box(
+                modifier = Modifier
+                    .weight(0.5f)
+                    .onGloballyPositioned { coordinates ->
+                        keyboardCoordinates = coordinates
+                    }
+            ) {
+                OnScreenKeyboard(
+                    searchQuery = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    keyboardFocusRequesters = keyboardFocusRequesters,
+                    onFocusChanged = onKeyboardFocusChanged,
+                    onNavigateRight = {
+                        appFocusRequesters[savedAppIndex]?.requestFocus()
+                    },
+                )
+            }
         }
 
         AppGrid(
@@ -251,6 +289,19 @@ private fun AppSelectionContent(
             pagerState = pagerState,
             onSettingsClick = onSettingsClick,
             powerViewModel = powerViewModel,
+            onMenuClick = onMenuClick,
+            keyboardCoordinates = keyboardCoordinates,
+            keyboardContent = if (!keyboardVisible) {
+                {
+                    OnScreenKeyboard(
+                        searchQuery = "",
+                        onQueryChange = {},
+                        keyboardFocusRequesters = remember { mutableStateMapOf() },
+                        onFocusChanged = {},
+                        onNavigateRight = {},
+                    )
+                }
+            } else null
         )
     }
 }
@@ -272,9 +323,13 @@ private fun AppGrid(
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
+    onMenuClick: () -> Unit = {},
+    keyboardCoordinates: LayoutCoordinates? = null,
+    keyboardContent: @Composable (() -> Unit)? = null
 ) {
     val gridState = rememberLazyGridState()
     val settingsIconFocusRequester = remember { FocusRequester() }
+    val menuIconFocusRequester = remember { FocusRequester() }
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
@@ -286,6 +341,8 @@ private fun AppGrid(
         appFocusRequesters[0]?.requestFocus()
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
         modifier = modifier
     ) {
@@ -293,22 +350,25 @@ private fun AppGrid(
             ScreenHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState,
-                trailingIcon = Icons.Default.Settings,
-                trailingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                onTrailingIconClick = onSettingsClick,
-                trailingIconFocusRequester = settingsIconFocusRequester,
+                leadingIcon = if (keyboardVisible) null else Icons.Default.Settings,
+                leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                onLeadingIconClick = onSettingsClick,
+                leadingIconFocusRequester = settingsIconFocusRequester,
+                trailingIcon = if (keyboardVisible) null else Icons.Default.Menu,
+                trailingIconContentDescription = null,
+                onTrailingIconClick = onMenuClick,
+                trailingIconFocusRequester = menuIconFocusRequester,
                 onNavigateToGrid = {
                     appFocusRequesters[0]?.requestFocus()
                 },
                 onNavigateFromGrid = {
-                    settingsIconFocusRequester.requestFocus()
+                    menuIconFocusRequester.requestFocus()
                 },
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
-                modifier = Modifier.padding(
-                    horizontal = if (keyboardVisible) 16.dp else 32.dp,
-                    vertical = if (keyboardVisible) 8.dp else 16.dp
-                )
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                keyboardCoordinates = keyboardCoordinates,
+                keyboardContent = keyboardContent
             )
         }
 
@@ -317,8 +377,8 @@ private fun AppGrid(
             state = gridState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                horizontal = if (keyboardVisible) 16.dp else 32.dp,
-                vertical = if (keyboardVisible) 0.dp else 0.dp,
+                horizontal = if (keyboardVisible) 16.dp else 8.dp,
+                vertical = if (keyboardVisible) 0.dp else 8.dp,
             ),
             horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
             verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
@@ -340,14 +400,24 @@ private fun AppGrid(
                     onNavigateUp = {
                         val prevIndex = index - columns
                         if (prevIndex >= 0) {
+                            coroutineScope.launch {
+                                gridState.animateScrollToItem(prevIndex)
+                            }
                             appFocusRequesters[prevIndex]?.requestFocus()
                         } else if (index < columns) {
-                            settingsIconFocusRequester.requestFocus()
+                            if (index == 0) {
+                                settingsIconFocusRequester.requestFocus()
+                            } else {
+                                menuIconFocusRequester.requestFocus()
+                            }
                         }
                     },
                     onNavigateDown = {
                         val nextIndex = index + columns
                         if (nextIndex < displayedApps.size) {
+                            coroutineScope.launch {
+                                gridState.animateScrollToItem(nextIndex)
+                            }
                             appFocusRequesters[nextIndex]?.requestFocus()
                         }
                     },

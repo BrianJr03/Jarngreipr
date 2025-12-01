@@ -67,6 +67,11 @@ fun GridColumnSelectorItem(
     val mainCardFocusRequester = remember { FocusRequester() }
     val columnsMinusFocusRequester = remember { FocusRequester() }
 
+    LaunchedEffect(totalAppsCount) {
+        gridSettingsManager.setTotalAppsCount(totalAppsCount)
+        gridSettingsManager.initializeDefaultRows(totalAppsCount)
+    }
+
     LaunchedEffect(isExpanded) {
         if (isExpanded) {
             columnsMinusFocusRequester.requestFocus()
@@ -179,12 +184,27 @@ fun GridColumnSelectorItem(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                val unlimitedMode = gridSettingsManager.unlimitedMode
                 val gridCapacity = gridSettingsManager.columnCount * gridSettingsManager.rowCount
                 val hiddenAppsCount = (totalAppsCount - gridCapacity).coerceAtLeast(0)
 
                 GridLayoutLabel(
                     gridCapacity = gridCapacity,
-                    hiddenAppsCount = hiddenAppsCount
+                    hiddenAppsCount = hiddenAppsCount,
+                    totalAppsCount = totalAppsCount,
+                    unlimitedMode = unlimitedMode
+                )
+
+                GridControlButton(
+                    text = stringResource(R.string.settings_grid_reset),
+                    onClick = {
+                        gridSettingsManager.resetToDefault(totalAppsCount)
+                    },
+                    isPrimary = false,
+                    isSpecial = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 )
 
                 GridDimensionSelector(
@@ -202,7 +222,7 @@ fun GridColumnSelectorItem(
                     label = stringResource(R.string.settings_grid_rows_label),
                     value = gridSettingsManager.rowCount,
                     minValue = GridSettingsManager.MIN_ROWS,
-                    maxValue = GridSettingsManager.MAX_ROWS,
+                    maxValue = gridSettingsManager.getMaxRows(),
                     onValueChange = { newValue ->
                         gridSettingsManager.updateRowCount(newValue)
                     },
@@ -304,32 +324,46 @@ private fun GridDimensionSelector(
 @Composable
 private fun GridLayoutLabel(
     gridCapacity: Int,
-    hiddenAppsCount: Int
+    hiddenAppsCount: Int,
+    totalAppsCount: Int,
+    unlimitedMode: Boolean
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = if (hiddenAppsCount > 0) {
-                    ThemeSecondaryColor.copy(alpha = 0.15f)
-                } else {
+                color = if (unlimitedMode || hiddenAppsCount == 0) {
                     ThemePrimaryColor.copy(alpha = 0.15f)
+                } else {
+                    ThemeSecondaryColor.copy(alpha = 0.15f)
                 },
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
                 width = 1.dp,
-                color = if (hiddenAppsCount > 0) {
-                    ThemeSecondaryColor.copy(alpha = 0.5f)
-                } else {
+                color = if (unlimitedMode || hiddenAppsCount == 0) {
                     ThemePrimaryColor.copy(alpha = 0.5f)
+                } else {
+                    ThemeSecondaryColor.copy(alpha = 0.5f)
                 },
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp)
     ) {
         Text(
-            text = if (hiddenAppsCount > 0) {
+            text = if (unlimitedMode) {
+                if (totalAppsCount == 1) {
+                    stringResource(
+                        R.string.settings_grid_unlimited_mode_singular,
+                        totalAppsCount
+                    )
+                } else {
+                    stringResource(
+                        R.string.settings_grid_unlimited_mode_plural,
+                        totalAppsCount
+                    )
+                }
+            } else if (hiddenAppsCount > 0) {
                 if (gridCapacity == 1 && hiddenAppsCount == 1) {
                     stringResource(
                         R.string.settings_grid_apps_hidden_singular,
@@ -356,10 +390,10 @@ private fun GridLayoutLabel(
                     )
                 }
             },
-            color = if (hiddenAppsCount > 0) {
-                ThemeSecondaryColor
-            } else {
+            color = if (unlimitedMode || hiddenAppsCount == 0) {
                 ThemePrimaryColor
+            } else {
+                ThemeSecondaryColor
             },
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
@@ -376,6 +410,7 @@ private fun GridControlButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isPrimary: Boolean = false,
+    isSpecial: Boolean = false,
     focusRequester: FocusRequester? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -383,11 +418,20 @@ private fun GridControlButton(
     val gradient = Brush.linearGradient(
         colors = when {
             !enabled -> listOf(Color.Gray.copy(alpha = 0.3f), Color.Gray.copy(alpha = 0.3f))
+            isFocused && isSpecial -> listOf(
+                ThemePrimaryColor.copy(alpha = 1f),
+                ThemeSecondaryColor.copy(alpha = 0.9f),
+            )
+
             isFocused -> listOf(
                 ThemePrimaryColor.copy(alpha = 0.9f),
                 ThemeSecondaryColor.copy(alpha = 0.7f),
             )
 
+            isSpecial -> listOf(
+                ThemePrimaryColor.copy(alpha = 0.5f),
+                ThemeSecondaryColor.copy(alpha = 0.3f),
+            )
             isPrimary -> listOf(
                 ThemePrimaryColor.copy(alpha = 0.6f),
                 ThemeSecondaryColor.copy(alpha = 0.4f),
@@ -437,7 +481,11 @@ private fun GridControlButton(
         Text(
             text = text,
             color = if (enabled) Color.White else Color.Gray,
-            fontSize = if (isPrimary) 18.sp else 24.sp,
+            fontSize = when {
+                isPrimary -> 18.sp
+                isSpecial -> 16.sp
+                else -> 24.sp
+            },
             fontWeight = FontWeight.Bold,
         )
     }

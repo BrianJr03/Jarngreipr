@@ -69,6 +69,25 @@ class HomeViewModel @Inject constructor(
                     }.distinctBy { it.packageName }
                     .sortedBy { it.label.lowercase() }
 
+            val currentHiddenApps = appVisibilityManager.currentHiddenApps
+            val previousApps = _uiState.value.allAppsUnfiltered
+
+            if (previousApps.isNotEmpty()) {
+                val newApps = allAppInfos.filter { newApp ->
+                    previousApps.none { it.packageName == newApp.packageName }
+                }
+
+                val newAppsVisibleByDefault = appVisibilityManager.newAppsVisibleByDefault.value
+                if (!newAppsVisibleByDefault && newApps.isNotEmpty()) {
+                    val newlyInstalledPackages = newApps.map { it.packageName }
+                    newlyInstalledPackages.forEach { packageName ->
+                        if (!currentHiddenApps.contains(packageName)) {
+                            appVisibilityManager.hideApp(packageName)
+                        }
+                    }
+                }
+            }
+
             val visibleApps = allAppInfos.filter { app ->
                 !appVisibilityManager.isAppHidden(app.packageName)
             }

@@ -35,6 +35,7 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
@@ -45,11 +46,11 @@ import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.util.DeviceModel
+import jr.brian.home.util.OverlayInfoUtil
 import kotlinx.coroutines.delay
 
 @Composable
 fun SettingsScreen(
-    allApps: List<AppInfo> = emptyList(),
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
@@ -66,7 +67,6 @@ fun SettingsScreen(
             Column {
                 VersionInfo()
                 SettingsContent(
-                    allApps = allApps,
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ
                 )
@@ -77,7 +77,6 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
-    allApps: List<AppInfo> = emptyList(),
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
@@ -154,11 +153,17 @@ private fun SettingsContent(
             )
         }
 
+//        item {
+//            NewAppsVisibleToggleItem(
+//                isExpanded = expandedItem == "new_apps_visible"
+//            )
+//        }
+
         item {
             GridColumnSelectorItem(
                 isExpanded = expandedItem == "grid",
                 onExpandChanged = { expandedItem = if (it) "grid" else null },
-                totalAppsCount = allApps.size
+                totalAppsCount = allAppsUnfiltered.size
             )
         }
 
@@ -203,6 +208,22 @@ private fun SettingsContent(
                     )
                     context.startActivity(intent)
                 },
+            )
+        }
+
+        item {
+            SettingsSectionHeader(
+                title = stringResource(id = R.string.settings_section_extras)
+            )
+        }
+
+        item {
+            val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
+            InfoBox(
+                label = stringResource(R.string.welcome_overlay_thor_fact_label),
+                content = stringResource(randomMessage),
+                isPrimary = true,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
     }

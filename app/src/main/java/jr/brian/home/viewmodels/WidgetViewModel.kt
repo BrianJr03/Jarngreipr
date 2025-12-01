@@ -302,6 +302,17 @@ class WidgetViewModel @Inject constructor(
 
     fun getAppWidgetHost(): AppWidgetHost? = appWidgetHost
 
+    fun toggleEditMode(pageIndex: Int) {
+        val currentEditModeMap = _uiState.value.editModeByPage.toMutableMap()
+        val currentMode = currentEditModeMap[pageIndex] ?: false
+        currentEditModeMap[pageIndex] = !currentMode
+        _uiState.value = _uiState.value.copy(editModeByPage = currentEditModeMap)
+    }
+
+    fun isEditModeActive(pageIndex: Int): Boolean {
+        return _uiState.value.editModeByPage[pageIndex] ?: false
+    }
+
     override fun onCleared() {
         super.onCleared()
         appWidgetHost?.stopListening()

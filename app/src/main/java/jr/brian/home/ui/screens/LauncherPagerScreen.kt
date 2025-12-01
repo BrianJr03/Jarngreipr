@@ -3,7 +3,8 @@ package jr.brian.home.ui.screens
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -33,7 +34,7 @@ fun LauncherPagerScreen(
     powerViewModel: PowerViewModel,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isOverlayShown: Boolean = false
+    initialPage: Int = 0
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -50,7 +51,7 @@ fun LauncherPagerScreen(
         context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
     }
     var keyboardVisible by remember {
-        mutableStateOf(prefs.getBoolean("keyboard_visible", true))
+        mutableStateOf(prefs.getBoolean("keyboard_visible", false))
     }
 
     LaunchedEffect(keyboardVisible) {
@@ -60,15 +61,16 @@ fun LauncherPagerScreen(
     }
 
     val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
+
     val pagerState = rememberPagerState(
-        initialPage = 0,
+        initialPage = initialPage,
         pageCount = { totalPages }
     )
 
-    BackHandler(enabled = !isOverlayShown) {
-        if (pagerState.currentPage != 0) {
+    BackHandler {
+        if (pagerState.currentPage > 0) {
             scope.launch {
-                pagerState.animateScrollToPage(0)
+                pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
         } else {
             keyboardVisible = !keyboardVisible
@@ -91,14 +93,14 @@ fun LauncherPagerScreen(
                 .fillMaxSize()
                 .handleShoulderButtons(
                     onLeftShoulder = {
-                        if (!isOverlayShown && pagerState.currentPage > 0) {
+                        if (pagerState.currentPage > 0) {
                             scope.launch {
                                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
                             }
                         }
                     },
                     onRightShoulder = {
-                        if (!isOverlayShown && pagerState.currentPage < totalPages - 1) {
+                        if (pagerState.currentPage < totalPages - 1) {
                             scope.launch {
                                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
@@ -110,12 +112,12 @@ fun LauncherPagerScreen(
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = !isOverlayShown
                 ) { page ->
                     when (page) {
                         0 -> {
                             AppDrawerScreen(
                                 apps = homeUiState.allApps,
+                                appsUnfiltered = homeUiState.allAppsUnfiltered,
                                 isLoading = homeUiState.isLoading,
                                 onSettingsClick = onSettingsClick,
                                 powerViewModel = powerViewModel,
@@ -134,20 +136,15 @@ fun LauncherPagerScreen(
                                     pageIndex = widgetPageIndex,
                                     widgets = widgetPage.widgets,
                                     viewModel = widgetViewModel,
+                                    powerViewModel = powerViewModel,
                                     allApps = homeUiState.allAppsUnfiltered,
                                     totalPages = totalPages,
                                     pagerState = pagerState,
+                                    onSettingsClick = onSettingsClick,
                                     onNavigateToResize = { widgetInfo, pageIdx ->
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx
                                         showResizeScreen = true
-                                    },
-                                    onLaunchApp = { app ->
-                                        val intent =
-                                            context.packageManager.getLaunchIntentForPackage(app.packageName)
-                                        if (intent != null) {
-                                            context.startActivity(intent)
-                                        }
                                     }
                                 )
                             }

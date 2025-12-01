@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,6 +67,8 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
@@ -76,12 +79,13 @@ fun WidgetPageScreen(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
+    powerViewModel: PowerViewModel,
     allApps: List<AppInfo> = emptyList(),
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
-    onLaunchApp: (AppInfo) -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -97,6 +101,9 @@ fun WidgetPageScreen(
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
 
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
+
     val visibleApps by widgetPageAppManager.getVisibleApps(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptySet())
     val appsFirst by widgetPageAppManager.getAppsFirstOrder(pageIndex)
@@ -105,6 +112,11 @@ fun WidgetPageScreen(
     val displayedApps = remember(allApps, visibleApps) {
         allApps.filter { it.packageName in visibleApps }
     }
+
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+    val settingsIconFocusRequester = remember { FocusRequester() }
 
     val widgetPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -221,51 +233,24 @@ fun WidgetPageScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 if (swapModeEnabled) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.widget_swap_mode_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = stringResource(R.string.widget_swap_mode_instructions),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                            TextButton(
-                                onClick = {
-                                    swapModeEnabled = false
-                                    swapSourceWidgetId = null
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Text(stringResource(R.string.widget_swap_cancel))
-                            }
-                        }
+                   WidgetSwapModeHeaderCard {
+                       swapModeEnabled = false
+                       swapSourceWidgetId = null
+                   }
+                } else if (editModeEnabled && pagerState != null) {
+                    WidgetEditModeHeaderCard {
+                        viewModel.toggleEditMode(pageIndex)
                     }
                 } else if (pagerState != null) {
                     ScreenHeaderRow(
                         totalPages = totalPages,
                         pagerState = pagerState,
+                        powerViewModel = powerViewModel,
+                        showPowerButton = isPowerButtonVisible,
+                        leadingIcon = Icons.Default.Settings,
+                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                        onLeadingIconClick = onSettingsClick,
+                        leadingIconFocusRequester = settingsIconFocusRequester,
                         trailingIcon = Icons.Default.Menu,
                         trailingIconContentDescription = null,
                         onTrailingIconClick = { showAddOptionsDialog = true },
@@ -282,7 +267,7 @@ fun WidgetPageScreen(
                     columns = GridCells.Fixed(columns),
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 8.dp),
+                        .padding(start = 8.dp, end = 8.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -293,7 +278,7 @@ fun WidgetPageScreen(
                     }
 
                     sections.forEach { (sectionType, items) ->
-                        if (sectionType == "apps" && displayedApps.isNotEmpty()) {
+                        if (sectionType == "apps" && displayedApps.isNotEmpty() && !editModeEnabled) {
                             item(span = { GridItemSpan(columns) }) {
                                 SectionHeader(
                                     title = stringResource(R.string.widget_page_section_apps)
@@ -305,8 +290,7 @@ fun WidgetPageScreen(
                                 item(key = "app_${app.packageName}") {
                                     AppItem(
                                         app = app,
-                                        pageIndex = pageIndex,
-                                        onLaunchApp = onLaunchApp
+                                        pageIndex = pageIndex
                                     )
                                 }
                             }
@@ -344,15 +328,12 @@ fun WidgetPageScreen(
                                         onEnableSwapMode = {
                                             swapModeEnabled = true
                                             swapSourceWidgetId = widget.widgetId
-                                        }
+                                        },
+                                        editModeEnabled = editModeEnabled
                                     )
                                 }
                             }
                         }
-                    }
-
-                    item {
-                        Spacer(Modifier.height(16.dp))
                     }
                 }
             }
@@ -368,7 +349,11 @@ fun WidgetPageScreen(
                 scope.launch {
                     widgetPageAppManager.toggleSectionOrder(pageIndex)
                 }
-            }
+            },
+            onToggleEditMode = {
+                viewModel.toggleEditMode(pageIndex)
+            },
+            isEditModeActive = editModeEnabled
         )
     }
 
@@ -399,6 +384,83 @@ fun WidgetPageScreen(
                 widgetPickerLauncher.launch(pickIntent)
             }
             showWidgetPicker = false
+        }
+    }
+}
+
+@Composable
+private fun WidgetSwapModeHeaderCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.widget_swap_mode_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = stringResource(R.string.widget_swap_mode_instructions),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+            TextButton(
+                onClick = onClick,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.widget_swap_cancel))
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetEditModeHeaderCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.widget_page_edit_mode_active),
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+            TextButton(
+                onClick = onClick,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.widget_page_edit_mode_exit))
+            }
         }
     }
 }

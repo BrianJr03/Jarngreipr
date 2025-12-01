@@ -17,11 +17,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 
-/**
- * A reusable component that displays a full-screen black box.
- * Used for simulating a powered-off display.
- * Captures any key press or click to power back on.
- */
 @Composable
 fun BlackScreen(
     modifier: Modifier = Modifier,
