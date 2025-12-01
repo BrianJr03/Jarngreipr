@@ -66,6 +66,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppDrawerScreen(
     apps: List<AppInfo>,
+    appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
@@ -130,7 +131,7 @@ fun AppDrawerScreen(
 
     if (showAppVisibilityDialog) {
         AppVisibilityDialog(
-            apps = apps,
+            apps = appsUnfiltered,
             onDismiss = { showAppVisibilityDialog = false }
         )
     }

@@ -11,6 +11,8 @@ class GridSettingsManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private var _totalAppsCount by mutableIntStateOf(0)
+
     private var _columnCount by mutableIntStateOf(loadColumnCount())
     val columnCount: Int
         get() = _columnCount
@@ -18,8 +20,6 @@ class GridSettingsManager(context: Context) {
     private var _rowCount by mutableIntStateOf(loadRowCount())
     val rowCount: Int
         get() = _rowCount
-
-    private var _totalAppsCount by mutableIntStateOf(0)
 
     private var _unlimitedMode by mutableStateOf(loadUnlimitedMode())
     val unlimitedMode: Boolean
@@ -126,7 +126,6 @@ class GridSettingsManager(context: Context) {
         private const val KEY_ROW_COUNT = "row_count"
         private const val KEY_UNLIMITED_MODE = "unlimited_mode"
         const val DEFAULT_COLUMN_COUNT = 4
-        const val DEFAULT_ROW_COUNT = 3
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7
         const val MIN_ROWS = 1

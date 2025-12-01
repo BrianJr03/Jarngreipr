@@ -205,49 +205,44 @@ private fun MainContent() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = !isPoweredOff,
-            enter = fadeIn(),
-            exit = fadeOut()
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = if (wallpaperManager.isTransparent()) {
+                GraphicsColor.Transparent
+            } else {
+                MaterialTheme.colorScheme.background
+            }
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = if (wallpaperManager.isTransparent()) {
-                    GraphicsColor.Transparent
-                } else {
-                    MaterialTheme.colorScheme.background
-                }
+            NavHost(
+                navController = navController,
+                startDestination = Routes.LAUNCHER
             ) {
-                NavHost(
-                    navController = navController,
-                    startDestination = Routes.LAUNCHER
-                ) {
-                    composable(Routes.LAUNCHER) {
-                        LauncherPagerScreen(
-                            homeViewModel = homeViewModel,
-                            widgetViewModel = widgetViewModel,
-                            powerViewModel = powerViewModel,
-                            onSettingsClick = {
-                                navController.navigate(Routes.SETTINGS)
-                            },
-                            isOverlayShown = showWelcomeOverlay,
-                            initialPage = homeTabIndex
-                        )
-                    }
+                composable(Routes.LAUNCHER) {
+                    val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
 
-                    composable(Routes.SETTINGS) {
-                        SettingsScreen(
-                            allApps = homeUiState.allApps,
-                            allAppsUnfiltered = homeUiState.allAppsUnfiltered,
-                            onNavigateToFAQ = {
-                                navController.navigate(Routes.FAQ)
-                            }
-                        )
-                    }
+                    LauncherPagerScreen(
+                        homeViewModel = homeViewModel,
+                        widgetViewModel = widgetViewModel,
+                        powerViewModel = powerViewModel,
+                        onSettingsClick = {
+                            navController.navigate(Routes.SETTINGS)
+                        },
+                        isOverlayShown = showWelcomeOverlay,
+                        initialPage = currentHomeTabIndex
+                    )
+                }
 
-                    composable(Routes.FAQ) {
-                        jr.brian.home.ui.screens.FAQScreen()
-                    }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(
+                        allAppsUnfiltered = homeUiState.allAppsUnfiltered,
+                        onNavigateToFAQ = {
+                            navController.navigate(Routes.FAQ)
+                        }
+                    )
+                }
+
+                composable(Routes.FAQ) {
+                    jr.brian.home.ui.screens.FAQScreen()
                 }
             }
         }

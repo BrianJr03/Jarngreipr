@@ -65,21 +65,11 @@ fun HomeTabSelectionDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                TabOption(
-                    text = stringResource(R.string.home_tab_app_drawer),
-                    isSelected = currentTabIndex == 0,
-                    onClick = {
-                        onTabSelected(0)
-                        onDismiss()
-                    }
-                )
-
-                for (i in 1 until totalPages) {
-                    val widgetPageNumber = i
+                for (i in 0 until totalPages) {
                     TabOption(
                         text = stringResource(
                             R.string.home_tab_widget_page,
-                            widgetPageNumber
+                            i+1
                         ),
                         isSelected = currentTabIndex == i,
                         onClick = {

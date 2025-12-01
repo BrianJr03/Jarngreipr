@@ -62,21 +62,10 @@ fun LauncherPagerScreen(
 
     val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
 
-    var savedPage by remember {
-        mutableStateOf(prefs.getInt("last_page", initialPage))
-    }
-
     val pagerState = rememberPagerState(
-        initialPage = savedPage,
+        initialPage = initialPage,
         pageCount = { totalPages }
     )
-
-    LaunchedEffect(pagerState.currentPage) {
-        savedPage = pagerState.currentPage
-        prefs.edit {
-            putInt("last_page", pagerState.currentPage)
-        }
-    }
 
     BackHandler(enabled = !isOverlayShown) {
         if (pagerState.currentPage > 0) {
@@ -129,6 +118,7 @@ fun LauncherPagerScreen(
                         0 -> {
                             AppDrawerScreen(
                                 apps = homeUiState.allApps,
+                                appsUnfiltered = homeUiState.allAppsUnfiltered,
                                 isLoading = homeUiState.isLoading,
                                 onSettingsClick = onSettingsClick,
                                 powerViewModel = powerViewModel,

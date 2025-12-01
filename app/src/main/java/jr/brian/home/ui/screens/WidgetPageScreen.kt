@@ -345,7 +345,7 @@ fun WidgetPageScreen(
                     }
 
                     sections.forEach { (sectionType, items) ->
-                        if (sectionType == "apps" && displayedApps.isNotEmpty()) {
+                        if (sectionType == "apps" && displayedApps.isNotEmpty() && !editModeEnabled) {
                             item(span = { GridItemSpan(columns) }) {
                                 SectionHeader(
                                     title = stringResource(R.string.widget_page_section_apps)

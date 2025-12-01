@@ -66,7 +66,7 @@
     <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
 
-    <string name="settings_new_apps_visible_title">New Apps Visible by Default</string>
+    <string name="settings_new_apps_visible_title">New App Visibility</string>
     <string name="settings_new_apps_visible_description">Show newly installed apps on home screen automatically</string>
 
     <string name="settings_grid_columns_title">Grid Layout</string>
@@ -99,7 +99,7 @@
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
     <string name="dialog_app_visibility_close">Close</string>
-    <string name="dialog_app_visibility_hidden_count">%1$d apps hidden</string>
+    <string name="dialog_app_visibility_hidden_count">%1$d app(s) hidden</string>
     <string name="dialog_app_visibility_show_all">Show All</string>
     <string name="dialog_app_visibility_hide_all">Hide All</string>
 
@@ -210,15 +210,14 @@
 
     <!-- Home Tab Selection -->
     <string name="home_tab_dialog_title">Select Home Tab</string>
-    <string name="home_tab_app_drawer">App Drawer</string>
-    <string name="home_tab_widget_page">Widget Page %1$d</string>
+    <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
 
     <!-- Onboarding -->
     <string name="onboarding_settings_title">Settings</string>
     <string name="onboarding_settings_description">Access app settings, themes, wallpapers, and customization options.</string>
     <string name="onboarding_page_indicators_title">Page Indicators</string>
-    <string name="onboarding_page_indicators_description">Shows current page position. Click to quickly change your home tab.</string>
+    <string name="onboarding_page_indicators_description">Shows current page position. Click to quickly change your Home tab.</string>
     <string name="onboarding_options_title">Options</string>
     <string name="onboarding_options_description">Access quick actions and page-specific options.</string>
     <string name="onboarding_keyboard_title">Search Keyboard</string>
@@ -244,7 +243,7 @@
     <string name="widget_page_app_options_title">App Options</string>
     <string name="widget_page_app_remove">Remove from Page</string>
     <string name="widget_page_app_remove_description">Remove this app from the page</string>
-    <string name="widget_page_edit_mode">Edit Page</string>
+    <string name="widget_page_edit_mode">Edit Widgets</string>
     <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
     <string name="widget_page_edit_mode_active">Edit Mode Active</string>
     <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>

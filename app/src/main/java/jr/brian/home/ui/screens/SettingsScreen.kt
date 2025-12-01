@@ -36,7 +36,6 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
-import jr.brian.home.ui.components.settings.NewAppsVisibleToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -50,7 +49,6 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SettingsScreen(
-    allApps: List<AppInfo> = emptyList(),
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
@@ -67,7 +65,6 @@ fun SettingsScreen(
             Column {
                 VersionInfo()
                 SettingsContent(
-                    allApps = allApps,
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ
                 )
@@ -78,7 +75,6 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
-    allApps: List<AppInfo> = emptyList(),
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {}
 ) {
@@ -155,11 +151,11 @@ private fun SettingsContent(
             )
         }
 
-        item {
-            NewAppsVisibleToggleItem(
-                isExpanded = expandedItem == "new_apps_visible"
-            )
-        }
+//        item {
+//            NewAppsVisibleToggleItem(
+//                isExpanded = expandedItem == "new_apps_visible"
+//            )
+//        }
 
         item {
             GridColumnSelectorItem(
