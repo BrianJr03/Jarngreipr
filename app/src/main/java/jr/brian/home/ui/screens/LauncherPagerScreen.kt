@@ -40,6 +40,7 @@ fun LauncherPagerScreen(
     val scope = rememberCoroutineScope()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
+    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
 
@@ -67,7 +68,7 @@ fun LauncherPagerScreen(
         pageCount = { totalPages }
     )
 
-    BackHandler {
+    BackHandler(enabled = !isPoweredOff) {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)

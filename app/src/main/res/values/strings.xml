@@ -91,6 +91,10 @@
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
     <string name="settings_thor_power_button">Show Power Button</string>
+    <string name="settings_thor_wake_method">Wake Method</string>
+    <string name="settings_thor_wake_single_tap">Single Tap</string>
+    <string name="settings_thor_wake_double_tap">Double Tap</string>
+    <string name="settings_thor_wake_long_press">Long Press for 1 second</string>
     <string name="settings_thor_icon_description">Thor settings icon</string>
     <string name="settings_toggle_on">ON</string>
     <string name="settings_toggle_off">OFF</string>

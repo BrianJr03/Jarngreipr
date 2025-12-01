@@ -4,6 +4,7 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -79,6 +80,11 @@ fun AppDrawerScreen(
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var searchQuery by remember { mutableStateOf("") }
+
+    val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
+        ?: remember { mutableStateOf(false) }
+
+    BackHandler(enabled = isPoweredOff) {}
 
     val hasExternalDisplay = remember {
         val displayManager =
