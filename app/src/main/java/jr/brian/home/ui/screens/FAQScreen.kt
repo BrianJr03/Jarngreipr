@@ -26,19 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.ui.theme.AppBackgroundDark
-import jr.brian.home.ui.theme.AppCardDark
-import jr.brian.home.ui.theme.AppCardLight
+import jr.brian.home.model.FAQItem
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-
-data class FAQItem(
-    val question: Int,
-    val answer: Int
-)
 
 @Composable
 fun FAQScreen() {
@@ -46,6 +39,11 @@ fun FAQScreen() {
         FAQItem(
             question = R.string.faq_keyboard_question,
             answer = R.string.faq_keyboard_answer
+        ),
+
+        FAQItem(
+            question = R.string.faq_app_close_question,
+            answer = R.string.faq_app_close_answer
         )
     )
 

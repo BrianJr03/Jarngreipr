@@ -154,6 +154,8 @@
     <string name="settings_faq_description">Frequently asked questions</string>
     <string name="settings_faq_icon_description">FAQ icon</string>
     <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_app_close_question">How can I prevent the Android system from closing Jarngreipr?</string>
+    <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
 
