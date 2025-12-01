@@ -267,7 +267,7 @@ fun WidgetPageScreen(
                     columns = GridCells.Fixed(columns),
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 8.dp),
+                        .padding(start = 8.dp, end = 8.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -334,10 +334,6 @@ fun WidgetPageScreen(
                                 }
                             }
                         }
-                    }
-
-                    item {
-                        Spacer(Modifier.height(16.dp))
                     }
                 }
             }
