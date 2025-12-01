@@ -68,150 +68,20 @@ fun AppOptionsMenu(
             )
         },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = appLabel,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                MenuOption(
-                    icon = Icons.Default.Info,
-                    label = stringResource(id = R.string.app_options_app_info),
-                    focusRequester = focusRequesters[0],
-                    onClick = {
-                        onAppInfoClick()
-                        onDismiss()
-                    },
-                    onNavigateUp = {
-                        // Stay on first item
-                    },
-                    onNavigateDown = {
-                        if (hasExternalDisplay && focusRequesters.size > 1) {
-                            focusRequesters[1].requestFocus()
-                            focusedIndex = 1
-                        }
-                    },
-                    onFocusChanged = { focused ->
-                        if (focused) focusedIndex = 0
-                    }
-                )
-
-                if (hasExternalDisplay) {
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_external),
-                        isSelected = currentDisplayPreference == AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY,
-                        focusRequester = focusRequesters[1],
-                        onClick = {
-                            onDisplayPreferenceChange(AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[0].requestFocus()
-                            focusedIndex = 0
-                        },
-                        onNavigateDown = {
-                            focusRequesters[2].requestFocus()
-                            focusedIndex = 2
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) focusedIndex = 1
-                        }
-                    )
-
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_primary),
-                        isSelected = currentDisplayPreference == AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY,
-                        focusRequester = focusRequesters[2],
-                        onClick = {
-                            onDisplayPreferenceChange(AppDisplayPreferenceManager.DisplayPreference.PRIMARY_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[1].requestFocus()
-                            focusedIndex = 1
-                        },
-                        onNavigateDown = {
-                            // Stay on last item
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) focusedIndex = 2
-                        }
-                    )
-                }
-            }
+            AppOptionsMenuContent(
+                appLabel,
+                currentDisplayPreference,
+                onAppInfoClick,
+                onDisplayPreferenceChange,
+                hasExternalDisplay,
+                focusRequesters,
+                onFocusedIndexChange = { focusedIndex = it },
+                onDismiss
+            )
         },
         confirmButton = {},
         dismissButton = {},
         containerColor = OledCardColor,
         shape = RoundedCornerShape(16.dp),
     )
-}
-
-@Composable
-private fun MenuOption(
-    icon: ImageVector,
-    label: String,
-    focusRequester: FocusRequester,
-    onClick: () -> Unit,
-    onNavigateUp: () -> Unit,
-    onNavigateDown: () -> Unit,
-    onFocusChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    isSelected: Boolean = false
-) {
-    var isFocused by remember { mutableIntStateOf(0) }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .background(
-                color = when {
-                    isFocused == 1 -> Color.White.copy(alpha = 0.2f)
-                    else -> Color.Transparent
-                },
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp)
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                isFocused = if (it.isFocused) 1 else 0
-                onFocusChanged(it.isFocused)
-            }
-            .handleDPadNavigation(
-                onNavigateUp = onNavigateUp,
-                onNavigateDown = onNavigateDown,
-                onEnterPress = onClick
-            )
-            .focusable(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            val color = if (isSelected) ThemePrimaryColor else Color.White
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Text(
-                text = label,
-                color = color,
-                fontSize = 16.sp
-            )
-        }
-    }
 }

@@ -5,10 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.hardware.display.DisplayManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
@@ -23,9 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
@@ -43,16 +39,20 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
-import jr.brian.home.ui.components.apps.AppOverlay
 import jr.brian.home.ui.screens.BlackScreen
+import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -80,6 +80,12 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var widgetPageAppManager: WidgetPageAppManager
+
+    @Inject
+    lateinit var homeTabManager: HomeTabManager
+
+    @Inject
+    lateinit var onboardingManager: OnboardingManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,7 +116,9 @@ class MainActivity : ComponentActivity() {
                     LocalGridSettingsManager provides gridSettingsManager,
                     LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
                     LocalPowerSettingsManager provides powerSettingsManager,
-                    LocalWidgetPageAppManager provides widgetPageAppManager
+                    LocalWidgetPageAppManager provides widgetPageAppManager,
+                    LocalHomeTabManager provides homeTabManager,
+                    LocalOnboardingManager provides onboardingManager
                 ) {
                     MainContent()
                 }
@@ -129,6 +137,7 @@ private fun MainContent() {
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val homeTabManager = LocalHomeTabManager.current
     val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
@@ -137,19 +146,6 @@ private fun MainContent() {
         context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
     }
 
-    val hasSeenOverlay = remember {
-        prefs.getBoolean("has_seen_welcome_overlay", false)
-    }
-
-    val displayManager =
-        remember { context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager }
-    val hasExternalDisplays = remember {
-        displayManager.displays.size > 1
-    }
-
-    var showWelcomeOverlay by remember {
-        mutableStateOf(hasExternalDisplays && !hasSeenOverlay)
-    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -166,8 +162,6 @@ private fun MainContent() {
     LaunchedEffect(hiddenApps) {
         homeViewModel.loadAllApps(context)
     }
-
-    BackHandler(enabled = showWelcomeOverlay) {}
 
     LaunchedEffect(Unit) {
         homeViewModel.loadAllApps(context)
@@ -202,48 +196,43 @@ private fun MainContent() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = !isPoweredOff,
-            enter = fadeIn(),
-            exit = fadeOut()
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = if (wallpaperManager.isTransparent()) {
+                GraphicsColor.Transparent
+            } else {
+                MaterialTheme.colorScheme.background
+            }
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = if (wallpaperManager.isTransparent()) {
-                    GraphicsColor.Transparent
-                } else {
-                    MaterialTheme.colorScheme.background
-                }
+            NavHost(
+                navController = navController,
+                startDestination = Routes.LAUNCHER
             ) {
-                NavHost(
-                    navController = navController,
-                    startDestination = Routes.LAUNCHER
-                ) {
-                    composable(Routes.LAUNCHER) {
-                        LauncherPagerScreen(
-                            homeViewModel = homeViewModel,
-                            widgetViewModel = widgetViewModel,
-                            powerViewModel = powerViewModel,
-                            onSettingsClick = {
-                                navController.navigate(Routes.SETTINGS)
-                            },
-                            isOverlayShown = showWelcomeOverlay
-                        )
-                    }
+                composable(Routes.LAUNCHER) {
+                    val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
 
-                    composable(Routes.SETTINGS) {
-                        SettingsScreen(
-                            allApps = homeUiState.allApps,
-                            allAppsUnfiltered = homeUiState.allAppsUnfiltered,
-                            onNavigateToFAQ = {
-                                navController.navigate(Routes.FAQ)
-                            }
-                        )
-                    }
+                    LauncherPagerScreen(
+                        homeViewModel = homeViewModel,
+                        widgetViewModel = widgetViewModel,
+                        powerViewModel = powerViewModel,
+                        onSettingsClick = {
+                            navController.navigate(Routes.SETTINGS)
+                        },
+                        initialPage = currentHomeTabIndex
+                    )
+                }
 
-                    composable(Routes.FAQ) {
-                        jr.brian.home.ui.screens.FAQScreen()
-                    }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(
+                        allAppsUnfiltered = homeUiState.allAppsUnfiltered,
+                        onNavigateToFAQ = {
+                            navController.navigate(Routes.FAQ)
+                        }
+                    )
+                }
+
+                composable(Routes.FAQ) {
+                    FAQScreen()
                 }
             }
         }
@@ -256,18 +245,6 @@ private fun MainContent() {
             BlackScreen(
                 onPowerOn = {
                     powerViewModel.powerOn()
-                }
-            )
-        }
-
-        if (showWelcomeOverlay) {
-            AppOverlay(
-                onDismissOverlay = {
-                    showWelcomeOverlay = false
-                    prefs.edit().putBoolean("has_seen_welcome_overlay", true).apply()
-                },
-                onOpenSettings = {
-                    navController.navigate(Routes.SETTINGS)
                 }
             )
         }

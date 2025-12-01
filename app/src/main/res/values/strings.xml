@@ -23,7 +23,6 @@
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
     <string name="add_app_message">Add this app to your home page?</string>
-    <string name="app_info_title">App Options</string>
     <string name="app_info_message">Open app info for %1$s?</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
@@ -67,6 +66,9 @@
     <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
 
+    <string name="settings_new_apps_visible_title">New App Visibility</string>
+    <string name="settings_new_apps_visible_description">Show newly installed apps on home screen automatically</string>
+
     <string name="settings_grid_columns_title">Grid Layout</string>
     <string name="settings_grid_columns_description">Customize columns and rows</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
@@ -75,13 +77,16 @@
     <string name="settings_grid_rows_label">Rows</string>
     <string name="settings_grid_apps_total_singular">%1$d app total</string>
     <string name="settings_grid_apps_total_plural">%1$d apps total</string>
-    <string name="settings_grid_apps_hidden_singular">%1$d app will be displayed. %2$d selected app will be hidden.</string>
-    <string name="settings_grid_apps_hidden_plural">%1$d apps will be displayed. %2$d selected apps will be hidden.</string>
-    <string name="settings_grid_all_apps_visible_singular"> %1$d app will be displayed. All selected apps will be visible.</string>
-    <string name="settings_grid_all_apps_visible_plural">%1$d apps will be displayed. All selected apps will be visible.</string>
+    <string name="settings_grid_apps_hidden_singular">%1$d app can be displayed. %2$d selected app will be hidden.</string>
+    <string name="settings_grid_apps_hidden_plural">%1$d apps can be displayed. %2$d selected apps will be hidden.</string>
+    <string name="settings_grid_all_apps_visible_singular"> %1$d app can be displayed. All selected apps will be visible.</string>
+    <string name="settings_grid_all_apps_visible_plural">%1$d apps can be displayed. All selected apps will be visible.</string>
+    <string name="settings_grid_unlimited_mode_singular">%1$d selected app will be displayed.</string>
+    <string name="settings_grid_unlimited_mode_plural">All %1$d selected apps will be displayed.</string>
     <string name="settings_grid_done">Done</string>
     <string name="settings_grid_minus">−</string>
     <string name="settings_grid_plus">+</string>
+    <string name="settings_grid_reset">Reset</string>
 
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
@@ -94,7 +99,7 @@
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
     <string name="dialog_app_visibility_close">Close</string>
-    <string name="dialog_app_visibility_hidden_count">%1$d apps hidden</string>
+    <string name="dialog_app_visibility_hidden_count">%1$d app(s) hidden</string>
     <string name="dialog_app_visibility_show_all">Show All</string>
     <string name="dialog_app_visibility_hide_all">Hide All</string>
 
@@ -128,6 +133,7 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_layout">Layout</string>
     <string name="settings_section_support">Support</string>
+    <string name="settings_section_extras">Extras</string>
 
     <!-- App Grid Item -->
     <string name="app_icon_description">App icon for %1$s</string>
@@ -148,6 +154,8 @@
     <string name="settings_faq_description">Frequently asked questions</string>
     <string name="settings_faq_icon_description">FAQ icon</string>
     <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_app_close_question">How can I prevent the Android system from closing Jarngreipr?</string>
+    <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
 
@@ -203,10 +211,30 @@
     <string name="thor_fact_49">Thor is the protector of the consecration of marriages and sacred oaths.</string>
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 
+    <!-- Home Tab Selection -->
+    <string name="home_tab_dialog_title">Select Home Tab</string>
+    <string name="home_tab_widget_page">Page %1$d</string>
+    <string name="home_tab_select">Select</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_settings_title">Settings</string>
+    <string name="onboarding_settings_description">Access app settings, themes, wallpapers, and customization options.</string>
+    <string name="onboarding_page_indicators_title">Page Indicators</string>
+    <string name="onboarding_page_indicators_description">Shows current page position. Click to quickly change your Home tab.</string>
+    <string name="onboarding_options_title">Options</string>
+    <string name="onboarding_options_description">Access quick actions and page-specific options.</string>
+    <string name="onboarding_keyboard_title">Search Keyboard</string>
+    <string name="onboarding_keyboard_description">On the first tab, press (or gesture) Back to toggle the on-screen keyboard.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Got It</string>
+
+    <!-- App Drawer Options -->
+    <string name="app_drawer_options_title">Options</string>
+
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
     <string name="widget_page_section_widgets">Widgets</string>
-    <string name="widget_page_add_options_title">Add to Page</string>
+    <string name="widget_page_add_options_title">Options</string>
     <string name="widget_page_add_widget">Add Widget</string>
     <string name="widget_page_add_widget_description">Add a system widget</string>
     <string name="widget_page_add_app">Add App</string>
@@ -218,4 +246,8 @@
     <string name="widget_page_app_options_title">App Options</string>
     <string name="widget_page_app_remove">Remove from Page</string>
     <string name="widget_page_app_remove_description">Remove this app from the page</string>
+    <string name="widget_page_edit_mode">Edit Widgets</string>
+    <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
+    <string name="widget_page_edit_mode_active">Edit Mode Active</string>
+    <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>
 </resources>

@@ -49,7 +49,8 @@ fun WidgetItem(
     swapModeEnabled: Boolean = false,
     isSwapSource: Boolean = false,
     onSwapSelect: (Int) -> Unit = {},
-    onEnableSwapMode: () -> Unit = {}
+    onEnableSwapMode: () -> Unit = {},
+    editModeEnabled: Boolean = false
 ) {
     var showOptionsDialog by remember { mutableStateOf(false) }
 
@@ -76,8 +77,8 @@ fun WidgetItem(
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
-                width = if (isSwapSource) 4.dp else 2.dp,
-                color = if (isSwapSource) Color.Yellow else ThemePrimaryColor,
+                width = if (isSwapSource) 4.dp else if (editModeEnabled || swapModeEnabled) 2.dp else 0.dp,
+                color = if (isSwapSource) Color.Yellow else if (editModeEnabled || swapModeEnabled) ThemePrimaryColor else Color.Transparent,
                 shape = RoundedCornerShape(12.dp)
             )
     ) {
@@ -106,64 +107,66 @@ fun WidgetItem(
             }
         }
 
-        Card(
-            onClick = {
-                if (swapModeEnabled && !isSwapSource) {
-                    onSwapSelect(widgetInfo.widgetId)
-                } else if (!swapModeEnabled) {
-                    showOptionsDialog = true
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(32.dp),
-            shape = RoundedCornerShape(
-                topStart = 0.dp,
-                topEnd = 0.dp,
-                bottomStart = 10.dp,
-                bottomEnd = 10.dp
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isSwapSource) Color.Yellow else ThemePrimaryColor
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
+        if (editModeEnabled || swapModeEnabled) {
+            Card(
+                onClick = {
+                    if (swapModeEnabled && !isSwapSource) {
+                        onSwapSelect(widgetInfo.widgetId)
+                    } else if (!swapModeEnabled) {
+                        showOptionsDialog = true
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp),
+                shape = RoundedCornerShape(
+                    topStart = 0.dp,
+                    topEnd = 0.dp,
+                    bottomStart = 10.dp,
+                    bottomEnd = 10.dp
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isSwapSource) Color.Yellow else ThemePrimaryColor
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
 
-                ) {
-                if (swapModeEnabled) {
-                    if (isSwapSource) {
-                        Text(
-                            text = "Selected",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Black
-                        )
+                    ) {
+                    if (swapModeEnabled) {
+                        if (isSwapSource) {
+                            Text(
+                                text = "Selected",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Black
+                            )
+                        } else {
+                            Text(
+                                text = "Tap to Swap",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White
+                            )
+                        }
                     } else {
-                        Text(
-                            text = "Tap to Swap",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.widget_edit_description),
+                            tint = if (themeManager.currentTheme == ColorTheme.OLED_BLACK_WHITE) {
+                                Color.Gray
+                            } else {
+                                Color.White
+                            },
+                            modifier = Modifier.size(18.dp)
                         )
                     }
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = stringResource(R.string.widget_edit_description),
-                        tint = if (themeManager.currentTheme == ColorTheme.OLED_BLACK_WHITE) {
-                            Color.Gray
-                        } else {
-                            Color.White
-                        },
-                        modifier = Modifier.size(18.dp)
-                    )
                 }
             }
         }
     }
 
-    if (showOptionsDialog && !swapModeEnabled) {
+    if (showOptionsDialog && !swapModeEnabled && editModeEnabled) {
         WidgetOptionsDialog(
             widgetInfo = widgetInfo,
             currentPageIndex = pageIndex,

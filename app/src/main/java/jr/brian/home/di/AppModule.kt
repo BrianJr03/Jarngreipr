@@ -9,6 +9,8 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -64,5 +66,21 @@ object AppModule {
         @ApplicationContext context: Context
     ): WidgetPageAppManager {
         return WidgetPageAppManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHomeTabManager(
+        @ApplicationContext context: Context
+    ): HomeTabManager {
+        return HomeTabManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOnboardingManager(
+        @ApplicationContext context: Context
+    ): OnboardingManager {
+        return OnboardingManager(context)
     }
 }
