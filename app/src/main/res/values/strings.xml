@@ -133,6 +133,7 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_layout">Layout</string>
     <string name="settings_section_support">Support</string>
+    <string name="settings_section_extras">Extras</string>
 
     <!-- App Grid Item -->
     <string name="app_icon_description">App icon for %1$s</string>

@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
@@ -22,9 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
@@ -46,7 +43,6 @@ import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
-import jr.brian.home.ui.components.apps.AppOverlay
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
@@ -144,15 +140,11 @@ private fun MainContent() {
     val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-    val homeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
 
     val prefs = remember {
         context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
     }
 
-    var showWelcomeOverlay by remember {
-        mutableStateOf(false)
-    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -169,8 +161,6 @@ private fun MainContent() {
     LaunchedEffect(hiddenApps) {
         homeViewModel.loadAllApps(context)
     }
-
-    BackHandler(enabled = showWelcomeOverlay) {}
 
     LaunchedEffect(Unit) {
         homeViewModel.loadAllApps(context)
@@ -227,7 +217,6 @@ private fun MainContent() {
                         onSettingsClick = {
                             navController.navigate(Routes.SETTINGS)
                         },
-                        isOverlayShown = showWelcomeOverlay,
                         initialPage = currentHomeTabIndex
                     )
                 }
@@ -255,18 +244,6 @@ private fun MainContent() {
             BlackScreen(
                 onPowerOn = {
                     powerViewModel.powerOn()
-                }
-            )
-        }
-
-        if (showWelcomeOverlay) {
-            AppOverlay(
-                onDismissOverlay = {
-                    showWelcomeOverlay = false
-                    prefs.edit().putBoolean("has_seen_welcome_overlay", true).apply()
-                },
-                onOpenSettings = {
-                    navController.navigate(Routes.SETTINGS)
                 }
             )
         }

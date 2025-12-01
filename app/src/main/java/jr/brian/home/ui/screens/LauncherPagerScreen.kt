@@ -3,7 +3,8 @@ package jr.brian.home.ui.screens
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -33,7 +34,6 @@ fun LauncherPagerScreen(
     powerViewModel: PowerViewModel,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isOverlayShown: Boolean = false,
     initialPage: Int = 0
 ) {
     val context = LocalContext.current
@@ -67,7 +67,7 @@ fun LauncherPagerScreen(
         pageCount = { totalPages }
     )
 
-    BackHandler(enabled = !isOverlayShown) {
+    BackHandler {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
@@ -93,14 +93,14 @@ fun LauncherPagerScreen(
                 .fillMaxSize()
                 .handleShoulderButtons(
                     onLeftShoulder = {
-                        if (!isOverlayShown && pagerState.currentPage > 0) {
+                        if (pagerState.currentPage > 0) {
                             scope.launch {
                                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
                             }
                         }
                     },
                     onRightShoulder = {
-                        if (!isOverlayShown && pagerState.currentPage < totalPages - 1) {
+                        if (pagerState.currentPage < totalPages - 1) {
                             scope.launch {
                                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
@@ -112,7 +112,6 @@ fun LauncherPagerScreen(
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = !isOverlayShown
                 ) { page ->
                     when (page) {
                         0 -> {
