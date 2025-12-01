@@ -44,6 +44,7 @@ import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.screens.BlackScreen
+import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
@@ -231,7 +232,7 @@ private fun MainContent() {
                 }
 
                 composable(Routes.FAQ) {
-                    jr.brian.home.ui.screens.FAQScreen()
+                    FAQScreen()
                 }
             }
         }
