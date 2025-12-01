@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -94,6 +95,8 @@ fun WidgetPageScreen(
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
 
+    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+
     val addWidgetIconFocusRequester = remember { FocusRequester() }
     var showAddOptionsDialog by remember { mutableStateOf(false) }
     var showAppSelectionDialog by remember { mutableStateOf(false) }
@@ -152,6 +155,8 @@ fun WidgetPageScreen(
             }
         }
     }
+
+    BackHandler(enabled = isPoweredOff) {}
 
     Box(
         modifier = modifier
