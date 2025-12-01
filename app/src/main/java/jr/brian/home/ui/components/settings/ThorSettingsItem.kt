@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -45,14 +44,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 
 @Composable
 fun ThorSettingsItem(
@@ -62,6 +61,7 @@ fun ThorSettingsItem(
 ) {
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val currentWakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
 
@@ -183,86 +183,45 @@ fun ThorSettingsItem(
                         onExpandChanged(false)
                     }
                 )
+
+                Text(
+                    text = stringResource(id = R.string.settings_thor_wake_method),
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
+
+                ThorSettingSelectionButton(
+                    text = stringResource(id = R.string.settings_thor_wake_single_tap),
+                    currentValue = currentWakeMethod,
+                    targetValue = WakeMethod.SINGLE_TAP,
+                    onClick = {
+                        powerSettingsManager.setWakeMethod(WakeMethod.SINGLE_TAP)
+                        onExpandChanged(false)
+                    }
+                )
+
+                ThorSettingSelectionButton(
+                    text = stringResource(id = R.string.settings_thor_wake_double_tap),
+                    currentValue = currentWakeMethod,
+                    targetValue = WakeMethod.DOUBLE_TAP,
+                    onClick = {
+                        powerSettingsManager.setWakeMethod(WakeMethod.DOUBLE_TAP)
+                        onExpandChanged(false)
+                    }
+                )
+
+                ThorSettingSelectionButton(
+                    text = stringResource(id = R.string.settings_thor_wake_long_press),
+                    currentValue = currentWakeMethod,
+                    targetValue = WakeMethod.LONG_PRESS,
+                    onClick = {
+                        powerSettingsManager.setWakeMethod(WakeMethod.LONG_PRESS)
+                        onExpandChanged(false)
+                    }
+                )
             }
-        }
-    }
-}
-
-@Composable
-private fun ThorSettingToggleButton(
-    text: String,
-    isChecked: Boolean,
-    onClick: () -> Unit,
-) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val gradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
-
-    val borderColor = when {
-        isChecked -> Color.White
-        isFocused -> Color.LightGray.copy(alpha = 0.8f)
-        else -> Color.Transparent
-    }
-
-    val borderWidth = if (isChecked || isFocused) 2.dp else 0.dp
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                }
-                .background(
-                    brush = gradient,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .border(
-                    width = borderWidth,
-                    color = borderColor,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() }
-                .focusable()
-                .padding(16.dp),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = text,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Medium,
-            )
-
-            Text(
-                text = if (isChecked) stringResource(R.string.settings_toggle_on) else stringResource(
-                    R.string.settings_toggle_off
-                ),
-                color = if (isChecked) Color.Green else Color.Gray,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-            )
         }
     }
 }
