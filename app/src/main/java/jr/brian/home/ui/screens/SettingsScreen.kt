@@ -36,6 +36,7 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
+import jr.brian.home.ui.components.settings.NewAppsVisibleToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -155,10 +156,16 @@ private fun SettingsContent(
         }
 
         item {
+            NewAppsVisibleToggleItem(
+                isExpanded = expandedItem == "new_apps_visible"
+            )
+        }
+
+        item {
             GridColumnSelectorItem(
                 isExpanded = expandedItem == "grid",
                 onExpandChanged = { expandedItem = if (it) "grid" else null },
-                totalAppsCount = allApps.size
+                totalAppsCount = allAppsUnfiltered.size
             )
         }
 

@@ -18,12 +18,27 @@ class AppVisibilityManager(context: Context) {
     var currentHiddenApps by mutableStateOf(loadHiddenApps())
         private set
 
+    private val _newAppsVisibleByDefault = MutableStateFlow(loadNewAppsVisibleByDefault())
+    val newAppsVisibleByDefault = _newAppsVisibleByDefault.asStateFlow()
+
     private fun loadHiddenApps(): Set<String> {
         val hiddenAppsString = prefs.getString(KEY_HIDDEN_APPS, "") ?: ""
         return if (hiddenAppsString.isEmpty()) {
             emptySet()
         } else {
             hiddenAppsString.split(SEPARATOR).toSet()
+        }
+    }
+
+    private fun loadNewAppsVisibleByDefault(): Boolean {
+        return prefs.getBoolean(KEY_NEW_APPS_VISIBLE_BY_DEFAULT, true)
+    }
+
+    fun setNewAppsVisibleByDefault(visible: Boolean) {
+        _newAppsVisibleByDefault.value = visible
+        prefs.edit().apply {
+            putBoolean(KEY_NEW_APPS_VISIBLE_BY_DEFAULT, visible)
+            apply()
         }
     }
 
@@ -63,6 +78,7 @@ class AppVisibilityManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"
+        private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"
         private const val SEPARATOR = ","
     }
 }

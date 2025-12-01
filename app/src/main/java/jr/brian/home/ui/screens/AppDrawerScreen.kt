@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -59,6 +60,7 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.PowerViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -225,7 +227,8 @@ private fun AppSelectionContent(
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
-    val maxAppsPerPage = columns * rows
+    val unlimitedMode = gridSettingsManager.unlimitedMode
+    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
 
     var keyboardCoordinates by remember {
         mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(
@@ -336,6 +339,8 @@ private fun AppGrid(
         appFocusRequesters[0]?.requestFocus()
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
         modifier = modifier
     ) {
@@ -393,6 +398,9 @@ private fun AppGrid(
                     onNavigateUp = {
                         val prevIndex = index - columns
                         if (prevIndex >= 0) {
+                            coroutineScope.launch {
+                                gridState.animateScrollToItem(prevIndex)
+                            }
                             appFocusRequesters[prevIndex]?.requestFocus()
                         } else if (index < columns) {
                             if (index == 0) {
@@ -405,6 +413,9 @@ private fun AppGrid(
                     onNavigateDown = {
                         val nextIndex = index + columns
                         if (nextIndex < displayedApps.size) {
+                            coroutineScope.launch {
+                                gridState.animateScrollToItem(nextIndex)
+                            }
                             appFocusRequesters[nextIndex]?.requestFocus()
                         }
                     },
