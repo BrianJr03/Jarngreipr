@@ -40,19 +40,20 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
-import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.viewmodels.WidgetViewModel
 
 @Composable
 fun WidgetResizeScreen(
     widgetInfo: WidgetInfo,
     pageIndex: Int,
-    viewModel: WidgetViewModel,
+    viewModel: WidgetViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current

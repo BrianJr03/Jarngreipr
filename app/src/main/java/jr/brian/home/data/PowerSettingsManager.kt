@@ -14,11 +14,18 @@ class PowerSettingsManager(context: Context) {
     private val _powerButtonVisible = MutableStateFlow(loadPowerButtonVisibility())
     val powerButtonVisible: StateFlow<Boolean> = _powerButtonVisible.asStateFlow()
 
+    private val _quickDeleteVisible = MutableStateFlow(loadQuickDeleteVisibility())
+    val quickDeleteVisible: StateFlow<Boolean> = _quickDeleteVisible.asStateFlow()
+
     private val _wakeMethod = MutableStateFlow(loadWakeMethod())
     val wakeMethod: StateFlow<WakeMethod> = _wakeMethod.asStateFlow()
 
     private fun loadPowerButtonVisibility(): Boolean {
         return prefs.getBoolean(KEY_POWER_BUTTON_VISIBLE, false)
+    }
+
+    private fun loadQuickDeleteVisibility(): Boolean {
+        return prefs.getBoolean(KEY_QUICK_DELETE_VISIBLE, false)
     }
 
     private fun loadWakeMethod(): WakeMethod {
@@ -38,6 +45,14 @@ class PowerSettingsManager(context: Context) {
         }
     }
 
+    fun setQuickDeleteVisibility(visible: Boolean) {
+        _quickDeleteVisible.value = visible
+        prefs.edit().apply {
+            putBoolean(KEY_QUICK_DELETE_VISIBLE, visible)
+            apply()
+        }
+    }
+
     fun setWakeMethod(method: WakeMethod) {
         _wakeMethod.value = method
         prefs.edit().apply {
@@ -49,6 +64,7 @@ class PowerSettingsManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "power_settings_prefs"
         private const val KEY_POWER_BUTTON_VISIBLE = "power_button_visible"
+        private const val KEY_QUICK_DELETE_VISIBLE = "quick_delete_visible"
         private const val KEY_WAKE_METHOD = "wake_method"
     }
 }

@@ -2,7 +2,6 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -18,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -26,15 +26,15 @@ import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LauncherPagerScreen(
-    homeViewModel: HomeViewModel,
-    widgetViewModel: WidgetViewModel,
-    powerViewModel: PowerViewModel,
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    widgetViewModel: WidgetViewModel = hiltViewModel(),
+    powerViewModel: PowerViewModel = hiltViewModel(),
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
-    initialPage: Int = 0
+    initialPage: Int = 0,
+    onShowBottomSheet: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -124,7 +124,8 @@ fun LauncherPagerScreen(
                                 powerViewModel = powerViewModel,
                                 totalPages = totalPages,
                                 pagerState = pagerState,
-                                keyboardVisible = keyboardVisible
+                                keyboardVisible = keyboardVisible,
+                                onShowBottomSheet = onShowBottomSheet
                             )
                         }
 

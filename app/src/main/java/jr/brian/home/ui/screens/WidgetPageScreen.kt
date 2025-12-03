@@ -51,24 +51,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.components.dialog.AddToWidgetPageDialog
+import jr.brian.home.ui.components.dialog.WidgetPageAppSelectionDialog
+import jr.brian.home.ui.components.header.ScreenHeaderRow
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.SectionHeader
 import jr.brian.home.ui.components.widget.WidgetItem
-import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
-import jr.brian.home.ui.components.dialog.WidgetPageAppSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -80,7 +81,7 @@ fun WidgetPageScreen(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
-    powerViewModel: PowerViewModel,
+    powerViewModel: PowerViewModel = hiltViewModel(),
     allApps: List<AppInfo> = emptyList(),
     modifier: Modifier = Modifier,
     totalPages: Int = 1,
@@ -103,6 +104,7 @@ fun WidgetPageScreen(
     var showWidgetPicker by remember { mutableStateOf(false) }
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
+    var showFolderOptionsDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -238,10 +240,10 @@ fun WidgetPageScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 if (swapModeEnabled) {
-                   WidgetSwapModeHeaderCard {
-                       swapModeEnabled = false
-                       swapSourceWidgetId = null
-                   }
+                    WidgetSwapModeHeaderCard {
+                        swapModeEnabled = false
+                        swapSourceWidgetId = null
+                    }
                 } else if (editModeEnabled && pagerState != null) {
                     WidgetEditModeHeaderCard {
                         viewModel.toggleEditMode(pageIndex)
@@ -264,6 +266,7 @@ fun WidgetPageScreen(
                         onNavigateFromGrid = {
                             addWidgetIconFocusRequester.requestFocus()
                         },
+                        onFolderClick = { showFolderOptionsDialog = true },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                     )
                 }
@@ -345,9 +348,12 @@ fun WidgetPageScreen(
         }
     }
 
-    if (showAddOptionsDialog) {
+    if (showAddOptionsDialog || showFolderOptionsDialog) {
         AddToWidgetPageDialog(
-            onDismiss = { showAddOptionsDialog = false },
+            onDismiss = {
+                showAddOptionsDialog = false
+                showFolderOptionsDialog = false
+            },
             onAddWidget = { showWidgetPicker = true },
             onAddApp = { showAppSelectionDialog = true },
             onSwapSections = {

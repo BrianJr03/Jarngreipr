@@ -12,18 +12,27 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -43,11 +52,14 @@ import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
+import jr.brian.home.ui.screens.AppDrawerScreen
 import jr.brian.home.ui.screens.BlackScreen
+import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -210,6 +222,7 @@ private fun MainContent() {
             ) {
                 composable(Routes.LAUNCHER) {
                     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+                    var showBottomSheet by remember { mutableStateOf(false) }
 
                     LauncherPagerScreen(
                         homeViewModel = homeViewModel,
@@ -218,8 +231,31 @@ private fun MainContent() {
                         onSettingsClick = {
                             navController.navigate(Routes.SETTINGS)
                         },
-                        initialPage = currentHomeTabIndex
+                        initialPage = currentHomeTabIndex,
+                        onShowBottomSheet = {
+                            showBottomSheet = true
+                        }
                     )
+
+                    AnimatedVisibility(
+                        visible = showBottomSheet,
+                        enter = slideInVertically(
+                            initialOffsetY = { it }
+                        ) + fadeIn(),
+                        exit = slideOutVertically(
+                            targetOffsetY = { it }
+                        ) + fadeOut()
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            QuickDeleteScreen(
+                                onDismiss = {
+                                    showBottomSheet = false
+                                }
+                            )
+                        }
+                    }
                 }
 
                 composable(Routes.SETTINGS) {

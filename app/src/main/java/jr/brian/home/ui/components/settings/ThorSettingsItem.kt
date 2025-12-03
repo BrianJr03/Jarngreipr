@@ -61,6 +61,7 @@ fun ThorSettingsItem(
 ) {
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
     val currentWakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
@@ -180,6 +181,15 @@ fun ThorSettingsItem(
                     isChecked = isPowerButtonVisible,
                     onClick = {
                         powerSettingsManager.setPowerButtonVisibility(!isPowerButtonVisible)
+                        onExpandChanged(false)
+                    }
+                )
+
+                ThorSettingToggleButton(
+                    text = stringResource(id = R.string.settings_thor_quick_delete_button),
+                    isChecked = isQuickDeleteVisible,
+                    onClick = {
+                        powerSettingsManager.setQuickDeleteVisibility(!isQuickDeleteVisible)
                         onExpandChanged(false)
                     }
                 )
