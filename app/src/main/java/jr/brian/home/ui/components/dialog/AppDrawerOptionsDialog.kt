@@ -18,8 +18,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,7 +55,10 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 @Composable
 fun AppDrawerOptionsDialog(
     onDismiss: () -> Unit,
-    onShowAppVisibility: () -> Unit
+    onShowAppVisibility: () -> Unit,
+    isFreeModeEnabled: Boolean = false,
+    onToggleFreeMode: () -> Unit = {},
+    onResetPositions: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -102,7 +106,35 @@ fun AppDrawerOptionsDialog(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                DrawerOptionCard(
+                    title = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_layout_grid)
+                    } else {
+                        stringResource(R.string.app_drawer_layout_free)
+                    },
+                    description = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
+                    }else {
+                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
+                    },
+                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
+                    onClick = {
+                        onDismiss()
+                        onToggleFreeMode()
+                    }
+                )
+
+                if (isFreeModeEnabled) {
+                    DrawerOptionCard(
+                        title = stringResource(R.string.app_drawer_reset_positions),
+                        description = stringResource(R.string.app_drawer_reset_positions_message),
+                        icon = Icons.Default.RestartAlt,
+                        onClick = {
+                            onDismiss()
+                            onResetPositions()
+                        }
+                    )
+                }
 
                 CancelButton(onClick = onDismiss)
             }

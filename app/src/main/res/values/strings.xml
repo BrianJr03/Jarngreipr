@@ -31,6 +31,7 @@
     <!-- App Options Menu -->
     <string name="app_options_menu_title">App Options</string>
     <string name="app_options_app_info">Open App Info</string>
+    <string name="app_options_resize">Resize Icon</string>
     <string name="app_options_launch_external">Launch on External Display</string>
     <string name="app_options_launch_primary">Launch on Primary Display</string>
     <string name="app_options_selected">Selected</string>
@@ -289,4 +290,17 @@
     <!-- Header Icons -->
     <string name="header_folder_options">Options</string>
     <string name="header_power_button">Power Button</string>
+
+    <!-- App Drawer Layout -->
+    <string name="app_drawer_layout_mode">Layout Mode</string>
+    <string name="app_drawer_layout_grid">Use Grid Layout</string>
+    <string name="app_drawer_layout_free">Use Free Positioning</string>
+    <string name="app_drawer_reset_positions">Reset Positions</string>
+    <string name="app_drawer_reset_positions_message">Reset app positions and icon sizes</string>
+    <string name="app_drawer_reset_confirm">Reset</string>
+    <string name="app_drawer_arrange_apps">Arrange Apps</string>
+    <string name="app_drawer_arrange_apps_description_fpm">Drag around and resize app icons</string>
+    <string name="app_drawer_arrange_apps_description_grid">Default layout</string>
+    <string name="app_drawer_scroll_up">Scroll Up</string>
+    <string name="app_drawer_scroll_down">Scroll Down</string>
 </resources>

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,11 +55,13 @@ import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -81,10 +84,12 @@ fun AppDrawerScreen(
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appPositionManager = LocalAppPositionManager.current
     var searchQuery by remember { mutableStateOf("") }
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
+    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled.collectAsStateWithLifecycle()
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -106,6 +111,12 @@ fun AppDrawerScreen(
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     if (showAppOptionsMenu && selectedApp != null) {
+        val currentIconSize = if (isFreeModeEnabled) {
+            appPositionManager.getPosition(selectedApp!!.packageName)?.iconSize ?: 64f
+        } else {
+            64f
+        }
+
         AppOptionsMenu(
             appLabel = selectedApp!!.label,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -121,7 +132,22 @@ fun AppDrawerScreen(
                     preference
                 )
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            app = if (isFreeModeEnabled) selectedApp else null,
+            currentIconSize = currentIconSize,
+            onIconSizeChange = { newSize ->
+                if (isFreeModeEnabled) {
+                    val currentPos = appPositionManager.getPosition(selectedApp!!.packageName)
+                    appPositionManager.savePosition(
+                        jr.brian.home.model.AppPosition(
+                            packageName = selectedApp!!.packageName,
+                            x = currentPos?.x ?: 0f,
+                            y = currentPos?.y ?: 0f,
+                            iconSize = newSize
+                        )
+                    )
+                }
+            }
         )
     }
 
@@ -134,7 +160,14 @@ fun AppDrawerScreen(
     if (showAppDrawerOptionsDialog) {
         AppDrawerOptionsDialog(
             onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true }
+            onShowAppVisibility = { showAppVisibilityDialog = true },
+            isFreeModeEnabled = isFreeModeEnabled,
+            onToggleFreeMode = {
+                appPositionManager.setFreeMode(!isFreeModeEnabled)
+            },
+            onResetPositions = {
+                appPositionManager.clearAllPositions()
+            }
         )
     }
 
@@ -207,7 +240,9 @@ fun AppDrawerScreen(
                 totalPages = totalPages,
                 pagerState = pagerState,
                 onMenuClick = { showAppDrawerOptionsDialog = true },
-                onShowBottomSheet = onShowBottomSheet
+                onShowBottomSheet = onShowBottomSheet,
+                isFreeModeEnabled = isFreeModeEnabled,
+                appPositionManager = appPositionManager
             )
         }
     }
@@ -235,7 +270,9 @@ private fun AppSelectionContent(
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     onMenuClick: () -> Unit = {},
-    onShowBottomSheet: () -> Unit = {}
+    onShowBottomSheet: () -> Unit = {},
+    isFreeModeEnabled: Boolean = false,
+    appPositionManager: jr.brian.home.data.AppPositionManager? = null
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -259,106 +296,13 @@ private fun AppSelectionContent(
             }
         }
 
-    Row(modifier = modifier.fillMaxSize()) {
-        if (keyboardVisible) {
-            Box(
-                modifier = Modifier
-                    .weight(0.5f)
-                    .onGloballyPositioned { coordinates ->
-                        keyboardCoordinates = coordinates
-                    }
-            ) {
-                OnScreenKeyboard(
-                    searchQuery = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    keyboardFocusRequesters = keyboardFocusRequesters,
-                    onFocusChanged = onKeyboardFocusChanged,
-                    onNavigateRight = {
-                        appFocusRequesters[savedAppIndex]?.requestFocus()
-                    },
-                )
-            }
-        }
-
-        AppGrid(
-            apps = filteredApps,
-            columns = columns,
-            maxAppsPerPage = maxAppsPerPage,
-            modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
-            appFocusRequesters = appFocusRequesters,
-            onFocusChanged = onAppFocusChanged,
-            onNavigateLeft = {
-                if (keyboardVisible) {
-                    keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
-                }
-            },
-            onAppClick = onAppClick,
-            onAppLongClick = onAppLongClick,
-            keyboardVisible = keyboardVisible,
-            totalPages = totalPages,
-            pagerState = pagerState,
-            onSettingsClick = onSettingsClick,
-            powerViewModel = powerViewModel,
-            onMenuClick = onMenuClick,
-            keyboardCoordinates = keyboardCoordinates,
-            keyboardContent = if (!keyboardVisible) {
-                {
-                    OnScreenKeyboard(
-                        searchQuery = "",
-                        onQueryChange = {},
-                        keyboardFocusRequesters = remember { mutableStateMapOf() },
-                        onFocusChanged = {},
-                        onNavigateRight = {},
-                    )
-                }
-            } else null,
-            onShowBottomSheet = onShowBottomSheet
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AppGrid(
-    columns: Int,
-    maxAppsPerPage: Int,
-    apps: List<AppInfo>,
-    modifier: Modifier = Modifier,
-    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    onFocusChanged: (Int) -> Unit = {},
-    onNavigateLeft: () -> Unit = {},
-    onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    keyboardVisible: Boolean = true,
-    totalPages: Int = 1,
-    pagerState: PagerState? = null,
-    onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = null,
-    onMenuClick: () -> Unit = {},
-    keyboardCoordinates: LayoutCoordinates? = null,
-    keyboardContent: @Composable (() -> Unit)? = null,
-    onShowBottomSheet: () -> Unit = {}
-) {
-    val gridState = rememberLazyGridState()
-    val settingsIconFocusRequester = remember { FocusRequester() }
-    val menuIconFocusRequester = remember { FocusRequester() }
-    val powerSettingsManager = LocalPowerSettingsManager.current
-    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-
-    val displayedApps = remember(apps, maxAppsPerPage) {
-        apps.take(maxAppsPerPage)
-    }
-
-    LaunchedEffect(Unit) {
-        appFocusRequesters[0]?.requestFocus()
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
         if (pagerState != null) {
+            val settingsIconFocusRequester = remember { FocusRequester() }
+            val menuIconFocusRequester = remember { FocusRequester() }
+            val powerSettingsManager = LocalPowerSettingsManager.current
+            val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
             ScreenHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState,
@@ -379,83 +323,158 @@ private fun AppGrid(
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                keyboardCoordinates = keyboardCoordinates,
-                keyboardContent = keyboardContent,
+                keyboardCoordinates = if (keyboardVisible) keyboardCoordinates else null,
+                keyboardContent = null,
                 onFolderClick = onShowBottomSheet
             )
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
-            state = gridState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                horizontal = if (keyboardVisible) 16.dp else 8.dp,
-                vertical = if (keyboardVisible) 0.dp else 8.dp,
-            ),
-            horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
-            verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
-        ) {
-            items(displayedApps.size) { index ->
-                val app = displayedApps[index]
-                val itemFocusRequester =
-                    remember(index) {
-                        FocusRequester().also { appFocusRequesters[index] = it }
+        if (isFreeModeEnabled && !keyboardVisible && appPositionManager != null) {
+            FreePositionedAppsLayout(
+                apps = filteredApps,
+                appPositionManager = appPositionManager,
+                keyboardVisible = false,
+                onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+            )
+        } else {
+            Row(modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()) {
+                if (keyboardVisible) {
+                    Box(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .onGloballyPositioned { coordinates ->
+                                keyboardCoordinates = coordinates
+                            }
+                    ) {
+                        OnScreenKeyboard(
+                            searchQuery = searchQuery,
+                            onQueryChange = onSearchQueryChange,
+                            keyboardFocusRequesters = keyboardFocusRequesters,
+                            onFocusChanged = onKeyboardFocusChanged,
+                            onNavigateRight = {
+                                appFocusRequesters[savedAppIndex]?.requestFocus()
+                            },
+                        )
                     }
+                }
 
-                AppGridItem(
-                    app = app,
-                    keyboardVisible = keyboardVisible,
-                    focusRequester = itemFocusRequester,
-                    onClick = { onAppClick(app) },
-                    onLongClick = { onAppLongClick(app) },
-                    onFocusChanged = { onFocusChanged(index) },
-                    onNavigateUp = {
-                        val prevIndex = index - columns
-                        if (prevIndex >= 0) {
-                            coroutineScope.launch {
-                                gridState.animateScrollToItem(prevIndex)
-                            }
-                            appFocusRequesters[prevIndex]?.requestFocus()
-                        } else if (index < columns) {
-                            if (index == 0) {
-                                settingsIconFocusRequester.requestFocus()
-                            } else {
-                                menuIconFocusRequester.requestFocus()
-                            }
-                        }
-                    },
-                    onNavigateDown = {
-                        val nextIndex = index + columns
-                        if (nextIndex < displayedApps.size) {
-                            coroutineScope.launch {
-                                gridState.animateScrollToItem(nextIndex)
-                            }
-                            appFocusRequesters[nextIndex]?.requestFocus()
-                        }
-                    },
+                AppGrid(
+                    apps = filteredApps,
+                    columns = columns,
+                    maxAppsPerPage = maxAppsPerPage,
+                    modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
+                    appFocusRequesters = appFocusRequesters,
+                    onFocusChanged = onAppFocusChanged,
                     onNavigateLeft = {
-                        if (index % columns == 0) {
-                            onNavigateLeft()
-                        } else {
-                            val prevIndex = index - 1
-                            if (prevIndex >= 0) {
-                                appFocusRequesters[prevIndex]?.requestFocus()
-                            }
+                        if (keyboardVisible) {
+                            keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
                         }
                     },
-                    onNavigateRight = {
-                        val nextIndex = index + 1
-                        if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
-                            appFocusRequesters[nextIndex]?.requestFocus()
-                        }
-                    },
+                    onAppClick = onAppClick,
+                    onAppLongClick = onAppLongClick,
+                    keyboardVisible = keyboardVisible
                 )
             }
+        }
+    }
+}
 
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
-            }
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppGrid(
+    columns: Int,
+    maxAppsPerPage: Int,
+    apps: List<AppInfo>,
+    modifier: Modifier = Modifier,
+    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit = {},
+    onNavigateLeft: () -> Unit = {},
+    onAppClick: (AppInfo) -> Unit,
+    onAppLongClick: (AppInfo) -> Unit = {},
+    keyboardVisible: Boolean = true
+) {
+    val gridState = rememberLazyGridState()
+
+    val displayedApps = remember(apps, maxAppsPerPage) {
+        apps.take(maxAppsPerPage)
+    }
+
+    LaunchedEffect(Unit) {
+        appFocusRequesters[0]?.requestFocus()
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        state = gridState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = if (keyboardVisible) 16.dp else 8.dp,
+            vertical = if (keyboardVisible) 0.dp else 8.dp,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
+        verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
+    ) {
+        items(displayedApps.size) { index ->
+            val app = displayedApps[index]
+            val itemFocusRequester =
+                remember(index) {
+                    FocusRequester().also { appFocusRequesters[index] = it }
+                }
+
+            AppGridItem(
+                app = app,
+                keyboardVisible = keyboardVisible,
+                focusRequester = itemFocusRequester,
+                onClick = { onAppClick(app) },
+                onLongClick = { onAppLongClick(app) },
+                onFocusChanged = { onFocusChanged(index) },
+                onNavigateUp = {
+                    val prevIndex = index - columns
+                    if (prevIndex >= 0) {
+                        coroutineScope.launch {
+                            gridState.animateScrollToItem(prevIndex)
+                        }
+                        appFocusRequesters[prevIndex]?.requestFocus()
+                    }
+                },
+                onNavigateDown = {
+                    val nextIndex = index + columns
+                    if (nextIndex < displayedApps.size) {
+                        coroutineScope.launch {
+                            gridState.animateScrollToItem(nextIndex)
+                        }
+                        appFocusRequesters[nextIndex]?.requestFocus()
+                    }
+                },
+                onNavigateLeft = {
+                    if (index % columns == 0) {
+                        onNavigateLeft()
+                    } else {
+                        val prevIndex = index - 1
+                        if (prevIndex >= 0) {
+                            appFocusRequesters[prevIndex]?.requestFocus()
+                        }
+                    }
+                },
+                onNavigateRight = {
+                    val nextIndex = index + 1
+                    if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
+                        appFocusRequesters[nextIndex]?.requestFocus()
+                    }
+                },
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }

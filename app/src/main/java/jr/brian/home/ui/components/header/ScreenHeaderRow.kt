@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Icon
@@ -246,7 +248,7 @@ fun ScreenHeaderRow(
                     isFocused = isPowerFocused,
                     modifier = Modifier.handleFullNavigation(
                         onNavigateLeft = {
-                            if (showFolder) {
+                        if (showFolder) {
                                 folderIconFocusRequester.requestFocus()
                             } else {
                                 onNavigateFromGrid()
