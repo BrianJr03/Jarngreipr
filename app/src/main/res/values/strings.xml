@@ -289,4 +289,14 @@
     <!-- Header Icons -->
     <string name="header_folder_options">Options</string>
     <string name="header_power_button">Power Button</string>
+
+    <!-- App Drawer Layout -->
+    <string name="app_drawer_layout_mode">Layout Mode</string>
+    <string name="app_drawer_layout_grid">Grid Layout</string>
+    <string name="app_drawer_layout_free">Free Positioning</string>
+    <string name="app_drawer_reset_positions">Reset Positions</string>
+    <string name="app_drawer_reset_positions_message">Reset all app positions to default?</string>
+    <string name="app_drawer_reset_confirm">Reset</string>
+    <string name="app_drawer_arrange_apps">Arrange Apps</string>
+    <string name="app_drawer_arrange_apps_description">Toggle free positioning mode</string>
 </resources>

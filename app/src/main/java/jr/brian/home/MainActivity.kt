@@ -46,6 +46,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager
+import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -61,6 +62,7 @@ import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -99,6 +101,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var onboardingManager: OnboardingManager
 
+    @Inject
+    lateinit var appPositionManager: AppPositionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -130,7 +135,8 @@ class MainActivity : ComponentActivity() {
                     LocalPowerSettingsManager provides powerSettingsManager,
                     LocalWidgetPageAppManager provides widgetPageAppManager,
                     LocalHomeTabManager provides homeTabManager,
-                    LocalOnboardingManager provides onboardingManager
+                    LocalOnboardingManager provides onboardingManager,
+                    LocalAppPositionManager provides appPositionManager
                 ) {
                     MainContent()
                 }

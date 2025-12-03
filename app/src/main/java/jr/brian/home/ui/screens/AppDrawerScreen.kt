@@ -54,11 +54,13 @@ import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -81,10 +83,12 @@ fun AppDrawerScreen(
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appPositionManager = LocalAppPositionManager.current
     var searchQuery by remember { mutableStateOf("") }
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
+    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled.collectAsStateWithLifecycle()
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -134,7 +138,14 @@ fun AppDrawerScreen(
     if (showAppDrawerOptionsDialog) {
         AppDrawerOptionsDialog(
             onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true }
+            onShowAppVisibility = { showAppVisibilityDialog = true },
+            isFreeModeEnabled = isFreeModeEnabled,
+            onToggleFreeMode = {
+                appPositionManager.setFreeMode(!isFreeModeEnabled)
+            },
+            onResetPositions = {
+                appPositionManager.clearAllPositions()
+            }
         )
     }
 
@@ -207,7 +218,9 @@ fun AppDrawerScreen(
                 totalPages = totalPages,
                 pagerState = pagerState,
                 onMenuClick = { showAppDrawerOptionsDialog = true },
-                onShowBottomSheet = onShowBottomSheet
+                onShowBottomSheet = onShowBottomSheet,
+                isFreeModeEnabled = isFreeModeEnabled,
+                appPositionManager = appPositionManager
             )
         }
     }
@@ -235,7 +248,9 @@ private fun AppSelectionContent(
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     onMenuClick: () -> Unit = {},
-    onShowBottomSheet: () -> Unit = {}
+    onShowBottomSheet: () -> Unit = {},
+    isFreeModeEnabled: Boolean = false,
+    appPositionManager: jr.brian.home.data.AppPositionManager? = null
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -280,40 +295,93 @@ private fun AppSelectionContent(
             }
         }
 
-        AppGrid(
-            apps = filteredApps,
-            columns = columns,
-            maxAppsPerPage = maxAppsPerPage,
-            modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
-            appFocusRequesters = appFocusRequesters,
-            onFocusChanged = onAppFocusChanged,
-            onNavigateLeft = {
-                if (keyboardVisible) {
-                    keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
-                }
-            },
-            onAppClick = onAppClick,
-            onAppLongClick = onAppLongClick,
-            keyboardVisible = keyboardVisible,
-            totalPages = totalPages,
-            pagerState = pagerState,
-            onSettingsClick = onSettingsClick,
-            powerViewModel = powerViewModel,
-            onMenuClick = onMenuClick,
-            keyboardCoordinates = keyboardCoordinates,
-            keyboardContent = if (!keyboardVisible) {
-                {
-                    OnScreenKeyboard(
-                        searchQuery = "",
-                        onQueryChange = {},
-                        keyboardFocusRequesters = remember { mutableStateMapOf() },
-                        onFocusChanged = {},
-                        onNavigateRight = {},
+        if (isFreeModeEnabled && appPositionManager != null) {
+            Box(modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f)) {
+                Column {
+                    if (pagerState != null) {
+                        val settingsIconFocusRequester = remember { FocusRequester() }
+                        val menuIconFocusRequester = remember { FocusRequester() }
+                        val powerSettingsManager = LocalPowerSettingsManager.current
+                        val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+                        ScreenHeaderRow(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            leadingIcon = if (keyboardVisible) null else Icons.Default.Settings,
+                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                            onLeadingIconClick = onSettingsClick,
+                            leadingIconFocusRequester = settingsIconFocusRequester,
+                            trailingIcon = if (keyboardVisible) null else Icons.Default.Menu,
+                            trailingIconContentDescription = null,
+                            onTrailingIconClick = onMenuClick,
+                            trailingIconFocusRequester = menuIconFocusRequester,
+                            onNavigateToGrid = {},
+                            onNavigateFromGrid = {},
+                            powerViewModel = powerViewModel,
+                            showPowerButton = isPowerButtonVisible,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            keyboardCoordinates = keyboardCoordinates,
+                            keyboardContent = if (!keyboardVisible) {
+                                {
+                                    OnScreenKeyboard(
+                                        searchQuery = "",
+                                        onQueryChange = {},
+                                        keyboardFocusRequesters = remember { mutableStateMapOf() },
+                                        onFocusChanged = {},
+                                        onNavigateRight = {},
+                                    )
+                                }
+                            } else null,
+                            onFolderClick = onShowBottomSheet
+                        )
+                    }
+
+                    FreePositionedAppsLayout(
+                        apps = filteredApps,
+                        appPositionManager = appPositionManager,
+                        keyboardVisible = keyboardVisible,
+                        onAppClick = onAppClick,
+                        onAppLongClick = onAppLongClick,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            } else null,
-            onShowBottomSheet = onShowBottomSheet
-        )
+            }
+        } else {
+            AppGrid(
+                apps = filteredApps,
+                columns = columns,
+                maxAppsPerPage = maxAppsPerPage,
+                modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
+                appFocusRequesters = appFocusRequesters,
+                onFocusChanged = onAppFocusChanged,
+                onNavigateLeft = {
+                    if (keyboardVisible) {
+                        keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
+                    }
+                },
+                onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
+                keyboardVisible = keyboardVisible,
+                totalPages = totalPages,
+                pagerState = pagerState,
+                onSettingsClick = onSettingsClick,
+                powerViewModel = powerViewModel,
+                onMenuClick = onMenuClick,
+                keyboardCoordinates = keyboardCoordinates,
+                keyboardContent = if (!keyboardVisible) {
+                    {
+                        OnScreenKeyboard(
+                            searchQuery = "",
+                            onQueryChange = {},
+                            keyboardFocusRequesters = remember { mutableStateMapOf() },
+                            onFocusChanged = {},
+                            onNavigateRight = {},
+                        )
+                    }
+                } else null,
+                onShowBottomSheet = onShowBottomSheet
+            )
+        }
     }
 }
 
