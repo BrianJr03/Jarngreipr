@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components.clean
+package jr.brian.home.ui.components.quick_delete
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

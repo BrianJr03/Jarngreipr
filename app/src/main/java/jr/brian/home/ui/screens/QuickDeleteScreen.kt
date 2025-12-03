@@ -56,11 +56,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.state.DeleteResult
-import jr.brian.home.ui.components.clean.ActionButton
-import jr.brian.home.ui.components.clean.AddFolderButton
-import jr.brian.home.ui.components.clean.DeleteConfirmationDialog
-import jr.brian.home.ui.components.clean.FileExtensionCheckboxItem
-import jr.brian.home.ui.components.clean.FolderPathItem
+import jr.brian.home.ui.components.quick_delete.ActionButton
+import jr.brian.home.ui.components.quick_delete.AddFolderButton
+import jr.brian.home.ui.components.quick_delete.DeleteConfirmationDialog
+import jr.brian.home.ui.components.quick_delete.FileExtensionCheckboxItem
+import jr.brian.home.ui.components.quick_delete.FolderPathItem
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
