@@ -68,7 +68,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
-    implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation(libs.androidx.documentfile)
 
     // Hilt
     implementation(libs.hilt.android)
