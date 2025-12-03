@@ -293,13 +293,14 @@
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
-    <string name="app_drawer_layout_grid">Grid Layout</string>
-    <string name="app_drawer_layout_free">Free Positioning</string>
+    <string name="app_drawer_layout_grid">Use Grid Layout</string>
+    <string name="app_drawer_layout_free">Use Free Positioning</string>
     <string name="app_drawer_reset_positions">Reset Positions</string>
-    <string name="app_drawer_reset_positions_message">Reset all app positions to default?</string>
+    <string name="app_drawer_reset_positions_message">Reset app positions and icon sizes</string>
     <string name="app_drawer_reset_confirm">Reset</string>
     <string name="app_drawer_arrange_apps">Arrange Apps</string>
-    <string name="app_drawer_arrange_apps_description">Toggle free positioning mode</string>
+    <string name="app_drawer_arrange_apps_description_fpm">Drag around and resize app icons</string>
+    <string name="app_drawer_arrange_apps_description_grid">Default layout</string>
     <string name="app_drawer_scroll_up">Scroll Up</string>
     <string name="app_drawer_scroll_down">Scroll Down</string>
 </resources>
