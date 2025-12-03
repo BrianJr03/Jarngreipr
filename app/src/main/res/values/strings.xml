@@ -91,6 +91,7 @@
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
     <string name="settings_thor_power_button">Show Power Button</string>
+    <string name="settings_thor_quick_delete_button">Show Quick Delete Button</string>
     <string name="settings_thor_wake_method">Wake Method</string>
     <string name="settings_thor_wake_single_tap">Single Tap</string>
     <string name="settings_thor_wake_double_tap">Double Tap</string>
@@ -254,4 +255,38 @@
     <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
     <string name="widget_page_edit_mode_active">Edit Mode Active</string>
     <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>
+
+    <!-- Clean Folders Screen -->
+    <string name="clean_folders_title">Quick Delete</string>
+    <string name="clean_folders_description">Quickly delete files you no longer need</string>
+    <string name="clean_folders_add_path">Add Folder</string>
+    <string name="clean_folders_no_paths">No folders added yet</string>
+    <string name="clean_folders_no_paths_description">Tap the button below to add a folder</string>
+    <string name="clean_folders_add_folder">Add Folder</string>
+    <string name="clean_folders_scan">Scan Folders</string>
+    <string name="clean_folders_scanning">Scanning…</string>
+    <string name="clean_folders_delete_selected">Delete Selected</string>
+    <string name="clean_folders_no_extensions">No file extensions found</string>
+    <string name="clean_folders_extension_count">%1$d file(s)</string>
+    <string name="clean_folders_delete_confirm_title">Confirm Deletion</string>
+    <string name="clean_folders_delete_confirm_message">Delete %1$d file(s) with %2$d extension(s)?</string>
+    <string name="clean_folders_delete_confirm">Delete</string>
+    <string name="clean_folders_delete_cancel">Cancel</string>
+    <string name="clean_folders_delete_success">Successfully deleted %1$d file(s)</string>
+    <string name="clean_folders_delete_failed">Failed to delete some files</string>
+    <string name="clean_folders_select_all">Select All</string>
+    <string name="clean_folders_deselect_all">Deselect All</string>
+    <string name="clean_folders_remove_path">Remove</string>
+    <string name="clean_folders_total_size">Total: %1$s</string>
+    <string name="clean_folders_icon_description">Clean folders icon</string>
+    <string name="clean_folders_path_invalid">Invalid folder path</string>
+    <string name="clean_folders_open_file_manager">Open File Manager</string>
+    <string name="clean_folders_close">Close</string>
+    <string name="clean_folders_selected_folders">Selected Folders</string>
+    <string name="clean_folders_file_extensions">File Extensions (%1$d)</string>
+    <string name="clean_folders_files_separator"> • %1$d files</string>
+
+    <!-- Header Icons -->
+    <string name="header_folder_options">Options</string>
+    <string name="header_power_button">Power Button</string>
 </resources>
