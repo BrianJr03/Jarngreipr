@@ -111,6 +111,12 @@ fun AppDrawerScreen(
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     if (showAppOptionsMenu && selectedApp != null) {
+        val currentIconSize = if (isFreeModeEnabled) {
+            appPositionManager.getPosition(selectedApp!!.packageName)?.iconSize ?: 64f
+        } else {
+            64f
+        }
+
         AppOptionsMenu(
             appLabel = selectedApp!!.label,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -126,7 +132,22 @@ fun AppDrawerScreen(
                     preference
                 )
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            app = if (isFreeModeEnabled) selectedApp else null,
+            currentIconSize = currentIconSize,
+            onIconSizeChange = { newSize ->
+                if (isFreeModeEnabled) {
+                    val currentPos = appPositionManager.getPosition(selectedApp!!.packageName)
+                    appPositionManager.savePosition(
+                        jr.brian.home.model.AppPosition(
+                            packageName = selectedApp!!.packageName,
+                            x = currentPos?.x ?: 0f,
+                            y = currentPos?.y ?: 0f,
+                            iconSize = newSize
+                        )
+                    )
+                }
+            }
         )
     }
 

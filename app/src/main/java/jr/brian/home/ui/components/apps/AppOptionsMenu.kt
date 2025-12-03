@@ -47,9 +47,16 @@ fun AppOptionsMenu(
     onDismiss: () -> Unit,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (AppDisplayPreferenceManager.DisplayPreference) -> Unit,
-    hasExternalDisplay: Boolean = false
+    hasExternalDisplay: Boolean = false,
+    app: jr.brian.home.model.AppInfo? = null,
+    currentIconSize: Float = 64f,
+    onIconSizeChange: (Float) -> Unit = {}
 ) {
-    val optionCount = if (hasExternalDisplay) 3 else 1
+    val optionCount = if (app != null) {
+        if (hasExternalDisplay) 4 else 2
+    } else {
+        if (hasExternalDisplay) 3 else 1
+    }
     val focusRequesters = remember {
         List(optionCount) { FocusRequester() }
     }
@@ -76,7 +83,10 @@ fun AppOptionsMenu(
                 hasExternalDisplay,
                 focusRequesters,
                 onFocusedIndexChange = { focusedIndex = it },
-                onDismiss
+                onDismiss,
+                app,
+                currentIconSize,
+                onIconSizeChange
             )
         },
         confirmButton = {},
