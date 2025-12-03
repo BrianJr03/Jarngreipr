@@ -299,4 +299,6 @@
     <string name="app_drawer_reset_confirm">Reset</string>
     <string name="app_drawer_arrange_apps">Arrange Apps</string>
     <string name="app_drawer_arrange_apps_description">Toggle free positioning mode</string>
+    <string name="app_drawer_scroll_up">Scroll Up</string>
+    <string name="app_drawer_scroll_down">Scroll Down</string>
 </resources>

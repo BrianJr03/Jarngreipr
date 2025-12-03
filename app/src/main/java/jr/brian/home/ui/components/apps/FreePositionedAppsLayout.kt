@@ -2,6 +2,10 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.AppPosition
+import kotlin.math.max
 
 @Composable
 fun FreePositionedAppsLayout(
@@ -34,6 +39,7 @@ fun FreePositionedAppsLayout(
     val focusRequesters = remember(apps.size) {
         List(apps.size) { FocusRequester() }
     }
+    val scrollState = rememberScrollState()
 
     val appPositions = remember(apps.size) {
         mutableMapOf<Int, Pair<Float, Float>>()
@@ -45,7 +51,10 @@ fun FreePositionedAppsLayout(
         }
     }
 
-    fun findNearestApp(currentIndex: Int, direction: Direction): Int? {
+    fun findNearestApp(
+        currentIndex: Int,
+        direction: Direction
+    ): Int? {
         val currentPos = appPositions[currentIndex] ?: return null
         val (currentX, currentY) = currentPos
 
@@ -64,80 +73,103 @@ fun FreePositionedAppsLayout(
         return candidates.minByOrNull { it.second }?.first
     }
 
+    var maxY by remember { mutableStateOf(0f) }
+    var maxX by remember { mutableStateOf(0f) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onSizeChanged { containerSize = it }
+            .verticalScroll(scrollState)
+            .onSizeChanged {
+                containerSize = it
+            }
     ) {
-        apps.forEachIndexed { index, app ->
-            val position = appPositionManager.getPosition(app.packageName)
-            val defaultX = with(density) {
-                val columns = 4
-                val itemWidth = 80.dp.toPx()
-                val spacing = 32.dp.toPx()
-                val column = index % columns
-                (column * (itemWidth + spacing)).toFloat()
-            }
-            val defaultY = with(density) {
-                val columns = 4
-                val itemHeight = 100.dp.toPx()
-                val spacing = 24.dp.toPx()
-                val row = index / columns
-                (row * (itemHeight + spacing)).toFloat()
-            }
+        val contentHeight = with(density) {
+            max(containerSize.height.toFloat(), maxY + 200.dp.toPx())
+        }
 
-            val initialX = position?.x ?: defaultX
-            val initialY = position?.y ?: defaultY
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(with(density) { contentHeight.toDp() })
+        ) {
+            apps.forEachIndexed { index, app ->
+                val position = appPositionManager.getPosition(app.packageName)
+                val defaultX = with(density) {
+                    val columns = 4
+                    val itemWidth = 80.dp.toPx()
+                    val spacing = 32.dp.toPx()
+                    val column = index % columns
+                    val startPadding = 8.dp.toPx()
+                    (startPadding + column * (itemWidth + spacing)).toFloat()
+                }
+                val defaultY = with(density) {
+                    val columns = 4
+                    val itemHeight = 100.dp.toPx()
+                    val spacing = 24.dp.toPx()
+                    val row = index / columns
+                    val topPadding = 8.dp.toPx()
+                    (topPadding + row * (itemHeight + spacing)).toFloat()
+                }
 
-            appPositions[index] = initialX to initialY
+                val initialX = position?.x ?: defaultX
+                val initialY = position?.y ?: defaultY
 
-            FreePositionedAppItem(
-                app = app,
-                keyboardVisible = keyboardVisible,
-                focusRequester = focusRequesters[index],
-                offsetX = initialX,
-                offsetY = initialY,
-                onOffsetChanged = { x, y ->
-                    appPositions[index] = x to y
-                    appPositionManager.savePosition(
-                        AppPosition(
-                            packageName = app.packageName,
-                            x = x,
-                            y = y
+                appPositions[index] = initialX to initialY
+
+                if (initialY > maxY) maxY = initialY
+                if (initialX > maxX) maxX = initialX
+
+                FreePositionedAppItem(
+                    app = app,
+                    keyboardVisible = keyboardVisible,
+                    focusRequester = focusRequesters[index],
+                    offsetX = initialX,
+                    offsetY = initialY,
+                    onOffsetChanged = { x, y ->
+                        appPositions[index] = x to y
+                        if (y > maxY) maxY = y
+                        if (x > maxX) maxX = x
+                        appPositionManager.savePosition(
+                            AppPosition(
+                                packageName = app.packageName,
+                                x = x,
+                                y = y
+                            )
                         )
-                    )
-                },
-                onClick = { onAppClick(app) },
-                onLongClick = { onAppLongClick(app) },
-                onNavigateUp = {
-                    findNearestApp(focusedIndex, Direction.UP)?.let { targetIndex ->
-                        focusedIndex = targetIndex
-                        focusRequesters[targetIndex].requestFocus()
-                    }
-                },
-                onNavigateDown = {
-                    findNearestApp(focusedIndex, Direction.DOWN)?.let { targetIndex ->
-                        focusedIndex = targetIndex
-                        focusRequesters[targetIndex].requestFocus()
-                    }
-                },
-                onNavigateLeft = {
-                    findNearestApp(focusedIndex, Direction.LEFT)?.let { targetIndex ->
-                        focusedIndex = targetIndex
-                        focusRequesters[targetIndex].requestFocus()
-                    }
-                },
-                onNavigateRight = {
-                    findNearestApp(focusedIndex, Direction.RIGHT)?.let { targetIndex ->
-                        focusedIndex = targetIndex
-                        focusRequesters[targetIndex].requestFocus()
-                    }
-                },
-                onFocusChanged = {
-                    focusedIndex = index
-                },
-                isDraggingEnabled = true
-            )
+                    },
+                    onClick = { onAppClick(app) },
+                    onLongClick = { onAppLongClick(app) },
+                    onNavigateUp = {
+                        findNearestApp(focusedIndex, Direction.UP)?.let { targetIndex ->
+                            focusedIndex = targetIndex
+                            focusRequesters[targetIndex].requestFocus()
+                        }
+                    },
+                    onNavigateDown = {
+                        findNearestApp(focusedIndex, Direction.DOWN)?.let { targetIndex ->
+                            focusedIndex = targetIndex
+                            focusRequesters[targetIndex].requestFocus()
+                        }
+                    },
+                    onNavigateLeft = {
+                        findNearestApp(focusedIndex, Direction.LEFT)?.let { targetIndex ->
+                            focusedIndex = targetIndex
+                            focusRequesters[targetIndex].requestFocus()
+                        }
+                    },
+                    onNavigateRight = {
+                        findNearestApp(focusedIndex, Direction.RIGHT)?.let { targetIndex ->
+                            focusedIndex = targetIndex
+                            focusRequesters[targetIndex].requestFocus()
+                        }
+                    },
+                    onFocusChanged = {
+                        focusedIndex = index
+                    },
+                    isDraggingEnabled = true
+                )
+            }
         }
     }
 }

@@ -134,8 +134,6 @@ fun AppDrawerOptionsDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
                 CancelButton(onClick = onDismiss)
             }
         }
