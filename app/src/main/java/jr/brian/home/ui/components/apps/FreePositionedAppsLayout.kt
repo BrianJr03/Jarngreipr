@@ -90,7 +90,7 @@ fun FreePositionedAppsLayout(
             }
     ) {
         val contentHeight = with(density) {
-            max(containerSize.height.toFloat(), maxY + 200.dp.toPx())
+            max(containerSize.height.toFloat(), maxY + 16.dp.toPx())
         }
 
         Box(
@@ -133,17 +133,35 @@ fun FreePositionedAppsLayout(
                     offsetY = initialY,
                     iconSize = position?.iconSize ?: 64f,
                     onOffsetChanged = { x, y ->
-                        appPositions[index] = x to y
-                        if (y > maxY) maxY = y
-                        if (x > maxX) maxX = x
                         // Get current icon size from the position manager at the time of drag
                         val currentIconSize =
                             appPositionManager.getPosition(app.packageName)?.iconSize ?: 64f
+
+                        // Calculate bounds with icon size and padding
+                        val iconSizePx = with(density) { currentIconSize.dp.toPx() }
+                        val startPaddingPx = with(density) { 16.dp.toPx() }
+
+                        // Constrain x and y to keep icon on screen
+                        val constrainedX = x.coerceIn(
+                            minimumValue = 0f,
+                            maximumValue = (containerSize.width - iconSizePx - startPaddingPx).coerceAtLeast(
+                                0f
+                            )
+                        )
+                        val constrainedY = y.coerceIn(
+                            minimumValue = 0f,
+                            maximumValue = (containerSize.height - iconSizePx).coerceAtLeast(0f)
+                        )
+
+                        appPositions[index] = constrainedX to constrainedY
+                        if (constrainedY > maxY) maxY = constrainedY
+                        if (constrainedX > maxX) maxX = constrainedX
+
                         appPositionManager.savePosition(
                             AppPosition(
                                 packageName = app.packageName,
-                                x = x,
-                                y = y,
+                                x = constrainedX,
+                                y = constrainedY,
                                 iconSize = currentIconSize
                             )
                         )
