@@ -31,6 +31,7 @@
     <!-- App Options Menu -->
     <string name="app_options_menu_title">App Options</string>
     <string name="app_options_app_info">Open App Info</string>
+    <string name="app_options_resize">Resize Icon</string>
     <string name="app_options_launch_external">Launch on External Display</string>
     <string name="app_options_launch_primary">Launch on Primary Display</string>
     <string name="app_options_selected">Selected</string>

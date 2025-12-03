@@ -45,6 +45,9 @@ fun FreePositionedAppsLayout(
         mutableMapOf<Int, Pair<Float, Float>>()
     }
 
+    // Observe positions to trigger recomposition when they change
+    val positions = appPositionManager.positions
+
     LaunchedEffect(Unit) {
         if (focusRequesters.isNotEmpty()) {
             focusRequesters[0].requestFocus()
@@ -94,7 +97,7 @@ fun FreePositionedAppsLayout(
                 .height(with(density) { contentHeight.toDp() })
         ) {
             apps.forEachIndexed { index, app ->
-                val position = appPositionManager.getPosition(app.packageName)
+                val position = positions[app.packageName]
                 val defaultX = with(density) {
                     val columns = 4
                     val itemWidth = 80.dp.toPx()
@@ -126,15 +129,20 @@ fun FreePositionedAppsLayout(
                     focusRequester = focusRequesters[index],
                     offsetX = initialX,
                     offsetY = initialY,
+                    iconSize = position?.iconSize ?: 64f,
                     onOffsetChanged = { x, y ->
                         appPositions[index] = x to y
                         if (y > maxY) maxY = y
                         if (x > maxX) maxX = x
+                        // Get current icon size from the position manager at the time of drag
+                        val currentIconSize =
+                            appPositionManager.getPosition(app.packageName)?.iconSize ?: 64f
                         appPositionManager.savePosition(
                             AppPosition(
                                 packageName = app.packageName,
                                 x = x,
-                                y = y
+                                y = y,
+                                iconSize = currentIconSize
                             )
                         )
                     },

@@ -43,11 +43,16 @@ class AppPositionManager(context: Context) {
             positionsJson.split(SEPARATOR_APPS).forEach { appData ->
                 if (appData.isNotBlank()) {
                     val parts = appData.split(SEPARATOR_COORDS)
-                    if (parts.size == 3) {
+                    if (parts.size >= 3) {
                         val packageName = parts[0]
                         val x = parts[1].toFloatOrNull() ?: return@forEach
                         val y = parts[2].toFloatOrNull() ?: return@forEach
-                        _positions[packageName] = AppPosition(packageName, x, y)
+                        val iconSize = if (parts.size >= 4) {
+                            parts[3].toFloatOrNull() ?: 64f
+                        } else {
+                            64f
+                        }
+                        _positions[packageName] = AppPosition(packageName, x, y, iconSize)
                     }
                 }
             }
@@ -77,7 +82,7 @@ class AppPositionManager(context: Context) {
 
     private fun savePositions() {
         val positionsJson = _positions.values.joinToString(SEPARATOR_APPS) { position ->
-            "${position.packageName}$SEPARATOR_COORDS${position.x}$SEPARATOR_COORDS${position.y}"
+            "${position.packageName}$SEPARATOR_COORDS${position.x}$SEPARATOR_COORDS${position.y}$SEPARATOR_COORDS${position.iconSize}"
         }
         prefs.edit().apply {
             putString(KEY_POSITIONS, positionsJson)

@@ -54,6 +54,7 @@ fun FreePositionedAppItem(
     onNavigateRight: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
+    iconSize: Float = 64f,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
@@ -68,7 +69,7 @@ fun FreePositionedAppItem(
                 painter = rememberAsyncImagePainter(model = app.icon),
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(iconSize.dp)
                     .then(
                         if (isDraggingEnabled) {
                             Modifier.pointerInput(Unit) {
