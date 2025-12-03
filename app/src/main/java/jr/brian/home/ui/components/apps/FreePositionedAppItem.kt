@@ -55,6 +55,7 @@ fun FreePositionedAppItem(
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
     iconSize: Float = 64f,
+    isFocusable: Boolean = false,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
@@ -84,23 +85,19 @@ fun FreePositionedAppItem(
                             Modifier
                         }
                     )
-                    .focusRequester(focusRequester)
-                    .onFocusChanged {
-                        if (it.isFocused && !isFocused) {
-                            onFocusChanged()
-                        }
-                        isFocused = it.isFocused
-                    }
-                    .handleFullNavigation(
-                        onNavigateUp = onNavigateUp,
-                        onNavigateDown = onNavigateDown,
-                        onNavigateLeft = onNavigateLeft,
-                        onNavigateRight = onNavigateRight,
-                        onEnterPress = {
-                            onClick()
-                        },
-                        onMenuPress = {
-                            onLongClick()
+                    .then(
+                        if (isFocusable) {
+                            Modifier
+                                .focusRequester(focusRequester)
+                                .onFocusChanged {
+                                    if (it.isFocused && !isFocused) {
+                                        onFocusChanged()
+                                    }
+                                    isFocused = it.isFocused
+                                }
+                                .focusable()
+                        } else {
+                            Modifier
                         }
                     )
                     .combinedClickable(
@@ -111,23 +108,22 @@ fun FreePositionedAppItem(
                             onLongClick()
                         },
                     )
-                    .focusable()
             )
 
-            if (!keyboardVisible) {
+            if (!keyboardVisible && isFocusable) {
                 Spacer(Modifier.height(12.dp))
+
+                val dividerAlpha by animateFloatAsState(
+                    targetValue = if (isFocused) 1f else 0f,
+                    label = "dividerAlpha"
+                )
+
+                HorizontalDivider(
+                    color = ThemePrimaryColor,
+                    thickness = 4.dp,
+                    modifier = Modifier.alpha(dividerAlpha)
+                )
             }
-
-            val dividerAlpha by animateFloatAsState(
-                targetValue = if (isFocused) 1f else 0f,
-                label = "dividerAlpha"
-            )
-
-            HorizontalDivider(
-                color = ThemePrimaryColor,
-                thickness = 4.dp,
-                modifier = Modifier.alpha(dividerAlpha)
-            )
         }
     }
 }

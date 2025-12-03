@@ -241,106 +241,125 @@ fun AppOptionsMenuContent(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Icon Preview",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium
+            AppPreview(
+                app = app,
+                previewIconSize = previewIconSize,
+                onPreviewSizeChange = { newSize ->
+                    previewIconSize = newSize
+                },
+                onCancel = {
+                    showResizeMode = false
+                    previewIconSize = currentIconSize
+                },
+                onApply = {
+                    onIconSizeChange(previewIconSize)
+                    showResizeMode = false
+                    onDismiss()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppPreview(
+    app: AppInfo?,
+    previewIconSize: Float,
+    onPreviewSizeChange: (Float) -> Unit,
+    onCancel: () -> Unit,
+    onApply: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Icon Preview",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            app?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(model = it.icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(previewIconSize.dp)
                 )
+            }
+        }
 
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(
-                            color = Color.White.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(16.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    app?.let {
-                        Image(
-                            painter = rememberAsyncImagePainter(model = it.icon),
-                            contentDescription = null,
-                            modifier = Modifier.size(previewIconSize.dp)
-                        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    if (previewIconSize > 32f) {
+                        onPreviewSizeChange(previewIconSize - 8f)
                     }
-                }
+                },
+                enabled = previewIconSize > 32f
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Remove,
+                    contentDescription = "Decrease size",
+                    tint = if (previewIconSize > 32f) ThemePrimaryColor else Color.Gray
+                )
+            }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = {
-                            if (previewIconSize > 32f) {
-                                previewIconSize -= 8f
-                            }
-                        },
-                        enabled = previewIconSize > 32f
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Remove,
-                            contentDescription = "Decrease size",
-                            tint = if (previewIconSize > 32f) ThemePrimaryColor else Color.Gray
-                        )
+            Text(
+                text = "${previewIconSize.toInt()} dp",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            IconButton(
+                onClick = {
+                    if (previewIconSize < 128f) {
+                        onPreviewSizeChange(previewIconSize + 8f)
                     }
+                },
+                enabled = previewIconSize < 128f
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Increase size",
+                    tint = if (previewIconSize < 128f) ThemePrimaryColor else Color.Gray
+                )
+            }
+        }
 
-                    Text(
-                        text = "${previewIconSize.toInt()} dp",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(
+                onClick = onCancel,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Gray.copy(alpha = 0.3f)
+                )
+            ) {
+                Text("Cancel")
+            }
 
-                    IconButton(
-                        onClick = {
-                            if (previewIconSize < 128f) {
-                                previewIconSize += 8f
-                            }
-                        },
-                        enabled = previewIconSize < 128f
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Increase size",
-                            tint = if (previewIconSize < 128f) ThemePrimaryColor else Color.Gray
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(
-                        onClick = {
-                            showResizeMode = false
-                            previewIconSize = currentIconSize
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Gray.copy(alpha = 0.3f)
-                        )
-                    ) {
-                        Text("Cancel")
-                    }
-
-                    Button(
-                        onClick = {
-                            onIconSizeChange(previewIconSize)
-                            showResizeMode = false
-                            onDismiss()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ThemePrimaryColor
-                        )
-                    ) {
-                        Text("Apply")
-                    }
-                }
+            Button(
+                onClick = onApply,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ThemePrimaryColor
+                )
+            ) {
+                Text("Apply")
             }
         }
     }
