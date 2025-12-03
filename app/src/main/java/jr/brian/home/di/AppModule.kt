@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
@@ -82,5 +83,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): OnboardingManager {
         return OnboardingManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideQuickDeleteManager(
+        @ApplicationContext context: Context
+    ): QuickDeleteManager {
+        return QuickDeleteManager(context)
     }
 }

@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -71,10 +72,11 @@ fun AppDrawerScreen(
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
     onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = null,
+    powerViewModel: PowerViewModel? = hiltViewModel(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     keyboardVisible: Boolean = true,
+    onShowBottomSheet: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -204,7 +206,8 @@ fun AppDrawerScreen(
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
                 pagerState = pagerState,
-                onMenuClick = { showAppDrawerOptionsDialog = true }
+                onMenuClick = { showAppDrawerOptionsDialog = true },
+                onShowBottomSheet = onShowBottomSheet
             )
         }
     }
@@ -231,7 +234,8 @@ private fun AppSelectionContent(
     powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
     pagerState: PagerState? = null,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onShowBottomSheet: () -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -307,7 +311,8 @@ private fun AppSelectionContent(
                         onNavigateRight = {},
                     )
                 }
-            } else null
+            } else null,
+            onShowBottomSheet = onShowBottomSheet
         )
     }
 }
@@ -331,7 +336,8 @@ private fun AppGrid(
     powerViewModel: PowerViewModel? = null,
     onMenuClick: () -> Unit = {},
     keyboardCoordinates: LayoutCoordinates? = null,
-    keyboardContent: @Composable (() -> Unit)? = null
+    keyboardContent: @Composable (() -> Unit)? = null,
+    onShowBottomSheet: () -> Unit = {}
 ) {
     val gridState = rememberLazyGridState()
     val settingsIconFocusRequester = remember { FocusRequester() }
@@ -374,7 +380,8 @@ private fun AppGrid(
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 keyboardCoordinates = keyboardCoordinates,
-                keyboardContent = keyboardContent
+                keyboardContent = keyboardContent,
+                onFolderClick = onShowBottomSheet
             )
         }
 

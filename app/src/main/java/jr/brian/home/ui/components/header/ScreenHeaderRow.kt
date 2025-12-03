@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -36,7 +37,6 @@ import jr.brian.home.ui.components.onboarding.HeaderOnboardingOverlay
 import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.ui.extensions.handleRightNavigation
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.viewmodels.PowerViewModel
@@ -61,10 +61,15 @@ fun ScreenHeaderRow(
     enableOnboarding: Boolean = true,
     keyboardCoordinates: LayoutCoordinates? = null,
     keyboardContent: @Composable (() -> Unit)? = null,
+    onFolderClick: () -> Unit = {},
 ) {
+    val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
+    val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
     var isLeadingFocused by remember { mutableStateOf(false) }
+    var isFolderFocused by remember { mutableStateOf(false) }
     var isPowerFocused by remember { mutableStateOf(false) }
     var isTrailingFocused by remember { mutableStateOf(false) }
+    val folderIconFocusRequester = remember { FocusRequester() }
     val powerIconFocusRequester = remember { FocusRequester() }
     var showHomeTabDialog by remember { mutableStateOf(false) }
     val homeTabManager = LocalHomeTabManager.current
@@ -156,13 +161,22 @@ fun ScreenHeaderRow(
             modifier = modifier
                 .fillMaxWidth()
                 .blockHorizontalNavigation()
-                .clickable { showHomeTabDialog = true }
         ) {
             if (leadingIcon != null) {
                 IconBox(
                     isFocused = isLeadingFocused,
                     modifier = Modifier
-                        .handleRightNavigation(onNavigateToGrid)
+                        .handleFullNavigation(
+                            onNavigateRight = {
+                                if (showFolder) {
+                                    folderIconFocusRequester.requestFocus()
+                                } else {
+                                    onNavigateToGrid()
+                                }
+                            },
+                            onNavigateDown = onNavigateToGrid,
+                            onEnterPress = onLeadingIconClick
+                        )
                         .onGloballyPositioned { coordinates ->
                             leadingIconCoordinates = coordinates
                         },
@@ -181,12 +195,42 @@ fun ScreenHeaderRow(
                 }
             }
 
+            if (showFolder) {
+                Spacer(modifier = Modifier.size(16.dp))
+
+                IconBox(
+                    isFocused = isFolderFocused,
+                    modifier = Modifier.handleFullNavigation(
+                        onNavigateLeft = {
+                            leadingIconFocusRequester?.requestFocus()
+                        },
+                        onNavigateRight = onNavigateFromGrid,
+                        onNavigateDown = onNavigateToGrid,
+                        onEnterPress = onFolderClick
+                    ),
+                    focusRequester = folderIconFocusRequester,
+                    onFocusChanged = { isFolderFocused = it },
+                    onClick = onFolderClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FolderOpen,
+                        contentDescription = stringResource(R.string.header_folder_options),
+                        tint = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .rotate(animatedRotation(isFolderFocused))
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             Box(
-                modifier = Modifier.onGloballyPositioned { coordinates ->
-                    pageIndicatorsCoordinates = coordinates
-                }
+                modifier = Modifier
+                    .clickable { showHomeTabDialog = true }
+                    .onGloballyPositioned { coordinates ->
+                        pageIndicatorsCoordinates = coordinates
+                    }
             ) {
                 PageIndicators(
                     homeTabIndex = currentHomeTabIndex,
@@ -201,7 +245,13 @@ fun ScreenHeaderRow(
                 IconBox(
                     isFocused = isPowerFocused,
                     modifier = Modifier.handleFullNavigation(
-                        onNavigateLeft = onNavigateFromGrid,
+                        onNavigateLeft = {
+                            if (showFolder) {
+                                folderIconFocusRequester.requestFocus()
+                            } else {
+                                onNavigateFromGrid()
+                            }
+                        },
                         onNavigateRight = {
                             trailingIconFocusRequester?.requestFocus()
                         },
@@ -218,7 +268,7 @@ fun ScreenHeaderRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PowerSettingsNew,
-                        contentDescription = "Power Button",
+                        contentDescription = stringResource(R.string.header_power_button),
                         tint = Color.White.copy(alpha = 0.6f),
                         modifier = Modifier
                             .size(24.dp)
