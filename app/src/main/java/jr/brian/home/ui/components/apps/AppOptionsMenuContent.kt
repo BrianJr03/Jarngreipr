@@ -23,6 +23,8 @@ import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -65,7 +67,9 @@ fun AppOptionsMenuContent(
     onDismiss: () -> Unit,
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
-    onIconSizeChange: (Float) -> Unit = {}
+    onIconSizeChange: (Float) -> Unit = {},
+    isAppHidden: Boolean = false,
+    onToggleVisibility: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
@@ -103,10 +107,7 @@ fun AppOptionsMenuContent(
                         // Stay on first item
                     },
                     onNavigateDown = {
-                        if (app != null && focusRequesters.size > 1) {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
-                        } else if (hasExternalDisplay && focusRequesters.size > 1) {
+                        if (focusRequesters.size > 1) {
                             focusRequesters[1].requestFocus()
                             onFocusedIndexChange(1)
                         }
@@ -117,9 +118,35 @@ fun AppOptionsMenuContent(
                     }
                 )
 
+                MenuOption(
+                    icon = if (isAppHidden) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    label = stringResource(id = if (isAppHidden) R.string.app_options_show_app else R.string.app_options_hide_app),
+                    focusRequester = focusRequesters[1],
+                    onClick = {
+                        onToggleVisibility()
+                        onDismiss()
+                    },
+                    onNavigateUp = {
+                        focusRequesters[0].requestFocus()
+                        onFocusedIndexChange(0)
+                    },
+                    onNavigateDown = {
+                        if (app != null && focusRequesters.size > 2) {
+                            focusRequesters[2].requestFocus()
+                            onFocusedIndexChange(2)
+                        } else if (hasExternalDisplay && focusRequesters.size > 2) {
+                            focusRequesters[2].requestFocus()
+                            onFocusedIndexChange(2)
+                        }
+                    },
+                    onFocusChanged = { focused ->
+                        if (focused) onFocusedIndexChange(1)
+                    }
+                )
+
                 if (app != null) {
-                    val resizeIndex = 1
-                    val displayStartIndex = 2
+                    val resizeIndex = 2
+                    val displayStartIndex = 3
 
                     MenuOption(
                         icon = Icons.Default.Add,
@@ -130,8 +157,8 @@ fun AppOptionsMenuContent(
                             previewIconSize = currentIconSize
                         },
                         onNavigateUp = {
-                            focusRequesters[0].requestFocus()
-                            onFocusedIndexChange(0)
+                            focusRequesters[1].requestFocus()
+                            onFocusedIndexChange(1)
                         },
                         onNavigateDown = {
                             if (hasExternalDisplay && focusRequesters.size > displayStartIndex) {
@@ -145,7 +172,6 @@ fun AppOptionsMenuContent(
                     )
 
                     if (hasExternalDisplay) {
-                        val displayStartIndex = 2
                         MenuOption(
                             icon = Icons.AutoMirrored.Filled.ScreenShare,
                             label = stringResource(id = R.string.app_options_launch_external),
@@ -156,8 +182,8 @@ fun AppOptionsMenuContent(
                                 onDismiss()
                             },
                             onNavigateUp = {
-                                focusRequesters[1].requestFocus()
-                                onFocusedIndexChange(1)
+                                focusRequesters[resizeIndex].requestFocus()
+                                onFocusedIndexChange(resizeIndex)
                             },
                             onNavigateDown = {
                                 focusRequesters[displayStartIndex + 1].requestFocus()
@@ -194,31 +220,9 @@ fun AppOptionsMenuContent(
                         icon = Icons.AutoMirrored.Filled.ScreenShare,
                         label = stringResource(id = R.string.app_options_launch_external),
                         isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                        focusRequester = focusRequesters[1],
-                        onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[0].requestFocus()
-                            onFocusedIndexChange(0)
-                        },
-                        onNavigateDown = {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) onFocusedIndexChange(1)
-                        }
-                    )
-
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_primary),
-                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                         focusRequester = focusRequesters[2],
                         onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                             onDismiss()
                         },
                         onNavigateUp = {
@@ -226,10 +230,32 @@ fun AppOptionsMenuContent(
                             onFocusedIndexChange(1)
                         },
                         onNavigateDown = {
-                            // Stay on last item
+                            focusRequesters[3].requestFocus()
+                            onFocusedIndexChange(3)
                         },
                         onFocusChanged = { focused ->
                             if (focused) onFocusedIndexChange(2)
+                        }
+                    )
+
+                    MenuOption(
+                        icon = Icons.AutoMirrored.Filled.ScreenShare,
+                        label = stringResource(id = R.string.app_options_launch_primary),
+                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                        focusRequester = focusRequesters[3],
+                        onClick = {
+                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                            onDismiss()
+                        },
+                        onNavigateUp = {
+                            focusRequesters[2].requestFocus()
+                            onFocusedIndexChange(2)
+                        },
+                        onNavigateDown = {
+                            // Stay on last item
+                        },
+                        onFocusChanged = { focused ->
+                            if (focused) onFocusedIndexChange(3)
                         }
                     )
                 }

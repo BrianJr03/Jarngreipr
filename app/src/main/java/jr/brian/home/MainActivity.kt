@@ -51,6 +51,7 @@ import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
+import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.screens.AppDrawerScreen
@@ -67,6 +68,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -104,6 +106,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var appPositionManager: AppPositionManager
 
+    @Inject
+    lateinit var pageCountManager: PageCountManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -136,7 +141,8 @@ class MainActivity : ComponentActivity() {
                     LocalWidgetPageAppManager provides widgetPageAppManager,
                     LocalHomeTabManager provides homeTabManager,
                     LocalOnboardingManager provides onboardingManager,
-                    LocalAppPositionManager provides appPositionManager
+                    LocalAppPositionManager provides appPositionManager,
+                    LocalPageCountManager provides pageCountManager
                 ) {
                     MainContent()
                 }

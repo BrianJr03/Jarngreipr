@@ -41,6 +41,7 @@ import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.viewmodels.PowerViewModel
 
 @Composable
@@ -64,6 +65,7 @@ fun ScreenHeaderRow(
     keyboardCoordinates: LayoutCoordinates? = null,
     keyboardContent: @Composable (() -> Unit)? = null,
     onFolderClick: () -> Unit = {},
+    onDeletePage: (Int) -> Unit = {},
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
     val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
@@ -76,6 +78,7 @@ fun ScreenHeaderRow(
     var showHomeTabDialog by remember { mutableStateOf(false) }
     val homeTabManager = LocalHomeTabManager.current
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+    val pageCountManager = LocalPageCountManager.current
 
     val onboardingManager = LocalOnboardingManager.current
     val hasCompletedOnboarding by onboardingManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
@@ -153,7 +156,13 @@ fun ScreenHeaderRow(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false }
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex ->
+                onDeletePage(pageIndex)
+            },
+            onAddPage = {
+                pageCountManager.addPage()
+            }
         )
     }
 

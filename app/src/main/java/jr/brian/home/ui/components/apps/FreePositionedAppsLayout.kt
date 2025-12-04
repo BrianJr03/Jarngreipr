@@ -140,6 +140,7 @@ fun FreePositionedAppsLayout(
                         // Calculate bounds with icon size and padding
                         val iconSizePx = with(density) { currentIconSize.dp.toPx() }
                         val startPaddingPx = with(density) { 16.dp.toPx() }
+                        val bottomPaddingPx = with(density) { 16.dp.toPx() }
 
                         // Constrain x and y to keep icon on screen
                         val constrainedX = x.coerceIn(
@@ -150,7 +151,7 @@ fun FreePositionedAppsLayout(
                         )
                         val constrainedY = y.coerceIn(
                             minimumValue = 0f,
-                            maximumValue = (containerSize.height - iconSizePx).coerceAtLeast(0f)
+                            maximumValue = (containerSize.height - iconSizePx - bottomPaddingPx).coerceAtLeast(0f)
                         )
 
                         appPositions[index] = constrainedX to constrainedY
