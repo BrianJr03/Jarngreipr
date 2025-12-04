@@ -80,6 +80,7 @@ fun AppDrawerScreen(
     pagerState: PagerState? = null,
     keyboardVisible: Boolean = true,
     onShowBottomSheet: () -> Unit = {},
+    onDeletePage: (Int) -> Unit = {},
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -117,6 +118,11 @@ fun AppDrawerScreen(
             64f
         }
 
+        val appVisibilityManager = jr.brian.home.ui.theme.managers.LocalAppVisibilityManager.current
+        val isAppHidden by remember(selectedApp) {
+            mutableStateOf(appVisibilityManager.isAppHidden(selectedApp!!.packageName))
+        }
+
         AppOptionsMenu(
             appLabel = selectedApp!!.label,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -146,6 +152,14 @@ fun AppDrawerScreen(
                             iconSize = newSize
                         )
                     )
+                }
+            },
+            isAppHidden = isAppHidden,
+            onToggleVisibility = {
+                if (isAppHidden) {
+                    appVisibilityManager.showApp(selectedApp!!.packageName)
+                } else {
+                    appVisibilityManager.hideApp(selectedApp!!.packageName)
                 }
             }
         )
@@ -242,7 +256,8 @@ fun AppDrawerScreen(
                 onMenuClick = { showAppDrawerOptionsDialog = true },
                 onShowBottomSheet = onShowBottomSheet,
                 isFreeModeEnabled = isFreeModeEnabled,
-                appPositionManager = appPositionManager
+                appPositionManager = appPositionManager,
+                onDeletePage = onDeletePage
             )
         }
     }
@@ -272,7 +287,8 @@ private fun AppSelectionContent(
     onMenuClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     isFreeModeEnabled: Boolean = false,
-    appPositionManager: jr.brian.home.data.AppPositionManager? = null
+    appPositionManager: jr.brian.home.data.AppPositionManager? = null,
+    onDeletePage: (Int) -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -325,7 +341,8 @@ private fun AppSelectionContent(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 keyboardCoordinates = if (keyboardVisible) keyboardCoordinates else null,
                 keyboardContent = null,
-                onFolderClick = onShowBottomSheet
+                onFolderClick = onShowBottomSheet,
+                onDeletePage = onDeletePage
             )
         }
 

@@ -13,6 +13,7 @@ import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
+import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -100,5 +101,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): AppPositionManager {
         return AppPositionManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun providePageCountManager(
+        @ApplicationContext context: Context
+    ): PageCountManager {
+        return PageCountManager(context)
     }
 }
