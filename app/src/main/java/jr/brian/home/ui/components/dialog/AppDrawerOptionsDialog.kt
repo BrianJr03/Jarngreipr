@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Visibility
@@ -58,7 +60,9 @@ fun AppDrawerOptionsDialog(
     onShowAppVisibility: () -> Unit,
     isFreeModeEnabled: Boolean = false,
     onToggleFreeMode: () -> Unit = {},
-    onResetPositions: () -> Unit = {}
+    onResetPositions: () -> Unit = {},
+    isDragLocked: Boolean = false,
+    onToggleDragLock: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -125,6 +129,24 @@ fun AppDrawerOptionsDialog(
                 )
 
                 if (isFreeModeEnabled) {
+                    DrawerOptionCard(
+                        title = if (isDragLocked) {
+                            stringResource(R.string.app_drawer_unlock_drag_mode)
+                        } else {
+                            stringResource(R.string.app_drawer_lock_drag_mode)
+                        },
+                        description = if (isDragLocked) {
+                            stringResource(R.string.app_drawer_unlock_drag_description)
+                        } else {
+                            stringResource(R.string.app_drawer_lock_drag_description)
+                        },
+                        icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                        onClick = {
+                            onDismiss()
+                            onToggleDragLock()
+                        }
+                    )
+
                     DrawerOptionCard(
                         title = stringResource(R.string.app_drawer_reset_positions),
                         description = stringResource(R.string.app_drawer_reset_positions_message),
