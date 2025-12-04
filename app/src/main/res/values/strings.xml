@@ -35,6 +35,8 @@
     <string name="app_options_launch_external">Launch on External Display</string>
     <string name="app_options_launch_primary">Launch on Primary Display</string>
     <string name="app_options_selected">Selected</string>
+    <string name="app_options_hide_app">Hide App</string>
+    <string name="app_options_show_app">Show App</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
@@ -221,6 +223,11 @@
     <string name="home_tab_dialog_title">Select Home Tab</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
+    <string name="home_tab_add_page">Add Page</string>
+    <string name="home_tab_delete_page_title">Delete Page</string>
+    <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
+    <string name="home_tab_delete_confirm">Delete</string>
+    <string name="home_tab_delete_cancel">Cancel</string>
 
     <!-- Onboarding -->
     <string name="onboarding_settings_title">Settings</string>
@@ -303,4 +310,8 @@
     <string name="app_drawer_arrange_apps_description_grid">Default layout</string>
     <string name="app_drawer_scroll_up">Scroll Up</string>
     <string name="app_drawer_scroll_down">Scroll Down</string>
+    <string name="app_drawer_lock_drag_mode">Lock Positions</string>
+    <string name="app_drawer_unlock_drag_mode">Unlock Positions</string>
+    <string name="app_drawer_lock_drag_description">Prevent app icons from being dragged</string>
+    <string name="app_drawer_unlock_drag_description">Allow app icons to be dragged</string>
 </resources>

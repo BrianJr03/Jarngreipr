@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +21,8 @@ import androidx.core.content.edit
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.extensions.handleShoulderButtons
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.PowerViewModel
@@ -43,6 +46,9 @@ fun LauncherPagerScreen(
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
+    val pageCountManager = LocalPageCountManager.current
+    val pageCount by pageCountManager.pageCount.collectAsStateWithLifecycle()
+    val homeTabManager = LocalHomeTabManager.current
 
     var showResizeScreen by remember { mutableStateOf(false) }
     var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
@@ -61,12 +67,21 @@ fun LauncherPagerScreen(
         }
     }
 
-    val totalPages = 1 + WidgetViewModel.MAX_WIDGET_PAGES
+    val totalPages = 1 + pageCount
 
     val pagerState = rememberPagerState(
-        initialPage = initialPage,
+        initialPage = initialPage.coerceAtMost(totalPages - 1),
         pageCount = { totalPages }
     )
+
+    LaunchedEffect(totalPages) {
+        if (pagerState.currentPage >= totalPages) {
+            pagerState.scrollToPage((totalPages - 1).coerceAtLeast(0))
+        }
+        if (totalPages == 1) {
+            homeTabManager.setHomeTabIndex(0)
+        }
+    }
 
     BackHandler(enabled = !isPoweredOff) {
         if (pagerState.currentPage > 0) {
@@ -125,7 +140,19 @@ fun LauncherPagerScreen(
                                 totalPages = totalPages,
                                 pagerState = pagerState,
                                 keyboardVisible = keyboardVisible,
-                                onShowBottomSheet = onShowBottomSheet
+                                onShowBottomSheet = onShowBottomSheet,
+                                onDeletePage = { pagerPageIndex ->
+                                    scope.launch {
+                                        deletePage(
+                                            totalPages = totalPages,
+                                            pagerPageIndex = pagerPageIndex,
+                                            pagerState = pagerState,
+                                            onDeletePage = { pageIndex ->
+                                                widgetViewModel.deletePage(pageIndex)
+                                            }
+                                        )
+                                    }
+                                }
                             )
                         }
 
@@ -147,6 +174,18 @@ fun LauncherPagerScreen(
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx
                                         showResizeScreen = true
+                                    },
+                                    onDeletePage = { pagerPageIndex ->
+                                        scope.launch {
+                                            deletePage(
+                                                totalPages = totalPages,
+                                                pagerPageIndex = pagerPageIndex,
+                                                pagerState = pagerState,
+                                                onDeletePage = { pageIndex ->
+                                                    widgetViewModel.deletePage(pageIndex)
+                                                }
+                                            )
+                                        }
                                     }
                                 )
                             }
@@ -154,6 +193,24 @@ fun LauncherPagerScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+private suspend fun deletePage(
+    totalPages: Int,
+    pagerPageIndex: Int,
+    pagerState: PagerState,
+    onDeletePage: (Int) -> Unit
+) {
+    val widgetPageIndex = pagerPageIndex - 1
+    if (widgetPageIndex >= 0) {
+        onDeletePage(widgetPageIndex)
+        val newTotalPages = totalPages - 1
+        if (pagerState.currentPage >= newTotalPages) {
+            pagerState.animateScrollToPage(
+                (newTotalPages - 1).coerceAtLeast(0)
+            )
         }
     }
 }

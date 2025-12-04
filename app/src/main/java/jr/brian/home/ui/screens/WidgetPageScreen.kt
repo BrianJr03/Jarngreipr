@@ -87,7 +87,8 @@ fun WidgetPageScreen(
     totalPages: Int = 1,
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
-    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> }
+    onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
+    onDeletePage: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -267,7 +268,8 @@ fun WidgetPageScreen(
                             addWidgetIconFocusRequester.requestFocus()
                         },
                         onFolderClick = { showFolderOptionsDialog = true },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                        onDeletePage = onDeletePage
                     )
                 }
 
