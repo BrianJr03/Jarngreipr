@@ -98,19 +98,6 @@ fun AddToWidgetPageDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 AddOptionCard(
-                    title = stringResource(
-                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
-                        else R.string.widget_page_edit_mode
-                    ),
-                    description = stringResource(R.string.widget_page_edit_mode_description),
-                    icon = Icons.Default.Edit,
-                    onClick = {
-                        onDismiss()
-                        onToggleEditMode()
-                    }
-                )
-
-                AddOptionCard(
                     title = stringResource(R.string.widget_page_add_widget),
                     description = stringResource(R.string.widget_page_add_widget_description),
                     icon = Icons.Default.Add,
@@ -127,6 +114,19 @@ fun AddToWidgetPageDialog(
                     onClick = {
                         onDismiss()
                         onAddApp()
+                    }
+                )
+
+                AddOptionCard(
+                    title = stringResource(
+                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
+                        else R.string.widget_page_edit_mode
+                    ),
+                    description = stringResource(R.string.widget_page_edit_mode_description),
+                    icon = Icons.Default.Edit,
+                    onClick = {
+                        onDismiss()
+                        onToggleEditMode()
                     }
                 )
 
