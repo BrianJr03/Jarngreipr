@@ -20,6 +20,9 @@ class AppPositionManager(context: Context) {
     private val _isFreeModeEnabled = MutableStateFlow(loadFreeMode())
     val isFreeModeEnabled: StateFlow<Boolean> = _isFreeModeEnabled.asStateFlow()
 
+    private val _isDragLocked = MutableStateFlow(loadDragLock())
+    val isDragLocked: StateFlow<Boolean> = _isDragLocked.asStateFlow()
+
     init {
         loadPositions()
     }
@@ -32,6 +35,18 @@ class AppPositionManager(context: Context) {
         _isFreeModeEnabled.value = enabled
         prefs.edit().apply {
             putBoolean(KEY_FREE_MODE, enabled)
+            apply()
+        }
+    }
+
+    private fun loadDragLock(): Boolean {
+        return prefs.getBoolean(KEY_DRAG_LOCKED, false)
+    }
+
+    fun setDragLock(locked: Boolean) {
+        _isDragLocked.value = locked
+        prefs.edit().apply {
+            putBoolean(KEY_DRAG_LOCKED, locked)
             apply()
         }
     }
@@ -94,6 +109,7 @@ class AppPositionManager(context: Context) {
         private const val PREFS_NAME = "app_position_prefs"
         private const val KEY_POSITIONS = "positions"
         private const val KEY_FREE_MODE = "free_mode"
+        private const val KEY_DRAG_LOCKED = "drag_locked"
         private const val SEPARATOR_APPS = "||"
         private const val SEPARATOR_COORDS = ","
     }

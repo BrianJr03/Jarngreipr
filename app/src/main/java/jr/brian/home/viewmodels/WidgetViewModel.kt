@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jr.brian.home.data.PageCountManager
+import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.model.WidgetConfig
 import jr.brian.home.model.WidgetInfo
@@ -19,7 +21,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WidgetViewModel @Inject constructor(
-    private val widgetPreferences: WidgetPreferences
+    private val widgetPreferences: WidgetPreferences,
+    private val pageCountManager: PageCountManager,
+    private val widgetPageAppManager: WidgetPageAppManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WidgetUIState())
     val uiState = _uiState.asStateFlow()
@@ -27,6 +31,7 @@ class WidgetViewModel @Inject constructor(
     private var appWidgetHost: AppWidgetHost? = null
     private var appWidgetManager: AppWidgetManager? = null
     private var isLoadingFromPreferences = false
+    private var isDeletingPage = false
 
     companion object {
         private const val APPWIDGET_HOST_ID = 1024
@@ -40,7 +45,15 @@ class WidgetViewModel @Inject constructor(
 
         appWidgetHost?.startListening()
 
-        val pages = (0 until MAX_WIDGET_PAGES).map { index ->
+        val pageCount = pageCountManager.pageCount.value.coerceIn(
+            PageCountManager.MIN_PAGE_COUNT,
+            MAX_WIDGET_PAGES
+        )
+        if (pageCount != pageCountManager.pageCount.value) {
+            pageCountManager.setPageCount(pageCount)
+        }
+
+        val pages = (0 until pageCount).map { index ->
             WidgetPage(index = index)
         }
 
@@ -50,6 +63,51 @@ class WidgetViewModel @Inject constructor(
         )
 
         loadSavedWidgets()
+        observePageCount()
+    }
+
+    private fun observePageCount() {
+        viewModelScope.launch {
+            pageCountManager.pageCount.collect { newPageCount ->
+                if (isDeletingPage) {
+                    return@collect
+                }
+
+                val validPageCount =
+                    newPageCount.coerceIn(PageCountManager.MIN_PAGE_COUNT, MAX_WIDGET_PAGES)
+                val currentPages = _uiState.value.widgetPages
+
+                when {
+                    validPageCount > currentPages.size -> {
+                        val additionalPages =
+                            (currentPages.size until validPageCount).map { index ->
+                                WidgetPage(index = index)
+                            }
+                        _uiState.value = _uiState.value.copy(
+                            widgetPages = currentPages + additionalPages
+                        )
+                    }
+
+                    validPageCount < currentPages.size -> {
+                        val trimmedPages = currentPages.take(validPageCount)
+                        val removedPages = currentPages.drop(validPageCount)
+
+                        removedPages.forEach { page ->
+                            page.widgets.forEach { widget ->
+                                appWidgetHost?.deleteAppWidgetId(widget.widgetId)
+                                viewModelScope.launch {
+                                    widgetPreferences.removeWidgetConfig(widget.widgetId)
+                                }
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            widgetPages = trimmedPages
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun loadSavedWidgets() {
@@ -311,6 +369,62 @@ class WidgetViewModel @Inject constructor(
 
     fun isEditModeActive(pageIndex: Int): Boolean {
         return _uiState.value.editModeByPage[pageIndex] ?: false
+    }
+
+    fun deletePage(pageIndexToDelete: Int) {
+        viewModelScope.launch {
+            isDeletingPage = true
+            try {
+                val currentPages = _uiState.value.widgetPages.toMutableList()
+
+                Log.d(TAG, "Attempting to delete page at index: $pageIndexToDelete")
+                Log.d(TAG, "Current pages count: ${currentPages.size}")
+                Log.d(TAG, "Current page count manager value: ${pageCountManager.pageCount.value}")
+
+                if (pageIndexToDelete < 0 || pageIndexToDelete >= currentPages.size) {
+                    Log.d(TAG, "Invalid page index, aborting deletion")
+                    return@launch
+                }
+
+                val pageToDelete = currentPages[pageIndexToDelete]
+                Log.d(TAG, "Deleting page with ${pageToDelete.widgets.size} widgets")
+
+                pageToDelete.widgets.forEach { widget ->
+                    appWidgetHost?.deleteAppWidgetId(widget.widgetId)
+                    widgetPreferences.removeWidgetConfig(widget.widgetId)
+                }
+
+                widgetPageAppManager.reindexPages(pageIndexToDelete, currentPages.size - 1)
+
+                currentPages.removeAt(pageIndexToDelete)
+
+                val reindexedPages = currentPages.mapIndexed { newIndex, page ->
+                    val updatedWidgets = page.widgets.map { widget ->
+                        if (widget.pageIndex != newIndex) {
+                            val updatedWidget = widget.copy(pageIndex = newIndex)
+                            saveWidgetConfig(updatedWidget)
+                            updatedWidget
+                        } else {
+                            widget
+                        }
+                    }
+                    page.copy(index = newIndex, widgets = updatedWidgets)
+                }
+
+                _uiState.value = _uiState.value.copy(widgetPages = reindexedPages)
+                pageCountManager.setPageCount(
+                    reindexedPages.size.coerceIn(
+                        PageCountManager.MIN_PAGE_COUNT,
+                        MAX_WIDGET_PAGES
+                    )
+                )
+
+                Log.d(TAG, "Page deleted. New pages count: ${reindexedPages.size}")
+                Log.d(TAG, "New page count manager value: ${pageCountManager.pageCount.value}")
+            } finally {
+                isDeletingPage = false
+            }
+        }
     }
 
     override fun onCleared() {
