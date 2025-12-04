@@ -64,4 +64,38 @@ class WidgetPageAppManager(private val context: Context) {
             preferences[sectionOrderKey(pageIndex)] = !current
         }
     }
+
+    suspend fun clearPageData(pageIndex: Int) {
+        context.widgetPageAppDataStore.edit { preferences ->
+            preferences.remove(visibleAppsKey(pageIndex))
+            preferences.remove(sectionOrderKey(pageIndex))
+        }
+    }
+
+    suspend fun reindexPages(deletedPageIndex: Int, totalPagesAfterDeletion: Int) {
+        context.widgetPageAppDataStore.edit { preferences ->
+            val tempData = mutableMapOf<Int, Pair<String, Boolean>>()
+
+            for (i in 0 until (totalPagesAfterDeletion + 1)) {
+                val visibleApps = preferences[visibleAppsKey(i)] ?: ""
+                val appsFirst = preferences[sectionOrderKey(i)] ?: false
+                if (visibleApps.isNotEmpty() || appsFirst) {
+                    tempData[i] = Pair(visibleApps, appsFirst)
+                }
+            }
+
+            for (i in 0 until (totalPagesAfterDeletion + 1)) {
+                preferences.remove(visibleAppsKey(i))
+                preferences.remove(sectionOrderKey(i))
+            }
+
+            tempData.forEach { (oldIndex, data) ->
+                val newIndex = if (oldIndex > deletedPageIndex) oldIndex - 1 else oldIndex
+                if (newIndex != deletedPageIndex) {
+                    preferences[visibleAppsKey(newIndex)] = data.first
+                    preferences[sectionOrderKey(newIndex)] = data.second
+                }
+            }
+        }
+    }
 }

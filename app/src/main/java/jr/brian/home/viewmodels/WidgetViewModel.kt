@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.PageCountManager
+import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.model.WidgetConfig
 import jr.brian.home.model.WidgetInfo
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class WidgetViewModel @Inject constructor(
     private val widgetPreferences: WidgetPreferences,
-    private val pageCountManager: PageCountManager
+    private val pageCountManager: PageCountManager,
+    private val widgetPageAppManager: WidgetPageAppManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WidgetUIState())
     val uiState = _uiState.asStateFlow()
@@ -391,6 +393,8 @@ class WidgetViewModel @Inject constructor(
                     appWidgetHost?.deleteAppWidgetId(widget.widgetId)
                     widgetPreferences.removeWidgetConfig(widget.widgetId)
                 }
+
+                widgetPageAppManager.reindexPages(pageIndexToDelete, currentPages.size - 1)
 
                 currentPages.removeAt(pageIndexToDelete)
 
