@@ -310,4 +310,8 @@
     <string name="app_drawer_arrange_apps_description_grid">Default layout</string>
     <string name="app_drawer_scroll_up">Scroll Up</string>
     <string name="app_drawer_scroll_down">Scroll Down</string>
+    <string name="app_drawer_lock_drag_mode">Lock Positions</string>
+    <string name="app_drawer_unlock_drag_mode">Unlock Positions</string>
+    <string name="app_drawer_lock_drag_description">Prevent app icons from being dragged</string>
+    <string name="app_drawer_unlock_drag_description">Allow app icons to be dragged</string>
 </resources>

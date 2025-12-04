@@ -91,6 +91,7 @@ fun AppDrawerScreen(
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
     val isFreeModeEnabled by appPositionManager.isFreeModeEnabled.collectAsStateWithLifecycle()
+    val isDragLocked by appPositionManager.isDragLocked.collectAsStateWithLifecycle()
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -181,6 +182,10 @@ fun AppDrawerScreen(
             },
             onResetPositions = {
                 appPositionManager.clearAllPositions()
+            },
+            isDragLocked = isDragLocked,
+            onToggleDragLock = {
+                appPositionManager.setDragLock(!isDragLocked)
             }
         )
     }
@@ -257,7 +262,8 @@ fun AppDrawerScreen(
                 onShowBottomSheet = onShowBottomSheet,
                 isFreeModeEnabled = isFreeModeEnabled,
                 appPositionManager = appPositionManager,
-                onDeletePage = onDeletePage
+                onDeletePage = onDeletePage,
+                isDragLocked = isDragLocked
             )
         }
     }
@@ -288,7 +294,8 @@ private fun AppSelectionContent(
     onShowBottomSheet: () -> Unit = {},
     isFreeModeEnabled: Boolean = false,
     appPositionManager: jr.brian.home.data.AppPositionManager? = null,
-    onDeletePage: (Int) -> Unit = {}
+    onDeletePage: (Int) -> Unit = {},
+    isDragLocked: Boolean = false
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -353,6 +360,7 @@ private fun AppSelectionContent(
                 keyboardVisible = false,
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
+                isDragLocked = isDragLocked,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()

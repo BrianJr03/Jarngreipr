@@ -32,6 +32,7 @@ fun FreePositionedAppsLayout(
     keyboardVisible: Boolean,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
+    isDragLocked: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
@@ -196,7 +197,7 @@ fun FreePositionedAppsLayout(
                     onFocusChanged = {
                         focusedIndex = index
                     },
-                    isDraggingEnabled = true
+                    isDraggingEnabled = !isDragLocked
                 )
             }
         }
