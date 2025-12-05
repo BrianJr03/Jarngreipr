@@ -40,7 +40,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 
 @Composable
-fun WidgetOptionsDialog(
+fun EditWidgetOptionsDialog(
     widgetInfo: WidgetInfo,
     currentPageIndex: Int,
     onDismiss: () -> Unit,

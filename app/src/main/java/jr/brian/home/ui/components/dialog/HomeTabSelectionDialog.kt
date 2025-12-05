@@ -45,6 +45,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
+import jr.brian.home.data.PageType
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -57,10 +58,24 @@ fun HomeTabSelectionDialog(
     onTabSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
     onDeletePage: (Int) -> Unit,
-    onAddPage: () -> Unit,
+    onAddPage: (PageType) -> Unit,
+    pageTypes: List<PageType> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
+    var showPageTypeSelection by remember { mutableStateOf(false) }
+
+    if (showPageTypeSelection) {
+        PageTypeSelectionDialog(
+            onTypeSelected = { pageType ->
+                onAddPage(pageType)
+                showPageTypeSelection = false
+            },
+            onDismiss = {
+                showPageTypeSelection = false
+            }
+        )
+    }
 
     if (showDeleteConfirmation != null) {
         ConfirmationDialog(
@@ -118,13 +133,17 @@ fun HomeTabSelectionDialog(
                 )
 
                 repeat(totalPages) { index ->
+                    val pageType =
+                        if (index < pageTypes.size) pageTypes[index] else PageType.APPS_TAB
+                    val pageLabel = when (pageType) {
+                        PageType.APPS_TAB -> stringResource(R.string.home_tab_page_type_apps_tab)
+                        PageType.APPS_AND_WIDGETS_TAB -> stringResource(R.string.home_tab_page_type_apps_and_widgets_tab)
+                    }
+
                     TabOption(
-                        text = stringResource(
-                            R.string.home_tab_widget_page,
-                            index + 1
-                        ),
+                        text = "$pageLabel ${index + 1}",
                         isSelected = currentTabIndex == index,
-                        showDelete = index > 0,
+                        showDelete = true,
                         onClick = {
                             onTabSelected(index)
                             onDismiss()
@@ -136,14 +155,13 @@ fun HomeTabSelectionDialog(
                 }
 
                 AnimatedVisibility(
-                    visible = (totalPages - 1) < PageCountManager.MAX_PAGE_COUNT,
+                    visible = totalPages < PageCountManager.MAX_PAGE_COUNT + 1,
                     enter = fadeIn() + slideInVertically(),
                     exit = fadeOut() + slideOutVertically()
                 ) {
                     AddPageButton(
                         onClick = {
-                            onAddPage()
-                            onDismiss()
+                            showPageTypeSelection = true
                         }
                     )
                 }

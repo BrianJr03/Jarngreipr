@@ -60,10 +60,21 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 @Composable
 fun AppVisibilityDialog(
     apps: List<AppInfo>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    pageIndex: Int = 0,
+    isWidgetTabMode: Boolean = false,
+    visibleAppsOverride: Set<String>? = null,
+    onToggleAppOverride: ((String) -> Unit)? = null,
+    onShowAllOverride: (() -> Unit)? = null,
+    onHideAllOverride: (() -> Unit)? = null
 ) {
     val appVisibilityManager = LocalAppVisibilityManager.current
-    val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
+    val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+    val hiddenApps = if (isWidgetTabMode && visibleAppsOverride != null) {
+        apps.map { it.packageName }.filter { it !in visibleAppsOverride }.toSet()
+    } else {
+        hiddenAppsByPage[pageIndex] ?: emptySet()
+    }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredApps = remember(apps, searchQuery) {
@@ -77,6 +88,10 @@ fun AppVisibilityDialog(
 
     val hiddenCount = remember(apps, hiddenApps) {
         apps.count { it.packageName in hiddenApps }
+    }
+
+    val visibleCount = remember(apps, hiddenApps) {
+        apps.count { it.packageName !in hiddenApps }
     }
 
     Dialog(
@@ -107,11 +122,22 @@ fun AppVisibilityDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = stringResource(R.string.dialog_app_visibility_hidden_count, hiddenCount),
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
-                )
+                if (isWidgetTabMode) {
+                    Text(
+                        text = "$visibleCount apps selected",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(
+                            R.string.dialog_app_visibility_hidden_count,
+                            hiddenCount
+                        ),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -122,14 +148,26 @@ fun AppVisibilityDialog(
                     ActionButton(
                         text = stringResource(R.string.dialog_app_visibility_show_all),
                         onClick = {
-                            appVisibilityManager.showAllApps(apps.map { it.packageName })
+                            if (onShowAllOverride != null) {
+                                onShowAllOverride()
+                            } else {
+                                appVisibilityManager.showAllApps(
+                                    pageIndex,
+                                    apps.map { it.packageName })
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     )
                     ActionButton(
                         text = stringResource(R.string.dialog_app_visibility_hide_all),
                         onClick = {
-                            appVisibilityManager.hideAllApps(apps.map { it.packageName })
+                            if (onHideAllOverride != null) {
+                                onHideAllOverride()
+                            } else {
+                                appVisibilityManager.hideAllApps(
+                                    pageIndex,
+                                    apps.map { it.packageName })
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -149,10 +187,14 @@ fun AppVisibilityDialog(
                             app = app,
                             isVisible = app.packageName !in hiddenApps,
                             onToggle = {
-                                if (app.packageName in hiddenApps) {
-                                    appVisibilityManager.showApp(app.packageName)
+                                if (onToggleAppOverride != null) {
+                                    onToggleAppOverride(app.packageName)
                                 } else {
-                                    appVisibilityManager.hideApp(app.packageName)
+                                    if (app.packageName in hiddenApps) {
+                                        appVisibilityManager.showApp(pageIndex, app.packageName)
+                                    } else {
+                                        appVisibilityManager.hideApp(pageIndex, app.packageName)
+                                    }
                                 }
                             }
                         )

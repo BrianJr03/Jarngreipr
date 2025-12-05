@@ -31,9 +31,10 @@ fun FreePositionedAppsLayout(
     appPositionManager: AppPositionManager,
     keyboardVisible: Boolean,
     onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
+    modifier: Modifier = Modifier,
+    pageIndex: Int = 0,
     isDragLocked: Boolean = false,
-    modifier: Modifier = Modifier
+    onAppLongClick: (AppInfo) -> Unit = {}
 ) {
     val density = LocalDensity.current
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
@@ -47,8 +48,7 @@ fun FreePositionedAppsLayout(
         mutableMapOf<Int, Pair<Float, Float>>()
     }
 
-    // Observe positions to trigger recomposition when they change
-    val positions = appPositionManager.positions
+    val positions = appPositionManager.getPositions(pageIndex)
 
     LaunchedEffect(Unit) {
         if (focusRequesters.isNotEmpty()) {
@@ -134,9 +134,8 @@ fun FreePositionedAppsLayout(
                     offsetY = initialY,
                     iconSize = position?.iconSize ?: 64f,
                     onOffsetChanged = { x, y ->
-                        // Get current icon size from the position manager at the time of drag
                         val currentIconSize =
-                            appPositionManager.getPosition(app.packageName)?.iconSize ?: 64f
+                            appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize ?: 64f
 
                         // Calculate bounds with icon size and padding
                         val iconSizePx = with(density) { currentIconSize.dp.toPx() }
@@ -160,6 +159,7 @@ fun FreePositionedAppsLayout(
                         if (constrainedX > maxX) maxX = constrainedX
 
                         appPositionManager.savePosition(
+                            pageIndex,
                             AppPosition(
                                 packageName = app.packageName,
                                 x = constrainedX,

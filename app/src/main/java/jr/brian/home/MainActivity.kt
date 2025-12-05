@@ -16,12 +16,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -32,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -52,16 +47,15 @@ import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
+import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
-import jr.brian.home.ui.screens.AppDrawerScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
-import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -69,6 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -109,6 +104,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var pageCountManager: PageCountManager
 
+    @Inject
+    lateinit var pageTypeManager: PageTypeManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -142,7 +140,8 @@ class MainActivity : ComponentActivity() {
                     LocalHomeTabManager provides homeTabManager,
                     LocalOnboardingManager provides onboardingManager,
                     LocalAppPositionManager provides appPositionManager,
-                    LocalPageCountManager provides pageCountManager
+                    LocalPageCountManager provides pageCountManager,
+                    LocalPageTypeManager provides pageTypeManager
                 ) {
                     MainContent()
                 }
@@ -160,9 +159,7 @@ private fun MainContent() {
     val widgetViewModel: WidgetViewModel = viewModel()
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
     val homeTabManager = LocalHomeTabManager.current
-    val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
@@ -181,10 +178,6 @@ private fun MainContent() {
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
-    }
-
-    LaunchedEffect(hiddenApps) {
-        homeViewModel.loadAllApps(context)
     }
 
     LaunchedEffect(Unit) {

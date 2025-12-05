@@ -6,33 +6,26 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,19 +42,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
-import jr.brian.home.ui.components.dialog.AddToWidgetPageDialog
-import jr.brian.home.ui.components.dialog.WidgetPageAppSelectionDialog
+import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.components.widget.AppItem
-import jr.brian.home.ui.components.widget.SectionHeader
 import jr.brian.home.ui.components.widget.WidgetItem
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -77,7 +68,7 @@ import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WidgetPageScreen(
+fun AppsAndWidgetsTab(
     pageIndex: Int,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
@@ -165,9 +156,7 @@ fun WidgetPageScreen(
         modifier = modifier
             .fillMaxSize()
             .then(
-                if (showWidgetPicker || showAddOptionsDialog || showAppSelectionDialog ||
-                    (widgets.isEmpty() && displayedApps.isEmpty()) || swapModeEnabled
-                ) {
+                if (showWidgetPicker || showAddOptionsDialog || showAppSelectionDialog || swapModeEnabled) {
                     Modifier.blockAllNavigation()
                 } else {
                     Modifier.blockHorizontalNavigation()
@@ -190,51 +179,6 @@ fun WidgetPageScreen(
                     color = ThemePrimaryColor,
                     strokeWidth = 4.dp
                 )
-            }
-        } else if (widgets.isEmpty() && displayedApps.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f))
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.widget_no_widgets_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = { showAddOptionsDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.widget_add_widget),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
             }
         } else {
             Column(
@@ -287,14 +231,8 @@ fun WidgetPageScreen(
                         listOf("widgets" to widgets, "apps" to displayedApps)
                     }
 
-                    sections.forEach { (sectionType, items) ->
+                    sections.forEachIndexed { sectionIndex, (sectionType, items) ->
                         if (sectionType == "apps" && displayedApps.isNotEmpty() && !editModeEnabled) {
-                            item(span = { GridItemSpan(columns) }) {
-                                SectionHeader(
-                                    title = stringResource(R.string.widget_page_section_apps)
-                                )
-                            }
-
                             @Suppress("UNCHECKED_CAST")
                             (items as List<AppInfo>).forEach { app ->
                                 item(key = "app_${app.packageName}") {
@@ -305,12 +243,6 @@ fun WidgetPageScreen(
                                 }
                             }
                         } else if (sectionType == "widgets" && widgets.isNotEmpty()) {
-                            item(span = { GridItemSpan(columns) }) {
-                                SectionHeader(
-                                    title = stringResource(R.string.widget_page_section_widgets)
-                                )
-                            }
-
                             @Suppress("UNCHECKED_CAST")
                             (items as List<WidgetInfo>).forEachIndexed { index, widget ->
                                 item(
@@ -344,6 +276,8 @@ fun WidgetPageScreen(
                                 }
                             }
                         }
+
+
                     }
                 }
             }
@@ -351,7 +285,7 @@ fun WidgetPageScreen(
     }
 
     if (showAddOptionsDialog || showFolderOptionsDialog) {
-        AddToWidgetPageDialog(
+        AppsAndWidgetsOptionsDialog(
             onDismiss = {
                 showAddOptionsDialog = false
                 showFolderOptionsDialog = false
@@ -371,19 +305,12 @@ fun WidgetPageScreen(
     }
 
     if (showAppSelectionDialog) {
-        WidgetPageAppSelectionDialog(
+        AppVisibilityDialogForWidgetTab(
             apps = allApps,
             visibleApps = visibleApps,
+            pageIndex = pageIndex,
             onDismiss = { showAppSelectionDialog = false },
-            onToggleApp = { packageName ->
-                scope.launch {
-                    if (packageName in visibleApps) {
-                        widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
-                    } else {
-                        widgetPageAppManager.addVisibleApp(pageIndex, packageName)
-                    }
-                }
-            }
+            widgetPageAppManager = widgetPageAppManager
         )
     }
 
@@ -476,4 +403,50 @@ private fun WidgetEditModeHeaderCard(onClick: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun AppVisibilityDialogForWidgetTab(
+    apps: List<AppInfo>,
+    visibleApps: Set<String>,
+    pageIndex: Int,
+    onDismiss: () -> Unit,
+    widgetPageAppManager: jr.brian.home.data.WidgetPageAppManager
+) {
+    val scope = rememberCoroutineScope()
+
+    AppVisibilityDialog(
+        apps = apps,
+        onDismiss = onDismiss,
+        pageIndex = pageIndex,
+        isWidgetTabMode = true,
+        visibleAppsOverride = visibleApps,
+        onToggleAppOverride = { packageName ->
+            scope.launch {
+                if (packageName in visibleApps) {
+                    widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
+                } else {
+                    widgetPageAppManager.addVisibleApp(pageIndex, packageName)
+                }
+            }
+        },
+        onShowAllOverride = {
+            scope.launch {
+                apps.forEach { app ->
+                    if (app.packageName !in visibleApps) {
+                        widgetPageAppManager.addVisibleApp(pageIndex, app.packageName)
+                    }
+                }
+            }
+        },
+        onHideAllOverride = {
+            scope.launch {
+                apps.forEach { app ->
+                    if (app.packageName in visibleApps) {
+                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
+                    }
+                }
+            }
+        }
+    )
 }

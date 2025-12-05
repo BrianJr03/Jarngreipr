@@ -52,7 +52,9 @@ fun AppOptionsDialog(
     hasExternalDisplay: Boolean = false,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    showResizeOption: Boolean = false
+    showResizeOption: Boolean = false,
+    isAppHidden: Boolean = false,
+    onToggleVisibility: () -> Unit = {}
 ) {
     AlertDialog(
         modifier = Modifier.fillMaxSize(),
@@ -78,9 +80,9 @@ fun AppOptionsDialog(
         },
         text = {
             val optionCount = if (showResizeOption) {
-                if (hasExternalDisplay) 4 else 2
+                if (hasExternalDisplay) 5 else 3
             } else {
-                if (hasExternalDisplay) 3 else 1
+                if (hasExternalDisplay) 4 else 2
             }
             val focusRequesters = remember {
                 List(optionCount) { FocusRequester() }
@@ -105,7 +107,9 @@ fun AppOptionsDialog(
                     onDismiss = onDismiss,
                     app = if (showResizeOption) app else null,
                     currentIconSize = currentIconSize,
-                    onIconSizeChange = onIconSizeChange
+                    onIconSizeChange = onIconSizeChange,
+                    isAppHidden = isAppHidden,
+                    onToggleVisibility = onToggleVisibility
                 )
 
                 Card(
