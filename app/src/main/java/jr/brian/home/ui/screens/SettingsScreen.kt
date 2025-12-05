@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Coffee
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
@@ -82,7 +80,6 @@ private fun SettingsContent(
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var expandedItem by remember { mutableStateOf<String?>(null) }
 
     val isThorDevice = remember {
@@ -92,13 +89,6 @@ private fun SettingsContent(
     LaunchedEffect(Unit) {
         delay(10)
         firstItemFocusRequester.requestFocus()
-    }
-
-    if (showAppVisibilityDialog) {
-        AppVisibilityDialog(
-            apps = allAppsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false }
-        )
     }
 
     LazyColumn(
@@ -138,18 +128,6 @@ private fun SettingsContent(
         item {
             SettingsSectionHeader(
                 title = stringResource(id = R.string.settings_section_layout)
-            )
-        }
-
-        item {
-            SettingItem(
-                title = stringResource(id = R.string.settings_app_visibility_title),
-                description = stringResource(id = R.string.settings_app_visibility_description),
-                icon = Icons.Default.Visibility,
-                onClick = {
-                    expandedItem = null
-                    showAppVisibilityDialog = true
-                },
             )
         }
 

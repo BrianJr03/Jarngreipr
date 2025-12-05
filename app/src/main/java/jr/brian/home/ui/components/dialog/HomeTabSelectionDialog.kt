@@ -55,12 +55,12 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun HomeTabSelectionDialog(
     currentTabIndex: Int,
     totalPages: Int,
+    modifier: Modifier = Modifier,
     onTabSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onAddPage: (PageType) -> Unit,
-    pageTypes: List<PageType> = emptyList(),
-    modifier: Modifier = Modifier
+    pageTypes: List<PageType> = emptyList()
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
     var showPageTypeSelection by remember { mutableStateOf(false) }
@@ -141,7 +141,7 @@ fun HomeTabSelectionDialog(
                     }
 
                     TabOption(
-                        text = "$pageLabel ${index + 1}",
+                        text = stringResource(R.string.home_tab_page_type, index + 1, pageLabel),
                         isSelected = currentTabIndex == index,
                         showDelete = true,
                         onClick = {

@@ -61,18 +61,7 @@ fun LauncherPagerScreen(
     var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
     var resizePageIndex by remember { mutableStateOf(0) }
 
-    val prefs = remember {
-        context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
-    }
-    var keyboardVisible by remember {
-        mutableStateOf(prefs.getBoolean("keyboard_visible", false))
-    }
 
-    LaunchedEffect(keyboardVisible) {
-        prefs.edit {
-            putBoolean("keyboard_visible", keyboardVisible)
-        }
-    }
 
     val totalPages = pageTypes.size
 
@@ -95,8 +84,6 @@ fun LauncherPagerScreen(
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
-        } else {
-            keyboardVisible = !keyboardVisible
         }
     }
 
@@ -157,7 +144,6 @@ fun LauncherPagerScreen(
                                 powerViewModel = powerViewModel,
                                 totalPages = totalPages,
                                 pagerState = pagerState,
-                                keyboardVisible = keyboardVisible,
                                 onShowBottomSheet = onShowBottomSheet,
                                 pageIndex = page,
                                 onDeletePage = { pagerPageIndex ->
