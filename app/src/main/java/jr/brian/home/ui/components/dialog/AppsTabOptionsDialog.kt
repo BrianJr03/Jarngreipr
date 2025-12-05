@@ -18,10 +18,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,13 +55,14 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun AddToWidgetPageDialog(
+fun AppsTabOptionsDialog(
     onDismiss: () -> Unit,
-    onAddWidget: () -> Unit,
-    onAddApp: () -> Unit,
-    onSwapSections: () -> Unit,
-    onToggleEditMode: () -> Unit,
-    isEditModeActive: Boolean = false
+    onShowAppVisibility: () -> Unit,
+    isFreeModeEnabled: Boolean = false,
+    onToggleFreeMode: () -> Unit = {},
+    onResetPositions: () -> Unit = {},
+    isDragLocked: Boolean = false,
+    onToggleDragLock: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -88,7 +91,7 @@ fun AddToWidgetPageDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.widget_page_add_options_title),
+                    text = stringResource(R.string.app_drawer_options_title),
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
@@ -97,50 +100,63 @@ fun AddToWidgetPageDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_add_widget),
-                    description = stringResource(R.string.widget_page_add_widget_description),
-                    icon = Icons.Default.Add,
+                DrawerOptionCard(
+                    title = stringResource(R.string.settings_app_visibility_title),
+                    description = stringResource(R.string.settings_app_visibility_description),
+                    icon = Icons.Default.Visibility,
                     onClick = {
                         onDismiss()
-                        onAddWidget()
+                        onShowAppVisibility()
                     }
                 )
 
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_add_app),
-                    description = stringResource(R.string.widget_page_add_app_description),
-                    icon = Icons.Default.Apps,
+                DrawerOptionCard(
+                    title = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_layout_grid)
+                    } else {
+                        stringResource(R.string.app_drawer_layout_free)
+                    },
+                    description = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
+                    }else {
+                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
+                    },
+                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
                     onClick = {
                         onDismiss()
-                        onAddApp()
+                        onToggleFreeMode()
                     }
                 )
 
-                AddOptionCard(
-                    title = stringResource(
-                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
-                        else R.string.widget_page_edit_mode
-                    ),
-                    description = stringResource(R.string.widget_page_edit_mode_description),
-                    icon = Icons.Default.Edit,
-                    onClick = {
-                        onDismiss()
-                        onToggleEditMode()
-                    }
-                )
+                if (isFreeModeEnabled) {
+                    DrawerOptionCard(
+                        title = if (isDragLocked) {
+                            stringResource(R.string.app_drawer_unlock_drag_mode)
+                        } else {
+                            stringResource(R.string.app_drawer_lock_drag_mode)
+                        },
+                        description = if (isDragLocked) {
+                            stringResource(R.string.app_drawer_unlock_drag_description)
+                        } else {
+                            stringResource(R.string.app_drawer_lock_drag_description)
+                        },
+                        icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                        onClick = {
+                            onDismiss()
+                            onToggleDragLock()
+                        }
+                    )
 
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_swap_sections),
-                    description = stringResource(R.string.widget_page_swap_sections_description),
-                    icon = Icons.Default.SwapVert,
-                    onClick = {
-                        onDismiss()
-                        onSwapSections()
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
+                    DrawerOptionCard(
+                        title = stringResource(R.string.app_drawer_reset_positions),
+                        description = stringResource(R.string.app_drawer_reset_positions_message),
+                        icon = Icons.Default.RestartAlt,
+                        onClick = {
+                            onDismiss()
+                            onResetPositions()
+                        }
+                    )
+                }
 
                 CancelButton(onClick = onDismiss)
             }
@@ -149,7 +165,7 @@ fun AddToWidgetPageDialog(
 }
 
 @Composable
-private fun AddOptionCard(
+private fun DrawerOptionCard(
     title: String,
     description: String,
     icon: ImageVector,

@@ -56,7 +56,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun WidgetPageAppSelectionDialog(
+fun WidgetTabAppSelectionDialog(
     apps: List<AppInfo>,
     visibleApps: Set<String>,
     onDismiss: () -> Unit,

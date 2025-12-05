@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
-import jr.brian.home.ui.components.dialog.WidgetOptionsDialog
+import jr.brian.home.ui.components.dialog.EditWidgetOptionsDialog
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -167,7 +167,7 @@ fun WidgetItem(
     }
 
     if (showOptionsDialog && !swapModeEnabled && editModeEnabled) {
-        WidgetOptionsDialog(
+        EditWidgetOptionsDialog(
             widgetInfo = widgetInfo,
             currentPageIndex = pageIndex,
             onDismiss = { showOptionsDialog = false },

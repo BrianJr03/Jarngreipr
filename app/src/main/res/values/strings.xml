@@ -228,6 +228,11 @@
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
     <string name="home_tab_delete_confirm">Delete</string>
     <string name="home_tab_delete_cancel">Cancel</string>
+    <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
+    <string name="home_tab_page_type_apps_tab">Apps Tab</string>
+    <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
+    <string name="home_tab_page_type_apps_tab_description">Grid or free layout of apps</string>
+    <string name="home_tab_page_type_apps_and_widgets_tab_description">Widgets and selected apps</string>
 
     <!-- Onboarding -->
     <string name="onboarding_settings_title">Settings</string>
@@ -242,12 +247,12 @@
     <string name="onboarding_finish">Got It</string>
 
     <!-- App Drawer Options -->
-    <string name="app_drawer_options_title">Options</string>
+    <string name="app_drawer_options_title">Apps Tab Options</string>
 
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
     <string name="widget_page_section_widgets">Widgets</string>
-    <string name="widget_page_add_options_title">Options</string>
+    <string name="app_widget_options_title">Apps + Widgets Tab Options</string>
     <string name="widget_page_add_widget">Add Widget</string>
     <string name="widget_page_add_widget_description">Add a system widget</string>
     <string name="widget_page_add_app">Add App</string>

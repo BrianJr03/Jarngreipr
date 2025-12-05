@@ -12,17 +12,31 @@ class AppVisibilityManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val _hiddenApps = MutableStateFlow(loadHiddenApps())
-    val hiddenApps = _hiddenApps.asStateFlow()
-
-    var currentHiddenApps by mutableStateOf(loadHiddenApps())
-        private set
+    private val _hiddenAppsByPage = MutableStateFlow<Map<Int, Set<String>>>(emptyMap())
+    val hiddenAppsByPage = _hiddenAppsByPage.asStateFlow()
 
     private val _newAppsVisibleByDefault = MutableStateFlow(loadNewAppsVisibleByDefault())
     val newAppsVisibleByDefault = _newAppsVisibleByDefault.asStateFlow()
 
-    private fun loadHiddenApps(): Set<String> {
-        val hiddenAppsString = prefs.getString(KEY_HIDDEN_APPS, "") ?: ""
+    init {
+        loadAllPageData()
+    }
+
+    private fun loadAllPageData() {
+        val maxPages = 10
+        val hiddenAppsMap = mutableMapOf<Int, Set<String>>()
+        for (pageIndex in 0 until maxPages) {
+            val hiddenApps = loadHiddenAppsForPage(pageIndex)
+            if (hiddenApps.isNotEmpty()) {
+                hiddenAppsMap[pageIndex] = hiddenApps
+            }
+        }
+        _hiddenAppsByPage.value = hiddenAppsMap
+    }
+
+    private fun loadHiddenAppsForPage(pageIndex: Int): Set<String> {
+        val key = "${KEY_HIDDEN_APPS}_$pageIndex"
+        val hiddenAppsString = prefs.getString(key, "") ?: ""
         return if (hiddenAppsString.isEmpty()) {
             emptySet()
         } else {
@@ -42,36 +56,55 @@ class AppVisibilityManager(context: Context) {
         }
     }
 
-    fun hideApp(packageName: String) {
-        val updated = currentHiddenApps + packageName
-        saveHiddenApps(updated)
+    fun getHiddenApps(pageIndex: Int): Set<String> {
+        return _hiddenAppsByPage.value[pageIndex] ?: emptySet()
     }
 
-    fun showApp(packageName: String) {
-        val updated = currentHiddenApps - packageName
-        saveHiddenApps(updated)
+    fun hideApp(pageIndex: Int, packageName: String) {
+        val currentHidden = getHiddenApps(pageIndex)
+        val updated = currentHidden + packageName
+        saveHiddenAppsForPage(pageIndex, updated)
     }
 
-    fun hideAllApps(packageNames: List<String>) {
-        val updated = currentHiddenApps + packageNames.toSet()
-        saveHiddenApps(updated)
+    fun showApp(pageIndex: Int, packageName: String) {
+        val currentHidden = getHiddenApps(pageIndex)
+        val updated = currentHidden - packageName
+        saveHiddenAppsForPage(pageIndex, updated)
     }
 
-    fun showAllApps(packageNames: List<String>) {
-        val updated = currentHiddenApps - packageNames.toSet()
-        saveHiddenApps(updated)
+    fun hideAllApps(pageIndex: Int, packageNames: List<String>) {
+        val currentHidden = getHiddenApps(pageIndex)
+        val updated = currentHidden + packageNames.toSet()
+        saveHiddenAppsForPage(pageIndex, updated)
     }
 
-    fun isAppHidden(packageName: String): Boolean {
-        return packageName in currentHiddenApps
+    fun showAllApps(pageIndex: Int, packageNames: List<String>) {
+        val currentHidden = getHiddenApps(pageIndex)
+        val updated = currentHidden - packageNames.toSet()
+        saveHiddenAppsForPage(pageIndex, updated)
     }
 
-    private fun saveHiddenApps(hiddenApps: Set<String>) {
-        currentHiddenApps = hiddenApps
-        _hiddenApps.value = hiddenApps
+    fun isAppHidden(pageIndex: Int, packageName: String): Boolean {
+        return packageName in getHiddenApps(pageIndex)
+    }
+
+    private fun saveHiddenAppsForPage(pageIndex: Int, hiddenApps: Set<String>) {
+        val currentMap = _hiddenAppsByPage.value.toMutableMap()
+        if (hiddenApps.isEmpty()) {
+            currentMap.remove(pageIndex)
+        } else {
+            currentMap[pageIndex] = hiddenApps
+        }
+        _hiddenAppsByPage.value = currentMap
+
         prefs.edit().apply {
-            putString(KEY_HIDDEN_APPS, hiddenApps.joinToString(SEPARATOR))
-            commit()
+            val key = "${KEY_HIDDEN_APPS}_$pageIndex"
+            if (hiddenApps.isEmpty()) {
+                remove(key)
+            } else {
+                putString(key, hiddenApps.joinToString(SEPARATOR))
+            }
+            apply()
         }
     }
 

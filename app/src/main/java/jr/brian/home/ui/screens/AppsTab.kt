@@ -6,7 +6,6 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,7 +54,7 @@ import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
-import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
@@ -70,15 +68,16 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppDrawerScreen(
+fun AppsTab(
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
-    onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = hiltViewModel(),
+    pageIndex: Int = 0,
     totalPages: Int = 1,
+    powerViewModel: PowerViewModel? = hiltViewModel(),
     pagerState: PagerState? = null,
     keyboardVisible: Boolean = true,
+    onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
 ) {
@@ -90,8 +89,9 @@ fun AppDrawerScreen(
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
-    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled.collectAsStateWithLifecycle()
-    val isDragLocked by appPositionManager.isDragLocked.collectAsStateWithLifecycle()
+    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled(pageIndex)
+        .collectAsStateWithLifecycle()
+    val isDragLocked by appPositionManager.isDragLocked(pageIndex).collectAsStateWithLifecycle()
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -114,14 +114,15 @@ fun AppDrawerScreen(
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
-            appPositionManager.getPosition(selectedApp!!.packageName)?.iconSize ?: 64f
+            appPositionManager.getPosition(pageIndex, selectedApp!!.packageName)?.iconSize ?: 64f
         } else {
             64f
         }
 
         val appVisibilityManager = jr.brian.home.ui.theme.managers.LocalAppVisibilityManager.current
-        val isAppHidden by remember(selectedApp) {
-            mutableStateOf(appVisibilityManager.isAppHidden(selectedApp!!.packageName))
+        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+        val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
+            appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
         }
 
         AppOptionsMenu(
@@ -144,8 +145,12 @@ fun AppDrawerScreen(
             currentIconSize = currentIconSize,
             onIconSizeChange = { newSize ->
                 if (isFreeModeEnabled) {
-                    val currentPos = appPositionManager.getPosition(selectedApp!!.packageName)
+                    val currentPos = appPositionManager.getPosition(
+                        pageIndex,
+                        selectedApp!!.packageName
+                    )
                     appPositionManager.savePosition(
+                        pageIndex,
                         jr.brian.home.model.AppPosition(
                             packageName = selectedApp!!.packageName,
                             x = currentPos?.x ?: 0f,
@@ -158,9 +163,9 @@ fun AppDrawerScreen(
             isAppHidden = isAppHidden,
             onToggleVisibility = {
                 if (isAppHidden) {
-                    appVisibilityManager.showApp(selectedApp!!.packageName)
+                    appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
                 } else {
-                    appVisibilityManager.hideApp(selectedApp!!.packageName)
+                    appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
                 }
             }
         )
@@ -173,19 +178,19 @@ fun AppDrawerScreen(
     }
 
     if (showAppDrawerOptionsDialog) {
-        AppDrawerOptionsDialog(
+        AppsTabOptionsDialog(
             onDismiss = { showAppDrawerOptionsDialog = false },
             onShowAppVisibility = { showAppVisibilityDialog = true },
             isFreeModeEnabled = isFreeModeEnabled,
             onToggleFreeMode = {
-                appPositionManager.setFreeMode(!isFreeModeEnabled)
+                appPositionManager.setFreeMode(pageIndex, !isFreeModeEnabled)
             },
             onResetPositions = {
-                appPositionManager.clearAllPositions()
+                appPositionManager.clearAllPositions(pageIndex)
             },
             isDragLocked = isDragLocked,
             onToggleDragLock = {
-                appPositionManager.setDragLock(!isDragLocked)
+                appPositionManager.setDragLock(pageIndex, !isDragLocked)
             }
         )
     }
@@ -193,7 +198,8 @@ fun AppDrawerScreen(
     if (showAppVisibilityDialog) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false }
+            onDismiss = { showAppVisibilityDialog = false },
+            pageIndex = pageIndex
         )
     }
 
@@ -263,7 +269,8 @@ fun AppDrawerScreen(
                 isFreeModeEnabled = isFreeModeEnabled,
                 appPositionManager = appPositionManager,
                 onDeletePage = onDeletePage,
-                isDragLocked = isDragLocked
+                isDragLocked = isDragLocked,
+                pageIndex = pageIndex
             )
         }
     }
@@ -295,7 +302,8 @@ private fun AppSelectionContent(
     isFreeModeEnabled: Boolean = false,
     appPositionManager: jr.brian.home.data.AppPositionManager? = null,
     onDeletePage: (Int) -> Unit = {},
-    isDragLocked: Boolean = false
+    isDragLocked: Boolean = false,
+    pageIndex: Int = 0
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -361,6 +369,7 @@ private fun AppSelectionContent(
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
                 isDragLocked = isDragLocked,
+                pageIndex = pageIndex,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
@@ -389,7 +398,7 @@ private fun AppSelectionContent(
                     }
                 }
 
-                AppGrid(
+                AppGridLayout(
                     apps = filteredApps,
                     columns = columns,
                     maxAppsPerPage = maxAppsPerPage,
@@ -412,7 +421,7 @@ private fun AppSelectionContent(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppGrid(
+private fun AppGridLayout(
     columns: Int,
     maxAppsPerPage: Int,
     apps: List<AppInfo>,
