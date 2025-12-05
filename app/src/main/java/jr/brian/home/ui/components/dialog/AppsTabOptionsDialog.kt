@@ -100,34 +100,6 @@ fun AppsTabOptionsDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_app_visibility_title),
-                    description = stringResource(R.string.settings_app_visibility_description),
-                    icon = Icons.Default.Visibility,
-                    onClick = {
-                        onDismiss()
-                        onShowAppVisibility()
-                    }
-                )
-
-                DrawerOptionCard(
-                    title = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_layout_grid)
-                    } else {
-                        stringResource(R.string.app_drawer_layout_free)
-                    },
-                    description = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
-                    }else {
-                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
-                    },
-                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
-                    onClick = {
-                        onDismiss()
-                        onToggleFreeMode()
-                    }
-                )
-
                 if (isFreeModeEnabled) {
                     DrawerOptionCard(
                         title = if (isDragLocked) {
@@ -157,6 +129,34 @@ fun AppsTabOptionsDialog(
                         }
                     )
                 }
+
+                DrawerOptionCard(
+                    title = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_layout_grid)
+                    } else {
+                        stringResource(R.string.app_drawer_layout_free)
+                    },
+                    description = if (isFreeModeEnabled) {
+                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
+                    } else {
+                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
+                    },
+                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
+                    onClick = {
+                        onDismiss()
+                        onToggleFreeMode()
+                    }
+                )
+
+                DrawerOptionCard(
+                    title = stringResource(R.string.settings_app_visibility_title),
+                    description = stringResource(R.string.settings_app_visibility_description),
+                    icon = Icons.Default.Visibility,
+                    onClick = {
+                        onDismiss()
+                        onShowAppVisibility()
+                    }
+                )
 
                 CancelButton(onClick = onDismiss)
             }

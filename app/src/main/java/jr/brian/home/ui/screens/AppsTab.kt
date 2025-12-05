@@ -39,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -76,7 +75,6 @@ fun AppsTab(
     totalPages: Int = 1,
     powerViewModel: PowerViewModel? = hiltViewModel(),
     pagerState: PagerState? = null,
-    keyboardVisible: Boolean = true,
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
@@ -85,7 +83,6 @@ fun AppsTab(
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
-    var searchQuery by remember { mutableStateOf("") }
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
@@ -107,9 +104,7 @@ fun AppsTab(
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
-    val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
-    var savedKeyboardIndex by remember { mutableIntStateOf(0) }
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     if (showAppOptionsMenu && selectedApp != null) {
@@ -234,14 +229,9 @@ fun AppsTab(
         } else {
             AppSelectionContent(
                 apps = apps,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
                 columns = gridSettingsManager.columnCount,
-                keyboardFocusRequesters = keyboardFocusRequesters,
                 appFocusRequesters = appFocusRequesters,
-                savedKeyboardIndex = savedKeyboardIndex,
                 savedAppIndex = savedAppIndex,
-                onKeyboardFocusChanged = { savedKeyboardIndex = it },
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppClick = { app ->
                     val displayPreference = if (hasExternalDisplay) {
@@ -259,7 +249,6 @@ fun AppsTab(
                     selectedApp = app
                     showAppOptionsMenu = true
                 },
-                keyboardVisible = keyboardVisible,
                 onSettingsClick = onSettingsClick,
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
@@ -280,19 +269,13 @@ fun AppsTab(
 @Composable
 private fun AppSelectionContent(
     apps: List<AppInfo>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     columns: Int = 4,
-    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    savedKeyboardIndex: Int,
     savedAppIndex: Int,
-    onKeyboardFocusChanged: (Int) -> Unit,
     onAppFocusChanged: (Int) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
-    keyboardVisible: Boolean = true,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
@@ -310,22 +293,9 @@ private fun AppSelectionContent(
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
 
-    var keyboardCoordinates by remember {
-        mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(
-            null
-        )
+    val filteredApps = remember(apps) {
+        apps.sortedBy { it.label.uppercase() }
     }
-
-    val filteredApps =
-        remember(apps, searchQuery) {
-            if (searchQuery.isBlank()) {
-                apps.sortedBy { it.label.uppercase() }
-            } else {
-                apps
-                    .filter { it.label.contains(searchQuery, ignoreCase = true) }
-                    .sortedBy { it.label.uppercase() }
-            }
-        }
 
     Column(modifier = modifier.fillMaxSize()) {
         if (pagerState != null) {
@@ -337,11 +307,11 @@ private fun AppSelectionContent(
             ScreenHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState,
-                leadingIcon = if (keyboardVisible) null else Icons.Default.Settings,
+                leadingIcon = Icons.Default.Settings,
                 leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
                 onLeadingIconClick = onSettingsClick,
                 leadingIconFocusRequester = settingsIconFocusRequester,
-                trailingIcon = if (keyboardVisible) null else Icons.Default.Menu,
+                trailingIcon = Icons.Default.Menu,
                 trailingIconContentDescription = null,
                 onTrailingIconClick = onMenuClick,
                 trailingIconFocusRequester = menuIconFocusRequester,
@@ -354,14 +324,12 @@ private fun AppSelectionContent(
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                keyboardCoordinates = if (keyboardVisible) keyboardCoordinates else null,
-                keyboardContent = null,
                 onFolderClick = onShowBottomSheet,
                 onDeletePage = onDeletePage
             )
         }
 
-        if (isFreeModeEnabled && !keyboardVisible && appPositionManager != null) {
+        if (isFreeModeEnabled && appPositionManager != null) {
             FreePositionedAppsLayout(
                 apps = filteredApps,
                 appPositionManager = appPositionManager,
@@ -375,46 +343,20 @@ private fun AppSelectionContent(
                     .fillMaxSize()
             )
         } else {
-            Row(modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()) {
-                if (keyboardVisible) {
-                    Box(
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .onGloballyPositioned { coordinates ->
-                                keyboardCoordinates = coordinates
-                            }
-                    ) {
-                        OnScreenKeyboard(
-                            searchQuery = searchQuery,
-                            onQueryChange = onSearchQueryChange,
-                            keyboardFocusRequesters = keyboardFocusRequesters,
-                            onFocusChanged = onKeyboardFocusChanged,
-                            onNavigateRight = {
-                                appFocusRequesters[savedAppIndex]?.requestFocus()
-                            },
-                        )
-                    }
-                }
-
-                AppGridLayout(
-                    apps = filteredApps,
-                    columns = columns,
-                    maxAppsPerPage = maxAppsPerPage,
-                    modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
-                    appFocusRequesters = appFocusRequesters,
-                    onFocusChanged = onAppFocusChanged,
-                    onNavigateLeft = {
-                        if (keyboardVisible) {
-                            keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
-                        }
-                    },
-                    onAppClick = onAppClick,
-                    onAppLongClick = onAppLongClick,
-                    keyboardVisible = keyboardVisible
-                )
-            }
+            AppGridLayout(
+                apps = filteredApps,
+                columns = columns,
+                maxAppsPerPage = maxAppsPerPage,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize(),
+                appFocusRequesters = appFocusRequesters,
+                onFocusChanged = onAppFocusChanged,
+                onNavigateLeft = {},
+                onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
+                keyboardVisible = false
+            )
         }
     }
 }

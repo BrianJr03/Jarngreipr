@@ -231,6 +231,7 @@
     <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
     <string name="home_tab_page_type_apps_tab">Apps Tab</string>
     <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
+    <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
     <string name="home_tab_page_type_apps_tab_description">Grid or free layout of apps</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Widgets and selected apps</string>
 

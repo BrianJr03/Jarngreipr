@@ -90,8 +90,20 @@ fun FreePositionedAppsLayout(
                 containerSize = it
             }
     ) {
+        // Since isFocusable is false, there's no spacer or divider below the icon
+        val extraItemHeight = 0f
+
+        // Add sufficient padding at the bottom to ensure all apps are fully visible
         val contentHeight = with(density) {
-            max(containerSize.height.toFloat(), maxY + 16.dp.toPx())
+            val maxIconSize = apps.mapNotNull { app ->
+                positions[app.packageName]?.iconSize
+            }.maxOrNull() ?: 64f
+            val maxIconSizePx = maxIconSize.dp.toPx()
+            val bottomPadding = 8.dp.toPx() // Extra padding for safety
+            max(
+                containerSize.height.toFloat(),
+                maxY + maxIconSizePx + extraItemHeight + bottomPadding
+            )
         }
 
         Box(
@@ -118,8 +130,28 @@ fun FreePositionedAppsLayout(
                     (topPadding + row * (itemHeight + spacing)).toFloat()
                 }
 
-                val initialX = position?.x ?: defaultX
-                val initialY = position?.y ?: defaultY
+                // Get icon size for this app
+                val currentIconSize = position?.iconSize ?: 64f
+                val iconSizePx = with(density) { currentIconSize.dp.toPx() }
+                val fullItemHeight = iconSizePx + extraItemHeight
+                val startPaddingPx = with(density) { 16.dp.toPx() }
+                val bottomPaddingPx = with(density) { 8.dp.toPx() }
+
+                // Constrain initial positions to ensure they're fully on screen
+                val initialX = (position?.x ?: defaultX).coerceIn(
+                    minimumValue = 0f,
+                    maximumValue = (containerSize.width - iconSizePx - startPaddingPx).coerceAtLeast(
+                        0f
+                    )
+                )
+                val initialY = (position?.y ?: defaultY).coerceIn(
+                    minimumValue = 0f,
+                    maximumValue = if (containerSize.height > 0) {
+                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(0f)
+                    } else {
+                        position?.y ?: defaultY
+                    }
+                )
 
                 appPositions[index] = initialX to initialY
 
@@ -133,16 +165,20 @@ fun FreePositionedAppsLayout(
                     offsetX = initialX,
                     offsetY = initialY,
                     iconSize = position?.iconSize ?: 64f,
+                    isFocusable = false,
                     onOffsetChanged = { x, y ->
                         val currentIconSize =
-                            appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize ?: 64f
+                            appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
+                                ?: 64f
 
-                        // Calculate bounds with icon size and padding
+                        // Calculate the full item height (just the icon since focus is disabled)
                         val iconSizePx = with(density) { currentIconSize.dp.toPx() }
+                        val fullItemHeight = iconSizePx + extraItemHeight
                         val startPaddingPx = with(density) { 16.dp.toPx() }
-                        val bottomPaddingPx = with(density) { 16.dp.toPx() }
+                        val bottomPaddingPx =
+                            with(density) { 8.dp.toPx() } // Ensure space at bottom
 
-                        // Constrain x and y to keep icon on screen
+                        // Constrain x and y to keep the entire item fully on screen
                         val constrainedX = x.coerceIn(
                             minimumValue = 0f,
                             maximumValue = (containerSize.width - iconSizePx - startPaddingPx).coerceAtLeast(
@@ -151,7 +187,7 @@ fun FreePositionedAppsLayout(
                         )
                         val constrainedY = y.coerceIn(
                             minimumValue = 0f,
-                            maximumValue = (containerSize.height - iconSizePx - bottomPaddingPx).coerceAtLeast(0f)
+                            maximumValue = (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(0f)
                         )
 
                         appPositions[index] = constrainedX to constrainedY

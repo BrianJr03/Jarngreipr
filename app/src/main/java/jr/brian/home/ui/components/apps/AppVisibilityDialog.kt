@@ -86,10 +86,6 @@ fun AppVisibilityDialog(
         }
     }
 
-    val hiddenCount = remember(apps, hiddenApps) {
-        apps.count { it.packageName in hiddenApps }
-    }
-
     val visibleCount = remember(apps, hiddenApps) {
         apps.count { it.packageName !in hiddenApps }
     }
@@ -122,22 +118,11 @@ fun AppVisibilityDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (isWidgetTabMode) {
-                    Text(
-                        text = "$visibleCount apps selected",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 14.sp
-                    )
-                } else {
-                    Text(
-                        text = stringResource(
-                            R.string.dialog_app_visibility_hidden_count,
-                            hiddenCount
-                        ),
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 14.sp
-                    )
-                }
+                Text(
+                    text = "$visibleCount apps selected",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
