@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlin.math.roundToInt
 
@@ -48,14 +45,12 @@ fun FreePositionedAppItem(
     onOffsetChanged: (Float, Float) -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
-    onNavigateUp: () -> Unit = {},
-    onNavigateDown: () -> Unit = {},
-    onNavigateLeft: () -> Unit = {},
-    onNavigateRight: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
     iconSize: Float = 64f,
     isFocusable: Boolean = false,
+    onDragStart: () -> Unit = {},
+    onDragEnd: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
@@ -74,7 +69,11 @@ fun FreePositionedAppItem(
                     .then(
                         if (isDraggingEnabled) {
                             Modifier.pointerInput(Unit) {
-                                detectDragGestures { change, dragAmount ->
+                                detectDragGestures(
+                                    onDragStart = { onDragStart() },
+                                    onDragEnd = { onDragEnd() },
+                                    onDragCancel = { onDragEnd() }
+                                ) { change, dragAmount ->
                                     change.consume()
                                     currentOffsetX += dragAmount.x
                                     currentOffsetY += dragAmount.y
