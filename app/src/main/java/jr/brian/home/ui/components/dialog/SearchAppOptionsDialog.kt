@@ -106,7 +106,6 @@ fun SearchAppOptionsDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // App Info Option
                 OptionCard(
                     title = stringResource(R.string.app_options_app_info),
                     description = stringResource(R.string.app_info_message, app.label),
@@ -117,7 +116,6 @@ fun SearchAppOptionsDialog(
                     }
                 )
 
-                // Display Preference Options (only if external display is available)
                 if (hasExternalDisplay) {
                     OptionCard(
                         title = stringResource(R.string.app_options_launch_external),

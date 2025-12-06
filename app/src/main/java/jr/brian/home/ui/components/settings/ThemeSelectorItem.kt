@@ -247,7 +247,6 @@ private fun ThemeCard(
     Box(
         contentAlignment = Alignment.TopEnd
     ) {
-        // Theme card
         Box(
             modifier =
                 Modifier
