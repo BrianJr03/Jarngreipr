@@ -34,23 +34,11 @@ class PageTypeManager(context: Context) {
             if (typeString != null) {
                 try {
                     PageType.valueOf(typeString)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     PageType.APPS_TAB
                 }
             } else {
                 PageType.APPS_TAB
-            }
-        }
-    }
-
-    fun setPageType(index: Int, type: PageType) {
-        val currentTypes = _pageTypes.value.toMutableList()
-        if (index in currentTypes.indices) {
-            currentTypes[index] = type
-            _pageTypes.value = currentTypes
-            prefs.edit().apply {
-                putString("${KEY_PAGE_TYPE_PREFIX}$index", type.name)
-                apply()
             }
         }
     }
@@ -81,11 +69,6 @@ class PageTypeManager(context: Context) {
                 apply()
             }
         }
-    }
-
-    fun getPageType(index: Int): PageType {
-        val types = _pageTypes.value
-        return if (index in types.indices) types[index] else PageType.APPS_TAB
     }
 
     companion object {

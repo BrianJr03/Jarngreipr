@@ -106,9 +106,12 @@ fun AppsTab(
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
-    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled(pageIndex)
-        .collectAsStateWithLifecycle()
-    val isDragLocked by appPositionManager.isDragLocked(pageIndex).collectAsStateWithLifecycle()
+
+    val freeModeByPage by appPositionManager.isFreeModeByPage.collectAsStateWithLifecycle()
+    val isFreeModeEnabled = freeModeByPage[pageIndex] ?: false
+
+    val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
+    val isDragLocked = dragLockedByPage[pageIndex] ?: true
 
     BackHandler(enabled = isPoweredOff) {}
 
