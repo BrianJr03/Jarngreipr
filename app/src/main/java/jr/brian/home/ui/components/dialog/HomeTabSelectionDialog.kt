@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -46,8 +47,11 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -142,8 +146,8 @@ fun HomeTabSelectionDialog(
 
                     TabOption(
                         text = stringResource(R.string.home_tab_page_type, index + 1, pageLabel),
-                        isSelected = currentTabIndex == index,
-                        showDelete = true,
+                        isSelected = if (totalPages == 1) true else currentTabIndex == index,
+                        showDelete = totalPages > 1,
                         onClick = {
                             onTabSelected(index)
                             onDismiss()
@@ -181,66 +185,78 @@ private fun TabOption(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val backgroundColor = when {
-        isSelected -> Brush.horizontalGradient(
-            colors = listOf(
-                ThemePrimaryColor.copy(alpha = 0.3f),
-                ThemeSecondaryColor.copy(alpha = 0.2f)
+    val cardGradient = Brush.linearGradient(
+        colors = if (isFocused) {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.9f),
+                ThemeSecondaryColor.copy(alpha = 0.9f)
             )
-        )
-
-        isFocused -> Brush.horizontalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.15f),
-                Color.White.copy(alpha = 0.1f)
+        } else {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.4f),
+                ThemeSecondaryColor.copy(alpha = 0.3f)
             )
-        )
-
-        else -> Brush.horizontalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.05f),
-                Color.White.copy(alpha = 0.05f)
-            )
-        )
-    }
+        }
+    )
 
     val borderColor = when {
-        isSelected -> ThemePrimaryColor.copy(alpha = 0.6f)
+        isSelected -> ThemeAccentColor
         isFocused -> Color.White.copy(alpha = 0.3f)
         else -> Color.White.copy(alpha = 0.1f)
-    }
-
-    val textColor = when {
-        isSelected -> ThemePrimaryColor
-        else -> Color.White
     }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(brush = backgroundColor)
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient,
+                shape = RoundedCornerShape(16.dp)
+            )
             .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(12.dp)
-            ),
+                width = if (isSelected) 3.dp else if (isFocused) 3.dp else 2.dp,
+                brush = if (isSelected) {
+                    Brush.linearGradient(
+                        colors = listOf(
+                            ThemeAccentColor,
+                            ThemeAccentColor
+                        )
+                    )
+                } else if (isFocused) {
+                    borderBrush(
+                        isFocused = true,
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.8f),
+                            ThemeSecondaryColor.copy(alpha = 0.6f)
+                        )
+                    )
+                } else {
+                    Brush.linearGradient(
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.6f),
+                            ThemeSecondaryColor.copy(alpha = 0.4f)
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .focusable(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .weight(1f)
                 .clickable { onClick() }
-                .padding(vertical = 16.dp, horizontal = 20.dp)
-                .focusable()
-                .onFocusChanged { isFocused = it.isFocused },
+                .padding(20.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = text,
-                color = textColor,
-                fontSize = 17.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                color = Color.White,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -248,17 +264,17 @@ private fun TabOption(
             Box(
                 modifier = Modifier
                     .padding(end = 4.dp)
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { onDelete() }
-                    .background(Color.Red.copy(alpha = 0.15f)),
+                    .background(Color.Red.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.home_tab_delete_page_title),
                     tint = Color(0xFFFF5252),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -272,56 +288,72 @@ private fun AddPageButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val backgroundBrush = when {
-        isFocused -> Brush.horizontalGradient(
-            colors = listOf(
+    val cardGradient = Brush.linearGradient(
+        colors = if (isFocused) {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.9f),
+                ThemeSecondaryColor.copy(alpha = 0.9f)
+            )
+        } else {
+            listOf(
                 ThemePrimaryColor.copy(alpha = 0.4f),
                 ThemeSecondaryColor.copy(alpha = 0.3f)
             )
-        )
+        }
+    )
 
-        else -> Brush.horizontalGradient(
-            colors = listOf(
-                ThemePrimaryColor.copy(alpha = 0.2f),
-                ThemeSecondaryColor.copy(alpha = 0.15f)
-            )
-        )
-    }
-
-    val borderColor = when {
-        isFocused -> ThemePrimaryColor.copy(alpha = 0.8f)
-        else -> ThemePrimaryColor.copy(alpha = 0.4f)
-    }
-
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(brush = backgroundBrush)
-            .border(
-                width = 1.5.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(12.dp)
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient,
+                shape = RoundedCornerShape(16.dp)
             )
+            .border(
+                width = if (isFocused) 3.dp else 2.dp,
+                brush = if (isFocused) {
+                    borderBrush(
+                        isFocused = true,
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.8f),
+                            ThemeSecondaryColor.copy(alpha = 0.6f)
+                        )
+                    )
+                } else {
+                    Brush.linearGradient(
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.6f),
+                            ThemeSecondaryColor.copy(alpha = 0.4f)
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
-            .padding(vertical = 16.dp, horizontal = 20.dp)
             .focusable()
-            .onFocusChanged { isFocused = it.isFocused },
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(20.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = null,
-            tint = ThemePrimaryColor,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.size(10.dp))
-        Text(
-            text = stringResource(R.string.home_tab_add_page),
-            color = ThemePrimaryColor,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.size(12.dp))
+            Text(
+                text = stringResource(R.string.home_tab_add_page),
+                color = Color.White,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }

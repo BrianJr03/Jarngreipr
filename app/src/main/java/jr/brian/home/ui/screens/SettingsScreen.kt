@@ -50,7 +50,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun SettingsScreen(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
-    onNavigateToFAQ: () -> Unit = {}
+    onNavigateToFAQ: () -> Unit = {},
+    onNavigateToCustomTheme: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = OledBackgroundColor,
@@ -66,7 +67,8 @@ fun SettingsScreen(
                 VersionInfo()
                 SettingsContent(
                     allAppsUnfiltered = allAppsUnfiltered,
-                    onNavigateToFAQ = onNavigateToFAQ
+                    onNavigateToFAQ = onNavigateToFAQ,
+                    onNavigateToCustomTheme = onNavigateToCustomTheme
                 )
             }
         }
@@ -76,7 +78,8 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
-    onNavigateToFAQ: () -> Unit = {}
+    onNavigateToFAQ: () -> Unit = {},
+    onNavigateToCustomTheme: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -108,7 +111,11 @@ private fun SettingsContent(
             ThemeSelectorItem(
                 focusRequester = firstItemFocusRequester,
                 isExpanded = expandedItem == "theme",
-                onExpandChanged = { expandedItem = if (it) "theme" else null }
+                onExpandChanged = { expandedItem = if (it) "theme" else null },
+                onNavigateToCustomTheme = {
+                    expandedItem = null
+                    onNavigateToCustomTheme()
+                }
             )
         }
 

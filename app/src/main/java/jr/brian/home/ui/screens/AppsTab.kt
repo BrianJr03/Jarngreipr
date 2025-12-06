@@ -22,9 +22,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,7 +50,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
@@ -64,6 +65,24 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -78,6 +97,7 @@ fun AppsTab(
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -226,12 +246,47 @@ fun AppsTab(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (apps.isEmpty()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (pagerState != null) {
+                    val settingsIconFocusRequester = remember { FocusRequester() }
+                    val menuIconFocusRequester = remember { FocusRequester() }
+                    val powerSettingsManager = LocalPowerSettingsManager.current
+                    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+                    ScreenHeaderRow(
+                        totalPages = totalPages,
+                        pagerState = pagerState,
+                        leadingIcon = Icons.Default.Settings,
+                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                        onLeadingIconClick = onSettingsClick,
+                        leadingIconFocusRequester = settingsIconFocusRequester,
+                        trailingIcon = Icons.Default.Menu,
+                        trailingIconContentDescription = null,
+                        onTrailingIconClick = { showAppDrawerOptionsDialog = true },
+                        trailingIconFocusRequester = menuIconFocusRequester,
+                        onNavigateToGrid = {},
+                        onNavigateFromGrid = {
+                            menuIconFocusRequester.requestFocus()
+                        },
+                        powerViewModel = powerViewModel,
+                        showPowerButton = isPowerButtonVisible,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                        onFolderClick = onShowBottomSheet,
+                        onDeletePage = onDeletePage,
+                        pageIndicatorBorderColor = pageIndicatorBorderColor
+                    )
+                }
+
+                EmptyAppsState(
+                    onAddClick = { showAppVisibilityDialog = true }
+                )
+            }
         } else {
             AppSelectionContent(
                 apps = apps,
                 columns = gridSettingsManager.columnCount,
                 appFocusRequesters = appFocusRequesters,
-                savedAppIndex = savedAppIndex,
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppClick = { app ->
                     val displayPreference = if (hasExternalDisplay) {
@@ -259,7 +314,8 @@ fun AppsTab(
                 appPositionManager = appPositionManager,
                 onDeletePage = onDeletePage,
                 isDragLocked = isDragLocked,
-                pageIndex = pageIndex
+                pageIndex = pageIndex,
+                pageIndicatorBorderColor = pageIndicatorBorderColor
             )
         }
     }
@@ -272,7 +328,6 @@ private fun AppSelectionContent(
     modifier: Modifier = Modifier,
     columns: Int = 4,
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    savedAppIndex: Int,
     onAppFocusChanged: (Int) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
@@ -286,14 +341,15 @@ private fun AppSelectionContent(
     appPositionManager: jr.brian.home.data.AppPositionManager? = null,
     onDeletePage: (Int) -> Unit = {},
     isDragLocked: Boolean = false,
-    pageIndex: Int = 0
+    pageIndex: Int = 0,
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
 
-    val filteredApps = remember(apps) {
+    val filteredApps = remember(apps, maxAppsPerPage) {
         apps.sortedBy { it.label.uppercase() }
     }
 
@@ -325,7 +381,8 @@ private fun AppSelectionContent(
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 onFolderClick = onShowBottomSheet,
-                onDeletePage = onDeletePage
+                onDeletePage = onDeletePage,
+                pageIndicatorBorderColor = pageIndicatorBorderColor
             )
         }
 
@@ -492,5 +549,110 @@ private fun openAppInfo(
         context.startActivity(intent)
     } catch (e: Exception) {
         e.printStackTrace()
+    }
+}
+
+@Composable
+private fun EmptyAppsState(
+    onAddClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_title),
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_description),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val cardGradient = Brush.linearGradient(
+                colors = if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.9f),
+                        ThemeSecondaryColor.copy(alpha = 0.9f)
+                    )
+                } else {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.4f),
+                        ThemeSecondaryColor.copy(alpha = 0.3f)
+                    )
+                }
+            )
+
+            Box(
+                modifier = Modifier
+                    .scale(animatedFocusedScale(isFocused))
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .background(
+                        brush = cardGradient,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = if (isFocused) 3.dp else 2.dp,
+                        brush = if (isFocused) {
+                            borderBrush(
+                                isFocused = true,
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.8f),
+                                    ThemeSecondaryColor.copy(alpha = 0.6f)
+                                )
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.6f),
+                                    ThemeSecondaryColor.copy(alpha = 0.4f)
+                                )
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onAddClick() }
+                    .focusable()
+                    .padding(horizontal = 48.dp, vertical = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Text(
+                        text = stringResource(R.string.apps_tab_add_button),
+                        color = Color.White,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }

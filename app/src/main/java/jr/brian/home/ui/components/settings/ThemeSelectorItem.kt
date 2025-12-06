@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +18,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -62,13 +66,15 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun ThemeSelectorItem(
     focusRequester: FocusRequester? = null,
     isExpanded: Boolean = false,
-    onExpandChanged: (Boolean) -> Unit = {}
+    onExpandChanged: (Boolean) -> Unit = {},
+    onNavigateToCustomTheme: () -> Unit = {}
 ) {
     val themeManager = LocalThemeManager.current
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
+    val allThemes = remember(themeManager.allThemes.size) { themeManager.allThemes }
     val selectedThemeFocusRequesters =
-        remember { ColorTheme.allThemes.associateWith { FocusRequester() } }
+        remember(allThemes.size) { allThemes.associateWith { FocusRequester() } }
 
     LaunchedEffect(isExpanded) {
         if (isExpanded) {
@@ -181,7 +187,7 @@ fun ThemeSelectorItem(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(horizontal = 8.dp),
             ) {
-                items(ColorTheme.allThemes) { theme ->
+                items(allThemes) { theme ->
                     ThemeCard(
                         theme = theme,
                         isSelected = themeManager.currentTheme.id == theme.id,
@@ -189,7 +195,18 @@ fun ThemeSelectorItem(
                             themeManager.setTheme(theme)
                             onExpandChanged(false)
                         },
+                        onLongClick = if (theme.isCustom) {
+                            { themeManager.deleteCustomTheme(theme) }
+                        } else null,
                         focusRequester = selectedThemeFocusRequesters[theme],
+                    )
+                }
+
+                item {
+                    AddCustomThemeCard(
+                        onClick = {
+                            onNavigateToCustomTheme()
+                        }
                     )
                 }
             }
@@ -202,9 +219,13 @@ private fun ThemeCard(
     theme: ColorTheme,
     isSelected: Boolean,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var showDeleteIcon by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val themeManager = LocalThemeManager.current
 
     val gradient =
         Brush.linearGradient(
@@ -224,25 +245,112 @@ private fun ThemeCard(
     val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
 
     Box(
+        contentAlignment = Alignment.TopEnd
+    ) {
+        // Theme card
+        Box(
+            modifier =
+                Modifier
+                    .width(120.dp)
+                    .height(80.dp)
+                    .scale(animatedFocusedScale(isFocused))
+                    .then(
+                        if (focusRequester != null) {
+                            Modifier.focusRequester(focusRequester)
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .background(
+                        brush = gradient,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                    .border(
+                        width = borderWidth,
+                        color = borderColor,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onClick() }
+                    .focusable()
+                    .onFocusChanged {
+                        isFocused = it.isFocused
+                        showDeleteIcon = it.isFocused && theme.isCustom
+                    },
+            contentAlignment = Alignment.Center,
+        ) {
+            val themeName = if (theme.isCustom) {
+                theme.customName ?: context.getString(R.string.theme_custom)
+            } else {
+                theme.nameResId?.let { context.getString(it) } ?: ""
+            }
+            val color = if (themeName == context.getString(R.string.theme_light_gray)) {
+                Color.Black
+            } else {
+                Color.White
+            }
+            Text(
+                text = themeName,
+                color = color,
+                fontSize = 14.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            )
+        }
+
+        if (theme.isCustom) {
+            Box(
+                modifier = Modifier
+                    .offset(x = 8.dp, y = (-8).dp)
+                    .size(24.dp)
+                    .background(
+                        color = Color.Red,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = Color.White,
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape)
+                    .clickable(
+                        onClick = {
+                            themeManager.deleteCustomTheme(theme)
+                        },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = context.getString(R.string.custom_theme_delete),
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddCustomThemeCard(
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
         modifier =
             Modifier
                 .width(120.dp)
                 .height(80.dp)
                 .scale(animatedFocusedScale(isFocused))
-                .then(
-                    if (focusRequester != null) {
-                        Modifier.focusRequester(focusRequester)
-                    } else {
-                        Modifier
-                    }
-                )
                 .background(
-                    brush = gradient,
+                    color = Color.Gray.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(12.dp),
                 )
                 .border(
-                    width = borderWidth,
-                    color = borderColor,
+                    width = if (isFocused) 2.dp else 1.dp,
+                    color = if (isFocused) Color.White else Color.Gray.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(12.dp),
                 )
                 .clip(RoundedCornerShape(12.dp))
@@ -253,17 +361,23 @@ private fun ThemeCard(
                 },
         contentAlignment = Alignment.Center,
     ) {
-        val themeName = stringResource(id = theme.nameResId)
-        val color = if (themeName == stringResource(R.string.theme_light_gray)) {
-            Color.Black
-        } else {
-            Color.White
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "+",
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Light
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.custom_theme_add),
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
-        Text(
-            text = themeName,
-            color = color,
-            fontSize = 14.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-        )
     }
 }

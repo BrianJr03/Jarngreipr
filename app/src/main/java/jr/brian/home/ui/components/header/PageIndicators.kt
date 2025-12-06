@@ -28,7 +28,8 @@ fun PageIndicators(
     totalPages: Int,
     homeTabIndex: Int,
     pagerState: PagerState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    borderColor: Color = ThemePrimaryColor,
 ) {
     Box(
         modifier = modifier,
@@ -42,7 +43,7 @@ fun PageIndicators(
                 )
                 .border(
                     width = 1.dp,
-                    color = Color.White.copy(alpha = 0.2f),
+                    color = borderColor,
                     shape = RoundedCornerShape(16.dp)
                 )
                 .padding(horizontal = 16.dp, vertical = 10.dp)

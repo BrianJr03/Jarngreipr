@@ -40,6 +40,7 @@ import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.data.PageType
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -68,6 +69,7 @@ fun ScreenHeaderRow(
     keyboardContent: @Composable (() -> Unit)? = null,
     onFolderClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
+    pageIndicatorBorderColor: Color = ThemePrimaryColor
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
     val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
@@ -253,6 +255,7 @@ fun ScreenHeaderRow(
                     homeTabIndex = currentHomeTabIndex,
                     totalPages = totalPages,
                     pagerState = pagerState,
+                    borderColor = pageIndicatorBorderColor,
                 )
             }
 
@@ -263,7 +266,7 @@ fun ScreenHeaderRow(
                     isFocused = isPowerFocused,
                     modifier = Modifier.handleFullNavigation(
                         onNavigateLeft = {
-                        if (showFolder) {
+                            if (showFolder) {
                                 folderIconFocusRequester.requestFocus()
                             } else {
                                 onNavigateFromGrid()
@@ -362,6 +365,7 @@ fun ScreenHeaderRow(
                         homeTabIndex = currentHomeTabIndex,
                         totalPages = totalPages,
                         pagerState = pagerState,
+                        borderColor = pageIndicatorBorderColor,
                     )
                 },
                 trailingIconContent = {

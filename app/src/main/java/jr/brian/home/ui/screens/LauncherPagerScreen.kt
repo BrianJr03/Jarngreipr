@@ -24,6 +24,7 @@ import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.ui.extensions.handleShoulderButtons
+import jr.brian.home.data.HomeTabManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -33,6 +34,8 @@ import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun LauncherPagerScreen(
@@ -154,12 +157,14 @@ fun LauncherPagerScreen(
                                             pagerState = pagerState,
                                             pageTypeManager = pageTypeManager,
                                             pageCountManager = pageCountManager,
+                                            homeTabManager = homeTabManager,
                                             onDeleteWidgetPage = { widgetPageIndex ->
                                                 widgetViewModel.deletePage(widgetPageIndex)
                                             }
                                         )
                                     }
-                                }
+                                },
+                                pageIndicatorBorderColor = ThemePrimaryColor
                             )
                         }
 
@@ -176,6 +181,7 @@ fun LauncherPagerScreen(
                                     allApps = homeUiState.allAppsUnfiltered,
                                     totalPages = totalPages,
                                     pagerState = pagerState,
+                                    onShowBottomSheet = onShowBottomSheet,
                                     onSettingsClick = onSettingsClick,
                                     onNavigateToResize = { widgetInfo, pageIdx ->
                                         resizeWidgetInfo = widgetInfo
@@ -190,12 +196,14 @@ fun LauncherPagerScreen(
                                                 pagerState = pagerState,
                                                 pageTypeManager = pageTypeManager,
                                                 pageCountManager = pageCountManager,
+                                                homeTabManager = homeTabManager,
                                                 onDeleteWidgetPage = { widgetPageIndex ->
                                                     widgetViewModel.deletePage(widgetPageIndex)
                                                 }
                                             )
                                         }
-                                    }
+                                    },
+                                    pageIndicatorBorderColor = ThemeSecondaryColor
                                 )
                             }
                         }
@@ -225,10 +233,12 @@ private suspend fun deleteTab(
     pagerState: PagerState,
     pageTypeManager: PageTypeManager,
     pageCountManager: PageCountManager,
+    homeTabManager: HomeTabManager,
     onDeleteWidgetPage: (Int) -> Unit
 ) {
     val pageTypes = pageTypeManager.pageTypes.value
     val pageType = pageTypes.getOrNull(pagerPageIndex)
+    val currentHomeTabIndex = homeTabManager.homeTabIndex.value
 
     if (pageType == PageType.APPS_AND_WIDGETS_TAB) {
         val widgetPageIndex = getAppAndWidgetTabIndex(
@@ -240,6 +250,14 @@ private suspend fun deleteTab(
 
     pageTypeManager.removePage(pagerPageIndex)
     pageCountManager.removePage()
+
+    // If the deleted tab was the current home tab, set the first tab as home
+    if (pagerPageIndex == currentHomeTabIndex) {
+        homeTabManager.setHomeTabIndex(0)
+    } else if (pagerPageIndex < currentHomeTabIndex) {
+        // If a tab before the home tab was deleted, adjust the home tab index
+        homeTabManager.setHomeTabIndex(currentHomeTabIndex - 1)
+    }
 
     val newTotalPages = totalPages - 1
     if (newTotalPages > 0 && pagerState.currentPage >= newTotalPages) {
