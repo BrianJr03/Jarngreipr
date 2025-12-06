@@ -16,26 +16,27 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
 fun IconBox(
-    isFocused: Boolean = false,
     modifier: Modifier = Modifier,
+    isFocused: Boolean = false,
     focusRequester: FocusRequester? = null,
     onFocusChanged: ((Boolean) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (isFocused) ThemePrimaryColor.copy(alpha = 0.3f) else Color.Black.copy(
+        targetValue = if (isFocused) ThemeAccentColor.copy(alpha = 0.3f) else Color.Black.copy(
             alpha = 0.75f
         ),
         label = "iconBoxBackgroundColor"
     )
 
     val borderColor by animateColorAsState(
-        targetValue = if (isFocused) ThemePrimaryColor else Color.White.copy(alpha = 0.2f),
+        targetValue = if (isFocused) ThemeAccentColor else Color.White.copy(alpha = 0.2f),
         label = "iconBoxBorderColor"
     )
 

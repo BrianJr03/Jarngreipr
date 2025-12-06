@@ -7,17 +7,12 @@ import android.hardware.display.DisplayManager
 import android.provider.Settings
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,23 +22,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -56,6 +48,7 @@ fun AppItem(
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
     val scope = rememberCoroutineScope()
     var showOptionsDialog by remember { mutableStateOf(false) }
 
@@ -68,15 +61,6 @@ fun AppItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                color = OledCardColor,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = 2.dp,
-                color = ThemePrimaryColor,
-                shape = RoundedCornerShape(12.dp)
-            )
             .combinedClickable(
                 onClick = {
                     val displayPreference = if (hasExternalDisplay) {
@@ -92,7 +76,7 @@ fun AppItem(
                 },
                 onLongClick = { showOptionsDialog = true }
             )
-            .padding(12.dp),
+            .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
@@ -102,20 +86,11 @@ fun AppItem(
                 .size(48.dp)
                 .clip(RoundedCornerShape(8.dp))
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = app.label,
-            color = Color.White,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            fontWeight = FontWeight.Medium
-        )
     }
 
     if (showOptionsDialog) {
+        val isAppHidden = appVisibilityManager.isAppHidden(pageIndex, app.packageName)
+
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -137,47 +112,19 @@ fun AppItem(
                     preference
                 )
             },
-            hasExternalDisplay = hasExternalDisplay
-        )
-    }
-}
-
-private fun launchApp(
-    context: Context,
-    packageName: String,
-    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
-) {
-    try {
-        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            when (displayPreference) {
-                DisplayPreference.PRIMARY_DISPLAY -> {
-                    val options = ActivityOptions.makeBasic()
-                    options.launchDisplayId = 0
-                    context.startActivity(intent, options.toBundle())
+            hasExternalDisplay = hasExternalDisplay,
+            isAppHidden = isAppHidden,
+            onToggleVisibility = {
+                scope.launch {
+                    if (isAppHidden) {
+                        appVisibilityManager.showApp(pageIndex, app.packageName)
+                    } else {
+                        appVisibilityManager.hideApp(pageIndex, app.packageName)
+                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
+                    }
                 }
-
-                DisplayPreference.CURRENT_DISPLAY -> {
-                    context.startActivity(intent)
-                }
+                showOptionsDialog = false
             }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}
-
-private fun openAppInfo(
-    context: Context,
-    packageName: String
-) {
-    try {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = "package:$packageName".toUri()
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        e.printStackTrace()
+        )
     }
 }

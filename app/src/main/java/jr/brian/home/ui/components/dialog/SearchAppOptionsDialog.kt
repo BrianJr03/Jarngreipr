@@ -18,12 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.OpenWith
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Monitor
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
@@ -55,14 +55,13 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun AppDrawerOptionsDialog(
+fun SearchAppOptionsDialog(
+    app: AppInfo,
+    currentDisplayPreference: DisplayPreference,
     onDismiss: () -> Unit,
-    onShowAppVisibility: () -> Unit,
-    isFreeModeEnabled: Boolean = false,
-    onToggleFreeMode: () -> Unit = {},
-    onResetPositions: () -> Unit = {},
-    isDragLocked: Boolean = false,
-    onToggleDragLock: () -> Unit = {}
+    onAppInfoClick: () -> Unit,
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
+    hasExternalDisplay: Boolean = false
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -91,69 +90,52 @@ fun AppDrawerOptionsDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.app_drawer_options_title),
+                    text = stringResource(R.string.app_options_menu_title),
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
 
+                Text(
+                    text = app.label,
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_app_visibility_title),
-                    description = stringResource(R.string.settings_app_visibility_description),
-                    icon = Icons.Default.Visibility,
+                OptionCard(
+                    title = stringResource(R.string.app_options_app_info),
+                    description = stringResource(R.string.app_info_message, app.label),
+                    icon = Icons.Default.Info,
                     onClick = {
                         onDismiss()
-                        onShowAppVisibility()
+                        onAppInfoClick()
                     }
                 )
 
-                DrawerOptionCard(
-                    title = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_layout_grid)
-                    } else {
-                        stringResource(R.string.app_drawer_layout_free)
-                    },
-                    description = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
-                    }else {
-                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
-                    },
-                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
-                    onClick = {
-                        onDismiss()
-                        onToggleFreeMode()
-                    }
-                )
-
-                if (isFreeModeEnabled) {
-                    DrawerOptionCard(
-                        title = if (isDragLocked) {
-                            stringResource(R.string.app_drawer_unlock_drag_mode)
-                        } else {
-                            stringResource(R.string.app_drawer_lock_drag_mode)
-                        },
-                        description = if (isDragLocked) {
-                            stringResource(R.string.app_drawer_unlock_drag_description)
-                        } else {
-                            stringResource(R.string.app_drawer_lock_drag_description)
-                        },
-                        icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                if (hasExternalDisplay) {
+                    OptionCard(
+                        title = stringResource(R.string.app_options_launch_external),
+                        description = "Launch this app on the external display",
+                        icon = Icons.Default.Monitor,
+                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                         onClick = {
+                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
                             onDismiss()
-                            onToggleDragLock()
                         }
                     )
 
-                    DrawerOptionCard(
-                        title = stringResource(R.string.app_drawer_reset_positions),
-                        description = stringResource(R.string.app_drawer_reset_positions_message),
-                        icon = Icons.Default.RestartAlt,
+                    OptionCard(
+                        title = stringResource(R.string.app_options_launch_primary),
+                        description = "Launch this app on the current display",
+                        icon = Icons.Default.Smartphone,
+                        isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
                         onClick = {
+                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                             onDismiss()
-                            onResetPositions()
                         }
                     )
                 }
@@ -165,11 +147,12 @@ fun AppDrawerOptionsDialog(
 }
 
 @Composable
-private fun DrawerOptionCard(
+private fun OptionCard(
     title: String,
     description: String,
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isSelected: Boolean = false
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -247,6 +230,16 @@ private fun DrawerOptionCard(
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
+                )
+            }
+
+            if (isSelected) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = stringResource(R.string.app_options_selected),
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

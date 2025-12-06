@@ -1,12 +1,12 @@
 package jr.brian.home.ui.screens
 
-import android.app.ActivityOptions
 import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,15 +17,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,60 +42,73 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
-import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppDrawerScreen(
+fun AppsTab(
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
-    onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = hiltViewModel(),
+    pageIndex: Int = 0,
     totalPages: Int = 1,
+    powerViewModel: PowerViewModel? = hiltViewModel(),
     pagerState: PagerState? = null,
-    keyboardVisible: Boolean = true,
+    onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    allApps: List<AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
-    var searchQuery by remember { mutableStateOf("") }
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
-    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled.collectAsStateWithLifecycle()
-    val isDragLocked by appPositionManager.isDragLocked.collectAsStateWithLifecycle()
+    val isFreeModeEnabled by appPositionManager.isFreeModeEnabled(pageIndex)
+        .collectAsStateWithLifecycle()
+    val isDragLocked by appPositionManager.isDragLocked(pageIndex).collectAsStateWithLifecycle()
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -107,21 +124,20 @@ fun AppDrawerScreen(
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
-    val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
-    var savedKeyboardIndex by remember { mutableIntStateOf(0) }
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
-            appPositionManager.getPosition(selectedApp!!.packageName)?.iconSize ?: 64f
+            appPositionManager.getPosition(pageIndex, selectedApp!!.packageName)?.iconSize ?: 64f
         } else {
             64f
         }
 
         val appVisibilityManager = jr.brian.home.ui.theme.managers.LocalAppVisibilityManager.current
-        val isAppHidden by remember(selectedApp) {
-            mutableStateOf(appVisibilityManager.isAppHidden(selectedApp!!.packageName))
+        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+        val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
+            appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
         }
 
         AppOptionsMenu(
@@ -144,8 +160,12 @@ fun AppDrawerScreen(
             currentIconSize = currentIconSize,
             onIconSizeChange = { newSize ->
                 if (isFreeModeEnabled) {
-                    val currentPos = appPositionManager.getPosition(selectedApp!!.packageName)
+                    val currentPos = appPositionManager.getPosition(
+                        pageIndex,
+                        selectedApp!!.packageName
+                    )
                     appPositionManager.savePosition(
+                        pageIndex,
                         jr.brian.home.model.AppPosition(
                             packageName = selectedApp!!.packageName,
                             x = currentPos?.x ?: 0f,
@@ -158,9 +178,9 @@ fun AppDrawerScreen(
             isAppHidden = isAppHidden,
             onToggleVisibility = {
                 if (isAppHidden) {
-                    appVisibilityManager.showApp(selectedApp!!.packageName)
+                    appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
                 } else {
-                    appVisibilityManager.hideApp(selectedApp!!.packageName)
+                    appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
                 }
             }
         )
@@ -173,19 +193,19 @@ fun AppDrawerScreen(
     }
 
     if (showAppDrawerOptionsDialog) {
-        AppDrawerOptionsDialog(
+        AppsTabOptionsDialog(
             onDismiss = { showAppDrawerOptionsDialog = false },
             onShowAppVisibility = { showAppVisibilityDialog = true },
             isFreeModeEnabled = isFreeModeEnabled,
             onToggleFreeMode = {
-                appPositionManager.setFreeMode(!isFreeModeEnabled)
+                appPositionManager.setFreeMode(pageIndex, !isFreeModeEnabled)
             },
             onResetPositions = {
-                appPositionManager.clearAllPositions()
+                appPositionManager.clearAllPositions(pageIndex)
             },
             isDragLocked = isDragLocked,
             onToggleDragLock = {
-                appPositionManager.setDragLock(!isDragLocked)
+                appPositionManager.setDragLock(pageIndex, !isDragLocked)
             }
         )
     }
@@ -193,7 +213,8 @@ fun AppDrawerScreen(
     if (showAppVisibilityDialog) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false }
+            onDismiss = { showAppVisibilityDialog = false },
+            pageIndex = pageIndex
         )
     }
 
@@ -225,17 +246,49 @@ fun AppDrawerScreen(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (apps.isEmpty()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (pagerState != null) {
+                    val settingsIconFocusRequester = remember { FocusRequester() }
+                    val menuIconFocusRequester = remember { FocusRequester() }
+                    val powerSettingsManager = LocalPowerSettingsManager.current
+                    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+
+                    ScreenHeaderRow(
+                        totalPages = totalPages,
+                        pagerState = pagerState,
+                        leadingIcon = Icons.Default.Settings,
+                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                        onLeadingIconClick = onSettingsClick,
+                        leadingIconFocusRequester = settingsIconFocusRequester,
+                        trailingIcon = Icons.Default.Menu,
+                        trailingIconContentDescription = null,
+                        onTrailingIconClick = { showAppDrawerOptionsDialog = true },
+                        trailingIconFocusRequester = menuIconFocusRequester,
+                        onNavigateToGrid = {},
+                        onNavigateFromGrid = {
+                            menuIconFocusRequester.requestFocus()
+                        },
+                        powerViewModel = powerViewModel,
+                        showPowerButton = isPowerButtonVisible,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                        onFolderClick = onShowBottomSheet,
+                        onDeletePage = onDeletePage,
+                        pageIndicatorBorderColor = pageIndicatorBorderColor,
+                        allApps = allApps,
+                        onNavigateToSearch = onNavigateToSearch
+                    )
+                }
+
+                EmptyAppsState(
+                    onAddClick = { showAppVisibilityDialog = true }
+                )
+            }
         } else {
             AppSelectionContent(
                 apps = apps,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
                 columns = gridSettingsManager.columnCount,
-                keyboardFocusRequesters = keyboardFocusRequesters,
                 appFocusRequesters = appFocusRequesters,
-                savedKeyboardIndex = savedKeyboardIndex,
-                savedAppIndex = savedAppIndex,
-                onKeyboardFocusChanged = { savedKeyboardIndex = it },
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppClick = { app ->
                     val displayPreference = if (hasExternalDisplay) {
@@ -253,7 +306,6 @@ fun AppDrawerScreen(
                     selectedApp = app
                     showAppOptionsMenu = true
                 },
-                keyboardVisible = keyboardVisible,
                 onSettingsClick = onSettingsClick,
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
@@ -263,7 +315,11 @@ fun AppDrawerScreen(
                 isFreeModeEnabled = isFreeModeEnabled,
                 appPositionManager = appPositionManager,
                 onDeletePage = onDeletePage,
-                isDragLocked = isDragLocked
+                isDragLocked = isDragLocked,
+                pageIndex = pageIndex,
+                pageIndicatorBorderColor = pageIndicatorBorderColor,
+                allApps = allApps,
+                onNavigateToSearch = onNavigateToSearch
             )
         }
     }
@@ -273,19 +329,12 @@ fun AppDrawerScreen(
 @Composable
 private fun AppSelectionContent(
     apps: List<AppInfo>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     columns: Int = 4,
-    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    savedKeyboardIndex: Int,
-    savedAppIndex: Int,
-    onKeyboardFocusChanged: (Int) -> Unit,
     onAppFocusChanged: (Int) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
-    keyboardVisible: Boolean = true,
     onSettingsClick: () -> Unit = {},
     powerViewModel: PowerViewModel? = null,
     totalPages: Int = 1,
@@ -295,29 +344,20 @@ private fun AppSelectionContent(
     isFreeModeEnabled: Boolean = false,
     appPositionManager: jr.brian.home.data.AppPositionManager? = null,
     onDeletePage: (Int) -> Unit = {},
-    isDragLocked: Boolean = false
+    isDragLocked: Boolean = false,
+    pageIndex: Int = 0,
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    allApps: List<AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
 
-    var keyboardCoordinates by remember {
-        mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(
-            null
-        )
+    val filteredApps = remember(apps, maxAppsPerPage) {
+        apps.sortedBy { it.label.uppercase() }
     }
-
-    val filteredApps =
-        remember(apps, searchQuery) {
-            if (searchQuery.isBlank()) {
-                apps.sortedBy { it.label.uppercase() }
-            } else {
-                apps
-                    .filter { it.label.contains(searchQuery, ignoreCase = true) }
-                    .sortedBy { it.label.uppercase() }
-            }
-        }
 
     Column(modifier = modifier.fillMaxSize()) {
         if (pagerState != null) {
@@ -329,11 +369,11 @@ private fun AppSelectionContent(
             ScreenHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState,
-                leadingIcon = if (keyboardVisible) null else Icons.Default.Settings,
+                leadingIcon = Icons.Default.Settings,
                 leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
                 onLeadingIconClick = onSettingsClick,
                 leadingIconFocusRequester = settingsIconFocusRequester,
-                trailingIcon = if (keyboardVisible) null else Icons.Default.Menu,
+                trailingIcon = Icons.Default.Menu,
                 trailingIconContentDescription = null,
                 onTrailingIconClick = onMenuClick,
                 trailingIconFocusRequester = menuIconFocusRequester,
@@ -346,14 +386,15 @@ private fun AppSelectionContent(
                 powerViewModel = powerViewModel,
                 showPowerButton = isPowerButtonVisible,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                keyboardCoordinates = if (keyboardVisible) keyboardCoordinates else null,
-                keyboardContent = null,
                 onFolderClick = onShowBottomSheet,
-                onDeletePage = onDeletePage
+                onDeletePage = onDeletePage,
+                pageIndicatorBorderColor = pageIndicatorBorderColor,
+                allApps = allApps,
+                onNavigateToSearch = onNavigateToSearch
             )
         }
 
-        if (isFreeModeEnabled && !keyboardVisible && appPositionManager != null) {
+        if (isFreeModeEnabled && appPositionManager != null) {
             FreePositionedAppsLayout(
                 apps = filteredApps,
                 appPositionManager = appPositionManager,
@@ -361,58 +402,33 @@ private fun AppSelectionContent(
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
                 isDragLocked = isDragLocked,
+                pageIndex = pageIndex,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
             )
         } else {
-            Row(modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()) {
-                if (keyboardVisible) {
-                    Box(
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .onGloballyPositioned { coordinates ->
-                                keyboardCoordinates = coordinates
-                            }
-                    ) {
-                        OnScreenKeyboard(
-                            searchQuery = searchQuery,
-                            onQueryChange = onSearchQueryChange,
-                            keyboardFocusRequesters = keyboardFocusRequesters,
-                            onFocusChanged = onKeyboardFocusChanged,
-                            onNavigateRight = {
-                                appFocusRequesters[savedAppIndex]?.requestFocus()
-                            },
-                        )
-                    }
-                }
-
-                AppGrid(
-                    apps = filteredApps,
-                    columns = columns,
-                    maxAppsPerPage = maxAppsPerPage,
-                    modifier = Modifier.weight(if (keyboardVisible) 0.5f else 1f),
-                    appFocusRequesters = appFocusRequesters,
-                    onFocusChanged = onAppFocusChanged,
-                    onNavigateLeft = {
-                        if (keyboardVisible) {
-                            keyboardFocusRequesters[savedKeyboardIndex]?.requestFocus()
-                        }
-                    },
-                    onAppClick = onAppClick,
-                    onAppLongClick = onAppLongClick,
-                    keyboardVisible = keyboardVisible
-                )
-            }
+            AppGridLayout(
+                apps = filteredApps,
+                columns = columns,
+                maxAppsPerPage = maxAppsPerPage,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize(),
+                appFocusRequesters = appFocusRequesters,
+                onFocusChanged = onAppFocusChanged,
+                onNavigateLeft = {},
+                onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
+                keyboardVisible = false
+            )
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppGrid(
+private fun AppGridLayout(
     columns: Int,
     maxAppsPerPage: Int,
     apps: List<AppInfo>,
@@ -504,42 +520,107 @@ private fun AppGrid(
     }
 }
 
-private fun launchApp(
-    context: Context,
-    packageName: String,
-    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
+@Composable
+private fun EmptyAppsState(
+    onAddClick: () -> Unit
 ) {
-    try {
-        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            when (displayPreference) {
-                DisplayPreference.PRIMARY_DISPLAY -> {
-                    val options = ActivityOptions.makeBasic()
-                    options.launchDisplayId = 0
-                    context.startActivity(intent, options.toBundle())
-                }
+    var isFocused by remember { mutableStateOf(false) }
 
-                DisplayPreference.CURRENT_DISPLAY -> {
-                    context.startActivity(intent)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_title),
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_description),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val cardGradient = Brush.linearGradient(
+                colors = if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.9f),
+                        ThemeSecondaryColor.copy(alpha = 0.9f)
+                    )
+                } else {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.4f),
+                        ThemeSecondaryColor.copy(alpha = 0.3f)
+                    )
+                }
+            )
+
+            Box(
+                modifier = Modifier
+                    .scale(animatedFocusedScale(isFocused))
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .background(
+                        brush = cardGradient,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = if (isFocused) 3.dp else 2.dp,
+                        brush = if (isFocused) {
+                            borderBrush(
+                                isFocused = true,
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.8f),
+                                    ThemeSecondaryColor.copy(alpha = 0.6f)
+                                )
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.6f),
+                                    ThemeSecondaryColor.copy(alpha = 0.4f)
+                                )
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onAddClick() }
+                    .focusable()
+                    .padding(horizontal = 48.dp, vertical = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Text(
+                        text = stringResource(R.string.apps_tab_add_button),
+                        color = Color.White,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}
-
-private fun openAppInfo(
-    context: Context,
-    packageName: String
-) {
-    try {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = "package:$packageName".toUri()
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        e.printStackTrace()
     }
 }

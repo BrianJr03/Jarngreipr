@@ -39,9 +39,13 @@ import jr.brian.home.ui.components.onboarding.HeaderOnboardingOverlay
 import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
+import jr.brian.home.data.PageType
+import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.viewmodels.PowerViewModel
 
 @Composable
@@ -66,6 +70,9 @@ fun ScreenHeaderRow(
     keyboardContent: @Composable (() -> Unit)? = null,
     onFolderClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
+    allApps: List<AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
     val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
@@ -79,6 +86,8 @@ fun ScreenHeaderRow(
     val homeTabManager = LocalHomeTabManager.current
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
+    val pageTypeManager = LocalPageTypeManager.current
+    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
     val onboardingManager = LocalOnboardingManager.current
     val hasCompletedOnboarding by onboardingManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
@@ -153,6 +162,7 @@ fun ScreenHeaderRow(
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
+            allApps = allApps,
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
@@ -160,9 +170,12 @@ fun ScreenHeaderRow(
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
-            onAddPage = {
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
                 pageCountManager.addPage()
-            }
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
         )
     }
 
@@ -247,6 +260,7 @@ fun ScreenHeaderRow(
                     homeTabIndex = currentHomeTabIndex,
                     totalPages = totalPages,
                     pagerState = pagerState,
+                    borderColor = pageIndicatorBorderColor,
                 )
             }
 
@@ -257,7 +271,7 @@ fun ScreenHeaderRow(
                     isFocused = isPowerFocused,
                     modifier = Modifier.handleFullNavigation(
                         onNavigateLeft = {
-                        if (showFolder) {
+                            if (showFolder) {
                                 folderIconFocusRequester.requestFocus()
                             } else {
                                 onNavigateFromGrid()
@@ -356,6 +370,7 @@ fun ScreenHeaderRow(
                         homeTabIndex = currentHomeTabIndex,
                         totalPages = totalPages,
                         pagerState = pagerState,
+                        borderColor = pageIndicatorBorderColor,
                     )
                 },
                 trailingIconContent = {
