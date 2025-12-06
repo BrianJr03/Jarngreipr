@@ -69,7 +69,9 @@ fun ScreenHeaderRow(
     keyboardContent: @Composable (() -> Unit)? = null,
     onFolderClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemePrimaryColor
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
+    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
     val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
@@ -159,6 +161,7 @@ fun ScreenHeaderRow(
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
+            allApps = allApps,
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
@@ -170,7 +173,8 @@ fun ScreenHeaderRow(
                 pageTypeManager.addPage(pageType)
                 pageCountManager.addPage()
             },
-            pageTypes = pageTypes
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
         )
     }
 

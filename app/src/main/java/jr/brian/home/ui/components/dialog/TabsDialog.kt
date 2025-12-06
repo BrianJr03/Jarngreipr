@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -47,16 +47,16 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
+import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun HomeTabSelectionDialog(
+fun TabsDialog(
     currentTabIndex: Int,
     totalPages: Int,
     modifier: Modifier = Modifier,
@@ -64,7 +64,8 @@ fun HomeTabSelectionDialog(
     onDismiss: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onAddPage: (PageType) -> Unit,
-    pageTypes: List<PageType> = emptyList()
+    pageTypes: List<PageType> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
     var showPageTypeSelection by remember { mutableStateOf(false) }
@@ -128,13 +129,35 @@ fun HomeTabSelectionDialog(
                 modifier = Modifier.padding(28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.home_tab_dialog_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_tab_dialog_title),
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
+                        onClick = {
+                            onNavigateToSearch()
+                            onDismiss()
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.home_tab_search_apps),
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
 
                 repeat(totalPages) { index ->
                     val pageType =
@@ -356,4 +379,31 @@ private fun AddPageButton(
             )
         }
     }
+}
+
+// Backward compatibility wrapper
+@Composable
+fun HomeTabSelectionDialog(
+    currentTabIndex: Int,
+    totalPages: Int,
+    allApps: List<AppInfo> = emptyList(),
+    modifier: Modifier = Modifier,
+    onTabSelected: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    onAddPage: (PageType) -> Unit,
+    pageTypes: List<PageType> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
+) {
+    TabsDialog(
+        currentTabIndex = currentTabIndex,
+        totalPages = totalPages,
+        modifier = modifier,
+        onTabSelected = onTabSelected,
+        onDismiss = onDismiss,
+        onDeletePage = onDeletePage,
+        onAddPage = onAddPage,
+        pageTypes = pageTypes,
+        onNavigateToSearch = onNavigateToSearch
+    )
 }
