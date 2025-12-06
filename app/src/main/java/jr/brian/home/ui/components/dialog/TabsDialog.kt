@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
@@ -146,19 +147,36 @@ fun TabsDialog(
                         fontWeight = FontWeight.Bold
                     )
 
-                    IconButton(
-                        onClick = {
-                            onNavigateToSearch()
-                            onDismiss()
-                        },
-                        modifier = Modifier.size(48.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(R.string.home_tab_search_apps),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        IconButton(
+                            onClick = {
+                                onNavigateToSearch()
+                                onDismiss()
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.home_tab_search_apps),
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.dialog_cancel),
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
 
@@ -170,12 +188,23 @@ fun TabsDialog(
                         PageType.APPS_AND_WIDGETS_TAB -> stringResource(R.string.home_tab_page_type_apps_and_widgets_tab)
                     }
 
+                    // When there's only one page, it's always the home tab (index 0)
+                    // Otherwise, show home badge for the current tab
+                    val isHomeTab = if (totalPages == 1) {
+                        index == 0
+                    } else {
+                        currentTabIndex == index
+                    }
+
                     TabOption(
                         text = stringResource(R.string.home_tab_page_type, index + 1, pageLabel),
-                        isSelected = if (totalPages == 1) true else currentTabIndex == index,
+                        isSelected = isHomeTab,
                         showDelete = totalPages > 1,
                         onClick = {
-                            onTabSelected(index)
+                            // Only set home tab if user explicitly clicks and it's different from current
+                            if (index != currentTabIndex) {
+                                onTabSelected(index)
+                            }
                             onDismiss()
                         },
                         onDelete = {
@@ -411,7 +440,10 @@ private fun AddPageButton(
     }
 }
 
-// Backward compatibility wrapper
+/**
+ * Backward compatibility wrapper for HomeTabSelectionDialog.
+ * Forwards all calls to TabsDialog with the same behavior.
+ */
 @Composable
 fun HomeTabSelectionDialog(
     currentTabIndex: Int,
