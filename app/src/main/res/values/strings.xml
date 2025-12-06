@@ -22,8 +22,8 @@
     <string name="wallpaper">"Wallpaper"</string>
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
-    <string name="add_app_message">Add this app to your home page?</string>
-    <string name="app_info_message">Open app info for %1$s?</string>
+    <string name="add_app_message">Add this app to your home page</string>
+    <string name="app_info_message">Open app info for %1$s</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
@@ -245,8 +245,8 @@
     <string name="home_tab_page_type_apps_tab">Apps Tab</string>
     <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
     <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
-    <string name="home_tab_page_type_apps_tab_description">Grid or free layout of apps</string>
-    <string name="home_tab_page_type_apps_and_widgets_tab_description">Widgets and selected apps</string>
+    <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
+    <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
