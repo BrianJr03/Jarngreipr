@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -109,20 +111,40 @@ fun AppVisibilityDialog(
                 .padding(24.dp)
         ) {
             Column {
-                Text(
-                    text = stringResource(R.string.dialog_app_visibility_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.dialog_app_visibility_title),
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "$visibleCount apps selected",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
-                )
+                        Text(
+                            text = "$visibleCount apps selected",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.dialog_app_visibility_close),
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -185,10 +207,6 @@ fun AppVisibilityDialog(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                CloseButton(onClick = onDismiss)
             }
         }
     }
@@ -327,49 +345,3 @@ private fun ActionButton(
     }
 }
 
-@Composable
-private fun CloseButton(onClick: () -> Unit) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = gradient,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = if (isFocused) 2.dp else 0.dp,
-                color = Color.White.copy(alpha = 0.8f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .focusable()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = stringResource(R.string.dialog_app_visibility_close),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold
-        )
-    }
-}

@@ -51,6 +51,7 @@ import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.screens.BlackScreen
+import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
@@ -65,6 +66,7 @@ import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.Routes
@@ -268,12 +270,29 @@ private fun MainContent() {
                         allAppsUnfiltered = homeUiState.allAppsUnfiltered,
                         onNavigateToFAQ = {
                             navController.navigate(Routes.FAQ)
+                        },
+                        onNavigateToCustomTheme = {
+                            navController.navigate(Routes.CUSTOM_THEME)
                         }
                     )
                 }
 
                 composable(Routes.FAQ) {
                     FAQScreen()
+                }
+
+                composable(Routes.CUSTOM_THEME) {
+                    val themeManager = LocalThemeManager.current
+                    CustomThemeScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onThemeCreated = { customTheme ->
+                            themeManager.addCustomTheme(customTheme)
+                            themeManager.setTheme(customTheme)
+                            navController.popBackStack()
+                        }
+                    )
                 }
             }
         }

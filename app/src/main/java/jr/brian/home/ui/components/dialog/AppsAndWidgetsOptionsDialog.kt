@@ -59,7 +59,8 @@ fun AppsAndWidgetsOptionsDialog(
     onAddApp: () -> Unit,
     onSwapSections: () -> Unit,
     onToggleEditMode: () -> Unit,
-    isEditModeActive: Boolean = false
+    isEditModeActive: Boolean = false,
+    isEmpty: Boolean = false
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -98,16 +99,6 @@ fun AppsAndWidgetsOptionsDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 AddOptionCard(
-                    title = stringResource(R.string.settings_app_visibility_title),
-                    description = stringResource(R.string.settings_app_visibility_description),
-                    icon = Icons.Default.Visibility,
-                    onClick = {
-                        onDismiss()
-                        onAddApp()
-                    }
-                )
-
-                AddOptionCard(
                     title = stringResource(R.string.widget_page_add_widget),
                     description = stringResource(R.string.widget_page_add_widget_description),
                     icon = Icons.Default.Add,
@@ -117,30 +108,40 @@ fun AppsAndWidgetsOptionsDialog(
                     }
                 )
 
+                if (!isEmpty) {
+                    AddOptionCard(
+                        title = stringResource(
+                            if (isEditModeActive) R.string.widget_page_edit_mode_exit
+                            else R.string.widget_page_edit_mode
+                        ),
+                        description = stringResource(R.string.widget_page_edit_mode_description),
+                        icon = Icons.Default.Edit,
+                        onClick = {
+                            onDismiss()
+                            onToggleEditMode()
+                        }
+                    )
+                    AddOptionCard(
+                        title = stringResource(R.string.widget_page_swap_sections),
+                        description = stringResource(R.string.widget_page_swap_sections_description),
+                        icon = Icons.Default.SwapVert,
+                        onClick = {
+                            onDismiss()
+                            onSwapSections()
+                        }
+                    )
+                }
+
+                // App Visibility last
                 AddOptionCard(
-                    title = stringResource(
-                        if (isEditModeActive) R.string.widget_page_edit_mode_exit
-                        else R.string.widget_page_edit_mode
-                    ),
-                    description = stringResource(R.string.widget_page_edit_mode_description),
-                    icon = Icons.Default.Edit,
+                    title = stringResource(R.string.settings_app_visibility_title),
+                    description = stringResource(R.string.settings_app_visibility_description),
+                    icon = Icons.Default.Visibility,
                     onClick = {
                         onDismiss()
-                        onToggleEditMode()
+                        onAddApp()
                     }
                 )
-
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_swap_sections),
-                    description = stringResource(R.string.widget_page_swap_sections_description),
-                    icon = Icons.Default.SwapVert,
-                    onClick = {
-                        onDismiss()
-                        onSwapSections()
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 CancelButton(onClick = onDismiss)
             }

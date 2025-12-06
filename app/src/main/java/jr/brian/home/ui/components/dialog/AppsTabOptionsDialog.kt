@@ -148,6 +148,7 @@ fun AppsTabOptionsDialog(
                     }
                 )
 
+                // App Visibility always last
                 DrawerOptionCard(
                     title = stringResource(R.string.settings_app_visibility_title),
                     description = stringResource(R.string.settings_app_visibility_description),
