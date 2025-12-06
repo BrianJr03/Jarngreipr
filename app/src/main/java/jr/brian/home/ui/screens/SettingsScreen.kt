@@ -138,12 +138,6 @@ private fun SettingsContent(
             )
         }
 
-//        item {
-//            NewAppsVisibleToggleItem(
-//                isExpanded = expandedItem == "new_apps_visible"
-//            )
-//        }
-
         item {
             GridColumnSelectorItem(
                 isExpanded = expandedItem == "grid",

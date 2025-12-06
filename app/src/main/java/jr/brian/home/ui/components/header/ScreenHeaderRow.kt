@@ -40,6 +40,7 @@ import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.data.PageType
+import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
@@ -70,7 +71,7 @@ fun ScreenHeaderRow(
     onFolderClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    allApps: List<jr.brian.home.model.AppInfo> = emptyList(),
+    allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
