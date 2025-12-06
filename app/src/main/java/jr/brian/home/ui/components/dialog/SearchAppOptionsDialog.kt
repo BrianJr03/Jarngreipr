@@ -111,8 +111,8 @@ fun SearchAppOptionsDialog(
                     description = stringResource(R.string.app_info_message, app.label),
                     icon = Icons.Default.Info,
                     onClick = {
-                        onDismiss()
                         onAppInfoClick()
+                        onDismiss()
                     }
                 )
 
