@@ -41,7 +41,7 @@ import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.OnScreenKeyboard
-import jr.brian.home.ui.components.dialog.AppOptionsDialog
+import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.util.launchApp
@@ -123,7 +123,7 @@ private fun AppGrid(
     }
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+        columns = GridCells.Fixed(3),
         modifier = modifier
             .background(OledBackgroundColor)
             .padding(horizontal = 8.dp),
@@ -154,16 +154,14 @@ private fun AppGrid(
     }
 
     if (selectedApp != null) {
-        AppOptionsDialog(
+        SearchAppOptionsDialog(
             app = selectedApp!!,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                 selectedApp!!.packageName
             ),
             onDismiss = { selectedApp = null },
-            onRemove = { selectedApp = null },
             onAppInfoClick = {
                 openAppInfo(context, selectedApp!!.packageName)
-                selectedApp = null
             },
             onDisplayPreferenceChange = { preference ->
                 appDisplayPreferenceManager.setAppDisplayPreference(
@@ -171,10 +169,7 @@ private fun AppGrid(
                     preference
                 )
             },
-            hasExternalDisplay = hasExternalDisplay,
-            showResizeOption = false,
-            isAppHidden = false,
-            onToggleVisibility = {}
+            hasExternalDisplay = hasExternalDisplay
         )
     }
 }

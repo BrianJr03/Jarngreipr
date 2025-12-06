@@ -15,12 +15,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -222,82 +225,109 @@ private fun TabOption(
         }
     )
 
-    val borderColor = when {
-        isSelected -> ThemeAccentColor
-        isFocused -> Color.White.copy(alpha = 0.3f)
-        else -> Color.White.copy(alpha = 0.1f)
-    }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = cardGradient,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .border(
-                width = if (isSelected) 3.dp else if (isFocused) 3.dp else 2.dp,
-                brush = if (isSelected) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemeAccentColor,
-                            ThemeAccentColor
-                        )
-                    )
-                } else if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clip(RoundedCornerShape(16.dp))
-            .focusable(),
-        verticalAlignment = Alignment.CenterVertically
+    Box(
+        contentAlignment = Alignment.TopStart,
+        modifier = Modifier.padding(bottom = 8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { onClick() }
-                .padding(20.dp),
-            contentAlignment = Alignment.CenterStart
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .scale(animatedFocusedScale(isFocused))
+                .onFocusChanged { isFocused = it.isFocused }
+                .background(
+                    brush = cardGradient,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .border(
+                    width = if (isFocused) 3.dp else 2.dp,
+                    brush = if (isFocused) {
+                        borderBrush(
+                            isFocused = true,
+                            colors = listOf(
+                                ThemePrimaryColor.copy(alpha = 0.8f),
+                                ThemeSecondaryColor.copy(alpha = 0.6f)
+                            )
+                        )
+                    } else {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                ThemePrimaryColor.copy(alpha = 0.6f),
+                                ThemeSecondaryColor.copy(alpha = 0.4f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .clip(RoundedCornerShape(16.dp))
+                .focusable(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = text,
-                color = Color.White,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        if (showDelete) {
             Box(
                 modifier = Modifier
-                    .padding(end = 4.dp)
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { onDelete() }
-                    .background(Color.Red.copy(alpha = 0.2f)),
+                    .weight(1f)
+                    .clickable { onClick() }
+                    .padding(20.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = text,
+                    color = Color.White,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (showDelete) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onDelete() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.home_tab_delete_page_title),
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+
+        // Home badge overlapping the top-left corner
+        if (isSelected) {
+            val offset = Pair(
+                first = if (isFocused) (-18).dp else (-10).dp,
+                second = if (isFocused) (-12).dp else (-8).dp
+            )
+            Box(
+                modifier = Modifier
+                    .offset(x = offset.first, y = offset.second)
+                    .scale(animatedFocusedScale(isFocused))
+                    .size(28.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                ThemeAccentColor,
+                                ThemeAccentColor.copy(alpha = 0.8f)
+                            )
+                        ),
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = Color.White,
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.home_tab_delete_page_title),
-                    tint = Color(0xFFFF5252),
-                    modifier = Modifier.size(24.dp)
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Home Tab",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
