@@ -1,11 +1,12 @@
 package jr.brian.home.ui.screens
 
-import android.app.ActivityOptions
 import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,11 +17,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -39,17 +42,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
@@ -58,31 +70,17 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
-import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -97,7 +95,9 @@ fun AppsTab(
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    allApps: List<AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -274,7 +274,9 @@ fun AppsTab(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                         onFolderClick = onShowBottomSheet,
                         onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor
+                        pageIndicatorBorderColor = pageIndicatorBorderColor,
+                        allApps = allApps,
+                        onNavigateToSearch = onNavigateToSearch
                     )
                 }
 
@@ -315,7 +317,9 @@ fun AppsTab(
                 onDeletePage = onDeletePage,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
-                pageIndicatorBorderColor = pageIndicatorBorderColor
+                pageIndicatorBorderColor = pageIndicatorBorderColor,
+                allApps = allApps,
+                onNavigateToSearch = onNavigateToSearch
             )
         }
     }
@@ -342,7 +346,9 @@ private fun AppSelectionContent(
     onDeletePage: (Int) -> Unit = {},
     isDragLocked: Boolean = false,
     pageIndex: Int = 0,
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor
+    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    allApps: List<AppInfo> = emptyList(),
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -382,7 +388,9 @@ private fun AppSelectionContent(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 onFolderClick = onShowBottomSheet,
                 onDeletePage = onDeletePage,
-                pageIndicatorBorderColor = pageIndicatorBorderColor
+                pageIndicatorBorderColor = pageIndicatorBorderColor,
+                allApps = allApps,
+                onNavigateToSearch = onNavigateToSearch
             )
         }
 
@@ -509,46 +517,6 @@ private fun AppGridLayout(
         item {
             Spacer(modifier = Modifier.height(80.dp))
         }
-    }
-}
-
-private fun launchApp(
-    context: Context,
-    packageName: String,
-    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
-) {
-    try {
-        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            when (displayPreference) {
-                DisplayPreference.PRIMARY_DISPLAY -> {
-                    val options = ActivityOptions.makeBasic()
-                    options.launchDisplayId = 0
-                    context.startActivity(intent, options.toBundle())
-                }
-
-                DisplayPreference.CURRENT_DISPLAY -> {
-                    context.startActivity(intent)
-                }
-            }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}
-
-private fun openAppInfo(
-    context: Context,
-    packageName: String
-) {
-    try {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = "package:$packageName".toUri()
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        e.printStackTrace()
     }
 }
 

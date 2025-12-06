@@ -50,6 +50,7 @@ import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
+import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
@@ -241,6 +242,9 @@ private fun MainContent() {
                         initialPage = currentHomeTabIndex,
                         onShowBottomSheet = {
                             showBottomSheet = true
+                        },
+                        onNavigateToSearch = {
+                            navController.navigate(Routes.APP_SEARCH)
                         }
                     )
 
@@ -292,6 +296,12 @@ private fun MainContent() {
                             themeManager.setTheme(customTheme)
                             navController.popBackStack()
                         }
+                    )
+                }
+
+                composable(Routes.APP_SEARCH) {
+                    AppSearchScreen(
+                        allApps = homeUiState.allAppsUnfiltered
                     )
                 }
             }

@@ -233,7 +233,7 @@
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 
     <!-- Home Tab Selection -->
-    <string name="home_tab_dialog_title">Select Home Tab</string>
+    <string name="home_tab_dialog_title">Tabs</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
     <string name="home_tab_add_page">Add Page</string>
@@ -247,6 +247,11 @@
     <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
     <string name="home_tab_page_type_apps_tab_description">Grid or free layout of apps</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Widgets and selected apps</string>
+    <string name="home_tab_search_apps">Search Apps</string>
+
+    <!-- All Apps Screen -->
+    <string name="all_apps_screen_title">All Apps</string>
+    <string name="all_apps_screen_search_hint">Search apps…</string>
 
     <!-- Onboarding -->
     <string name="onboarding_settings_title">Settings</string>

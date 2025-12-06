@@ -45,7 +45,8 @@ fun LauncherPagerScreen(
     powerViewModel: PowerViewModel = hiltViewModel(),
     initialPage: Int = 0,
     onSettingsClick: () -> Unit,
-    onShowBottomSheet: () -> Unit = {}
+    onShowBottomSheet: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -164,7 +165,9 @@ fun LauncherPagerScreen(
                                         )
                                     }
                                 },
-                                pageIndicatorBorderColor = ThemePrimaryColor
+                                pageIndicatorBorderColor = ThemePrimaryColor,
+                                allApps = homeUiState.allAppsUnfiltered,
+                                onNavigateToSearch = onNavigateToSearch
                             )
                         }
 
@@ -203,7 +206,8 @@ fun LauncherPagerScreen(
                                             )
                                         }
                                     },
-                                    pageIndicatorBorderColor = ThemeSecondaryColor
+                                    pageIndicatorBorderColor = ThemeSecondaryColor,
+                                    onNavigateToSearch = onNavigateToSearch
                                 )
                             }
                         }

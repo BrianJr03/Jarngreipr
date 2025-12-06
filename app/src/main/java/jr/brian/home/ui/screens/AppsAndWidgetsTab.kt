@@ -99,7 +99,8 @@ fun AppsAndWidgetsTab(
     onSettingsClick: () -> Unit = {},
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemeSecondaryColor
+    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -234,7 +235,9 @@ fun AppsAndWidgetsTab(
                         onFolderClick = onShowBottomSheet,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                         onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor
+                        pageIndicatorBorderColor = pageIndicatorBorderColor,
+                        allApps = allApps,
+                        onNavigateToSearch = onNavigateToSearch
                     )
                 }
 
