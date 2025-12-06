@@ -195,9 +195,6 @@ fun ThemeSelectorItem(
                             themeManager.setTheme(theme)
                             onExpandChanged(false)
                         },
-                        onLongClick = if (theme.isCustom) {
-                            { themeManager.deleteCustomTheme(theme) }
-                        } else null,
                         focusRequester = selectedThemeFocusRequesters[theme],
                     )
                 }
@@ -219,7 +216,6 @@ private fun ThemeCard(
     theme: ColorTheme,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }

@@ -23,6 +23,8 @@ this launcher helps you grip control of your Thor device's bottom screen.
 
 - **Custom Wallpapers** - Set static images from your gallery
 
+- **Icon Pack Support** - Apply third-party icon packs to customize app icons
+
 ### 🎮 **Gamepad-Optimized UI**
 
 - **On-Screen Keyboard** - Built-in keyboard to prevent system keyboard from overlapping apps

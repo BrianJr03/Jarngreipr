@@ -35,6 +35,7 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
+import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -45,10 +46,12 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.OverlayInfoUtil
+import jr.brian.home.viewmodels.HomeViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun SettingsScreen(
+    homeViewModel: HomeViewModel,
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {},
     onNavigateToCustomTheme: () -> Unit = {}
@@ -66,6 +69,7 @@ fun SettingsScreen(
             Column {
                 VersionInfo()
                 SettingsContent(
+                    homeViewModel = homeViewModel,
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ,
                     onNavigateToCustomTheme = onNavigateToCustomTheme
@@ -77,6 +81,7 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
+    homeViewModel: HomeViewModel,
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit = {},
     onNavigateToCustomTheme: () -> Unit = {}
@@ -129,6 +134,18 @@ private fun SettingsContent(
             WallpaperSelectorItem(
                 isExpanded = expandedItem == "wallpaper",
                 onExpandChanged = { expandedItem = if (it) "wallpaper" else null }
+            )
+        }
+
+        item {
+            IconPackSelectorItem(
+                iconPackManager = homeViewModel.iconPackManager,
+                isExpanded = expandedItem == "icon_pack",
+                onExpandChanged = { expandedItem = if (it) "icon_pack" else null },
+                onIconPackChanged = {
+                    // Reload apps with new icon pack
+                    homeViewModel.loadAllApps(context)
+                }
             )
         }
 

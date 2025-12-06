@@ -35,6 +35,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -45,6 +46,7 @@ import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.IconPackManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
@@ -109,6 +111,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var pageTypeManager: PageTypeManager
 
+    @Inject
+    lateinit var iconPackManager: IconPackManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -157,9 +162,9 @@ private fun MainContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = rememberNavController()
-    val homeViewModel: HomeViewModel = viewModel()
-    val widgetViewModel: WidgetViewModel = viewModel()
-    val powerViewModel: PowerViewModel = viewModel()
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val widgetViewModel: WidgetViewModel = hiltViewModel()
+    val powerViewModel: PowerViewModel = hiltViewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val homeTabManager = LocalHomeTabManager.current
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -183,6 +188,10 @@ private fun MainContent() {
     }
 
     LaunchedEffect(Unit) {
+        // Load selected icon pack first
+        val selectedIconPack = homeViewModel.iconPackManager.getSelectedIconPack()
+        homeViewModel.iconPackManager.loadIconPack(selectedIconPack)
+
         homeViewModel.loadAllApps(context)
         widgetViewModel.initializeWidgetHost(context)
     }
@@ -267,6 +276,7 @@ private fun MainContent() {
 
                 composable(Routes.SETTINGS) {
                     SettingsScreen(
+                        homeViewModel = homeViewModel,
                         allAppsUnfiltered = homeUiState.allAppsUnfiltered,
                         onNavigateToFAQ = {
                             navController.navigate(Routes.FAQ)
