@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,15 +15,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.edit
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.ui.extensions.handleShoulderButtons
-import jr.brian.home.data.HomeTabManager
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -34,8 +33,6 @@ import jr.brian.home.viewmodels.HomeViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun LauncherPagerScreen(
@@ -48,7 +45,6 @@ fun LauncherPagerScreen(
     onShowBottomSheet: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
@@ -64,8 +60,6 @@ fun LauncherPagerScreen(
     var showResizeScreen by remember { mutableStateOf(false) }
     var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
     var resizePageIndex by remember { mutableStateOf(0) }
-
-
 
     val totalPages = pageTypes.size
 
