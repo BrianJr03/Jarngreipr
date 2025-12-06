@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.IconButton
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,10 +62,21 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 @Composable
 fun AppVisibilityDialog(
     apps: List<AppInfo>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    pageIndex: Int = 0,
+    isWidgetTabMode: Boolean = false,
+    visibleAppsOverride: Set<String>? = null,
+    onToggleAppOverride: ((String) -> Unit)? = null,
+    onShowAllOverride: (() -> Unit)? = null,
+    onHideAllOverride: (() -> Unit)? = null
 ) {
     val appVisibilityManager = LocalAppVisibilityManager.current
-    val hiddenApps by appVisibilityManager.hiddenApps.collectAsStateWithLifecycle()
+    val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+    val hiddenApps = if (isWidgetTabMode && visibleAppsOverride != null) {
+        apps.map { it.packageName }.filter { it !in visibleAppsOverride }.toSet()
+    } else {
+        hiddenAppsByPage[pageIndex] ?: emptySet()
+    }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredApps = remember(apps, searchQuery) {
@@ -75,8 +88,8 @@ fun AppVisibilityDialog(
         }
     }
 
-    val hiddenCount = remember(apps, hiddenApps) {
-        apps.count { it.packageName in hiddenApps }
+    val visibleCount = remember(apps, hiddenApps) {
+        apps.count { it.packageName !in hiddenApps }
     }
 
     Dialog(
@@ -98,20 +111,40 @@ fun AppVisibilityDialog(
                 .padding(24.dp)
         ) {
             Column {
-                Text(
-                    text = stringResource(R.string.dialog_app_visibility_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.dialog_app_visibility_title),
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = stringResource(R.string.dialog_app_visibility_hidden_count, hiddenCount),
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
-                )
+                        Text(
+                            text = "$visibleCount apps selected",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.dialog_app_visibility_close),
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -122,14 +155,26 @@ fun AppVisibilityDialog(
                     ActionButton(
                         text = stringResource(R.string.dialog_app_visibility_show_all),
                         onClick = {
-                            appVisibilityManager.showAllApps(apps.map { it.packageName })
+                            if (onShowAllOverride != null) {
+                                onShowAllOverride()
+                            } else {
+                                appVisibilityManager.showAllApps(
+                                    pageIndex,
+                                    apps.map { it.packageName })
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     )
                     ActionButton(
                         text = stringResource(R.string.dialog_app_visibility_hide_all),
                         onClick = {
-                            appVisibilityManager.hideAllApps(apps.map { it.packageName })
+                            if (onHideAllOverride != null) {
+                                onHideAllOverride()
+                            } else {
+                                appVisibilityManager.hideAllApps(
+                                    pageIndex,
+                                    apps.map { it.packageName })
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -149,19 +194,19 @@ fun AppVisibilityDialog(
                             app = app,
                             isVisible = app.packageName !in hiddenApps,
                             onToggle = {
-                                if (app.packageName in hiddenApps) {
-                                    appVisibilityManager.showApp(app.packageName)
+                                if (onToggleAppOverride != null) {
+                                    onToggleAppOverride(app.packageName)
                                 } else {
-                                    appVisibilityManager.hideApp(app.packageName)
+                                    if (app.packageName in hiddenApps) {
+                                        appVisibilityManager.showApp(pageIndex, app.packageName)
+                                    } else {
+                                        appVisibilityManager.hideApp(pageIndex, app.packageName)
+                                    }
                                 }
                             }
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                CloseButton(onClick = onDismiss)
             }
         }
     }
@@ -300,49 +345,3 @@ private fun ActionButton(
     }
 }
 
-@Composable
-private fun CloseButton(onClick: () -> Unit) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = gradient,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = if (isFocused) 2.dp else 0.dp,
-                color = Color.White.copy(alpha = 0.8f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .focusable()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = stringResource(R.string.dialog_app_visibility_close),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold
-        )
-    }
-}

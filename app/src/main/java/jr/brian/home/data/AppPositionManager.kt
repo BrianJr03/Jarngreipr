@@ -13,46 +13,51 @@ class AppPositionManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val _positions: SnapshotStateMap<String, AppPosition> = mutableStateMapOf()
-    val positions: Map<String, AppPosition>
-        get() = _positions
+    private val _positionsByPage: SnapshotStateMap<Int, SnapshotStateMap<String, AppPosition>> =
+        mutableStateMapOf()
 
-    private val _isFreeModeEnabled = MutableStateFlow(loadFreeMode())
-    val isFreeModeEnabled: StateFlow<Boolean> = _isFreeModeEnabled.asStateFlow()
+    private val _isFreeModeByPage: MutableStateFlow<Map<Int, Boolean>> =
+        MutableStateFlow(emptyMap())
 
-    private val _isDragLocked = MutableStateFlow(loadDragLock())
-    val isDragLocked: StateFlow<Boolean> = _isDragLocked.asStateFlow()
+    private val _isDragLockedByPage: MutableStateFlow<Map<Int, Boolean>> =
+        MutableStateFlow(emptyMap())
 
     init {
-        loadPositions()
+        loadAllPageData()
     }
 
-    private fun loadFreeMode(): Boolean {
-        return prefs.getBoolean(KEY_FREE_MODE, false)
+    fun getPositions(pageIndex: Int): Map<String, AppPosition> {
+        return _positionsByPage[pageIndex] ?: emptyMap()
     }
 
-    fun setFreeMode(enabled: Boolean) {
-        _isFreeModeEnabled.value = enabled
-        prefs.edit().apply {
-            putBoolean(KEY_FREE_MODE, enabled)
-            apply()
+    fun isFreeModeEnabled(pageIndex: Int): StateFlow<Boolean> {
+        return MutableStateFlow(_isFreeModeByPage.value[pageIndex] ?: false).asStateFlow()
+    }
+
+    fun isDragLocked(pageIndex: Int): StateFlow<Boolean> {
+        return MutableStateFlow(_isDragLockedByPage.value[pageIndex] ?: false).asStateFlow()
+    }
+
+    private fun loadAllPageData() {
+        val maxPages = 10
+        for (pageIndex in 0 until maxPages) {
+            loadPageData(pageIndex)
         }
     }
 
-    private fun loadDragLock(): Boolean {
-        return prefs.getBoolean(KEY_DRAG_LOCKED, false)
-    }
+    private fun loadPageData(pageIndex: Int) {
+        val freeModeKey = "${KEY_FREE_MODE}_$pageIndex"
+        val dragLockedKey = "${KEY_DRAG_LOCKED}_$pageIndex"
+        val positionsKey = "${KEY_POSITIONS}_$pageIndex"
 
-    fun setDragLock(locked: Boolean) {
-        _isDragLocked.value = locked
-        prefs.edit().apply {
-            putBoolean(KEY_DRAG_LOCKED, locked)
-            apply()
-        }
-    }
+        val isFreeMode = prefs.getBoolean(freeModeKey, false)
+        val isDragLocked = prefs.getBoolean(dragLockedKey, false)
 
-    private fun loadPositions() {
-        val positionsJson = prefs.getString(KEY_POSITIONS, null) ?: return
+        _isFreeModeByPage.value = _isFreeModeByPage.value + (pageIndex to isFreeMode)
+        _isDragLockedByPage.value = _isDragLockedByPage.value + (pageIndex to isDragLocked)
+
+        val positionsJson = prefs.getString(positionsKey, null) ?: return
+        val pagePositions = mutableStateMapOf<String, AppPosition>()
 
         try {
             positionsJson.split(SEPARATOR_APPS).forEach { appData ->
@@ -67,40 +72,61 @@ class AppPositionManager(context: Context) {
                         } else {
                             64f
                         }
-                        _positions[packageName] = AppPosition(packageName, x, y, iconSize)
+                        pagePositions[packageName] = AppPosition(packageName, x, y, iconSize)
                     }
                 }
+            }
+            if (pagePositions.isNotEmpty()) {
+                _positionsByPage[pageIndex] = pagePositions
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    fun savePosition(position: AppPosition) {
-        _positions[position.packageName] = position
-        savePositions()
+    fun setFreeMode(pageIndex: Int, enabled: Boolean) {
+        _isFreeModeByPage.value = _isFreeModeByPage.value + (pageIndex to enabled)
+        prefs.edit().apply {
+            putBoolean("${KEY_FREE_MODE}_$pageIndex", enabled)
+            apply()
+        }
     }
 
-    fun removePosition(packageName: String) {
-        _positions.remove(packageName)
-        savePositions()
+    fun setDragLock(pageIndex: Int, locked: Boolean) {
+        _isDragLockedByPage.value = _isDragLockedByPage.value + (pageIndex to locked)
+        prefs.edit().apply {
+            putBoolean("${KEY_DRAG_LOCKED}_$pageIndex", locked)
+            apply()
+        }
     }
 
-    fun getPosition(packageName: String): AppPosition? {
-        return _positions[packageName]
+    fun savePosition(pageIndex: Int, position: AppPosition) {
+        val pagePositions = _positionsByPage.getOrPut(pageIndex) { mutableStateMapOf() }
+        pagePositions[position.packageName] = position
+        savePositionsForPage(pageIndex)
     }
 
-    fun clearAllPositions() {
-        _positions.clear()
-        savePositions()
+    fun removePosition(pageIndex: Int, packageName: String) {
+        _positionsByPage[pageIndex]?.remove(packageName)
+        savePositionsForPage(pageIndex)
     }
 
-    private fun savePositions() {
-        val positionsJson = _positions.values.joinToString(SEPARATOR_APPS) { position ->
+    fun getPosition(pageIndex: Int, packageName: String): AppPosition? {
+        return _positionsByPage[pageIndex]?.get(packageName)
+    }
+
+    fun clearAllPositions(pageIndex: Int) {
+        _positionsByPage[pageIndex]?.clear()
+        savePositionsForPage(pageIndex)
+    }
+
+    private fun savePositionsForPage(pageIndex: Int) {
+        val positions = _positionsByPage[pageIndex] ?: return
+        val positionsJson = positions.values.joinToString(SEPARATOR_APPS) { position ->
             "${position.packageName}$SEPARATOR_COORDS${position.x}$SEPARATOR_COORDS${position.y}$SEPARATOR_COORDS${position.iconSize}"
         }
         prefs.edit().apply {
-            putString(KEY_POSITIONS, positionsJson)
+            putString("${KEY_POSITIONS}_$pageIndex", positionsJson)
             apply()
         }
     }

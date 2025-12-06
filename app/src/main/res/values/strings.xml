@@ -22,8 +22,8 @@
     <string name="wallpaper">"Wallpaper"</string>
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
-    <string name="add_app_message">Add this app to your home page?</string>
-    <string name="app_info_message">Open app info for %1$s?</string>
+    <string name="add_app_message">Add this app to your home page</string>
+    <string name="app_info_message">Open app info for %1$s</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
@@ -49,6 +49,19 @@
     <string name="theme_red_blue">Red &amp; Blue</string>
     <string name="theme_magenta_lime">Magenta &amp; Lime</string>
     <string name="theme_light_gray">Light Gray</string>
+    <string name="theme_custom">Custom</string>
+
+    <!-- Custom Theme Dialog -->
+    <string name="custom_theme_dialog_title">Create Custom Theme</string>
+    <string name="custom_theme_solid_color">Solid Color</string>
+    <string name="custom_theme_preview">Preview</string>
+    <string name="custom_theme_color">Color</string>
+    <string name="custom_theme_primary_color">Primary Color</string>
+    <string name="custom_theme_secondary_color">Secondary Color</string>
+    <string name="custom_theme_create">Create</string>
+    <string name="custom_theme_name">Custom Theme</string>
+    <string name="custom_theme_add">Create Custom</string>
+    <string name="custom_theme_delete">Delete</string>
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
@@ -220,7 +233,7 @@
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 
     <!-- Home Tab Selection -->
-    <string name="home_tab_dialog_title">Select Home Tab</string>
+    <string name="home_tab_dialog_title">Tabs</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
     <string name="home_tab_add_page">Add Page</string>
@@ -228,6 +241,17 @@
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
     <string name="home_tab_delete_confirm">Delete</string>
     <string name="home_tab_delete_cancel">Cancel</string>
+    <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
+    <string name="home_tab_page_type_apps_tab">Apps Tab</string>
+    <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
+    <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
+    <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
+    <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
+    <string name="home_tab_search_apps">Search Apps</string>
+
+    <!-- All Apps Screen -->
+    <string name="all_apps_screen_title">All Apps</string>
+    <string name="all_apps_screen_search_hint">Search apps…</string>
 
     <!-- Onboarding -->
     <string name="onboarding_settings_title">Settings</string>
@@ -242,12 +266,12 @@
     <string name="onboarding_finish">Got It</string>
 
     <!-- App Drawer Options -->
-    <string name="app_drawer_options_title">Options</string>
+    <string name="app_drawer_options_title">Apps Tab Options</string>
 
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
     <string name="widget_page_section_widgets">Widgets</string>
-    <string name="widget_page_add_options_title">Options</string>
+    <string name="app_widget_options_title">Apps + Widgets Tab Options</string>
     <string name="widget_page_add_widget">Add Widget</string>
     <string name="widget_page_add_widget_description">Add a system widget</string>
     <string name="widget_page_add_app">Add App</string>
@@ -314,4 +338,12 @@
     <string name="app_drawer_unlock_drag_mode">Unlock Positions</string>
     <string name="app_drawer_lock_drag_description">Prevent app icons from being dragged</string>
     <string name="app_drawer_unlock_drag_description">Allow app icons to be dragged</string>
+
+    <!-- Empty State Messages -->
+    <string name="apps_tab_no_apps_title">No Apps</string>
+    <string name="apps_tab_no_apps_description">No apps are currently visible on this tab. Tap the button below to add apps.</string>
+    <string name="apps_tab_add_button">Add Apps</string>
+    <string name="widgets_tab_no_content_title">No Apps or Widgets</string>
+    <string name="widgets_tab_no_content_description">This tab is empty. Tap the button below to add apps or widgets.</string>
+    <string name="widgets_tab_add_button">Add</string>
 </resources>

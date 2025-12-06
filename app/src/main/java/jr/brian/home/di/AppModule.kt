@@ -14,6 +14,7 @@ import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
+import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -109,5 +110,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): PageCountManager {
         return PageCountManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun providePageTypeManager(
+        @ApplicationContext context: Context
+    ): PageTypeManager {
+        return PageTypeManager(context)
     }
 }
