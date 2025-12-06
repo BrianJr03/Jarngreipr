@@ -12,6 +12,7 @@ import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.JoystickThemeManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
@@ -118,5 +119,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): PageTypeManager {
         return PageTypeManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideJoystickThemeManager(
+        @ApplicationContext context: Context
+    ): JoystickThemeManager {
+        return JoystickThemeManager(context)
     }
 }

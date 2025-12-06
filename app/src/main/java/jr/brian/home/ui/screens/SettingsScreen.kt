@@ -35,6 +35,7 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
+import jr.brian.home.ui.components.settings.JoystickThemeSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -129,6 +130,13 @@ private fun SettingsContent(
             WallpaperSelectorItem(
                 isExpanded = expandedItem == "wallpaper",
                 onExpandChanged = { expandedItem = if (it) "wallpaper" else null }
+            )
+        }
+
+        item {
+            JoystickThemeSelectorItem(
+                isExpanded = expandedItem == "joystick",
+                onExpandChanged = { expandedItem = if (it) "joystick" else null }
             )
         }
 

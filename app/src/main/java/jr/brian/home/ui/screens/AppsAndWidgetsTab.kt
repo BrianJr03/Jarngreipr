@@ -74,6 +74,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -182,6 +183,7 @@ fun AppsAndWidgetsTab(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(OledBackgroundColor)
             .then(
                 if (showWidgetPicker || showAddOptionsDialog || showAppSelectionDialog || swapModeEnabled) {
                     Modifier.blockAllNavigation()

@@ -348,4 +348,15 @@
     <string name="widgets_tab_no_content_title">No Apps or Widgets</string>
     <string name="widgets_tab_no_content_description">This tab is empty. Tap the button below to add apps or widgets.</string>
     <string name="widgets_tab_add_button">Add</string>
+
+    <!-- Joystick Theme Settings -->
+    <string name="settings_joystick_theme_title">Apply Theme To Joystick</string>
+    <string name="settings_joystick_theme_description">Sync controller LED colors with theme</string>
+    <string name="settings_joystick_theme_icon_description">Joystick theme icon</string>
+    <string name="settings_joystick_flashing_title">Flashing Effect</string>
+    <string name="settings_joystick_flashing_description">Enable LED pulsing effect</string>
+    <string name="settings_joystick_speed_label">Flash Speed</string>
+    <string name="settings_joystick_speed_slow">Slow</string>
+    <string name="settings_joystick_speed_medium">Medium</string>
+    <string name="settings_joystick_speed_fast">Fast</string>
 </resources>

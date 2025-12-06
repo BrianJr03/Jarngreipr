@@ -70,6 +70,7 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -227,6 +228,7 @@ fun AppsTab(
         modifier =
             Modifier
                 .fillMaxSize()
+                .background(OledBackgroundColor)
                 .systemBarsPadding()
                 .pointerInput(Unit) {
                     detectTapGestures(

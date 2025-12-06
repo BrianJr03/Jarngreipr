@@ -45,6 +45,7 @@ import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.JoystickThemeManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
@@ -63,6 +64,7 @@ import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalJoystickThemeManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -110,6 +112,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var pageTypeManager: PageTypeManager
 
+    @Inject
+    lateinit var joystickThemeManager: JoystickThemeManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -144,11 +149,24 @@ class MainActivity : ComponentActivity() {
                     LocalOnboardingManager provides onboardingManager,
                     LocalAppPositionManager provides appPositionManager,
                     LocalPageCountManager provides pageCountManager,
-                    LocalPageTypeManager provides pageTypeManager
+                    LocalPageTypeManager provides pageTypeManager,
+                    LocalJoystickThemeManager provides joystickThemeManager
                 ) {
                     MainContent()
                 }
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        joystickThemeManager.cleanup()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isFinishing) {
+            joystickThemeManager.cleanup()
         }
     }
 }
