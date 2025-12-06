@@ -33,7 +33,9 @@
     <string name="app_options_app_info">Open App Info</string>
     <string name="app_options_resize">Resize Icon</string>
     <string name="app_options_launch_external">Launch on External Display</string>
+    <string name="app_options_launch_external_descr">Bottom Display</string>
     <string name="app_options_launch_primary">Launch on Primary Display</string>
+    <string name="app_options_launch_primary_descr">Top Display</string>
     <string name="app_options_selected">Selected</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>

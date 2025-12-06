@@ -118,8 +118,8 @@ fun SearchAppOptionsDialog(
 
                 if (hasExternalDisplay) {
                     OptionCard(
-                        title = stringResource(R.string.app_options_launch_external),
-                        description = "Launch this app on the external display",
+                        title = stringResource(R.string.app_options_launch_primary),
+                        description = stringResource(R.string.app_options_launch_primary_descr),
                         icon = Icons.Default.Monitor,
                         isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                         onClick = {
@@ -129,8 +129,8 @@ fun SearchAppOptionsDialog(
                     )
 
                     OptionCard(
-                        title = stringResource(R.string.app_options_launch_primary),
-                        description = "Launch this app on the current display",
+                        title = stringResource(R.string.app_options_launch_external),
+                        description = stringResource(R.string.app_options_launch_external_descr),
                         icon = Icons.Default.Smartphone,
                         isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
                         onClick = {
