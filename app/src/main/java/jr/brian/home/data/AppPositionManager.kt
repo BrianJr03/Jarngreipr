@@ -16,26 +16,24 @@ class AppPositionManager(context: Context) {
     private val _positionsByPage: SnapshotStateMap<Int, SnapshotStateMap<String, AppPosition>> =
         mutableStateMapOf()
 
-    private val _isFreeModeByPage: MutableStateFlow<Map<Int, Boolean>> =
-        MutableStateFlow(emptyMap())
+    private val _isFreeModeByPage = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    val isFreeModeByPage: StateFlow<Map<Int, Boolean>> = _isFreeModeByPage.asStateFlow()
 
-    private val _isDragLockedByPage: MutableStateFlow<Map<Int, Boolean>> =
-        MutableStateFlow(emptyMap())
+    private val _isDragLockedByPage = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    val isDragLockedByPage: StateFlow<Map<Int, Boolean>> = _isDragLockedByPage.asStateFlow()
 
     init {
         loadAllPageData()
+        repeat(3) {
+            setDragLock(
+                it,
+                true
+            )
+        }
     }
 
     fun getPositions(pageIndex: Int): Map<String, AppPosition> {
         return _positionsByPage[pageIndex] ?: emptyMap()
-    }
-
-    fun isFreeModeEnabled(pageIndex: Int): StateFlow<Boolean> {
-        return MutableStateFlow(_isFreeModeByPage.value[pageIndex] ?: false).asStateFlow()
-    }
-
-    fun isDragLocked(pageIndex: Int): StateFlow<Boolean> {
-        return MutableStateFlow(_isDragLockedByPage.value[pageIndex] ?: false).asStateFlow()
     }
 
     private fun loadAllPageData() {
@@ -51,10 +49,10 @@ class AppPositionManager(context: Context) {
         val positionsKey = "${KEY_POSITIONS}_$pageIndex"
 
         val isFreeMode = prefs.getBoolean(freeModeKey, false)
-        val isDragLocked = prefs.getBoolean(dragLockedKey, false)
+        val isDragLocked = prefs.getBoolean(dragLockedKey, true)
 
-        _isFreeModeByPage.value = _isFreeModeByPage.value + (pageIndex to isFreeMode)
-        _isDragLockedByPage.value = _isDragLockedByPage.value + (pageIndex to isDragLocked)
+        _isFreeModeByPage.value += (pageIndex to isFreeMode)
+        _isDragLockedByPage.value += (pageIndex to isDragLocked)
 
         val positionsJson = prefs.getString(positionsKey, null) ?: return
         val pagePositions = mutableStateMapOf<String, AppPosition>()
@@ -85,7 +83,7 @@ class AppPositionManager(context: Context) {
     }
 
     fun setFreeMode(pageIndex: Int, enabled: Boolean) {
-        _isFreeModeByPage.value = _isFreeModeByPage.value + (pageIndex to enabled)
+        _isFreeModeByPage.value += (pageIndex to enabled)
         prefs.edit().apply {
             putBoolean("${KEY_FREE_MODE}_$pageIndex", enabled)
             apply()
@@ -93,7 +91,7 @@ class AppPositionManager(context: Context) {
     }
 
     fun setDragLock(pageIndex: Int, locked: Boolean) {
-        _isDragLockedByPage.value = _isDragLockedByPage.value + (pageIndex to locked)
+        _isDragLockedByPage.value += (pageIndex to locked)
         prefs.edit().apply {
             putBoolean("${KEY_DRAG_LOCKED}_$pageIndex", locked)
             apply()
@@ -103,11 +101,6 @@ class AppPositionManager(context: Context) {
     fun savePosition(pageIndex: Int, position: AppPosition) {
         val pagePositions = _positionsByPage.getOrPut(pageIndex) { mutableStateMapOf() }
         pagePositions[position.packageName] = position
-        savePositionsForPage(pageIndex)
-    }
-
-    fun removePosition(pageIndex: Int, packageName: String) {
-        _positionsByPage[pageIndex]?.remove(packageName)
         savePositionsForPage(pageIndex)
     }
 
