@@ -5,6 +5,9 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -134,6 +137,7 @@ fun AppsAndWidgetsTab(
 
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
 
     val settingsIconFocusRequester = remember { FocusRequester() }
 
@@ -221,30 +225,36 @@ fun AppsAndWidgetsTab(
                         viewModel.toggleEditMode(pageIndex)
                     }
                 } else if (pagerState != null) {
-                    ScreenHeaderRow(
-                        totalPages = totalPages,
-                        pagerState = pagerState,
-                        powerViewModel = powerViewModel,
-                        showPowerButton = isPowerButtonVisible,
-                        leadingIcon = Icons.Default.Settings,
-                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                        onLeadingIconClick = onSettingsClick,
-                        leadingIconFocusRequester = settingsIconFocusRequester,
-                        trailingIcon = Icons.Default.Menu,
-                        trailingIconContentDescription = null,
-                        onTrailingIconClick = { showAddOptionsDialog = true },
-                        trailingIconFocusRequester = addWidgetIconFocusRequester,
-                        onNavigateToGrid = {},
-                        onNavigateFromGrid = {
-                            addWidgetIconFocusRequester.requestFocus()
-                        },
-                        onFolderClick = onShowBottomSheet,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                        onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor,
-                        allApps = allApps,
-                        onNavigateToSearch = onNavigateToSearch
-                    )
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = slideInVertically(initialOffsetY = { -it }),
+                        exit = slideOutVertically(targetOffsetY = { -it })
+                    ) {
+                        ScreenHeaderRow(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            powerViewModel = powerViewModel,
+                            showPowerButton = isPowerButtonVisible,
+                            leadingIcon = Icons.Default.Settings,
+                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                            onLeadingIconClick = onSettingsClick,
+                            leadingIconFocusRequester = settingsIconFocusRequester,
+                            trailingIcon = Icons.Default.Menu,
+                            trailingIconContentDescription = null,
+                            onTrailingIconClick = { showAddOptionsDialog = true },
+                            trailingIconFocusRequester = addWidgetIconFocusRequester,
+                            onNavigateToGrid = {},
+                            onNavigateFromGrid = {
+                                addWidgetIconFocusRequester.requestFocus()
+                            },
+                            onFolderClick = onShowBottomSheet,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            onDeletePage = onDeletePage,
+                            pageIndicatorBorderColor = pageIndicatorBorderColor,
+                            allApps = allApps,
+                            onNavigateToSearch = onNavigateToSearch
+                        )
+                    }
                 }
 
                 val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
