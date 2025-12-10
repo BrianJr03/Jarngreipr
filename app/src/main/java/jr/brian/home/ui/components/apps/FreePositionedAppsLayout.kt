@@ -1,6 +1,7 @@
 package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,29 +53,26 @@ fun FreePositionedAppsLayout(
     isDragLocked: Boolean = false
 ) {
     val density = LocalDensity.current
-    var containerSize by remember { mutableStateOf(IntSize.Zero) }
-    var focusedIndex by remember { mutableIntStateOf(0) }
-    val focusRequesters = remember(apps.size) {
+    var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
+    var focusedIndex by remember(pageIndex) { mutableIntStateOf(0) }
+    val focusRequesters = remember(pageIndex, apps.size) {
         List(apps.size) { FocusRequester() }
     }
-    val scrollState = rememberScrollState()
+    // Each page should have its own scroll state
+    val scrollState = remember(pageIndex) { ScrollState(0) }
 
-    val appPositions = remember(apps.size) {
-        mutableMapOf<Int, Pair<Float, Float>>()
-    }
-
-    val appSizes = remember(apps.size) {
-        mutableMapOf<Int, Float>()
-    }
-
+    // Get positions directly without remember to allow reactivity to position changes
+    // The SnapshotStateMap in AppPositionManager will trigger recomposition when needed
     val positions = appPositionManager.getPositions(pageIndex)
 
-    var draggingAppIndex by remember { mutableIntStateOf(-1) }
-    var alignmentState by remember { mutableStateOf(AlignmentState()) }
+    var draggingAppIndex by remember(pageIndex) { mutableIntStateOf(-1) }
+    var alignmentState by remember(pageIndex) { mutableStateOf(AlignmentState()) }
     val snapThreshold = with(density) { 12.dp.toPx() } // Distance to trigger snapping
 
-    var maxY by remember { mutableStateOf(0f) }
-    var maxX by remember { mutableStateOf(0f) }
+    // Calculate maxY and maxX on each composition based on current positions
+    // This ensures they're always accurate and reset when positions are cleared
+    var maxY = 0f
+    var maxX = 0f
 
     LaunchedEffect(Unit) {
         if (focusRequesters.isNotEmpty()) {
@@ -93,15 +91,31 @@ fun FreePositionedAppsLayout(
     ) {
         val extraItemHeight = 0f
 
+        // Pre-calculate maxY to determine content height
+        // This is done before rendering so scroll area is correct
+        var calculatedMaxY = 0f
+        apps.forEachIndexed { index, app ->
+            val position = positions[app.packageName]
+            val defaultY = with(density) {
+                val columns = 4
+                val itemHeight = 100.dp.toPx()
+                val spacing = 24.dp.toPx()
+                val row = index / columns
+                val topPadding = 8.dp.toPx()
+                (topPadding + row * (itemHeight + spacing))
+            }
+            val iconSize = position?.iconSize ?: 64f
+            val iconSizePx = with(density) { iconSize.dp.toPx() }
+            val y = position?.y ?: defaultY
+            val bottom = y + iconSizePx
+            if (bottom > calculatedMaxY) calculatedMaxY = bottom
+        }
+
         val contentHeight = with(density) {
-            val maxIconSize = apps.mapNotNull { app ->
-                positions[app.packageName]?.iconSize
-            }.maxOrNull() ?: 64f
-            val maxIconSizePx = maxIconSize.dp.toPx()
-            val bottomPadding = 8.dp.toPx() // Extra padding for safety
+            val bottomPadding = 8.dp.toPx()
             max(
                 containerSize.height.toFloat(),
-                maxY + maxIconSizePx + extraItemHeight + bottomPadding
+                calculatedMaxY + bottomPadding
             )
         }
 
@@ -232,6 +246,8 @@ fun FreePositionedAppsLayout(
 
             apps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
+
+                // Calculate default positions based on grid
                 val defaultX = with(density) {
                     val columns = 4
                     val itemWidth = 80.dp.toPx()
@@ -256,27 +272,15 @@ fun FreePositionedAppsLayout(
                 val startPaddingPx = with(density) { 16.dp.toPx() }
                 val bottomPaddingPx = with(density) { 8.dp.toPx() }
 
-                // Constrain initial positions to ensure they're fully on screen
-                val initialX = (position?.x ?: defaultX).coerceIn(
-                    minimumValue = 0f,
-                    maximumValue = (containerSize.width - iconSizePx - startPaddingPx).coerceAtLeast(
-                        0f
-                    )
-                )
-                val initialY = (position?.y ?: defaultY).coerceIn(
-                    minimumValue = 0f,
-                    maximumValue = if (containerSize.height > 0) {
-                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(0f)
-                    } else {
-                        position?.y ?: defaultY
-                    }
-                )
+                // Use saved position if available, otherwise use default
+                val initialX = position?.x ?: defaultX
+                val initialY = position?.y ?: defaultY
 
-                appPositions[index] = initialX to initialY
-                appSizes[index] = currentIconSize
-
-                if (initialY > maxY) maxY = initialY
-                if (initialX > maxX) maxX = initialX
+                // Track max positions for content height calculation
+                val currentBottom = initialY + iconSizePx
+                val currentRight = initialX + iconSizePx
+                if (currentBottom > maxY) maxY = currentBottom
+                if (currentRight > maxX) maxX = currentRight
 
                 FreePositionedAppItem(
                     app = app,
@@ -284,19 +288,12 @@ fun FreePositionedAppsLayout(
                     focusRequester = focusRequesters[index],
                     offsetX = initialX,
                     offsetY = initialY,
-                    iconSize = position?.iconSize ?: 64f,
+                    iconSize = currentIconSize,
                     isFocusable = false,
                     onOffsetChanged = { x, y ->
                         val currentIconSize =
                             appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
                                 ?: 64f
-
-                        // Calculate the full item height (just the icon since focus is disabled)
-                        val iconSizePx = with(density) { currentIconSize.dp.toPx() }
-                        val fullItemHeight = iconSizePx + extraItemHeight
-                        val startPaddingPx = with(density) { 16.dp.toPx() }
-                        val bottomPaddingPx =
-                            with(density) { 8.dp.toPx() } // Ensure space at bottom
 
                         // Calculate alignment guides and potential snap positions
                         val alignment = calculateAlignmentGuides(
@@ -307,8 +304,7 @@ fun FreePositionedAppsLayout(
                             containerSize = containerSize,
                             snapThreshold = snapThreshold,
                             apps = apps,
-                            appPositions = appPositions,
-                            appSizes = appSizes,
+                            positions = positions,
                             density = density
                         )
                         alignmentState = alignment
@@ -317,29 +313,12 @@ fun FreePositionedAppsLayout(
                         val finalX = alignment.snappedX ?: x
                         val finalY = alignment.snappedY ?: y
 
-                        // Constrain x and y to keep the entire item fully on screen
-                        val constrainedX = finalX.coerceIn(
-                            minimumValue = 0f,
-                            maximumValue = (containerSize.width - iconSizePx - startPaddingPx).coerceAtLeast(
-                                0f
-                            )
-                        )
-                        val constrainedY = finalY.coerceIn(
-                            minimumValue = 0f,
-                            maximumValue = (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(
-                                0f)
-                        )
-
-                        appPositions[index] = constrainedX to constrainedY
-                        if (constrainedY > maxY) maxY = constrainedY
-                        if (constrainedX > maxX) maxX = constrainedX
-
                         appPositionManager.savePosition(
                             pageIndex,
                             AppPosition(
                                 packageName = app.packageName,
-                                x = constrainedX,
-                                y = constrainedY,
+                                x = finalX,
+                                y = finalY,
                                 iconSize = currentIconSize
                             )
                         )
@@ -371,8 +350,7 @@ private fun calculateAlignmentGuides(
     apps: List<AppInfo>,
     snapThreshold: Float,
     containerSize: IntSize,
-    appSizes: Map<Int, Float>,
-    appPositions: Map<Int, Pair<Float, Float>>
+    positions: Map<String, AppPosition>
 ): AlignmentState {
     if (draggingIndex < 0 || containerSize.width == 0) {
         return AlignmentState()
@@ -408,105 +386,120 @@ private fun calculateAlignmentGuides(
     }
 
     // Check alignment with other apps and calculate distances
-    apps.forEachIndexed { index, _ ->
+    apps.forEachIndexed { index, otherApp ->
         if (index != draggingIndex) {
-            val otherPos = appPositions[index]
-            val otherIconSize = appSizes[index] ?: 64f
-            if (otherPos != null) {
-                val (otherX, otherY) = otherPos
-                val otherIconSizePx = with(density) { otherIconSize.dp.toPx() }
-                val otherCenterX = otherX + otherIconSizePx / 2
-                val otherCenterY = otherY + otherIconSizePx / 2
-                val otherRight = otherX + otherIconSizePx
-                val otherBottom = otherY + otherIconSizePx
+            val otherPosition = positions[otherApp.packageName]
 
-                // Vertical alignment checks (center, left, right)
-                if (abs(draggingCenterX - otherCenterX) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.VERTICAL, otherCenterX))
-                    if (snappedX == null) snappedX = otherCenterX - iconSizePx / 2
-                } else if (abs(dragX - otherX) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
-                    if (snappedX == null) snappedX = otherX
-                } else if (abs(draggingRight - otherRight) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
-                    if (snappedX == null) snappedX = otherRight - iconSizePx
-                }
+            // Calculate default position for apps without saved positions
+            val otherX = otherPosition?.x ?: with(density) {
+                val columns = 4
+                val itemWidth = 80.dp.toPx()
+                val spacing = 32.dp.toPx()
+                val column = index % columns
+                val startPadding = 8.dp.toPx()
+                (startPadding + column * (itemWidth + spacing))
+            }
+            val otherY = otherPosition?.y ?: with(density) {
+                val columns = 4
+                val itemHeight = 100.dp.toPx()
+                val spacing = 24.dp.toPx()
+                val row = index / columns
+                val topPadding = 8.dp.toPx()
+                (topPadding + row * (itemHeight + spacing))
+            }
+            val otherIconSize = otherPosition?.iconSize ?: 64f
+            val otherIconSizePx = with(density) { otherIconSize.dp.toPx() }
+            val otherCenterX = otherX + otherIconSizePx / 2
+            val otherCenterY = otherY + otherIconSizePx / 2
+            val otherRight = otherX + otherIconSizePx
+            val otherBottom = otherY + otherIconSizePx
 
-                // Horizontal alignment checks (center, top, bottom)
-                if (abs(draggingCenterY - otherCenterY) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherCenterY))
-                    if (snappedY == null) snappedY = otherCenterY - iconSizePx / 2
-                } else if (abs(dragY - otherY) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
-                    if (snappedY == null) snappedY = otherY
-                } else if (abs(draggingBottom - otherBottom) < snapThreshold) {
-                    guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
-                    if (snappedY == null) snappedY = otherBottom - iconSizePx
-                }
+            // Vertical alignment checks (center, left, right)
+            if (abs(draggingCenterX - otherCenterX) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.VERTICAL, otherCenterX))
+                if (snappedX == null) snappedX = otherCenterX - iconSizePx / 2
+            } else if (abs(dragX - otherX) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
+                if (snappedX == null) snappedX = otherX
+            } else if (abs(draggingRight - otherRight) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
+                if (snappedX == null) snappedX = otherRight - iconSizePx
+            }
 
-                // Calculate distances to nearby apps
-                // Horizontal distance (left/right)
-                val horizontalDistance = if (draggingRight < otherX) {
-                    // Dragging app is to the left
-                    otherX - draggingRight
-                } else if (dragX > otherRight) {
-                    // Dragging app is to the right
-                    dragX - otherRight
-                } else {
-                    null // Apps overlap horizontally
-                }
+            // Horizontal alignment checks (center, top, bottom)
+            if (abs(draggingCenterY - otherCenterY) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherCenterY))
+                if (snappedY == null) snappedY = otherCenterY - iconSizePx / 2
+            } else if (abs(dragY - otherY) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
+                if (snappedY == null) snappedY = otherY
+            } else if (abs(draggingBottom - otherBottom) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
+                if (snappedY == null) snappedY = otherBottom - iconSizePx
+            }
 
-                // Vertical distance (top/bottom)
-                val verticalDistance = if (draggingBottom < otherY) {
-                    // Dragging app is above
-                    otherY - draggingBottom
-                } else if (dragY > otherBottom) {
-                    // Dragging app is below
-                    dragY - otherBottom
-                } else {
-                    null // Apps overlap vertically
-                }
+            // Calculate distances to nearby apps
+            // Horizontal distance (left/right)
+            val horizontalDistance = if (draggingRight < otherX) {
+                // Dragging app is to the left
+                otherX - draggingRight
+            } else if (dragX > otherRight) {
+                // Dragging app is to the right
+                dragX - otherRight
+            } else {
+                null // Apps overlap horizontally
+            }
 
-                // Add horizontal distance measurement if within threshold and apps are roughly aligned vertically
-                if (horizontalDistance != null && horizontalDistance > 0 && horizontalDistance < distanceThreshold) {
-                    val verticalOverlap = min(draggingBottom, otherBottom) - max(dragY, otherY)
-                    if (verticalOverlap > 0) {
-                        val measurementY = max(dragY, otherY) + verticalOverlap / 2
-                        val startX = if (draggingRight < otherX) draggingRight else dragX
-                        val endX = if (draggingRight < otherX) otherX else otherRight
+            // Vertical distance (top/bottom)
+            val verticalDistance = if (draggingBottom < otherY) {
+                // Dragging app is above
+                otherY - draggingBottom
+            } else if (dragY > otherBottom) {
+                // Dragging app is below
+                dragY - otherBottom
+            } else {
+                null // Apps overlap vertically
+            }
 
-                        distances.add(
-                            DistanceMeasurement(
-                                startX = startX,
-                                startY = measurementY,
-                                endX = endX,
-                                endY = measurementY,
-                                distance = with(density) { horizontalDistance.toDp().value },
-                                isHorizontal = true
-                            )
+            // Add horizontal distance measurement if within threshold and apps are roughly aligned vertically
+            if (horizontalDistance != null && horizontalDistance > 0 && horizontalDistance < distanceThreshold) {
+                val verticalOverlap = min(draggingBottom, otherBottom) - max(dragY, otherY)
+                if (verticalOverlap > 0) {
+                    val measurementY = max(dragY, otherY) + verticalOverlap / 2
+                    val startX = if (draggingRight < otherX) draggingRight else dragX
+                    val endX = if (draggingRight < otherX) otherX else otherRight
+
+                    distances.add(
+                        DistanceMeasurement(
+                            startX = startX,
+                            startY = measurementY,
+                            endX = endX,
+                            endY = measurementY,
+                            distance = with(density) { horizontalDistance.toDp().value },
+                            isHorizontal = true
                         )
-                    }
+                    )
                 }
+            }
 
-                // Add vertical distance measurement if within threshold and apps are roughly aligned horizontally
-                if (verticalDistance != null && verticalDistance > 0 && verticalDistance < distanceThreshold) {
-                    val horizontalOverlap = min(draggingRight, otherRight) - max(dragX, otherX)
-                    if (horizontalOverlap > 0) {
-                        val measurementX = max(dragX, otherX) + horizontalOverlap / 2
-                        val startY = if (draggingBottom < otherY) draggingBottom else dragY
-                        val endY = if (draggingBottom < otherY) otherY else otherBottom
+            // Add vertical distance measurement if within threshold and apps are roughly aligned horizontally
+            if (verticalDistance != null && verticalDistance > 0 && verticalDistance < distanceThreshold) {
+                val horizontalOverlap = min(draggingRight, otherRight) - max(dragX, otherX)
+                if (horizontalOverlap > 0) {
+                    val measurementX = max(dragX, otherX) + horizontalOverlap / 2
+                    val startY = if (draggingBottom < otherY) draggingBottom else dragY
+                    val endY = if (draggingBottom < otherY) otherY else otherBottom
 
-                        distances.add(
-                            DistanceMeasurement(
-                                startX = measurementX,
-                                startY = startY,
-                                endX = measurementX,
-                                endY = endY,
-                                distance = with(density) { verticalDistance.toDp().value },
-                                isHorizontal = false
-                            )
+                    distances.add(
+                        DistanceMeasurement(
+                            startX = measurementX,
+                            startY = startY,
+                            endX = measurementX,
+                            endY = endY,
+                            distance = with(density) { verticalDistance.toDp().value },
+                            isHorizontal = false
                         )
-                    }
+                    )
                 }
             }
         }
