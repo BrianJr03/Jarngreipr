@@ -66,7 +66,9 @@ fun DrawerOptionsDialog(
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
-    val mediaPickerLauncher = MediaPickerLauncher()
+    val mediaPickerLauncher = MediaPickerLauncher(
+        onResult = { onDismiss() }
+    )
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -115,6 +117,7 @@ fun DrawerOptionsDialog(
                     icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                     onClick = {
                         powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
+                        onDismiss()
                     }
                 )
 
@@ -148,7 +151,6 @@ fun DrawerOptionsDialog(
                     isSelected = wallpaperManager.getWallpaperType() == WallpaperType.IMAGE,
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("image/*"))
-                        onDismiss()
                     }
                 )
 
@@ -159,7 +161,6 @@ fun DrawerOptionsDialog(
                     isSelected = wallpaperManager.getWallpaperType() == WallpaperType.GIF,
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("image/gif"))
-                        onDismiss()
                     }
                 )
 
@@ -170,7 +171,6 @@ fun DrawerOptionsDialog(
                     isSelected = wallpaperManager.getWallpaperType() == WallpaperType.VIDEO,
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("video/*"))
-                        onDismiss()
                     }
                 )
 
