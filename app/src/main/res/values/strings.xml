@@ -26,7 +26,16 @@
     <string name="app_info_message">Open app info for %1$s</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
+    <string name="drawer_options_header_section">Header</string>
+    <string name="drawer_options_show_header">Show Header</string>
+    <string name="drawer_options_hide_header">Hide Header</string>
+    <string name="drawer_options_header_description">Toggle header bar visibility</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
+    <string name="drawer_options_wallpaper_default_description">Use default gradient background</string>
+    <string name="drawer_options_wallpaper_system_description">Show system wallpaper</string>
+    <string name="drawer_options_wallpaper_image_description">Set a custom image</string>
+    <string name="drawer_options_wallpaper_gif_description">Set an animated GIF</string>
+    <string name="drawer_options_wallpaper_video_description">Set a video background</string>
 
     <!-- App Options Menu -->
     <string name="app_options_menu_title">App Options</string>

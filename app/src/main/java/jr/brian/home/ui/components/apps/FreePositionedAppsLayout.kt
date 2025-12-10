@@ -43,7 +43,8 @@ fun FreePositionedAppsLayout(
     modifier: Modifier = Modifier,
     pageIndex: Int = 0,
     isDragLocked: Boolean = false,
-    onAppLongClick: (AppInfo) -> Unit = {}
+    onAppLongClick: (AppInfo) -> Unit = {},
+    headerVisible: Boolean = true
 ) {
     val density = LocalDensity.current
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
@@ -52,6 +53,41 @@ fun FreePositionedAppsLayout(
         List(apps.size) { FocusRequester() }
     }
     val scrollState = rememberScrollState()
+
+    // Calculate header offset - approximate header height when visible
+    val headerOffset = if (headerVisible) {
+        with(density) { 56.dp.toPx() } // Approximate header height (padding + icon + padding)
+    } else {
+        0f
+    }
+
+    // Track previous header visibility to detect changes
+    var previousHeaderVisible by remember { mutableStateOf(headerVisible) }
+
+    // When header visibility changes, adjust app positions if needed
+    LaunchedEffect(headerVisible) {
+        if (previousHeaderVisible != headerVisible) {
+            if (headerVisible && !previousHeaderVisible) {
+                // Header became visible - push apps down if they're too high
+                apps.forEach { app ->
+                    val position = appPositionManager.getPosition(pageIndex, app.packageName)
+                    if (position != null && position.y < headerOffset) {
+                        // App is behind the header, push it down
+                        appPositionManager.savePosition(
+                            pageIndex,
+                            AppPosition(
+                                packageName = app.packageName,
+                                x = position.x,
+                                y = headerOffset,
+                                iconSize = position.iconSize
+                            )
+                        )
+                    }
+                }
+            }
+            previousHeaderVisible = headerVisible
+        }
+    }
 
     val appPositions = remember(apps.size) {
         mutableMapOf<Int, Pair<Float, Float>>()
@@ -175,9 +211,10 @@ fun FreePositionedAppsLayout(
                     )
                 )
                 val initialY = (position?.y ?: defaultY).coerceIn(
-                    minimumValue = 0f,
+                    minimumValue = headerOffset, // Ensure apps don't go behind the header
                     maximumValue = if (containerSize.height > 0) {
-                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(0f)
+                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(
+                            headerOffset)
                     } else {
                         position?.y ?: defaultY
                     }
@@ -236,9 +273,9 @@ fun FreePositionedAppsLayout(
                             )
                         )
                         val constrainedY = finalY.coerceIn(
-                            minimumValue = 0f,
+                            minimumValue = headerOffset, // Ensure apps don't go behind the header
                             maximumValue = (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(
-                                0f
+                                headerOffset
                             )
                         )
 
