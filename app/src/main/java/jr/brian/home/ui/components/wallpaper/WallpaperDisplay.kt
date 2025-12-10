@@ -24,8 +24,8 @@ import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import jr.brian.home.ui.theme.AppBackgroundDark
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.theme.oledBackgroundColor
 
 @Composable
 fun WallpaperDisplay(
@@ -38,7 +38,7 @@ fun WallpaperDisplay(
             Box(
                 modifier = modifier
                     .fillMaxSize()
-                    .background(AppBackgroundDark)
+                    .background(oledBackgroundColor())
             )
         }
 
