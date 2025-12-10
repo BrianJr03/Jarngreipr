@@ -1,8 +1,5 @@
 package jr.brian.home.ui.components.dialog
 
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -25,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,50 +33,14 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.WallpaperType
-import jr.brian.home.util.WallpaperUtils
-import java.io.File
+import jr.brian.home.util.MediaPickerLauncher
 
 @Composable
 fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
-
-    val mediaPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            val detectedType = WallpaperUtils.detectWallpaperType(context, uri)
-            try {
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.takePersistableUriPermission(uri, flags)
-                wallpaperManager.setWallpaper(uri.toString(), detectedType)
-            } catch (_: SecurityException) {
-                try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val extension = when (detectedType) {
-                        WallpaperType.GIF -> "gif"
-                        WallpaperType.VIDEO -> "mp4"
-                        else -> "jpg"
-                    }
-                    val fileName = "wallpaper_${System.currentTimeMillis()}.$extension"
-                    val outputFile = File(context.filesDir, fileName)
-                    inputStream?.use { input ->
-                        outputFile.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    wallpaperManager.setWallpaper(
-                        "file://${outputFile.absolutePath}",
-                        detectedType
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
+    val mediaPickerLauncher = MediaPickerLauncher()
 
     Dialog(
         onDismissRequest = onDismiss,
