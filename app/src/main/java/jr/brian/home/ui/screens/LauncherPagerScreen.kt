@@ -134,6 +134,12 @@ fun LauncherPagerScreen(
                                 }
                             }
 
+                            // Get widgets for this specific AppsTab page
+                            val appsTabWidgetPageIndex = getAppsTabWidgetPageIndex(page, pageTypes)
+                            val appsTabWidgetPage =
+                                widgetUiState.widgetPages.getOrNull(appsTabWidgetPageIndex)
+                            val appsTabWidgets = appsTabWidgetPage?.widgets ?: emptyList()
+
                             AppsTab(
                                 apps = visibleApps,
                                 appsUnfiltered = homeUiState.allAppsUnfiltered,
@@ -143,7 +149,7 @@ fun LauncherPagerScreen(
                                 totalPages = totalPages,
                                 pagerState = pagerState,
                                 onShowBottomSheet = onShowBottomSheet,
-                                pageIndex = page,
+                                pageIndex = appsTabWidgetPageIndex,
                                 onDeletePage = { pagerPageIndex ->
                                     scope.launch {
                                         deleteTab(
@@ -161,7 +167,14 @@ fun LauncherPagerScreen(
                                 },
                                 pageIndicatorBorderColor = ThemePrimaryColor,
                                 allApps = homeUiState.allAppsUnfiltered,
-                                onNavigateToSearch = onNavigateToSearch
+                                onNavigateToSearch = onNavigateToSearch,
+                                widgets = appsTabWidgets,
+                                widgetViewModel = widgetViewModel,
+                                onNavigateToWidgetResize = { widgetInfo, pageIdx ->
+                                    resizeWidgetInfo = widgetInfo
+                                    resizePageIndex = pageIdx
+                                    showResizeScreen = true
+                                }
                             )
                         }
 
@@ -225,6 +238,28 @@ private fun getAppAndWidgetTabIndex(
     return widgetPageCount
 }
 
+private fun getAppsTabWidgetPageIndex(
+    currentPageIndex: Int,
+    pageTypes: List<PageType>
+): Int {
+    // Each AppsTab and AppsAndWidgetsTab gets its own widget page index
+    // Count all widget-supporting pages (both types) from the beginning up to current page
+    var widgetPageIndex = 0
+    for (i in 0..currentPageIndex) {
+        when (pageTypes.getOrNull(i)) {
+            PageType.APPS_TAB, PageType.APPS_AND_WIDGETS_TAB -> {
+                if (i == currentPageIndex) {
+                    return widgetPageIndex
+                }
+                widgetPageIndex++
+            }
+
+            else -> {}
+        }
+    }
+    return widgetPageIndex
+}
+
 private suspend fun deleteTab(
     totalPages: Int,
     pagerPageIndex: Int,
@@ -238,8 +273,9 @@ private suspend fun deleteTab(
     val pageType = pageTypes.getOrNull(pagerPageIndex)
     val currentHomeTabIndex = homeTabManager.homeTabIndex.value
 
-    if (pageType == PageType.APPS_AND_WIDGETS_TAB) {
-        val widgetPageIndex = getAppAndWidgetTabIndex(
+    // Delete widget page for both APPS_TAB and APPS_AND_WIDGETS_TAB
+    if (pageType == PageType.APPS_TAB || pageType == PageType.APPS_AND_WIDGETS_TAB) {
+        val widgetPageIndex = getAppsTabWidgetPageIndex(
             pagerPageIndex,
             pageTypes
         )

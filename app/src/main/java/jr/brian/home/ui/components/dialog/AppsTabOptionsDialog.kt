@@ -18,6 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -62,7 +64,10 @@ fun AppsTabOptionsDialog(
     onToggleFreeMode: () -> Unit = {},
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
-    onToggleDragLock: () -> Unit = {}
+    onToggleDragLock: () -> Unit = {},
+    onAddWidget: () -> Unit = {},
+    isEditModeActive: Boolean = false,
+    onToggleEditMode: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -101,6 +106,31 @@ fun AppsTabOptionsDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (isFreeModeEnabled) {
+                    // Add Widget option
+                    DrawerOptionCard(
+                        title = stringResource(R.string.widget_page_add_widget),
+                        description = stringResource(R.string.widget_page_add_widget_description),
+                        icon = Icons.Default.Add,
+                        onClick = {
+                            onDismiss()
+                            onAddWidget()
+                        }
+                    )
+
+                    // Edit Mode option
+                    DrawerOptionCard(
+                        title = stringResource(
+                            if (isEditModeActive) R.string.widget_page_edit_mode_exit
+                            else R.string.widget_page_edit_mode
+                        ),
+                        description = stringResource(R.string.widget_page_edit_mode_description),
+                        icon = Icons.Default.Edit,
+                        onClick = {
+                            onDismiss()
+                            onToggleEditMode()
+                        }
+                    )
+
                     DrawerOptionCard(
                         title = if (isDragLocked) {
                             stringResource(R.string.app_drawer_unlock_drag_mode)

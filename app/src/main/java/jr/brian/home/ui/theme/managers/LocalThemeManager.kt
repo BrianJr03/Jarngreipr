@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
 import jr.brian.home.ui.theme.ColorTheme
+import jr.brian.home.util.LedController
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_THEME = "selected_theme"
@@ -20,6 +21,8 @@ class ThemeManager(
     private val context: Context,
 ) {
     private val customThemes = mutableStateOf(loadCustomThemes())
+
+    private val ledController = LedController()
 
     var currentTheme by mutableStateOf(loadTheme())
         private set
@@ -80,6 +83,18 @@ class ThemeManager(
         currentTheme = theme
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit { putString(KEY_THEME, theme.id) }
+        ledController.setLedColor(
+            red = theme.primaryColor.red,
+            green = theme.primaryColor.green,
+            blue = theme.primaryColor.blue,
+            rightTop = false, rightBottom = false
+        )
+        ledController.setLedColor(
+            red = theme.secondaryColor.red,
+            green = theme.secondaryColor.green,
+            blue = theme.secondaryColor.blue,
+            leftTop = false, leftBottom = false
+        )
     }
 
     fun addCustomTheme(theme: ColorTheme) {

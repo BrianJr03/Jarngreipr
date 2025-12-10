@@ -69,11 +69,7 @@ fun WidgetItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (swapModeEnabled && !isSwapSource) {
-                    OledCardColor.copy(alpha = 0.8f)
-                } else {
-                    OledCardColor
-                },
+                color = Color.Transparent,
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -87,7 +83,7 @@ fun WidgetItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(widgetHeightDp)
-                    .background(OledCardColor)
+                    .background(Color.Transparent)
             ) {
                 AndroidView(
                     factory = { ctx ->
