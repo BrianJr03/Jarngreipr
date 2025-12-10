@@ -3,7 +3,7 @@ package jr.brian.home.ui.components.apps
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -44,7 +44,6 @@ fun FreePositionedAppItem(
     offsetY: Float,
     onOffsetChanged: (Float, Float) -> Unit,
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
     iconSize: Float = 64f,
@@ -99,14 +98,7 @@ fun FreePositionedAppItem(
                             Modifier
                         }
                     )
-                    .combinedClickable(
-                        onClick = {
-                            onClick()
-                        },
-                        onLongClick = {
-                            onLongClick()
-                        },
-                    )
+                    .clickable(onClick = onClick)
             )
 
             if (!keyboardVisible && isFocusable) {

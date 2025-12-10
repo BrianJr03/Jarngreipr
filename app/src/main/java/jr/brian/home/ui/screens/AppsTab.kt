@@ -210,8 +210,8 @@ fun AppsTab(
                 appPositionManager.clearAllPositions(pageIndex)
             },
             isDragLocked = isDragLocked,
-            onToggleDragLock = {
-                appPositionManager.setDragLock(pageIndex, !isDragLocked)
+            onToggleDragLock = { lockOnly ->
+                appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             }
         )
     }
@@ -421,10 +421,8 @@ private fun AppSelectionContent(
                 appPositionManager = appPositionManager,
                 keyboardVisible = false,
                 onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
-                headerVisible = isHeaderVisible,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()

@@ -62,7 +62,7 @@ fun AppsTabOptionsDialog(
     onToggleFreeMode: () -> Unit = {},
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
-    onToggleDragLock: () -> Unit = {}
+    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -115,7 +115,7 @@ fun AppsTabOptionsDialog(
                         icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
                         onClick = {
                             onDismiss()
-                            onToggleDragLock()
+                            onToggleDragLock(null)
                         }
                     )
 
@@ -155,6 +155,7 @@ fun AppsTabOptionsDialog(
                     icon = Icons.Default.Visibility,
                     onClick = {
                         onDismiss()
+                        onToggleDragLock(true)
                         onShowAppVisibility()
                     }
                 )

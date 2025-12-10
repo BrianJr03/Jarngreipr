@@ -18,7 +18,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -29,10 +34,12 @@ import jr.brian.home.model.AlignmentGuide
 import jr.brian.home.model.AlignmentState
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.AppPosition
+import jr.brian.home.model.DistanceMeasurement
 import jr.brian.home.model.GuideType
 import jr.brian.home.ui.theme.AlignmentGuideColor
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun FreePositionedAppsLayout(
@@ -42,9 +49,7 @@ fun FreePositionedAppsLayout(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     pageIndex: Int = 0,
-    isDragLocked: Boolean = false,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    headerVisible: Boolean = true
+    isDragLocked: Boolean = false
 ) {
     val density = LocalDensity.current
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
@@ -53,41 +58,6 @@ fun FreePositionedAppsLayout(
         List(apps.size) { FocusRequester() }
     }
     val scrollState = rememberScrollState()
-
-    // Calculate header offset - approximate header height when visible
-    val headerOffset = if (headerVisible) {
-        with(density) { 56.dp.toPx() } // Approximate header height (padding + icon + padding)
-    } else {
-        0f
-    }
-
-    // Track previous header visibility to detect changes
-    var previousHeaderVisible by remember { mutableStateOf(headerVisible) }
-
-    // When header visibility changes, adjust app positions if needed
-    LaunchedEffect(headerVisible) {
-        if (previousHeaderVisible != headerVisible) {
-            if (headerVisible && !previousHeaderVisible) {
-                // Header became visible - push apps down if they're too high
-                apps.forEach { app ->
-                    val position = appPositionManager.getPosition(pageIndex, app.packageName)
-                    if (position != null && position.y < headerOffset) {
-                        // App is behind the header, push it down
-                        appPositionManager.savePosition(
-                            pageIndex,
-                            AppPosition(
-                                packageName = app.packageName,
-                                x = position.x,
-                                y = headerOffset,
-                                iconSize = position.iconSize
-                            )
-                        )
-                    }
-                }
-            }
-            previousHeaderVisible = headerVisible
-        }
-    }
 
     val appPositions = remember(apps.size) {
         mutableMapOf<Int, Pair<Float, Float>>()
@@ -121,10 +91,8 @@ fun FreePositionedAppsLayout(
                 containerSize = it
             }
     ) {
-        // Since isFocusable is false, there's no spacer or divider below the icon
         val extraItemHeight = 0f
 
-        // Add sufficient padding at the bottom to ensure all apps are fully visible
         val contentHeight = with(density) {
             val maxIconSize = apps.mapNotNull { app ->
                 positions[app.packageName]?.iconSize
@@ -142,7 +110,6 @@ fun FreePositionedAppsLayout(
                 .fillMaxWidth()
                 .height(with(density) { contentHeight.toDp() })
         ) {
-            // Draw alignment guides
             Canvas(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -173,6 +140,92 @@ fun FreePositionedAppsLayout(
                                 )
                             )
                         }
+                    }
+                }
+
+                alignmentState.distances.forEach { measurement ->
+                    val distanceColor = Color(0xFFFF9800) // Orange color for distance lines
+                    val textColor = Color.White
+
+                    drawLine(
+                        color = distanceColor,
+                        start = Offset(measurement.startX, measurement.startY),
+                        end = Offset(measurement.endX, measurement.endY),
+                        strokeWidth = 2f
+                    )
+
+                    // Draw end caps
+                    val capSize = 8f
+                    if (measurement.isHorizontal) {
+                        // Vertical caps for horizontal measurements
+                        drawLine(
+                            color = distanceColor,
+                            start = Offset(measurement.startX, measurement.startY - capSize),
+                            end = Offset(measurement.startX, measurement.startY + capSize),
+                            strokeWidth = 2f
+                        )
+                        drawLine(
+                            color = distanceColor,
+                            start = Offset(measurement.endX, measurement.endY - capSize),
+                            end = Offset(measurement.endX, measurement.endY + capSize),
+                            strokeWidth = 2f
+                        )
+                    } else {
+                        // Horizontal caps for vertical measurements
+                        drawLine(
+                            color = distanceColor,
+                            start = Offset(measurement.startX - capSize, measurement.startY),
+                            end = Offset(measurement.startX + capSize, measurement.startY),
+                            strokeWidth = 2f
+                        )
+                        drawLine(
+                            color = distanceColor,
+                            start = Offset(measurement.endX - capSize, measurement.endY),
+                            end = Offset(measurement.endX + capSize, measurement.endY),
+                            strokeWidth = 2f
+                        )
+                    }
+
+                    // Draw distance text
+                    val distanceText = "${measurement.distance.toInt()}dp"
+                    val textX = (measurement.startX + measurement.endX) / 2
+                    val textY = (measurement.startY + measurement.endY) / 2
+
+                    drawIntoCanvas { canvas ->
+                        val paint = Paint().asFrameworkPaint().apply {
+                            color = textColor.toArgb()
+                            textSize = 32f
+                            textAlign = android.graphics.Paint.Align.CENTER
+                            isFakeBoldText = true
+                            setShadowLayer(4f, 0f, 0f, Color.Black.toArgb())
+                        }
+
+                        // Draw background rectangle for better readability
+                        val textBounds = android.graphics.Rect()
+                        paint.getTextBounds(distanceText, 0, distanceText.length, textBounds)
+                        val padding = 8f
+
+                        val bgPaint = android.graphics.Paint().apply {
+                            color = Color(0xCC000000).toArgb() // Semi-transparent black
+                            style = android.graphics.Paint.Style.FILL
+                        }
+
+                        canvas.nativeCanvas.drawRoundRect(
+                            textX - textBounds.width() / 2 - padding,
+                            textY + textBounds.top - padding,
+                            textX + textBounds.width() / 2 + padding,
+                            textY + textBounds.bottom + padding,
+                            8f,
+                            8f,
+                            bgPaint
+                        )
+
+                        canvas.nativeCanvas.drawText(
+                            distanceText,
+                            textX,
+                            textY,
+                            paint
+                        )
                     }
                 }
             }
@@ -211,10 +264,9 @@ fun FreePositionedAppsLayout(
                     )
                 )
                 val initialY = (position?.y ?: defaultY).coerceIn(
-                    minimumValue = headerOffset, // Ensure apps don't go behind the header
+                    minimumValue = 0f,
                     maximumValue = if (containerSize.height > 0) {
-                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(
-                            headerOffset)
+                        (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(0f)
                     } else {
                         position?.y ?: defaultY
                     }
@@ -273,10 +325,9 @@ fun FreePositionedAppsLayout(
                             )
                         )
                         val constrainedY = finalY.coerceIn(
-                            minimumValue = headerOffset, // Ensure apps don't go behind the header
+                            minimumValue = 0f,
                             maximumValue = (containerSize.height - fullItemHeight - bottomPaddingPx).coerceAtLeast(
-                                headerOffset
-                            )
+                                0f)
                         )
 
                         appPositions[index] = constrainedX to constrainedY
@@ -301,7 +352,6 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = { onAppClick(app) },
-                    onLongClick = { onAppLongClick(app) },
                     onFocusChanged = {
                         focusedIndex = index
                     },
@@ -329,6 +379,7 @@ private fun calculateAlignmentGuides(
     }
 
     val guides = mutableListOf<AlignmentGuide>()
+    val distances = mutableListOf<DistanceMeasurement>()
     var snappedX: Float? = null
     var snappedY: Float? = null
 
@@ -342,6 +393,9 @@ private fun calculateAlignmentGuides(
     val screenCenterX = (containerSize.width - startPaddingPx) / 2
     val screenCenterY = containerSize.height / 2f
 
+    // Distance threshold for showing measurements (in pixels)
+    val distanceThreshold = with(density) { 200.dp.toPx() }
+
     // Check alignment with screen center
     if (abs(draggingCenterX - screenCenterX) < snapThreshold) {
         guides.add(AlignmentGuide(GuideType.VERTICAL, screenCenterX))
@@ -353,7 +407,7 @@ private fun calculateAlignmentGuides(
         snappedY = screenCenterY - iconSizePx / 2
     }
 
-    // Check alignment with other apps
+    // Check alignment with other apps and calculate distances
     apps.forEachIndexed { index, _ ->
         if (index != draggingIndex) {
             val otherPos = appPositions[index]
@@ -389,6 +443,71 @@ private fun calculateAlignmentGuides(
                     guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
                     if (snappedY == null) snappedY = otherBottom - iconSizePx
                 }
+
+                // Calculate distances to nearby apps
+                // Horizontal distance (left/right)
+                val horizontalDistance = if (draggingRight < otherX) {
+                    // Dragging app is to the left
+                    otherX - draggingRight
+                } else if (dragX > otherRight) {
+                    // Dragging app is to the right
+                    dragX - otherRight
+                } else {
+                    null // Apps overlap horizontally
+                }
+
+                // Vertical distance (top/bottom)
+                val verticalDistance = if (draggingBottom < otherY) {
+                    // Dragging app is above
+                    otherY - draggingBottom
+                } else if (dragY > otherBottom) {
+                    // Dragging app is below
+                    dragY - otherBottom
+                } else {
+                    null // Apps overlap vertically
+                }
+
+                // Add horizontal distance measurement if within threshold and apps are roughly aligned vertically
+                if (horizontalDistance != null && horizontalDistance > 0 && horizontalDistance < distanceThreshold) {
+                    val verticalOverlap = min(draggingBottom, otherBottom) - max(dragY, otherY)
+                    if (verticalOverlap > 0) {
+                        val measurementY = max(dragY, otherY) + verticalOverlap / 2
+                        val startX = if (draggingRight < otherX) draggingRight else dragX
+                        val endX = if (draggingRight < otherX) otherX else otherRight
+
+                        distances.add(
+                            DistanceMeasurement(
+                                startX = startX,
+                                startY = measurementY,
+                                endX = endX,
+                                endY = measurementY,
+                                distance = with(density) { horizontalDistance.toDp().value },
+                                isHorizontal = true
+                            )
+                        )
+                    }
+                }
+
+                // Add vertical distance measurement if within threshold and apps are roughly aligned horizontally
+                if (verticalDistance != null && verticalDistance > 0 && verticalDistance < distanceThreshold) {
+                    val horizontalOverlap = min(draggingRight, otherRight) - max(dragX, otherX)
+                    if (horizontalOverlap > 0) {
+                        val measurementX = max(dragX, otherX) + horizontalOverlap / 2
+                        val startY = if (draggingBottom < otherY) draggingBottom else dragY
+                        val endY = if (draggingBottom < otherY) otherY else otherBottom
+
+                        distances.add(
+                            DistanceMeasurement(
+                                startX = measurementX,
+                                startY = startY,
+                                endX = measurementX,
+                                endY = endY,
+                                distance = with(density) { verticalDistance.toDp().value },
+                                isHorizontal = false
+                            )
+                        )
+                    }
+                }
             }
         }
     }
@@ -396,6 +515,7 @@ private fun calculateAlignmentGuides(
     return AlignmentState(
         guides = guides.distinctBy { it.position to it.type },
         snappedX = snappedX,
-        snappedY = snappedY
+        snappedY = snappedY,
+        distances = distances
     )
 }
