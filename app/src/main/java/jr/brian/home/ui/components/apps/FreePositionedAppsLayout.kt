@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +66,7 @@ fun FreePositionedAppsLayout(
     var draggingAppIndex by remember(pageIndex) { mutableIntStateOf(-1) }
     var alignmentState by remember(pageIndex) { mutableStateOf(AlignmentState()) }
     val snapThreshold = with(density) { 12.dp.toPx() } // Distance to trigger snapping
+    val borderPadding = with(density) { 4.dp.toPx() } // 4dp border constraint
 
     // Calculate maxY and maxX on each composition based on current positions
     // This ensures they're always accurate and reset when positions are cleared
@@ -83,14 +82,11 @@ fun FreePositionedAppsLayout(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(start = 16.dp)
             .verticalScroll(scrollState)
             .onSizeChanged {
                 containerSize = it
             }
     ) {
-        val extraItemHeight = 0f
-
         // Pre-calculate maxY to determine content height
         // This is done before rendering so scroll area is correct
         var calculatedMaxY = 0f
@@ -101,7 +97,7 @@ fun FreePositionedAppsLayout(
                 val itemHeight = 100.dp.toPx()
                 val spacing = 24.dp.toPx()
                 val row = index / columns
-                val topPadding = 8.dp.toPx()
+                val topPadding = max(8.dp.toPx(), borderPadding)
                 (topPadding + row * (itemHeight + spacing))
             }
             val iconSize = position?.iconSize ?: 64f
@@ -246,14 +242,12 @@ fun FreePositionedAppsLayout(
 
             apps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
-
-                // Calculate default positions based on grid
                 val defaultX = with(density) {
                     val columns = 4
                     val itemWidth = 80.dp.toPx()
                     val spacing = 32.dp.toPx()
                     val column = index % columns
-                    val startPadding = 8.dp.toPx()
+                    val startPadding = max(8.dp.toPx(), borderPadding)
                     (startPadding + column * (itemWidth + spacing))
                 }
                 val defaultY = with(density) {
@@ -261,22 +255,16 @@ fun FreePositionedAppsLayout(
                     val itemHeight = 100.dp.toPx()
                     val spacing = 24.dp.toPx()
                     val row = index / columns
-                    val topPadding = 8.dp.toPx()
+                    val topPadding = max(8.dp.toPx(), borderPadding)
                     (topPadding + row * (itemHeight + spacing))
                 }
 
-                // Get icon size for this app
                 val currentIconSize = position?.iconSize ?: 64f
                 val iconSizePx = with(density) { currentIconSize.dp.toPx() }
-                val fullItemHeight = iconSizePx + extraItemHeight
-                val startPaddingPx = with(density) { 16.dp.toPx() }
-                val bottomPaddingPx = with(density) { 8.dp.toPx() }
 
-                // Use saved position if available, otherwise use default
                 val initialX = position?.x ?: defaultX
                 val initialY = position?.y ?: defaultY
 
-                // Track max positions for content height calculation
                 val currentBottom = initialY + iconSizePx
                 val currentRight = initialX + iconSizePx
                 if (currentBottom > maxY) maxY = currentBottom
@@ -294,8 +282,8 @@ fun FreePositionedAppsLayout(
                         val currentIconSize =
                             appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
                                 ?: 64f
+                        val iconSizePx = with(density) { currentIconSize.dp.toPx() }
 
-                        // Calculate alignment guides and potential snap positions
                         val alignment = calculateAlignmentGuides(
                             draggingIndex = index,
                             dragX = x,
@@ -305,20 +293,26 @@ fun FreePositionedAppsLayout(
                             snapThreshold = snapThreshold,
                             apps = apps,
                             positions = positions,
-                            density = density
+                            density = density,
+                            borderPadding = borderPadding
                         )
                         alignmentState = alignment
 
-                        // Use snapped positions if available, otherwise use dragged position
                         val finalX = alignment.snappedX ?: x
                         val finalY = alignment.snappedY ?: y
+
+                        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
+                        val maxY = contentHeight - iconSizePx - borderPadding
+
+                        val constrainedX = finalX.coerceIn(borderPadding, maxX)
+                        val constrainedY = finalY.coerceIn(borderPadding, maxY)
 
                         appPositionManager.savePosition(
                             pageIndex,
                             AppPosition(
                                 packageName = app.packageName,
-                                x = finalX,
-                                y = finalY,
+                                x = constrainedX,
+                                y = constrainedY,
                                 iconSize = currentIconSize
                             )
                         )
@@ -350,7 +344,8 @@ private fun calculateAlignmentGuides(
     apps: List<AppInfo>,
     snapThreshold: Float,
     containerSize: IntSize,
-    positions: Map<String, AppPosition>
+    positions: Map<String, AppPosition>,
+    borderPadding: Float
 ): AlignmentState {
     if (draggingIndex < 0 || containerSize.width == 0) {
         return AlignmentState()
@@ -367,8 +362,7 @@ private fun calculateAlignmentGuides(
     val draggingRight = dragX + iconSizePx
     val draggingBottom = dragY + iconSizePx
 
-    val startPaddingPx = with(density) { 16.dp.toPx() }
-    val screenCenterX = (containerSize.width - startPaddingPx) / 2
+    val screenCenterX = containerSize.width / 2f
     val screenCenterY = containerSize.height / 2f
 
     // Distance threshold for showing measurements (in pixels)
@@ -396,7 +390,7 @@ private fun calculateAlignmentGuides(
                 val itemWidth = 80.dp.toPx()
                 val spacing = 32.dp.toPx()
                 val column = index % columns
-                val startPadding = 8.dp.toPx()
+                val startPadding = max(8.dp.toPx(), borderPadding)
                 (startPadding + column * (itemWidth + spacing))
             }
             val otherY = otherPosition?.y ?: with(density) {
@@ -404,7 +398,7 @@ private fun calculateAlignmentGuides(
                 val itemHeight = 100.dp.toPx()
                 val spacing = 24.dp.toPx()
                 val row = index / columns
-                val topPadding = 8.dp.toPx()
+                val topPadding = max(8.dp.toPx(), borderPadding)
                 (topPadding + row * (itemHeight + spacing))
             }
             val otherIconSize = otherPosition?.iconSize ?: 64f
@@ -504,7 +498,6 @@ private fun calculateAlignmentGuides(
             }
         }
     }
-
     return AlignmentState(
         guides = guides.distinctBy { it.position to it.type },
         snappedX = snappedX,
