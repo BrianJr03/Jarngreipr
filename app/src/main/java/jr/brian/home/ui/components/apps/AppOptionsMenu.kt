@@ -29,7 +29,6 @@ fun AppOptionsMenu(
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    isAppHidden: Boolean = false,
     onToggleVisibility: () -> Unit = {}
 ) {
     val optionCount = if (app != null) {
@@ -67,7 +66,6 @@ fun AppOptionsMenu(
                 app,
                 currentIconSize,
                 onIconSizeChange,
-                isAppHidden,
                 onToggleVisibility
             )
         },

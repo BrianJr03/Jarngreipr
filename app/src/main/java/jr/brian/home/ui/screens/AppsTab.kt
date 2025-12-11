@@ -2,6 +2,9 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,13 +71,18 @@ import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.util.launchApp
@@ -95,7 +103,7 @@ fun AppsTab(
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -126,6 +134,7 @@ fun AppsTab(
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -137,7 +146,7 @@ fun AppsTab(
             64f
         }
 
-        val appVisibilityManager = jr.brian.home.ui.theme.managers.LocalAppVisibilityManager.current
+        val appVisibilityManager = LocalAppVisibilityManager.current
         val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
         val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
             appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
@@ -178,7 +187,6 @@ fun AppsTab(
                     )
                 }
             },
-            isAppHidden = isAppHidden,
             onToggleVisibility = {
                 if (isAppHidden) {
                     appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
@@ -189,9 +197,47 @@ fun AppsTab(
         )
     }
 
+    if (showHomeTabDialog) {
+        val homeTabManager = LocalHomeTabManager.current
+        val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+        val pageCountManager = LocalPageCountManager.current
+        val pageTypeManager = LocalPageTypeManager.current
+        val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+
+        HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            allApps = allApps,
+            onTabSelected = { index ->
+                homeTabManager.setHomeTabIndex(index)
+            },
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex ->
+                onDeletePage(pageIndex)
+            },
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
+        )
+    }
+
     if (showDrawerOptionsDialog) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false }
+            onDismiss = { showDrawerOptionsDialog = false },
+            onPowerClick = {
+                powerViewModel?.togglePower()
+            },
+            onTabsClick = {
+                showHomeTabDialog = true
+            },
+            onMenuClick = {
+                showAppDrawerOptionsDialog = true
+            },
+            onSettingsClick = onSettingsClick,
+            onQuickDeleteClick = onShowBottomSheet
         )
     }
 
@@ -207,8 +253,8 @@ fun AppsTab(
                 appPositionManager.clearAllPositions(pageIndex)
             },
             isDragLocked = isDragLocked,
-            onToggleDragLock = {
-                appPositionManager.setDragLock(pageIndex, !isDragLocked)
+            onToggleDragLock = { lockOnly ->
+                appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             }
         )
     }
@@ -256,31 +302,38 @@ fun AppsTab(
                     val menuIconFocusRequester = remember { FocusRequester() }
                     val powerSettingsManager = LocalPowerSettingsManager.current
                     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+                    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
 
-                    ScreenHeaderRow(
-                        totalPages = totalPages,
-                        pagerState = pagerState,
-                        leadingIcon = Icons.Default.Settings,
-                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                        onLeadingIconClick = onSettingsClick,
-                        leadingIconFocusRequester = settingsIconFocusRequester,
-                        trailingIcon = Icons.Default.Menu,
-                        trailingIconContentDescription = null,
-                        onTrailingIconClick = { showAppDrawerOptionsDialog = true },
-                        trailingIconFocusRequester = menuIconFocusRequester,
-                        onNavigateToGrid = {},
-                        onNavigateFromGrid = {
-                            menuIconFocusRequester.requestFocus()
-                        },
-                        powerViewModel = powerViewModel,
-                        showPowerButton = isPowerButtonVisible,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                        onFolderClick = onShowBottomSheet,
-                        onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor,
-                        allApps = allApps,
-                        onNavigateToSearch = onNavigateToSearch
-                    )
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = slideInVertically(initialOffsetY = { -it }),
+                        exit = slideOutVertically(targetOffsetY = { -it })
+                    ) {
+                        ScreenHeaderRow(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            leadingIcon = Icons.Default.Settings,
+                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                            onLeadingIconClick = onSettingsClick,
+                            leadingIconFocusRequester = settingsIconFocusRequester,
+                            trailingIcon = Icons.Default.Menu,
+                            trailingIconContentDescription = null,
+                            onTrailingIconClick = { showAppDrawerOptionsDialog = true },
+                            trailingIconFocusRequester = menuIconFocusRequester,
+                            onNavigateToGrid = {},
+                            onNavigateFromGrid = {
+                                menuIconFocusRequester.requestFocus()
+                            },
+                            powerViewModel = powerViewModel,
+                            showPowerButton = isPowerButtonVisible,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            onFolderClick = onShowBottomSheet,
+                            onDeletePage = onDeletePage,
+                            pageIndicatorBorderColor = pageIndicatorBorderColor,
+                            allApps = allApps,
+                            onNavigateToSearch = onNavigateToSearch
+                        )
+                    }
                 }
 
                 EmptyAppsState(
@@ -349,7 +402,7 @@ private fun AppSelectionContent(
     onDeletePage: (Int) -> Unit = {},
     isDragLocked: Boolean = false,
     pageIndex: Int = 0,
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -362,39 +415,47 @@ private fun AppSelectionContent(
         apps.sortedBy { it.label.uppercase() }
     }
 
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
+
     Column(modifier = modifier.fillMaxSize()) {
         if (pagerState != null) {
             val settingsIconFocusRequester = remember { FocusRequester() }
             val menuIconFocusRequester = remember { FocusRequester() }
-            val powerSettingsManager = LocalPowerSettingsManager.current
-            val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
-            ScreenHeaderRow(
-                totalPages = totalPages,
-                pagerState = pagerState,
-                leadingIcon = Icons.Default.Settings,
-                leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                onLeadingIconClick = onSettingsClick,
-                leadingIconFocusRequester = settingsIconFocusRequester,
-                trailingIcon = Icons.Default.Menu,
-                trailingIconContentDescription = null,
-                onTrailingIconClick = onMenuClick,
-                trailingIconFocusRequester = menuIconFocusRequester,
-                onNavigateToGrid = {
-                    appFocusRequesters[0]?.requestFocus()
-                },
-                onNavigateFromGrid = {
-                    menuIconFocusRequester.requestFocus()
-                },
-                powerViewModel = powerViewModel,
-                showPowerButton = isPowerButtonVisible,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                onFolderClick = onShowBottomSheet,
-                onDeletePage = onDeletePage,
-                pageIndicatorBorderColor = pageIndicatorBorderColor,
-                allApps = allApps,
-                onNavigateToSearch = onNavigateToSearch
-            )
+            AnimatedVisibility(
+                visible = isHeaderVisible,
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = slideOutVertically(targetOffsetY = { -it })
+            ) {
+                ScreenHeaderRow(
+                    totalPages = totalPages,
+                    pagerState = pagerState,
+                    leadingIcon = Icons.Default.Settings,
+                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                    onLeadingIconClick = onSettingsClick,
+                    leadingIconFocusRequester = settingsIconFocusRequester,
+                    trailingIcon = Icons.Default.Menu,
+                    trailingIconContentDescription = null,
+                    onTrailingIconClick = onMenuClick,
+                    trailingIconFocusRequester = menuIconFocusRequester,
+                    onNavigateToGrid = {
+                        appFocusRequesters[0]?.requestFocus()
+                    },
+                    onNavigateFromGrid = {
+                        menuIconFocusRequester.requestFocus()
+                    },
+                    powerViewModel = powerViewModel,
+                    showPowerButton = isPowerButtonVisible,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    onFolderClick = onShowBottomSheet,
+                    onDeletePage = onDeletePage,
+                    pageIndicatorBorderColor = pageIndicatorBorderColor,
+                    allApps = allApps,
+                    onNavigateToSearch = onNavigateToSearch
+                )
+            }
         }
 
         if (isFreeModeEnabled && appPositionManager != null) {
@@ -403,7 +464,6 @@ private fun AppSelectionContent(
                 appPositionManager = appPositionManager,
                 keyboardVisible = false,
                 onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
                 modifier = Modifier
@@ -423,7 +483,6 @@ private fun AppSelectionContent(
                 onNavigateLeft = {},
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
-                keyboardVisible = false
             )
         }
     }
@@ -441,7 +500,6 @@ private fun AppGridLayout(
     onNavigateLeft: () -> Unit = {},
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
-    keyboardVisible: Boolean = true
 ) {
     val gridState = rememberLazyGridState()
 
@@ -460,11 +518,11 @@ private fun AppGridLayout(
         state = gridState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = if (keyboardVisible) 16.dp else 8.dp,
-            vertical = if (keyboardVisible) 0.dp else 8.dp,
+            horizontal = 8.dp,
+            vertical = 8.dp,
         ),
-        horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
-        verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         items(displayedApps.size) { index ->
             val app = displayedApps[index]
@@ -475,7 +533,6 @@ private fun AppGridLayout(
 
             AppGridItem(
                 app = app,
-                keyboardVisible = keyboardVisible,
                 focusRequester = itemFocusRequester,
                 onClick = { onAppClick(app) },
                 onLongClick = { onAppLongClick(app) },

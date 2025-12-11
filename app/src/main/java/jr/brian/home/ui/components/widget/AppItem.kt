@@ -1,10 +1,7 @@
 package jr.brian.home.ui.components.widget
 
-import android.app.ActivityOptions
 import android.content.Context
-import android.content.Intent
 import android.hardware.display.DisplayManager
-import android.provider.Settings
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -25,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -89,8 +85,6 @@ fun AppItem(
     }
 
     if (showOptionsDialog) {
-        val isAppHidden = appVisibilityManager.isAppHidden(pageIndex, app.packageName)
-
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -113,15 +107,10 @@ fun AppItem(
                 )
             },
             hasExternalDisplay = hasExternalDisplay,
-            isAppHidden = isAppHidden,
-            onToggleVisibility = {
+            onHideApp = {
                 scope.launch {
-                    if (isAppHidden) {
-                        appVisibilityManager.showApp(pageIndex, app.packageName)
-                    } else {
-                        appVisibilityManager.hideApp(pageIndex, app.packageName)
-                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
-                    }
+                    appVisibilityManager.hideApp(pageIndex, app.packageName)
+                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
                 showOptionsDialog = false
             }
