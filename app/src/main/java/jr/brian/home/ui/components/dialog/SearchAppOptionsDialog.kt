@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.Smartphone
@@ -63,7 +64,9 @@ fun SearchAppOptionsDialog(
     onDismiss: () -> Unit,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
-    hasExternalDisplay: Boolean = false
+    hasExternalDisplay: Boolean = false,
+    onSelectCustomIcon: () -> Unit = {},
+    onResetCustomIcon: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -136,6 +139,16 @@ fun SearchAppOptionsDialog(
                     icon = Icons.Default.Info,
                     onClick = {
                         onAppInfoClick()
+                        onDismiss()
+                    }
+                )
+
+                OptionCard(
+                    title = stringResource(R.string.app_options_custom_icon),
+                    description = stringResource(R.string.app_options_custom_icon_select),
+                    icon = Icons.Default.Image,
+                    onClick = {
+                        onSelectCustomIcon()
                         onDismiss()
                     }
                 )

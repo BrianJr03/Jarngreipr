@@ -2,8 +2,10 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -41,11 +44,14 @@ import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppSearchScreen(
@@ -113,13 +119,35 @@ private fun AppGrid(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val customIconManager = LocalCustomIconManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
         val displayManager =
             context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         displayManager.displays.size > 1
+    }
+
+    val iconPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedApp?.let { app ->
+                scope.launch {
+                    try {
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (e: SecurityException) {
+                        // Some content providers don't support persistent permissions
+                    }
+                    customIconManager.setCustomIcon(app.packageName, uri)
+                }
+            }
+        }
     }
 
     LazyVerticalGrid(
@@ -169,7 +197,15 @@ private fun AppGrid(
                     preference
                 )
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            onSelectCustomIcon = {
+                iconPickerLauncher.launch("image/*")
+            },
+            onResetCustomIcon = {
+                scope.launch {
+                    customIconManager.clearCustomIcon(selectedApp!!.packageName)
+                }
+            }
         )
     }
 }
@@ -201,8 +237,9 @@ private fun AppGridItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            packageName = app.packageName,
+            defaultIcon = app.icon,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             modifier = Modifier
                 .size(80.dp)

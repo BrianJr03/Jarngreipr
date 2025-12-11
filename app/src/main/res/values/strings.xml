@@ -50,6 +50,9 @@
     <string name="app_options_selected">Selected</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
+    <string name="app_options_custom_icon">Custom Icon</string>
+    <string name="app_options_custom_icon_select">Select Custom Icon</string>
+    <string name="app_options_custom_icon_reset">Reset to Default Icon</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>

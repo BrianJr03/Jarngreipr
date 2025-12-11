@@ -2,7 +2,6 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
@@ -46,8 +45,9 @@ fun AppGridItem(
     var isFocused by remember { mutableStateOf(false) }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            packageName = app.packageName,
+            defaultIcon = app.icon,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             modifier =
                 Modifier

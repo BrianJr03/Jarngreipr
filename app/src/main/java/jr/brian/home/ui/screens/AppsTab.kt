@@ -1,7 +1,10 @@
 package jr.brian.home.ui.screens
 
 import android.content.Context
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -61,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import kotlinx.coroutines.launch
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -103,9 +107,11 @@ fun AppsTab(
     onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
+    val customIconManager = jr.brian.home.ui.theme.managers.LocalCustomIconManager.current
 
     val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(false) }
@@ -133,6 +139,28 @@ fun AppsTab(
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
+
+    val iconPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedApp?.let { app ->
+                scope.launch {
+                    try {
+                        // Try to request permission to access the URI persistently
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (e: SecurityException) {
+                        // Some content providers don't support persistent permissions
+                        // This is okay - the URI will still work within the app session
+                    }
+                    customIconManager.setCustomIcon(app.packageName, uri)
+                }
+            }
+        }
+    }
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
@@ -188,6 +216,14 @@ fun AppsTab(
                     appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
                 } else {
                     appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
+                }
+            },
+            onSelectCustomIcon = {
+                iconPickerLauncher.launch("image/*")
+            },
+            onResetCustomIcon = {
+                scope.launch {
+                    customIconManager.clearCustomIcon(selectedApp!!.packageName)
                 }
             }
         )
@@ -460,6 +496,7 @@ private fun AppSelectionContent(
                 appPositionManager = appPositionManager,
                 keyboardVisible = false,
                 onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
                 modifier = Modifier

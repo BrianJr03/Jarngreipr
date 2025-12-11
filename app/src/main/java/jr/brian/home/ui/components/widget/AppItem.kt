@@ -4,9 +4,11 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
+import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,14 +27,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
@@ -49,6 +52,7 @@ fun AppItem(
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val customIconManager = LocalCustomIconManager.current
     val scope = rememberCoroutineScope()
     var showOptionsDialog by remember { mutableStateOf(false) }
 
@@ -56,6 +60,24 @@ fun AppItem(
         val displayManager =
             context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         displayManager.displays.size > 1
+    }
+
+    val iconPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (e: SecurityException) {
+                    // Some content providers don't support persistent permissions
+                }
+                customIconManager.setCustomIcon(app.packageName, uri)
+            }
+        }
     }
 
     Column(
@@ -79,8 +101,9 @@ fun AppItem(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            packageName = app.packageName,
+            defaultIcon = app.icon,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             modifier = Modifier
                 .size(48.dp)
@@ -124,6 +147,14 @@ fun AppItem(
                     }
                 }
                 showOptionsDialog = false
+            },
+            onSelectCustomIcon = {
+                iconPickerLauncher.launch("image/*")
+            },
+            onResetCustomIcon = {
+                scope.launch {
+                    customIconManager.clearCustomIcon(app.packageName)
+                }
             }
         )
     }

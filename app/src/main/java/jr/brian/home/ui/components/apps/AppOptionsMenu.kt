@@ -30,12 +30,14 @@ fun AppOptionsMenu(
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     isAppHidden: Boolean = false,
-    onToggleVisibility: () -> Unit = {}
+    onToggleVisibility: () -> Unit = {},
+    onSelectCustomIcon: () -> Unit = {},
+    onResetCustomIcon: () -> Unit = {}
 ) {
     val optionCount = if (app != null) {
-        if (hasExternalDisplay) 5 else 3
+        if (hasExternalDisplay) 6 else 4
     } else {
-        if (hasExternalDisplay) 4 else 2
+        if (hasExternalDisplay) 5 else 3
     }
     val focusRequesters = remember {
         List(optionCount) { FocusRequester() }
@@ -68,7 +70,9 @@ fun AppOptionsMenu(
                 currentIconSize,
                 onIconSizeChange,
                 isAppHidden,
-                onToggleVisibility
+                onToggleVisibility,
+                onSelectCustomIcon,
+                onResetCustomIcon
             )
         },
         confirmButton = {},

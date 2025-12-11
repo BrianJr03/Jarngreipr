@@ -2,8 +2,8 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -50,6 +50,7 @@ fun FreePositionedAppItem(
     isFocusable: Boolean = false,
     onDragStart: () -> Unit = {},
     onDragEnd: () -> Unit = {},
+    onLongClick: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
@@ -60,8 +61,9 @@ fun FreePositionedAppItem(
             .offset { IntOffset(currentOffsetX.roundToInt(), currentOffsetY.roundToInt()) }
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = rememberAsyncImagePainter(model = app.icon),
+            AppIconImage(
+                packageName = app.packageName,
+                defaultIcon = app.icon,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 modifier = Modifier
                     .size(iconSize.dp)
@@ -98,7 +100,10 @@ fun FreePositionedAppItem(
                             Modifier
                         }
                     )
-                    .clickable(onClick = onClick)
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
             )
 
             if (!keyboardVisible && isFocusable) {

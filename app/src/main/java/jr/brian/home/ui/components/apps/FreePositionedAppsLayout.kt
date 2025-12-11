@@ -48,7 +48,8 @@ fun FreePositionedAppsLayout(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     pageIndex: Int = 0,
-    isDragLocked: Boolean = false
+    isDragLocked: Boolean = false,
+    onAppLongClick: (AppInfo) -> Unit = {}
 ) {
     val density = LocalDensity.current
     var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
@@ -325,6 +326,7 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = { onAppClick(app) },
+                    onLongClick = { onAppLongClick(app) },
                     onFocusChanged = {
                         focusedIndex = index
                     },
