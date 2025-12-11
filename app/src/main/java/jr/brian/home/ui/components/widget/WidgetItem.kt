@@ -1,6 +1,5 @@
 package jr.brian.home.ui.components.widget
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +33,6 @@ import jr.brian.home.R
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.components.dialog.EditWidgetOptionsDialog
 import jr.brian.home.ui.theme.ColorTheme
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -68,14 +66,6 @@ fun WidgetItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                color = if (swapModeEnabled && !isSwapSource) {
-                    OledCardColor.copy(alpha = 0.8f)
-                } else {
-                    OledCardColor
-                },
-                shape = RoundedCornerShape(12.dp)
-            )
             .border(
                 width = if (isSwapSource) 4.dp else if (editModeEnabled || swapModeEnabled) 2.dp else 0.dp,
                 color = if (isSwapSource) Color.Yellow else if (editModeEnabled || swapModeEnabled) ThemePrimaryColor else Color.Transparent,
@@ -87,7 +77,6 @@ fun WidgetItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(widgetHeightDp)
-                    .background(OledCardColor)
             ) {
                 AndroidView(
                     factory = { ctx ->
