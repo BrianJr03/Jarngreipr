@@ -323,7 +323,7 @@ private fun DrawerOptionCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
+            .padding(vertical = 8.dp)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
