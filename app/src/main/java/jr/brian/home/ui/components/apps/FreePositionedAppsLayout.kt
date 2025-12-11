@@ -180,7 +180,7 @@ fun FreePositionedAppsLayout(
                 }
 
                 alignmentState.distances.forEach { measurement ->
-                    val distanceColor = Color(0xFFFF9800) // Orange color for distance lines
+                    val distanceColor = Color(0xFFFF9800)
                     val textColor = Color.White
 
                     drawLine(
@@ -368,7 +368,6 @@ fun FreePositionedAppsLayout(
 
     if (showOptionsDialog && selectedApp != null) {
         val app = selectedApp!!
-        val isAppHidden = appVisibilityManager.isAppHidden(pageIndex, app.packageName)
         val currentPosition = appPositionManager.getPosition(pageIndex, app.packageName)
         val currentIconSize = currentPosition?.iconSize ?: 64f
 

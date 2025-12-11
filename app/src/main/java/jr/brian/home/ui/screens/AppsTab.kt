@@ -71,13 +71,18 @@ import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.util.launchApp
@@ -98,7 +103,7 @@ fun AppsTab(
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -141,7 +146,7 @@ fun AppsTab(
             64f
         }
 
-        val appVisibilityManager = jr.brian.home.ui.theme.managers.LocalAppVisibilityManager.current
+        val appVisibilityManager = LocalAppVisibilityManager.current
         val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
         val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
             appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
@@ -193,13 +198,13 @@ fun AppsTab(
     }
 
     if (showHomeTabDialog) {
-        val homeTabManager = jr.brian.home.ui.theme.managers.LocalHomeTabManager.current
+        val homeTabManager = LocalHomeTabManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
-        val pageCountManager = jr.brian.home.ui.theme.managers.LocalPageCountManager.current
-        val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
+        val pageCountManager = LocalPageCountManager.current
+        val pageTypeManager = LocalPageTypeManager.current
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
-        jr.brian.home.ui.components.dialog.HomeTabSelectionDialog(
+        HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
             allApps = allApps,
@@ -397,7 +402,7 @@ private fun AppSelectionContent(
     onDeletePage: (Int) -> Unit = {},
     isDragLocked: Boolean = false,
     pageIndex: Int = 0,
-    pageIndicatorBorderColor: Color = jr.brian.home.ui.theme.ThemePrimaryColor,
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -478,7 +483,6 @@ private fun AppSelectionContent(
                 onNavigateLeft = {},
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
-                keyboardVisible = false
             )
         }
     }
@@ -496,7 +500,6 @@ private fun AppGridLayout(
     onNavigateLeft: () -> Unit = {},
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
-    keyboardVisible: Boolean = true
 ) {
     val gridState = rememberLazyGridState()
 
@@ -515,11 +518,11 @@ private fun AppGridLayout(
         state = gridState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = if (keyboardVisible) 16.dp else 8.dp,
-            vertical = if (keyboardVisible) 0.dp else 8.dp,
+            horizontal = 8.dp,
+            vertical = 8.dp,
         ),
-        horizontalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 32.dp),
-        verticalArrangement = Arrangement.spacedBy(if (keyboardVisible) 16.dp else 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         items(displayedApps.size) { index ->
             val app = displayedApps[index]
@@ -530,7 +533,6 @@ private fun AppGridLayout(
 
             AppGridItem(
                 app = app,
-                keyboardVisible = keyboardVisible,
                 focusRequester = itemFocusRequester,
                 onClick = { onAppClick(app) },
                 onLongClick = { onAppLongClick(app) },

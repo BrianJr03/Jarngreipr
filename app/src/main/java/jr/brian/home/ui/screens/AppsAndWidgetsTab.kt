@@ -78,6 +78,7 @@ import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.WidgetItem
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -398,7 +399,7 @@ fun AppsAndWidgetsTab(
         val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
-        jr.brian.home.ui.components.dialog.HomeTabSelectionDialog(
+        HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
             allApps = allApps,

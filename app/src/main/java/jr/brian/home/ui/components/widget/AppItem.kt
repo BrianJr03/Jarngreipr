@@ -85,8 +85,6 @@ fun AppItem(
     }
 
     if (showOptionsDialog) {
-        val isAppHidden = appVisibilityManager.isAppHidden(pageIndex, app.packageName)
-
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
