@@ -1,5 +1,8 @@
 package jr.brian.home.ui.components.apps
 
+import android.content.Context
+import android.hardware.display.DisplayManager
+import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -13,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -24,10 +28,12 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.AlignmentGuide
 import jr.brian.home.model.AlignmentState
@@ -35,7 +41,14 @@ import jr.brian.home.model.AppInfo
 import jr.brian.home.model.AppPosition
 import jr.brian.home.model.DistanceMeasurement
 import jr.brian.home.model.GuideType
+import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.theme.AlignmentGuideColor
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -50,7 +63,13 @@ fun FreePositionedAppsLayout(
     pageIndex: Int = 0,
     isDragLocked: Boolean = false
 ) {
+    val context = LocalContext.current
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    val widgetPageAppManager = LocalWidgetPageAppManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+
     var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
     var focusedIndex by remember(pageIndex) { mutableIntStateOf(0) }
     val focusRequesters = remember(pageIndex, apps.size) {
@@ -58,6 +77,16 @@ fun FreePositionedAppsLayout(
     }
     // Each page should have its own scroll state
     val scrollState = remember(pageIndex) { ScrollState(0) }
+
+    // Dialog state
+    var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
+    var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
+
+    val hasExternalDisplay = remember {
+        val displayManager =
+            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        displayManager.displays.size > 1
+    }
 
     // Get positions directly without remember to allow reactivity to position changes
     // The SnapshotStateMap in AppPositionManager will trigger recomposition when needed
@@ -325,6 +354,12 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = { onAppClick(app) },
+                    onLongClick = {
+                        if (isDragLocked) {
+                            selectedApp = app
+                            showOptionsDialog = true
+                        }
+                    },
                     onFocusChanged = {
                         focusedIndex = index
                     },
@@ -332,6 +367,68 @@ fun FreePositionedAppsLayout(
                 )
             }
         }
+    }
+
+    if (showOptionsDialog && selectedApp != null) {
+        val app = selectedApp!!
+        val isAppHidden = appVisibilityManager.isAppHidden(pageIndex, app.packageName)
+        val currentPosition = appPositionManager.getPosition(pageIndex, app.packageName)
+        val currentIconSize = currentPosition?.iconSize ?: 64f
+
+        AppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                app.packageName
+            ),
+            onDismiss = {
+                showOptionsDialog = false
+                selectedApp = null
+            },
+            onRemove = {
+                scope.launch {
+                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
+                    appPositionManager.removePosition(pageIndex, app.packageName)
+                }
+                showOptionsDialog = false
+                selectedApp = null
+            },
+            onAppInfoClick = {
+                openAppInfo(context, app.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    app.packageName,
+                    preference
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay,
+            currentIconSize = currentIconSize,
+            onIconSizeChange = { newSize ->
+                appPositionManager.savePosition(
+                    pageIndex,
+                    AppPosition(
+                        packageName = app.packageName,
+                        x = currentPosition?.x ?: 0f,
+                        y = currentPosition?.y ?: 0f,
+                        iconSize = newSize
+                    )
+                )
+            },
+            showResizeOption = true,
+            isAppHidden = isAppHidden,
+            onToggleVisibility = {
+                scope.launch {
+                    if (isAppHidden) {
+                        appVisibilityManager.showApp(pageIndex, app.packageName)
+                    } else {
+                        appVisibilityManager.hideApp(pageIndex, app.packageName)
+                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
+                    }
+                }
+                showOptionsDialog = false
+                selectedApp = null
+            }
+        )
     }
 }
 
