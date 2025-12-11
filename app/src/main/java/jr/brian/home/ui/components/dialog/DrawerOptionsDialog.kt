@@ -1,5 +1,10 @@
 package jr.brian.home.ui.components.dialog
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,12 +23,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,7 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -49,7 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.components.wallpaper.WallpaperOptionButton
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -62,12 +71,23 @@ import jr.brian.home.util.MediaPickerLauncher
 @Composable
 fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
+    onPowerClick: () -> Unit,
+    onTabsClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onQuickDeleteClick: () -> Unit
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
+    var isWallpaperExpanded by remember { mutableStateOf(false) }
     val mediaPickerLauncher = MediaPickerLauncher(
-        onResult = { onDismiss() }
+        onResult = {
+            isWallpaperExpanded = false
+            onDismiss()
+        }
     )
 
     Dialog(
@@ -94,19 +114,95 @@ fun DrawerOptionsDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.drawer_options_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.drawer_options_title),
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.drawer_options_close),
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Header Visibility Toggle
+                if (!isHeaderVisible) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        QuickAccessIconButton(
+                            icon = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.keyboard_label_settings),
+                            onClick = {
+                                onSettingsClick()
+                                onDismiss()
+                            }
+                        )
+
+                        if (isQuickDeleteVisible) {
+                            QuickAccessIconButton(
+                                icon = Icons.Default.FolderOpen,
+                                contentDescription = stringResource(R.string.header_folder_options),
+                                onClick = {
+                                    onQuickDeleteClick()
+                                    onDismiss()
+                                }
+                            )
+                        }
+
+                        QuickAccessIconButton(
+                            icon = Icons.Default.Home,
+                            contentDescription = stringResource(R.string.drawer_options_tabs),
+                            onClick = {
+                                onTabsClick()
+                                onDismiss()
+                            }
+                        )
+
+                        if (isPowerButtonVisible) {
+                            QuickAccessIconButton(
+                                icon = Icons.Default.PowerSettingsNew,
+                                contentDescription = stringResource(R.string.header_power_button),
+                                onClick = {
+                                    onPowerClick()
+                                    onDismiss()
+                                }
+                            )
+                        }
+
+                        QuickAccessIconButton(
+                            icon = Icons.Default.Menu,
+                            contentDescription = stringResource(R.string.drawer_options_menu),
+                            onClick = {
+                                onMenuClick()
+                                onDismiss()
+                            }
+                        )
+                    }
+                }
+
                 DrawerOptionCard(
                     title = if (isHeaderVisible) {
                         stringResource(R.string.drawer_options_hide_header)
@@ -121,60 +217,75 @@ fun DrawerOptionsDialog(
                     }
                 )
 
-                // Wallpaper Options
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_wallpaper_default),
-                    description = stringResource(R.string.drawer_options_wallpaper_default_description),
-                    icon = Icons.Default.Wallpaper,
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.NONE,
-                    onClick = {
-                        wallpaperManager.clearWallpaper()
-                        onDismiss()
-                    }
-                )
+                AnimatedVisibility(
+                    visible = !isWallpaperExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    DrawerOptionCard(
+                        title = stringResource(R.string.settings_wallpaper_title),
+                        description = stringResource(R.string.settings_wallpaper_description),
+                        icon = Icons.Default.Wallpaper,
+                        onClick = {
+                            isWallpaperExpanded = true
+                        }
+                    )
+                }
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_wallpaper_transparent),
-                    description = stringResource(R.string.drawer_options_wallpaper_system_description),
-                    icon = Icons.Default.Wallpaper,
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
-                    onClick = {
-                        wallpaperManager.setTransparent()
-                        onDismiss()
-                    }
-                )
+                AnimatedVisibility(
+                    visible = isWallpaperExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        WallpaperOptionButton(
+                            text = stringResource(R.string.settings_wallpaper_default),
+                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.NONE,
+                            onClick = {
+                                wallpaperManager.clearWallpaper()
+                                isWallpaperExpanded = false
+                                onDismiss()
+                            }
+                        )
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_wallpaper_image_picker),
-                    description = stringResource(R.string.drawer_options_wallpaper_image_description),
-                    icon = Icons.Default.Image,
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.IMAGE,
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/*"))
-                    }
-                )
+                        WallpaperOptionButton(
+                            text = stringResource(R.string.settings_wallpaper_transparent),
+                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
+                            onClick = {
+                                wallpaperManager.setTransparent()
+                                isWallpaperExpanded = false
+                                onDismiss()
+                            }
+                        )
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_wallpaper_gif_picker),
-                    description = stringResource(R.string.drawer_options_wallpaper_gif_description),
-                    icon = Icons.Default.Image,
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.GIF,
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/gif"))
-                    }
-                )
+                        WallpaperOptionButton(
+                            text = stringResource(R.string.settings_wallpaper_image_picker),
+                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.IMAGE,
+                            onClick = {
+                                mediaPickerLauncher.launch(arrayOf("image/*"))
+                            }
+                        )
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_wallpaper_video_picker),
-                    description = stringResource(R.string.drawer_options_wallpaper_video_description),
-                    icon = Icons.Default.Videocam,
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.VIDEO,
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("video/*"))
-                    }
-                )
+                        WallpaperOptionButton(
+                            text = stringResource(R.string.settings_wallpaper_gif_picker),
+                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.GIF,
+                            onClick = {
+                                mediaPickerLauncher.launch(arrayOf("image/gif"))
+                            }
+                        )
 
-                CancelButton(onClick = onDismiss)
+                        WallpaperOptionButton(
+                            text = stringResource(R.string.settings_wallpaper_video_picker),
+                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.VIDEO,
+                            onClick = {
+                                mediaPickerLauncher.launch(arrayOf("video/*"))
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -212,6 +323,7 @@ private fun DrawerOptionCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = 8.dp)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -283,7 +395,11 @@ private fun DrawerOptionCard(
 }
 
 @Composable
-private fun CancelButton(onClick: () -> Unit) {
+private fun QuickAccessIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
     var isFocused by remember { mutableStateOf(false) }
 
     val gradient = Brush.linearGradient(
@@ -294,41 +410,40 @@ private fun CancelButton(onClick: () -> Unit) {
             )
         } else {
             listOf(
-                OledCardLightColor.copy(alpha = 0.8f),
-                OledCardColor.copy(alpha = 0.8f)
+                OledCardLightColor.copy(alpha = 0.6f),
+                OledCardColor.copy(alpha = 0.6f)
             )
         }
     )
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .size(64.dp)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = gradient,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = 2.dp,
+                width = if (isFocused) 2.dp else 1.dp,
                 color = if (isFocused) {
-                    Color.White.copy(alpha = 0.9f)
+                    Color.White.copy(alpha = 0.8f)
                 } else {
-                    Color.White.copy(alpha = 0.4f)
+                    ThemePrimaryColor.copy(alpha = 0.4f)
                 },
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             )
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
-            .focusable()
-            .padding(16.dp),
+            .focusable(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = stringResource(R.string.drawer_options_close),
-            color = Color.White,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(32.dp)
         )
     }
 }

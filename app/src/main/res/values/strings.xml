@@ -13,8 +13,8 @@
     <string name="keyboard_button_backspace">Backspace</string>
     <string name="keyboard_label_space">Space</string>
     <string name="keyboard_label_clear">Clear</string>
-    <string name="keyboard_label_search">Search…</string>
-    <string name="keyboard_label_settings">Settings…</string>
+    <string name="keyboard_label_search">Search</string>
+    <string name="keyboard_label_settings">Settings</string>
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
 
@@ -30,6 +30,8 @@
     <string name="drawer_options_show_header">Show Header</string>
     <string name="drawer_options_hide_header">Hide Header</string>
     <string name="drawer_options_header_description">Toggle header bar visibility</string>
+    <string name="drawer_options_tabs">Tabs</string>
+    <string name="drawer_options_menu">Menu</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
     <string name="drawer_options_wallpaper_default_description">Use default gradient background</string>
     <string name="drawer_options_wallpaper_system_description">Show system wallpaper</string>
@@ -331,7 +333,7 @@
 
     <!-- Header Icons -->
     <string name="header_folder_options">Options</string>
-    <string name="header_power_button">Power Button</string>
+    <string name="header_power_button">Power</string>
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
