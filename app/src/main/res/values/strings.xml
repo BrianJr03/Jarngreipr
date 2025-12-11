@@ -27,9 +27,11 @@
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
     <string name="drawer_options_header_section">Header</string>
-    <string name="drawer_options_show_header">Show Header</string>
-    <string name="drawer_options_hide_header">Hide Header</string>
+    <string name="drawer_options_show_header">Show Tab Header</string>
+    <string name="drawer_options_hide_header">Hide Tab Header</string>
     <string name="drawer_options_header_description">Toggle header bar visibility</string>
+    <string name="settings_header_visibility_title">Show Tab Header</string>
+    <string name="settings_header_visibility_description">Toggle header bar visibility on home tabs</string>
     <string name="drawer_options_tabs">Tabs</string>
     <string name="drawer_options_menu">Menu</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
