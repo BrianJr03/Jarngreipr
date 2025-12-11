@@ -73,7 +73,6 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -84,7 +83,6 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
@@ -267,8 +265,6 @@ fun AppsTab(
         )
     }
 
-    val wallpaperManager = LocalWallpaperManager.current
-
     Box(
         modifier =
             Modifier
@@ -282,12 +278,6 @@ fun AppsTab(
                     )
                 },
     ) {
-        WallpaperDisplay(
-            wallpaperUri = wallpaperManager.getWallpaperUri(),
-            wallpaperType = wallpaperManager.getWallpaperType(),
-            modifier = Modifier.fillMaxSize()
-        )
-
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
