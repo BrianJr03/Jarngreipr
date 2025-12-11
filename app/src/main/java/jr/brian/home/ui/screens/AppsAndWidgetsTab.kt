@@ -5,11 +5,15 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +57,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,12 +71,14 @@ import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
+import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.WidgetItem
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -119,6 +126,8 @@ fun AppsAndWidgetsTab(
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
     var showFolderOptionsDialog by remember { mutableStateOf(false) }
+    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -134,6 +143,7 @@ fun AppsAndWidgetsTab(
 
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
 
     val settingsIconFocusRequester = remember { FocusRequester() }
 
@@ -189,6 +199,13 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        showDrawerOptionsDialog = true
+                    }
+                )
+            }
     ) {
         WallpaperDisplay(
             wallpaperUri = wallpaperManager.getWallpaperUri(),
@@ -221,30 +238,36 @@ fun AppsAndWidgetsTab(
                         viewModel.toggleEditMode(pageIndex)
                     }
                 } else if (pagerState != null) {
-                    ScreenHeaderRow(
-                        totalPages = totalPages,
-                        pagerState = pagerState,
-                        powerViewModel = powerViewModel,
-                        showPowerButton = isPowerButtonVisible,
-                        leadingIcon = Icons.Default.Settings,
-                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                        onLeadingIconClick = onSettingsClick,
-                        leadingIconFocusRequester = settingsIconFocusRequester,
-                        trailingIcon = Icons.Default.Menu,
-                        trailingIconContentDescription = null,
-                        onTrailingIconClick = { showAddOptionsDialog = true },
-                        trailingIconFocusRequester = addWidgetIconFocusRequester,
-                        onNavigateToGrid = {},
-                        onNavigateFromGrid = {
-                            addWidgetIconFocusRequester.requestFocus()
-                        },
-                        onFolderClick = onShowBottomSheet,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                        onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor,
-                        allApps = allApps,
-                        onNavigateToSearch = onNavigateToSearch
-                    )
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = slideInVertically(initialOffsetY = { -it }),
+                        exit = slideOutVertically(targetOffsetY = { -it })
+                    ) {
+                        ScreenHeaderRow(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            powerViewModel = powerViewModel,
+                            showPowerButton = isPowerButtonVisible,
+                            leadingIcon = Icons.Default.Settings,
+                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                            onLeadingIconClick = onSettingsClick,
+                            leadingIconFocusRequester = settingsIconFocusRequester,
+                            trailingIcon = Icons.Default.Menu,
+                            trailingIconContentDescription = null,
+                            onTrailingIconClick = { showAddOptionsDialog = true },
+                            trailingIconFocusRequester = addWidgetIconFocusRequester,
+                            onNavigateToGrid = {},
+                            onNavigateFromGrid = {
+                                addWidgetIconFocusRequester.requestFocus()
+                            },
+                            onFolderClick = onShowBottomSheet,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            onDeletePage = onDeletePage,
+                            pageIndicatorBorderColor = pageIndicatorBorderColor,
+                            allApps = allApps,
+                            onNavigateToSearch = onNavigateToSearch
+                        )
+                    }
                 }
 
                 val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
@@ -367,6 +390,50 @@ fun AppsAndWidgetsTab(
             }
             showWidgetPicker = false
         }
+    }
+
+    if (showHomeTabDialog) {
+        val homeTabManager = jr.brian.home.ui.theme.managers.LocalHomeTabManager.current
+        val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+        val pageCountManager = jr.brian.home.ui.theme.managers.LocalPageCountManager.current
+        val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
+        val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+
+        HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            allApps = allApps,
+            onTabSelected = { index ->
+                homeTabManager.setHomeTabIndex(index)
+            },
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex ->
+                onDeletePage(pageIndex)
+            },
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
+        )
+    }
+
+    if (showDrawerOptionsDialog) {
+        DrawerOptionsDialog(
+            onDismiss = { showDrawerOptionsDialog = false },
+            onPowerClick = {
+                powerViewModel?.togglePower()
+            },
+            onTabsClick = {
+                showHomeTabDialog = true
+            },
+            onMenuClick = {
+                showAddOptionsDialog = true
+            },
+            onSettingsClick = onSettingsClick,
+            onQuickDeleteClick = onShowBottomSheet
+        )
     }
 }
 

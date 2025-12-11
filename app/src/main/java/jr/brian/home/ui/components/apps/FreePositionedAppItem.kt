@@ -3,6 +3,7 @@ package jr.brian.home.ui.components.apps
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -100,12 +101,8 @@ fun FreePositionedAppItem(
                         }
                     )
                     .combinedClickable(
-                        onClick = {
-                            onClick()
-                        },
-                        onLongClick = {
-                            onLongClick()
-                        },
+                        onClick = onClick,
+                        onLongClick = onLongClick
                     )
             )
 

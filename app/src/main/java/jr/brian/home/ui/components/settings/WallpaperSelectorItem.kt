@@ -1,8 +1,5 @@
 package jr.brian.home.ui.components.settings
 
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -41,7 +38,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,8 +52,7 @@ import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.WallpaperType
-import jr.brian.home.util.WallpaperUtils
-import java.io.File
+import jr.brian.home.util.MediaPickerLauncher
 
 @Composable
 fun WallpaperSelectorItem(
@@ -66,45 +61,11 @@ fun WallpaperSelectorItem(
     onExpandChanged: (Boolean) -> Unit = {}
 ) {
     val wallpaperManager = LocalWallpaperManager.current
-    val context = LocalContext.current
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
-
-    val mediaPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let {
-            val detectedType = WallpaperUtils.detectWallpaperType(context, it)
-            try {
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                context.contentResolver.takePersistableUriPermission(it, flags)
-                wallpaperManager.setWallpaper(it.toString(), detectedType)
-            } catch (_: SecurityException) {
-                try {
-                    val inputStream = context.contentResolver.openInputStream(it)
-                    val extension = when (detectedType) {
-                        WallpaperType.GIF -> "gif"
-                        WallpaperType.VIDEO -> "mp4"
-                        else -> "jpg"
-                    }
-                    val fileName = "wallpaper_${System.currentTimeMillis()}.$extension"
-                    val outputFile = File(context.filesDir, fileName)
-                    inputStream?.use { input ->
-                        outputFile.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    wallpaperManager.setWallpaper(
-                        "file://${outputFile.absolutePath}",
-                        detectedType
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-        onExpandChanged(false)
-    }
+    val mediaPickerLauncher = MediaPickerLauncher(
+        onResult = { onExpandChanged(false) }
+    )
 
     LaunchedEffect(isExpanded) {
         if (!isExpanded) {

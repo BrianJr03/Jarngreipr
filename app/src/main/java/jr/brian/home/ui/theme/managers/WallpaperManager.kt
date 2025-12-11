@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
+import androidx.core.net.toUri
 
 private const val PREFS_NAME = "launcher_prefs"
 private const val KEY_WALLPAPER = "selected_wallpaper"
@@ -40,7 +41,23 @@ class WallpaperManager(
             WallpaperType.NONE
         }
 
+        if (uri != null && type != WallpaperType.NONE && type != WallpaperType.TRANSPARENT) {
+            if (!isUriAccessible(uri)) {
+                clearWallpaper()
+                return WallpaperInfo(null, WallpaperType.NONE)
+            }
+        }
+
         return WallpaperInfo(uri, type)
+    }
+
+    private fun isUriAccessible(uriString: String): Boolean {
+        return try {
+            val uri = uriString.toUri()
+            context.contentResolver.openInputStream(uri)?.use { true } ?: false
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun setWallpaper(uri: String?, type: WallpaperType) {
@@ -62,6 +79,14 @@ class WallpaperManager(
     }
 
     fun clearWallpaper() {
+        try {
+            val wallpaperDir = java.io.File(context.filesDir, "wallpapers")
+            if (wallpaperDir.exists()) {
+                wallpaperDir.listFiles()?.forEach { it.delete() }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         setWallpaper(null, WallpaperType.NONE)
     }
 
