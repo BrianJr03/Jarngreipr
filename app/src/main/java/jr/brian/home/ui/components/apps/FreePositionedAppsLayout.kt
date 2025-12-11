@@ -412,15 +412,10 @@ fun FreePositionedAppsLayout(
                 )
             },
             showResizeOption = true,
-            isAppHidden = isAppHidden,
-            onToggleVisibility = {
+            onHideApp = {
                 scope.launch {
-                    if (isAppHidden) {
-                        appVisibilityManager.showApp(pageIndex, app.packageName)
-                    } else {
-                        appVisibilityManager.hideApp(pageIndex, app.packageName)
-                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
-                    }
+                    appVisibilityManager.hideApp(pageIndex, app.packageName)
+                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
                 showOptionsDialog = false
                 selectedApp = null

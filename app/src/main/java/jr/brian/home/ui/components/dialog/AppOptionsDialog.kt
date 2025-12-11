@@ -52,8 +52,7 @@ fun AppOptionsDialog(
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     showResizeOption: Boolean = false,
-    isAppHidden: Boolean = false,
-    onToggleVisibility: () -> Unit = {}
+    onHideApp: () -> Unit = {}
 ) {
     AlertDialog(
         modifier = Modifier.fillMaxSize(),
@@ -124,8 +123,7 @@ fun AppOptionsDialog(
                     app = if (showResizeOption) app else null,
                     currentIconSize = currentIconSize,
                     onIconSizeChange = onIconSizeChange,
-                    isAppHidden = isAppHidden,
-                    onToggleVisibility = onToggleVisibility
+                    onToggleVisibility = onHideApp
                 )
 
                 Card(
