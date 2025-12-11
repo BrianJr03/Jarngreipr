@@ -2,7 +2,6 @@ package jr.brian.home.ui.components.apps
 
 import android.content.Context
 import android.hardware.display.DisplayManager
-import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -33,7 +32,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.AlignmentGuide
 import jr.brian.home.model.AlignmentState
@@ -46,7 +44,6 @@ import jr.brian.home.ui.theme.AlignmentGuideColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 import kotlin.math.abs
