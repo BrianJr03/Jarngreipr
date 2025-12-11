@@ -182,7 +182,6 @@ fun AppsTab(
                     )
                 }
             },
-            isAppHidden = isAppHidden,
             onToggleVisibility = {
                 if (isAppHidden) {
                     appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
