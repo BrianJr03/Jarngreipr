@@ -129,6 +129,7 @@ fun AppsTab(
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -192,9 +193,47 @@ fun AppsTab(
         )
     }
 
+    if (showHomeTabDialog) {
+        val homeTabManager = jr.brian.home.ui.theme.managers.LocalHomeTabManager.current
+        val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+        val pageCountManager = jr.brian.home.ui.theme.managers.LocalPageCountManager.current
+        val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
+        val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+
+        jr.brian.home.ui.components.dialog.HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            allApps = allApps,
+            onTabSelected = { index ->
+                homeTabManager.setHomeTabIndex(index)
+            },
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex ->
+                onDeletePage(pageIndex)
+            },
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
+        )
+    }
+
     if (showDrawerOptionsDialog) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false }
+            onDismiss = { showDrawerOptionsDialog = false },
+            onPowerClick = {
+                powerViewModel?.togglePower()
+            },
+            onTabsClick = {
+                showHomeTabDialog = true
+            },
+            onMenuClick = {
+                showAppDrawerOptionsDialog = true
+            },
+            onSettingsClick = onSettingsClick,
+            onQuickDeleteClick = onShowBottomSheet
         )
     }
 
