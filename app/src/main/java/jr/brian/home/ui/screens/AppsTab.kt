@@ -119,6 +119,10 @@ fun AppsTab(
     val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
     val isDragLocked = dragLockedByPage[pageIndex] ?: true
 
+    LaunchedEffect(pageIndex) {
+        appPositionManager.setDragLock(pageIndex, true)
+    }
+
     BackHandler(enabled = isPoweredOff) {}
 
     val hasExternalDisplay = remember {
