@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +71,7 @@ import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
+import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.components.widget.AppItem
@@ -122,6 +125,8 @@ fun AppsAndWidgetsTab(
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
     var showFolderOptionsDialog by remember { mutableStateOf(false) }
+    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -193,6 +198,13 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        showDrawerOptionsDialog = true
+                    }
+                )
+            }
     ) {
         WallpaperDisplay(
             wallpaperUri = wallpaperManager.getWallpaperUri(),
@@ -377,6 +389,50 @@ fun AppsAndWidgetsTab(
             }
             showWidgetPicker = false
         }
+    }
+
+    if (showHomeTabDialog) {
+        val homeTabManager = jr.brian.home.ui.theme.managers.LocalHomeTabManager.current
+        val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+        val pageCountManager = jr.brian.home.ui.theme.managers.LocalPageCountManager.current
+        val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
+        val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+
+        jr.brian.home.ui.components.dialog.HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            allApps = allApps,
+            onTabSelected = { index ->
+                homeTabManager.setHomeTabIndex(index)
+            },
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex ->
+                onDeletePage(pageIndex)
+            },
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch
+        )
+    }
+
+    if (showDrawerOptionsDialog) {
+        DrawerOptionsDialog(
+            onDismiss = { showDrawerOptionsDialog = false },
+            onPowerClick = {
+                powerViewModel?.togglePower()
+            },
+            onTabsClick = {
+                showHomeTabDialog = true
+            },
+            onMenuClick = {
+                showAddOptionsDialog = true
+            },
+            onSettingsClick = onSettingsClick,
+            onQuickDeleteClick = onShowBottomSheet
+        )
     }
 }
 
