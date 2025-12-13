@@ -17,8 +17,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,23 +69,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.WidgetInfo
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.WidgetItem
-import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -111,7 +109,6 @@ fun AppsAndWidgetsTab(
     onNavigateToSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val wallpaperManager = LocalWallpaperManager.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val columns = gridSettingsManager.columnCount
@@ -207,12 +204,6 @@ fun AppsAndWidgetsTab(
                 )
             }
     ) {
-        WallpaperDisplay(
-            wallpaperUri = wallpaperManager.getWallpaperUri(),
-            wallpaperType = wallpaperManager.getWallpaperType(),
-            modifier = Modifier.fillMaxSize()
-        )
-
         if (showWidgetPicker) {
             Box(
                 modifier = Modifier.fillMaxSize(),

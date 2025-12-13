@@ -296,7 +296,6 @@
     <string name="widget_page_no_apps">No Apps Selected</string>
     <string name="widget_page_no_apps_description">Tap the + button to add apps</string>
     <string name="widget_page_app_options_title">App Options</string>
-    <string name="widget_page_app_remove">Remove from Page</string>
     <string name="widget_page_app_remove_description">Remove this app from the page</string>
     <string name="widget_page_edit_mode">Edit Widgets</string>
     <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>

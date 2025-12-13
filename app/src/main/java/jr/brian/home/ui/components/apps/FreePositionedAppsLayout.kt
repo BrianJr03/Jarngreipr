@@ -380,14 +380,6 @@ fun FreePositionedAppsLayout(
                 showOptionsDialog = false
                 selectedApp = null
             },
-            onRemove = {
-                scope.launch {
-                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
-                    appPositionManager.removePosition(pageIndex, app.packageName)
-                }
-                showOptionsDialog = false
-                selectedApp = null
-            },
             onAppInfoClick = {
                 openAppInfo(context, app.packageName)
             },
