@@ -40,17 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import jr.brian.home.data.AppDisplayPreferenceManager
-import jr.brian.home.data.AppPositionManager
-import jr.brian.home.data.AppVisibilityManager
-import jr.brian.home.data.GridSettingsManager
-import jr.brian.home.data.HomeTabManager
-import jr.brian.home.data.IconPackManager
-import jr.brian.home.data.OnboardingManager
-import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageTypeManager
-import jr.brian.home.data.PowerSettingsManager
-import jr.brian.home.data.WidgetPageAppManager
+import jr.brian.home.data.ManagerContainer
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
@@ -81,39 +71,8 @@ import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @Inject
-    lateinit var appVisibilityManager: AppVisibilityManager
-
-    @Inject
-    lateinit var gridSettingsManager: GridSettingsManager
-
-    @Inject
-    lateinit var appDisplayPreferenceManager: AppDisplayPreferenceManager
-
-    @Inject
-    lateinit var powerSettingsManager: PowerSettingsManager
-
-    @Inject
-    lateinit var widgetPageAppManager: WidgetPageAppManager
-
-    @Inject
-    lateinit var homeTabManager: HomeTabManager
-
-    @Inject
-    lateinit var onboardingManager: OnboardingManager
-
-    @Inject
-    lateinit var appPositionManager: AppPositionManager
-
-    @Inject
-    lateinit var pageCountManager: PageCountManager
-
-    @Inject
-    lateinit var pageTypeManager: PageTypeManager
-
-    @Inject
-    lateinit var iconPackManager: IconPackManager
+    lateinit var managers: ManagerContainer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,17 +99,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 CompositionLocalProvider(
-                    LocalAppVisibilityManager provides appVisibilityManager,
-                    LocalGridSettingsManager provides gridSettingsManager,
-                    LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
-                    LocalPowerSettingsManager provides powerSettingsManager,
-                    LocalWidgetPageAppManager provides widgetPageAppManager,
-                    LocalHomeTabManager provides homeTabManager,
-                    LocalOnboardingManager provides onboardingManager,
-                    LocalAppPositionManager provides appPositionManager,
-                    LocalPageCountManager provides pageCountManager,
-                    LocalPageTypeManager provides pageTypeManager,
-                    LocalIconPackManager provides iconPackManager
+                    LocalAppVisibilityManager provides managers.appVisibilityManager,
+                    LocalGridSettingsManager provides managers.gridSettingsManager,
+                    LocalAppDisplayPreferenceManager provides managers.appDisplayPreferenceManager,
+                    LocalPowerSettingsManager provides managers.powerSettingsManager,
+                    LocalWidgetPageAppManager provides managers.widgetPageAppManager,
+                    LocalHomeTabManager provides managers.homeTabManager,
+                    LocalOnboardingManager provides managers.onboardingManager,
+                    LocalAppPositionManager provides managers.appPositionManager,
+                    LocalPageCountManager provides managers.pageCountManager,
+                    LocalPageTypeManager provides managers.pageTypeManager,
+                    LocalIconPackManager provides managers.iconPackManager
                 ) {
                     MainContent()
                 }
