@@ -2,6 +2,7 @@ package jr.brian.home.ui.components.apps
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -29,9 +30,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.AlignmentGuide
 import jr.brian.home.model.AlignmentState
@@ -66,6 +69,8 @@ fun FreePositionedAppsLayout(
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+
+    val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
 
     var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
     var focusedIndex by remember(pageIndex) { mutableIntStateOf(0) }
@@ -355,6 +360,12 @@ fun FreePositionedAppsLayout(
                         if (isDragLocked) {
                             selectedApp = app
                             showOptionsDialog = true
+                        } else {
+                            Toast.makeText(
+                                context,
+                                longPressToastMsg,
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     onFocusChanged = {

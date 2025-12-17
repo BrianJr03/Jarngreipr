@@ -359,6 +359,7 @@
     <string name="app_drawer_unlock_drag_mode">Unlock Positions</string>
     <string name="app_drawer_lock_drag_description">Prevent app icons from being dragged</string>
     <string name="app_drawer_unlock_drag_description">Allow app icons to be dragged</string>
+    <string name="app_drawer_long_press_app_msg">Lock app positions to enable long press.</string>
 
     <!-- Empty State Messages -->
     <string name="apps_tab_no_apps_title">No Apps</string>
