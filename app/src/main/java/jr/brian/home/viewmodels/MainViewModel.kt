@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.IconPackManager
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.state.AppDrawerUIState
 import kotlinx.coroutines.Dispatchers
@@ -17,8 +17,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val appVisibilityManager: AppVisibilityManager
+class MainViewModel @Inject constructor(
+    private val iconPackManager: IconPackManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AppDrawerUIState())
     val uiState = _uiState.asStateFlow()
@@ -59,12 +59,20 @@ class HomeViewModel @Inject constructor(
 
                         val category = appInfo.category
                         val label = resolveInfo.loadLabel(pm).toString()
+                        val activityName = resolveInfo.activityInfo.name
+
+                        val defaultIcon = resolveInfo.loadIcon(pm)
+
+                        val icon = iconPackManager.getIconForApp(packageName, activityName)
+                            ?: iconPackManager.applyIconMask(defaultIcon)
+                            ?: defaultIcon
 
                         AppInfo(
                             label = label,
                             packageName = packageName,
-                            icon = resolveInfo.loadIcon(pm),
+                            icon = icon,
                             category = category,
+                            activityName = activityName,
                         )
                     }.distinctBy { it.packageName }
                     .sortedBy { it.label.lowercase() }

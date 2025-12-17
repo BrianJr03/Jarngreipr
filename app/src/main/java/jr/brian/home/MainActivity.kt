@@ -28,34 +28,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import jr.brian.home.data.AppDisplayPreferenceManager
-import jr.brian.home.data.AppPositionManager
-import jr.brian.home.data.AppVisibilityManager
-import jr.brian.home.data.GridSettingsManager
-import jr.brian.home.data.HomeTabManager
-import jr.brian.home.data.OnboardingManager
-import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageTypeManager
-import jr.brian.home.data.PowerSettingsManager
-import jr.brian.home.data.WidgetPageAppManager
+import jr.brian.home.data.ManagerContainer
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
-import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
+import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -63,6 +54,7 @@ import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -71,7 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.Routes
-import jr.brian.home.viewmodels.HomeViewModel
+import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import javax.inject.Inject
@@ -79,36 +71,8 @@ import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @Inject
-    lateinit var appVisibilityManager: AppVisibilityManager
-
-    @Inject
-    lateinit var gridSettingsManager: GridSettingsManager
-
-    @Inject
-    lateinit var appDisplayPreferenceManager: AppDisplayPreferenceManager
-
-    @Inject
-    lateinit var powerSettingsManager: PowerSettingsManager
-
-    @Inject
-    lateinit var widgetPageAppManager: WidgetPageAppManager
-
-    @Inject
-    lateinit var homeTabManager: HomeTabManager
-
-    @Inject
-    lateinit var onboardingManager: OnboardingManager
-
-    @Inject
-    lateinit var appPositionManager: AppPositionManager
-
-    @Inject
-    lateinit var pageCountManager: PageCountManager
-
-    @Inject
-    lateinit var pageTypeManager: PageTypeManager
+    lateinit var managers: ManagerContainer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,16 +99,17 @@ class MainActivity : ComponentActivity() {
                 }
 
                 CompositionLocalProvider(
-                    LocalAppVisibilityManager provides appVisibilityManager,
-                    LocalGridSettingsManager provides gridSettingsManager,
-                    LocalAppDisplayPreferenceManager provides appDisplayPreferenceManager,
-                    LocalPowerSettingsManager provides powerSettingsManager,
-                    LocalWidgetPageAppManager provides widgetPageAppManager,
-                    LocalHomeTabManager provides homeTabManager,
-                    LocalOnboardingManager provides onboardingManager,
-                    LocalAppPositionManager provides appPositionManager,
-                    LocalPageCountManager provides pageCountManager,
-                    LocalPageTypeManager provides pageTypeManager
+                    LocalAppVisibilityManager provides managers.appVisibilityManager,
+                    LocalGridSettingsManager provides managers.gridSettingsManager,
+                    LocalAppDisplayPreferenceManager provides managers.appDisplayPreferenceManager,
+                    LocalPowerSettingsManager provides managers.powerSettingsManager,
+                    LocalWidgetPageAppManager provides managers.widgetPageAppManager,
+                    LocalHomeTabManager provides managers.homeTabManager,
+                    LocalOnboardingManager provides managers.onboardingManager,
+                    LocalAppPositionManager provides managers.appPositionManager,
+                    LocalPageCountManager provides managers.pageCountManager,
+                    LocalPageTypeManager provides managers.pageTypeManager,
+                    LocalIconPackManager provides managers.iconPackManager
                 ) {
                     MainContent()
                 }
@@ -158,18 +123,13 @@ private fun MainContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = rememberNavController()
-    val homeViewModel: HomeViewModel = viewModel()
+    val mainViewModel: MainViewModel = viewModel()
     val widgetViewModel: WidgetViewModel = viewModel()
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val homeTabManager = LocalHomeTabManager.current
-    val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-
-    val prefs = remember {
-        context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
-    }
-
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -184,7 +144,7 @@ private fun MainContent() {
     }
 
     LaunchedEffect(Unit) {
-        homeViewModel.loadAllApps(context)
+        mainViewModel.loadAllApps(context)
         widgetViewModel.initializeWidgetHost(context)
     }
 
@@ -195,7 +155,7 @@ private fun MainContent() {
                     Intent.ACTION_PACKAGE_ADDED,
                     Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
-                        homeViewModel.loadAllApps(context!!)
+                        mainViewModel.loadAllApps(context!!)
                     }
                 }
             }
@@ -233,7 +193,7 @@ private fun MainContent() {
                     var showBottomSheet by remember { mutableStateOf(false) }
 
                     LauncherPagerScreen(
-                        homeViewModel = homeViewModel,
+                        mainViewModel = mainViewModel,
                         widgetViewModel = widgetViewModel,
                         powerViewModel = powerViewModel,
                         onSettingsClick = {
@@ -277,6 +237,9 @@ private fun MainContent() {
                         },
                         onNavigateToCustomTheme = {
                             navController.navigate(Routes.CUSTOM_THEME)
+                        },
+                        onIconPackChanged = {
+                            mainViewModel.loadAllApps(context)
                         }
                     )
                 }
