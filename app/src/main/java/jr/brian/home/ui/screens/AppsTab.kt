@@ -1,7 +1,11 @@
 package jr.brian.home.ui.screens
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -103,7 +107,10 @@ fun AppsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    widgets: List<jr.brian.home.model.WidgetInfo> = emptyList(),
+    widgetViewModel: jr.brian.home.viewmodels.WidgetViewModel? = null,
+    onNavigateToWidgetResize: (jr.brian.home.model.WidgetInfo, Int) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -136,10 +143,50 @@ fun AppsTab(
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
+    var showWidgetPicker by remember { mutableStateOf(false) }
+    var widgetEditModeEnabled by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
+
+    val scope = rememberCoroutineScope()
+
+    // Widget picker launcher
+    val widgetPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data
+        val appWidgetId = data?.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            -1
+        ) ?: -1
+
+        if (appWidgetId != -1 && widgetViewModel != null) {
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
+
+            if (appWidgetInfo != null) {
+                val cellSize = 70
+                val widgetWidth =
+                    kotlin.math.ceil(appWidgetInfo.minWidth.toFloat() / cellSize).toInt()
+                        .coerceAtLeast(1)
+                val widgetHeight =
+                    kotlin.math.ceil(appWidgetInfo.minHeight.toFloat() / cellSize).toInt()
+                        .coerceAtLeast(1)
+
+                val widgetInfo = jr.brian.home.model.WidgetInfo(
+                    widgetId = appWidgetId,
+                    providerInfo = appWidgetInfo,
+                    pageIndex = pageIndex,
+                    width = widgetWidth,
+                    height = widgetHeight
+                )
+
+                widgetViewModel.addWidgetToPage(widgetInfo, pageIndex)
+            }
+        }
+    }
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
@@ -255,6 +302,13 @@ fun AppsTab(
                 appPositionManager.clearAllPositions(pageIndex)
             },
             isDragLocked = isDragLocked,
+            onAddWidget = {
+                showWidgetPicker = true
+            },
+            isEditModeActive = widgetEditModeEnabled,
+            onToggleEditMode = {
+                widgetEditModeEnabled = !widgetEditModeEnabled
+            },
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             }
@@ -268,6 +322,23 @@ fun AppsTab(
             pageIndex = pageIndex
         )
     }
+
+    if (showWidgetPicker) {
+        LaunchedEffect(Unit) {
+            if (widgetViewModel != null) {
+                val appWidgetId = widgetViewModel.allocateAppWidgetId()
+                if (appWidgetId != -1) {
+                    val pickIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK).apply {
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    }
+                    widgetPickerLauncher.launch(pickIntent)
+                }
+            }
+            showWidgetPicker = false
+        }
+    }
+
+    val wallpaperManager = LocalWallpaperManager.current
 
     Box(
         modifier =
@@ -369,7 +440,11 @@ fun AppsTab(
                 pageIndex = pageIndex,
                 pageIndicatorBorderColor = pageIndicatorBorderColor,
                 allApps = allApps,
-                onNavigateToSearch = onNavigateToSearch
+                onNavigateToSearch = onNavigateToSearch,
+                widgets = widgets,
+                widgetViewModel = widgetViewModel,
+                onNavigateToWidgetResize = onNavigateToWidgetResize,
+                widgetEditModeEnabled = widgetEditModeEnabled
             )
         }
     }
@@ -398,7 +473,11 @@ private fun AppSelectionContent(
     pageIndex: Int = 0,
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    widgets: List<jr.brian.home.model.WidgetInfo> = emptyList(),
+    widgetViewModel: jr.brian.home.viewmodels.WidgetViewModel? = null,
+    onNavigateToWidgetResize: (jr.brian.home.model.WidgetInfo, Int) -> Unit = { _, _ -> },
+    widgetEditModeEnabled: Boolean = false
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -460,6 +539,10 @@ private fun AppSelectionContent(
                 onAppClick = onAppClick,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
+                widgets = widgets,
+                widgetViewModel = widgetViewModel,
+                onNavigateToWidgetResize = onNavigateToWidgetResize,
+                widgetEditModeEnabled = widgetEditModeEnabled,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
