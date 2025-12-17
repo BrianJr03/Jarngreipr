@@ -4,7 +4,7 @@ import android.graphics.drawable.Drawable
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import io.mockk.mockk
-import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.IconPackManager
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.state.AppDrawerUIState
 import kotlinx.coroutines.Dispatchers
@@ -29,13 +29,13 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: HomeViewModel
-    private lateinit var mockAppVisibilityManager: AppVisibilityManager
+    private lateinit var iconPackManager: IconPackManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        mockAppVisibilityManager = mockk(relaxed = true)
-        viewModel = HomeViewModel(mockAppVisibilityManager)
+        iconPackManager = mockk(relaxed = true)
+        viewModel = HomeViewModel(iconPackManager)
     }
 
     @After
@@ -218,7 +218,7 @@ class HomeViewModelTest {
     @Test
     fun `ViewModel can be instantiated`() {
         // Given/When
-        val vm = HomeViewModel(mockAppVisibilityManager)
+        val vm = HomeViewModel(iconPackManager)
 
         // Then
         assertTrue(vm.uiState.value.allApps.isEmpty())
@@ -254,8 +254,8 @@ class HomeViewModelTest {
     @Test
     fun `multiple ViewModels can be created independently`() {
         // Given
-        val mockManager1 = mockk<AppVisibilityManager>(relaxed = true)
-        val mockManager2 = mockk<AppVisibilityManager>(relaxed = true)
+        val mockManager1 = mockk<IconPackManager>(relaxed = true)
+        val mockManager2 = mockk<IconPackManager>(relaxed = true)
 
         // When
         val vm1 = HomeViewModel(mockManager1)
