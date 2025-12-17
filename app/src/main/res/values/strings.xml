@@ -301,6 +301,7 @@
     <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
     <string name="widget_page_edit_mode_active">Edit Mode Active</string>
     <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>
+    <string name="widget_edit_tap_instruction">Tap a widget to edit</string>
 
     <!-- Clean Folders Screen -->
     <string name="clean_folders_title">Quick Delete</string>

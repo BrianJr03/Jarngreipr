@@ -32,6 +32,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -481,26 +483,39 @@ private fun WidgetEditModeHeaderCard(onClick: () -> Unit) {
             containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.widget_page_edit_mode_active),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
-            TextButton(
-                onClick = onClick,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.White
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.widget_page_edit_mode_exit))
+                Text(
+                    text = stringResource(R.string.widget_page_edit_mode_active),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                IconButton(
+                    onClick = onClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.widget_page_edit_mode_exit),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
+            Text(
+                text = stringResource(R.string.widget_edit_tap_instruction),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }
