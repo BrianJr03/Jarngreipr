@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class MainViewModel @Inject constructor(
     private val iconPackManager: IconPackManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AppDrawerUIState())

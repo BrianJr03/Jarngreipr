@@ -63,7 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.Routes
-import jr.brian.home.viewmodels.HomeViewModel
+import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import javax.inject.Inject
@@ -123,12 +123,12 @@ private fun MainContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = rememberNavController()
-    val homeViewModel: HomeViewModel = viewModel()
+    val mainViewModel: MainViewModel = viewModel()
     val widgetViewModel: WidgetViewModel = viewModel()
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val homeTabManager = LocalHomeTabManager.current
-    val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
     DisposableEffect(lifecycleOwner) {
@@ -144,7 +144,7 @@ private fun MainContent() {
     }
 
     LaunchedEffect(Unit) {
-        homeViewModel.loadAllApps(context)
+        mainViewModel.loadAllApps(context)
         widgetViewModel.initializeWidgetHost(context)
     }
 
@@ -155,7 +155,7 @@ private fun MainContent() {
                     Intent.ACTION_PACKAGE_ADDED,
                     Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
-                        homeViewModel.loadAllApps(context!!)
+                        mainViewModel.loadAllApps(context!!)
                     }
                 }
             }
@@ -193,7 +193,7 @@ private fun MainContent() {
                     var showBottomSheet by remember { mutableStateOf(false) }
 
                     LauncherPagerScreen(
-                        homeViewModel = homeViewModel,
+                        mainViewModel = mainViewModel,
                         widgetViewModel = widgetViewModel,
                         powerViewModel = powerViewModel,
                         onSettingsClick = {
@@ -239,7 +239,7 @@ private fun MainContent() {
                             navController.navigate(Routes.CUSTOM_THEME)
                         },
                         onIconPackChanged = {
-                            homeViewModel.loadAllApps(context)
+                            mainViewModel.loadAllApps(context)
                         }
                     )
                 }
