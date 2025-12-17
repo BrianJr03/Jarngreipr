@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.FolderManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -118,5 +119,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): PageTypeManager {
         return PageTypeManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFolderManager(
+        @ApplicationContext context: Context
+    ): FolderManager {
+        return FolderManager(context)
     }
 }

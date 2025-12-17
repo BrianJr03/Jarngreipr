@@ -43,6 +43,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.FolderManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.OnboardingManager
@@ -61,6 +62,7 @@ import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
@@ -110,6 +112,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var pageTypeManager: PageTypeManager
 
+    @Inject
+    lateinit var folderManager: FolderManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -144,7 +149,8 @@ class MainActivity : ComponentActivity() {
                     LocalOnboardingManager provides onboardingManager,
                     LocalAppPositionManager provides appPositionManager,
                     LocalPageCountManager provides pageCountManager,
-                    LocalPageTypeManager provides pageTypeManager
+                    LocalPageTypeManager provides pageTypeManager,
+                    LocalFolderManager provides folderManager
                 ) {
                     MainContent()
                 }

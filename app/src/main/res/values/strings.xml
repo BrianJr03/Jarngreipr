@@ -361,4 +361,18 @@
     <string name="widgets_tab_no_content_title">No Apps or Widgets</string>
     <string name="widgets_tab_no_content_description">This tab is empty. Tap the button below to add apps or widgets.</string>
     <string name="widgets_tab_add_button">Add</string>
+
+    <!-- Folder Strings -->
+    <string name="folder_default_name">Folder</string>
+    <string name="folder_edit_name">Edit Folder Name</string>
+    <string name="folder_name_hint">Folder name</string>
+    <string name="folder_save">Save</string>
+    <string name="folder_delete">Delete Folder</string>
+    <string name="folder_remove_app">Remove from Folder</string>
+    <string name="folder_open">Open</string>
+    <string name="folder_close">Close</string>
+    <string name="folder_apps_count">%1$d apps</string>
+    <string name="folder_empty">Empty folder</string>
+    <string name="folder_create_by_overlap">Overlap icons to create folder</string>
+    <string name="folder_drag_to_add">Drag app here to add</string>
 </resources>

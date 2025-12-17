@@ -29,26 +29,35 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.AlignmentGuide
 import jr.brian.home.model.AlignmentState
+import jr.brian.home.model.AppFolder
 import jr.brian.home.model.AppInfo
 import jr.brian.home.model.AppPosition
 import jr.brian.home.model.DistanceMeasurement
 import jr.brian.home.model.GuideType
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
+import jr.brian.home.ui.components.folder.FolderContentDialog
+import jr.brian.home.ui.components.folder.FolderIcon
+import jr.brian.home.ui.components.folder.FolderOptionsDialog
 import jr.brian.home.ui.theme.AlignmentGuideColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 @Composable
 fun FreePositionedAppsLayout(
@@ -66,18 +75,26 @@ fun FreePositionedAppsLayout(
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val folderManager = LocalFolderManager.current
 
     var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
     var focusedIndex by remember(pageIndex) { mutableIntStateOf(0) }
     val focusRequesters = remember(pageIndex, apps.size) {
         List(apps.size) { FocusRequester() }
     }
-    // Each page should have its own scroll state
     val scrollState = remember(pageIndex) { ScrollState(0) }
 
-    // Dialog state
     var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
     var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
+    var showFolderOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
+    var selectedFolderId by remember(pageIndex) { mutableStateOf<String?>(null) }
+    
+    val openFolderId by folderManager.openFolderId.collectAsStateWithLifecycle()
+    val folders = folderManager.getFolders(pageIndex)
+    
+    val appsNotInFolders = apps.filter { app ->
+        folderManager.isAppInAnyFolder(pageIndex, app.packageName) == null
+    }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -85,17 +102,18 @@ fun FreePositionedAppsLayout(
         displayManager.displays.size > 1
     }
 
-    // Get positions directly without remember to allow reactivity to position changes
-    // The SnapshotStateMap in AppPositionManager will trigger recomposition when needed
     val positions = appPositionManager.getPositions(pageIndex)
 
     var draggingAppIndex by remember(pageIndex) { mutableIntStateOf(-1) }
+    var draggingAppPackage by remember(pageIndex) { mutableStateOf<String?>(null) }
+    var draggingFolderId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var alignmentState by remember(pageIndex) { mutableStateOf(AlignmentState()) }
-    val snapThreshold = with(density) { 12.dp.toPx() } // Distance to trigger snapping
-    val borderPadding = with(density) { 4.dp.toPx() } // 4dp border constraint
+    var dragOverFolderId by remember(pageIndex) { mutableStateOf<String?>(null) }
+    
+    val snapThreshold = with(density) { 12.dp.toPx() }
+    val borderPadding = with(density) { 4.dp.toPx() }
+    val overlapThreshold = with(density) { 32.dp.toPx() }
 
-    // Calculate maxY and maxX on each composition based on current positions
-    // This ensures they're always accurate and reset when positions are cleared
     var maxY = 0f
     var maxX = 0f
 
@@ -113,10 +131,8 @@ fun FreePositionedAppsLayout(
                 containerSize = it
             }
     ) {
-        // Pre-calculate maxY to determine content height
-        // This is done before rendering so scroll area is correct
         var calculatedMaxY = 0f
-        apps.forEachIndexed { index, app ->
+        appsNotInFolders.forEachIndexed { index, app ->
             val position = positions[app.packageName]
             val defaultY = with(density) {
                 val columns = 4
@@ -130,6 +146,12 @@ fun FreePositionedAppsLayout(
             val iconSizePx = with(density) { iconSize.dp.toPx() }
             val y = position?.y ?: defaultY
             val bottom = y + iconSizePx
+            if (bottom > calculatedMaxY) calculatedMaxY = bottom
+        }
+        
+        folders.values.forEach { folder ->
+            val iconSizePx = with(density) { folder.iconSize.dp.toPx() }
+            val bottom = folder.y + iconSizePx + with(density) { 40.dp.toPx() }
             if (bottom > calculatedMaxY) calculatedMaxY = bottom
         }
 
@@ -190,10 +212,8 @@ fun FreePositionedAppsLayout(
                         strokeWidth = 2f
                     )
 
-                    // Draw end caps
                     val capSize = 8f
                     if (measurement.isHorizontal) {
-                        // Vertical caps for horizontal measurements
                         drawLine(
                             color = distanceColor,
                             start = Offset(measurement.startX, measurement.startY - capSize),
@@ -207,7 +227,6 @@ fun FreePositionedAppsLayout(
                             strokeWidth = 2f
                         )
                     } else {
-                        // Horizontal caps for vertical measurements
                         drawLine(
                             color = distanceColor,
                             start = Offset(measurement.startX - capSize, measurement.startY),
@@ -222,7 +241,6 @@ fun FreePositionedAppsLayout(
                         )
                     }
 
-                    // Draw distance text
                     val distanceText = "${measurement.distance.toInt()}dp"
                     val textX = (measurement.startX + measurement.endX) / 2
                     val textY = (measurement.startY + measurement.endY) / 2
@@ -236,13 +254,12 @@ fun FreePositionedAppsLayout(
                             setShadowLayer(4f, 0f, 0f, Color.Black.toArgb())
                         }
 
-                        // Draw background rectangle for better readability
                         val textBounds = android.graphics.Rect()
                         paint.getTextBounds(distanceText, 0, distanceText.length, textBounds)
                         val padding = 8f
 
                         val bgPaint = android.graphics.Paint().apply {
-                            color = Color(0xCC000000).toArgb() // Semi-transparent black
+                            color = Color(0xCC000000).toArgb()
                             style = android.graphics.Paint.Style.FILL
                         }
 
@@ -266,7 +283,36 @@ fun FreePositionedAppsLayout(
                 }
             }
 
-            apps.forEachIndexed { index, app ->
+            folders.values.forEach { folder ->
+                FolderIcon(
+                    folder = folder,
+                    apps = apps,
+                    keyboardVisible = keyboardVisible,
+                    offsetX = folder.x,
+                    offsetY = folder.y,
+                    onOffsetChanged = { x, y ->
+                        folderManager.updateFolderPosition(pageIndex, folder.id, x, y)
+                    },
+                    onClick = {
+                        folderManager.openFolder(folder.id)
+                    },
+                    onLongClick = {
+                        if (isDragLocked) {
+                            selectedFolderId = folder.id
+                            showFolderOptionsDialog = true
+                        }
+                    },
+                    isDraggingEnabled = !isDragLocked,
+                    onDragStart = {
+                        draggingFolderId = folder.id
+                    },
+                    onDragEnd = {
+                        draggingFolderId = null
+                    }
+                )
+            }
+
+            appsNotInFolders.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
                 val defaultX = with(density) {
                     val columns = 4
@@ -310,6 +356,56 @@ fun FreePositionedAppsLayout(
                                 ?: 64f
                         val iconSizePx = with(density) { currentIconSize.dp.toPx() }
 
+                        var potentialOverlapApp: String? = null
+                        var potentialOverlapFolder: String? = null
+                        
+                        appsNotInFolders.forEachIndexed { otherIndex, otherApp ->
+                            if (otherIndex != index) {
+                                val otherPos = positions[otherApp.packageName]
+                                val otherX = otherPos?.x ?: with(density) {
+                                    val columns = 4
+                                    val itemWidth = 80.dp.toPx()
+                                    val spacing = 32.dp.toPx()
+                                    val column = otherIndex % columns
+                                    val startPadding = max(8.dp.toPx(), borderPadding)
+                                    (startPadding + column * (itemWidth + spacing))
+                                }
+                                val otherY = otherPos?.y ?: with(density) {
+                                    val columns = 4
+                                    val itemHeight = 100.dp.toPx()
+                                    val spacing = 24.dp.toPx()
+                                    val row = otherIndex / columns
+                                    val topPadding = max(8.dp.toPx(), borderPadding)
+                                    (topPadding + row * (itemHeight + spacing))
+                                }
+                                val otherIconSize = otherPos?.iconSize ?: 64f
+                                val otherIconSizePx = with(density) { otherIconSize.dp.toPx() }
+
+                                val distance = calculateDistance(
+                                    x, y, iconSizePx,
+                                    otherX, otherY, otherIconSizePx
+                                )
+
+                                if (distance < overlapThreshold) {
+                                    potentialOverlapApp = otherApp.packageName
+                                }
+                            }
+                        }
+                        
+                        folders.values.forEach { folder ->
+                            val folderIconSizePx = with(density) { folder.iconSize.dp.toPx() }
+                            val distance = calculateDistance(
+                                x, y, iconSizePx,
+                                folder.x, folder.y, folderIconSizePx
+                            )
+                            
+                            if (distance < overlapThreshold) {
+                                potentialOverlapFolder = folder.id
+                            }
+                        }
+                        
+                        dragOverFolderId = potentialOverlapFolder
+
                         val alignment = calculateAlignmentGuides(
                             draggingIndex = index,
                             dragX = x,
@@ -317,10 +413,11 @@ fun FreePositionedAppsLayout(
                             iconSize = currentIconSize,
                             containerSize = containerSize,
                             snapThreshold = snapThreshold,
-                            apps = apps,
+                            apps = appsNotInFolders,
                             positions = positions,
                             density = density,
-                            borderPadding = borderPadding
+                            borderPadding = borderPadding,
+                            folders = folders.values.toList()
                         )
                         alignmentState = alignment
 
@@ -345,9 +442,56 @@ fun FreePositionedAppsLayout(
                     },
                     onDragStart = {
                         draggingAppIndex = index
+                        draggingAppPackage = app.packageName
                     },
                     onDragEnd = {
+                        if (draggingAppPackage != null) {
+                            val draggedApp = draggingAppPackage!!
+                            val draggedPos = positions[draggedApp]
+                            
+                            if (draggedPos != null) {
+                                var createdFolder = false
+                                
+                                if (dragOverFolderId != null) {
+                                    folderManager.addAppToFolder(pageIndex, dragOverFolderId!!, draggedApp)
+                                    appPositionManager.removePosition(pageIndex, draggedApp)
+                                    createdFolder = true
+                                } else {
+                                    appsNotInFolders.forEach { otherApp ->
+                                        if (otherApp.packageName != draggedApp) {
+                                            val otherPos = positions[otherApp.packageName]
+                                            if (otherPos != null) {
+                                                val distance = calculateDistance(
+                                                    draggedPos.x, draggedPos.y,
+                                                    with(density) { draggedPos.iconSize.dp.toPx() },
+                                                    otherPos.x, otherPos.y,
+                                                    with(density) { otherPos.iconSize.dp.toPx() }
+                                                )
+                                                
+                                                if (distance < overlapThreshold && !createdFolder) {
+                                                    val folderId = folderManager.createFolder(
+                                                        pageIndex = pageIndex,
+                                                        name = context.getString(R.string.folder_default_name),
+                                                        apps = listOf(otherApp.packageName, draggedApp),
+                                                        x = min(draggedPos.x, otherPos.x),
+                                                        y = min(draggedPos.y, otherPos.y),
+                                                        iconSize = max(draggedPos.iconSize, otherPos.iconSize)
+                                                    )
+                                                    
+                                                    appPositionManager.removePosition(pageIndex, draggedApp)
+                                                    appPositionManager.removePosition(pageIndex, otherApp.packageName)
+                                                    createdFolder = true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
                         draggingAppIndex = -1
+                        draggingAppPackage = null
+                        dragOverFolderId = null
                         alignmentState = AlignmentState()
                     },
                     onClick = { onAppClick(app) },
@@ -413,6 +557,140 @@ fun FreePositionedAppsLayout(
             }
         )
     }
+    
+    if (showFolderOptionsDialog && selectedFolderId != null) {
+        val folder = folderManager.getFolder(pageIndex, selectedFolderId!!)
+        if (folder != null) {
+            FolderOptionsDialog(
+                onDismiss = {
+                    showFolderOptionsDialog = false
+                    selectedFolderId = null
+                },
+                onEditName = {
+                    folderManager.openFolder(folder.id)
+                },
+                onDeleteFolder = {
+                    folder.apps.forEach { packageName ->
+                        val defaultPos = with(density) {
+                            val columns = 4
+                            val itemWidth = 80.dp.toPx()
+                            val spacing = 32.dp.toPx()
+                            val itemHeight = 100.dp.toPx()
+                            val vSpacing = 24.dp.toPx()
+                            val index = apps.indexOfFirst { it.packageName == packageName }
+                            val column = index % columns
+                            val row = index / columns
+                            val startPadding = max(8.dp.toPx(), borderPadding)
+                            val topPadding = max(8.dp.toPx(), borderPadding)
+                            AppPosition(
+                                packageName = packageName,
+                                x = startPadding + column * (itemWidth + spacing),
+                                y = topPadding + row * (itemHeight + vSpacing),
+                                iconSize = 64f
+                            )
+                        }
+                        appPositionManager.savePosition(pageIndex, defaultPos)
+                    }
+                    folderManager.deleteFolder(pageIndex, folder.id)
+                },
+                onResizeIcon = {
+                    val currentSize = folder.iconSize
+                    val newSize = when {
+                        currentSize < 64f -> 64f
+                        currentSize < 80f -> 80f
+                        currentSize < 96f -> 96f
+                        else -> 48f
+                    }
+                    folderManager.updateFolderSize(pageIndex, folder.id, newSize)
+                }
+            )
+        }
+    }
+    
+    if (openFolderId != null) {
+        val folder = folderManager.getFolder(pageIndex, openFolderId!!)
+        if (folder != null) {
+            FolderContentDialog(
+                folder = folder,
+                apps = apps,
+                onDismiss = {
+                    folderManager.closeFolder()
+                },
+                onAppClick = { app ->
+                    folderManager.closeFolder()
+                    onAppClick(app)
+                },
+                onAppRemove = { packageName ->
+                    folderManager.removeAppFromFolder(pageIndex, folder.id, packageName)
+                    val defaultPos = with(density) {
+                        val columns = 4
+                        val itemWidth = 80.dp.toPx()
+                        val spacing = 32.dp.toPx()
+                        val itemHeight = 100.dp.toPx()
+                        val vSpacing = 24.dp.toPx()
+                        val index = apps.indexOfFirst { it.packageName == packageName }
+                        val column = index % columns
+                        val row = index / columns
+                        val startPadding = max(8.dp.toPx(), borderPadding)
+                        val topPadding = max(8.dp.toPx(), borderPadding)
+                        AppPosition(
+                            packageName = packageName,
+                            x = startPadding + column * (itemWidth + spacing),
+                            y = topPadding + row * (itemHeight + vSpacing),
+                            iconSize = 64f
+                        )
+                    }
+                    appPositionManager.savePosition(pageIndex, defaultPos)
+                },
+                onFolderNameChange = { newName ->
+                    folderManager.updateFolderName(pageIndex, folder.id, newName)
+                },
+                onDeleteFolder = {
+                    folder.apps.forEach { packageName ->
+                        val defaultPos = with(density) {
+                            val columns = 4
+                            val itemWidth = 80.dp.toPx()
+                            val spacing = 32.dp.toPx()
+                            val itemHeight = 100.dp.toPx()
+                            val vSpacing = 24.dp.toPx()
+                            val index = apps.indexOfFirst { it.packageName == packageName }
+                            val column = index % columns
+                            val row = index / columns
+                            val startPadding = max(8.dp.toPx(), borderPadding)
+                            val topPadding = max(8.dp.toPx(), borderPadding)
+                            AppPosition(
+                                packageName = packageName,
+                                x = startPadding + column * (itemWidth + spacing),
+                                y = topPadding + row * (itemHeight + vSpacing),
+                                iconSize = 64f
+                            )
+                        }
+                        appPositionManager.savePosition(pageIndex, defaultPos)
+                    }
+                    folderManager.deleteFolder(pageIndex, folder.id)
+                }
+            )
+        }
+    }
+}
+
+private fun calculateDistance(
+    x1: Float,
+    y1: Float,
+    size1: Float,
+    x2: Float,
+    y2: Float,
+    size2: Float
+): Float {
+    val centerX1 = x1 + size1 / 2
+    val centerY1 = y1 + size1 / 2
+    val centerX2 = x2 + size2 / 2
+    val centerY2 = y2 + size2 / 2
+
+    val dx = centerX1 - centerX2
+    val dy = centerY1 - centerY2
+
+    return sqrt(dx * dx + dy * dy)
 }
 
 private fun calculateAlignmentGuides(
@@ -425,7 +703,8 @@ private fun calculateAlignmentGuides(
     snapThreshold: Float,
     containerSize: IntSize,
     positions: Map<String, AppPosition>,
-    borderPadding: Float
+    borderPadding: Float,
+    folders: List<AppFolder> = emptyList()
 ): AlignmentState {
     if (draggingIndex < 0 || containerSize.width == 0) {
         return AlignmentState()
@@ -445,10 +724,8 @@ private fun calculateAlignmentGuides(
     val screenCenterX = containerSize.width / 2f
     val screenCenterY = containerSize.height / 2f
 
-    // Distance threshold for showing measurements (in pixels)
     val distanceThreshold = with(density) { 200.dp.toPx() }
 
-    // Check alignment with screen center
     if (abs(draggingCenterX - screenCenterX) < snapThreshold) {
         guides.add(AlignmentGuide(GuideType.VERTICAL, screenCenterX))
         snappedX = screenCenterX - iconSizePx / 2
@@ -459,12 +736,10 @@ private fun calculateAlignmentGuides(
         snappedY = screenCenterY - iconSizePx / 2
     }
 
-    // Check alignment with other apps and calculate distances
     apps.forEachIndexed { index, otherApp ->
         if (index != draggingIndex) {
             val otherPosition = positions[otherApp.packageName]
 
-            // Calculate default position for apps without saved positions
             val otherX = otherPosition?.x ?: with(density) {
                 val columns = 4
                 val itemWidth = 80.dp.toPx()
@@ -488,88 +763,56 @@ private fun calculateAlignmentGuides(
             val otherRight = otherX + otherIconSizePx
             val otherBottom = otherY + otherIconSizePx
 
-            // Vertical alignment checks (center, left, right)
-            // Center-to-center alignment
             if (abs(draggingCenterX - otherCenterX) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherCenterX))
-                // Position dragging app so its center aligns with other app's center
                 if (snappedX == null) snappedX = otherCenterX - iconSizePx / 2
-            }
-            // Left edge alignment
-            else if (abs(dragX - otherX) < snapThreshold) {
+            } else if (abs(dragX - otherX) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
                 if (snappedX == null) snappedX = otherX
-            }
-            // Right edge alignment - both right edges should align
-            else if (abs(draggingRight - otherRight) < snapThreshold) {
+            } else if (abs(draggingRight - otherRight) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
-                // Position dragging app so its right edge aligns with other app's right edge
                 if (snappedX == null) snappedX = otherRight - iconSizePx
-            }
-            // Left edge to right edge (for spacing next to each other)
-            else if (abs(dragX - otherRight) < snapThreshold) {
+            } else if (abs(dragX - otherRight) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
                 if (snappedX == null) snappedX = otherRight
-            }
-            // Right edge to left edge (for spacing next to each other)
-            else if (abs(draggingRight - otherX) < snapThreshold) {
+            } else if (abs(draggingRight - otherX) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
                 if (snappedX == null) snappedX = otherX - iconSizePx
             }
 
-            // Horizontal alignment checks (center, top, bottom)
-            // Center-to-center alignment
             if (abs(draggingCenterY - otherCenterY) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherCenterY))
-                // Position dragging app so its center aligns with other app's center
                 if (snappedY == null) snappedY = otherCenterY - iconSizePx / 2
-            }
-            // Top edge alignment
-            else if (abs(dragY - otherY) < snapThreshold) {
+            } else if (abs(dragY - otherY) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
                 if (snappedY == null) snappedY = otherY
-            }
-            // Bottom edge alignment - both bottom edges should align
-            else if (abs(draggingBottom - otherBottom) < snapThreshold) {
+            } else if (abs(draggingBottom - otherBottom) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
-                // Position dragging app so its bottom edge aligns with other app's bottom edge
                 if (snappedY == null) snappedY = otherBottom - iconSizePx
-            }
-            // Top edge to bottom edge (for spacing above/below each other)
-            else if (abs(dragY - otherBottom) < snapThreshold) {
+            } else if (abs(dragY - otherBottom) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
                 if (snappedY == null) snappedY = otherBottom
-            }
-            // Bottom edge to top edge (for spacing above/below each other)
-            else if (abs(draggingBottom - otherY) < snapThreshold) {
+            } else if (abs(draggingBottom - otherY) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
                 if (snappedY == null) snappedY = otherY - iconSizePx
             }
 
-            // Calculate distances to nearby apps
-            // Horizontal distance (left/right)
             val horizontalDistance = if (draggingRight < otherX) {
-                // Dragging app is to the left
                 otherX - draggingRight
             } else if (dragX > otherRight) {
-                // Dragging app is to the right
                 dragX - otherRight
             } else {
-                null // Apps overlap horizontally
+                null
             }
 
-            // Vertical distance (top/bottom)
             val verticalDistance = if (draggingBottom < otherY) {
-                // Dragging app is above
                 otherY - draggingBottom
             } else if (dragY > otherBottom) {
-                // Dragging app is below
                 dragY - otherBottom
             } else {
-                null // Apps overlap vertically
+                null
             }
 
-            // Add horizontal distance measurement if within threshold and apps are roughly aligned vertically
             if (horizontalDistance != null && horizontalDistance > 0 && horizontalDistance < distanceThreshold) {
                 val verticalOverlap = min(draggingBottom, otherBottom) - max(dragY, otherY)
                 if (verticalOverlap > 0) {
@@ -590,7 +833,6 @@ private fun calculateAlignmentGuides(
                 }
             }
 
-            // Add vertical distance measurement if within threshold and apps are roughly aligned horizontally
             if (verticalDistance != null && verticalDistance > 0 && verticalDistance < distanceThreshold) {
                 val horizontalOverlap = min(draggingRight, otherRight) - max(dragX, otherX)
                 if (horizontalOverlap > 0) {
@@ -612,6 +854,31 @@ private fun calculateAlignmentGuides(
             }
         }
     }
+    
+    folders.forEach { folder ->
+        val folderIconSizePx = with(density) { folder.iconSize.dp.toPx() }
+        val folderCenterX = folder.x + folderIconSizePx / 2
+        val folderCenterY = folder.y + folderIconSizePx / 2
+        val folderRight = folder.x + folderIconSizePx
+        val folderBottom = folder.y + folderIconSizePx
+        
+        if (abs(draggingCenterX - folderCenterX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderCenterX))
+            if (snappedX == null) snappedX = folderCenterX - iconSizePx / 2
+        } else if (abs(dragX - folder.x) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folder.x))
+            if (snappedX == null) snappedX = folder.x
+        }
+        
+        if (abs(draggingCenterY - folderCenterY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderCenterY))
+            if (snappedY == null) snappedY = folderCenterY - iconSizePx / 2
+        } else if (abs(dragY - folder.y) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folder.y))
+            if (snappedY == null) snappedY = folder.y
+        }
+    }
+    
     return AlignmentState(
         guides = guides.distinctBy { it.position to it.type },
         snappedX = snappedX,
