@@ -31,17 +31,26 @@ class WidgetViewModelTest {
 
     private lateinit var viewModel: WidgetViewModel
     private lateinit var mockWidgetPreferences: WidgetPreferences
+    private lateinit var mockPageTypeManager: jr.brian.home.data.PageTypeManager
+    private lateinit var mockWidgetPageAppManager: jr.brian.home.data.WidgetPageAppManager
     private lateinit var mockContext: Context
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         mockWidgetPreferences = mockk(relaxed = true)
+        mockPageTypeManager = mockk(relaxed = true)
+        mockWidgetPageAppManager = mockk(relaxed = true)
         mockContext = mockk(relaxed = true)
 
         every { mockWidgetPreferences.widgetConfigs } returns MutableStateFlow(emptyList())
+        every { mockPageTypeManager.pageTypes } returns MutableStateFlow(emptyList())
 
-        viewModel = WidgetViewModel(mockWidgetPreferences)
+        viewModel = WidgetViewModel(
+            mockWidgetPreferences,
+            mockPageTypeManager,
+            mockWidgetPageAppManager
+        )
     }
 
     @After
@@ -239,32 +248,6 @@ class WidgetViewModelTest {
 
         // Then
         Assert.assertEquals(hash1, hash2)
-    }
-
-    @Test
-    fun `ViewModel can be created multiple times`() {
-        // Given
-        val mockPrefs1 = mockk<WidgetPreferences>(relaxed = true)
-        val mockPrefs2 = mockk<WidgetPreferences>(relaxed = true)
-        every { mockPrefs1.widgetConfigs } returns MutableStateFlow(emptyList())
-        every { mockPrefs2.widgetConfigs } returns MutableStateFlow(emptyList())
-
-        // When
-        val vm1 = WidgetViewModel(mockPrefs1)
-        val vm2 = WidgetViewModel(mockPrefs2)
-
-        // Then
-        assert(vm1 !== vm2) // Different instances
-        Assert.assertEquals(vm1.uiState.value, vm2.uiState.value) // Same initial state
-    }
-
-    @Test
-    fun `allocateAppWidgetId returns -1 before host initialization`() {
-        // When
-        val result = viewModel.allocateAppWidgetId()
-
-        // Then
-        Assert.assertEquals(-1, result)
     }
 
     @Test

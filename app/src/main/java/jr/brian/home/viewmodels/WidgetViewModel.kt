@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.WidgetPageAppManager
@@ -24,7 +23,6 @@ import javax.inject.Inject
 @HiltViewModel
 class WidgetViewModel @Inject constructor(
     private val widgetPreferences: WidgetPreferences,
-    private val pageCountManager: PageCountManager,
     private val pageTypeManager: PageTypeManager,
     private val widgetPageAppManager: WidgetPageAppManager
 ) : ViewModel() {
@@ -362,10 +360,6 @@ class WidgetViewModel @Inject constructor(
         val currentMode = currentEditModeMap[pageIndex] ?: false
         currentEditModeMap[pageIndex] = !currentMode
         _uiState.value = _uiState.value.copy(editModeByPage = currentEditModeMap)
-    }
-
-    fun isEditModeActive(pageIndex: Int): Boolean {
-        return _uiState.value.editModeByPage[pageIndex] ?: false
     }
 
     fun deletePage(widgetPageIndexToDelete: Int) {

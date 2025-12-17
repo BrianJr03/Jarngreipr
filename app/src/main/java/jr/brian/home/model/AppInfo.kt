@@ -8,4 +8,5 @@ data class AppInfo(
     val packageName: String,
     val icon: Drawable,
     val category: Int = ApplicationInfo.CATEGORY_UNDEFINED,
+    val activityName: String? = null,
 )

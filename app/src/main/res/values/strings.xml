@@ -119,6 +119,12 @@
     <string name="settings_grid_plus">+</string>
     <string name="settings_grid_reset">Reset</string>
 
+    <string name="settings_icon_pack_title">Icon Pack</string>
+    <string name="settings_icon_pack_description">Apply custom icon packs</string>
+    <string name="settings_icon_pack_default">System Default</string>
+    <string name="settings_icon_pack_system_default">System Default Icons</string>
+    <string name="settings_icon_pack_none_found">No icon packs installed</string>
+
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
     <string name="settings_thor_power_button">Show Power Button</string>
