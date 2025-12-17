@@ -22,20 +22,20 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeViewModelTest {
+class MainViewModelTest {
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var viewModel: HomeViewModel
+    private lateinit var viewModel: MainViewModel
     private lateinit var iconPackManager: IconPackManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         iconPackManager = mockk(relaxed = true)
-        viewModel = HomeViewModel(iconPackManager)
+        viewModel = MainViewModel(iconPackManager)
     }
 
     @After
@@ -218,7 +218,7 @@ class HomeViewModelTest {
     @Test
     fun `ViewModel can be instantiated`() {
         // Given/When
-        val vm = HomeViewModel(iconPackManager)
+        val vm = MainViewModel(iconPackManager)
 
         // Then
         assertTrue(vm.uiState.value.allApps.isEmpty())
@@ -258,8 +258,8 @@ class HomeViewModelTest {
         val mockManager2 = mockk<IconPackManager>(relaxed = true)
 
         // When
-        val vm1 = HomeViewModel(mockManager1)
-        val vm2 = HomeViewModel(mockManager2)
+        val vm1 = MainViewModel(mockManager1)
+        val vm2 = MainViewModel(mockManager2)
 
         // Then
         assertTrue(vm1 !== vm2) // Different instances
