@@ -489,27 +489,61 @@ private fun calculateAlignmentGuides(
             val otherBottom = otherY + otherIconSizePx
 
             // Vertical alignment checks (center, left, right)
+            // Center-to-center alignment
             if (abs(draggingCenterX - otherCenterX) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherCenterX))
+                // Position dragging app so its center aligns with other app's center
                 if (snappedX == null) snappedX = otherCenterX - iconSizePx / 2
-            } else if (abs(dragX - otherX) < snapThreshold) {
+            }
+            // Left edge alignment
+            else if (abs(dragX - otherX) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
                 if (snappedX == null) snappedX = otherX
-            } else if (abs(draggingRight - otherRight) < snapThreshold) {
+            }
+            // Right edge alignment - both right edges should align
+            else if (abs(draggingRight - otherRight) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
+                // Position dragging app so its right edge aligns with other app's right edge
                 if (snappedX == null) snappedX = otherRight - iconSizePx
+            }
+            // Left edge to right edge (for spacing next to each other)
+            else if (abs(dragX - otherRight) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.VERTICAL, otherRight))
+                if (snappedX == null) snappedX = otherRight
+            }
+            // Right edge to left edge (for spacing next to each other)
+            else if (abs(draggingRight - otherX) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.VERTICAL, otherX))
+                if (snappedX == null) snappedX = otherX - iconSizePx
             }
 
             // Horizontal alignment checks (center, top, bottom)
+            // Center-to-center alignment
             if (abs(draggingCenterY - otherCenterY) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherCenterY))
+                // Position dragging app so its center aligns with other app's center
                 if (snappedY == null) snappedY = otherCenterY - iconSizePx / 2
-            } else if (abs(dragY - otherY) < snapThreshold) {
+            }
+            // Top edge alignment
+            else if (abs(dragY - otherY) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
                 if (snappedY == null) snappedY = otherY
-            } else if (abs(draggingBottom - otherBottom) < snapThreshold) {
+            }
+            // Bottom edge alignment - both bottom edges should align
+            else if (abs(draggingBottom - otherBottom) < snapThreshold) {
                 guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
+                // Position dragging app so its bottom edge aligns with other app's bottom edge
                 if (snappedY == null) snappedY = otherBottom - iconSizePx
+            }
+            // Top edge to bottom edge (for spacing above/below each other)
+            else if (abs(dragY - otherBottom) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherBottom))
+                if (snappedY == null) snappedY = otherBottom
+            }
+            // Bottom edge to top edge (for spacing above/below each other)
+            else if (abs(draggingBottom - otherY) < snapThreshold) {
+                guides.add(AlignmentGuide(GuideType.HORIZONTAL, otherY))
+                if (snappedY == null) snappedY = otherY - iconSizePx
             }
 
             // Calculate distances to nearby apps
