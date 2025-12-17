@@ -91,12 +91,6 @@ fun AppItem(
                 app.packageName
             ),
             onDismiss = { showOptionsDialog = false },
-            onRemove = {
-                scope.launch {
-                    widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
-                }
-                showOptionsDialog = false
-            },
             onAppInfoClick = {
                 openAppInfo(context, app.packageName)
             },
