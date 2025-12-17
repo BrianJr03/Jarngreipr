@@ -285,7 +285,7 @@ fun AppsAndWidgetsTab(
                             listOf("widgets" to widgets, "apps" to displayedApps)
                         }
 
-                        sections.forEachIndexed { sectionIndex, (sectionType, items) ->
+                        sections.forEachIndexed { _, (sectionType, items) ->
                             if (sectionType == "apps" && displayedApps.isNotEmpty() && !editModeEnabled) {
                                 @Suppress("UNCHECKED_CAST")
                                 (items as List<AppInfo>).forEach { app ->
@@ -416,7 +416,7 @@ fun AppsAndWidgetsTab(
         DrawerOptionsDialog(
             onDismiss = { showDrawerOptionsDialog = false },
             onPowerClick = {
-                powerViewModel?.togglePower()
+                powerViewModel.togglePower()
             },
             onTabsClick = {
                 showHomeTabDialog = true
