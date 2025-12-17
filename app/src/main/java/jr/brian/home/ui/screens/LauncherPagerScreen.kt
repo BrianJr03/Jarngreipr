@@ -30,7 +30,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.viewmodels.HomeViewModel
+import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LauncherPagerScreen(
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
     powerViewModel: PowerViewModel = hiltViewModel(),
     initialPage: Int = 0,
@@ -47,7 +47,7 @@ fun LauncherPagerScreen(
     onNavigateToSearch: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
-    val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current

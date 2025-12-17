@@ -3,15 +3,12 @@ package jr.brian.home.data
 import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class PageCountManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private val _pageCount = MutableStateFlow(loadPageCount())
-    val pageCount: StateFlow<Int> = _pageCount.asStateFlow()
 
     private fun loadPageCount(): Int {
         return prefs.getInt(KEY_PAGE_COUNT, DEFAULT_PAGE_COUNT)

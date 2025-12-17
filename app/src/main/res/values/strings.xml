@@ -119,6 +119,12 @@
     <string name="settings_grid_plus">+</string>
     <string name="settings_grid_reset">Reset</string>
 
+    <string name="settings_icon_pack_title">Icon Pack</string>
+    <string name="settings_icon_pack_description">Apply custom icon packs</string>
+    <string name="settings_icon_pack_default">System Default</string>
+    <string name="settings_icon_pack_system_default">System Default Icons</string>
+    <string name="settings_icon_pack_none_found">No icon packs installed</string>
+
     <string name="settings_thor_title">Thor Settings</string>
     <string name="settings_thor_description">Settings exclusive to the Thor</string>
     <string name="settings_thor_power_button">Show Power Button</string>
@@ -301,6 +307,7 @@
     <string name="widget_page_edit_mode_description">Toggle edit controls for all widgets</string>
     <string name="widget_page_edit_mode_active">Edit Mode Active</string>
     <string name="widget_page_edit_mode_exit">Exit Edit Mode</string>
+    <string name="widget_edit_tap_instruction">Tap a widget to edit</string>
 
     <!-- Clean Folders Screen -->
     <string name="clean_folders_title">Quick Delete</string>
@@ -352,6 +359,7 @@
     <string name="app_drawer_unlock_drag_mode">Unlock Positions</string>
     <string name="app_drawer_lock_drag_description">Prevent app icons from being dragged</string>
     <string name="app_drawer_unlock_drag_description">Allow app icons to be dragged</string>
+    <string name="app_drawer_long_press_app_msg">Lock app positions to enable long press.</string>
 
     <!-- Empty State Messages -->
     <string name="apps_tab_no_apps_title">No Apps</string>
