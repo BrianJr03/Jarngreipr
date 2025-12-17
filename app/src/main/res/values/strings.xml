@@ -367,4 +367,31 @@
     <string name="widgets_tab_no_content_title">No Apps or Widgets</string>
     <string name="widgets_tab_no_content_description">This tab is empty. Tap the button below to add apps or widgets.</string>
     <string name="widgets_tab_add_button">Add</string>
+
+    <!-- App Layout Screen -->
+    <string name="app_layout_screen_title">App Layouts</string>
+    <string name="app_layout_tab_section_title">Tab %1$d</string>
+    <string name="app_layout_no_layouts">No layouts saved</string>
+    <string name="app_layout_no_layouts_description">Save your current app positions as a layout</string>
+    <string name="app_layout_save_current">Save Current Layout</string>
+    <string name="app_layout_active">Active</string>
+    <string name="app_layout_select">Select</string>
+    <string name="app_layout_rename">Rename</string>
+    <string name="app_layout_delete">Delete</string>
+    <string name="app_layout_save_dialog_title">Save Layout</string>
+    <string name="app_layout_save_dialog_message">Enter a name for this layout</string>
+    <string name="app_layout_save_dialog_hint">Layout name</string>
+    <string name="app_layout_save_dialog_save">Save</string>
+    <string name="app_layout_save_dialog_cancel">Cancel</string>
+    <string name="app_layout_rename_dialog_title">Rename Layout</string>
+    <string name="app_layout_rename_dialog_message">Enter a new name for this layout</string>
+    <string name="app_layout_rename_dialog_save">Rename</string>
+    <string name="app_layout_delete_dialog_title">Delete Layout</string>
+    <string name="app_layout_delete_dialog_message">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="app_layout_delete_dialog_confirm">Delete</string>
+    <string name="app_layout_delete_dialog_cancel">Cancel</string>
+    <string name="app_layout_max_reached">Maximum of %1$d layouts per tab</string>
+    <string name="app_layout_default_name">Layout %1$d</string>
+    <string name="app_layout_manage">Manage Layouts</string>
+    <string name="app_layout_not_available">Free positioning must be enabled</string>
 </resources>

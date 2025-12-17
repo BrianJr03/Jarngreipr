@@ -103,7 +103,8 @@ fun AppsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToLayouts: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -257,7 +258,8 @@ fun AppsTab(
             isDragLocked = isDragLocked,
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
-            }
+            },
+            onManageLayouts = onNavigateToLayouts
         )
     }
 
@@ -369,7 +371,8 @@ fun AppsTab(
                 pageIndex = pageIndex,
                 pageIndicatorBorderColor = pageIndicatorBorderColor,
                 allApps = allApps,
-                onNavigateToSearch = onNavigateToSearch
+                onNavigateToSearch = onNavigateToSearch,
+                onNavigateToLayouts = onNavigateToLayouts
             )
         }
     }
@@ -398,7 +401,8 @@ private fun AppSelectionContent(
     pageIndex: Int = 0,
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToLayouts: () -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Visibility
@@ -64,7 +65,8 @@ fun AppsTabOptionsDialog(
     onToggleFreeMode: () -> Unit = {},
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
-    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {}
+    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
+    onManageLayouts: () -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -122,6 +124,16 @@ fun AppsTabOptionsDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (isFreeModeEnabled) {
+                    DrawerOptionCard(
+                        title = stringResource(R.string.app_layout_manage),
+                        description = stringResource(R.string.app_layout_screen_title),
+                        icon = Icons.Default.Layers,
+                        onClick = {
+                            onDismiss()
+                            onManageLayouts()
+                        }
+                    )
+
                     DrawerOptionCard(
                         title = if (isDragLocked) {
                             stringResource(R.string.app_drawer_unlock_drag_mode)

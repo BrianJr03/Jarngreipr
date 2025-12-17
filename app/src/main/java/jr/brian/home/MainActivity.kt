@@ -51,6 +51,7 @@ import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
+import jr.brian.home.ui.screens.AppLayoutScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
@@ -115,6 +116,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var iconPackManager: IconPackManager
 
+    @Inject
+    lateinit var appLayoutManager: jr.brian.home.data.AppLayoutManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -150,7 +154,8 @@ class MainActivity : ComponentActivity() {
                     LocalAppPositionManager provides appPositionManager,
                     LocalPageCountManager provides pageCountManager,
                     LocalPageTypeManager provides pageTypeManager,
-                    LocalIconPackManager provides iconPackManager
+                    LocalIconPackManager provides iconPackManager,
+                    jr.brian.home.ui.theme.managers.LocalAppLayoutManager provides appLayoutManager
                 ) {
                     MainContent()
                 }
@@ -246,6 +251,9 @@ private fun MainContent() {
                         },
                         onNavigateToSearch = {
                             navController.navigate(Routes.APP_SEARCH)
+                        },
+                        onNavigateToLayouts = {
+                            navController.navigate(Routes.APP_LAYOUTS)
                         }
                     )
 
@@ -307,6 +315,10 @@ private fun MainContent() {
                     AppSearchScreen(
                         allApps = homeUiState.allAppsUnfiltered
                     )
+                }
+
+                composable(Routes.APP_LAYOUTS) {
+                    AppLayoutScreen()
                 }
             }
         }

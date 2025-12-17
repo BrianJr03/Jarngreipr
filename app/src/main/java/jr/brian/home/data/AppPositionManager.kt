@@ -114,7 +114,12 @@ class AppPositionManager(context: Context) {
     }
 
     fun clearAllPositions(pageIndex: Int) {
-        _positionsByPage[pageIndex]?.clear()
+        val pagePositions = _positionsByPage[pageIndex]
+        if (pagePositions != null) {
+            pagePositions.clear()
+        } else {
+            _positionsByPage[pageIndex] = mutableStateMapOf()
+        }
         savePositionsForPage(pageIndex)
     }
 
