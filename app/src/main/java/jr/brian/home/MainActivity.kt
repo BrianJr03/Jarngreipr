@@ -28,12 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -45,6 +45,7 @@ import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
+import jr.brian.home.data.IconPackManager
 import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
@@ -53,9 +54,9 @@ import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BlackScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
-import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
+import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -63,6 +64,7 @@ import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -110,6 +112,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var pageTypeManager: PageTypeManager
 
+    @Inject
+    lateinit var iconPackManager: IconPackManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -144,7 +149,8 @@ class MainActivity : ComponentActivity() {
                     LocalOnboardingManager provides onboardingManager,
                     LocalAppPositionManager provides appPositionManager,
                     LocalPageCountManager provides pageCountManager,
-                    LocalPageTypeManager provides pageTypeManager
+                    LocalPageTypeManager provides pageTypeManager,
+                    LocalIconPackManager provides iconPackManager
                 ) {
                     MainContent()
                 }
@@ -165,11 +171,6 @@ private fun MainContent() {
     val homeTabManager = LocalHomeTabManager.current
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-
-    val prefs = remember {
-        context.getSharedPreferences("launcher_prefs", Context.MODE_PRIVATE)
-    }
-
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -277,6 +278,9 @@ private fun MainContent() {
                         },
                         onNavigateToCustomTheme = {
                             navController.navigate(Routes.CUSTOM_THEME)
+                        },
+                        onIconPackChanged = {
+                            homeViewModel.loadAllApps(context)
                         }
                     )
                 }

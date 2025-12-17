@@ -36,6 +36,7 @@ import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
+import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -51,8 +52,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun SettingsScreen(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
-    onNavigateToFAQ: () -> Unit = {},
-    onNavigateToCustomTheme: () -> Unit = {}
+    onNavigateToFAQ: () -> Unit,
+    onNavigateToCustomTheme: () -> Unit,
+    onIconPackChanged: () -> Unit
 ) {
     Scaffold(
         containerColor = OledBackgroundColor,
@@ -69,7 +71,8 @@ fun SettingsScreen(
                 SettingsContent(
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ,
-                    onNavigateToCustomTheme = onNavigateToCustomTheme
+                    onNavigateToCustomTheme = onNavigateToCustomTheme,
+                    onIconPackChanged = onIconPackChanged
                 )
             }
         }
@@ -79,8 +82,9 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
-    onNavigateToFAQ: () -> Unit = {},
-    onNavigateToCustomTheme: () -> Unit = {}
+    onNavigateToFAQ: () -> Unit,
+    onNavigateToCustomTheme: () -> Unit,
+    onIconPackChanged: () -> Unit
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -130,6 +134,14 @@ private fun SettingsContent(
             WallpaperSelectorItem(
                 isExpanded = expandedItem == "wallpaper",
                 onExpandChanged = { expandedItem = if (it) "wallpaper" else null }
+            )
+        }
+
+        item {
+            IconPackSelectorItem(
+                isExpanded = expandedItem == "iconpack",
+                onExpandChanged = { expandedItem = if (it) "iconpack" else null },
+                onIconPackChanged = onIconPackChanged
             )
         }
 
