@@ -23,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -68,7 +67,6 @@ fun AppOptionsMenuContent(
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    isAppHidden: Boolean = false,
     onToggleVisibility: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
@@ -119,8 +117,8 @@ fun AppOptionsMenuContent(
                 )
 
                 MenuOption(
-                    icon = if (isAppHidden) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    label = stringResource(id = if (isAppHidden) R.string.app_options_show_app else R.string.app_options_hide_app),
+                    icon = Icons.Default.VisibilityOff,
+                    label = stringResource(id = R.string.app_options_hide_app),
                     focusRequester = focusRequesters[1],
                     onClick = {
                         onToggleVisibility()

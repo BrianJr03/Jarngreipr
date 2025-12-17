@@ -108,6 +108,11 @@ class AppPositionManager(context: Context) {
         return _positionsByPage[pageIndex]?.get(packageName)
     }
 
+    fun removePosition(pageIndex: Int, packageName: String) {
+        _positionsByPage[pageIndex]?.remove(packageName)
+        savePositionsForPage(pageIndex)
+    }
+
     fun clearAllPositions(pageIndex: Int) {
         _positionsByPage[pageIndex]?.clear()
         savePositionsForPage(pageIndex)

@@ -21,6 +21,7 @@ import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -117,22 +118,28 @@ fun LauncherPagerScreen(
                 )
         ) {
             key(currentWallpaper) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                ) { page ->
-                    val pageType =
-                        if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
+                WallpaperDisplay(
+                    wallpaperUri = wallpaperManager.getWallpaperUri(),
+                    wallpaperType = wallpaperManager.getWallpaperType(),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                val pageType =
+                    if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
-                    when (pageType) {
-                        PageType.APPS_TAB -> {
-                            val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-                            val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
-                            val visibleApps = remember(homeUiState.allApps, hiddenApps) {
-                                homeUiState.allApps.filter { app ->
-                                    app.packageName !in hiddenApps
-                                }
+                when (pageType) {
+                    PageType.APPS_TAB -> {
+                        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+                        val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
+                        val visibleApps = remember(homeUiState.allApps, hiddenApps) {
+                            homeUiState.allApps.filter { app ->
+                                app.packageName !in hiddenApps
                             }
+                        }
 
                             // Get widgets for this specific AppsTab page
                             val appsTabWidgetPageIndex = getAppsTabWidgetPageIndex(page, pageTypes)
@@ -140,16 +147,59 @@ fun LauncherPagerScreen(
                                 widgetUiState.widgetPages.getOrNull(appsTabWidgetPageIndex)
                             val appsTabWidgets = appsTabWidgetPage?.widgets ?: emptyList()
 
-                            AppsTab(
-                                apps = visibleApps,
-                                appsUnfiltered = homeUiState.allAppsUnfiltered,
-                                isLoading = homeUiState.isLoading,
-                                onSettingsClick = onSettingsClick,
+           
+                        AppsTab(
+                            apps = visibleApps,
+                            appsUnfiltered = homeUiState.allAppsUnfiltered,
+                            isLoading = homeUiState.isLoading,
+                            onSettingsClick = onSettingsClick,
+                            powerViewModel = powerViewModel,
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            onShowBottomSheet = onShowBottomSheet,
+                            pageIndex = page,
+                            onDeletePage = { pagerPageIndex ->
+                                scope.launch {
+                                    deleteTab(
+                                        totalPages = totalPages,
+                                        pagerPageIndex = pagerPageIndex,
+                                        pagerState = pagerState,
+                                        pageTypeManager = pageTypeManager,
+                                        pageCountManager = pageCountManager,
+                                        homeTabManager = homeTabManager,
+                                        onDeleteWidgetPage = { widgetPageIndex ->
+                                            widgetViewModel.deletePage(widgetPageIndex)
+                                        }
+                                    )
+                                }
+                            },
+                            pageIndicatorBorderColor = ThemePrimaryColor,
+                            allApps = homeUiState.allAppsUnfiltered,
+                            onNavigateToSearch = onNavigateToSearch
+                        )
+                    }
+
+                    PageType.APPS_AND_WIDGETS_TAB -> {
+                        val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                        if (widgetPage != null) {
+                            AppsAndWidgetsTab(
+                                pageIndex = widgetPageIndex,
+                                widgets = widgetPage.widgets,
+                                viewModel = widgetViewModel,
                                 powerViewModel = powerViewModel,
+                                allApps = homeUiState.allAppsUnfiltered,
                                 totalPages = totalPages,
                                 pagerState = pagerState,
                                 onShowBottomSheet = onShowBottomSheet,
                                 pageIndex = appsTabWidgetPageIndex,
+                                onSettingsClick = onSettingsClick,
+                                onNavigateToResize = { widgetInfo, pageIdx ->
+                                    resizeWidgetInfo = widgetInfo
+                                    resizePageIndex = pageIdx
+                                    showResizeScreen = true
+                                },
                                 onDeletePage = { pagerPageIndex ->
                                     scope.launch {
                                         deleteTab(
@@ -176,47 +226,6 @@ fun LauncherPagerScreen(
                                     showResizeScreen = true
                                 }
                             )
-                        }
-
-                        PageType.APPS_AND_WIDGETS_TAB -> {
-                            val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
-                            val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                            if (widgetPage != null) {
-                                AppsAndWidgetsTab(
-                                    pageIndex = widgetPageIndex,
-                                    widgets = widgetPage.widgets,
-                                    viewModel = widgetViewModel,
-                                    powerViewModel = powerViewModel,
-                                    allApps = homeUiState.allAppsUnfiltered,
-                                    totalPages = totalPages,
-                                    pagerState = pagerState,
-                                    onShowBottomSheet = onShowBottomSheet,
-                                    onSettingsClick = onSettingsClick,
-                                    onNavigateToResize = { widgetInfo, pageIdx ->
-                                        resizeWidgetInfo = widgetInfo
-                                        resizePageIndex = pageIdx
-                                        showResizeScreen = true
-                                    },
-                                    onDeletePage = { pagerPageIndex ->
-                                        scope.launch {
-                                            deleteTab(
-                                                totalPages = totalPages,
-                                                pagerPageIndex = pagerPageIndex,
-                                                pagerState = pagerState,
-                                                pageTypeManager = pageTypeManager,
-                                                pageCountManager = pageCountManager,
-                                                homeTabManager = homeTabManager,
-                                                onDeleteWidgetPage = { widgetPageIndex ->
-                                                    widgetViewModel.deletePage(widgetPageIndex)
-                                                }
-                                            )
-                                        }
-                                    },
-                                    pageIndicatorBorderColor = ThemeSecondaryColor,
-                                    onNavigateToSearch = onNavigateToSearch
-                                )
-                            }
                         }
                     }
                 }

@@ -35,6 +35,7 @@ import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
+import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
@@ -135,6 +136,12 @@ private fun SettingsContent(
         item {
             SettingsSectionHeader(
                 title = stringResource(id = R.string.settings_section_layout)
+            )
+        }
+
+        item {
+            HeaderVisibilityToggleItem(
+                isExpanded = expandedItem == "header"
             )
         }
 

@@ -6,8 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -33,7 +31,6 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 @Composable
 fun AppGridItem(
     app: AppInfo,
-    keyboardVisible: Boolean,
     focusRequester: FocusRequester,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
@@ -81,10 +78,6 @@ fun AppGridItem(
                     )
                     .focusable()
         )
-
-        if (!keyboardVisible) {
-            Spacer(Modifier.height(12.dp))
-        }
 
         val dividerAlpha by animateFloatAsState(
             targetValue = if (isFocused) 1f else 0f,
