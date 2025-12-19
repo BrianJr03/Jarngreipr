@@ -9,7 +9,8 @@ data class WidgetInfo(
     val y: Int = 0,
     val width: Int = 1,
     val height: Int = 1,
-    val pageIndex: Int = 0
+    val pageIndex: Int = 0,
+    val order: Int = 0
 )
 
 data class WidgetPage(

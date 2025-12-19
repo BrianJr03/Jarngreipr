@@ -12,7 +12,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import jr.brian.home.model.AppInfo
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppSearchScreen
@@ -23,6 +22,7 @@ import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
@@ -42,6 +42,7 @@ fun NavGraphBuilder.launcherScreen(
     composable(Routes.LAUNCHER) {
         val homeTabManager = LocalHomeTabManager.current
         val powerSettingsManager = LocalPowerSettingsManager.current
+        val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
 
         var showSettingsSheet by remember { mutableStateOf(false) }
@@ -60,10 +61,10 @@ fun NavGraphBuilder.launcherScreen(
             mainViewModel = mainViewModel,
             widgetViewModel = widgetViewModel,
             powerViewModel = powerViewModel,
+            initialPage = currentHomeTabIndex,
             onSettingsClick = {
                 navController.navigate(Routes.SETTINGS)
             },
-            initialPage = currentHomeTabIndex,
             onShowBottomSheet = {
                 showQuickDeleteSheet = true
             },
@@ -73,39 +74,21 @@ fun NavGraphBuilder.launcherScreen(
             onBackButtonShortcut = {
                 if (isBackButtonShortcutEnabled) {
                     when (backButtonShortcut) {
-                        BackButtonShortcut.NONE -> {
-                            showBackButtonShortcutSheet = true
-                        }
-                        BackButtonShortcut.SETTINGS -> {
-                            showSettingsSheet = true
-                        }
-
-                        BackButtonShortcut.APP_SEARCH -> {
-                            showAppSearchSheet = true
-                        }
-
-                        BackButtonShortcut.POWERED_OFF -> {
-                            powerViewModel.togglePower()
-                        }
-
-                        BackButtonShortcut.QUICK_DELETE -> {
-                            showQuickDeleteSheet = true
-                        }
-
-                        BackButtonShortcut.CUSTOM_THEME -> {
-                            showCustomThemeSheet = true
-                        }
-
-                        BackButtonShortcut.MONITOR -> {
-                            showMonitorSheet = true
-                        }
-
+                        BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
+                        BackButtonShortcut.SETTINGS -> showSettingsSheet = true
+                        BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
+                        BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
+                        BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
+                        BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
+                        BackButtonShortcut.MONITOR -> showMonitorSheet = true
                         BackButtonShortcut.APP -> {
                             backButtonShortcutAppPackage?.let { packageName ->
                                 launchApp(
                                     context = context,
                                     packageName = packageName,
-                                    displayPreference = jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference.CURRENT_DISPLAY
+                                    displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                        packageName
+                                    )
                                 )
                             }
                         }
