@@ -1,6 +1,7 @@
 package jr.brian.home.ui.screens
 
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.AppInfo
 import jr.brian.home.ui.components.InfoBox
+import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
@@ -54,8 +57,12 @@ fun SettingsScreen(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
-    onIconPackChanged: () -> Unit
+    onIconPackChanged: () -> Unit,
+    onNavigateToBackButtonShortcut: () -> Unit = {},
+    onNavigateToMonitor: () -> Unit = {},
+    onDismiss: () -> Unit = {}
 ) {
+    BackHandler(onBack = onDismiss)
     Scaffold(
         containerColor = OledBackgroundColor,
     ) { innerPadding ->
@@ -72,7 +79,9 @@ fun SettingsScreen(
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ,
                     onNavigateToCustomTheme = onNavigateToCustomTheme,
-                    onIconPackChanged = onIconPackChanged
+                    onIconPackChanged = onIconPackChanged,
+                    onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
+                    onNavigateToMonitor = onNavigateToMonitor
                 )
             }
         }
@@ -84,7 +93,9 @@ private fun SettingsContent(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
-    onIconPackChanged: () -> Unit
+    onIconPackChanged: () -> Unit,
+    onNavigateToBackButtonShortcut: () -> Unit = {},
+    onNavigateToMonitor: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -172,6 +183,35 @@ private fun SettingsContent(
                     onExpandChanged = { expandedItem = if (it) "thor" else null }
                 )
             }
+        }
+
+        item {
+            BackButtonShortcutItem(
+                isExpanded = expandedItem == "back_button",
+                onExpandChanged = { expandedItem = if (it) "back_button" else null },
+                onConfigureClick = {
+                    expandedItem = null
+                    onNavigateToBackButtonShortcut()
+                }
+            )
+        }
+
+        item {
+            SettingsSectionHeader(
+                title = stringResource(id = R.string.settings_section_system)
+            )
+        }
+
+        item {
+            SettingItem(
+                title = stringResource(id = R.string.monitor_screen_title),
+                description = stringResource(id = R.string.monitor_screen_description),
+                icon = Icons.Default.Monitor,
+                onClick = {
+                    expandedItem = null
+                    onNavigateToMonitor()
+                }
+            )
         }
 
         item {
