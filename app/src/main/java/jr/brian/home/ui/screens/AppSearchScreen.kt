@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,9 +50,13 @@ import jr.brian.home.util.openAppInfo
 
 @Composable
 fun AppSearchScreen(
-    allApps: List<AppInfo>
+    allApps: List<AppInfo>,
+    onDismiss: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+
+    BackHandler(onBack = onDismiss)
+
     val filteredApps = remember(allApps, searchQuery) {
         if (searchQuery.isBlank()) {
             allApps
