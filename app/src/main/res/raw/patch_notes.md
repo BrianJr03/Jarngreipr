@@ -1,5 +1,3 @@
-## What's Changed
-
 ### 🔙 Back Button Shortcuts
 You can now control what happens when you press (or gesture) back from any tab!
 Set your Back Button Shortcut to quickly access:
