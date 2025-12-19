@@ -19,14 +19,13 @@ this launcher helps you grip control of your Thor device's bottom screen.
 ### 🎨 **Customization**
 
 - **6 Beautiful Color Themes** - Switch between Pink & Violet, Blue & Yellow, Green & Cyan, Purple &
-  Orange, Red & Blue, and Magenta & Lime
+  Orange, Red & Blue, and Magenta & Lime. You also can create your own theme!
 
 - **Custom Wallpapers** - Set static images from your gallery
 
 ### 🎮 **Gamepad-Optimized UI**
 
 - **On-Screen Keyboard** - Built-in keyboard to prevent system keyboard from overlapping apps
-- **Toggleable Keyboard** - Press back to show/hide the search keyboard
 - **Full Navigation Support** - Navigate with a gamepad or touch
 
 ### 📱 **App Management**
@@ -41,6 +40,7 @@ this launcher helps you grip control of your Thor device's bottom screen.
 
 - **Theme Selection** - Choose your preferred color scheme
 - **Wallpaper Options** - Default, Custom Image, or System Wallpaper
+- **Icon Packs** - Use your prefered icon packs
 
 ## 📸 Screenshots (taken on AYN Thor's bottom screen)
 <p>
