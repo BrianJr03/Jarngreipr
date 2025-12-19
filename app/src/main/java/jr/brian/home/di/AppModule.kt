@@ -19,6 +19,7 @@ import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
+import jr.brian.home.data.WhatsNewManager
 import javax.inject.Singleton
 
 @Module
@@ -127,5 +128,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): IconPackManager {
         return IconPackManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWhatsNewManager(
+        @ApplicationContext context: Context
+    ): WhatsNewManager {
+        return WhatsNewManager(context)
     }
 }

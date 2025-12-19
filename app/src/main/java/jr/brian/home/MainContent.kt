@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as GraphicsColor
 import androidx.compose.ui.platform.LocalContext
@@ -32,8 +35,11 @@ import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.settingsScreen
+import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
+import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
@@ -48,11 +54,26 @@ fun MainContent() {
     val widgetViewModel: WidgetViewModel = viewModel()
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
+    val whatsNewManager = LocalWhatsNewManager.current
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+    val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
+
+    var showWhatsNewDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         mainViewModel.loadAllApps(context)
         widgetViewModel.initializeWidgetHost(context)
+
+        val versionName = context.packageManager.getPackageInfo(
+            context.packageName,
+            0
+        ).versionName ?: "Unknown"
+
+        whatsNewManager.checkAndShowWhatsNew(versionName)
+    }
+
+    LaunchedEffect(shouldShowWhatsNew) {
+        showWhatsNewDialog = shouldShowWhatsNew
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -149,6 +170,31 @@ fun MainContent() {
                     powerViewModel.powerOn()
                 }
             )
+        }
+
+        if (showWhatsNewDialog) {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val versionName = packageInfo.versionName ?: "Unknown"
+
+            var patchNotes by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(Unit) {
+                patchNotes = PatchNotesUtil.fetchPatchNotesWithFallback(
+                    context = context,
+                    currentVersionName = versionName,
+                )
+            }
+
+            patchNotes?.let { notes ->
+                WhatsNewDialog(
+                    versionName = versionName,
+                    patchNotes = notes,
+                    onDismiss = {
+                        whatsNewManager.markWhatsNewAsSeen(versionName)
+                        showWhatsNewDialog = false
+                    }
+                )
+            }
         }
     }
 }
