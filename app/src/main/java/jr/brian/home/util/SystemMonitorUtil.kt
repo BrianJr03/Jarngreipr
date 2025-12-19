@@ -51,9 +51,7 @@ fun getBatteryInfo(context: Context): Pair<Float, String> {
         }
 
         else -> {
-            // Try to get battery capacity and current
-            val capacity =
-                batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
+            // Try to get battery current discharge rate
             val currentNow =
                 batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0
             val chargeCounter =
