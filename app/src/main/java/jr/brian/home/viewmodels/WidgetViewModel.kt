@@ -120,7 +120,23 @@ class WidgetViewModel @Inject constructor(
                     currentPages[index] = page.copy(widgets = emptyList())
                 }
 
-                configs.forEach { config ->
+                // Detect if we need to migrate old data (all order values are 0)
+                val needsMigration = configs.isNotEmpty() && configs.all { it.order == 0 }
+
+                // Sort configs by order to maintain consistent positioning
+                val sortedConfigs = if (needsMigration) {
+                    // For migration, group by page and assign sequential order values
+                    configs.groupBy { it.pageIndex }
+                        .flatMap { (_, pageConfigs) ->
+                            pageConfigs.mapIndexed { index, config ->
+                                config.copy(order = index)
+                            }
+                        }
+                } else {
+                    configs.sortedBy { it.order }
+                }
+
+                sortedConfigs.forEach { config ->
                     try {
                         val appWidgetInfo = appWidgetManager?.getAppWidgetInfo(config.widgetId)
 
@@ -132,12 +148,17 @@ class WidgetViewModel @Inject constructor(
                                 y = config.y,
                                 width = config.width,
                                 height = config.height,
-                                pageIndex = config.pageIndex
+                                pageIndex = config.pageIndex,
+                                order = config.order
                             )
 
                             val pageIndex = config.pageIndex.coerceIn(0, MAX_WIDGET_PAGES - 1)
                             val page = currentPages[pageIndex]
                             currentPages[pageIndex] = page.copy(widgets = page.widgets + widgetInfo)
+
+                            if (needsMigration) {
+                                saveWidgetConfig(widgetInfo)
+                            }
                         } else {
                             appWidgetHost?.deleteAppWidgetId(config.widgetId)
                             widgetPreferences.removeWidgetConfig(config.widgetId)
@@ -157,7 +178,8 @@ class WidgetViewModel @Inject constructor(
         viewModelScope.launch {
             val currentPages = _uiState.value.widgetPages.toMutableList()
             val pageToUpdate = currentPages.getOrNull(pageIndex) ?: return@launch
-            val updatedWidget = widgetInfo.copy(pageIndex = pageIndex)
+            val nextOrder = (pageToUpdate.widgets.maxOfOrNull { it.order } ?: -1) + 1
+            val updatedWidget = widgetInfo.copy(pageIndex = pageIndex, order = nextOrder)
             val updatedWidgets = pageToUpdate.widgets + updatedWidget
             currentPages[pageIndex] = pageToUpdate.copy(widgets = updatedWidgets)
             _uiState.value = _uiState.value.copy(widgetPages = currentPages)
@@ -177,7 +199,8 @@ class WidgetViewModel @Inject constructor(
                     y = widgetInfo.y,
                     width = widgetInfo.width,
                     height = widgetInfo.height,
-                    pageIndex = widgetInfo.pageIndex
+                    pageIndex = widgetInfo.pageIndex,
+                    order = widgetInfo.order
                 )
                 widgetPreferences.addWidgetConfig(config)
                 Log.d(TAG, "Saved widget config: ${config.providerClassName}")
@@ -218,7 +241,8 @@ class WidgetViewModel @Inject constructor(
             val updatedFromWidgets = fromPage.widgets.filter { it.widgetId != widgetId }
             currentPages[fromPageIndex] = fromPage.copy(widgets = updatedFromWidgets)
 
-            val updatedWidget = widgetToMove.copy(pageIndex = toPageIndex)
+            val nextOrder = (toPage.widgets.maxOfOrNull { it.order } ?: -1) + 1
+            val updatedWidget = widgetToMove.copy(pageIndex = toPageIndex, order = nextOrder)
             val updatedToWidgets = toPage.widgets + updatedWidget
             currentPages[toPageIndex] = toPage.copy(widgets = updatedToWidgets)
 
@@ -244,6 +268,14 @@ class WidgetViewModel @Inject constructor(
 
                 if (widget1Index != -1 && widget2Index != -1) {
                     val updatedWidgets = page.widgets.toMutableList()
+
+                    val widget1 = updatedWidgets[widget1Index]
+                    val widget2 = updatedWidgets[widget2Index]
+                    val tempOrder = widget1.order
+
+                    updatedWidgets[widget1Index] = widget1.copy(order = widget2.order)
+                    updatedWidgets[widget2Index] = widget2.copy(order = tempOrder)
+
                     val temp = updatedWidgets[widget1Index]
                     updatedWidgets[widget1Index] = updatedWidgets[widget2Index]
                     updatedWidgets[widget2Index] = temp
@@ -260,7 +292,8 @@ class WidgetViewModel @Inject constructor(
                             y = widget.y,
                             width = widget.width,
                             height = widget.height,
-                            pageIndex = widget.pageIndex
+                            pageIndex = widget.pageIndex,
+                            order = widget.order
                         )
                         widgetPreferences.addWidgetConfig(config)
                     }
@@ -273,7 +306,8 @@ class WidgetViewModel @Inject constructor(
                             y = widget.y,
                             width = widget.width,
                             height = widget.height,
-                            pageIndex = widget.pageIndex
+                            pageIndex = widget.pageIndex,
+                            order = widget.order
                         )
                         widgetPreferences.addWidgetConfig(config)
                     }
@@ -316,7 +350,8 @@ class WidgetViewModel @Inject constructor(
                         y = updatedWidget.y,
                         width = updatedWidget.width,
                         height = updatedWidget.height,
-                        pageIndex = updatedWidget.pageIndex
+                        pageIndex = updatedWidget.pageIndex,
+                        order = updatedWidget.order
                     )
                     widgetPreferences.addWidgetConfig(config)
                     Log.d(TAG, "Updated widget size: $widgetId to ${newWidth}x${newHeight}")
