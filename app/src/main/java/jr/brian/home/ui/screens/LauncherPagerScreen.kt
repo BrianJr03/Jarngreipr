@@ -29,6 +29,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
@@ -44,7 +45,8 @@ fun LauncherPagerScreen(
     initialPage: Int = 0,
     onSettingsClick: () -> Unit,
     onShowBottomSheet: () -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onBackButtonShortcut: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -57,6 +59,8 @@ fun LauncherPagerScreen(
     val pageTypeManager = LocalPageTypeManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
 
     var showResizeScreen by remember { mutableStateOf(false) }
     var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
@@ -78,12 +82,16 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff) {
+    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled) {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
         }
+    }
+
+    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled) {
+        onBackButtonShortcut()
     }
 
     if (showResizeScreen && resizeWidgetInfo != null) {

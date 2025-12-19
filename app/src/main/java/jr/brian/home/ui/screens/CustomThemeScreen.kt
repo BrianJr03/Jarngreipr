@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,6 +58,8 @@ fun CustomThemeScreen(
     onNavigateBack: () -> Unit,
     onThemeCreated: (ColorTheme) -> Unit
 ) {
+    BackHandler(onBack = onNavigateBack)
+
     var selectedPrimaryColor by remember { mutableStateOf(Color(0xFF8A2BE2)) }
     var selectedSecondaryColor by remember { mutableStateOf(Color(0xFFFF69B4)) }
     var isSolidColor by remember { mutableStateOf(false) }
