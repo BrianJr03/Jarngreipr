@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +35,11 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun FAQScreen() {
+fun FAQScreen(
+    onDismiss: () -> Unit = {}
+) {
+    BackHandler(onBack = onDismiss)
+
     val faqItems = listOf(
         FAQItem(
             question = R.string.faq_keyboard_question,
