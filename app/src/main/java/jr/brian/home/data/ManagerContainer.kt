@@ -12,6 +12,7 @@ import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import javax.inject.Inject
 
@@ -29,7 +30,8 @@ data class ManagerContainer @Inject constructor(
     val appPositionManager: AppPositionManager,
     val pageCountManager: PageCountManager,
     val pageTypeManager: PageTypeManager,
-    val iconPackManager: IconPackManager
+    val iconPackManager: IconPackManager,
+    val whatsNewManager: WhatsNewManager
 )
 
 @Composable
@@ -45,7 +47,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalAppPositionManager provides appPositionManager,
         LocalPageCountManager provides pageCountManager,
         LocalPageTypeManager provides pageTypeManager,
-        LocalIconPackManager provides iconPackManager
+        LocalIconPackManager provides iconPackManager,
+        LocalWhatsNewManager provides whatsNewManager
     ) {
         content()
     }
