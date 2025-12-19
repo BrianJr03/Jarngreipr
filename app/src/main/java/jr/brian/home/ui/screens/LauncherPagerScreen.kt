@@ -73,6 +73,9 @@ fun LauncherPagerScreen(
         pageCount = { totalPages }
     )
 
+    val isAnyPageInEditMode = widgetUiState.editModeByPage.values.any { it }
+    val shouldBlockBackButtonShortcut = showResizeScreen || isAnyPageInEditMode
+
     LaunchedEffect(totalPages, pageTypes) {
         if (pagerState.currentPage >= totalPages && totalPages > 0) {
             pagerState.scrollToPage((totalPages - 1).coerceAtLeast(0))
@@ -82,7 +85,20 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled) {
+    BackHandler(enabled = showResizeScreen) {
+        showResizeScreen = false
+        resizeWidgetInfo = null
+    }
+
+    BackHandler(enabled = !showResizeScreen && isAnyPageInEditMode) {
+        widgetUiState.editModeByPage.forEach { (pageIndex, isEnabled) ->
+            if (isEnabled) {
+                widgetViewModel.toggleEditMode(pageIndex)
+            }
+        }
+    }
+
+    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
@@ -90,7 +106,7 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled) {
+    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
         onBackButtonShortcut()
     }
 
