@@ -51,9 +51,31 @@ fun getBatteryInfo(context: Context): Pair<Float, String> {
         }
 
         else -> {
-            batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)?.let {
+            // Try to get battery capacity and current
+            val capacity =
+                batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
+            val currentNow =
+                batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0
+            val chargeCounter =
+                batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: 0
+
+            // Calculate time remaining if we have valid data
+            if (currentNow < 0 && chargeCounter > 0) {
+                // currentNow is negative when discharging (in microamps)
+                // chargeCounter is in microamp-hours
+                val hoursRemaining =
+                    (chargeCounter.toFloat() / kotlin.math.abs(currentNow.toFloat()))
+                val hours = hoursRemaining.toInt()
+                val minutes = ((hoursRemaining - hours) * 60).toInt()
+
+                if (hours > 0 || minutes > 0) {
+                    "${hours}h ${minutes}m remaining"
+                } else {
+                    "Calculating..."
+                }
+            } else {
                 "On Battery"
-            } ?: "Unknown"
+            }
         }
     }
 
