@@ -73,6 +73,12 @@ fun LauncherPagerScreen(
         pageCount = { totalPages }
     )
 
+    // Check if any page is in edit mode
+    val isAnyPageInEditMode = widgetUiState.editModeByPage.values.any { it }
+
+    // Determine if back button shortcut should be blocked
+    val shouldBlockBackButtonShortcut = showResizeScreen || isAnyPageInEditMode
+
     LaunchedEffect(totalPages, pageTypes) {
         if (pagerState.currentPage >= totalPages && totalPages > 0) {
             pagerState.scrollToPage((totalPages - 1).coerceAtLeast(0))
@@ -82,7 +88,23 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled) {
+    // Handle back button when resize screen is showing - close resize screen
+    BackHandler(enabled = showResizeScreen) {
+        showResizeScreen = false
+        resizeWidgetInfo = null
+    }
+
+    // Handle back button when any page is in edit mode - exit edit mode
+    BackHandler(enabled = !showResizeScreen && isAnyPageInEditMode) {
+        // Find and exit edit mode for all pages that have it enabled
+        widgetUiState.editModeByPage.forEach { (pageIndex, isEnabled) ->
+            if (isEnabled) {
+                widgetViewModel.toggleEditMode(pageIndex)
+            }
+        }
+    }
+
+    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
@@ -90,7 +112,7 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled) {
+    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
         onBackButtonShortcut()
     }
 
