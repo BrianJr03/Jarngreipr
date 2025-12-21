@@ -62,7 +62,6 @@ fun CustomIconDialog(
     val scope = rememberCoroutineScope()
     var hasCustomIcon by remember { mutableStateOf(false) }
 
-    // Check if custom icon exists
     scope.launch {
         hasCustomIcon = customIconManager.hasCustomIcon(packageName)
     }
@@ -156,7 +155,6 @@ fun CustomIconDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Set Custom Icon Button
                 CustomIconActionButton(
                     text = stringResource(R.string.app_options_custom_icon_set),
                     icon = Icons.Default.Image,
@@ -168,7 +166,6 @@ fun CustomIconDialog(
                 if (hasCustomIcon) {
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Remove Custom Icon Button
                     CustomIconActionButton(
                         text = stringResource(R.string.app_options_custom_icon_remove),
                         icon = Icons.Default.Delete,
