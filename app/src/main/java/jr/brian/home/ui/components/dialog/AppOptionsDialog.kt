@@ -3,7 +3,6 @@ package jr.brian.home.ui.components.dialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,14 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenuContent
+import jr.brian.home.ui.components.apps.rememberAppOptionsMenuFocusRequesters
 import jr.brian.home.ui.theme.OledCardColor
 
 @Composable
@@ -43,10 +42,10 @@ fun AppOptionsDialog(
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     showResizeOption: Boolean = false,
-    onHideApp: () -> Unit = {}
+    onHideApp: () -> Unit = {},
+    onCustomIconClick: () -> Unit = {}
 ) {
     AlertDialog(
-        modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         shape = RoundedCornerShape(24.dp),
@@ -85,15 +84,12 @@ fun AppOptionsDialog(
             }
         },
         text = {
-            val optionCount = if (showResizeOption) {
-                if (hasExternalDisplay) 5 else 3
-            } else {
-                if (hasExternalDisplay) 4 else 2
-            }
-            val focusRequesters = remember {
-                List(optionCount) { FocusRequester() }
-            }
+            val focusRequesters = rememberAppOptionsMenuFocusRequesters(
+                hasResizeOption = showResizeOption,
+                hasExternalDisplay = hasExternalDisplay
+            )
             var focusedIndex by remember { mutableIntStateOf(0) }
+
             AppOptionsMenuContent(
                 appLabel = "", // Already displayed in title
                 currentDisplayPreference = currentDisplayPreference,
@@ -106,7 +102,8 @@ fun AppOptionsDialog(
                 app = if (showResizeOption) app else null,
                 currentIconSize = currentIconSize,
                 onIconSizeChange = onIconSizeChange,
-                onToggleVisibility = onHideApp
+                onToggleVisibility = onHideApp,
+                onCustomIconClick = onCustomIconClick
             )
 
         },

@@ -1,6 +1,6 @@
 package jr.brian.home.model.state
 
-import jr.brian.home.model.WidgetPage
+import jr.brian.home.model.widget.WidgetPage
 
 data class WidgetUIState(
     val widgetPages: List<WidgetPage> = emptyList(),

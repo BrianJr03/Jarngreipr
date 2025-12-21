@@ -26,7 +26,7 @@ import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 
 @Composable
-fun BlackScreen(
+fun PoweredOffScreen(
     modifier: Modifier = Modifier,
     onPowerOn: () -> Unit = {}
 ) {

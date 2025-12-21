@@ -2,8 +2,6 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -22,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -29,9 +28,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.shape.RoundedCornerShape
 import jr.brian.home.R
-import jr.brian.home.model.AppInfo
+import jr.brian.home.data.CustomIconManager
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlin.math.roundToInt
 
@@ -52,6 +52,7 @@ fun FreePositionedAppItem(
     isFocusable: Boolean = false,
     onDragStart: () -> Unit = {},
     onDragEnd: () -> Unit = {},
+    customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
@@ -62,11 +63,14 @@ fun FreePositionedAppItem(
             .offset { IntOffset(currentOffsetX.roundToInt(), currentOffsetY.roundToInt()) }
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = rememberAsyncImagePainter(model = app.icon),
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
                 modifier = Modifier
                     .size(iconSize.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .then(
                         if (isDraggingEnabled) {
                             Modifier.pointerInput(Unit) {

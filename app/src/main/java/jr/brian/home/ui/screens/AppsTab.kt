@@ -64,7 +64,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.AppPosition
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppGridItem
@@ -80,6 +81,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -182,7 +184,7 @@ fun AppsTab(
                     )
                     appPositionManager.savePosition(
                         pageIndex,
-                        jr.brian.home.model.AppPosition(
+                        AppPosition(
                             packageName = selectedApp!!.packageName,
                             x = currentPos?.x ?: 0f,
                             y = currentPos?.y ?: 0f,
@@ -498,6 +500,7 @@ private fun AppGridLayout(
     onAppLongClick: (AppInfo) -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
+    val customIconManager = LocalCustomIconManager.current
 
     val displayedApps = remember(apps, maxAppsPerPage) {
         apps.take(maxAppsPerPage)
@@ -533,6 +536,7 @@ private fun AppGridLayout(
                 onClick = { onAppClick(app) },
                 onLongClick = { onAppLongClick(app) },
                 onFocusChanged = { onFocusChanged(index) },
+                customIconManager = customIconManager,
                 onNavigateUp = {
                     val prevIndex = index - columns
                     if (prevIndex >= 0) {

@@ -1,4 +1,4 @@
-package jr.brian.home.model
+package jr.brian.home.model.app
 
 data class AppPosition(
     val packageName: String,

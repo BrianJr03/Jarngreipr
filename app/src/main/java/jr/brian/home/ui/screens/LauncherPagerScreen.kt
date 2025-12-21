@@ -17,10 +17,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
+import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -29,6 +31,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
@@ -41,10 +44,12 @@ fun LauncherPagerScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
     powerViewModel: PowerViewModel = hiltViewModel(),
+    navController: NavHostController? = null,
     initialPage: Int = 0,
     onSettingsClick: () -> Unit,
     onShowBottomSheet: () -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onBackButtonShortcut: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -57,9 +62,11 @@ fun LauncherPagerScreen(
     val pageTypeManager = LocalPageTypeManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
 
     var showResizeScreen by remember { mutableStateOf(false) }
-    var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
+    var resizeWidgetInfo by remember { mutableStateOf<WidgetInfo?>(null) }
     var resizePageIndex by remember { mutableStateOf(0) }
 
     val totalPages = pageTypes.size
@@ -68,6 +75,9 @@ fun LauncherPagerScreen(
         initialPage = initialPage.coerceAtMost(totalPages - 1),
         pageCount = { totalPages }
     )
+
+    val isAnyPageInEditMode = widgetUiState.editModeByPage.values.any { it }
+    val shouldBlockBackButtonShortcut = showResizeScreen || isAnyPageInEditMode
 
     LaunchedEffect(totalPages, pageTypes) {
         if (pagerState.currentPage >= totalPages && totalPages > 0) {
@@ -78,12 +88,29 @@ fun LauncherPagerScreen(
         }
     }
 
-    BackHandler(enabled = !isPoweredOff) {
+    BackHandler(enabled = showResizeScreen) {
+        showResizeScreen = false
+        resizeWidgetInfo = null
+    }
+
+    BackHandler(enabled = !showResizeScreen && isAnyPageInEditMode) {
+        widgetUiState.editModeByPage.forEach { (pageIndex, isEnabled) ->
+            if (isEnabled) {
+                widgetViewModel.toggleEditMode(pageIndex)
+            }
+        }
+    }
+
+    BackHandler(enabled = !isPoweredOff && !isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
         if (pagerState.currentPage > 0) {
             scope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
         }
+    }
+
+    BackHandler(enabled = !isPoweredOff && isBackButtonShortcutEnabled && !shouldBlockBackButtonShortcut) {
+        onBackButtonShortcut()
     }
 
     if (showResizeScreen && resizeWidgetInfo != null) {
@@ -208,7 +235,8 @@ fun LauncherPagerScreen(
                                     }
                                 },
                                 pageIndicatorBorderColor = ThemeSecondaryColor,
-                                onNavigateToSearch = onNavigateToSearch
+                                onNavigateToSearch = onNavigateToSearch,
+                                navController = navController
                             )
                         }
                     }

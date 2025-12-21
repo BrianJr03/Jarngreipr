@@ -2,7 +2,6 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
@@ -21,9 +20,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
-import jr.brian.home.model.AppInfo
+import jr.brian.home.data.CustomIconManager
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -39,13 +38,16 @@ fun AppGridItem(
     onNavigateLeft: () -> Unit = {},
     onNavigateRight: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
+    customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            defaultIcon = app.icon,
+            packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
+            customIconManager = customIconManager,
             modifier =
                 Modifier
                     .size(64.dp)
