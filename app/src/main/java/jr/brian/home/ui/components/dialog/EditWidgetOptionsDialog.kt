@@ -34,7 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
-import jr.brian.home.model.WidgetInfo
+import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel

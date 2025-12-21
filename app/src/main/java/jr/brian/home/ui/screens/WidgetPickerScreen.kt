@@ -62,8 +62,10 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.R
 import jr.brian.home.data.WidgetProviderRepository
-import jr.brian.home.model.WidgetCategory
-import jr.brian.home.model.WidgetProviderInfo
+import jr.brian.home.model.widget.WidgetCategory
+import jr.brian.home.model.widget.WidgetProviderInfo
+import jr.brian.home.model.widget.WidgetInfo
+import jr.brian.home.model.widget.WidgetWithCategory
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -73,9 +75,6 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 
-/**
- * Full-screen widget picker with search, categorization, and preview support
- */
 @Composable
 fun WidgetPickerScreen(
     pageIndex: Int,
@@ -93,7 +92,6 @@ fun WidgetPickerScreen(
     var isLoading by remember { mutableStateOf(true) }
     var showKeyboard by remember { mutableStateOf(false) }
 
-    // Widget binding launcher
     val bindWidgetLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -108,7 +106,7 @@ fun WidgetPickerScreen(
 
                     if (appWidgetInfo != null) {
                         val sizeInfo = repository.getWidgetSizeInfo(appWidgetInfo)
-                        val widgetInfo = jr.brian.home.model.WidgetInfo(
+                        val widgetInfo = WidgetInfo(
                             widgetId = appWidgetId,
                             providerInfo = appWidgetInfo,
                             pageIndex = pageIndex,
@@ -120,14 +118,13 @@ fun WidgetPickerScreen(
                         onWidgetAdded()
                         onNavigateBack()
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Handle error
                 }
             }
         }
     }
 
-    // Load widgets on first composition
     LaunchedEffect(Unit) {
         isLoading = true
         widgetCategories = repository.getWidgetCategories()
@@ -135,7 +132,6 @@ fun WidgetPickerScreen(
         isLoading = false
     }
 
-    // Filter widgets when search query changes
     LaunchedEffect(searchQuery, widgetCategories) {
         filteredCategories = if (searchQuery.isBlank()) {
             widgetCategories
@@ -169,7 +165,6 @@ fun WidgetPickerScreen(
                 .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Left side - Widget grid
             Box(
                 modifier = Modifier
                     .weight(if (showKeyboard) 1f else 2f)
@@ -180,7 +175,6 @@ fun WidgetPickerScreen(
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    // Header
                     WidgetPickerHeader(
                         searchQuery = searchQuery,
                         onSearchQueryChange = { searchQuery = it },
@@ -191,7 +185,6 @@ fun WidgetPickerScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Content
                     when {
                         isLoading -> {
                             LoadingView()
@@ -213,17 +206,15 @@ fun WidgetPickerScreen(
                                             val appWidgetManager =
                                                 AppWidgetManager.getInstance(context)
 
-                                            // Check if we can bind the widget directly
                                             val canBind = appWidgetManager.bindAppWidgetIdIfAllowed(
                                                 appWidgetId,
                                                 widgetProviderInfo.providerInfo.provider
                                             )
 
                                             if (canBind) {
-                                                // Widget bound successfully, add it
                                                 val sizeInfo =
                                                     repository.getWidgetSizeInfo(widgetProviderInfo.providerInfo)
-                                                val widgetInfo = jr.brian.home.model.WidgetInfo(
+                                                val widgetInfo = WidgetInfo(
                                                     widgetId = appWidgetId,
                                                     providerInfo = widgetProviderInfo.providerInfo,
                                                     pageIndex = pageIndex,
@@ -238,7 +229,6 @@ fun WidgetPickerScreen(
                                                 onWidgetAdded()
                                                 onNavigateBack()
                                             } else {
-                                                // Need to request permission
                                                 val bindIntent =
                                                     Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
                                                         putExtra(
@@ -261,7 +251,6 @@ fun WidgetPickerScreen(
                 }
             }
 
-            // Right side - Keyboard (when visible)
             if (showKeyboard) {
                 Box(
                     modifier = Modifier
@@ -330,10 +319,8 @@ private fun WidgetPickerHeader(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Search bar
         WidgetSearchBar(
             query = searchQuery,
-            onQueryChange = onSearchQueryChange,
             onClick = onSearchBarClick,
             showKeyboard = showKeyboard
         )
@@ -343,9 +330,8 @@ private fun WidgetPickerHeader(
 @Composable
 private fun WidgetSearchBar(
     query: String,
-    onQueryChange: (String) -> Unit,
-    onClick: () -> Unit,
-    showKeyboard: Boolean
+    showKeyboard: Boolean,
+    onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -402,11 +388,14 @@ private fun WidgetCategoryList(
     showKeyboard: Boolean,
     onWidgetSelected: (WidgetProviderInfo) -> Unit
 ) {
-    // Flatten all widgets with their category info for the grid
     val allWidgets = remember(categories) {
         categories.flatMap { category ->
             category.widgets.map { widget ->
-                WidgetWithCategory(widget, category.appName, category.appIcon)
+                WidgetWithCategory(
+                    widget = widget,
+                    categoryName = category.appName,
+                    categoryIcon = category.appIcon
+                )
             }
         }
     }
@@ -430,16 +419,6 @@ private fun WidgetCategoryList(
         }
     }
 }
-
-private data class WidgetWithCategory(
-    val widget: WidgetProviderInfo,
-    val categoryName: String,
-    val categoryIcon: android.graphics.drawable.Drawable?
-) {
-    val category = widget
-}
-
-
 
 @Composable
 private fun WidgetPreviewCard(

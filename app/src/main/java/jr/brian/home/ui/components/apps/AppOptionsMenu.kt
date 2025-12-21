@@ -15,7 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
 
 @Composable

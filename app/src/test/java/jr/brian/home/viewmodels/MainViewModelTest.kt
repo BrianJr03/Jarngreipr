@@ -5,7 +5,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import io.mockk.mockk
 import jr.brian.home.data.IconPackManager
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.state.AppDrawerUIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

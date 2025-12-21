@@ -3,7 +3,6 @@ package jr.brian.home.ui.components.dialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenuContent
 import jr.brian.home.ui.theme.OledCardColor
 

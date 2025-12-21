@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import jr.brian.home.model.WidgetInfo
+import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.dialog.EditWidgetOptionsDialog
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel

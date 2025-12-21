@@ -7,8 +7,9 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
-import jr.brian.home.model.WidgetCategory
-import jr.brian.home.model.WidgetProviderInfo
+import jr.brian.home.model.widget.WidgetCategory
+import jr.brian.home.model.widget.WidgetProviderInfo
+import jr.brian.home.model.widget.WidgetSizeInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -96,13 +97,9 @@ class WidgetProviderRepository(private val context: Context) {
         val packageManager = context.packageManager
         val provider = providerInfo.provider
 
-        // Get widget label
         val label = providerInfo.loadLabel(packageManager)
-
-        // Get preview image (supports both old and new APIs)
         val previewImage = getWidgetPreview(providerInfo, packageManager)
 
-        // Get app name
         val appInfo = try {
             packageManager.getApplicationInfo(provider.packageName, 0)
         } catch (e: PackageManager.NameNotFoundException) {
@@ -111,7 +108,6 @@ class WidgetProviderRepository(private val context: Context) {
         val appName = appInfo?.let { packageManager.getApplicationLabel(it).toString() }
             ?: provider.packageName
 
-        // Get description if available
         val description = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             providerInfo.loadDescription(context)?.toString() ?: ""
         } else {
@@ -163,7 +159,7 @@ class WidgetProviderRepository(private val context: Context) {
             try {
                 // Last resort: try to get the app icon
                 packageManager.getApplicationIcon(providerInfo.provider.packageName)
-            } catch (e: PackageManager.NameNotFoundException) {
+            } catch (_: PackageManager.NameNotFoundException) {
                 null
             }
         }
@@ -173,7 +169,6 @@ class WidgetProviderRepository(private val context: Context) {
      * Gets detailed info about the widget's size requirements
      */
     fun getWidgetSizeInfo(providerInfo: AppWidgetProviderInfo): WidgetSizeInfo {
-        // Standard cell size in dp (typical for Android launchers)
         val cellSizeDp = 70
 
         val minWidthCells = (providerInfo.minWidth / cellSizeDp).coerceAtLeast(1)
@@ -221,16 +216,3 @@ class WidgetProviderRepository(private val context: Context) {
         )
     }
 }
-
-/**
- * Information about widget sizing constraints
- */
-data class WidgetSizeInfo(
-    val minWidthCells: Int,
-    val minHeightCells: Int,
-    val targetWidthCells: Int,
-    val targetHeightCells: Int,
-    val maxWidthCells: Int,
-    val maxHeightCells: Int,
-    val isResizable: Boolean
-)
