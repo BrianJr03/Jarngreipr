@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.dialog.AppSelectionDialog

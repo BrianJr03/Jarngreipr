@@ -1,4 +1,6 @@
-package jr.brian.home.model
+package jr.brian.home.model.alignment
+
+import jr.brian.home.model.DistanceMeasurement
 
 data class AlignmentState(
     val guides: List<AlignmentGuide> = emptyList(),

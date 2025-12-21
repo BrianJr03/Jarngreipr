@@ -25,9 +25,9 @@ object PatchNotesUtil {
      * 4. If that fails, use hardcoded fallback
      *
      * @param context Android context
-     * @param currentVersionName Current app version name (e.g., "0.9.6-beta")
-     * @param owner GitHub repository owner (default: "BrianJr03")
-     * @param repo GitHub repository name (default: "Jarngreipr")
+     * @param currentVersionName Current app version name
+     * @param owner GitHub repository owner
+     * @param repo GitHub repository name
      * @return Patch notes content
      */
     suspend fun fetchPatchNotesWithFallback(

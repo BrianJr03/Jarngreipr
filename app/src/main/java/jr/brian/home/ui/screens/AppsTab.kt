@@ -64,7 +64,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.AppPosition
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppGridItem
@@ -183,7 +184,7 @@ fun AppsTab(
                     )
                     appPositionManager.savePosition(
                         pageIndex,
-                        jr.brian.home.model.AppPosition(
+                        AppPosition(
                             packageName = selectedApp!!.packageName,
                             x = currentPos?.x ?: 0f,
                             y = currentPos?.y ?: 0f,
