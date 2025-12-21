@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
@@ -31,7 +32,8 @@ data class ManagerContainer @Inject constructor(
     val pageCountManager: PageCountManager,
     val pageTypeManager: PageTypeManager,
     val iconPackManager: IconPackManager,
-    val whatsNewManager: WhatsNewManager
+    val whatsNewManager: WhatsNewManager,
+    val customIconManager: CustomIconManager
 )
 
 @Composable
@@ -48,7 +50,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalPageCountManager provides pageCountManager,
         LocalPageTypeManager provides pageTypeManager,
         LocalIconPackManager provides iconPackManager,
-        LocalWhatsNewManager provides whatsNewManager
+        LocalWhatsNewManager provides whatsNewManager,
+        LocalCustomIconManager provides customIconManager
     ) {
         content()
     }
