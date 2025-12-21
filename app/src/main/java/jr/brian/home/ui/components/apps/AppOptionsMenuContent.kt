@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,16 +13,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -44,14 +45,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
-import jr.brian.home.ui.extensions.handleDPadNavigation
+import jr.brian.home.model.GridItem
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
@@ -67,7 +68,8 @@ fun AppOptionsMenuContent(
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {}
+    onToggleVisibility: () -> Unit = {},
+    onCustomIconClick: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
@@ -90,172 +92,224 @@ fun AppOptionsMenuContent(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MenuOption(
-                    icon = Icons.Default.Info,
-                    label = stringResource(id = R.string.app_options_app_info),
-                    focusRequester = focusRequesters[0],
-                    onClick = {
-                        onAppInfoClick()
-                        onDismiss()
-                    },
-                    onNavigateUp = {
-                        // Stay on first item
-                    },
-                    onNavigateDown = {
-                        if (focusRequesters.size > 1) {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
-                        }
-                    },
-                    onFocusChanged = { focused ->
-                        if (focused)
-                            onFocusedIndexChange(0)
-                    }
+            val gridItems = buildList {
+                add(
+                    GridItem.IconItem(
+                        icon = Icons.Default.Info,
+                        label = "Info",
+                        onClick = {
+                            onAppInfoClick()
+                            onDismiss()
+                        },
+                        index = 0
+                    )
                 )
-
-                MenuOption(
-                    icon = Icons.Default.VisibilityOff,
-                    label = stringResource(id = R.string.app_options_hide_app),
-                    focusRequester = focusRequesters[1],
-                    onClick = {
-                        onToggleVisibility()
-                        onDismiss()
-                    },
-                    onNavigateUp = {
-                        focusRequesters[0].requestFocus()
-                        onFocusedIndexChange(0)
-                    },
-                    onNavigateDown = {
-                        if (app != null && focusRequesters.size > 2) {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        } else if (hasExternalDisplay && focusRequesters.size > 2) {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        }
-                    },
-                    onFocusChanged = { focused ->
-                        if (focused) onFocusedIndexChange(1)
-                    }
+                add(
+                    GridItem.IconItem(
+                        icon = Icons.Default.VisibilityOff,
+                        label = "Hide",
+                        onClick = {
+                            onToggleVisibility()
+                            onDismiss()
+                        },
+                        index = 1
+                    )
+                )
+                add(
+                    GridItem.IconItem(
+                        icon = Icons.Default.Image,
+                        label = "Icon",
+                        onClick = onCustomIconClick,
+                        index = 2
+                    )
                 )
 
                 if (app != null) {
-                    val resizeIndex = 2
-                    val displayStartIndex = 3
-
-                    MenuOption(
-                        icon = Icons.Default.Add,
-                        label = stringResource(id = R.string.app_options_resize),
-                        focusRequester = focusRequesters[resizeIndex],
-                        onClick = {
-                            showResizeMode = true
-                            previewIconSize = currentIconSize
-                        },
-                        onNavigateUp = {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
-                        },
-                        onNavigateDown = {
-                            if (hasExternalDisplay && focusRequesters.size > displayStartIndex) {
-                                focusRequesters[displayStartIndex].requestFocus()
-                                onFocusedIndexChange(displayStartIndex)
-                            }
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) onFocusedIndexChange(resizeIndex)
-                        }
+                    add(
+                        GridItem.IconItem(
+                            icon = Icons.Default.OpenInFull,
+                            label = "Resize",
+                            onClick = {
+                                showResizeMode = true
+                                previewIconSize = currentIconSize
+                            },
+                            index = 3
+                        )
                     )
 
                     if (hasExternalDisplay) {
-                        MenuOption(
-                            icon = Icons.AutoMirrored.Filled.ScreenShare,
-                            label = stringResource(id = R.string.app_options_launch_external),
-                            isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                            focusRequester = focusRequesters[displayStartIndex],
-                            onClick = {
-                                onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                                onDismiss()
-                            },
-                            onNavigateUp = {
-                                focusRequesters[resizeIndex].requestFocus()
-                                onFocusedIndexChange(resizeIndex)
-                            },
-                            onNavigateDown = {
-                                focusRequesters[displayStartIndex + 1].requestFocus()
-                                onFocusedIndexChange(displayStartIndex + 1)
-                            },
-                            onFocusChanged = { focused ->
-                                if (focused) onFocusedIndexChange(displayStartIndex)
-                            }
+                        add(
+                            GridItem.TextItem(
+                                text = "Top\nDisplay",
+                                onClick = {
+                                    onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                                    onDismiss()
+                                },
+                                isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                                index = 4
+                            )
                         )
-
-                        MenuOption(
-                            icon = Icons.AutoMirrored.Filled.ScreenShare,
-                            label = stringResource(id = R.string.app_options_launch_primary),
-                            isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                            focusRequester = focusRequesters[displayStartIndex + 1],
+                        add(
+                            GridItem.TextItem(
+                                text = "Bottom\nDisplay",
+                                onClick = {
+                                    onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
+                                    onDismiss()
+                                },
+                                isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+                                index = 5
+                            )
+                        )
+                    }
+                } else if (hasExternalDisplay) {
+                    add(
+                        GridItem.TextItem(
+                            text = "Top\nDisplay",
                             onClick = {
                                 onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
                                 onDismiss()
                             },
-                            onNavigateUp = {
-                                focusRequesters[displayStartIndex].requestFocus()
-                                onFocusedIndexChange(displayStartIndex)
-                            },
-                            onNavigateDown = {
-                                // Stay on last item
-                            },
-                            onFocusChanged = { focused ->
-                                if (focused) onFocusedIndexChange(displayStartIndex + 1)
-                            }
+                            isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                            index = 3
                         )
-                    }
-                } else if (hasExternalDisplay) {
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_external),
-                        isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                        focusRequester = focusRequesters[2],
-                        onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
-                        },
-                        onNavigateDown = {
-                            focusRequesters[3].requestFocus()
-                            onFocusedIndexChange(3)
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) onFocusedIndexChange(2)
-                        }
                     )
+                    add(
+                        GridItem.TextItem(
+                            text = "Bottom\nDisplay",
+                            onClick = {
+                                onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
+                                onDismiss()
+                            },
+                            isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+                            index = 4
+                        )
+                    )
+                }
+            }
 
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_primary),
-                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                        focusRequester = focusRequesters[3],
-                        onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        },
-                        onNavigateDown = {
-                            // Stay on last item
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) onFocusedIndexChange(3)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    gridItems.take(3).forEach { item ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            when (item) {
+                                is GridItem.IconItem -> IconGridOption(
+                                    icon = item.icon,
+                                    label = item.label,
+                                    onClick = item.onClick,
+                                    focusRequester = focusRequesters[item.index],
+                                    onNavigateLeft = {
+                                        if (item.index > 0) {
+                                            focusRequesters[item.index - 1].requestFocus()
+                                            onFocusedIndexChange(item.index - 1)
+                                        }
+                                    },
+                                    onNavigateRight = {
+                                        if (item.index < 2 && gridItems.size > item.index + 1) {
+                                            focusRequesters[item.index + 1].requestFocus()
+                                            onFocusedIndexChange(item.index + 1)
+                                        }
+                                    },
+                                    onNavigateUp = {
+                                        // Stay on top row
+                                    },
+                                    onNavigateDown = {
+                                        val bottomRowIndex = item.index + 3
+                                        if (gridItems.size > bottomRowIndex) {
+                                            focusRequesters[bottomRowIndex].requestFocus()
+                                            onFocusedIndexChange(bottomRowIndex)
+                                        }
+                                    },
+                                    onFocusChanged = { focused ->
+                                        if (focused) onFocusedIndexChange(item.index)
+                                    }
+                                )
+
+                                is GridItem.TextItem -> {}
+                            }
                         }
-                    )
+                    }
+                }
+
+                if (gridItems.size > 3) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        gridItems.drop(3).take(3).forEach { item ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                when (item) {
+                                    is GridItem.IconItem -> IconGridOption(
+                                        icon = item.icon,
+                                        label = item.label,
+                                        onClick = item.onClick,
+                                        focusRequester = focusRequesters[item.index],
+                                        onNavigateLeft = {
+                                            if (item.index > 3) {
+                                                focusRequesters[item.index - 1].requestFocus()
+                                                onFocusedIndexChange(item.index - 1)
+                                            }
+                                        },
+                                        onNavigateRight = {
+                                            if (item.index < gridItems.size - 1) {
+                                                focusRequesters[item.index + 1].requestFocus()
+                                                onFocusedIndexChange(item.index + 1)
+                                            }
+                                        },
+                                        onNavigateUp = {
+                                            val topRowIndex = item.index - 3
+                                            if (topRowIndex >= 0) {
+                                                focusRequesters[topRowIndex].requestFocus()
+                                                onFocusedIndexChange(topRowIndex)
+                                            }
+                                        },
+                                        onNavigateDown = {
+                                            // Stay on bottom row
+                                        },
+                                        onFocusChanged = { focused ->
+                                            if (focused) onFocusedIndexChange(item.index)
+                                        }
+                                    )
+
+                                    is GridItem.TextItem -> TextGridOption(
+                                        text = item.text,
+                                        onClick = item.onClick,
+                                        isSelected = item.isSelected,
+                                        focusRequester = focusRequesters[item.index],
+                                        onNavigateLeft = {
+                                            if (item.index > 3) {
+                                                focusRequesters[item.index - 1].requestFocus()
+                                                onFocusedIndexChange(item.index - 1)
+                                            }
+                                        },
+                                        onNavigateRight = {
+                                            if (item.index < gridItems.size - 1) {
+                                                focusRequesters[item.index + 1].requestFocus()
+                                                onFocusedIndexChange(item.index + 1)
+                                            }
+                                        },
+                                        onNavigateUp = {
+                                            val topRowIndex = item.index - 3
+                                            if (topRowIndex >= 0) {
+                                                focusRequesters[topRowIndex].requestFocus()
+                                                onFocusedIndexChange(topRowIndex)
+                                            }
+                                        },
+                                        onNavigateDown = {
+                                            // Stay on bottom row
+                                        },
+                                        onFocusChanged = { focused ->
+                                            if (focused) onFocusedIndexChange(item.index)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -390,63 +444,124 @@ private fun AppPreview(
 }
 
 @Composable
-private fun MenuOption(
+private fun IconGridOption(
     icon: ImageVector,
     label: String,
-    focusRequester: FocusRequester,
     onClick: () -> Unit,
+    focusRequester: FocusRequester,
+    onNavigateLeft: () -> Unit,
+    onNavigateRight: () -> Unit,
     onNavigateUp: () -> Unit,
     onNavigateDown: () -> Unit,
     onFocusChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    isSelected: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableIntStateOf(0) }
 
-    Row(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
+            .aspectRatio(1f)
             .clickable { onClick() }
             .background(
                 color = when {
-                    isFocused == 1 -> Color.White.copy(alpha = 0.2f)
-                    else -> Color.Transparent
+                    isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
+                    else -> Color.White.copy(alpha = 0.1f)
                 },
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(16.dp)
             )
-            .padding(12.dp)
+            .border(
+                width = if (isFocused == 1) 2.dp else 0.dp,
+                color = if (isFocused == 1) ThemePrimaryColor else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
             .focusRequester(focusRequester)
             .onFocusChanged {
                 isFocused = if (it.isFocused) 1 else 0
                 onFocusChanged(it.isFocused)
             }
-            .handleDPadNavigation(
+            .handleFullNavigation(
                 onNavigateUp = onNavigateUp,
                 onNavigateDown = onNavigateDown,
+                onNavigateLeft = onNavigateLeft,
+                onNavigateRight = onNavigateRight,
                 onEnterPress = onClick
             )
             .focusable(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val color = if (isSelected) ThemePrimaryColor else Color.White
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = color
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
             )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
             Text(
                 text = label,
-                color = color,
-                fontSize = 16.sp
+                color = Color.White,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun TextGridOption(
+    text: String,
+    onClick: () -> Unit,
+    isSelected: Boolean,
+    focusRequester: FocusRequester,
+    onNavigateLeft: () -> Unit,
+    onNavigateRight: () -> Unit,
+    onNavigateUp: () -> Unit,
+    onNavigateDown: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableIntStateOf(0) }
+
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clickable { onClick() }
+            .background(
+                color = when {
+                    isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
+                    isSelected -> ThemePrimaryColor.copy(alpha = 0.2f)
+                    else -> Color.White.copy(alpha = 0.1f)
+                },
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = if (isFocused == 1) 2.dp else 0.dp,
+                color = if (isFocused == 1) ThemePrimaryColor else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .focusRequester(focusRequester)
+            .onFocusChanged {
+                isFocused = if (it.isFocused) 1 else 0
+                onFocusChanged(it.isFocused)
+            }
+            .handleFullNavigation(
+                onNavigateUp = onNavigateUp,
+                onNavigateDown = onNavigateDown,
+                onNavigateLeft = onNavigateLeft,
+                onNavigateRight = onNavigateRight,
+                onEnterPress = onClick
+            )
+            .focusable(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) ThemePrimaryColor else Color.White,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelLarge
+        )
     }
 }

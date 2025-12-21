@@ -2,8 +2,8 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -35,23 +35,29 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.data.CustomIconManager
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 
 @Composable
 fun AppSearchScreen(
-    allApps: List<AppInfo>
+    allApps: List<AppInfo>,
+    onDismiss: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+
+    BackHandler(onBack = onDismiss)
+
     val filteredApps = remember(allApps, searchQuery) {
         if (searchQuery.isBlank()) {
             allApps
@@ -114,6 +120,7 @@ private fun AppGrid(
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val customIconManager = LocalCustomIconManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
@@ -134,6 +141,7 @@ private fun AppGrid(
         items(apps, key = { it.packageName }) { app ->
             AppGridItem(
                 app = app,
+                customIconManager = customIconManager,
                 onAppClick = {
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -178,6 +186,7 @@ private fun AppGrid(
 @Composable
 private fun AppGridItem(
     app: AppInfo,
+    customIconManager: CustomIconManager,
     onAppClick: () -> Unit,
     onAppLongClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -201,9 +210,11 @@ private fun AppGridItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            defaultIcon = app.icon,
+            packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
+            customIconManager = customIconManager,
             modifier = Modifier
                 .size(80.dp)
                 .clip(RoundedCornerShape(12.dp))

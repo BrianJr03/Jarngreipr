@@ -14,8 +14,6 @@ data class ColorTheme(
     val isCustom: Boolean = false,
     val isSolid: Boolean = false,
 ) {
-    fun getDisplayName(): String? = customName
-
     companion object {
         const val CUSTOM_THEME_PREFIX = "custom_"
 
@@ -100,9 +98,6 @@ data class ColorTheme(
                 OLED_BLACK_WHITE,
             )
 
-        @Deprecated("Use presetThemes or ThemeManager.allThemes instead")
-        val allThemes = presetThemes
-
         fun fromId(id: String): ColorTheme = presetThemes.find { it.id == id } ?: PINK_VIOLET
 
         fun createCustomTheme(
@@ -135,13 +130,13 @@ data class ColorTheme(
         ): ColorTheme {
             val primary = try {
                 Color(android.graphics.Color.parseColor(primaryColorHex))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Color(0xFF8A2BE2)
             }
 
             val secondary = try {
                 Color(android.graphics.Color.parseColor(secondaryColorHex))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 primary
             }
 

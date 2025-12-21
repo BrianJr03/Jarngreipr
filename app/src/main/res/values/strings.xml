@@ -52,6 +52,13 @@
     <string name="app_options_selected">Selected</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
+    <string name="app_options_custom_icon">Custom Icon</string>
+    <string name="app_options_custom_icon_set">Set Custom Icon</string>
+    <string name="app_options_custom_icon_remove">Remove Custom Icon</string>
+    <string name="app_options_custom_icon_description">Choose a PNG image</string>
+    <string name="app_options_custom_icon_success">Custom icon set successfully</string>
+    <string name="app_options_custom_icon_error">Failed to set custom icon</string>
+    <string name="app_options_custom_icon_removed">Custom icon removed</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
@@ -137,6 +144,24 @@
     <string name="settings_toggle_on">ON</string>
     <string name="settings_toggle_off">OFF</string>
 
+    <string name="settings_back_button_shortcut_title">Back Button Shortcut</string>
+    <string name="settings_back_button_shortcut_description">Configure what the back button does</string>
+    <string name="settings_back_button_shortcut_enabled">Enable Back Button Shortcut</string>
+    <string name="settings_back_button_shortcut_choose">Choose Shortcut</string>
+    <string name="back_button_shortcut_screen_title">Back Button Shortcut</string>
+    <string name="back_button_shortcut_screen_description">Select what happens when you press the back button</string>
+    <string name="back_button_shortcut_none">None (Default Navigation)</string>
+    <string name="back_button_shortcut_settings">Settings</string>
+    <string name="back_button_shortcut_app_search">App Search</string>
+    <string name="back_button_shortcut_powered_off">Turn Off Display</string>
+    <string name="back_button_shortcut_quick_delete">Quick Delete</string>
+    <string name="back_button_shortcut_custom_theme">Create Custom Theme</string>
+    <string name="back_button_shortcut_monitor">System Monitor</string>
+    <string name="back_button_shortcut_app">App Launch</string>
+    <string name="back_button_shortcut_select_app">Select App</string>
+    <string name="back_button_shortcut_selected_app">Selected: %1$s</string>
+    <string name="back_button_shortcut_no_app">No app selected</string>
+
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
@@ -181,7 +206,7 @@
     <string name="app_icon_description">App icon for %1$s</string>
 
     <!-- Version Info -->
-    <string name="settings_version_label">Version %1$s (Beta)</string>
+    <string name="settings_version_label">Version %1$s</string>
 
     <!-- Welcome Overlay -->
     <string name="welcome_overlay_title">Welcome to Járngreipr</string>
@@ -368,4 +393,44 @@
     <string name="widgets_tab_no_content_title">No Apps or Widgets</string>
     <string name="widgets_tab_no_content_description">This tab is empty. Tap the button below to add apps or widgets.</string>
     <string name="widgets_tab_add_button">Add</string>
+
+    <!-- Monitor Screen -->
+    <string name="monitor_screen_title">System Monitor</string>
+    <string name="monitor_screen_description">Real-time system information</string>
+    <string name="monitor_ram_label">RAM Usage</string>
+    <string name="monitor_cpu_label">CPU Usage</string>
+    <string name="monitor_battery_label">Battery Level</string>
+    <string name="monitor_battery_time_label">Battery Time</string>
+    <string name="monitor_storage_label">Storage</string>
+    <string name="monitor_close">Close</string>
+    <string name="settings_section_system">System</string>
+
+    <!-- Widget Picker -->
+    <string name="widget_picker_title">Choose a Widget</string>
+    <string name="widget_picker_search_hint">Search widgets…</string>
+    <string name="widget_picker_loading">Loading widgets…</string>
+    <string name="widget_picker_no_widgets">No Widgets Available</string>
+    <string name="widget_picker_no_widgets_description">No apps on your device provide widgets.</string>
+    <string name="widget_picker_no_results">No Results Found</string>
+    <string name="widget_picker_try_different_search">Try a different search term</string>
+    <string name="widget_picker_size_info">%1$d × %2$d cells</string>
+    <string name="widget_picker_resizable">Resizable</string>
+
+    <!-- Crash Logs Screen -->
+    <string name="crash_logs_title">Crash Logs</string>
+    <string name="crash_logs_description">View and manage app crash reports</string>
+    <string name="crash_logs_report_issue">Report Issue</string>
+    <string name="crash_logs_report_issue_url">https://github.com/BrianJr03/Jarngreipr/issues/new</string>
+    <string name="crash_logs_clear_all">Clear All</string>
+    <string name="crash_logs_clear_all_dialog_title">Clear All Crash Logs?</string>
+    <string name="crash_logs_clear_all_dialog_message">This will permanently delete all %1$d crash log(s).</string>
+    <string name="crash_logs_clear_all_confirm">Clear All</string>
+    <string name="crash_logs_clear_all_cancel">Cancel</string>
+    <string name="crash_logs_detail_title">Crash Details</string>
+    <string name="crash_logs_detail_copy">Copy</string>
+    <string name="crash_logs_detail_close">Close</string>
+    <string name="crash_logs_copied_toast">Copied to clipboard</string>
+    <string name="crash_logs_delete_description">Delete</string>
+    <string name="crash_logs_empty_title">No Crash Logs</string>
+    <string name="crash_logs_empty_description">Your app hasn\'t crashed recently.\nCrash logs will appear here if the app encounters an error.</string>
 </resources>

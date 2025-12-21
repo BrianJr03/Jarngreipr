@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Icon
@@ -39,8 +37,7 @@ import jr.brian.home.ui.components.onboarding.HeaderOnboardingOverlay
 import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.data.PageType
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager

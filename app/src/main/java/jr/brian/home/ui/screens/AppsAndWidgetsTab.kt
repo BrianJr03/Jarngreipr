@@ -1,10 +1,6 @@
 package jr.brian.home.ui.screens
 
-import android.appwidget.AppWidgetManager
-import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -29,6 +25,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
@@ -63,7 +61,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,9 +68,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import jr.brian.home.R
-import jr.brian.home.model.AppInfo
-import jr.brian.home.model.WidgetInfo
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
@@ -88,12 +86,15 @@ import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
-import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -111,9 +112,9 @@ fun AppsAndWidgetsTab(
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    navController: NavHostController? = null
 ) {
-    val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val columns = gridSettingsManager.columnCount
@@ -144,50 +145,12 @@ fun AppsAndWidgetsTab(
     }
 
     val powerSettingsManager = LocalPowerSettingsManager.current
-    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
     val settingsIconFocusRequester = remember { FocusRequester() }
 
     val gridState = rememberLazyGridState()
-
-    val widgetPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val data = result.data
-        val appWidgetId = data?.getIntExtra(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            -1
-        ) ?: -1
-
-        if (appWidgetId != -1) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
-
-            if (appWidgetInfo != null) {
-                val cellSize = 70
-                val widgetWidth =
-                    ceil(appWidgetInfo.minWidth.toFloat() / cellSize).toInt()
-                        .coerceAtLeast(1)
-                val widgetHeight =
-                    ceil(appWidgetInfo.minHeight.toFloat() / cellSize).toInt()
-                        .coerceAtLeast(1)
-
-                val widgetInfo = WidgetInfo(
-                    widgetId = appWidgetId,
-                    providerInfo = appWidgetInfo,
-                    pageIndex = pageIndex,
-                    width = widgetWidth,
-                    height = widgetHeight
-                )
-
-                viewModel.addWidgetToPage(widgetInfo, pageIndex)
-                scope.launch {
-                    gridState.animateScrollToItem(0)
-                }
-            }
-        }
-    }
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -196,7 +159,11 @@ fun AppsAndWidgetsTab(
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.statusBars)
             .then(
-                if (showWidgetPicker || showAddOptionsDialog || showAppSelectionDialog || swapModeEnabled) {
+                if (showWidgetPicker ||
+                    showAddOptionsDialog ||
+                    showAppSelectionDialog ||
+                    swapModeEnabled
+                ) {
                     Modifier.blockAllNavigation()
                 } else {
                     Modifier.blockHorizontalNavigation()
@@ -222,124 +189,42 @@ fun AppsAndWidgetsTab(
                 )
             }
         } else {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                if (swapModeEnabled) {
-                    WidgetSwapModeHeaderCard {
-                        swapModeEnabled = false
-                        swapSourceWidgetId = null
-                    }
-                } else if (editModeEnabled && pagerState != null) {
-                    WidgetEditModeHeaderCard {
-                        viewModel.toggleEditMode(pageIndex)
-                    }
-                } else if (pagerState != null) {
-                    AnimatedVisibility(
-                        visible = isHeaderVisible,
-                        enter = slideInVertically(initialOffsetY = { -it }),
-                        exit = slideOutVertically(targetOffsetY = { -it })
-                    ) {
-                        ScreenHeaderRow(
-                            totalPages = totalPages,
-                            pagerState = pagerState,
-                            powerViewModel = powerViewModel,
-                            showPowerButton = isPowerButtonVisible,
-                            leadingIcon = Icons.Default.Settings,
-                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                            onLeadingIconClick = onSettingsClick,
-                            leadingIconFocusRequester = settingsIconFocusRequester,
-                            trailingIcon = Icons.Default.Menu,
-                            trailingIconContentDescription = null,
-                            onTrailingIconClick = { showAddOptionsDialog = true },
-                            trailingIconFocusRequester = addWidgetIconFocusRequester,
-                            onNavigateToGrid = {},
-                            onNavigateFromGrid = {
-                                addWidgetIconFocusRequester.requestFocus()
-                            },
-                            onFolderClick = onShowBottomSheet,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                            onDeletePage = onDeletePage,
-                            pageIndicatorBorderColor = pageIndicatorBorderColor,
-                            allApps = allApps,
-                            onNavigateToSearch = onNavigateToSearch
-                        )
-                    }
+            TabContent(
+                swapModeEnabled = swapModeEnabled,
+                editModeEnabled = editModeEnabled,
+                pagerState = pagerState,
+                isHeaderVisible = isHeaderVisible,
+                totalPages = totalPages,
+                powerViewModel = powerViewModel,
+                isPowerButtonVisible = isPowerButtonVisible,
+                onSettingsClick = onSettingsClick,
+                settingsIconFocusRequester = settingsIconFocusRequester,
+                onShowOptionsDialog = { showAddOptionsDialog = true },
+                addWidgetIconFocusRequester = addWidgetIconFocusRequester,
+                onShowBottomSheet = onShowBottomSheet,
+                onDeletePage = onDeletePage,
+                pageIndicatorBorderColor = pageIndicatorBorderColor,
+                allApps = allApps,
+                onNavigateToSearch = onNavigateToSearch,
+                widgets = widgets,
+                displayedApps = displayedApps,
+                gridState = gridState,
+                columns = columns,
+                appsFirst = appsFirst,
+                pageIndex = pageIndex,
+                viewModel = viewModel,
+                onNavigateToResize = onNavigateToResize,
+                swapSourceWidgetId = swapSourceWidgetId,
+                onSwapModeDisabled = {
+                    swapModeEnabled = false
+                    swapSourceWidgetId = null
+                },
+                onEditModeToggle = { viewModel.toggleEditMode(pageIndex) },
+                onSwapModeEnabled = { widgetId ->
+                    swapModeEnabled = true
+                    swapSourceWidgetId = widgetId
                 }
-
-                val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
-
-                if (isTabEmpty && !editModeEnabled) {
-                    EmptyWidgetsState(
-                        onAddClick = { showAddOptionsDialog = true }
-                    )
-                } else {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = GridCells.Fixed(columns),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(start = 8.dp, end = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val sections = if (appsFirst) {
-                            listOf("apps" to displayedApps, "widgets" to widgets)
-                        } else {
-                            listOf("widgets" to widgets, "apps" to displayedApps)
-                        }
-
-                        sections.forEachIndexed { _, (sectionType, items) ->
-                            if (sectionType == "apps" && displayedApps.isNotEmpty() && !editModeEnabled) {
-                                @Suppress("UNCHECKED_CAST")
-                                (items as List<AppInfo>).forEach { app ->
-                                    item(key = "app_${app.packageName}") {
-                                        AppItem(
-                                            app = app,
-                                            pageIndex = pageIndex
-                                        )
-                                    }
-                                }
-                            } else if (sectionType == "widgets" && widgets.isNotEmpty()) {
-                                @Suppress("UNCHECKED_CAST")
-                                (items as List<WidgetInfo>).forEachIndexed { index, widget ->
-                                    item(
-                                        key = "widget_${widget.widgetId}_${pageIndex}_$index",
-                                        span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
-                                    ) {
-                                        WidgetItem(
-                                            widgetInfo = widget,
-                                            viewModel = viewModel,
-                                            pageIndex = pageIndex,
-                                            onNavigateToResize = onNavigateToResize,
-                                            swapModeEnabled = swapModeEnabled,
-                                            isSwapSource = swapSourceWidgetId == widget.widgetId,
-                                            onSwapSelect = { selectedWidgetId ->
-                                                if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
-                                                    viewModel.swapWidgets(
-                                                        swapSourceWidgetId!!,
-                                                        selectedWidgetId,
-                                                        pageIndex
-                                                    )
-                                                    swapModeEnabled = false
-                                                    swapSourceWidgetId = null
-                                                }
-                                            },
-                                            onEnableSwapMode = {
-                                                swapModeEnabled = true
-                                                swapSourceWidgetId = widget.widgetId
-                                            },
-                                            editModeEnabled = editModeEnabled
-                                        )
-                                    }
-                                }
-                            }
-
-
-                        }
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -378,22 +263,16 @@ fun AppsAndWidgetsTab(
 
     if (showWidgetPicker) {
         LaunchedEffect(Unit) {
-            val appWidgetId = viewModel.allocateAppWidgetId()
-            if (appWidgetId != -1) {
-                val pickIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK).apply {
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                }
-                widgetPickerLauncher.launch(pickIntent)
-            }
+            navController?.navigate(Routes.widgetPicker(pageIndex))
             showWidgetPicker = false
         }
     }
 
     if (showHomeTabDialog) {
-        val homeTabManager = jr.brian.home.ui.theme.managers.LocalHomeTabManager.current
+        val homeTabManager = LocalHomeTabManager.current
+        val pageTypeManager = LocalPageTypeManager.current
+        val pageCountManager = LocalPageCountManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
-        val pageCountManager = jr.brian.home.ui.theme.managers.LocalPageCountManager.current
-        val pageTypeManager = jr.brian.home.ui.theme.managers.LocalPageTypeManager.current
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
         HomeTabSelectionDialog(
@@ -431,6 +310,212 @@ fun AppsAndWidgetsTab(
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun TabContent(
+    swapModeEnabled: Boolean,
+    editModeEnabled: Boolean,
+    pagerState: PagerState?,
+    isHeaderVisible: Boolean,
+    totalPages: Int,
+    powerViewModel: PowerViewModel,
+    isPowerButtonVisible: Boolean,
+    onSettingsClick: () -> Unit,
+    settingsIconFocusRequester: FocusRequester,
+    onShowOptionsDialog: () -> Unit,
+    addWidgetIconFocusRequester: FocusRequester,
+    onShowBottomSheet: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    pageIndicatorBorderColor: Color,
+    allApps: List<AppInfo>,
+    onNavigateToSearch: () -> Unit,
+    widgets: List<WidgetInfo>,
+    displayedApps: List<AppInfo>,
+    gridState: LazyGridState,
+    columns: Int,
+    appsFirst: Boolean,
+    pageIndex: Int,
+    viewModel: WidgetViewModel,
+    onNavigateToResize: (WidgetInfo, Int) -> Unit,
+    swapSourceWidgetId: Int?,
+    onSwapModeDisabled: () -> Unit,
+    onEditModeToggle: () -> Unit,
+    onSwapModeEnabled: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        TabHeader(
+            swapModeEnabled = swapModeEnabled,
+            editModeEnabled = editModeEnabled,
+            pagerState = pagerState,
+            isHeaderVisible = isHeaderVisible,
+            totalPages = totalPages,
+            powerViewModel = powerViewModel,
+            isPowerButtonVisible = isPowerButtonVisible,
+            onSettingsClick = onSettingsClick,
+            settingsIconFocusRequester = settingsIconFocusRequester,
+            onShowOptionsDialog = onShowOptionsDialog,
+            addWidgetIconFocusRequester = addWidgetIconFocusRequester,
+            onShowBottomSheet = onShowBottomSheet,
+            onDeletePage = onDeletePage,
+            pageIndicatorBorderColor = pageIndicatorBorderColor,
+            allApps = allApps,
+            onNavigateToSearch = onNavigateToSearch,
+            onSwapModeDisabled = onSwapModeDisabled,
+            onEditModeToggle = onEditModeToggle
+        )
+
+        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+
+        if (isTabEmpty && !editModeEnabled) {
+            EmptyWidgetsState(
+                onAddClick = onShowOptionsDialog
+            )
+        } else {
+            WidgetsAndAppsGrid(
+                gridState = gridState,
+                columns = columns,
+                appsFirst = appsFirst,
+                displayedApps = displayedApps,
+                widgets = widgets,
+                editModeEnabled = editModeEnabled,
+                pageIndex = pageIndex,
+                viewModel = viewModel,
+                onNavigateToResize = onNavigateToResize,
+                swapModeEnabled = swapModeEnabled,
+                swapSourceWidgetId = swapSourceWidgetId,
+                onSwapComplete = onSwapModeDisabled,
+                onSwapModeEnabled = onSwapModeEnabled
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun TabHeader(
+    swapModeEnabled: Boolean,
+    editModeEnabled: Boolean,
+    pagerState: PagerState?,
+    isHeaderVisible: Boolean,
+    totalPages: Int,
+    powerViewModel: PowerViewModel,
+    isPowerButtonVisible: Boolean,
+    onSettingsClick: () -> Unit,
+    settingsIconFocusRequester: FocusRequester,
+    onShowOptionsDialog: () -> Unit,
+    addWidgetIconFocusRequester: FocusRequester,
+    onShowBottomSheet: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    pageIndicatorBorderColor: Color,
+    allApps: List<AppInfo>,
+    onNavigateToSearch: () -> Unit,
+    onSwapModeDisabled: () -> Unit,
+    onEditModeToggle: () -> Unit
+) {
+    when {
+        swapModeEnabled -> {
+            WidgetSwapModeHeaderCard(onClick = onSwapModeDisabled)
+        }
+
+        editModeEnabled && pagerState != null -> {
+            WidgetEditModeHeaderCard(onClick = onEditModeToggle)
+        }
+
+        pagerState != null -> {
+            AnimatedVisibility(
+                visible = isHeaderVisible,
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = slideOutVertically(targetOffsetY = { -it })
+            ) {
+                ScreenHeaderRow(
+                    totalPages = totalPages,
+                    pagerState = pagerState,
+                    powerViewModel = powerViewModel,
+                    showPowerButton = isPowerButtonVisible,
+                    leadingIcon = Icons.Default.Settings,
+                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                    onLeadingIconClick = onSettingsClick,
+                    leadingIconFocusRequester = settingsIconFocusRequester,
+                    trailingIcon = Icons.Default.Menu,
+                    trailingIconContentDescription = null,
+                    onTrailingIconClick = onShowOptionsDialog,
+                    trailingIconFocusRequester = addWidgetIconFocusRequester,
+                    onNavigateToGrid = {},
+                    onNavigateFromGrid = {
+                        addWidgetIconFocusRequester.requestFocus()
+                    },
+                    onFolderClick = onShowBottomSheet,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    onDeletePage = onDeletePage,
+                    pageIndicatorBorderColor = pageIndicatorBorderColor,
+                    allApps = allApps,
+                    onNavigateToSearch = onNavigateToSearch
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetsAndAppsGrid(
+    gridState: LazyGridState,
+    columns: Int,
+    appsFirst: Boolean,
+    displayedApps: List<AppInfo>,
+    widgets: List<WidgetInfo>,
+    editModeEnabled: Boolean,
+    pageIndex: Int,
+    viewModel: WidgetViewModel,
+    onNavigateToResize: (WidgetInfo, Int) -> Unit,
+    swapModeEnabled: Boolean,
+    swapSourceWidgetId: Int?,
+    onSwapComplete: () -> Unit,
+    onSwapModeEnabled: (Int) -> Unit
+) {
+    LazyVerticalGrid(
+        state = gridState,
+        columns = GridCells.Fixed(columns),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 8.dp, end = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val sections = if (appsFirst) {
+            listOf("apps" to displayedApps, "widgets" to widgets)
+        } else {
+            listOf("widgets" to widgets, "apps" to displayedApps)
+        }
+
+        sections.forEach { (sectionType, items) ->
+            when (sectionType) {
+                "apps" -> renderAppItems(
+                    apps = displayedApps,
+                    items = items,
+                    editModeEnabled = editModeEnabled,
+                    pageIndex = pageIndex
+                )
+
+                "widgets" -> renderWidgetItems(
+                    widgets = widgets,
+                    items = items,
+                    columns = columns,
+                    pageIndex = pageIndex,
+                    viewModel = viewModel,
+                    onNavigateToResize = onNavigateToResize,
+                    swapModeEnabled = swapModeEnabled,
+                    swapSourceWidgetId = swapSourceWidgetId,
+                    onSwapComplete = onSwapComplete,
+                    onSwapModeEnabled = onSwapModeEnabled,
+                    editModeEnabled = editModeEnabled
+                )
+            }
+        }
     }
 }
 
@@ -671,6 +756,72 @@ private fun EmptyWidgetsState(
                     )
                 }
             }
+        }
+    }
+}
+
+private fun LazyGridScope.renderAppItems(
+    apps: List<AppInfo>,
+    items: Any,
+    editModeEnabled: Boolean,
+    pageIndex: Int
+) {
+    if (apps.isEmpty() || editModeEnabled) return
+
+    @Suppress("UNCHECKED_CAST")
+    (items as List<AppInfo>).forEach { app ->
+        item(key = "app_${app.packageName}") {
+            AppItem(
+                app = app,
+                pageIndex = pageIndex
+            )
+        }
+    }
+}
+
+private fun LazyGridScope.renderWidgetItems(
+    widgets: List<WidgetInfo>,
+    items: Any,
+    columns: Int,
+    pageIndex: Int,
+    viewModel: WidgetViewModel,
+    onNavigateToResize: (WidgetInfo, Int) -> Unit,
+    swapModeEnabled: Boolean,
+    swapSourceWidgetId: Int?,
+    onSwapComplete: () -> Unit,
+    onSwapModeEnabled: (Int) -> Unit,
+    editModeEnabled: Boolean
+) {
+    if (widgets.isEmpty()) return
+
+    @Suppress("UNCHECKED_CAST")
+    (items as List<WidgetInfo>).forEachIndexed { index, widget ->
+        item(
+            key = "widget_${widget.widgetId}_${pageIndex}_$index",
+            span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
+        ) {
+            WidgetItem(
+                widgetInfo = widget,
+                viewModel = viewModel,
+                pageIndex = pageIndex,
+                onNavigateToResize = onNavigateToResize,
+                swapModeEnabled = swapModeEnabled,
+                isSwapSource = swapSourceWidgetId == widget.widgetId,
+                onSwapSelect = { selectedWidgetId ->
+                    if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
+                        viewModel.swapWidgets(
+                            swapSourceWidgetId,
+                            selectedWidgetId,
+                            pageIndex
+                        )
+                        onSwapComplete()
+                    }
+                },
+                onEnableSwapMode = {
+                    onSwapModeEnabled(widget.widgetId)
+                },
+                editModeEnabled = editModeEnabled
+            )
         }
     }
 }
