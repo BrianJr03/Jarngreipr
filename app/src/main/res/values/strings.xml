@@ -52,6 +52,13 @@
     <string name="app_options_selected">Selected</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
+    <string name="app_options_custom_icon">Custom Icon</string>
+    <string name="app_options_custom_icon_set">Set Custom Icon</string>
+    <string name="app_options_custom_icon_remove">Remove Custom Icon</string>
+    <string name="app_options_custom_icon_description">Choose a PNG image</string>
+    <string name="app_options_custom_icon_success">Custom icon set successfully</string>
+    <string name="app_options_custom_icon_error">Failed to set custom icon</string>
+    <string name="app_options_custom_icon_removed">Custom icon removed</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Change the look of Jarngreipr</string>

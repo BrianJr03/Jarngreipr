@@ -1,6 +1,7 @@
 package jr.brian.home.di
 
 import android.content.Context
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -9,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -20,6 +22,8 @@ import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.data.WhatsNewManager
+import jr.brian.home.data.database.AppDatabase
+import jr.brian.home.data.database.CustomIconDao
 import javax.inject.Singleton
 
 @Module
@@ -136,5 +140,32 @@ object AppModule {
         @ApplicationContext context: Context
     ): WhatsNewManager {
         return WhatsNewManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppDatabase(
+        @ApplicationContext context: Context
+    ): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "jarngreipr_database"
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomIconDao(database: AppDatabase): CustomIconDao {
+        return database.customIconDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomIconManager(
+        @ApplicationContext context: Context,
+        customIconDao: CustomIconDao
+    ): CustomIconManager {
+        return CustomIconManager(context, customIconDao)
     }
 }
