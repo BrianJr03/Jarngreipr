@@ -83,7 +83,6 @@ fun FreePositionedAppsLayout(
     // Each page should have its own scroll state
     val scrollState = remember(pageIndex) { ScrollState(0) }
 
-    // Dialog state
     var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
     var showCustomIconDialog by remember(pageIndex) { mutableStateOf(false) }
     var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }

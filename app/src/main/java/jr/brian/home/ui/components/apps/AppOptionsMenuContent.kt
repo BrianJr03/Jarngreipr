@@ -139,7 +139,6 @@ fun AppOptionsMenuContent(
                     }
                 )
 
-                // Custom Icon option
                 MenuOption(
                     icon = Icons.Default.Image,
                     label = stringResource(id = R.string.app_options_custom_icon),
