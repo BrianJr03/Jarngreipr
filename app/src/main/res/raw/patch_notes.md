@@ -1,5 +1,5 @@
 ### New Features
-- You can now use custom icons! Long-press an icon and select "Icon" to use your own PNG.
-- Widget Selector has been overhauled. Much cleaner UI with previews and search.
+- Fixes crash when long-pressing app.
+- Adds Crash Logs in Settings!
 
-1.0.0
+1.0.1
