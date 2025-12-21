@@ -36,12 +36,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
-import jr.brian.home.model.AlignmentGuide
-import jr.brian.home.model.AlignmentState
-import jr.brian.home.model.AppInfo
-import jr.brian.home.model.AppPosition
 import jr.brian.home.model.DistanceMeasurement
 import jr.brian.home.model.GuideType
+import jr.brian.home.model.alignment.AlignmentGuide
+import jr.brian.home.model.alignment.AlignmentState
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.AppPosition
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.theme.AlignmentGuideColor

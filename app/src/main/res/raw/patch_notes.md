@@ -1,5 +1,5 @@
-### Quick Fixes
-- Fixes issue where widgets position would randomize.
-- Fixes issue where an app launched using the Back Button Shortcut always displays on the bottom screen
+### New Features
+- You can now use custom icons! Long-press an icon and select "Icon" to use your own PNG.
+- Widget Selector has been overhauled. Much cleaner UI with previews and search.
 
-0.9.7-beta
+1.0.0

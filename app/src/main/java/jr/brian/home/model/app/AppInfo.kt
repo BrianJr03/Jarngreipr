@@ -1,4 +1,4 @@
-package jr.brian.home.model
+package jr.brian.home.model.app
 
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Drawable

@@ -21,6 +21,7 @@ import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
+import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.data.WhatsNewManager
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
@@ -167,5 +168,13 @@ object AppModule {
         customIconDao: CustomIconDao
     ): CustomIconManager {
         return CustomIconManager(context, customIconDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWidgetProviderRepository(
+        @ApplicationContext context: Context
+    ): WidgetProviderRepository {
+        return WidgetProviderRepository(context)
     }
 }

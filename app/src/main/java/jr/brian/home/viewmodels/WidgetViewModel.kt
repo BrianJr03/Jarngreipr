@@ -11,9 +11,9 @@ import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
-import jr.brian.home.model.WidgetConfig
-import jr.brian.home.model.WidgetInfo
-import jr.brian.home.model.WidgetPage
+import jr.brian.home.model.widget.WidgetConfig
+import jr.brian.home.model.widget.WidgetInfo
+import jr.brian.home.model.widget.WidgetPage
 import jr.brian.home.model.state.WidgetUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
