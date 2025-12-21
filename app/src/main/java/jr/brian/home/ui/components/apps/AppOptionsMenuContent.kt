@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -67,7 +68,8 @@ fun AppOptionsMenuContent(
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {}
+    onToggleVisibility: () -> Unit = {},
+    onCustomIconClick: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
@@ -129,22 +131,42 @@ fun AppOptionsMenuContent(
                         onFocusedIndexChange(0)
                     },
                     onNavigateDown = {
-                        if (app != null && focusRequesters.size > 2) {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        } else if (hasExternalDisplay && focusRequesters.size > 2) {
-                            focusRequesters[2].requestFocus()
-                            onFocusedIndexChange(2)
-                        }
+                        focusRequesters[2].requestFocus()
+                        onFocusedIndexChange(2)
                     },
                     onFocusChanged = { focused ->
                         if (focused) onFocusedIndexChange(1)
                     }
                 )
 
+                MenuOption(
+                    icon = Icons.Default.Image,
+                    label = stringResource(id = R.string.app_options_custom_icon),
+                    focusRequester = focusRequesters[2],
+                    onClick = {
+                        onCustomIconClick()
+                    },
+                    onNavigateUp = {
+                        focusRequesters[1].requestFocus()
+                        onFocusedIndexChange(1)
+                    },
+                    onNavigateDown = {
+                        if (app != null && focusRequesters.size > 3) {
+                            focusRequesters[3].requestFocus()
+                            onFocusedIndexChange(3)
+                        } else if (hasExternalDisplay && focusRequesters.size > 3) {
+                            focusRequesters[3].requestFocus()
+                            onFocusedIndexChange(3)
+                        }
+                    },
+                    onFocusChanged = { focused ->
+                        if (focused) onFocusedIndexChange(2)
+                    }
+                )
+
                 if (app != null) {
-                    val resizeIndex = 2
-                    val displayStartIndex = 3
+                    val resizeIndex = 3
+                    val displayStartIndex = 4
 
                     MenuOption(
                         icon = Icons.Default.Add,
@@ -155,8 +177,8 @@ fun AppOptionsMenuContent(
                             previewIconSize = currentIconSize
                         },
                         onNavigateUp = {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
+                            focusRequesters[2].requestFocus()
+                            onFocusedIndexChange(2)
                         },
                         onNavigateDown = {
                             if (hasExternalDisplay && focusRequesters.size > displayStartIndex) {
@@ -218,31 +240,9 @@ fun AppOptionsMenuContent(
                         icon = Icons.AutoMirrored.Filled.ScreenShare,
                         label = stringResource(id = R.string.app_options_launch_external),
                         isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                        focusRequester = focusRequesters[2],
-                        onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                            onDismiss()
-                        },
-                        onNavigateUp = {
-                            focusRequesters[1].requestFocus()
-                            onFocusedIndexChange(1)
-                        },
-                        onNavigateDown = {
-                            focusRequesters[3].requestFocus()
-                            onFocusedIndexChange(3)
-                        },
-                        onFocusChanged = { focused ->
-                            if (focused) onFocusedIndexChange(2)
-                        }
-                    )
-
-                    MenuOption(
-                        icon = Icons.AutoMirrored.Filled.ScreenShare,
-                        label = stringResource(id = R.string.app_options_launch_primary),
-                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                         focusRequester = focusRequesters[3],
                         onClick = {
-                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                            onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                             onDismiss()
                         },
                         onNavigateUp = {
@@ -250,10 +250,32 @@ fun AppOptionsMenuContent(
                             onFocusedIndexChange(2)
                         },
                         onNavigateDown = {
-                            // Stay on last item
+                            focusRequesters[4].requestFocus()
+                            onFocusedIndexChange(4)
                         },
                         onFocusChanged = { focused ->
                             if (focused) onFocusedIndexChange(3)
+                        }
+                    )
+
+                    MenuOption(
+                        icon = Icons.AutoMirrored.Filled.ScreenShare,
+                        label = stringResource(id = R.string.app_options_launch_primary),
+                        isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                        focusRequester = focusRequesters[4],
+                        onClick = {
+                            onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                            onDismiss()
+                        },
+                        onNavigateUp = {
+                            focusRequesters[3].requestFocus()
+                            onFocusedIndexChange(3)
+                        },
+                        onNavigateDown = {
+                            // Stay on last item
+                        },
+                        onFocusChanged = { focused ->
+                            if (focused) onFocusedIndexChange(4)
                         }
                     )
                 }

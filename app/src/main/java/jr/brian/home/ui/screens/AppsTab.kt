@@ -80,6 +80,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -498,6 +499,7 @@ private fun AppGridLayout(
     onAppLongClick: (AppInfo) -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
+    val customIconManager = LocalCustomIconManager.current
 
     val displayedApps = remember(apps, maxAppsPerPage) {
         apps.take(maxAppsPerPage)
@@ -533,6 +535,7 @@ private fun AppGridLayout(
                 onClick = { onAppClick(app) },
                 onLongClick = { onAppLongClick(app) },
                 onFocusChanged = { onFocusChanged(index) },
+                customIconManager = customIconManager,
                 onNavigateUp = {
                     val prevIndex = index - columns
                     if (prevIndex >= 0) {

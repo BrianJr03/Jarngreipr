@@ -43,9 +43,11 @@ import jr.brian.home.model.AppPosition
 import jr.brian.home.model.DistanceMeasurement
 import jr.brian.home.model.GuideType
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.theme.AlignmentGuideColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -69,6 +71,7 @@ fun FreePositionedAppsLayout(
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val customIconManager = LocalCustomIconManager.current
 
     val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
 
@@ -80,8 +83,8 @@ fun FreePositionedAppsLayout(
     // Each page should have its own scroll state
     val scrollState = remember(pageIndex) { ScrollState(0) }
 
-    // Dialog state
     var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
+    var showCustomIconDialog by remember(pageIndex) { mutableStateOf(false) }
     var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
@@ -309,6 +312,7 @@ fun FreePositionedAppsLayout(
                     offsetY = initialY,
                     iconSize = currentIconSize,
                     isFocusable = false,
+                    customIconManager = customIconManager,
                     onOffsetChanged = { x, y ->
                         val currentIconSize =
                             appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
@@ -420,6 +424,22 @@ fun FreePositionedAppsLayout(
                     widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
                 showOptionsDialog = false
+                selectedApp = null
+            },
+            onCustomIconClick = {
+                showOptionsDialog = false
+                showCustomIconDialog = true
+            }
+        )
+    }
+
+    if (showCustomIconDialog && selectedApp != null) {
+        CustomIconDialog(
+            packageName = selectedApp!!.packageName,
+            appLabel = selectedApp!!.label,
+            customIconManager = customIconManager,
+            onDismiss = {
+                showCustomIconDialog = false
                 selectedApp = null
             }
         )

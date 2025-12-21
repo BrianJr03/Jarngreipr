@@ -26,9 +26,12 @@ import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.AppInfo
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
@@ -45,8 +48,10 @@ fun AppItem(
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val customIconManager = LocalCustomIconManager.current
     val scope = rememberCoroutineScope()
     var showOptionsDialog by remember { mutableStateOf(false) }
+    var showCustomIconDialog by remember { mutableStateOf(false) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -75,9 +80,11 @@ fun AppItem(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            defaultIcon = app.icon,
+            packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
+            customIconManager = customIconManager,
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(8.dp))
@@ -107,7 +114,20 @@ fun AppItem(
                     widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
                 showOptionsDialog = false
+            },
+            onCustomIconClick = {
+                showOptionsDialog = false
+                showCustomIconDialog = true
             }
+        )
+    }
+
+    if (showCustomIconDialog) {
+        CustomIconDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            customIconManager = customIconManager,
+            onDismiss = { showCustomIconDialog = false }
         )
     }
 }

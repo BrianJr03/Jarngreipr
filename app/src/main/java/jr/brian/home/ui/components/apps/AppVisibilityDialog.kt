@@ -54,6 +54,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -71,6 +72,7 @@ fun AppVisibilityDialog(
     onHideAllOverride: (() -> Unit)? = null
 ) {
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val customIconManager = LocalCustomIconManager.current
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val hiddenApps = if (isWidgetTabMode && visibleAppsOverride != null) {
         apps.map { it.packageName }.filter { it !in visibleAppsOverride }.toSet()
@@ -193,6 +195,7 @@ fun AppVisibilityDialog(
                         AppVisibilityItem(
                             app = app,
                             isVisible = app.packageName !in hiddenApps,
+                            customIconManager = customIconManager,
                             onToggle = {
                                 if (onToggleAppOverride != null) {
                                     onToggleAppOverride(app.packageName)
@@ -216,6 +219,7 @@ fun AppVisibilityDialog(
 private fun AppVisibilityItem(
     app: AppInfo,
     isVisible: Boolean,
+    customIconManager: jr.brian.home.data.CustomIconManager,
     onToggle: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -263,9 +267,11 @@ private fun AppVisibilityItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                bitmap = app.icon.toBitmap(48, 48).asImageBitmap(),
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(8.dp))
