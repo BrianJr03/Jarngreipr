@@ -8,6 +8,7 @@ object Routes {
     const val APP_SEARCH = "app_search"
     const val BACK_BUTTON_SHORTCUT = "back_button_shortcut"
     const val MONITOR = "monitor"
+    const val CRASH_LOGS = "crash_logs"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
 
     fun widgetPicker(pageIndex: Int) = "widget_picker/$pageIndex"
