@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppSearchScreen
@@ -22,6 +24,7 @@ import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
@@ -61,6 +64,7 @@ fun NavGraphBuilder.launcherScreen(
             mainViewModel = mainViewModel,
             widgetViewModel = widgetViewModel,
             powerViewModel = powerViewModel,
+            navController = navController,
             initialPage = currentHomeTabIndex,
             onSettingsClick = {
                 navController.navigate(Routes.SETTINGS)
@@ -322,6 +326,37 @@ fun NavGraphBuilder.monitorScreen(
                     showScreen = false
                     navController.popBackStack()
                 }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.widgetPickerScreen(
+    navController: NavHostController,
+    widgetViewModel: WidgetViewModel
+) {
+    composable(
+        route = Routes.WIDGET_PICKER,
+        arguments = listOf(
+            navArgument("pageIndex") {
+                type = NavType.IntType
+            }
+        )
+    ) { backStackEntry ->
+        val pageIndex = backStackEntry.arguments?.getInt("pageIndex") ?: 0
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            WidgetPickerScreen(
+                pageIndex = pageIndex,
+                onNavigateBack = {
+                    showScreen = false
+                    navController.popBackStack()
+                },
+                onWidgetAdded = {
+                    // Widget added successfully
+                },
+                widgetViewModel = widgetViewModel
             )
         }
     }

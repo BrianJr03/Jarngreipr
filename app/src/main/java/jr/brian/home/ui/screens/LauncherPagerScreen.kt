@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
@@ -42,6 +43,7 @@ fun LauncherPagerScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
     powerViewModel: PowerViewModel = hiltViewModel(),
+    navController: NavHostController? = null,
     initialPage: Int = 0,
     onSettingsClick: () -> Unit,
     onShowBottomSheet: () -> Unit = {},
@@ -232,7 +234,8 @@ fun LauncherPagerScreen(
                                     }
                                 },
                                 pageIndicatorBorderColor = ThemeSecondaryColor,
-                                onNavigateToSearch = onNavigateToSearch
+                                onNavigateToSearch = onNavigateToSearch,
+                                navController = navController
                             )
                         }
                     }

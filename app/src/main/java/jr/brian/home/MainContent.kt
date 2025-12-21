@@ -35,6 +35,7 @@ import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.settingsScreen
+import jr.brian.home.ui.navigation.widgetPickerScreen
 import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -157,6 +158,11 @@ fun MainContent() {
                 )
 
                 monitorScreen(navController = navController)
+
+                widgetPickerScreen(
+                    navController = navController,
+                    widgetViewModel = widgetViewModel
+                )
             }
         }
 

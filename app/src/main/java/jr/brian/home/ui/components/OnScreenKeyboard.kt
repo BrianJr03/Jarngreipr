@@ -53,9 +53,10 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 @Composable
 fun OnScreenKeyboard(
     searchQuery: String,
-    onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    showQueryText: Boolean = true,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onNavigateRight: () -> Unit = {},
 ) {
@@ -71,22 +72,24 @@ fun OnScreenKeyboard(
         modifier = modifier.padding(top = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .background(OledCardColor, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
-                modifier = Modifier.weight(1f),
-            )
+        if (showQueryText) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                        .background(OledCardColor, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
 
         LazyColumn(
