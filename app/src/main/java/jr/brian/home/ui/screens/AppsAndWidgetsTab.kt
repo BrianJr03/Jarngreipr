@@ -1,10 +1,6 @@
 package jr.brian.home.ui.screens
 
-import android.appwidget.AppWidgetManager
-import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -77,9 +73,11 @@ import jr.brian.home.model.WidgetInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import androidx.navigation.NavHostController
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.util.Routes
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.WidgetItem
@@ -93,7 +91,6 @@ import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
-import kotlin.math.ceil
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -111,7 +108,8 @@ fun AppsAndWidgetsTab(
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    navController: NavHostController? = null
 ) {
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
@@ -151,43 +149,7 @@ fun AppsAndWidgetsTab(
 
     val gridState = rememberLazyGridState()
 
-    val widgetPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val data = result.data
-        val appWidgetId = data?.getIntExtra(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            -1
-        ) ?: -1
-
-        if (appWidgetId != -1) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
-
-            if (appWidgetInfo != null) {
-                val cellSize = 70
-                val widgetWidth =
-                    ceil(appWidgetInfo.minWidth.toFloat() / cellSize).toInt()
-                        .coerceAtLeast(1)
-                val widgetHeight =
-                    ceil(appWidgetInfo.minHeight.toFloat() / cellSize).toInt()
-                        .coerceAtLeast(1)
-
-                val widgetInfo = WidgetInfo(
-                    widgetId = appWidgetId,
-                    providerInfo = appWidgetInfo,
-                    pageIndex = pageIndex,
-                    width = widgetWidth,
-                    height = widgetHeight
-                )
-
-                viewModel.addWidgetToPage(widgetInfo, pageIndex)
-                scope.launch {
-                    gridState.animateScrollToItem(0)
-                }
-            }
-        }
-    }
+    // Note: Widget picker is now a navigation screen (WidgetPickerScreen)
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -378,13 +340,7 @@ fun AppsAndWidgetsTab(
 
     if (showWidgetPicker) {
         LaunchedEffect(Unit) {
-            val appWidgetId = viewModel.allocateAppWidgetId()
-            if (appWidgetId != -1) {
-                val pickIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK).apply {
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                }
-                widgetPickerLauncher.launch(pickIntent)
-            }
+            navController?.navigate(Routes.widgetPicker(pageIndex))
             showWidgetPicker = false
         }
     }
