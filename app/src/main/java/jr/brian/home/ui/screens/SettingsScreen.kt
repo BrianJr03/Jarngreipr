@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material3.Scaffold
@@ -60,6 +61,7 @@ fun SettingsScreen(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
+    onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     BackHandler(onBack = onDismiss)
@@ -81,7 +83,8 @@ fun SettingsScreen(
                     onNavigateToCustomTheme = onNavigateToCustomTheme,
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
-                    onNavigateToMonitor = onNavigateToMonitor
+                    onNavigateToMonitor = onNavigateToMonitor,
+                    onNavigateToCrashLogs = onNavigateToCrashLogs
                 )
             }
         }
@@ -95,7 +98,8 @@ private fun SettingsContent(
     onNavigateToCustomTheme: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
-    onNavigateToMonitor: () -> Unit = {}
+    onNavigateToMonitor: () -> Unit = {},
+    onNavigateToCrashLogs: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -210,6 +214,18 @@ private fun SettingsContent(
                 onClick = {
                     expandedItem = null
                     onNavigateToMonitor()
+                }
+            )
+        }
+
+        item {
+            SettingItem(
+                title = "Crash Logs",
+                description = "View and copy crash reports for debugging",
+                icon = Icons.Default.BugReport,
+                onClick = {
+                    expandedItem = null
+                    onNavigateToCrashLogs()
                 }
             )
         }

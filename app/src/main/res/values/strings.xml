@@ -415,4 +415,22 @@
     <string name="widget_picker_try_different_search">Try a different search term</string>
     <string name="widget_picker_size_info">%1$d × %2$d cells</string>
     <string name="widget_picker_resizable">Resizable</string>
+
+    <!-- Crash Logs Screen -->
+    <string name="crash_logs_title">Crash Logs</string>
+    <string name="crash_logs_description">View and manage app crash reports</string>
+    <string name="crash_logs_report_issue">Report Issue</string>
+    <string name="crash_logs_report_issue_url">https://github.com/BrianJr03/Jarngreipr/issues/new</string>
+    <string name="crash_logs_clear_all">Clear All</string>
+    <string name="crash_logs_clear_all_dialog_title">Clear All Crash Logs?</string>
+    <string name="crash_logs_clear_all_dialog_message">This will permanently delete all %1$d crash log(s).</string>
+    <string name="crash_logs_clear_all_confirm">Clear All</string>
+    <string name="crash_logs_clear_all_cancel">Cancel</string>
+    <string name="crash_logs_detail_title">Crash Details</string>
+    <string name="crash_logs_detail_copy">Copy</string>
+    <string name="crash_logs_detail_close">Close</string>
+    <string name="crash_logs_copied_toast">Copied to clipboard</string>
+    <string name="crash_logs_delete_description">Delete</string>
+    <string name="crash_logs_empty_title">No Crash Logs</string>
+    <string name="crash_logs_empty_description">Your app hasn\'t crashed recently.\nCrash logs will appear here if the app encounters an error.</string>
 </resources>

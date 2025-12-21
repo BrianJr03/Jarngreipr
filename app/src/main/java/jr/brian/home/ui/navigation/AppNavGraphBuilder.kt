@@ -18,6 +18,7 @@ import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
+import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
@@ -36,8 +37,8 @@ import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 
 fun NavGraphBuilder.launcherScreen(
-    navController: NavHostController,
     context: Context,
+    navController: NavHostController,
     mainViewModel: MainViewModel,
     widgetViewModel: WidgetViewModel,
     powerViewModel: PowerViewModel
@@ -134,6 +135,10 @@ fun NavGraphBuilder.launcherScreen(
                         showSettingsSheet = false
                         navController.navigate(Routes.MONITOR)
                     },
+                    onNavigateToCrashLogs = {
+                        showSettingsSheet = false
+                        navController.navigate(Routes.CRASH_LOGS)
+                    },
                     onDismiss = {
                         showSettingsSheet = false
                     }
@@ -221,6 +226,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToMonitor = {
                     showScreen = false
                     navController.navigate(Routes.MONITOR)
+                },
+                onNavigateToCrashLogs = {
+                    showScreen = false
+                    navController.navigate(Routes.CRASH_LOGS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -322,6 +331,23 @@ fun NavGraphBuilder.monitorScreen(
 
         SlideInVertically(showScreen) {
             MonitorScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.crashLogsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.CRASH_LOGS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            CrashLogsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
