@@ -206,7 +206,7 @@
     <string name="app_icon_description">App icon for %1$s</string>
 
     <!-- Version Info -->
-    <string name="settings_version_label">Version %1$s (Beta)</string>
+    <string name="settings_version_label">Version %1$s</string>
 
     <!-- Welcome Overlay -->
     <string name="welcome_overlay_title">Welcome to Járngreipr</string>
