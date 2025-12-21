@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,18 +30,14 @@ fun AppOptionsMenu(
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {}
 ) {
-    val optionCount = if (app != null) {
-        if (hasExternalDisplay) 5 else 3
-    } else {
-        if (hasExternalDisplay) 4 else 2
-    }
-    val focusRequesters = remember {
-        List(optionCount) { FocusRequester() }
-    }
+    val focusRequesters = rememberAppOptionsMenuFocusRequesters(
+        app = app,
+        hasExternalDisplay = hasExternalDisplay
+    )
     var focusedIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        focusRequesters[0].requestFocus()
+        focusRequesters.firstOrNull()?.requestFocus()
     }
 
     AlertDialog(

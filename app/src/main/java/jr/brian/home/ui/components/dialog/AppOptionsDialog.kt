@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,6 +28,7 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenuContent
+import jr.brian.home.ui.components.apps.rememberAppOptionsMenuFocusRequesters
 import jr.brian.home.ui.theme.OledCardColor
 
 @Composable
@@ -84,15 +84,12 @@ fun AppOptionsDialog(
             }
         },
         text = {
-            val optionCount = if (showResizeOption) {
-                if (hasExternalDisplay) 6 else 4
-            } else {
-                if (hasExternalDisplay) 5 else 3
-            }
-            val focusRequesters = remember {
-                List(optionCount) { FocusRequester() }
-            }
+            val focusRequesters = rememberAppOptionsMenuFocusRequesters(
+                hasResizeOption = showResizeOption,
+                hasExternalDisplay = hasExternalDisplay
+            )
             var focusedIndex by remember { mutableIntStateOf(0) }
+
             AppOptionsMenuContent(
                 appLabel = "", // Already displayed in title
                 currentDisplayPreference = currentDisplayPreference,
