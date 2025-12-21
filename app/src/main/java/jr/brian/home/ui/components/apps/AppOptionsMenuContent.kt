@@ -8,8 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -53,7 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.model.AppInfo
+import jr.brian.home.model.GridItem
+import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -94,9 +92,7 @@ fun AppOptionsMenuContent(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            // Create grid items based on available options
             val gridItems = buildList {
-                // Row 1
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Info,
@@ -128,7 +124,6 @@ fun AppOptionsMenuContent(
                     )
                 )
 
-                // Row 2
                 if (app != null) {
                     add(
                         GridItem.IconItem(
@@ -195,7 +190,6 @@ fun AppOptionsMenuContent(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // First row (3 items)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -241,7 +235,6 @@ fun AppOptionsMenuContent(
                     }
                 }
 
-                // Second row (up to 3 items)
                 if (gridItems.size > 3) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -448,22 +441,6 @@ private fun AppPreview(
             }
         }
     }
-}
-
-private sealed class GridItem {
-    data class IconItem(
-        val icon: ImageVector,
-        val label: String,
-        val onClick: () -> Unit,
-        val index: Int
-    ) : GridItem()
-
-    data class TextItem(
-        val text: String,
-        val onClick: () -> Unit,
-        val isSelected: Boolean,
-        val index: Int
-    ) : GridItem()
 }
 
 @Composable

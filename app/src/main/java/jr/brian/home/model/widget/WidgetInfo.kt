@@ -1,4 +1,4 @@
-package jr.brian.home.model
+package jr.brian.home.model.widget
 
 import android.appwidget.AppWidgetProviderInfo
 

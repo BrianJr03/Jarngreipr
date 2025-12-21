@@ -6,7 +6,7 @@ import app.cash.turbine.test
 import io.mockk.every
 import io.mockk.mockk
 import jr.brian.home.data.WidgetPreferences
-import jr.brian.home.model.WidgetPage
+import jr.brian.home.model.widget.WidgetPage
 import jr.brian.home.model.state.WidgetUIState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers

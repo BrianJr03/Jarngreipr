@@ -121,7 +121,7 @@ fun AppsAndWidgetsOptionsDialog(
 
                 AddOptionCard(
                     title = stringResource(R.string.widget_page_add_widget),
-                    description = "Browse and add widgets with live previews",
+                    description = stringResource(R.string.widget_page_add_widget_description),
                     icon = Icons.Default.Add,
                     onClick = {
                         onDismiss()

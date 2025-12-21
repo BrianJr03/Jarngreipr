@@ -22,6 +22,7 @@ import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
+import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -65,7 +66,7 @@ fun LauncherPagerScreen(
     val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
 
     var showResizeScreen by remember { mutableStateOf(false) }
-    var resizeWidgetInfo by remember { mutableStateOf<jr.brian.home.model.WidgetInfo?>(null) }
+    var resizeWidgetInfo by remember { mutableStateOf<WidgetInfo?>(null) }
     var resizePageIndex by remember { mutableStateOf(0) }
 
     val totalPages = pageTypes.size
