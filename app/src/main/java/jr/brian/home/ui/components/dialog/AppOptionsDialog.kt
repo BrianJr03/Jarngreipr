@@ -47,7 +47,6 @@ fun AppOptionsDialog(
     onCustomIconClick: () -> Unit = {}
 ) {
     AlertDialog(
-        modifier = Modifier.fillMaxSize(),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         shape = RoundedCornerShape(24.dp),
