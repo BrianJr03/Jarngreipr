@@ -94,6 +94,9 @@
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
 
+    <string name="settings_show_app_names_title">Show App Names</string>
+    <string name="settings_show_app_names_description">Show app names in Tabs</string>
+
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper</string>
     <string name="settings_wallpaper_default">Default</string>

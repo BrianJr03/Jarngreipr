@@ -5,8 +5,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,12 +22,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -41,6 +47,7 @@ fun AppGridItem(
     customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val appVisibilityManager = LocalAppVisibilityManager.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AppIconImage(
@@ -80,6 +87,12 @@ fun AppGridItem(
                     )
                     .focusable()
         )
+
+        Spacer(Modifier.height(4.dp))
+
+        if (appVisibilityManager.showAppNames) {
+            app.AppName()
+        }
 
         val dividerAlpha by animateFloatAsState(
             targetValue = if (isFocused) 1f else 0f,
