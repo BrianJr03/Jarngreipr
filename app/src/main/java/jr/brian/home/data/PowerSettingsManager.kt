@@ -46,11 +46,11 @@ class PowerSettingsManager(context: Context) {
     }
 
     private fun loadWakeMethod(): WakeMethod {
-        val methodName = prefs.getString(KEY_WAKE_METHOD, WakeMethod.SINGLE_TAP.name)
+        val methodName = prefs.getString(KEY_WAKE_METHOD, WakeMethod.DOUBLE_TAP.name)
         return try {
-            WakeMethod.valueOf(methodName ?: WakeMethod.SINGLE_TAP.name)
+            WakeMethod.valueOf(methodName ?: WakeMethod.DOUBLE_TAP.name)
         } catch (_: IllegalArgumentException) {
-            WakeMethod.SINGLE_TAP
+            WakeMethod.DOUBLE_TAP
         }
     }
 
