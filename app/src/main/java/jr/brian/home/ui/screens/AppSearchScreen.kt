@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -37,14 +39,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
@@ -91,7 +94,7 @@ fun AppSearchScreen(
 
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(.8f)
                     .fillMaxSize()
                     .background(OledBackgroundColor)
             ) {
@@ -120,7 +123,6 @@ private fun AppGrid(
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-    val customIconManager = LocalCustomIconManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
@@ -141,7 +143,6 @@ private fun AppGrid(
         items(apps, key = { it.packageName }) { app ->
             AppGridItem(
                 app = app,
-                customIconManager = customIconManager,
                 onAppClick = {
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -186,11 +187,12 @@ private fun AppGrid(
 @Composable
 private fun AppGridItem(
     app: AppInfo,
-    customIconManager: CustomIconManager,
+    modifier: Modifier = Modifier,
     onAppClick: () -> Unit,
-    onAppLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onAppLongClick: () -> Unit
 ) {
+    val customIconManager = LocalCustomIconManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
     var isFocused by remember { mutableStateOf(false) }
 
     Column(
@@ -219,5 +221,8 @@ private fun AppGridItem(
                 .size(80.dp)
                 .clip(RoundedCornerShape(12.dp))
         )
+
+        Spacer(Modifier.height(4.dp))
+        app.AppName()
     }
 }

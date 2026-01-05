@@ -18,6 +18,9 @@ class AppVisibilityManager(context: Context) {
     private val _newAppsVisibleByDefault = MutableStateFlow(loadNewAppsVisibleByDefault())
     val newAppsVisibleByDefault = _newAppsVisibleByDefault.asStateFlow()
 
+    var showAppNames by mutableStateOf(loadShowAppNames())
+        private set
+
     init {
         loadAllPageData()
     }
@@ -46,6 +49,18 @@ class AppVisibilityManager(context: Context) {
 
     private fun loadNewAppsVisibleByDefault(): Boolean {
         return prefs.getBoolean(KEY_NEW_APPS_VISIBLE_BY_DEFAULT, true)
+    }
+
+    private fun loadShowAppNames(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_APP_NAMES, false)
+    }
+
+    fun toggleShowAppNames() {
+        showAppNames = !showAppNames
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_APP_NAMES, showAppNames)
+            apply()
+        }
     }
 
     fun setNewAppsVisibleByDefault(visible: Boolean) {
@@ -111,6 +126,7 @@ class AppVisibilityManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"
+        private const val KEY_SHOW_APP_NAMES = "show_app_names"
         private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"
         private const val SEPARATOR = ","
     }
