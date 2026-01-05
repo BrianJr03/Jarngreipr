@@ -28,9 +28,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.GridItem
 import jr.brian.home.ui.extensions.handleFullNavigation
@@ -50,7 +52,7 @@ fun SearchAppOptionsMenuContent(
         add(
             GridItem.IconItem(
                 icon = Icons.Default.Info,
-                label = "Info",
+                label = stringResource(R.string.app_options_info),
                 onClick = {
                     onAppInfoClick()
                     onDismiss()
@@ -62,7 +64,7 @@ fun SearchAppOptionsMenuContent(
         if (hasExternalDisplay) {
             add(
                 GridItem.TextItem(
-                    text = "Top\nDisplay",
+                    text = stringResource(R.string.app_options_launch_primary_descr),
                     onClick = {
                         onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
                         onDismiss()
@@ -73,7 +75,7 @@ fun SearchAppOptionsMenuContent(
             )
             add(
                 GridItem.TextItem(
-                    text = "Bottom\nDisplay",
+                    text = stringResource(R.string.app_options_launch_external_descr),
                     onClick = {
                         onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                         onDismiss()

@@ -45,10 +45,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.GridItem
 import jr.brian.home.model.app.AppInfo
@@ -96,7 +98,7 @@ fun AppOptionsMenuContent(
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Info,
-                        label = "Info",
+                        label = stringResource(R.string.app_options_info),
                         onClick = {
                             onAppInfoClick()
                             onDismiss()
@@ -107,7 +109,7 @@ fun AppOptionsMenuContent(
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.VisibilityOff,
-                        label = "Hide",
+                        label = stringResource(R.string.app_options_hide),
                         onClick = {
                             onToggleVisibility()
                             onDismiss()
@@ -118,7 +120,7 @@ fun AppOptionsMenuContent(
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Image,
-                        label = "Icon",
+                        label = stringResource(R.string.app_options_icon),
                         onClick = onCustomIconClick,
                         index = 2
                     )
@@ -128,7 +130,7 @@ fun AppOptionsMenuContent(
                     add(
                         GridItem.IconItem(
                             icon = Icons.Default.OpenInFull,
-                            label = "Resize",
+                            label = stringResource(R.string.app_options_resize),
                             onClick = {
                                 showResizeMode = true
                                 previewIconSize = currentIconSize
@@ -140,7 +142,7 @@ fun AppOptionsMenuContent(
                     if (hasExternalDisplay) {
                         add(
                             GridItem.TextItem(
-                                text = "Top\nDisplay",
+                                text = stringResource(R.string.app_options_launch_primary_descr),
                                 onClick = {
                                     onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
                                     onDismiss()
@@ -151,7 +153,7 @@ fun AppOptionsMenuContent(
                         )
                         add(
                             GridItem.TextItem(
-                                text = "Bottom\nDisplay",
+                                text = stringResource(R.string.app_options_launch_external_descr),
                                 onClick = {
                                     onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                                     onDismiss()
@@ -161,29 +163,6 @@ fun AppOptionsMenuContent(
                             )
                         )
                     }
-                } else if (hasExternalDisplay) {
-                    add(
-                        GridItem.TextItem(
-                            text = "Top\nDisplay",
-                            onClick = {
-                                onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
-                                onDismiss()
-                            },
-                            isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                            index = 3
-                        )
-                    )
-                    add(
-                        GridItem.TextItem(
-                            text = "Bottom\nDisplay",
-                            onClick = {
-                                onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                                onDismiss()
-                            },
-                            isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                            index = 4
-                        )
-                    )
                 }
             }
 
@@ -353,7 +332,7 @@ private fun AppPreview(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Icon Preview",
+            text = stringResource(R.string.app_options_resize_preview),
             color = Color.White,
             style = MaterialTheme.typography.titleMedium
         )
@@ -428,7 +407,7 @@ private fun AppPreview(
                     containerColor = Color.Gray.copy(alpha = 0.3f)
                 )
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.app_options_resize_cancel))
             }
 
             Button(
@@ -437,7 +416,7 @@ private fun AppPreview(
                     containerColor = ThemePrimaryColor
                 )
             ) {
-                Text("Apply")
+                Text(stringResource(R.string.app_options_resize_apply))
             }
         }
     }
