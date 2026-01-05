@@ -100,7 +100,7 @@ fun AppsTab(
     isLoading: Boolean = false,
     pageIndex: Int = 0,
     totalPages: Int = 1,
-    powerViewModel: PowerViewModel? = hiltViewModel(),
+    powerViewModel: PowerViewModel = hiltViewModel(),
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
@@ -114,8 +114,7 @@ fun AppsTab(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
 
-    val isPoweredOff by powerViewModel?.isPoweredOff?.collectAsStateWithLifecycle()
-        ?: remember { mutableStateOf(false) }
+    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
     val freeModeByPage by appPositionManager.isFreeModeByPage.collectAsStateWithLifecycle()
     val isFreeModeEnabled = freeModeByPage[pageIndex] ?: false
@@ -234,7 +233,7 @@ fun AppsTab(
         DrawerOptionsDialog(
             onDismiss = { showDrawerOptionsDialog = false },
             onPowerClick = {
-                powerViewModel?.togglePower()
+                powerViewModel.togglePower()
             },
             onTabsClick = {
                 showHomeTabDialog = true
@@ -280,6 +279,9 @@ fun AppsTab(
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .pointerInput(Unit) {
                     detectTapGestures(
+                        onDoubleTap = {
+                            powerViewModel.togglePower()
+                        },
                         onLongPress = {
                             showDrawerOptionsDialog = true
                         }
