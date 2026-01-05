@@ -203,16 +203,6 @@ fun ThorSettingsItem(
                 )
 
                 ThorSettingSelectionButton(
-                    text = stringResource(id = R.string.settings_thor_wake_single_tap),
-                    currentValue = currentWakeMethod,
-                    targetValue = WakeMethod.SINGLE_TAP,
-                    onClick = {
-                        powerSettingsManager.setWakeMethod(WakeMethod.SINGLE_TAP)
-                        onExpandChanged(false)
-                    }
-                )
-
-                ThorSettingSelectionButton(
                     text = stringResource(id = R.string.settings_thor_wake_double_tap),
                     currentValue = currentWakeMethod,
                     targetValue = WakeMethod.DOUBLE_TAP,
