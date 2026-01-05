@@ -281,7 +281,6 @@ fun AppsAndWidgetsTab(
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
-            allApps = allApps,
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
