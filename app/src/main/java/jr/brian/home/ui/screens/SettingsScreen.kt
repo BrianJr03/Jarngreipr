@@ -37,6 +37,7 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.InfoBox
+import jr.brian.home.ui.components.settings.AppNameToggleItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
@@ -164,6 +165,10 @@ private fun SettingsContent(
             SettingsSectionHeader(
                 title = stringResource(id = R.string.settings_section_layout)
             )
+        }
+
+        item {
+            AppNameToggleItem()
         }
 
         item {
