@@ -171,6 +171,9 @@ fun AppsAndWidgetsTab(
             )
             .pointerInput(Unit) {
                 detectTapGestures(
+                    onDoubleTap = {
+                        powerViewModel.togglePower()
+                    },
                     onLongPress = {
                         showDrawerOptionsDialog = true
                     }

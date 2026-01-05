@@ -80,6 +80,26 @@ fun getBatteryInfo(context: Context): Pair<Float, String> {
     return Pair(batteryPercent, timeRemaining)
 }
 
+fun Context.getSimpleBatteryInfo(): Pair<Int, Boolean> {
+    val batteryStatus: Intent? = registerReceiver(
+        null,
+        IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+    )
+    val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+    val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+    val batteryPct = if (level >= 0 && scale > 0) {
+        (level * 100 / scale.toFloat()).toInt()
+    } else {
+        0
+    }
+
+    val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+    val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+            status == BatteryManager.BATTERY_STATUS_FULL
+
+    return Pair(batteryPct, isCharging)
+}
+
 fun getStorageInfo(): Triple<Float, Float, Float> {
     val stat = StatFs(Environment.getDataDirectory().path)
     val totalBytes = stat.totalBytes
