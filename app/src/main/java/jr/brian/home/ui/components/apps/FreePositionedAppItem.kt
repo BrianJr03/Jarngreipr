@@ -29,10 +29,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -55,6 +60,7 @@ fun FreePositionedAppItem(
     customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val appVisibilityManager = LocalAppVisibilityManager.current
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
     var currentOffsetY by remember(offsetY) { mutableStateOf(offsetY) }
 
@@ -109,6 +115,12 @@ fun FreePositionedAppItem(
                         onLongClick = onLongClick
                     )
             )
+
+            Spacer(Modifier.height(4.dp))
+
+            if (appVisibilityManager.showAppNames) {
+                app.AppName()
+            }
 
             if (!keyboardVisible && isFocusable) {
                 Spacer(Modifier.height(12.dp))
