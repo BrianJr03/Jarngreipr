@@ -437,7 +437,6 @@ fun FreePositionedAppsLayout(
         CustomIconDialog(
             packageName = selectedApp!!.packageName,
             appLabel = selectedApp!!.label,
-            customIconManager = customIconManager,
             onDismiss = {
                 showCustomIconDialog = false
                 selectedApp = null

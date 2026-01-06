@@ -53,9 +53,13 @@
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
     <string name="app_options_custom_icon">Custom Icon</string>
-    <string name="app_options_custom_icon_set">Set Custom Icon</string>
+    <string name="app_options_custom_icon_set">Set Custom Icon (PNG)</string>
+    <string name="app_options_custom_icon_from_pack">Choose from Icon Packs</string>
+    <string name="app_options_icon_pack_browse_title">Choose Icon Pack</string>
+    <string name="app_options_icon_pack_loading_packs">Loading icon packs…</string>
+    <string name="app_options_icon_pack_loading_icons">Loading icons…</string>
+    <string name="app_options_icon_pack_no_icons">No icons found in this pack</string>
     <string name="app_options_custom_icon_remove">Remove Custom Icon</string>
-    <string name="app_options_custom_icon_description">Choose a PNG image</string>
     <string name="app_options_custom_icon_success">Custom icon set successfully</string>
     <string name="app_options_custom_icon_error">Failed to set custom icon</string>
     <string name="app_options_custom_icon_removed">Custom icon removed</string>
