@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -35,6 +33,7 @@ import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
@@ -52,6 +51,7 @@ fun AppItem(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
+    val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
     val scope = rememberCoroutineScope()
     var showOptionsDialog by remember { mutableStateOf(false) }
     var showCustomIconDialog by remember { mutableStateOf(false) }
@@ -135,8 +135,8 @@ fun AppItem(
         CustomIconDialog(
             packageName = app.packageName,
             appLabel = app.label,
-            customIconManager = customIconManager,
-            onDismiss = { showCustomIconDialog = false }
+            onDismiss = { showCustomIconDialog = false },
+            onIconChanged = {  }
         )
     }
 }

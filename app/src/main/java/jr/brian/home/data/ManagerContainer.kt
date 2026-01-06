@@ -2,10 +2,12 @@ package jr.brian.home.data
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import jr.brian.home.ui.theme.managers.GlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
@@ -33,7 +35,8 @@ data class ManagerContainer @Inject constructor(
     val pageTypeManager: PageTypeManager,
     val iconPackManager: IconPackManager,
     val whatsNewManager: WhatsNewManager,
-    val customIconManager: CustomIconManager
+    val customIconManager: CustomIconManager,
+    val globalIconRefreshManager: GlobalIconRefreshManager
 )
 
 @Composable
@@ -51,7 +54,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalPageTypeManager provides pageTypeManager,
         LocalIconPackManager provides iconPackManager,
         LocalWhatsNewManager provides whatsNewManager,
-        LocalCustomIconManager provides customIconManager
+        LocalCustomIconManager provides customIconManager,
+        LocalGlobalIconRefreshManager provides globalIconRefreshManager
     ) {
         content()
     }
