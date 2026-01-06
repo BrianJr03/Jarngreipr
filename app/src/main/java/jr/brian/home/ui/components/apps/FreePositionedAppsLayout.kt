@@ -86,6 +86,7 @@ fun FreePositionedAppsLayout(
     var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
     var showCustomIconDialog by remember(pageIndex) { mutableStateOf(false) }
     var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
+    var iconRefreshKey by remember(pageIndex) { mutableStateOf(0) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -437,7 +438,6 @@ fun FreePositionedAppsLayout(
         CustomIconDialog(
             packageName = selectedApp!!.packageName,
             appLabel = selectedApp!!.label,
-            customIconManager = customIconManager,
             onDismiss = {
                 showCustomIconDialog = false
                 selectedApp = null
