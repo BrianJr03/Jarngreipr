@@ -163,6 +163,29 @@ fun AppOptionsMenuContent(
                             )
                         )
                     }
+                } else if (hasExternalDisplay) {
+                    add(
+                        GridItem.TextItem(
+                            text = stringResource(R.string.app_options_launch_primary_descr),
+                            onClick = {
+                                onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                                onDismiss()
+                            },
+                            isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                            index = 3
+                        )
+                    )
+                    add(
+                        GridItem.TextItem(
+                            text = stringResource(R.string.app_options_launch_external_descr),
+                            onClick = {
+                                onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
+                                onDismiss()
+                            },
+                            isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+                            index = 4
+                        )
+                    )
                 }
             }
 
