@@ -73,6 +73,7 @@ import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
@@ -140,6 +141,7 @@ fun AppsTab(
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
+    var showCustomIconDialog by remember { mutableStateOf(false) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -198,7 +200,19 @@ fun AppsTab(
                 } else {
                     appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
                 }
+            },
+            onCustomIconClick = {
+                showAppOptionsMenu = false
+                showCustomIconDialog = true
             }
+        )
+    }
+
+    if (showCustomIconDialog && selectedApp != null) {
+        CustomIconDialog(
+            packageName = selectedApp!!.packageName,
+            appLabel = selectedApp!!.label,
+            onDismiss = { showCustomIconDialog = false }
         )
     }
 

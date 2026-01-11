@@ -28,7 +28,8 @@ fun AppOptionsMenu(
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {}
+    onToggleVisibility: () -> Unit = {},
+    onCustomIconClick: () -> Unit = {}
 ) {
     val focusRequesters = rememberAppOptionsMenuFocusRequesters(
         app = app,
@@ -61,7 +62,8 @@ fun AppOptionsMenu(
                 app,
                 currentIconSize,
                 onIconSizeChange,
-                onToggleVisibility
+                onToggleVisibility,
+                onCustomIconClick
             )
         },
         confirmButton = {},

@@ -60,11 +60,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
-import jr.brian.home.data.CustomIconManager
-import jr.brian.home.data.IconPackManager
 import jr.brian.home.model.IconPack
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.OnScreenKeyboard
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -72,6 +71,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
+import jr.brian.home.util.OverlayInfoUtil
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -141,8 +141,7 @@ fun IconPackBrowseDialog(
                 }
             },
             onBack = { selectedIconPack = null },
-            onDismiss = onDismiss,
-            onIconChanged = onIconChanged
+            onDismiss = onDismiss
         )
     }
 }
@@ -255,8 +254,7 @@ private fun DrawableSelectionDialog(
     isLoadingDrawables: Boolean,
     onDrawableSelected: (Drawable) -> Unit,
     onBack: () -> Unit,
-    onDismiss: () -> Unit,
-    onIconChanged: () -> Unit = {}
+    onDismiss: () -> Unit
 ) {
     var showKeyboard by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -343,11 +341,20 @@ private fun DrawableSelectionDialog(
                             .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = stringResource(R.string.app_options_icon_pack_loading_icons),
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
+                            Text(
+                                text = stringResource(R.string.app_options_icon_pack_loading_icons),
+                                color = Color.White.copy(alpha = 0.7f),
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            InfoBox(
+                                label = stringResource(R.string.welcome_overlay_thor_fact_label),
+                                content = stringResource(randomMessage),
+                                isPrimary = true,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                        }
                     }
                 } else if (iconPackDrawables.isEmpty()) {
                     Box(
