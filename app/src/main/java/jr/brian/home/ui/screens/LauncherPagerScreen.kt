@@ -65,6 +65,7 @@ fun LauncherPagerScreen(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
+    val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
 
     var showResizeScreen by remember { mutableStateOf(false) }
@@ -153,24 +154,24 @@ fun LauncherPagerScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            key(globalIconRefreshManager?.refreshCounter) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                ) { page ->
-                    val pageType =
-                        if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
-                    when (pageType) {
-                        PageType.APPS_TAB -> {
-                            val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-                            val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
-                            val visibleApps = remember(homeUiState.allApps, hiddenApps) {
-                                homeUiState.allApps.filter { app ->
-                                    app.packageName !in hiddenApps
-                                }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                val pageType =
+                    if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
+
+                when (pageType) {
+                    PageType.APPS_TAB -> {
+                        val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
+                        val visibleApps = remember(homeUiState.allApps, hiddenApps) {
+                            homeUiState.allApps.filter { app ->
+                                app.packageName !in hiddenApps
                             }
+                        }
 
+                        key(globalIconRefreshManager?.refreshCounter) {
                             AppsTab(
                                 apps = visibleApps,
                                 appsUnfiltered = homeUiState.allAppsUnfiltered,
@@ -201,12 +202,14 @@ fun LauncherPagerScreen(
                                 onNavigateToSearch = onNavigateToSearch
                             )
                         }
+                    }
 
-                        PageType.APPS_AND_WIDGETS_TAB -> {
-                            val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
-                            val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+                    PageType.APPS_AND_WIDGETS_TAB -> {
+                        val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
 
-                            if (widgetPage != null) {
+                        if (widgetPage != null) {
+                            key(globalIconRefreshManager?.refreshCounter) {
                                 AppsAndWidgetsTab(
                                     pageIndex = widgetPageIndex,
                                     widgets = widgetPage.widgets,
