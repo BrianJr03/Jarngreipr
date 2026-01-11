@@ -51,7 +51,6 @@ fun AppItem(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
-    val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
     val scope = rememberCoroutineScope()
     var showOptionsDialog by remember { mutableStateOf(false) }
     var showCustomIconDialog by remember { mutableStateOf(false) }

@@ -75,7 +75,8 @@ fun DrawerOptionsDialog(
     onTabsClick: () -> Unit,
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onQuickDeleteClick: () -> Unit
+    onQuickDeleteClick: () -> Unit,
+    onCreateFolderClick: () -> Unit
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -213,6 +214,16 @@ fun DrawerOptionsDialog(
                     icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                     onClick = {
                         powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
+                        onDismiss()
+                    }
+                )
+
+                DrawerOptionCard(
+                    "Create a folder",
+                    "Group multiple apps together",
+                    Icons.Default.FolderOpen,
+                    onClick = {
+                        onCreateFolderClick()
                         onDismiss()
                     }
                 )

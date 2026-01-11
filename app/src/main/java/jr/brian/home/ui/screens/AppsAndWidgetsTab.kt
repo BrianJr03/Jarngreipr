@@ -76,6 +76,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
+import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
@@ -131,6 +132,7 @@ fun AppsAndWidgetsTab(
     var showFolderOptionsDialog by remember { mutableStateOf(false) }
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -310,7 +312,18 @@ fun AppsAndWidgetsTab(
                 showAddOptionsDialog = true
             },
             onSettingsClick = onSettingsClick,
-            onQuickDeleteClick = onShowBottomSheet
+            onQuickDeleteClick = onShowBottomSheet,
+            onCreateFolderClick = {
+                showCreateFolderDialog = true
+            }
+        )
+    }
+
+    if (showCreateFolderDialog) {
+        CreateFolderDialog(
+            apps = displayedApps,
+            onDismiss = { showCreateFolderDialog = false },
+            pageIndex = pageIndex
         )
     }
 }
