@@ -207,9 +207,7 @@ fun CreateFolderDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

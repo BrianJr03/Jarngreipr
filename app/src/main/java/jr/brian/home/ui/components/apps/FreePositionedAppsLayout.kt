@@ -43,8 +43,10 @@ import jr.brian.home.model.alignment.AlignmentGuide
 import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
+import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.theme.AlignmentGuideColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -91,6 +93,8 @@ fun FreePositionedAppsLayout(
     var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
     var showCustomIconDialog by remember(pageIndex) { mutableStateOf(false) }
     var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
+    var showFolderDialog by remember(pageIndex) { mutableStateOf(false) }
+    var selectedFolder by remember(pageIndex) { mutableStateOf<Folder?>(null) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -340,8 +344,17 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = {
+                        selectedFolder = folder
+                        showFolderDialog = true
                     },
                     onLongClick = {
+                        if (isDragLocked) {
+                            Toast.makeText(
+                                context,
+                                "Folder options: ${folder.name}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     },
                     isDraggingEnabled = !isDragLocked
                 )
@@ -513,6 +526,18 @@ fun FreePositionedAppsLayout(
             onDismiss = {
                 showCustomIconDialog = false
                 selectedApp = null
+            }
+        )
+    }
+
+    if (showFolderDialog && selectedFolder != null) {
+        val folderApps = allApps.filter { it.packageName in selectedFolder!!.appPackageNames }
+        FolderContentsDialog(
+            folderName = selectedFolder!!.name,
+            apps = folderApps,
+            onDismiss = {
+                showFolderDialog = false
+                selectedFolder = null
             }
         )
     }
