@@ -23,12 +23,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
-import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -42,10 +42,10 @@ fun AppGridItem(
     onNavigateLeft: () -> Unit = {},
     onNavigateRight: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
-    customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val customIconManager = LocalCustomIconManager.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AppIconImage(

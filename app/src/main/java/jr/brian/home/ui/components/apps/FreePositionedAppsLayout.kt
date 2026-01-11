@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.DistanceMeasurement
@@ -48,6 +49,7 @@ import jr.brian.home.ui.theme.AlignmentGuideColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -63,7 +65,8 @@ fun FreePositionedAppsLayout(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     pageIndex: Int = 0,
-    isDragLocked: Boolean = false
+    isDragLocked: Boolean = false,
+    allApps: List<AppInfo> = apps
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -72,8 +75,10 @@ fun FreePositionedAppsLayout(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
+    val folderManager = LocalFolderManager.current
 
     val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
+    val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
 
     var containerSize by remember(pageIndex) { mutableStateOf(IntSize.Zero) }
     var focusedIndex by remember(pageIndex) { mutableIntStateOf(0) }
@@ -124,7 +129,16 @@ fun FreePositionedAppsLayout(
         // Pre-calculate maxY to determine content height
         // This is done before rendering so scroll area is correct
         var calculatedMaxY = 0f
-        apps.forEachIndexed { index, app ->
+        
+        folders.forEach { folder ->
+            val position = folder.position
+            val iconSizePx = with(density) { position.iconSize.dp.toPx() }
+            val bottom = position.y + iconSizePx
+            if (bottom > calculatedMaxY) calculatedMaxY = bottom
+        }
+        
+        val appsInFolders = folders.flatMap { it.appPackageNames }.toSet()
+        apps.filterNot { it.packageName in appsInFolders }.forEachIndexed { index, app ->
             val position = positions[app.packageName]
             val defaultY = with(density) {
                 val columns = 4
@@ -274,7 +288,66 @@ fun FreePositionedAppsLayout(
                 }
             }
 
-            apps.forEachIndexed { index, app ->
+            val appsInFolders = folders.flatMap { it.appPackageNames }.toSet()
+            val filteredApps = apps.filter { it.packageName !in appsInFolders }
+
+            folders.forEachIndexed { _, folder ->
+                val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+                val position = folder.position
+                
+                val currentBottom = position.y + with(density) { position.iconSize.dp.toPx() }
+                val currentRight = position.x + with(density) { position.iconSize.dp.toPx() }
+                if (currentBottom > maxY) maxY = currentBottom
+                if (currentRight > maxX) maxX = currentRight
+
+                FolderItem(
+                    apps = folderApps,
+                    folderName = folder.name,
+                    keyboardVisible = keyboardVisible,
+                    focusRequester = FocusRequester(),
+                    offsetX = position.x,
+                    offsetY = position.y,
+                    iconSize = position.iconSize,
+                    isFocusable = false,
+                    customIconManager = customIconManager,
+                    onOffsetChanged = { x, y ->
+                        val iconSizePx = with(density) { position.iconSize.dp.toPx() }
+                        
+                        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
+                        val maxY = contentHeight - iconSizePx - borderPadding
+                        
+                        val constrainedX = x.coerceIn(borderPadding, maxX)
+                        val constrainedY = y.coerceIn(borderPadding, maxY)
+                        
+                        scope.launch {
+                            folderManager.updateFolderPosition(
+                                pageIndex,
+                                folder.id,
+                                AppPosition(
+                                    packageName = folder.id,
+                                    x = constrainedX,
+                                    y = constrainedY,
+                                    iconSize = position.iconSize
+                                )
+                            )
+                        }
+                    },
+                    onDragStart = {
+                        draggingAppIndex = -1
+                    },
+                    onDragEnd = {
+                        draggingAppIndex = -1
+                        alignmentState = AlignmentState()
+                    },
+                    onClick = {
+                    },
+                    onLongClick = {
+                    },
+                    isDraggingEnabled = !isDragLocked
+                )
+            }
+
+            filteredApps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
                 val defaultX = with(density) {
                     val columns = 4

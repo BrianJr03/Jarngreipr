@@ -381,6 +381,20 @@
     <string name="header_folder_options">Options</string>
     <string name="header_power_button">Power</string>
 
+    <!-- Create Folder Dialog -->
+    <string name="dialog_create_folder_title">Create Folder</string>
+    <string name="dialog_create_folder_description">Select apps to add to this folder</string>
+    <string name="dialog_create_folder_close">Close</string>
+    <string name="dialog_create_folder_select_all">Select All</string>
+    <string name="dialog_create_folder_deselect_all">Deselect All</string>
+    <string name="dialog_create_folder_ok">OK</string>
+    <string name="dialog_create_folder_apps_selected">%1$d apps selected</string>
+
+    <!-- Folder -->
+    <string name="folder_default_name">Folder</string>
+    <string name="folder_icon_description">Folder containing %1$d apps</string>
+    <string name="folder_empty">Empty folder</string>
+
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
     <string name="app_drawer_layout_grid">Use Grid Layout</string>

@@ -73,6 +73,7 @@ import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
+import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -82,7 +83,6 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
-import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -142,6 +142,7 @@ fun AppsTab(
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
     var showCustomIconDialog by remember { mutableStateOf(false) }
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -255,7 +256,18 @@ fun AppsTab(
                 showAppDrawerOptionsDialog = true
             },
             onSettingsClick = onSettingsClick,
-            onQuickDeleteClick = onShowBottomSheet
+            onQuickDeleteClick = onShowBottomSheet,
+            onCreateFolderClick = {
+                showCreateFolderDialog = true
+            }
+        )
+    }
+
+    if (showCreateFolderDialog) {
+        CreateFolderDialog(
+            apps = apps,
+            onDismiss = { showCreateFolderDialog = false },
+            pageIndex = pageIndex
         )
     }
 
@@ -387,7 +399,7 @@ fun AppsTab(
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
                 pageIndicatorBorderColor = pageIndicatorBorderColor,
-                allApps = allApps,
+                allApps = appsUnfiltered,
                 onNavigateToSearch = onNavigateToSearch
             )
         }
@@ -479,6 +491,7 @@ private fun AppSelectionContent(
                 onAppClick = onAppClick,
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
+                allApps = allApps,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
@@ -515,7 +528,6 @@ private fun AppGridLayout(
     onAppLongClick: (AppInfo) -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
-    val customIconManager = LocalCustomIconManager.current
 
     val displayedApps = remember(apps, maxAppsPerPage) {
         apps.take(maxAppsPerPage)
@@ -551,7 +563,6 @@ private fun AppGridLayout(
                 onClick = { onAppClick(app) },
                 onLongClick = { onAppLongClick(app) },
                 onFocusChanged = { onFocusChanged(index) },
-                customIconManager = customIconManager,
                 onNavigateUp = {
                     val prevIndex = index - columns
                     if (prevIndex >= 0) {
