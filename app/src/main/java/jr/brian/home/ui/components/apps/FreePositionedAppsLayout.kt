@@ -535,6 +535,8 @@ fun FreePositionedAppsLayout(
         FolderContentsDialog(
             folderName = selectedFolder!!.name,
             apps = folderApps,
+            folderId = selectedFolder!!.id,
+            pageIndex = pageIndex,
             onDismiss = {
                 showFolderDialog = false
                 selectedFolder = null

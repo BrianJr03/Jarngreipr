@@ -394,6 +394,7 @@
     <string name="folder_default_name">Folder</string>
     <string name="folder_icon_description">Folder containing %1$d apps</string>
     <string name="folder_empty">Empty folder</string>
+    <string name="folder_delete">Delete folder</string>
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
@@ -425,6 +426,7 @@
     <string name="monitor_screen_title">System Monitor</string>
     <string name="monitor_screen_description">Real-time system information</string>
     <string name="monitor_ram_label">RAM Usage</string>
+    <string name="monitor_fps_label">FPS %d</string>
     <string name="monitor_cpu_label">CPU Usage</string>
     <string name="monitor_battery_label">Battery Level</string>
     <string name="monitor_battery_time_label">Battery Time</string>
