@@ -433,6 +433,8 @@
     <string name="monitor_storage_label">Storage</string>
     <string name="monitor_close">Close</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_crash_logs_title">Crash Logs</string>
+    <string name="settings_crash_logs_description">View and copy crash reports for debugging</string>
 
     <!-- Widget Picker -->
     <string name="widget_picker_title">Choose a Widget</string>
