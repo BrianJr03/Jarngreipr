@@ -43,7 +43,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:excludeFromRecents="true"
             android:theme="@style/Theme.Home"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize">
             <intent-filter>
