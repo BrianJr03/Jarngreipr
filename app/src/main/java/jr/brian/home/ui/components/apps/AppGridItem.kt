@@ -37,6 +37,7 @@ fun AppGridItem(
     focusRequester: FocusRequester,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
+    onDoubleClick: () -> Unit = {},
     onNavigateUp: () -> Unit = {},
     onNavigateDown: () -> Unit = {},
     onNavigateLeft: () -> Unit = {},
@@ -78,6 +79,9 @@ fun AppGridItem(
                     .combinedClickable(
                         onClick = {
                             onClick()
+                        },
+                        onDoubleClick = {
+                            onDoubleClick()
                         },
                         onLongClick = {
                             onLongClick()

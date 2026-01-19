@@ -23,10 +23,18 @@ class FolderManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     private val json = Json { ignoreUnknownKeys = true }
+    
+    private fun getStorageKey(pageIndex: Int, tabType: String): String {
+        return if (tabType == TAB_TYPE_APPS) {
+            "folders_page_$pageIndex"
+        } else {
+            "folders_${tabType}_page_$pageIndex"
+        }
+    }
 
-    fun getFolders(pageIndex: Int): Flow<List<Folder>> {
+    fun getFolders(pageIndex: Int, tabType: String = TAB_TYPE_APPS): Flow<List<Folder>> {
         return context.folderDataStore.data.map { preferences ->
-            val key = stringPreferencesKey("folders_page_$pageIndex")
+            val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
             val foldersJson = preferences[key] ?: "[]"
             try {
                 val folderDataList: List<FolderData> = json.decodeFromString(foldersJson)
@@ -37,8 +45,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun createFolder(pageIndex: Int, folder: Folder) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun createFolder(pageIndex: Int, folder: Folder, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -51,8 +59,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun updateFolder(pageIndex: Int, folder: Folder) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun updateFolder(pageIndex: Int, folder: Folder, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -67,8 +75,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun renameFolder(pageIndex: Int, folderId: String, newName: String) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun renameFolder(pageIndex: Int, folderId: String, newName: String, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -83,8 +91,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun updateFolderApps(pageIndex: Int, folderId: String, appPackageNames: List<String>) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun updateFolderApps(pageIndex: Int, folderId: String, appPackageNames: List<String>, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -102,8 +110,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun deleteFolder(pageIndex: Int, folderId: String) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun deleteFolder(pageIndex: Int, folderId: String, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -116,8 +124,8 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun updateFolderPosition(pageIndex: Int, folderId: String, position: AppPosition) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun updateFolderPosition(pageIndex: Int, folderId: String, position: AppPosition, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -140,12 +148,12 @@ class FolderManager @Inject constructor(
         }
     }
 
-    suspend fun getFolder(pageIndex: Int, folderId: String): Folder? {
-        return getFolders(pageIndex).first().find { it.id == folderId }
+    suspend fun getFolder(pageIndex: Int, folderId: String, tabType: String = TAB_TYPE_APPS): Folder? {
+        return getFolders(pageIndex, tabType).first().find { it.id == folderId }
     }
 
-    suspend fun removeAppFromFolders(pageIndex: Int, packageName: String) {
-        val key = stringPreferencesKey("folders_page_$pageIndex")
+    suspend fun removeAppFromFolders(pageIndex: Int, packageName: String, tabType: String = TAB_TYPE_APPS) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
         context.folderDataStore.edit { preferences ->
             val existingFoldersJson = preferences[key] ?: "[]"
             val existingFolders: List<FolderData> = try {
@@ -195,4 +203,9 @@ class FolderManager @Inject constructor(
             iconSize = iconSize
         )
     )
+    
+    companion object {
+        const val TAB_TYPE_APPS = "apps"
+        const val TAB_TYPE_WIDGETS = "widgets"
+    }
 }

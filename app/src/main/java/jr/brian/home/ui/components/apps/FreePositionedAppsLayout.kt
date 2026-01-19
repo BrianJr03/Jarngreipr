@@ -53,7 +53,9 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
@@ -333,14 +335,27 @@ fun FreePositionedAppsLayout(
                         )
                         alignmentState = alignment
 
-                        val finalX = alignment.snappedX ?: x
-                        val finalY = alignment.snappedY ?: y
+                        val snappedX = alignment.snappedX ?: x
+                        val snappedY = alignment.snappedY ?: y
 
                         val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
                         val maxY = contentHeight - iconSizePx - borderPadding
 
-                        val constrainedX = finalX.coerceIn(borderPadding, maxX)
-                        val constrainedY = finalY.coerceIn(borderPadding, maxY)
+                        val constrainedX = snappedX.coerceIn(borderPadding, maxX)
+                        val constrainedY = snappedY.coerceIn(borderPadding, maxY)
+
+                        // Check for collisions and adjust position
+                        val allItems = getAllItemRects(filteredApps, positions, folders, density)
+                        val (finalX, finalY) = findNonOverlappingPosition(
+                            targetX = constrainedX,
+                            targetY = constrainedY,
+                            targetSize = iconSizePx,
+                            excludeId = folder.id,
+                            allItems = allItems,
+                            containerWidth = containerSize.width.toFloat(),
+                            containerHeight = contentHeight,
+                            borderPadding = borderPadding
+                        )
 
                         scope.launch {
                             folderManager.updateFolderPosition(
@@ -348,8 +363,8 @@ fun FreePositionedAppsLayout(
                                 folder.id,
                                 AppPosition(
                                     packageName = folder.id,
-                                    x = constrainedX,
-                                    y = constrainedY,
+                                    x = finalX,
+                                    y = finalY,
                                     iconSize = position.iconSize
                                 )
                             )
@@ -371,30 +386,67 @@ fun FreePositionedAppsLayout(
                 )
             }
 
+            // Pre-calculate all existing positioned items (apps with saved positions + folders)
+            val existingPositionedItems = getAllItemRects(
+                apps = filteredApps.filter { positions[it.packageName] != null },
+                positions = positions,
+                folders = folders,
+                density = density
+            )
+
             filteredApps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
-                val defaultX = with(density) {
-                    val columns = 4
-                    val itemWidth = 80.dp.toPx()
-                    val spacing = 32.dp.toPx()
-                    val column = index % columns
-                    val startPadding = max(8.dp.toPx(), borderPadding)
-                    (startPadding + column * (itemWidth + spacing))
-                }
-                val defaultY = with(density) {
-                    val columns = 4
-                    val itemHeight = 100.dp.toPx()
-                    val spacing = 24.dp.toPx()
-                    val row = index / columns
-                    val topPadding = max(8.dp.toPx(), borderPadding)
-                    (topPadding + row * (itemHeight + spacing))
-                }
-
                 val currentIconSize = position?.iconSize ?: 64f
                 val iconSizePx = with(density) { currentIconSize.dp.toPx() }
-
-                val initialX = position?.x ?: defaultX
-                val initialY = position?.y ?: defaultY
+                
+                val (initialX, initialY) = if (position != null) {
+                    Pair(position.x, position.y)
+                } else {
+                    // Calculate default position in grid
+                    val defaultX = with(density) {
+                        val columns = 4
+                        val itemWidth = 80.dp.toPx()
+                        val spacing = 32.dp.toPx()
+                        val column = index % columns
+                        val startPadding = max(8.dp.toPx(), borderPadding)
+                        (startPadding + column * (itemWidth + spacing))
+                    }
+                    val defaultY = with(density) {
+                        val columns = 4
+                        val itemHeight = 100.dp.toPx()
+                        val spacing = 24.dp.toPx()
+                        val row = index / columns
+                        val topPadding = max(8.dp.toPx(), borderPadding)
+                        (topPadding + row * (itemHeight + spacing))
+                    }
+                    
+                    // Check if default position overlaps with ANY existing positioned item
+                    val nonOverlapping = findNonOverlappingPosition(
+                        targetX = defaultX,
+                        targetY = defaultY,
+                        targetSize = iconSizePx,
+                        excludeId = app.packageName,
+                        allItems = existingPositionedItems,
+                        containerWidth = containerSize.width.toFloat().takeIf { it > 0 } ?: 1080f,
+                        containerHeight = contentHeight.takeIf { it > 0 } ?: 1920f,
+                        borderPadding = borderPadding
+                    )
+                    
+                    // Save the position so subsequent new apps also avoid this spot
+                    if (nonOverlapping.first != defaultX || nonOverlapping.second != defaultY) {
+                        appPositionManager.savePosition(
+                            pageIndex,
+                            AppPosition(
+                                packageName = app.packageName,
+                                x = nonOverlapping.first,
+                                y = nonOverlapping.second,
+                                iconSize = currentIconSize
+                            )
+                        )
+                    }
+                    
+                    nonOverlapping
+                }
 
                 val currentBottom = initialY + iconSizePx
                 val currentRight = initialX + iconSizePx
@@ -431,21 +483,34 @@ fun FreePositionedAppsLayout(
                         )
                         alignmentState = alignment
 
-                        val finalX = alignment.snappedX ?: x
-                        val finalY = alignment.snappedY ?: y
+                        val snappedX = alignment.snappedX ?: x
+                        val snappedY = alignment.snappedY ?: y
 
                         val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
                         val maxY = contentHeight - iconSizePx - borderPadding
 
-                        val constrainedX = finalX.coerceIn(borderPadding, maxX)
-                        val constrainedY = finalY.coerceIn(borderPadding, maxY)
+                        val constrainedX = snappedX.coerceIn(borderPadding, maxX)
+                        val constrainedY = snappedY.coerceIn(borderPadding, maxY)
+
+                        // Check for collisions and adjust position
+                        val allItems = getAllItemRects(filteredApps, positions, folders, density)
+                        val (finalX, finalY) = findNonOverlappingPosition(
+                            targetX = constrainedX,
+                            targetY = constrainedY,
+                            targetSize = iconSizePx,
+                            excludeId = app.packageName,
+                            allItems = allItems,
+                            containerWidth = containerSize.width.toFloat(),
+                            containerHeight = contentHeight,
+                            borderPadding = borderPadding
+                        )
 
                         appPositionManager.savePosition(
                             pageIndex,
                             AppPosition(
                                 packageName = app.packageName,
-                                x = constrainedX,
-                                y = constrainedY,
+                                x = finalX,
+                                y = finalY,
                                 iconSize = currentIconSize
                             )
                         )
@@ -458,6 +523,16 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = { onAppClick(app) },
+                    onDoubleClick = {
+                        // Launch on opposite display from current preference
+                        val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                        val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
+                            DisplayPreference.CURRENT_DISPLAY
+                        } else {
+                            DisplayPreference.PRIMARY_DISPLAY
+                        }
+                        launchApp(context, app.packageName, oppositePreference)
+                    },
                     onLongClick = {
                         if (isDragLocked) {
                             selectedApp = app
@@ -894,4 +969,137 @@ private fun calculateAlignmentGuides(
         snappedY = snappedY,
         distances = distances
     )
+}
+
+private data class ItemRect(
+    val id: String,
+    val x: Float,
+    val y: Float,
+    val width: Float,
+    val height: Float
+)
+
+private fun checkCollision(
+    x1: Float, y1: Float, w1: Float, h1: Float,
+    x2: Float, y2: Float, w2: Float, h2: Float
+): Boolean {
+    return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
+}
+
+private fun findNonOverlappingPosition(
+    targetX: Float,
+    targetY: Float,
+    targetSize: Float,
+    excludeId: String,
+    allItems: List<ItemRect>,
+    containerWidth: Float,
+    containerHeight: Float,
+    borderPadding: Float
+): Pair<Float, Float> {
+    val minGap = 8f // Minimum gap between items
+    
+    // Helper to check if position is valid (no collision)
+    fun isPositionFree(x: Float, y: Float): Boolean {
+        if (x < borderPadding || x + targetSize > containerWidth - borderPadding ||
+            y < borderPadding || y + targetSize > containerHeight - borderPadding) {
+            return false
+        }
+        return allItems.none { item ->
+            item.id != excludeId && checkCollision(
+                x, y, targetSize, targetSize,
+                item.x - minGap, item.y - minGap, 
+                item.width + minGap * 2, item.height + minGap * 2
+            )
+        }
+    }
+    
+    // Check if current position has no collision
+    if (isPositionFree(targetX, targetY)) {
+        return Pair(targetX, targetY)
+    }
+    
+    // Try pushing in each direction from the collision
+    allItems.forEach { item ->
+        if (item.id != excludeId && checkCollision(
+                targetX, targetY, targetSize, targetSize,
+                item.x - minGap, item.y - minGap,
+                item.width + minGap * 2, item.height + minGap * 2
+            )) {
+            // Try positions around this item
+            val positions = listOf(
+                Pair(item.x + item.width + minGap, targetY),  // Right of item
+                Pair(item.x - targetSize - minGap, targetY),  // Left of item
+                Pair(targetX, item.y + item.height + minGap), // Below item
+                Pair(targetX, item.y - targetSize - minGap)   // Above item
+            )
+            
+            for ((testX, testY) in positions) {
+                if (isPositionFree(testX, testY)) {
+                    return Pair(testX, testY)
+                }
+            }
+        }
+    }
+    
+    // Grid search for a free spot
+    val gridStep = targetSize + minGap
+    val maxColumns = ((containerWidth - borderPadding * 2) / gridStep).toInt()
+    val maxRows = ((containerHeight - borderPadding * 2) / gridStep).toInt()
+    
+    for (row in 0 until maxRows) {
+        for (col in 0 until maxColumns) {
+            val testX = borderPadding + col * gridStep
+            val testY = borderPadding + row * gridStep
+            
+            if (isPositionFree(testX, testY)) {
+                return Pair(testX, testY)
+            }
+        }
+    }
+    
+    // If no free spot found in grid, try to find any available space
+    // by scanning with smaller increments
+    val fineStep = targetSize / 2
+    var testY = borderPadding
+    while (testY + targetSize <= containerHeight - borderPadding) {
+        var testX = borderPadding
+        while (testX + targetSize <= containerWidth - borderPadding) {
+            if (isPositionFree(testX, testY)) {
+                return Pair(testX, testY)
+            }
+            testX += fineStep
+        }
+        testY += fineStep
+    }
+    
+    // Fallback: return original position (will overlap, but better than nothing)
+    return Pair(targetX, targetY)
+}
+
+private fun getAllItemRects(
+    apps: List<AppInfo>,
+    positions: Map<String, AppPosition>,
+    folders: List<Folder>,
+    density: Density,
+    defaultIconSize: Float = 64f
+): List<ItemRect> {
+    val items = mutableListOf<ItemRect>()
+    
+    // Add all apps
+    apps.forEach { app ->
+        val position = positions[app.packageName]
+        val iconSize = position?.iconSize ?: defaultIconSize
+        val iconSizePx = with(density) { iconSize.dp.toPx() }
+        val x = position?.x ?: 0f
+        val y = position?.y ?: 0f
+        items.add(ItemRect(app.packageName, x, y, iconSizePx, iconSizePx))
+    }
+    
+    // Add all folders
+    folders.forEach { folder ->
+        val iconSizePx = with(density) { folder.position.iconSize.dp.toPx() }
+        items.add(ItemRect(folder.id, folder.position.x, folder.position.y, iconSizePx, iconSizePx))
+    }
+    
+    return items
 }
