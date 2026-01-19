@@ -52,10 +52,13 @@ import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun AppVisibilityDialog(
@@ -70,6 +73,8 @@ fun AppVisibilityDialog(
 ) {
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
+    val folderManager = LocalFolderManager.current
+    val scope = rememberCoroutineScope()
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val hiddenApps = if (isWidgetTabMode && visibleAppsOverride != null) {
         apps.map { it.packageName }.filter { it !in visibleAppsOverride }.toSet()
@@ -173,6 +178,12 @@ fun AppVisibilityDialog(
                                 appVisibilityManager.hideAllApps(
                                     pageIndex,
                                     apps.map { it.packageName })
+                                // Remove all apps from folders when hiding all
+                                scope.launch {
+                                    apps.forEach { app ->
+                                        folderManager.removeAppFromFolders(pageIndex, app.packageName)
+                                    }
+                                }
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -201,6 +212,10 @@ fun AppVisibilityDialog(
                                         appVisibilityManager.showApp(pageIndex, app.packageName)
                                     } else {
                                         appVisibilityManager.hideApp(pageIndex, app.packageName)
+                                        // Remove app from folders when hidden, delete folder if empty
+                                        scope.launch {
+                                            folderManager.removeAppFromFolders(pageIndex, app.packageName)
+                                        }
                                     }
                                 }
                             }
