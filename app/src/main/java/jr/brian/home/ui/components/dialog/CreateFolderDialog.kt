@@ -1,7 +1,9 @@
 package jr.brian.home.ui.components.dialog
 
 import android.widget.Toast
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
@@ -81,6 +83,10 @@ fun CreateFolderDialog(
     val appPositionManager = LocalAppPositionManager.current
     val defaultFolderName = stringResource(R.string.folder_default_name)
     var selectedApps by remember { mutableStateOf(emptySet<String>()) }
+    
+    // Collect existing folders to check for duplicates
+    val existingFolders by folderManager.getFolders(pageIndex, tabType)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val sortedApps = remember(allApps) {
         allApps.sortedBy { it.label.lowercase() }
@@ -171,35 +177,49 @@ fun CreateFolderDialog(
                         text = stringResource(R.string.dialog_create_folder_ok),
                         onClick = {
                             if (selectedApps.isNotEmpty()) {
-                                scope.launch {
-                                    val firstApp = allApps.first { it.packageName in selectedApps }
-                                    val firstAppPosition = appPositionManager.getPosition(
-                                        pageIndex,
-                                        firstApp.packageName
-                                    )
-                                        ?: AppPosition(
-                                            packageName = firstApp.packageName,
-                                            x = 100f,
-                                            y = 100f,
-                                            iconSize = 64f
-                                        )
-
-                                    val folder = Folder(
-                                        id = UUID.randomUUID().toString(),
-                                        name = defaultFolderName,
-                                        appPackageNames = selectedApps.toList(),
-                                        position = firstAppPosition
-                                    )
-
-                                    folderManager.createFolder(pageIndex, folder, tabType)
-
+                                // Check if a folder with the exact same apps already exists
+                                val selectedAppsSorted = selectedApps.sorted()
+                                val duplicateFolder = existingFolders.find { folder ->
+                                    folder.appPackageNames.sorted() == selectedAppsSorted
+                                }
+                                
+                                if (duplicateFolder != null) {
                                     Toast.makeText(
                                         context,
-                                        "Folder created with ${selectedApps.size} apps",
+                                        "A folder with these apps already exists",
                                         Toast.LENGTH_SHORT
                                     ).show()
+                                } else {
+                                    scope.launch {
+                                        val firstApp = allApps.first { it.packageName in selectedApps }
+                                        val firstAppPosition = appPositionManager.getPosition(
+                                            pageIndex,
+                                            firstApp.packageName
+                                        )
+                                            ?: AppPosition(
+                                                packageName = firstApp.packageName,
+                                                x = 100f,
+                                                y = 100f,
+                                                iconSize = 64f
+                                            )
+
+                                        val folder = Folder(
+                                            id = UUID.randomUUID().toString(),
+                                            name = defaultFolderName,
+                                            appPackageNames = selectedApps.toList(),
+                                            position = firstAppPosition
+                                        )
+
+                                        folderManager.createFolder(pageIndex, folder, tabType)
+
+                                        Toast.makeText(
+                                            context,
+                                            "Folder created with ${selectedApps.size} apps",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    onDismiss()
                                 }
-                                onDismiss()
                             }
                         },
                         modifier = Modifier.weight(1f)
