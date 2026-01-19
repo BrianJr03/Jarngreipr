@@ -70,7 +70,8 @@ import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 fun CreateFolderDialog(
     apps: List<AppInfo>,
     onDismiss: () -> Unit,
-    pageIndex: Int = 0
+    pageIndex: Int = 0,
+    allApps: List<AppInfo> = apps
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -80,12 +81,12 @@ fun CreateFolderDialog(
     val defaultFolderName = stringResource(R.string.folder_default_name)
     var selectedApps by remember { mutableStateOf(emptySet<String>()) }
 
-    val sortedApps = remember(apps) {
-        apps.sortedBy { it.label.lowercase() }
+    val sortedApps = remember(allApps) {
+        allApps.sortedBy { it.label.lowercase() }
     }
 
-    val allSelected = remember(selectedApps, apps) {
-        selectedApps.size == apps.size && apps.isNotEmpty()
+    val allSelected = remember(selectedApps, allApps) {
+        selectedApps.size == allApps.size && allApps.isNotEmpty()
     }
 
     Dialog(
@@ -160,7 +161,7 @@ fun CreateFolderDialog(
                             selectedApps = if (allSelected) {
                                 emptySet()
                             } else {
-                                apps.map { it.packageName }.toSet()
+                                allApps.map { it.packageName }.toSet()
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -170,7 +171,7 @@ fun CreateFolderDialog(
                         onClick = {
                             if (selectedApps.isNotEmpty()) {
                                 scope.launch {
-                                    val firstApp = apps.first { it.packageName in selectedApps }
+                                    val firstApp = allApps.first { it.packageName in selectedApps }
                                     val firstAppPosition = appPositionManager.getPosition(
                                         pageIndex,
                                         firstApp.packageName

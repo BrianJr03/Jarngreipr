@@ -20,9 +20,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,7 +43,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,6 +60,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppIconImage
+import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -71,6 +79,7 @@ fun FolderContentsDialog(
     apps: List<AppInfo>,
     folderId: String,
     pageIndex: Int,
+    allApps: List<AppInfo> = apps,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -79,6 +88,11 @@ fun FolderContentsDialog(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
     val folderManager = LocalFolderManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var editableName by remember { mutableStateOf(folderName) }
+    var showEditAppsDialog by remember { mutableStateOf(false) }
+    var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -127,32 +141,64 @@ fun FolderContentsDialog(
                         )
                     }
 
-                    Text(
-                        text = folderName,
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
+                    BasicTextField(
+                        value = editableName,
+                        onValueChange = { newName ->
+                            editableName = newName
+                            scope.launch {
+                                folderManager.renameFolder(pageIndex, folderId, newName)
+                            }
+                        },
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        ),
+                        singleLine = true,
+                        cursorBrush = SolidColor(ThemePrimaryColor),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { keyboardController?.hide() }
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     )
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.dialog_app_visibility_close),
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    Row {
+                        IconButton(
+                            onClick = { showEditAppsDialog = true },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit folder apps",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.dialog_app_visibility_close),
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                val currentFolderApps = allApps.filter { it.packageName in folderAppPackages }
+
                 Text(
-                    text = "${apps.size} apps",
+                    text = "${currentFolderApps.size} apps",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center,
@@ -161,7 +207,7 @@ fun FolderContentsDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (apps.isEmpty()) {
+                if (currentFolderApps.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -183,7 +229,7 @@ fun FolderContentsDialog(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(apps, key = { it.packageName }) { app ->
+                        items(currentFolderApps, key = { it.packageName }) { app ->
                             FolderAppItem(
                                 app = app,
                                 customIconManager = customIconManager,
@@ -207,6 +253,48 @@ fun FolderContentsDialog(
                 }
             }
         }
+    }
+
+    if (showEditAppsDialog) {
+        AppVisibilityDialog(
+            apps = allApps,
+            onDismiss = { showEditAppsDialog = false },
+            pageIndex = pageIndex,
+            isWidgetTabMode = true,
+            visibleAppsOverride = folderAppPackages,
+            onToggleAppOverride = { packageName ->
+                val newPackages = if (packageName in folderAppPackages) {
+                    folderAppPackages - packageName
+                } else {
+                    folderAppPackages + packageName
+                }
+                folderAppPackages = newPackages
+                scope.launch {
+                    if (newPackages.isEmpty()) {
+                        folderManager.deleteFolder(pageIndex, folderId)
+                        showEditAppsDialog = false
+                        onDismiss()
+                    } else {
+                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList())
+                    }
+                }
+            },
+            onShowAllOverride = {
+                val newPackages = allApps.map { it.packageName }.toSet()
+                folderAppPackages = newPackages
+                scope.launch {
+                    folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList())
+                }
+            },
+            onHideAllOverride = {
+                folderAppPackages = emptySet()
+                scope.launch {
+                    folderManager.deleteFolder(pageIndex, folderId)
+                    showEditAppsDialog = false
+                    onDismiss()
+                }
+            }
+        )
     }
 }
 

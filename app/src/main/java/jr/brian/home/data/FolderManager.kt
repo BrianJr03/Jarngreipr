@@ -67,6 +67,41 @@ class FolderManager @Inject constructor(
         }
     }
 
+    suspend fun renameFolder(pageIndex: Int, folderId: String, newName: String) {
+        val key = stringPreferencesKey("folders_page_$pageIndex")
+        context.folderDataStore.edit { preferences ->
+            val existingFoldersJson = preferences[key] ?: "[]"
+            val existingFolders: List<FolderData> = try {
+                json.decodeFromString(existingFoldersJson)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val updatedFolders = existingFolders.map { folderData ->
+                if (folderData.id == folderId) folderData.copy(name = newName) else folderData
+            }
+            preferences[key] = json.encodeToString(updatedFolders)
+        }
+    }
+
+    suspend fun updateFolderApps(pageIndex: Int, folderId: String, appPackageNames: List<String>) {
+        val key = stringPreferencesKey("folders_page_$pageIndex")
+        context.folderDataStore.edit { preferences ->
+            val existingFoldersJson = preferences[key] ?: "[]"
+            val existingFolders: List<FolderData> = try {
+                json.decodeFromString(existingFoldersJson)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            // Update apps or delete folder if empty
+            val updatedFolders = existingFolders
+                .map { folderData ->
+                    if (folderData.id == folderId) folderData.copy(appPackageNames = appPackageNames) else folderData
+                }
+                .filter { it.appPackageNames.isNotEmpty() }
+            preferences[key] = json.encodeToString(updatedFolders)
+        }
+    }
+
     suspend fun deleteFolder(pageIndex: Int, folderId: String) {
         val key = stringPreferencesKey("folders_page_$pageIndex")
         context.folderDataStore.edit { preferences ->
