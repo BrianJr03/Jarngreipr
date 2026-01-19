@@ -323,7 +323,8 @@ fun AppsAndWidgetsTab(
         CreateFolderDialog(
             apps = displayedApps,
             onDismiss = { showCreateFolderDialog = false },
-            pageIndex = pageIndex
+            pageIndex = pageIndex,
+            allApps = allApps
         )
     }
 }

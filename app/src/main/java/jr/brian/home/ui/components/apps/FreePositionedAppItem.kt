@@ -112,6 +112,7 @@ fun FreePositionedAppItem(
                     )
                     .combinedClickable(
                         onClick = onClick,
+                        onDoubleClick = {},
                         onLongClick = onLongClick
                     )
             )

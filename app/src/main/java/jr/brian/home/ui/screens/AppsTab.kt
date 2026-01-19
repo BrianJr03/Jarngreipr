@@ -267,7 +267,8 @@ fun AppsTab(
         CreateFolderDialog(
             apps = apps,
             onDismiss = { showCreateFolderDialog = false },
-            pageIndex = pageIndex
+            pageIndex = pageIndex,
+            allApps = allApps
         )
     }
 

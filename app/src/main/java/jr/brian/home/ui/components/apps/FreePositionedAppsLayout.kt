@@ -141,8 +141,8 @@ fun FreePositionedAppsLayout(
             if (bottom > calculatedMaxY) calculatedMaxY = bottom
         }
         
-        val appsInFolders = folders.flatMap { it.appPackageNames }.toSet()
-        apps.filterNot { it.packageName in appsInFolders }.forEachIndexed { index, app ->
+        // Apps can exist both in folders and outside, so don't filter them out
+        apps.forEachIndexed { index, app ->
             val position = positions[app.packageName]
             val defaultY = with(density) {
                 val columns = 4
@@ -292,8 +292,8 @@ fun FreePositionedAppsLayout(
                 }
             }
 
-            val appsInFolders = folders.flatMap { it.appPackageNames }.toSet()
-            val filteredApps = apps.filter { it.packageName !in appsInFolders }
+            // Apps can exist both in folders and outside, so show all apps
+            val filteredApps = apps
 
             folders.forEachIndexed { _, folder ->
                 val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
@@ -366,15 +366,7 @@ fun FreePositionedAppsLayout(
                         selectedFolder = folder
                         showFolderDialog = true
                     },
-                    onLongClick = {
-                        if (isDragLocked) {
-                            Toast.makeText(
-                                context,
-                                "Folder options: ${folder.name}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
+                    onLongClick = {},
                     isDraggingEnabled = !isDragLocked
                 )
             }
@@ -557,6 +549,7 @@ fun FreePositionedAppsLayout(
             apps = folderApps,
             folderId = selectedFolder!!.id,
             pageIndex = pageIndex,
+            allApps = allApps,
             onDismiss = {
                 showFolderDialog = false
                 selectedFolder = null
