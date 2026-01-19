@@ -51,6 +51,7 @@ fun FreePositionedAppItem(
     onOffsetChanged: (Float, Float) -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
+    onDoubleClick: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
     iconSize: Float = 64f,
@@ -112,7 +113,7 @@ fun FreePositionedAppItem(
                     )
                     .combinedClickable(
                         onClick = onClick,
-                        onDoubleClick = {},
+                        onDoubleClick = onDoubleClick,
                         onLongClick = onLongClick
                     )
             )

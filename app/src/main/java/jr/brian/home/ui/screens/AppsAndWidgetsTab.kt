@@ -71,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
@@ -78,14 +79,20 @@ import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.widget.AppItem
 import jr.brian.home.ui.components.widget.WidgetItem
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -118,8 +125,11 @@ fun AppsAndWidgetsTab(
 ) {
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val folderManager = LocalFolderManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
+    
+    val folders by folderManager.getFolders(pageIndex, jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS).collectAsStateWithLifecycle(initialValue = emptyList())
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
@@ -133,6 +143,8 @@ fun AppsAndWidgetsTab(
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var showFolderContentsDialog by remember { mutableStateOf(false) }
+    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -213,6 +225,7 @@ fun AppsAndWidgetsTab(
                 onNavigateToSearch = onNavigateToSearch,
                 widgets = widgets,
                 displayedApps = displayedApps,
+                folders = folders,
                 gridState = gridState,
                 columns = columns,
                 appsFirst = appsFirst,
@@ -228,6 +241,10 @@ fun AppsAndWidgetsTab(
                 onSwapModeEnabled = { widgetId ->
                     swapModeEnabled = true
                     swapSourceWidgetId = widgetId
+                },
+                onFolderClick = { folder ->
+                    selectedFolder = folder
+                    showFolderContentsDialog = true
                 }
             )
         }
@@ -324,7 +341,24 @@ fun AppsAndWidgetsTab(
             apps = displayedApps,
             onDismiss = { showCreateFolderDialog = false },
             pageIndex = pageIndex,
-            allApps = allApps
+            allApps = allApps,
+            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS
+        )
+    }
+    
+    if (showFolderContentsDialog && selectedFolder != null) {
+        val folderApps = allApps.filter { it.packageName in selectedFolder!!.appPackageNames }
+        FolderContentsDialog(
+            folderName = selectedFolder!!.name,
+            apps = folderApps,
+            folderId = selectedFolder!!.id,
+            pageIndex = pageIndex,
+            allApps = allApps,
+            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS,
+            onDismiss = {
+                showFolderContentsDialog = false
+                selectedFolder = null
+            }
         )
     }
 }
@@ -350,6 +384,7 @@ private fun TabContent(
     onNavigateToSearch: () -> Unit,
     widgets: List<WidgetInfo>,
     displayedApps: List<AppInfo>,
+    folders: List<Folder>,
     gridState: LazyGridState,
     columns: Int,
     appsFirst: Boolean,
@@ -359,7 +394,8 @@ private fun TabContent(
     swapSourceWidgetId: Int?,
     onSwapModeDisabled: () -> Unit,
     onEditModeToggle: () -> Unit,
-    onSwapModeEnabled: (Int) -> Unit
+    onSwapModeEnabled: (Int) -> Unit,
+    onFolderClick: (Folder) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -385,7 +421,7 @@ private fun TabContent(
             onEditModeToggle = onEditModeToggle
         )
 
-        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty() && folders.isEmpty()
 
         if (isTabEmpty && !editModeEnabled) {
             EmptyWidgetsState(
@@ -397,6 +433,8 @@ private fun TabContent(
                 columns = columns,
                 appsFirst = appsFirst,
                 displayedApps = displayedApps,
+                folders = folders,
+                allApps = allApps,
                 widgets = widgets,
                 editModeEnabled = editModeEnabled,
                 pageIndex = pageIndex,
@@ -405,7 +443,8 @@ private fun TabContent(
                 swapModeEnabled = swapModeEnabled,
                 swapSourceWidgetId = swapSourceWidgetId,
                 onSwapComplete = onSwapModeDisabled,
-                onSwapModeEnabled = onSwapModeEnabled
+                onSwapModeEnabled = onSwapModeEnabled,
+                onFolderClick = onFolderClick
             )
         }
     }
@@ -469,7 +508,6 @@ private fun TabHeader(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                     onDeletePage = onDeletePage,
                     pageIndicatorBorderColor = pageIndicatorBorderColor,
-                    allApps = allApps,
                     onNavigateToSearch = onNavigateToSearch
                 )
             }
@@ -483,6 +521,8 @@ private fun WidgetsAndAppsGrid(
     columns: Int,
     appsFirst: Boolean,
     displayedApps: List<AppInfo>,
+    folders: List<Folder>,
+    allApps: List<AppInfo>,
     widgets: List<WidgetInfo>,
     editModeEnabled: Boolean,
     pageIndex: Int,
@@ -491,7 +531,8 @@ private fun WidgetsAndAppsGrid(
     swapModeEnabled: Boolean,
     swapSourceWidgetId: Int?,
     onSwapComplete: () -> Unit,
-    onSwapModeEnabled: (Int) -> Unit
+    onSwapModeEnabled: (Int) -> Unit,
+    onFolderClick: (Folder) -> Unit
 ) {
     LazyVerticalGrid(
         state = gridState,
@@ -502,24 +543,32 @@ private fun WidgetsAndAppsGrid(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // Folders always follow after apps - use "apps_folders" as a combined section
         val sections = if (appsFirst) {
-            listOf("apps" to displayedApps, "widgets" to widgets)
+            listOf("apps" to displayedApps, "folders" to folders, "widgets" to widgets)
         } else {
-            listOf("widgets" to widgets, "apps" to displayedApps)
+            listOf("widgets" to widgets, "apps" to displayedApps, "folders" to folders)
         }
 
-        sections.forEach { (sectionType, items) ->
+        sections.forEach { (sectionType, _) ->
             when (sectionType) {
                 "apps" -> renderAppItems(
                     apps = displayedApps,
-                    items = items,
+                    items = displayedApps,
                     editModeEnabled = editModeEnabled,
                     pageIndex = pageIndex
                 )
 
+                "folders" -> renderFolderItems(
+                    folders = folders,
+                    allApps = allApps,
+                    editModeEnabled = editModeEnabled,
+                    onClick = onFolderClick
+                )
+
                 "widgets" -> renderWidgetItems(
                     widgets = widgets,
-                    items = items,
+                    items = widgets,
                     columns = columns,
                     pageIndex = pageIndex,
                     viewModel = viewModel,
@@ -837,6 +886,170 @@ private fun LazyGridScope.renderWidgetItems(
                     onSwapModeEnabled(widget.widgetId)
                 },
                 editModeEnabled = editModeEnabled
+            )
+        }
+    }
+}
+
+private fun LazyGridScope.renderFolderItems(
+    folders: List<Folder>,
+    allApps: List<AppInfo>,
+    editModeEnabled: Boolean,
+    onClick: (Folder) -> Unit
+) {
+    if (folders.isEmpty() || editModeEnabled) return
+
+    folders.forEach { folder ->
+        val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+        item(key = "folder_${folder.id}") {
+            FolderGridItem(
+                folder = folder,
+                apps = folderApps,
+                onClick = { onClick(folder) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FolderGridItem(
+    folder: Folder,
+    apps: List<AppInfo>,
+    onClick: () -> Unit
+) {
+    val customIconManager = LocalCustomIconManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val previewApps = apps.take(4)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(OledCardColor.copy(alpha = 0.9f))
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when (previewApps.size) {
+                0 -> {
+                    Text(
+                        text = "Empty",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 8.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                1 -> {
+                    AppIconImage(
+                        defaultIcon = previewApps[0].icon,
+                        packageName = previewApps[0].packageName,
+                        contentDescription = previewApps[0].label,
+                        customIconManager = customIconManager,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                    )
+                }
+                2 -> {
+                    Row {
+                        previewApps.forEach { app ->
+                            AppIconImage(
+                                defaultIcon = app.icon,
+                                packageName = app.packageName,
+                                contentDescription = app.label,
+                                customIconManager = customIconManager,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(1.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                            )
+                        }
+                    }
+                }
+                3 -> {
+                    Column {
+                        AppIconImage(
+                            defaultIcon = previewApps[0].icon,
+                            packageName = previewApps[0].packageName,
+                            contentDescription = previewApps[0].label,
+                            customIconManager = customIconManager,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .padding(1.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                        )
+                        Row {
+                            previewApps.drop(1).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Column {
+                        Row {
+                            previewApps.take(2).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                        Row {
+                            previewApps.drop(2).take(2).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        if (appVisibilityManager.showFolderNames) {
+            Text(
+                text = folder.name,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 1
             )
         }
     }

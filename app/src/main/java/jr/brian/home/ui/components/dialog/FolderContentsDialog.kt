@@ -41,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -80,6 +82,7 @@ fun FolderContentsDialog(
     folderId: String,
     pageIndex: Int,
     allApps: List<AppInfo> = apps,
+    tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -89,6 +92,7 @@ fun FolderContentsDialog(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val folderManager = LocalFolderManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     var editableName by remember { mutableStateOf(folderName) }
     var showEditAppsDialog by remember { mutableStateOf(false) }
@@ -116,6 +120,13 @@ fun FolderContentsDialog(
                     color = ThemePrimaryColor.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(16.dp)
                 )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                }
                 .padding(24.dp)
         ) {
             Column {
@@ -127,7 +138,7 @@ fun FolderContentsDialog(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                folderManager.deleteFolder(pageIndex, folderId)
+                                folderManager.deleteFolder(pageIndex, folderId, tabType)
                             }
                             onDismiss()
                         },
@@ -146,7 +157,7 @@ fun FolderContentsDialog(
                         onValueChange = { newName ->
                             editableName = newName
                             scope.launch {
-                                folderManager.renameFolder(pageIndex, folderId, newName)
+                                folderManager.renameFolder(pageIndex, folderId, newName, tabType)
                             }
                         },
                         textStyle = androidx.compose.ui.text.TextStyle(
@@ -271,11 +282,11 @@ fun FolderContentsDialog(
                 folderAppPackages = newPackages
                 scope.launch {
                     if (newPackages.isEmpty()) {
-                        folderManager.deleteFolder(pageIndex, folderId)
+                        folderManager.deleteFolder(pageIndex, folderId, tabType)
                         showEditAppsDialog = false
                         onDismiss()
                     } else {
-                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList())
+                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
                     }
                 }
             },
@@ -283,13 +294,13 @@ fun FolderContentsDialog(
                 val newPackages = allApps.map { it.packageName }.toSet()
                 folderAppPackages = newPackages
                 scope.launch {
-                    folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList())
+                    folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
                 }
             },
             onHideAllOverride = {
                 folderAppPackages = emptySet()
                 scope.launch {
-                    folderManager.deleteFolder(pageIndex, folderId)
+                    folderManager.deleteFolder(pageIndex, folderId, tabType)
                     showEditAppsDialog = false
                     onDismiss()
                 }

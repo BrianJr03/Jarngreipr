@@ -71,7 +71,8 @@ fun CreateFolderDialog(
     apps: List<AppInfo>,
     onDismiss: () -> Unit,
     pageIndex: Int = 0,
-    allApps: List<AppInfo> = apps
+    allApps: List<AppInfo> = apps,
+    tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -190,7 +191,7 @@ fun CreateFolderDialog(
                                         position = firstAppPosition
                                     )
 
-                                    folderManager.createFolder(pageIndex, folder)
+                                    folderManager.createFolder(pageIndex, folder, tabType)
 
                                     Toast.makeText(
                                         context,

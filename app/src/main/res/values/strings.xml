@@ -29,7 +29,6 @@
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
-    <string name="drawer_options_header_description">Toggle header bar visibility</string>
     <string name="settings_header_visibility_title">Show Tab Header</string>
     <string name="settings_header_visibility_description">Toggle header bar visibility on home tabs</string>
     <string name="drawer_options_tabs">Tabs</string>
@@ -100,6 +99,9 @@
 
     <string name="settings_show_app_names_title">Show App Names</string>
     <string name="settings_show_app_names_description">Show app names in Tabs</string>
+
+    <string name="settings_show_folder_names_title">Show Folder Names</string>
+    <string name="settings_show_folder_names_description">Show folder names below folder icons</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper</string>

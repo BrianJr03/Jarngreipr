@@ -41,6 +41,7 @@ import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -66,6 +67,7 @@ fun FolderItem(
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
     var currentOffsetY by remember(offsetY) { mutableStateOf(offsetY) }
+    val appVisibilityManager = LocalAppVisibilityManager.current
 
     val previewApps = apps.take(4)
     val iconPreviewSize = (iconSize * 0.4f).dp
@@ -228,14 +230,16 @@ fun FolderItem(
 
             Spacer(Modifier.height(4.dp))
 
-            Text(
-                text = folderName,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 1
-            )
+            if (appVisibilityManager.showFolderNames) {
+                Text(
+                    text = folderName,
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+            }
 
             if (!keyboardVisible && isFocusable) {
                 Spacer(Modifier.height(12.dp))

@@ -38,6 +38,7 @@ import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.AppNameToggleItem
+import jr.brian.home.ui.components.settings.FolderNameToggleItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
@@ -202,6 +203,10 @@ private fun SettingsContent(
 
             item {
                 AppNameToggleItem()
+            }
+
+            item {
+                FolderNameToggleItem()
             }
 
             item {
