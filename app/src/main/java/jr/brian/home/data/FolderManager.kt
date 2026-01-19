@@ -109,6 +109,27 @@ class FolderManager @Inject constructor(
         return getFolders(pageIndex).first().find { it.id == folderId }
     }
 
+    suspend fun removeAppFromFolders(pageIndex: Int, packageName: String) {
+        val key = stringPreferencesKey("folders_page_$pageIndex")
+        context.folderDataStore.edit { preferences ->
+            val existingFoldersJson = preferences[key] ?: "[]"
+            val existingFolders: List<FolderData> = try {
+                json.decodeFromString(existingFoldersJson)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            // Remove the app from all folders and filter out empty folders
+            val updatedFolders = existingFolders
+                .map { folderData ->
+                    folderData.copy(
+                        appPackageNames = folderData.appPackageNames.filter { it != packageName }
+                    )
+                }
+                .filter { it.appPackageNames.isNotEmpty() } // Delete folders that become empty
+            preferences[key] = json.encodeToString(updatedFolders)
+        }
+    }
+
     @Serializable
     private data class FolderData(
         val id: String,
