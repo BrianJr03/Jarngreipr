@@ -316,13 +316,32 @@ fun FreePositionedAppsLayout(
                     customIconManager = customIconManager,
                     onOffsetChanged = { x, y ->
                         val iconSizePx = with(density) { position.iconSize.dp.toPx() }
-                        
+
+                        val alignment = calculateAlignmentGuides(
+                            draggingIndex = -1,
+                            dragX = x,
+                            dragY = y,
+                            iconSize = position.iconSize,
+                            containerSize = containerSize,
+                            snapThreshold = snapThreshold,
+                            apps = filteredApps,
+                            positions = positions,
+                            density = density,
+                            borderPadding = borderPadding,
+                            folders = folders,
+                            draggingFolderId = folder.id
+                        )
+                        alignmentState = alignment
+
+                        val finalX = alignment.snappedX ?: x
+                        val finalY = alignment.snappedY ?: y
+
                         val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
                         val maxY = contentHeight - iconSizePx - borderPadding
-                        
-                        val constrainedX = x.coerceIn(borderPadding, maxX)
-                        val constrainedY = y.coerceIn(borderPadding, maxY)
-                        
+
+                        val constrainedX = finalX.coerceIn(borderPadding, maxX)
+                        val constrainedY = finalY.coerceIn(borderPadding, maxY)
+
                         scope.launch {
                             folderManager.updateFolderPosition(
                                 pageIndex,
@@ -412,10 +431,11 @@ fun FreePositionedAppsLayout(
                             iconSize = currentIconSize,
                             containerSize = containerSize,
                             snapThreshold = snapThreshold,
-                            apps = apps,
+                            apps = filteredApps,
                             positions = positions,
                             density = density,
-                            borderPadding = borderPadding
+                            borderPadding = borderPadding,
+                            folders = folders
                         )
                         alignmentState = alignment
 
@@ -555,9 +575,12 @@ private fun calculateAlignmentGuides(
     snapThreshold: Float,
     containerSize: IntSize,
     positions: Map<String, AppPosition>,
-    borderPadding: Float
+    borderPadding: Float,
+    folders: List<Folder> = emptyList(),
+    draggingFolderId: String? = null
 ): AlignmentState {
-    if (draggingIndex < 0 || containerSize.width == 0) {
+    // Return early if nothing is being dragged (no app index and no folder id) or container not ready
+    if ((draggingIndex < 0 && draggingFolderId == null) || containerSize.width == 0) {
         return AlignmentState()
     }
 
@@ -742,6 +765,136 @@ private fun calculateAlignmentGuides(
             }
         }
     }
+
+    // Check alignment with folders
+    folders.forEach { folder ->
+        // Skip the folder being dragged
+        if (folder.id == draggingFolderId) return@forEach
+
+        val folderPosition = folder.position
+        val folderX = folderPosition.x
+        val folderY = folderPosition.y
+        val folderIconSize = folderPosition.iconSize
+        val folderIconSizePx = with(density) { folderIconSize.dp.toPx() }
+        val folderCenterX = folderX + folderIconSizePx / 2
+        val folderCenterY = folderY + folderIconSizePx / 2
+        val folderRight = folderX + folderIconSizePx
+        val folderBottom = folderY + folderIconSizePx
+
+        // Vertical alignment checks (center, left, right)
+        // Center-to-center alignment
+        if (abs(draggingCenterX - folderCenterX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderCenterX))
+            if (snappedX == null) snappedX = folderCenterX - iconSizePx / 2
+        }
+        // Left edge alignment
+        else if (abs(dragX - folderX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderX))
+            if (snappedX == null) snappedX = folderX
+        }
+        // Right edge alignment
+        else if (abs(draggingRight - folderRight) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderRight))
+            if (snappedX == null) snappedX = folderRight - iconSizePx
+        }
+        // Left edge to right edge
+        else if (abs(dragX - folderRight) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderRight))
+            if (snappedX == null) snappedX = folderRight
+        }
+        // Right edge to left edge
+        else if (abs(draggingRight - folderX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, folderX))
+            if (snappedX == null) snappedX = folderX - iconSizePx
+        }
+
+        // Horizontal alignment checks (center, top, bottom)
+        // Center-to-center alignment
+        if (abs(draggingCenterY - folderCenterY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderCenterY))
+            if (snappedY == null) snappedY = folderCenterY - iconSizePx / 2
+        }
+        // Top edge alignment
+        else if (abs(dragY - folderY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderY))
+            if (snappedY == null) snappedY = folderY
+        }
+        // Bottom edge alignment
+        else if (abs(draggingBottom - folderBottom) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderBottom))
+            if (snappedY == null) snappedY = folderBottom - iconSizePx
+        }
+        // Top edge to bottom edge
+        else if (abs(dragY - folderBottom) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderBottom))
+            if (snappedY == null) snappedY = folderBottom
+        }
+        // Bottom edge to top edge
+        else if (abs(draggingBottom - folderY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, folderY))
+            if (snappedY == null) snappedY = folderY - iconSizePx
+        }
+
+        // Calculate distances to folders
+        val horizontalDistance = if (draggingRight < folderX) {
+            folderX - draggingRight
+        } else if (dragX > folderRight) {
+            dragX - folderRight
+        } else {
+            null
+        }
+
+        val verticalDistance = if (draggingBottom < folderY) {
+            folderY - draggingBottom
+        } else if (dragY > folderBottom) {
+            dragY - folderBottom
+        } else {
+            null
+        }
+
+        val distanceThreshold = with(density) { 200.dp.toPx() }
+
+        if (horizontalDistance != null && horizontalDistance > 0 && horizontalDistance < distanceThreshold) {
+            val verticalOverlap = min(draggingBottom, folderBottom) - max(dragY, folderY)
+            if (verticalOverlap > 0) {
+                val measurementY = max(dragY, folderY) + verticalOverlap / 2
+                val startX = if (draggingRight < folderX) draggingRight else dragX
+                val endX = if (draggingRight < folderX) folderX else folderRight
+
+                distances.add(
+                    DistanceMeasurement(
+                        startX = startX,
+                        startY = measurementY,
+                        endX = endX,
+                        endY = measurementY,
+                        distance = with(density) { horizontalDistance.toDp().value },
+                        isHorizontal = true
+                    )
+                )
+            }
+        }
+
+        if (verticalDistance != null && verticalDistance > 0 && verticalDistance < distanceThreshold) {
+            val horizontalOverlap = min(draggingRight, folderRight) - max(dragX, folderX)
+            if (horizontalOverlap > 0) {
+                val measurementX = max(dragX, folderX) + horizontalOverlap / 2
+                val startY = if (draggingBottom < folderY) draggingBottom else dragY
+                val endY = if (draggingBottom < folderY) folderY else folderBottom
+
+                distances.add(
+                    DistanceMeasurement(
+                        startX = measurementX,
+                        startY = startY,
+                        endX = measurementX,
+                        endY = endY,
+                        distance = with(density) { verticalDistance.toDp().value },
+                        isHorizontal = false
+                    )
+                )
+            }
+        }
+    }
+
     return AlignmentState(
         guides = guides.distinctBy { it.position to it.type },
         snappedX = snappedX,
