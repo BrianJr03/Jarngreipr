@@ -32,11 +32,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
@@ -48,21 +50,21 @@ import kotlin.math.roundToInt
 @Composable
 fun FolderItem(
     apps: List<AppInfo>,
-    folderName: String = "Folder",
-    keyboardVisible: Boolean,
-    focusRequester: FocusRequester,
     offsetX: Float,
     offsetY: Float,
-    onOffsetChanged: (Float, Float) -> Unit,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
-    onFocusChanged: () -> Unit = {},
-    isDraggingEnabled: Boolean = true,
+    focusRequester: FocusRequester,
+    keyboardVisible: Boolean,
     iconSize: Float = 64f,
     isFocusable: Boolean = false,
-    onDragStart: () -> Unit = {},
+    isDraggingEnabled: Boolean = true,
+    customIconManager: CustomIconManager? = null,
+    folderName: String = stringResource(R.string.folder_default_name),
+    onClick: () -> Unit,
+    onOffsetChanged: (Float, Float) -> Unit,
     onDragEnd: () -> Unit = {},
-    customIconManager: CustomIconManager? = null
+    onLongClick: () -> Unit = {},
+    onDragStart: () -> Unit = {},
+    onFocusChanged: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }

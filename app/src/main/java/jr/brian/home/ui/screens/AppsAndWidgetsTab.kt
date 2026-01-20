@@ -70,6 +70,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import jr.brian.home.R
+import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
@@ -128,8 +129,9 @@ fun AppsAndWidgetsTab(
     val folderManager = LocalFolderManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
-    
-    val folders by folderManager.getFolders(pageIndex, jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS).collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
@@ -345,7 +347,7 @@ fun AppsAndWidgetsTab(
             tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS
         )
     }
-    
+
     if (showFolderContentsDialog && selectedFolder != null) {
         val folderApps = allApps.filter { it.packageName in selectedFolder!!.appPackageNames }
         FolderContentsDialog(
@@ -950,6 +952,7 @@ private fun FolderGridItem(
                         textAlign = TextAlign.Center
                     )
                 }
+
                 1 -> {
                     AppIconImage(
                         defaultIcon = previewApps[0].icon,
@@ -961,6 +964,7 @@ private fun FolderGridItem(
                             .clip(RoundedCornerShape(6.dp))
                     )
                 }
+
                 2 -> {
                     Row {
                         previewApps.forEach { app ->
@@ -977,6 +981,7 @@ private fun FolderGridItem(
                         }
                     }
                 }
+
                 3 -> {
                     Column {
                         AppIconImage(
@@ -1005,6 +1010,7 @@ private fun FolderGridItem(
                         }
                     }
                 }
+
                 else -> {
                     Column {
                         Row {

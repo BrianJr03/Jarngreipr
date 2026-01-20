@@ -58,6 +58,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
@@ -312,7 +313,7 @@ fun FolderContentsDialog(
 @Composable
 private fun FolderAppItem(
     app: AppInfo,
-    customIconManager: jr.brian.home.data.CustomIconManager,
+    customIconManager: CustomIconManager,
     showAppNames: Boolean,
     onClick: () -> Unit
 ) {
