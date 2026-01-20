@@ -155,6 +155,16 @@ private fun AppGrid(
                         displayPreference = displayPreference
                     )
                 },
+                onAppDoubleClick = {
+                    // Launch on opposite display from current preference
+                    val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
+                        DisplayPreference.CURRENT_DISPLAY
+                    } else {
+                        DisplayPreference.PRIMARY_DISPLAY
+                    }
+                    launchApp(context, app.packageName, oppositePreference)
+                },
                 onAppLongClick = {
                     selectedApp = app
                 }
@@ -189,6 +199,7 @@ private fun AppGridItem(
     app: AppInfo,
     modifier: Modifier = Modifier,
     onAppClick: () -> Unit,
+    onAppDoubleClick: () -> Unit = {},
     onAppLongClick: () -> Unit
 ) {
     val customIconManager = LocalCustomIconManager.current
@@ -205,6 +216,7 @@ private fun AppGridItem(
             .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onAppClick,
+                onDoubleClick = onAppDoubleClick,
                 onLongClick = onAppLongClick
             )
             .focusable()

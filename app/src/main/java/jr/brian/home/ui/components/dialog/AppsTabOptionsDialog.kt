@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -52,7 +52,7 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -119,75 +119,75 @@ fun AppsTabOptionsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (isFreeModeEnabled) {
-                    DrawerOptionCard(
-                        title = if (isDragLocked) {
-                            stringResource(R.string.app_drawer_unlock_drag_mode)
-                        } else {
-                            stringResource(R.string.app_drawer_lock_drag_mode)
-                        },
-                        description = if (isDragLocked) {
-                            stringResource(R.string.app_drawer_unlock_drag_description)
-                        } else {
-                            stringResource(R.string.app_drawer_lock_drag_description)
-                        },
-                        icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GridOptionButton(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.settings_app_visibility_title),
+                        icon = Icons.Default.Visibility,
                         onClick = {
                             onDismiss()
-                            onToggleDragLock(null)
+                            onToggleDragLock(true)
+                            onShowAppVisibility()
                         }
                     )
 
-                    DrawerOptionCard(
-                        title = stringResource(R.string.app_drawer_reset_positions),
-                        description = stringResource(R.string.app_drawer_reset_positions_message),
-                        icon = Icons.Default.RestartAlt,
+                    GridOptionButton(
+                        modifier = Modifier.weight(1f),
+                        title = if (isFreeModeEnabled) {
+                            stringResource(R.string.app_drawer_layout_grid)
+                        } else {
+                            stringResource(R.string.app_drawer_layout_free)
+                        },
+                        icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
                         onClick = {
                             onDismiss()
-                            onResetPositions()
+                            onToggleFreeMode()
                         }
                     )
                 }
 
-                DrawerOptionCard(
-                    title = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_layout_grid)
-                    } else {
-                        stringResource(R.string.app_drawer_layout_free)
-                    },
-                    description = if (isFreeModeEnabled) {
-                        stringResource(R.string.app_drawer_arrange_apps_description_grid)
-                    } else {
-                        stringResource(R.string.app_drawer_arrange_apps_description_fpm)
-                    },
-                    icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
-                    onClick = {
-                        onDismiss()
-                        onToggleFreeMode()
-                    }
-                )
+                if (isFreeModeEnabled) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = if (isDragLocked) {
+                                stringResource(R.string.app_drawer_unlock_drag_mode)
+                            } else {
+                                stringResource(R.string.app_drawer_lock_drag_mode)
+                            },
+                            icon = if (isDragLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                            onClick = {
+                                onDismiss()
+                                onToggleDragLock(null)
+                            }
+                        )
 
-                DrawerOptionCard(
-                    title = stringResource(R.string.settings_app_visibility_title),
-                    description = stringResource(R.string.settings_app_visibility_description),
-                    icon = Icons.Default.Visibility,
-                    onClick = {
-                        onDismiss()
-                        onToggleDragLock(true)
-                        onShowAppVisibility()
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.app_drawer_reset_positions),
+                            icon = Icons.Default.RestartAlt,
+                            onClick = {
+                                onDismiss()
+                                onResetPositions()
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DrawerOptionCard(
+private fun GridOptionButton(
+    modifier: Modifier = Modifier,
     title: String,
-    description: String,
     icon: ImageVector,
     onClick: () -> Unit
 ) {
@@ -208,8 +208,7 @@ private fun DrawerOptionCard(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -239,36 +238,28 @@ private fun DrawerOptionCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .focusable()
-            .padding(20.dp)
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(28.dp)
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = description,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
