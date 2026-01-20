@@ -9,4 +9,4 @@
 - Improved UI in Dialogs
 - Improved UI in Settings
 
-1.0.5
+1.2
