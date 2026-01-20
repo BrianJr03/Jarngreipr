@@ -34,13 +34,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.util.getSimpleBatteryInfo
+import jr.brian.home.util.rememberFpsMonitor
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -61,6 +64,8 @@ fun PoweredOffScreen(
     var batteryPercentage by remember { mutableStateOf(0) }
     var isCharging by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf("") }
+
+    val fps = rememberFpsMonitor().value
 
     val defaultConfig = LocalViewConfiguration.current
     val customViewConfiguration = remember(defaultConfig) {
@@ -163,6 +168,22 @@ fun PoweredOffScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
+            }
+
+            AnimatedVisibility(
+                visible = showInfo,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(end = 16.dp, top = 8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.monitor_fps_label, fps),
+                    color = Color.DarkGray,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             AnimatedVisibility(

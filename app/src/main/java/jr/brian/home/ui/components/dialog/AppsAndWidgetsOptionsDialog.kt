@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -50,7 +50,7 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -117,60 +117,69 @@ fun AppsAndWidgetsOptionsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                AddOptionCard(
-                    title = stringResource(R.string.widget_page_add_widget),
-                    description = stringResource(R.string.widget_page_add_widget_description),
-                    icon = Icons.Default.Add,
-                    onClick = {
-                        onDismiss()
-                        onAddWidget()
-                    }
-                )
-
-                if (!isEmpty) {
-                    AddOptionCard(
-                        title = stringResource(
-                            if (isEditModeActive) R.string.widget_page_edit_mode_exit
-                            else R.string.widget_page_edit_mode
-                        ),
-                        description = stringResource(R.string.widget_page_edit_mode_description),
-                        icon = Icons.Default.Edit,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GridOptionButton(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.widget_page_add_widget),
+                        icon = Icons.Default.Add,
                         onClick = {
                             onDismiss()
-                            onToggleEditMode()
+                            onAddWidget()
                         }
                     )
-                    AddOptionCard(
-                        title = stringResource(R.string.widget_page_swap_sections),
-                        description = stringResource(R.string.widget_page_swap_sections_description),
-                        icon = Icons.Default.SwapVert,
+
+                    GridOptionButton(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.settings_app_visibility_title),
+                        icon = Icons.Default.Visibility,
                         onClick = {
                             onDismiss()
-                            onSwapSections()
+                            onAddApp()
                         }
                     )
                 }
 
-                AddOptionCard(
-                    title = stringResource(R.string.settings_app_visibility_title),
-                    description = stringResource(R.string.settings_app_visibility_description),
-                    icon = Icons.Default.Visibility,
-                    onClick = {
-                        onDismiss()
-                        onAddApp()
+                if (!isEmpty) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(
+                                if (isEditModeActive) R.string.widget_page_edit_mode_exit
+                                else R.string.widget_page_edit_mode
+                            ),
+                            icon = Icons.Default.Edit,
+                            onClick = {
+                                onDismiss()
+                                onToggleEditMode()
+                            }
+                        )
+
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.widget_page_swap_sections),
+                            icon = Icons.Default.SwapVert,
+                            onClick = {
+                                onDismiss()
+                                onSwapSections()
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun AddOptionCard(
+private fun GridOptionButton(
+    modifier: Modifier = Modifier,
     title: String,
-    description: String,
     icon: ImageVector,
     onClick: () -> Unit
 ) {
@@ -191,8 +200,7 @@ private fun AddOptionCard(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -222,36 +230,28 @@ private fun AddOptionCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .focusable()
-            .padding(20.dp)
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(28.dp)
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = description,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -29,7 +29,6 @@
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
-    <string name="drawer_options_header_description">Toggle header bar visibility</string>
     <string name="settings_header_visibility_title">Show Tab Header</string>
     <string name="settings_header_visibility_description">Toggle header bar visibility on home tabs</string>
     <string name="drawer_options_tabs">Tabs</string>
@@ -100,6 +99,9 @@
 
     <string name="settings_show_app_names_title">Show App Names</string>
     <string name="settings_show_app_names_description">Show app names in Tabs</string>
+
+    <string name="settings_show_folder_names_title">Show Folder Names</string>
+    <string name="settings_show_folder_names_description">Show folder names below folder icons</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
     <string name="settings_wallpaper_description">Choose a wallpaper</string>
@@ -381,6 +383,21 @@
     <string name="header_folder_options">Options</string>
     <string name="header_power_button">Power</string>
 
+    <!-- Create Folder Dialog -->
+    <string name="dialog_create_folder_title">Create Folder</string>
+    <string name="dialog_create_folder_description">Select apps to add to this folder</string>
+    <string name="dialog_create_folder_close">Close</string>
+    <string name="dialog_create_folder_select_all">Select All</string>
+    <string name="dialog_create_folder_deselect_all">Deselect All</string>
+    <string name="dialog_create_folder_ok">OK</string>
+    <string name="dialog_create_folder_apps_selected">%1$d apps selected</string>
+
+    <!-- Folder -->
+    <string name="folder_default_name">Folder</string>
+    <string name="folder_icon_description">Folder containing %1$d apps</string>
+    <string name="folder_empty">Empty folder</string>
+    <string name="folder_delete">Delete folder</string>
+
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
     <string name="app_drawer_layout_grid">Use Grid Layout</string>
@@ -411,12 +428,15 @@
     <string name="monitor_screen_title">System Monitor</string>
     <string name="monitor_screen_description">Real-time system information</string>
     <string name="monitor_ram_label">RAM Usage</string>
+    <string name="monitor_fps_label">FPS %d</string>
     <string name="monitor_cpu_label">CPU Usage</string>
     <string name="monitor_battery_label">Battery Level</string>
     <string name="monitor_battery_time_label">Battery Time</string>
     <string name="monitor_storage_label">Storage</string>
     <string name="monitor_close">Close</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_crash_logs_title">Crash Logs</string>
+    <string name="settings_crash_logs_description">View and copy crash reports for debugging</string>
 
     <!-- Widget Picker -->
     <string name="widget_picker_title">Choose a Widget</string>

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -75,7 +77,8 @@ fun DrawerOptionsDialog(
     onTabsClick: () -> Unit,
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onQuickDeleteClick: () -> Unit
+    onQuickDeleteClick: () -> Unit,
+    onCreateFolderClick: () -> Unit
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -163,7 +166,7 @@ fun DrawerOptionsDialog(
 
                         if (isQuickDeleteVisible) {
                             QuickAccessIconButton(
-                                icon = Icons.Default.FolderOpen,
+                                icon = Icons.Default.SdStorage,
                                 contentDescription = stringResource(R.string.header_folder_options),
                                 onClick = {
                                     onQuickDeleteClick()
@@ -203,33 +206,48 @@ fun DrawerOptionsDialog(
                     }
                 }
 
-                DrawerOptionCard(
-                    title = if (isHeaderVisible) {
-                        stringResource(R.string.drawer_options_hide_header)
-                    } else {
-                        stringResource(R.string.drawer_options_show_header)
-                    },
-                    description = stringResource(R.string.drawer_options_header_description),
-                    icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    onClick = {
-                        powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
-                        onDismiss()
-                    }
-                )
-
                 AnimatedVisibility(
                     visible = !isWallpaperExpanded,
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    DrawerOptionCard(
-                        title = stringResource(R.string.settings_wallpaper_title),
-                        description = stringResource(R.string.settings_wallpaper_description),
-                        icon = Icons.Default.Wallpaper,
-                        onClick = {
-                            isWallpaperExpanded = true
-                        }
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        DrawerOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.dialog_create_folder_title),
+                            icon = Icons.Default.FolderOpen,
+                            onClick = {
+                                onCreateFolderClick()
+                                onDismiss()
+                            }
+                        )
+
+                        DrawerOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = if (isHeaderVisible) {
+                                stringResource(R.string.drawer_options_hide_header)
+                            } else {
+                                stringResource(R.string.drawer_options_show_header)
+                            },
+                            icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            onClick = {
+                                powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
+                                onDismiss()
+                            }
+                        )
+
+                        DrawerOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.settings_wallpaper_title),
+                            icon = Icons.Default.Wallpaper,
+                            onClick = {
+                                isWallpaperExpanded = true
+                            }
+                        )
+                    }
                 }
 
                 AnimatedVisibility(
@@ -292,12 +310,11 @@ fun DrawerOptionsDialog(
 }
 
 @Composable
-private fun DrawerOptionCard(
+private fun DrawerOptionButton(
+    modifier: Modifier = Modifier,
     title: String,
-    description: String,
     icon: ImageVector,
-    onClick: () -> Unit,
-    isSelected: Boolean = false
+    onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -306,11 +323,6 @@ private fun DrawerOptionCard(
             listOf(
                 ThemePrimaryColor.copy(alpha = 0.9f),
                 ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else if (isSelected) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.5f)
             )
         } else {
             listOf(
@@ -321,9 +333,7 @@ private fun DrawerOptionCard(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+        modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -331,20 +341,13 @@ private fun DrawerOptionCard(
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = if (isFocused) 3.dp else if (isSelected) 2.dp else 2.dp,
+                width = if (isFocused) 3.dp else 2.dp,
                 brush = if (isFocused) {
                     borderBrush(
                         isFocused = true,
                         colors = listOf(
                             ThemePrimaryColor.copy(alpha = 0.8f),
                             ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else if (isSelected) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.7f),
-                            Color.White.copy(alpha = 0.5f)
                         )
                     )
                 } else {
@@ -360,36 +363,28 @@ private fun DrawerOptionCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .focusable()
-            .padding(20.dp)
+            .padding(12.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(28.dp)
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = description,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

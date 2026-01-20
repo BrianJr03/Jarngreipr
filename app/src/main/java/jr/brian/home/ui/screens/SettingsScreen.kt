@@ -38,6 +38,7 @@ import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.AppNameToggleItem
+import jr.brian.home.ui.components.settings.FolderNameToggleItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
@@ -52,6 +53,15 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.OverlayInfoUtil
+import jr.brian.home.util.SettingsScreenUtil.DEFAULT_VERSION_NAME
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_GRID
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THOR
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THEME
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_ICON_PACK
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_HEADER
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_OLED
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_WALLPAPER
 import kotlinx.coroutines.delay
 
 @Composable
@@ -65,7 +75,6 @@ fun SettingsScreen(
     onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
-    BackHandler(onBack = onDismiss)
     Scaffold(
         containerColor = OledBackgroundColor,
     ) { innerPadding ->
@@ -85,7 +94,8 @@ fun SettingsScreen(
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                     onNavigateToMonitor = onNavigateToMonitor,
-                    onNavigateToCrashLogs = onNavigateToCrashLogs
+                    onNavigateToCrashLogs = onNavigateToCrashLogs,
+                    onDismiss = onDismiss
                 )
             }
         }
@@ -100,7 +110,8 @@ private fun SettingsContent(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
-    onNavigateToCrashLogs: () -> Unit = {}
+    onNavigateToCrashLogs: () -> Unit = {},
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -108,6 +119,14 @@ private fun SettingsContent(
 
     val isThorDevice = remember {
         android.os.Build.MODEL == DeviceModel.THOR
+    }
+
+    BackHandler {
+        if (expandedItem != null) {
+            expandedItem = null
+        } else {
+            onDismiss()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -122,168 +141,200 @@ private fun SettingsContent(
         contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        item {
-            SettingsSectionHeader(
-                title = stringResource(id = R.string.settings_section_appearance)
-            )
-        }
-
-        item {
-            ThemeSelectorItem(
-                focusRequester = firstItemFocusRequester,
-                isExpanded = expandedItem == "theme",
-                onExpandChanged = { expandedItem = if (it) "theme" else null },
-                onNavigateToCustomTheme = {
-                    expandedItem = null
-                    onNavigateToCustomTheme()
-                }
-            )
-        }
-
-        item {
-            OledModeToggleItem(
-                isExpanded = expandedItem == "oled"
-            )
-        }
-
-        item {
-            WallpaperSelectorItem(
-                isExpanded = expandedItem == "wallpaper",
-                onExpandChanged = { expandedItem = if (it) "wallpaper" else null }
-            )
-        }
-
-        item {
-            IconPackSelectorItem(
-                isExpanded = expandedItem == "iconpack",
-                onExpandChanged = { expandedItem = if (it) "iconpack" else null },
-                onIconPackChanged = onIconPackChanged
-            )
-        }
-
-        item {
-            SettingsSectionHeader(
-                title = stringResource(id = R.string.settings_section_layout)
-            )
-        }
-
-        item {
-            AppNameToggleItem()
-        }
-
-        item {
-            HeaderVisibilityToggleItem(
-                isExpanded = expandedItem == "header"
-            )
-        }
-
-        item {
-            GridColumnSelectorItem(
-                isExpanded = expandedItem == "grid",
-                onExpandChanged = { expandedItem = if (it) "grid" else null },
-                totalAppsCount = allAppsUnfiltered.size
-            )
-        }
-
-        if (isThorDevice) {
+        if (expandedItem == null || expandedItem == EXPANDED_THEME) {
             item {
-                ThorSettingsItem(
-                    isExpanded = expandedItem == "thor",
-                    onExpandChanged = { expandedItem = if (it) "thor" else null }
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_appearance)
+                )
+            }
+
+            item {
+                ThemeSelectorItem(
+                    focusRequester = firstItemFocusRequester,
+                    isExpanded = expandedItem == EXPANDED_THEME,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_THEME else null
+                    },
+                    onNavigateToCustomTheme = {
+                        expandedItem = null
+                        onNavigateToCustomTheme()
+                    }
                 )
             }
         }
 
-        item {
-            BackButtonShortcutItem(
-                isExpanded = expandedItem == "back_button",
-                onExpandChanged = { expandedItem = if (it) "back_button" else null },
-                onConfigureClick = {
-                    expandedItem = null
-                    onNavigateToBackButtonShortcut()
-                }
-            )
+        if (expandedItem == null) {
+            item {
+                OledModeToggleItem(
+                    isExpanded = expandedItem == EXPANDED_OLED
+                )
+            }
         }
 
-        item {
-            SettingsSectionHeader(
-                title = stringResource(id = R.string.settings_section_system)
-            )
+        if (expandedItem == null || expandedItem == EXPANDED_WALLPAPER) {
+            item {
+                WallpaperSelectorItem(
+                    isExpanded = expandedItem == EXPANDED_WALLPAPER,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_WALLPAPER else null
+                    }
+                )
+            }
         }
 
-        item {
-            SettingItem(
-                title = stringResource(id = R.string.monitor_screen_title),
-                description = stringResource(id = R.string.monitor_screen_description),
-                icon = Icons.Default.Monitor,
-                onClick = {
-                    expandedItem = null
-                    onNavigateToMonitor()
-                }
-            )
+        if (expandedItem == null || expandedItem == EXPANDED_ICON_PACK) {
+            item {
+                IconPackSelectorItem(
+                    isExpanded = expandedItem == EXPANDED_ICON_PACK,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_ICON_PACK else null
+                    },
+                    onIconPackChanged = onIconPackChanged
+                )
+            }
         }
 
-        item {
-            SettingItem(
-                title = "Crash Logs",
-                description = "View and copy crash reports for debugging",
-                icon = Icons.Default.BugReport,
-                onClick = {
-                    expandedItem = null
-                    onNavigateToCrashLogs()
-                }
-            )
+        if (expandedItem == null) {
+            item {
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_layout)
+                )
+            }
+
+            item {
+                AppNameToggleItem()
+            }
+
+            item {
+                FolderNameToggleItem()
+            }
+
+            item {
+                HeaderVisibilityToggleItem(
+                    isExpanded = expandedItem == EXPANDED_HEADER
+                )
+            }
         }
 
-        item {
-            SettingsSectionHeader(
-                title = stringResource(id = R.string.settings_section_support)
-            )
+        if (expandedItem == null || expandedItem == EXPANDED_GRID) {
+            item {
+                GridColumnSelectorItem(
+                    isExpanded = expandedItem == EXPANDED_GRID,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_GRID else null
+                    },
+                    totalAppsCount = allAppsUnfiltered.size
+                )
+            }
         }
 
-        item {
-            SettingItem(
-                title = stringResource(id = R.string.settings_faq_title),
-                description = stringResource(id = R.string.settings_faq_description),
-                icon = Icons.AutoMirrored.Filled.Help,
-                onClick = {
-                    expandedItem = null
-                    onNavigateToFAQ()
-                },
-            )
+        if (isThorDevice && (expandedItem == null || expandedItem == EXPANDED_THOR)) {
+            item {
+                ThorSettingsItem(
+                    isExpanded = expandedItem == EXPANDED_THOR,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_THOR else null
+                    }
+                )
+            }
         }
 
-        item {
-            val url = stringResource(R.string.settings_buy_me_coffee_url)
-            SettingItem(
-                title = stringResource(id = R.string.settings_buy_me_coffee_title),
-                description = stringResource(id = R.string.settings_buy_me_coffee_description),
-                icon = Icons.Default.Coffee,
-                onClick = {
-                    expandedItem = null
-                    val intent = Intent(
-                        Intent.ACTION_VIEW,
-                        url.toUri()
-                    )
-                    context.startActivity(intent)
-                },
-            )
+        if (expandedItem == null || expandedItem == EXPANDED_BACK_BUTTON) {
+            item {
+                BackButtonShortcutItem(
+                    isExpanded = expandedItem == EXPANDED_BACK_BUTTON,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_BACK_BUTTON else null
+                    },
+                    onConfigureClick = {
+                        expandedItem = null
+                        onNavigateToBackButtonShortcut()
+                    }
+                )
+            }
         }
 
-        item {
-            SettingsSectionHeader(
-                title = stringResource(id = R.string.settings_section_extras)
-            )
-        }
+        if (expandedItem == null) {
+            item {
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_system)
+                )
+            }
 
-        item {
-            val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
-            InfoBox(
-                label = stringResource(R.string.welcome_overlay_thor_fact_label),
-                content = stringResource(randomMessage),
-                isPrimary = true,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            item {
+                SettingItem(
+                    title = stringResource(id = R.string.monitor_screen_title),
+                    description = stringResource(id = R.string.monitor_screen_description),
+                    icon = Icons.Default.Monitor,
+                    onClick = {
+                        expandedItem = null
+                        onNavigateToMonitor()
+                    }
+                )
+            }
+
+            item {
+                SettingItem(
+                    title = stringResource(id = R.string.settings_crash_logs_title),
+                    description = stringResource(id = R.string.settings_crash_logs_description),
+                    icon = Icons.Default.BugReport,
+                    onClick = {
+                        expandedItem = null
+                        onNavigateToCrashLogs()
+                    }
+                )
+            }
+
+            item {
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_support)
+                )
+            }
+
+            item {
+                SettingItem(
+                    title = stringResource(id = R.string.settings_faq_title),
+                    description = stringResource(id = R.string.settings_faq_description),
+                    icon = Icons.AutoMirrored.Filled.Help,
+                    onClick = {
+                        expandedItem = null
+                        onNavigateToFAQ()
+                    },
+                )
+            }
+
+            item {
+                val url = stringResource(R.string.settings_buy_me_coffee_url)
+                SettingItem(
+                    title = stringResource(id = R.string.settings_buy_me_coffee_title),
+                    description = stringResource(id = R.string.settings_buy_me_coffee_description),
+                    icon = Icons.Default.Coffee,
+                    onClick = {
+                        expandedItem = null
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            url.toUri()
+                        )
+                        context.startActivity(intent)
+                    },
+                )
+            }
+
+            item {
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_extras)
+                )
+            }
+
+            item {
+                val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
+                InfoBox(
+                    label = stringResource(R.string.welcome_overlay_thor_fact_label),
+                    content = stringResource(randomMessage),
+                    isPrimary = true,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
         }
     }
 }
@@ -292,11 +343,11 @@ private fun SettingsContent(
 private fun VersionInfo() {
     val context = LocalContext.current
     val versionName = try {
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.1"
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            ?: DEFAULT_VERSION_NAME
     } catch (_: Exception) {
-        "0.1"
+        DEFAULT_VERSION_NAME
     }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
