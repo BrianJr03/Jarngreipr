@@ -78,7 +78,7 @@ fun DrawerOptionsDialog(
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
-    onCreateFolderClick: () -> Unit
+    onCreateFolderClick: (() -> Unit)?
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -215,15 +215,17 @@ fun DrawerOptionsDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        DrawerOptionButton(
-                            modifier = Modifier.weight(1f),
-                            title = stringResource(R.string.dialog_create_folder_title),
-                            icon = Icons.Default.FolderOpen,
-                            onClick = {
-                                onCreateFolderClick()
-                                onDismiss()
-                            }
-                        )
+                        if (onCreateFolderClick != null) {
+                            DrawerOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.dialog_create_folder_title),
+                                icon = Icons.Default.FolderOpen,
+                                onClick = {
+                                    onCreateFolderClick()
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         DrawerOptionButton(
                             modifier = Modifier.weight(1f),

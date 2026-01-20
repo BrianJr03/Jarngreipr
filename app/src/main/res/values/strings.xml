@@ -305,9 +305,11 @@
     <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
     <string name="home_tab_page_type_apps_tab">Apps Tab</string>
     <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
+    <string name="home_tab_page_type_empty_tab">Empty Tab</string>
     <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
     <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
+    <string name="home_tab_page_type_empty_tab_description">A blank page. </string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
