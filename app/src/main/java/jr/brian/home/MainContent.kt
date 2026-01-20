@@ -37,12 +37,15 @@ import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
+import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
+import jr.brian.home.util.UpdateChecker
+import jr.brian.home.util.UpdateInfo
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -61,6 +64,9 @@ fun MainContent() {
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
     var showWhatsNewDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var currentVersionName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         mainViewModel.loadAllApps(context)
@@ -71,7 +77,15 @@ fun MainContent() {
             0
         ).versionName ?: "Unknown"
 
+        currentVersionName = versionName
         whatsNewManager.checkAndShowWhatsNew(versionName)
+
+        // Check for app updates
+        val update = UpdateChecker.checkForUpdate(versionName)
+        if (update.isUpdateAvailable) {
+            updateInfo = update
+            showUpdateDialog = true
+        }
     }
 
     LaunchedEffect(shouldShowWhatsNew) {
@@ -204,6 +218,20 @@ fun MainContent() {
                     }
                 )
             }
+        }
+
+        // Update Available Dialog
+        if (showUpdateDialog && updateInfo != null) {
+            UpdateAvailableDialog(
+                updateInfo = updateInfo!!,
+                currentVersion = currentVersionName,
+                onDismiss = {
+                    showUpdateDialog = false
+                },
+                onRemindLater = {
+                    showUpdateDialog = false
+                }
+            )
         }
     }
 }
