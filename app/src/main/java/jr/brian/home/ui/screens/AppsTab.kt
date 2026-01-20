@@ -554,7 +554,8 @@ private fun AppSelectionContent(
                 onAppDoubleClick = onAppDoubleClick,
                 folders = folders,
                 allApps = allApps,
-                onFolderClick = onFolderClick
+                onFolderClick = onFolderClick,
+                isHeaderVisible = isHeaderVisible
             )
         }
     }
@@ -575,7 +576,8 @@ private fun AppGridLayout(
     onAppDoubleClick: (AppInfo) -> Unit = {},
     folders: List<Folder> = emptyList(),
     allApps: List<AppInfo> = emptyList(),
-    onFolderClick: (Folder) -> Unit = {}
+    onFolderClick: (Folder) -> Unit = {},
+    isHeaderVisible: Boolean
 ) {
     val gridState = rememberLazyGridState()
 
@@ -595,7 +597,7 @@ private fun AppGridLayout(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             horizontal = 8.dp,
-            vertical = 8.dp,
+            vertical = if (isHeaderVisible) 8.dp else 20.dp,
         ),
         horizontalArrangement = Arrangement.spacedBy(32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
