@@ -1,15 +1,6 @@
 package jr.brian.home.ui.components.dialog
 
 import android.widget.Toast
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import jr.brian.home.model.app.AppPosition
-import jr.brian.home.model.app.Folder
-import jr.brian.home.ui.theme.managers.LocalAppPositionManager
-import jr.brian.home.ui.theme.managers.LocalFolderManager
-import kotlinx.coroutines.launch
-import java.util.UUID
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,9 +47,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
+import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_APPS
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.AppPosition
+import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
@@ -66,7 +62,11 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun CreateFolderDialog(
@@ -74,7 +74,7 @@ fun CreateFolderDialog(
     onDismiss: () -> Unit,
     pageIndex: Int = 0,
     allApps: List<AppInfo> = apps,
-    tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS
+    tabType: String = TAB_TYPE_APPS
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -84,7 +84,6 @@ fun CreateFolderDialog(
     val defaultFolderName = stringResource(R.string.folder_default_name)
     var selectedApps by remember { mutableStateOf(emptySet<String>()) }
     
-    // Collect existing folders to check for duplicates
     val existingFolders by folderManager.getFolders(pageIndex, tabType)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
