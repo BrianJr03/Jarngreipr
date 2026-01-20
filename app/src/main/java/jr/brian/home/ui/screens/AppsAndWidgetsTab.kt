@@ -446,7 +446,8 @@ private fun TabContent(
                 swapSourceWidgetId = swapSourceWidgetId,
                 onSwapComplete = onSwapModeDisabled,
                 onSwapModeEnabled = onSwapModeEnabled,
-                onFolderClick = onFolderClick
+                onFolderClick = onFolderClick,
+                isHeaderVisible = isHeaderVisible
             )
         }
     }
@@ -534,14 +535,15 @@ private fun WidgetsAndAppsGrid(
     swapSourceWidgetId: Int?,
     onSwapComplete: () -> Unit,
     onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit
+    onFolderClick: (Folder) -> Unit,
+    isHeaderVisible: Boolean
 ) {
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columns),
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 8.dp, end = 8.dp),
+            .padding(horizontal = 8.dp, vertical = if (isHeaderVisible) 0.dp else 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

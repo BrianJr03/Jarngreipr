@@ -35,6 +35,8 @@ import jr.brian.home.R
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
+import jr.brian.home.ui.extensions.blockAllNavigation
+import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -66,7 +68,20 @@ fun EmptyTab(
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .then(
+                if (showDrawerOptionsDialog ||
+                    showHomeTabDialog
+                ) {
+                    Modifier.blockAllNavigation()
+                } else {
+                    Modifier.blockHorizontalNavigation()
+                }
+            )
+    ) {
         if (pagerState != null) {
             val settingsIconFocusRequester = remember { FocusRequester() }
             val menuIconFocusRequester = remember { FocusRequester() }
@@ -85,7 +100,9 @@ fun EmptyTab(
                     leadingIconFocusRequester = settingsIconFocusRequester,
                     trailingIcon = Icons.Default.Menu,
                     trailingIconContentDescription = null,
-                    onTrailingIconClick = {},
+                    onTrailingIconClick = {
+                        showDrawerOptionsDialog = true
+                    },
                     trailingIconFocusRequester = menuIconFocusRequester,
                     onNavigateToGrid = {
                         appFocusRequesters[0]?.requestFocus()
