@@ -99,6 +99,15 @@ fun PageTypeSelectionDialog(
                         onDismiss()
                     }
                 )
+
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_empty_tab),
+                    description = stringResource(R.string.home_tab_page_type_empty_tab_description),
+                    onClick = {
+                        onTypeSelected(PageType.EMPTY_TAB)
+                        onDismiss()
+                    }
+                )
             }
         }
     }
