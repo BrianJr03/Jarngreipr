@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -49,46 +50,54 @@ fun AppGridItem(
     val customIconManager = LocalCustomIconManager.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        AppIconImage(
-            defaultIcon = app.icon,
-            packageName = app.packageName,
-            contentDescription = stringResource(R.string.app_icon_description, app.label),
-            customIconManager = customIconManager,
-            modifier =
-                Modifier
-                    .size(64.dp)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged {
-                        if (it.isFocused && !isFocused) {
-                            onFocusChanged()
+        Box {
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
+                contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .focusRequester(focusRequester)
+                        .onFocusChanged {
+                            if (it.isFocused && !isFocused) {
+                                onFocusChanged()
+                            }
+                            isFocused = it.isFocused
                         }
-                        isFocused = it.isFocused
-                    }
-                    .handleFullNavigation(
-                        onNavigateUp = onNavigateUp,
-                        onNavigateDown = onNavigateDown,
-                        onNavigateLeft = onNavigateLeft,
-                        onNavigateRight = onNavigateRight,
-                        onEnterPress = {
-                            onClick()
-                        },
-                        onMenuPress = {
-                            onLongClick()
-                        }
-                    )
-                    .combinedClickable(
-                        onClick = {
-                            onClick()
-                        },
-                        onDoubleClick = {
-                            onDoubleClick()
-                        },
-                        onLongClick = {
-                            onLongClick()
-                        },
-                    )
-                    .focusable()
-        )
+                        .handleFullNavigation(
+                            onNavigateUp = onNavigateUp,
+                            onNavigateDown = onNavigateDown,
+                            onNavigateLeft = onNavigateLeft,
+                            onNavigateRight = onNavigateRight,
+                            onEnterPress = {
+                                onClick()
+                            },
+                            onMenuPress = {
+                                onLongClick()
+                            }
+                        )
+                        .combinedClickable(
+                            onClick = {
+                                onClick()
+                            },
+                            onDoubleClick = {
+                                onDoubleClick()
+                            },
+                            onLongClick = {
+                                onLongClick()
+                            },
+                        )
+                        .focusable()
+            )
+            
+            NotificationBadge(
+                packageName = app.packageName,
+                offsetX = 4.dp,
+                offsetY = (-4).dp
+            )
+        }
 
         Spacer(Modifier.height(4.dp))
 

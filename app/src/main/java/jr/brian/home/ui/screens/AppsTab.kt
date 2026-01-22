@@ -114,7 +114,8 @@ fun AppsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToRecentApps: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -269,7 +270,8 @@ fun AppsTab(
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
                 showCreateFolderDialog = true
-            }
+            },
+            onRecentAppsClick = onNavigateToRecentApps
         )
     }
 
