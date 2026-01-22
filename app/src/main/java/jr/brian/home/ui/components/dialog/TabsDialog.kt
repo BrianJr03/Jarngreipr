@@ -189,7 +189,7 @@ fun TabsDialog(
                     val pageLabel = when (pageType) {
                         PageType.APPS_TAB -> stringResource(R.string.home_tab_page_type_apps_tab)
                         PageType.APPS_AND_WIDGETS_TAB -> stringResource(R.string.home_tab_page_type_apps_and_widgets_tab)
-                        PageType.EMPTY_TAB -> stringResource(R.string.home_tab_page_type_empty_tab)
+                        PageType.APP_DRAWER_TAB -> stringResource(R.string.home_tab_page_type_app_drawer_tab)
                     }
 
                     // When there's only one page, it's always the home tab (index 0)

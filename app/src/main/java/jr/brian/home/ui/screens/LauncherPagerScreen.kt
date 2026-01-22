@@ -248,17 +248,28 @@ fun LauncherPagerScreen(
                         }
                     }
 
-                    PageType.EMPTY_TAB -> {
+                    PageType.APP_DRAWER_TAB -> {
                         val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
                         val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
 
+
                         if (widgetPage != null) {
+                            val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
+                            val visibleApps = remember(homeUiState.allApps, hiddenApps) {
+                                homeUiState.allApps.filter { app ->
+                                    app.packageName !in hiddenApps
+                                }
+                            }
+
                             key(globalIconRefreshManager?.refreshCounter) {
-                                EmptyTab(
+                                AppDrawerTab(
                                     powerViewModel = powerViewModel,
                                     totalPages = totalPages,
                                     onShowBottomSheet = onShowBottomSheet,
                                     onSettingsClick = onSettingsClick,
+                                    apps = visibleApps,
+                                    appsUnfiltered = homeUiState.allAppsUnfiltered,
+                                    allApps = homeUiState.allAppsUnfiltered,
                                     onDeletePage = { pagerPageIndex ->
                                         scope.launch {
                                             deleteTab(
@@ -276,6 +287,8 @@ fun LauncherPagerScreen(
                                     },
                                     pageIndicatorBorderColor = ThemeSecondaryColor,
                                     pagerState = pagerState,
+                                    isLoading = homeUiState.isLoading,
+                                    pageIndex = page,
                                 )
                             }
                         }
