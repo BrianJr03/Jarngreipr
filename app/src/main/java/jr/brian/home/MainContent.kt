@@ -236,7 +236,6 @@ fun MainContent() {
             }
         }
 
-        // Update Available Dialog
         if (showUpdateDialog && updateInfo != null) {
             UpdateAvailableDialog(
                 updateInfo = updateInfo!!,

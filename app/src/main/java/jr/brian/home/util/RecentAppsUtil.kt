@@ -8,9 +8,6 @@ import android.os.Process
 import jr.brian.home.model.app.RecentAppInfo
 import java.util.concurrent.TimeUnit
 
-/**
- * Utility object for recent apps functionality.
- */
 object RecentAppsUtil {
     
     /**
@@ -49,7 +46,7 @@ object RecentAppsUtil {
 
         return usageStats
             .filter { it.totalTimeInForeground > 0 }
-            .filter { it.lastTimeUsed > recentThreshold } // Only recently used apps
+            .filter { it.lastTimeUsed > recentThreshold }
             .sortedByDescending { it.lastTimeUsed }
             .distinctBy { it.packageName }
             .filter { it.packageName != launcherPackage }
