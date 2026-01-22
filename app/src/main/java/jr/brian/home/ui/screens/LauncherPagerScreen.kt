@@ -50,7 +50,8 @@ fun LauncherPagerScreen(
     onSettingsClick: () -> Unit,
     onShowBottomSheet: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
-    onBackButtonShortcut: () -> Unit = {}
+    onBackButtonShortcut: () -> Unit = {},
+    onNavigateToRecentApps: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -199,7 +200,8 @@ fun LauncherPagerScreen(
                                 },
                                 pageIndicatorBorderColor = ThemePrimaryColor,
                                 allApps = homeUiState.allAppsUnfiltered,
-                                onNavigateToSearch = onNavigateToSearch
+                                onNavigateToSearch = onNavigateToSearch,
+                                onNavigateToRecentApps = onNavigateToRecentApps
                             )
                         }
                     }
@@ -242,6 +244,7 @@ fun LauncherPagerScreen(
                                     },
                                     pageIndicatorBorderColor = ThemeSecondaryColor,
                                     onNavigateToSearch = onNavigateToSearch,
+                                    onNavigateToRecentApps = onNavigateToRecentApps,
                                     navController = navController
                                 )
                             }
