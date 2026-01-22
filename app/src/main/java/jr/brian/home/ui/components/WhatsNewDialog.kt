@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +44,6 @@ fun WhatsNewDialog(
                     .fillMaxSize()
                     .padding(24.dp)
             ) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -75,7 +76,6 @@ fun WhatsNewDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Content
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -96,7 +96,6 @@ fun WhatsNewDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Bottom button
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
@@ -120,51 +119,13 @@ private fun MarkdownText(
         while (i < lines.size) {
             val line = lines[i]
             when {
-                // Headers
-                line.startsWith("### ") -> {
-                    Text(
-                        text = line.removePrefix("### "),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
+                line.startsWith("### ") -> MarkdownHeader3(line)
+                line.startsWith("## ") -> MarkdownHeader2(line)
+                line.startsWith("# ") -> MarkdownHeader1(line)
+                line.trim().startsWith("- ") || line.trim().startsWith("* ") ->
+                    MarkdownBulletPoint(line)
 
-                line.startsWith("## ") -> {
-                    Text(
-                        text = line.removePrefix("## "),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
-                }
-
-                line.startsWith("# ") -> {
-                    Text(
-                        text = line.removePrefix("# "),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
-                // Bullet points
-                line.trim().startsWith("- ") || line.trim().startsWith("* ") -> {
-                    Row(
-                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
-                    ) {
-                        Text(
-                            text = "• ",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = line.trim().removePrefix("- ").removePrefix("* "),
-                            style = MaterialTheme.typography.bodyLarge,
-                            lineHeight = 24.sp
-                        )
-                    }
-                }
-                // Code blocks
+                line.trim().startsWith(">") -> MarkdownBlockquote(line)
                 line.trim().startsWith("```") -> {
                     i++
                     val codeLines = mutableListOf<String>()
@@ -172,48 +133,132 @@ private fun MarkdownText(
                         codeLines.add(lines[i])
                         i++
                     }
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Text(
-                            text = codeLines.joinToString("\n"),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            ),
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
+                    MarkdownCodeBlock(codeLines)
                 }
-                // Bold text **text**
-                line.contains("**") -> {
-                    Text(
-                        text = line.replace("**", ""),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (line.trim()
-                                .startsWith("**")
-                        ) FontWeight.Bold else FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-                // Empty line
-                line.isBlank() -> {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                // Regular text
-                else -> {
-                    Text(
-                        text = line,
-                        style = MaterialTheme.typography.bodyLarge,
-                        lineHeight = 24.sp,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
+
+                line.contains("**") -> MarkdownBoldText(line)
+                line.isBlank() -> MarkdownEmptyLine()
+                else -> MarkdownRegularText(line)
             }
             i++
         }
     }
+}
+
+@Composable
+private fun MarkdownHeader1(line: String) {
+    Text(
+        text = line.removePrefix("# "),
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 16.dp)
+    )
+}
+
+@Composable
+private fun MarkdownHeader2(line: String) {
+    Text(
+        text = line.removePrefix("## "),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 12.dp)
+    )
+}
+
+@Composable
+private fun MarkdownHeader3(line: String) {
+    Text(
+        text = line.removePrefix("### "),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+}
+
+@Composable
+private fun MarkdownBulletPoint(line: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+    ) {
+        Text(
+            text = "• ",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = line.trim().removePrefix("- ").removePrefix("* "),
+            style = MaterialTheme.typography.bodyLarge,
+            lineHeight = 24.sp
+        )
+    }
+}
+
+@Composable
+private fun MarkdownBlockquote(line: String) {
+    val quoteText = line.trim().removePrefix(">").trimStart()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Surface(
+            modifier = Modifier
+                .width(4.dp)
+                .height(24.dp),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+            shape = MaterialTheme.shapes.extraSmall
+        ) {}
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = quoteText,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 24.sp,
+            fontStyle = FontStyle.Italic
+        )
+    }
+}
+
+@Composable
+private fun MarkdownCodeBlock(codeLines: List<String>) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Text(
+            text = codeLines.joinToString("\n"),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.Monospace
+            ),
+            modifier = Modifier.padding(12.dp)
+        )
+    }
+}
+
+@Composable
+private fun MarkdownBoldText(line: String) {
+    Text(
+        text = line.replace("**", ""),
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = if (line.trim().startsWith("**")) FontWeight.Bold else FontWeight.Normal,
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
+}
+
+@Composable
+private fun MarkdownEmptyLine() {
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun MarkdownRegularText(line: String) {
+    Text(
+        text = line,
+        style = MaterialTheme.typography.bodyLarge,
+        lineHeight = 24.sp,
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
 }
