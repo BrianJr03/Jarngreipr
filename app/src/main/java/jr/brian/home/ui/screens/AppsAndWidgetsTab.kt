@@ -906,7 +906,7 @@ private fun LazyGridScope.renderFolderItems(
     folders.forEach { folder ->
         val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
         item(key = "folder_${folder.id}") {
-            FolderGridItem(
+            AppsAndWidgetsFolderGridItem(
                 folder = folder,
                 apps = folderApps,
                 onClick = { onClick(folder) }
@@ -916,7 +916,7 @@ private fun LazyGridScope.renderFolderItems(
 }
 
 @Composable
-private fun FolderGridItem(
+private fun AppsAndWidgetsFolderGridItem(
     folder: Folder,
     apps: List<AppInfo>,
     onClick: () -> Unit
