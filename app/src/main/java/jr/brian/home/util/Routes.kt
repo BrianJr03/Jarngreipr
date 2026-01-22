@@ -10,6 +10,7 @@ object Routes {
     const val MONITOR = "monitor"
     const val CRASH_LOGS = "crash_logs"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
+    const val RECENT_APPS = "recent_apps"
 
     fun widgetPicker(pageIndex: Int) = "widget_picker/$pageIndex"
 }

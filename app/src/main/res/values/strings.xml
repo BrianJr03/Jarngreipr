@@ -172,6 +172,7 @@
     <string name="back_button_shortcut_quick_delete">Quick Delete</string>
     <string name="back_button_shortcut_custom_theme">Create Custom Theme</string>
     <string name="back_button_shortcut_monitor">System Monitor</string>
+    <string name="back_button_shortcut_recent_apps">Recent Apps</string>
     <string name="back_button_shortcut_app">App Launch</string>
     <string name="back_button_shortcut_select_app">Select App</string>
     <string name="back_button_shortcut_selected_app">Selected: %1$s</string>
@@ -466,4 +467,69 @@
     <string name="crash_logs_delete_description">Delete</string>
     <string name="crash_logs_empty_title">No Crash Logs</string>
     <string name="crash_logs_empty_description">Your app hasn\'t crashed recently.\nCrash logs will appear here if the app encounters an error.</string>
+
+    <!-- Update Dialog -->
+    <string name="update_available_title">Update Available</string>
+    <string name="update_version_format">%1$s → %2$s</string>
+    <string name="update_download_size">Download size: %1$s</string>
+    <string name="update_whats_new">What\'s New</string>
+    <string name="update_button_later">Later</string>
+    <string name="update_button_download">Download</string>
+    <string name="update_choose_variant">Choose Version</string>
+    <string name="update_variant_standard">Standard</string>
+    <string name="update_variant_hidden">Hidden</string>
+    <string name="update_variant_hidden_description">• Hidden: Jarngreipr will be hidden in task switcher</string>
+    <string name="update_variant_size">%1$s</string>
+    <string name="update_downloading_title">Downloading Update</string>
+    <string name="update_downloading_message">Please wait while the update is being downloaded…</string>
+    <string name="update_progress_format">%1$s / %2$s</string>
+    <string name="update_progress_percent">%1$d%%</string>
+    <string name="update_complete_title">Download Complete</string>
+    <string name="update_complete_message">The update is ready to be installed. Tap Install to continue.</string>
+    <string name="update_button_install">Install</string>
+    <string name="update_failed_title">Download Failed</string>
+    <string name="update_button_retry">Retry</string>
+    <string name="update_button_download_browser">Download in Browser</string>
+    <string name="update_button_cancel">Cancel</string>
+    <string name="update_permission_title">Permission Required</string>
+    <string name="update_permission_message">To install updates directly, please allow this app to install apps from unknown sources in the settings.</string>
+    <string name="update_permission_granted_title">Permission Granted</string>
+    <string name="update_permission_granted_message">You can now download and install updates directly.</string>
+    <string name="update_button_open_settings">Open Settings</string>
+    <string name="update_button_start_download">Start Download</string>
+    <string name="update_close_description">Close</string>
+    <string name="update_scroll_down_description">Scroll down</string>
+    <string name="update_button_skip_version">Skip this version</string>
+    <string name="update_button_skip">Skip</string>
+    <string name="settings_check_updates_title">Check for Updates</string>
+    <string name="settings_check_updates_description">Check if a new version is available</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_not_available">You\'re up to date!</string>
+
+    <!-- Recent Apps Screen -->
+    <string name="recent_apps_screen_title">Recently Used Apps</string>
+    <string name="recent_apps_empty_title">No Recent Apps</string>
+    <string name="recent_apps_empty_description">Your recently used apps will appear here.</string>
+    <string name="recent_apps_permission_title">Permission Required</string>
+    <string name="recent_apps_permission_description">To view recent apps, please grant usage access permission.</string>
+    <string name="recent_apps_permission_button">Grant Permission</string>
+    <string name="recent_apps_icon_description">App icon for %1$s</string>
+    <string name="recent_apps_tap_to_open">Tap to open</string>
+    <string name="recent_apps_display_top">Top</string>
+    <string name="recent_apps_display_bottom">Bottom</string>
+    <string name="recent_apps_usage_time_format">Used for %1$s</string>
+    <string name="recent_apps_subtitle">%1$d apps used today</string>
+    <string name="recent_apps_refresh">Refresh</string>
+    <string name="recent_apps_loading">Loading recent apps…</string>
+    <string name="recent_apps_close">Close app</string>
+
+    <!-- Notification Access -->
+    <string name="notification_access_title">Enable Notification Badges</string>
+    <string name="notification_access_description">Grant notification access to show notification count badges on app icons. This helps you see which apps have unread notifications at a glance.</string>
+    <string name="notification_access_grant">Grant Access</string>
+    <string name="notification_access_later">Maybe Later</string>
+    <string name="notification_access_restricted_title">Restricted Setting (Android 13+)</string>
+    <string name="notification_access_restricted_steps">Since this app was installed outside the Play Store, you need to allow restricted settings first:\n\n1. Tap \"Open App Settings\" below\n2. Tap the ⋮ menu (top right)\n3. Select \"Allow restricted settings\"\n4. Return here and tap \"Grant Access\"</string>
+    <string name="notification_access_open_app_settings">Open App Settings</string>
+    <string name="notification_access_never">I\'ll Pass</string>
 </resources>

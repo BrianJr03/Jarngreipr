@@ -12,7 +12,11 @@ import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
+import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
+import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
@@ -38,8 +42,17 @@ data class ManagerContainer @Inject constructor(
     val whatsNewManager: WhatsNewManager,
     val customIconManager: CustomIconManager,
     val globalIconRefreshManager: GlobalIconRefreshManager,
-    val folderManager: FolderManager
-)
+    val folderManager: FolderManager,
+    val notificationCountManager: NotificationCountManager,
+    val recentAppsCacheManager: RecentAppsCacheManager,
+    val shizukuManager: ShizukuManager,
+    val appUpdateManager: AppUpdateManager
+) {
+    init {
+        NotificationCountManager.setInstance(notificationCountManager)
+        shizukuManager.initialize()
+    }
+}
 
 @Composable
 fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> Unit) {
@@ -58,7 +71,11 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalWhatsNewManager provides whatsNewManager,
         LocalCustomIconManager provides customIconManager,
         LocalGlobalIconRefreshManager provides globalIconRefreshManager,
-        LocalFolderManager provides folderManager
+        LocalFolderManager provides folderManager,
+        LocalNotificationCountManager provides notificationCountManager,
+        LocalRecentAppsCacheManager provides recentAppsCacheManager,
+        LocalShizukuManager provides shizukuManager,
+        LocalAppUpdateManager provides appUpdateManager
     ) {
         content()
     }

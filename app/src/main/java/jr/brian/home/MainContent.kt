@@ -35,14 +35,25 @@ import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
+import jr.brian.home.ui.navigation.recentAppsScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
+import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
+import jr.brian.home.ui.components.dialog.NotificationAccessDialog
+import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
+import jr.brian.home.ui.components.dialog.openAppSettings
+import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
+import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
+import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.screens.PoweredOffScreen
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
+import jr.brian.home.util.UpdateChecker
+import jr.brian.home.util.UpdateInfo
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -57,10 +68,15 @@ fun MainContent() {
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
+    val appUpdateManager = LocalAppUpdateManager.current
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
     var showWhatsNewDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var showNotificationAccessDialog by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var currentVersionName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         mainViewModel.loadAllApps(context)
@@ -71,7 +87,19 @@ fun MainContent() {
             0
         ).versionName ?: "Unknown"
 
+        currentVersionName = versionName
         whatsNewManager.checkAndShowWhatsNew(versionName)
+
+        val update = UpdateChecker.checkForUpdate(versionName)
+        if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)) {
+            updateInfo = update
+            showUpdateDialog = true
+        }
+
+        if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
+            !hasUserDeclinedNotificationAccess(context)) {
+            showNotificationAccessDialog = true
+        }
     }
 
     LaunchedEffect(shouldShowWhatsNew) {
@@ -166,6 +194,8 @@ fun MainContent() {
                     navController = navController,
                     widgetViewModel = widgetViewModel
                 )
+
+                recentAppsScreen(navController = navController)
             }
         }
 
@@ -204,6 +234,45 @@ fun MainContent() {
                     }
                 )
             }
+        }
+
+        if (showUpdateDialog && updateInfo != null) {
+            UpdateAvailableDialog(
+                updateInfo = updateInfo!!,
+                currentVersion = currentVersionName,
+                onDismiss = {
+                    showUpdateDialog = false
+                },
+                onRemindLater = {
+                    showUpdateDialog = false
+                },
+                onSkipVersion = {
+                    appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
+                    showUpdateDialog = false
+                },
+                onDownloadComplete = {
+                    appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
+                }
+            )
+        }
+
+        if (showNotificationAccessDialog) {
+            NotificationAccessDialog(
+                onDismiss = {
+                    showNotificationAccessDialog = false
+                },
+                onGrantAccess = {
+                    showNotificationAccessDialog = false
+                    openNotificationAccessSettings(context)
+                },
+                onOpenAppSettings = {
+                    openAppSettings(context)
+                },
+                onNeverAskAgain = {
+                    setNotificationAccessDeclined(context)
+                    showNotificationAccessDialog = false
+                }
+            )
         }
     }
 }
