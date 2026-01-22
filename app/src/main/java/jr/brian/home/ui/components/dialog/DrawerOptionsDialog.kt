@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,7 +79,8 @@ fun DrawerOptionsDialog(
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
-    onCreateFolderClick: (() -> Unit)?
+    onCreateFolderClick: (() -> Unit)?,
+    onRecentAppsClick: () -> Unit = {}
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -211,44 +213,64 @@ fun DrawerOptionsDialog(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (onCreateFolderClick != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (onCreateFolderClick != null) {
+                                DrawerOptionButton(
+                                    modifier = Modifier.weight(1f),
+                                    title = stringResource(R.string.dialog_create_folder_title),
+                                    icon = Icons.Default.FolderOpen,
+                                    onClick = {
+                                        onCreateFolderClick()
+                                        onDismiss()
+                                    }
+                                )
+                            }
+
                             DrawerOptionButton(
                                 modifier = Modifier.weight(1f),
-                                title = stringResource(R.string.dialog_create_folder_title),
-                                icon = Icons.Default.FolderOpen,
+                                title = if (isHeaderVisible) {
+                                    stringResource(R.string.drawer_options_hide_header)
+                                } else {
+                                    stringResource(R.string.drawer_options_show_header)
+                                },
+                                icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 onClick = {
-                                    onCreateFolderClick()
+                                    powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
                                     onDismiss()
                                 }
                             )
                         }
 
-                        DrawerOptionButton(
-                            modifier = Modifier.weight(1f),
-                            title = if (isHeaderVisible) {
-                                stringResource(R.string.drawer_options_hide_header)
-                            } else {
-                                stringResource(R.string.drawer_options_show_header)
-                            },
-                            icon = if (isHeaderVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            onClick = {
-                                powerSettingsManager.setHeaderVisibility(!isHeaderVisible)
-                                onDismiss()
-                            }
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DrawerOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.recent_apps_screen_title),
+                                icon = Icons.Default.History,
+                                onClick = {
+                                    onRecentAppsClick()
+                                    onDismiss()
+                                }
+                            )
 
-                        DrawerOptionButton(
-                            modifier = Modifier.weight(1f),
-                            title = stringResource(R.string.settings_wallpaper_title),
-                            icon = Icons.Default.Wallpaper,
-                            onClick = {
-                                isWallpaperExpanded = true
-                            }
-                        )
+                            DrawerOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.settings_wallpaper_title),
+                                icon = Icons.Default.Wallpaper,
+                                onClick = {
+                                    isWallpaperExpanded = true
+                                }
+                            )
+                        }
                     }
                 }
 
