@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
@@ -100,7 +102,6 @@ fun NotificationAccessDialog(
                     lineHeight = 22.sp
                 )
 
-                // Show restricted settings instructions for Android 13+
                 if (isAndroid13OrHigher) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -118,7 +119,7 @@ fun NotificationAccessDialog(
                                 text = stringResource(R.string.notification_access_restricted_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFFA726) // Orange warning color
+                                color = ThemeAccentColor
                             )
                             
                             Spacer(modifier = Modifier.height(8.dp))
@@ -138,7 +139,7 @@ fun NotificationAccessDialog(
                         onClick = onOpenAppSettings,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFFFA726)
+                            contentColor = ThemeAccentColor
                         )
                     ) {
                         Text(stringResource(R.string.notification_access_open_app_settings))
@@ -147,7 +148,6 @@ fun NotificationAccessDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Main action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -174,9 +174,8 @@ fun NotificationAccessDialog(
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                // Never ask again button
-                androidx.compose.material3.TextButton(
+
+                TextButton(
                     onClick = onNeverAskAgain,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.textButtonColors(

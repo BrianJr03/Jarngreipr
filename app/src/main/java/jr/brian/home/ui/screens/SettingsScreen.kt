@@ -127,7 +127,6 @@ fun SettingsScreen(
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
                             scope.launch {
-                                // Clear any skipped/downloaded version when manually checking
                                 appUpdateManager.clearSkippedVersion(context)
                                 appUpdateManager.clearDownloadedVersion(context)
                                 
@@ -151,7 +150,6 @@ fun SettingsScreen(
                 )
             }
             
-            // Update Dialog
             if (showUpdateDialog && updateInfo != null) {
                 UpdateAvailableDialog(
                     updateInfo = updateInfo!!,

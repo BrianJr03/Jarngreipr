@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 
 /**
@@ -38,7 +39,7 @@ import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 fun BoxScope.NotificationBadge(
     packageName: String,
     modifier: Modifier = Modifier,
-    badgeColor: Color = Color(0xFFE53935), // Material Red 600
+    badgeColor: Color = ThemeAccentColor,
     textColor: Color = Color.White,
     offsetX: Dp = 0.dp,
     offsetY: Dp = 0.dp
