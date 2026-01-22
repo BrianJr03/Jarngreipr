@@ -25,6 +25,7 @@ import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.screens.ControlPadScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -54,6 +55,7 @@ fun NavGraphBuilder.launcherScreen(
         var showCustomThemeSheet by remember { mutableStateOf(false) }
         var showQuickDeleteSheet by remember { mutableStateOf(false) }
         var showMonitorSheet by remember { mutableStateOf(false) }
+        var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
 
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
@@ -86,6 +88,7 @@ fun NavGraphBuilder.launcherScreen(
                         BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
                         BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
                         BackButtonShortcut.MONITOR -> showMonitorSheet = true
+                        BackButtonShortcut.CONTROL_PAD -> showControlPadSheet = true
                         BackButtonShortcut.APP -> {
                             backButtonShortcutAppPackage?.let { packageName ->
                                 launchApp(
@@ -134,6 +137,10 @@ fun NavGraphBuilder.launcherScreen(
                     onNavigateToMonitor = {
                         showSettingsSheet = false
                         navController.navigate(Routes.MONITOR)
+                    },
+                    onNavigateToControlPad = {
+                        showSettingsSheet = false
+                        navController.navigate(Routes.CONTROL_PAD)
                     },
                     onNavigateToCrashLogs = {
                         showSettingsSheet = false
@@ -193,6 +200,16 @@ fun NavGraphBuilder.launcherScreen(
                 )
             }
         }
+
+        SlideInVertically(showControlPadSheet) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                ControlPadScreen(
+                    onDismiss = {
+                        showControlPadSheet = false
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -226,6 +243,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToMonitor = {
                     showScreen = false
                     navController.navigate(Routes.MONITOR)
+                },
+                onNavigateToControlPad = {
+                    showScreen = false
+                    navController.navigate(Routes.CONTROL_PAD)
                 },
                 onNavigateToCrashLogs = {
                     showScreen = false
@@ -383,6 +404,23 @@ fun NavGraphBuilder.widgetPickerScreen(
                     // Widget added successfully
                 },
                 widgetViewModel = widgetViewModel
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.controlPadScreen(
+    navController: NavHostController
+) {
+    composable(Routes.CONTROL_PAD) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            ControlPadScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
             )
         }
     }

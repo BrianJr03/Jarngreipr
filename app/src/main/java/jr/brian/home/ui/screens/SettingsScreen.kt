@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -72,6 +73,7 @@ fun SettingsScreen(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
+    onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
@@ -94,6 +96,7 @@ fun SettingsScreen(
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                     onNavigateToMonitor = onNavigateToMonitor,
+                    onNavigateToControlPad = onNavigateToControlPad,
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
                     onDismiss = onDismiss
                 )
@@ -110,6 +113,7 @@ private fun SettingsContent(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
+    onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
@@ -269,6 +273,18 @@ private fun SettingsContent(
                     onClick = {
                         expandedItem = null
                         onNavigateToMonitor()
+                    }
+                )
+            }
+
+            item {
+                SettingItem(
+                    title = stringResource(id = R.string.control_pad_screen_title),
+                    description = stringResource(id = R.string.control_pad_screen_description),
+                    icon = Icons.Default.GridView,
+                    onClick = {
+                        expandedItem = null
+                        onNavigateToControlPad()
                     }
                 )
             }

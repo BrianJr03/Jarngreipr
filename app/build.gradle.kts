@@ -16,7 +16,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = 1
-        versionName = "1.3"
+        versionName = "1.3h"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,6 +45,8 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+        aidl = true
     }
 }
 
@@ -85,6 +87,10 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // Shizuku
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
 
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)
