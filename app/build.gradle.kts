@@ -87,7 +87,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    // Shizuku (for force-stopping apps)
+    // Shizuku
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
 
