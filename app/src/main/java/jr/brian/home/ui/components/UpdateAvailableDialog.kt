@@ -1,7 +1,6 @@
 package jr.brian.home.ui.components
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,10 +12,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
+import jr.brian.home.model.state.UpdateDialogState
 import jr.brian.home.util.ApkVariant
 import jr.brian.home.util.DownloadState
 import jr.brian.home.util.UpdateDownloader
@@ -39,21 +39,19 @@ import jr.brian.home.util.UpdateInfo
 import jr.brian.home.util.VariantType
 import kotlinx.coroutines.launch
 import java.io.File
-
-private enum class UpdateDialogState {
-    INFO,
-    DOWNLOADING,
-    DOWNLOAD_COMPLETE,
-    ERROR,
-    PERMISSION_REQUIRED
-}
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun UpdateAvailableDialog(
     updateInfo: UpdateInfo,
     currentVersion: String,
     onDismiss: () -> Unit,
-    onRemindLater: () -> Unit
+    onRemindLater: () -> Unit,
+    onSkipVersion: () -> Unit = {},
+    onDownloadComplete: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -65,23 +63,20 @@ fun UpdateAvailableDialog(
     var downloadedFile by remember { mutableStateOf<File?>(null) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // Selected variant for download
     var selectedVariant by remember {
-        mutableStateOf(updateInfo.apkVariants.firstOrNull())
+        mutableStateOf<ApkVariant?>(null)
     }
 
     fun startDownload(variant: ApkVariant?) {
         val apkVariant = variant ?: updateInfo.apkVariants.firstOrNull()
 
         if (apkVariant == null || apkVariant.downloadUrl.isBlank()) {
-            // Fallback to browser if no APK URL
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
+            val intent = Intent(Intent.ACTION_VIEW, updateInfo.downloadUrl.toUri())
             context.startActivity(intent)
             onDismiss()
             return
         }
 
-        // Check install permission first
         if (!UpdateDownloader.canInstallPackages(context)) {
             dialogState = UpdateDialogState.PERMISSION_REQUIRED
             return
@@ -99,15 +94,19 @@ fun UpdateAvailableDialog(
                     is DownloadState.Idle -> {
                         downloadProgress = 0
                     }
+
                     is DownloadState.Downloading -> {
                         downloadProgress = state.progress
                         downloadedBytes = state.downloadedBytes
                         totalBytes = state.totalBytes
                     }
+
                     is DownloadState.Success -> {
                         downloadedFile = state.file
                         dialogState = UpdateDialogState.DOWNLOAD_COMPLETE
+                        onDownloadComplete()
                     }
+
                     is DownloadState.Error -> {
                         errorMessage = state.message
                         dialogState = UpdateDialogState.ERROR
@@ -132,7 +131,8 @@ fun UpdateAvailableDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
+                .heightIn(max = 600.dp)
+                .padding(vertical = 16.dp),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 8.dp
@@ -148,15 +148,17 @@ fun UpdateAvailableDialog(
                         currentVersion = currentVersion,
                         selectedVariant = selectedVariant,
                         onVariantSelected = { selectedVariant = it },
-                        onDismiss = onDismiss,
                         onRemindLater = onRemindLater,
-                        onDownload = { startDownload(selectedVariant) }
+                        onDownloadVariant = { variant -> startDownload(variant) },
+                        onSkipVersion = onSkipVersion
                     )
+
                     UpdateDialogState.DOWNLOADING -> DownloadingContent(
                         progress = downloadProgress,
                         downloadedBytes = downloadedBytes,
                         totalBytes = totalBytes
                     )
+
                     UpdateDialogState.DOWNLOAD_COMPLETE -> DownloadCompleteContent(
                         onInstall = {
                             downloadedFile?.let { file ->
@@ -166,31 +168,29 @@ fun UpdateAvailableDialog(
                         },
                         onDismiss = onDismiss
                     )
+
                     UpdateDialogState.ERROR -> ErrorContent(
                         errorMessage = errorMessage,
                         onRetry = { startDownload(selectedVariant) },
                         onDismiss = onDismiss,
                         onOpenBrowser = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
+                            val intent = Intent(Intent.ACTION_VIEW, updateInfo.downloadUrl.toUri())
                             context.startActivity(intent)
                             onDismiss()
                         }
                     )
+
                     UpdateDialogState.PERMISSION_REQUIRED -> PermissionRequiredContent(
                         onGrantPermission = {
                             UpdateDownloader.openInstallPermissionSettings(context)
+                        },
+                        onStartDownload = {
+                            startDownload(selectedVariant)
                         },
                         onDismiss = onDismiss
                     )
                 }
             }
-        }
-    }
-
-    // Check if permission was granted after returning from settings
-    LaunchedEffect(dialogState) {
-        if (dialogState == UpdateDialogState.PERMISSION_REQUIRED) {
-            // We'll check again when user interacts
         }
     }
 }
@@ -201,13 +201,17 @@ private fun InfoContent(
     currentVersion: String,
     selectedVariant: ApkVariant?,
     onVariantSelected: (ApkVariant) -> Unit,
-    onDismiss: () -> Unit,
     onRemindLater: () -> Unit,
-    onDownload: () -> Unit
+    onDownloadVariant: (ApkVariant) -> Unit,
+    onSkipVersion: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .verticalScroll(scrollState)
             .padding(24.dp)
     ) {
         Row(
@@ -232,16 +236,26 @@ private fun InfoContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = stringResource(R.string.update_version_format, currentVersion, updateInfo.latestVersion),
+                        text = stringResource(
+                            R.string.update_version_format,
+                            currentVersion,
+                            updateInfo.latestVersion
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            IconButton(onClick = onDismiss) {
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        scrollState.animateScrollTo(scrollState.maxValue)
+                    }
+                }
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.update_close_description),
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = stringResource(R.string.update_scroll_down_description),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -253,12 +267,19 @@ private fun InfoContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Variant selection when multiple APKs are available
         if (updateInfo.hasMultipleVariants) {
             Text(
                 text = stringResource(R.string.update_choose_variant),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(R.string.update_variant_hidden_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -273,7 +294,10 @@ private fun InfoContent(
                     VariantSelectionCard(
                         variant = variant,
                         isSelected = selectedVariant == variant,
-                        onSelect = { onVariantSelected(variant) }
+                        onSelect = {
+                            onVariantSelected(variant)
+                            onDownloadVariant(variant)
+                        }
                     )
                 }
             }
@@ -281,7 +305,10 @@ private fun InfoContent(
             Spacer(modifier = Modifier.height(16.dp))
         } else if (selectedVariant != null && selectedVariant.size > 0) {
             Text(
-                text = stringResource(R.string.update_download_size, UpdateDownloader.formatBytes(selectedVariant.size)),
+                text = stringResource(
+                    R.string.update_download_size,
+                    UpdateDownloader.formatBytes(selectedVariant.size)
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -297,26 +324,17 @@ private fun InfoContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = if (updateInfo.hasMultipleVariants) 120.dp else 180.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                shape = MaterialTheme.shapes.medium
             ) {
-                val scrollState = rememberScrollState()
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(
-                        text = updateInfo.releaseNotes,
-                        style = MaterialTheme.typography.bodyMedium,
-                        lineHeight = 22.sp,
-                        modifier = Modifier
-                            .verticalScroll(scrollState)
-                            .padding(12.dp)
-                    )
-                }
+                Text(
+                    text = updateInfo.releaseNotes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 22.sp,
+                    modifier = Modifier.padding(12.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -333,17 +351,11 @@ private fun InfoContent(
                 Text(stringResource(R.string.update_button_later))
             }
 
-            Button(
-                onClick = onDownload,
+            OutlinedButton(
+                onClick = onSkipVersion,
                 modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.update_button_download))
+                Text(stringResource(R.string.update_button_skip))
             }
         }
     }
@@ -357,7 +369,7 @@ private fun VariantSelectionCard(
 ) {
     val variantName = when (variant.variantType) {
         VariantType.STANDARD -> stringResource(R.string.update_variant_standard)
-        VariantType.THOR -> stringResource(R.string.update_variant_thor)
+        VariantType.THOR -> stringResource(R.string.update_variant_hidden)
     }
 
     Surface(
@@ -638,8 +650,23 @@ private fun ErrorContent(
 @Composable
 private fun PermissionRequiredContent(
     onGrantPermission: () -> Unit,
+    onStartDownload: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasPermission by remember { mutableStateOf(UpdateDownloader.canInstallPackages(context)) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasPermission = UpdateDownloader.canInstallPackages(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -647,16 +674,20 @@ private fun PermissionRequiredContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Default.SystemUpdate,
+            imageVector = if (hasPermission) Icons.Default.CheckCircle else Icons.Default.SystemUpdate,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = if (hasPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(64.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.update_permission_title),
+            text = if (hasPermission) {
+                stringResource(R.string.update_permission_granted_title)
+            } else {
+                stringResource(R.string.update_permission_title)
+            },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -664,7 +695,11 @@ private fun PermissionRequiredContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.update_permission_message),
+            text = if (hasPermission) {
+                stringResource(R.string.update_permission_granted_message)
+            } else {
+                stringResource(R.string.update_permission_message)
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -676,11 +711,26 @@ private fun PermissionRequiredContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                onClick = onGrantPermission,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.update_button_open_settings))
+            if (hasPermission) {
+                Button(
+                    onClick = onStartDownload,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.update_button_start_download))
+                }
+            } else {
+                Button(
+                    onClick = onGrantPermission,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.update_button_open_settings))
+                }
             }
 
             OutlinedButton(

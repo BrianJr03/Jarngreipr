@@ -37,13 +37,6 @@ data class UpdateInfo(
     val downloadUrl: String,
     val apkVariants: List<ApkVariant>
 ) {
-    // Convenience properties for backward compatibility
-    val apkDownloadUrl: String
-        get() = apkVariants.firstOrNull()?.downloadUrl ?: ""
-
-    val apkFileName: String
-        get() = apkVariants.firstOrNull()?.fileName ?: ""
-
     val apkSize: Long
         get() = apkVariants.firstOrNull()?.size ?: 0L
 

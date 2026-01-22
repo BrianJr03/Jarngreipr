@@ -1,11 +1,14 @@
 package jr.brian.home.util
 
+import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
+import android.provider.MediaStore
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -17,7 +20,9 @@ import java.net.URL
 
 sealed class DownloadState {
     data object Idle : DownloadState()
-    data class Downloading(val progress: Int, val downloadedBytes: Long, val totalBytes: Long) : DownloadState()
+    data class Downloading(val progress: Int, val downloadedBytes: Long, val totalBytes: Long) :
+        DownloadState()
+
     data class Success(val file: File) : DownloadState()
     data class Error(val message: String) : DownloadState()
 }
@@ -25,7 +30,8 @@ sealed class DownloadState {
 object UpdateDownloader {
 
     /**
-     * Download an APK file with progress updates
+     * Download an APK file with progress updates.
+     * Files are saved to the public Downloads folder for easy access.
      *
      * @param context Android context
      * @param downloadUrl URL to download the APK from
@@ -40,16 +46,6 @@ object UpdateDownloader {
         emit(DownloadState.Idle)
 
         try {
-            val updatesDir = File(context.cacheDir, "updates")
-            if (!updatesDir.exists()) {
-                updatesDir.mkdirs()
-            }
-
-            // Clean up old APK files
-            updatesDir.listFiles()?.forEach { it.delete() }
-
-            val outputFile = File(updatesDir, fileName)
-
             val url = URL(downloadUrl)
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -66,8 +62,18 @@ object UpdateDownloader {
             val totalBytes = connection.contentLengthLong
             var downloadedBytes = 0L
 
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                put(MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive")
+                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                ?: throw Exception("Failed to create download file")
+
             connection.inputStream.use { input ->
-                FileOutputStream(outputFile).use { output ->
+                resolver.openOutputStream(uri)?.use { output ->
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
 
@@ -78,13 +84,21 @@ object UpdateDownloader {
                         val progress = if (totalBytes > 0) {
                             ((downloadedBytes * 100) / totalBytes).toInt()
                         } else {
-                            -1 // Indeterminate
+                            -1
                         }
 
                         emit(DownloadState.Downloading(progress, downloadedBytes, totalBytes))
                     }
-                }
+                } ?: throw Exception("Failed to open output stream")
             }
+
+            // Mark download as complete
+            contentValues.clear()
+            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolver.update(uri, contentValues, null, null)
+
+            // Get the actual file path for installation
+            val outputFile = getFileFromUri(context, uri)
 
             emit(DownloadState.Success(outputFile))
 
@@ -92,6 +106,28 @@ object UpdateDownloader {
             emit(DownloadState.Error(e.message ?: "Download failed"))
         }
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * Get a File object from a content Uri (for Android 10+)
+     */
+    private fun getFileFromUri(context: Context, uri: Uri): File {
+        // Copy to cache for installation since we can't install directly from MediaStore
+        val cacheDir = File(context.cacheDir, "updates")
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs()
+        }
+
+        val fileName = uri.lastPathSegment ?: "update.apk"
+        val cacheFile = File(cacheDir, fileName.substringAfterLast("/"))
+
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(cacheFile).use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        return cacheFile
+    }
 
     /**
      * Install an APK file
@@ -118,29 +154,24 @@ object UpdateDownloader {
      * Check if the app can install packages from unknown sources
      */
     fun canInstallPackages(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.packageManager.canRequestPackageInstalls()
-        } else {
-            true
-        }
+        return context.packageManager.canRequestPackageInstalls()
     }
 
     /**
      * Open settings to allow installing from unknown sources
      */
     fun openInstallPermissionSettings(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                data = Uri.parse("package:${context.packageName}")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            context.startActivity(intent)
+        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+            data = "package:${context.packageName}".toUri()
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
+        context.startActivity(intent)
     }
 
     /**
      * Format bytes to human-readable string
      */
+    @SuppressLint("DefaultLocale")
     fun formatBytes(bytes: Long): String {
         return when {
             bytes < 1024 -> "$bytes B"
