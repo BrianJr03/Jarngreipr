@@ -47,6 +47,7 @@ import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
 import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.screens.PoweredOffScreen
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.util.PatchNotesUtil
@@ -67,6 +68,7 @@ fun MainContent() {
     val powerViewModel: PowerViewModel = viewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
+    val appUpdateManager = LocalAppUpdateManager.current
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
@@ -89,7 +91,7 @@ fun MainContent() {
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
         val update = UpdateChecker.checkForUpdate(versionName)
-        if (update.isUpdateAvailable) {
+        if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)) {
             updateInfo = update
             showUpdateDialog = true
         }
@@ -244,6 +246,13 @@ fun MainContent() {
                 },
                 onRemindLater = {
                     showUpdateDialog = false
+                },
+                onSkipVersion = {
+                    appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
+                    showUpdateDialog = false
+                },
+                onDownloadComplete = {
+                    appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
                 }
             )
         }

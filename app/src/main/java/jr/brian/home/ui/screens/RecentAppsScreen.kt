@@ -1,12 +1,7 @@
 package jr.brian.home.ui.screens
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.os.Process
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -91,9 +86,9 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
+import jr.brian.home.util.RecentAppsUtil
 import jr.brian.home.util.launchApp
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +100,7 @@ fun RecentAppsScreen(
     val recentAppsCache = LocalRecentAppsCacheManager.current
     val scope = rememberCoroutineScope()
     val appDisplayPreferenceManager = remember { AppDisplayPreferenceManager(context) }
-    var hasPermission by remember { mutableStateOf(hasUsageStatsPermission(context)) }
+    var hasPermission by remember { mutableStateOf(RecentAppsUtil.hasUsageStatsPermission(context)) }
     
     var recentApps by remember { 
         mutableStateOf(recentAppsCache.get() ?: emptyList()) 
@@ -121,7 +116,7 @@ fun RecentAppsScreen(
 
     fun reload(forceRefresh: Boolean = false) {
         scope.launch {
-            hasPermission = hasUsageStatsPermission(context)
+            hasPermission = RecentAppsUtil.hasUsageStatsPermission(context)
             
             if (!hasPermission) {
                 recentApps = emptyList()
@@ -144,7 +139,7 @@ fun RecentAppsScreen(
                 isRefreshing = true
             }
             
-            val apps = getRecentApps(context)
+            val apps = RecentAppsUtil.getRecentApps(context)
             recentAppsCache.set(apps)
             recentApps = apps
             isLoading = false
@@ -508,7 +503,7 @@ private fun UsageTimeBadge(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = formatUsageDuration(usageTimeMs),
+                text = RecentAppsUtil.formatUsageDuration(usageTimeMs),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White.copy(alpha = 0.9f)
@@ -637,71 +632,5 @@ private fun PermissionRequiredContent(
                 }
             }
         }
-    }
-}
-
-private fun hasUsageStatsPermission(context: Context): Boolean {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = appOps.checkOpNoThrow(
-        AppOpsManager.OPSTR_GET_USAGE_STATS,
-        Process.myUid(),
-        context.packageName
-    )
-    return mode == AppOpsManager.MODE_ALLOWED
-}
-
-private fun getRecentApps(context: Context): List<RecentAppInfo> {
-    val usageStatsManager =
-        context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-    val endTime = System.currentTimeMillis()
-    val startTime = endTime - (24 * 60 * 60 * 1000)
-
-    val usageStats = usageStatsManager.queryUsageStats(
-        UsageStatsManager.INTERVAL_DAILY,
-        startTime,
-        endTime
-    )
-
-    val pm = context.packageManager
-    val launcherPackage = context.packageName
-
-    return usageStats
-        .filter { it.totalTimeInForeground > 0 }
-        .sortedByDescending { it.lastTimeUsed }
-        .distinctBy { it.packageName }
-        .filter { it.packageName != launcherPackage }
-        .mapNotNull { stats ->
-            try {
-                val appInfo = pm.getApplicationInfo(
-                    stats.packageName,
-                    PackageManager.ApplicationInfoFlags.of(0)
-                )
-                val intent = pm.getLaunchIntentForPackage(stats.packageName)
-                if (intent != null) {
-                    RecentAppInfo(
-                        packageName = stats.packageName,
-                        label = pm.getApplicationLabel(appInfo).toString(),
-                        icon = pm.getApplicationIcon(appInfo),
-                        usageTimeMs = stats.totalTimeInForeground
-                    )
-                } else null
-            } catch (_: PackageManager.NameNotFoundException) {
-                null
-            }
-        }
-        .take(20)
-}
-
-private fun formatUsageDuration(durationMs: Long): String {
-    if (durationMs <= 0) return "<1m"
-
-    val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(durationMs)
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-
-    return when {
-        hours <= 0 -> "${minutes}m"
-        minutes <= 0L -> "${hours}h"
-        else -> "${hours}h ${minutes}m"
     }
 }

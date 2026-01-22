@@ -1,12 +1,18 @@
 ### New Features
-- Folder Support! Long press a tab to bring up 'Create a Folder' to get started! To rename a folder, open and click the name. You can also toggle the visibility of folder names in Settings.
+- Adds Recent Apps Screen
+  - Long Press on any tab or configure as back button shortcut to open
+  
+  - See recently used apps (opened within the last 10 minutes) and quickly launch
+  
+  - Chose which screen it'll launch on
 
-- Double tap any app to quickly launch the app on the non-preferred screen. Example: Chrome is set to always open on top. Double tap to quickly open on bottom.
+- Notification badges
+  - Displays number of notifications for each app
+  
+  - NOTE: Due to Android security policies, this may not work if Jarngreipr is sideloaded. 
+    Apps that do not come from the PlayStore are restricted from listening to the system's notifications. 
 
 ### Quick Fixes
-- Fixes issue where new apps would overlap previous ones
-- Fixes issue where apps would overlap whilst in dragging mode
-- Improved UI in Dialogs
-- Improved UI in Settings
+- Fixes issue where app update wouldn't start downloading
 
-1.0.5
+1.3
