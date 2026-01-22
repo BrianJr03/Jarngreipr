@@ -35,10 +35,17 @@ import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
+import jr.brian.home.ui.navigation.recentAppsScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
+import jr.brian.home.ui.components.dialog.NotificationAccessDialog
+import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
+import jr.brian.home.ui.components.dialog.openAppSettings
+import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
+import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
+import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
@@ -65,6 +72,7 @@ fun MainContent() {
 
     var showWhatsNewDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
+    var showNotificationAccessDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     var currentVersionName by remember { mutableStateOf("") }
 
@@ -80,11 +88,15 @@ fun MainContent() {
         currentVersionName = versionName
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
-        // Check for app updates
         val update = UpdateChecker.checkForUpdate(versionName)
         if (update.isUpdateAvailable) {
             updateInfo = update
             showUpdateDialog = true
+        }
+
+        if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
+            !hasUserDeclinedNotificationAccess(context)) {
+            showNotificationAccessDialog = true
         }
     }
 
@@ -180,6 +192,8 @@ fun MainContent() {
                     navController = navController,
                     widgetViewModel = widgetViewModel
                 )
+
+                recentAppsScreen(navController = navController)
             }
         }
 
@@ -230,6 +244,25 @@ fun MainContent() {
                 },
                 onRemindLater = {
                     showUpdateDialog = false
+                }
+            )
+        }
+
+        if (showNotificationAccessDialog) {
+            NotificationAccessDialog(
+                onDismiss = {
+                    showNotificationAccessDialog = false
+                },
+                onGrantAccess = {
+                    showNotificationAccessDialog = false
+                    openNotificationAccessSettings(context)
+                },
+                onOpenAppSettings = {
+                    openAppSettings(context)
+                },
+                onNeverAskAgain = {
+                    setNotificationAccessDeclined(context)
+                    showNotificationAccessDialog = false
                 }
             )
         }
