@@ -34,8 +34,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +52,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
@@ -158,6 +158,14 @@ fun AppDrawerTab(
 
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
+    val gridSettingsManager = LocalGridSettingsManager.current
+    val rows = gridSettingsManager.rowCount
+    val unlimitedMode = gridSettingsManager.unlimitedMode
+    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
+
+    val filteredApps = remember(apps, maxAppsPerPage) {
+        apps.sortedBy { it.label.uppercase() }
+    }
 
     BottomSheetScaffold(
         modifier = modifier.onSizeChanged { size ->
@@ -175,14 +183,6 @@ fun AppDrawerTab(
             Box {}
         },
         sheetContent = {
-            val gridSettingsManager = LocalGridSettingsManager.current
-            val rows = gridSettingsManager.rowCount
-            val unlimitedMode = gridSettingsManager.unlimitedMode
-            val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
-
-            val filteredApps = remember(apps, maxAppsPerPage) {
-                apps.sortedBy { it.label.uppercase() }
-            }
             AppsModalContent(
                 apps = filteredApps,
                 appsUnfiltered = appsUnfiltered,
@@ -216,7 +216,9 @@ fun AppDrawerTab(
             pagerState = pagerState,
             onNavigateToSearch = onNavigateToSearch,
             isHeaderVisible = isHeaderVisible,
-            onNavigateToRecentApps = onNavigateToRecentApps
+            onNavigateToRecentApps = onNavigateToRecentApps,
+            appsUnfiltered = appsUnfiltered,
+            pageIndex = pageIndex
         )
     }
 }
@@ -234,13 +236,17 @@ private fun EmptyPage(
     pagerState: PagerState? = null,
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     isHeaderVisible: Boolean,
-    onNavigateToRecentApps: () -> Unit
+    onNavigateToRecentApps: () -> Unit,
+    appsUnfiltered: List<AppInfo>,
+    pageIndex: Int
 ) {
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -277,6 +283,12 @@ private fun EmptyPage(
                     leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
                     onLeadingIconClick = onSettingsClick,
                     leadingIconFocusRequester = settingsIconFocusRequester,
+                    trailingIcon = Icons.Default.Menu,
+                    trailingIconContentDescription = null,
+                    onTrailingIconClick = {
+                        showAppDrawerOptionsDialog = true
+                    },
+                    trailingIconFocusRequester = menuIconFocusRequester,
                     onNavigateToGrid = {
                         appFocusRequesters[0]?.requestFocus()
                     },
@@ -325,6 +337,24 @@ private fun EmptyPage(
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = null,
             onRecentAppsClick = onNavigateToRecentApps
+        )
+    }
+
+    if (showAppDrawerOptionsDialog) {
+        AppsTabOptionsDialog(
+            onDismiss = { showAppDrawerOptionsDialog = false },
+            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onResetPositions = {},
+            isDragLocked = true,
+            onToggleDragLock = { }
+        )
+    }
+
+    if (showAppVisibilityDialog) {
+        AppVisibilityDialog(
+            apps = appsUnfiltered,
+            onDismiss = { showAppVisibilityDialog = false },
+            pageIndex = pageIndex
         )
     }
 
