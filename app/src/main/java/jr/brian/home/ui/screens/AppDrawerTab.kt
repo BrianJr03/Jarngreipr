@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
@@ -37,7 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -68,7 +66,6 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,20 +88,6 @@ fun AppDrawerTab(
     pageIndex: Int,
     onNavigateToRecentApps: () -> Unit = {}
 ) {
-    val verticalPagerState = rememberPagerState(
-        initialPage = 0,
-        pageCount = { 1 }
-    )
-
-    val animationScope = rememberCoroutineScope()
-
-    BackHandler(
-        enabled = verticalPagerState.currentPage == 1
-    ) {
-        animationScope.launch {
-            verticalPagerState.animateScrollToPage(0)
-        }
-    }
 
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -349,6 +332,7 @@ private fun EmptyPage(
             onResetPositions = {},
             isDragLocked = true,
             onToggleDragLock = { },
+            title = stringResource(R.string.app_drawer_tab_options_title)
         )
     }
 
