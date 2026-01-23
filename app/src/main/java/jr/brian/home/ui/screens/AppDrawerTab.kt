@@ -332,7 +332,9 @@ private fun EmptyPage(
             onTabsClick = {
                 showHomeTabDialog = true
             },
-            onMenuClick = null,
+            onMenuClick = {
+                showAppDrawerOptionsDialog = true
+            },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = null,
@@ -346,7 +348,7 @@ private fun EmptyPage(
             onShowAppVisibility = { showAppVisibilityDialog = true },
             onResetPositions = {},
             isDragLocked = true,
-            onToggleDragLock = { }
+            onToggleDragLock = { },
         )
     }
 
