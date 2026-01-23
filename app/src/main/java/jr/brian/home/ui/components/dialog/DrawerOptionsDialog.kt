@@ -76,7 +76,7 @@ fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
     onPowerClick: () -> Unit,
     onTabsClick: () -> Unit,
-    onMenuClick: (() -> Unit)?,
+    onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
@@ -197,16 +197,15 @@ fun DrawerOptionsDialog(
                             )
                         }
 
-                        if (onMenuClick != null) {
-                            QuickAccessIconButton(
-                                icon = Icons.Default.Menu,
-                                contentDescription = stringResource(R.string.drawer_options_menu),
-                                onClick = {
-                                    onMenuClick()
-                                    onDismiss()
-                                }
-                            )
-                        }
+                        QuickAccessIconButton(
+                            icon = Icons.Default.Menu,
+                            contentDescription = stringResource(R.string.drawer_options_menu),
+                            onClick = {
+                                onMenuClick()
+                                onDismiss()
+                            }
+                        )
+
                     }
                 }
 
