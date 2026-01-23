@@ -29,7 +29,7 @@ fun AppGridLayout(
     columns: Int,
     maxAppsPerPage: Int,
     apps: List<AppInfo>,
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit = {},
     onNavigateLeft: () -> Unit = {},
@@ -131,7 +131,7 @@ fun AppGridLayout(
         }
 
         item {
-            Spacer(modifier = Modifier.Companion.height(80.dp))
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }

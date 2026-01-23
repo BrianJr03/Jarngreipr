@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,6 +30,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 
+
 @Composable
 fun FolderGridItem(
     folder: Folder,
@@ -42,7 +43,7 @@ fun FolderGridItem(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .clickable { onClick() }
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -55,7 +56,7 @@ fun FolderGridItem(
                 .border(
                     width = 2.dp,
                     color = ThemePrimaryColor.copy(alpha = 0.4f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp)
                 )
                 .padding(4.dp),
             contentAlignment = Alignment.Center
@@ -78,7 +79,7 @@ fun FolderGridItem(
                         customIconManager = customIconManager,
                         modifier = Modifier
                             .size(32.dp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(6.dp))
                     )
                 }
 
@@ -93,7 +94,7 @@ fun FolderGridItem(
                                 modifier = Modifier
                                     .size(18.dp)
                                     .padding(1.dp)
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                    .clip(RoundedCornerShape(4.dp))
                             )
                         }
                     }
@@ -109,7 +110,7 @@ fun FolderGridItem(
                             modifier = Modifier
                                 .size(18.dp)
                                 .padding(1.dp)
-                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(4.dp))
                         )
                         Row {
                             previewApps.drop(1).forEach { app ->
@@ -121,7 +122,7 @@ fun FolderGridItem(
                                     modifier = Modifier
                                         .size(18.dp)
                                         .padding(1.dp)
-                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                        .clip(RoundedCornerShape(4.dp))
                                 )
                             }
                         }
@@ -140,7 +141,7 @@ fun FolderGridItem(
                                     modifier = Modifier
                                         .size(18.dp)
                                         .padding(1.dp)
-                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                        .clip(RoundedCornerShape(4.dp))
                                 )
                             }
                         }
@@ -154,7 +155,7 @@ fun FolderGridItem(
                                     modifier = Modifier
                                         .size(18.dp)
                                         .padding(1.dp)
-                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                        .clip(RoundedCornerShape(4.dp))
                                 )
                             }
                         }

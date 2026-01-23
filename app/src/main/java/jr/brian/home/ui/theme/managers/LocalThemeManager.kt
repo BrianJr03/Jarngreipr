@@ -30,16 +30,16 @@ class ThemeManager(
     private fun loadTheme(): ColorTheme {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val themeId =
-            prefs.getString(KEY_THEME, ColorTheme.Companion.PINK_VIOLET.id)
-                ?: ColorTheme.Companion.PINK_VIOLET.id
+            prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id)
+                ?: ColorTheme.PINK_VIOLET.id
 
         // Check if it's a custom theme
         if (themeId.startsWith(ColorTheme.CUSTOM_THEME_PREFIX)) {
             val customThemesList = loadCustomThemes()
-            return customThemesList.find { it.id == themeId } ?: ColorTheme.Companion.PINK_VIOLET
+            return customThemesList.find { it.id == themeId } ?: ColorTheme.PINK_VIOLET
         }
 
-        return ColorTheme.Companion.fromId(themeId)
+        return ColorTheme.fromId(themeId)
     }
 
     private fun loadCustomThemes(): List<ColorTheme> {
