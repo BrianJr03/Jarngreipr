@@ -331,6 +331,7 @@
 
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Apps Tab Options</string>
+    <string name="app_drawer_tab_options_title">Apps Drawer Tab Options</string>
 
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>

@@ -64,7 +64,8 @@ fun AppsTabOptionsDialog(
     onToggleFreeMode: (() -> Unit)? = null,
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
-    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {}
+    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
+    title: String = stringResource(R.string.app_drawer_options_title)
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -100,7 +101,7 @@ fun AppsTabOptionsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.app_drawer_options_title),
+                        text = title,
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
