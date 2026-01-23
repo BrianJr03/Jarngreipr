@@ -48,34 +48,34 @@ fun EmptyAppsState(
     var isFocused by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.Companion
+        modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
-        contentAlignment = Alignment.Companion.Center
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.Companion.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
                 text = stringResource(R.string.apps_tab_no_apps_title),
-                color = Color.Companion.White,
+                color = Color.White,
                 fontSize = 28.sp,
-                fontWeight = FontWeight.Companion.Bold,
-                textAlign = TextAlign.Companion.Center
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
 
             Text(
                 text = stringResource(R.string.apps_tab_no_apps_description),
-                color = Color.Companion.White.copy(alpha = 0.7f),
+                color = Color.White.copy(alpha = 0.7f),
                 fontSize = 16.sp,
-                textAlign = TextAlign.Companion.Center,
-                modifier = Modifier.Companion.padding(horizontal = 32.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
             )
 
-            Spacer(modifier = Modifier.Companion.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            val cardGradient = Brush.Companion.linearGradient(
+            val cardGradient = Brush.linearGradient(
                 colors = if (isFocused) {
                     listOf(
                         ThemePrimaryColor.copy(alpha = 0.9f),
@@ -90,7 +90,7 @@ fun EmptyAppsState(
             )
 
             Box(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .scale(animatedFocusedScale(isFocused))
                     .onFocusChanged { isFocused = it.isFocused }
                     .background(
@@ -108,7 +108,7 @@ fun EmptyAppsState(
                                 )
                             )
                         } else {
-                            Brush.Companion.linearGradient(
+                            Brush.linearGradient(
                                 colors = listOf(
                                     ThemePrimaryColor.copy(alpha = 0.6f),
                                     ThemeSecondaryColor.copy(alpha = 0.4f)
@@ -121,24 +121,24 @@ fun EmptyAppsState(
                     .clickable { onAddClick() }
                     .focusable()
                     .padding(horizontal = 48.dp, vertical = 20.dp),
-                contentAlignment = Alignment.Companion.Center
+                contentAlignment = Alignment.Center
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.Companion.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = Color.Companion.White,
-                        modifier = Modifier.Companion.size(24.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.Companion.size(12.dp))
+                    Spacer(modifier = Modifier.size(12.dp))
                     Text(
                         text = stringResource(R.string.apps_tab_add_button),
-                        color = Color.Companion.White,
+                        color = Color.White,
                         fontSize = 19.sp,
-                        fontWeight = FontWeight.Companion.Bold
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

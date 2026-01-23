@@ -82,13 +82,10 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
-import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.widget.AppItem
+import jr.brian.home.ui.components.widget.FolderGridItem
 import jr.brian.home.ui.components.widget.WidgetItem
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
-import jr.brian.home.ui.theme.managers.LocalCustomIconManager
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -908,158 +905,10 @@ private fun LazyGridScope.renderFolderItems(
     folders.forEach { folder ->
         val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
         item(key = "folder_${folder.id}") {
-            AppsAndWidgetsFolderGridItem(
+            FolderGridItem(
                 folder = folder,
                 apps = folderApps,
                 onClick = { onClick(folder) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun AppsAndWidgetsFolderGridItem(
-    folder: Folder,
-    apps: List<AppInfo>,
-    onClick: () -> Unit
-) {
-    val customIconManager = LocalCustomIconManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
-    val previewApps = apps.take(4)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(OledCardColor.copy(alpha = 0.9f))
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            when (previewApps.size) {
-                0 -> {
-                    Text(
-                        text = "Empty",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 8.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                1 -> {
-                    AppIconImage(
-                        defaultIcon = previewApps[0].icon,
-                        packageName = previewApps[0].packageName,
-                        contentDescription = previewApps[0].label,
-                        customIconManager = customIconManager,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                    )
-                }
-
-                2 -> {
-                    Row {
-                        previewApps.forEach { app ->
-                            AppIconImage(
-                                defaultIcon = app.icon,
-                                packageName = app.packageName,
-                                contentDescription = app.label,
-                                customIconManager = customIconManager,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .padding(1.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                            )
-                        }
-                    }
-                }
-
-                3 -> {
-                    Column {
-                        AppIconImage(
-                            defaultIcon = previewApps[0].icon,
-                            packageName = previewApps[0].packageName,
-                            contentDescription = previewApps[0].label,
-                            customIconManager = customIconManager,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(1.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                        )
-                        Row {
-                            previewApps.drop(1).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                    }
-                }
-
-                else -> {
-                    Column {
-                        Row {
-                            previewApps.take(2).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                        Row {
-                            previewApps.drop(2).take(2).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        if (appVisibilityManager.showFolderNames) {
-            Text(
-                text = folder.name,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 1
             )
         }
     }
