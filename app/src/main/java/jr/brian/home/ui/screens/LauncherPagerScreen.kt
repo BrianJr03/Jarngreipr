@@ -292,6 +292,7 @@ fun LauncherPagerScreen(
                                     pagerState = pagerState,
                                     isLoading = homeUiState.isLoading,
                                     pageIndex = page,
+                                    onNavigateToRecentApps = onNavigateToRecentApps,
                                 )
                             }
                         }

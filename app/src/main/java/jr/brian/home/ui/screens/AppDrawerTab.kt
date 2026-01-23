@@ -88,7 +88,8 @@ fun AppDrawerTab(
     allApps: List<AppInfo> = emptyList(),
     columns: Int = 4,
     isLoading: Boolean = false,
-    pageIndex: Int
+    pageIndex: Int,
+    onNavigateToRecentApps: () -> Unit = {}
 ) {
     val verticalPagerState = rememberPagerState(
         initialPage = 0,
@@ -186,10 +187,9 @@ fun AppDrawerTab(
                 apps = filteredApps,
                 appsUnfiltered = appsUnfiltered,
                 isLoading = isLoading,
-                onShowBottomSheet = onShowBottomSheet,
                 allApps = allApps,
                 pageIndex = pageIndex,
-                isHeaderVisible = isHeaderVisible
+                isHeaderVisible = isHeaderVisible,
             )
         }
     ) {
@@ -215,7 +215,8 @@ fun AppDrawerTab(
             pageIndicatorBorderColor = pageIndicatorBorderColor,
             pagerState = pagerState,
             onNavigateToSearch = onNavigateToSearch,
-            isHeaderVisible = isHeaderVisible
+            isHeaderVisible = isHeaderVisible,
+            onNavigateToRecentApps = onNavigateToRecentApps
         )
     }
 }
@@ -232,7 +233,8 @@ private fun EmptyPage(
     onNavigateToSearch: () -> Unit = {},
     pagerState: PagerState? = null,
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    isHeaderVisible: Boolean
+    isHeaderVisible: Boolean,
+    onNavigateToRecentApps: () -> Unit
 ) {
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
@@ -275,12 +277,6 @@ private fun EmptyPage(
                     leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
                     onLeadingIconClick = onSettingsClick,
                     leadingIconFocusRequester = settingsIconFocusRequester,
-                    trailingIcon = Icons.Default.Menu,
-                    trailingIconContentDescription = null,
-                    onTrailingIconClick = {
-                        showDrawerOptionsDialog = true
-                    },
-                    trailingIconFocusRequester = menuIconFocusRequester,
                     onNavigateToGrid = {
                         appFocusRequesters[0]?.requestFocus()
                     },
@@ -324,11 +320,11 @@ private fun EmptyPage(
             onTabsClick = {
                 showHomeTabDialog = true
             },
-            onMenuClick = {
-            },
+            onMenuClick = null,
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = null,
+            onRecentAppsClick = onNavigateToRecentApps
         )
     }
 
