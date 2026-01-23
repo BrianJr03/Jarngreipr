@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FolderDelete
@@ -331,6 +332,8 @@ fun ScreenHeaderRow(
                             .rotate(animatedRotation(isTrailingFocused))
                     )
                 }
+            } else {
+                Box(Modifier.width(60.dp))
             }
         }
 

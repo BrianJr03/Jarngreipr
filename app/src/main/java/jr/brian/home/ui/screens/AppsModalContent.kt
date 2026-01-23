@@ -4,19 +4,13 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +19,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -33,20 +26,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
-import jr.brian.home.ui.components.apps.AppGridItem
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
-import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.widget.AppGridLayout
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -54,7 +46,6 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -62,10 +53,9 @@ fun AppsModalContent(
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
-    onShowBottomSheet: () -> Unit = {},
     allApps: List<AppInfo> = emptyList(),
     pageIndex: Int,
-    isHeaderVisible: Boolean
+    isHeaderVisible: Boolean,
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -152,18 +142,11 @@ fun AppsModalContent(
     }
 
     if (showDrawerOptionsDialog) {
-        DrawerOptionsDialog(
+        AppDrawerOptionsDialog(
             onDismiss = { showDrawerOptionsDialog = false },
-            onPowerClick = {},
-            onTabsClick = {},
-            onMenuClick = {
-                showAppDrawerOptionsDialog = true
-            },
-            onSettingsClick = {},
-            onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
                 showCreateFolderDialog = true
-            }
+            },
         )
     }
 
@@ -300,7 +283,7 @@ private fun ModalAppSelectionContent(
     allApps: List<AppInfo> = emptyList(),
     folders: List<Folder> = emptyList(),
     onFolderClick: (Folder) -> Unit = {},
-    isHeaderVisible: Boolean
+    isHeaderVisible: Boolean,
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount

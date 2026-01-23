@@ -1,4 +1,4 @@
-package jr.brian.home.ui.screens
+package jr.brian.home.ui.components.widget
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

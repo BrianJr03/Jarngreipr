@@ -76,7 +76,7 @@ fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
     onPowerClick: () -> Unit,
     onTabsClick: () -> Unit,
-    onMenuClick: () -> Unit,
+    onMenuClick: (() -> Unit)?,
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
@@ -197,14 +197,16 @@ fun DrawerOptionsDialog(
                             )
                         }
 
-                        QuickAccessIconButton(
-                            icon = Icons.Default.Menu,
-                            contentDescription = stringResource(R.string.drawer_options_menu),
-                            onClick = {
-                                onMenuClick()
-                                onDismiss()
-                            }
-                        )
+                        if (onMenuClick != null) {
+                            QuickAccessIconButton(
+                                icon = Icons.Default.Menu,
+                                contentDescription = stringResource(R.string.drawer_options_menu),
+                                onClick = {
+                                    onMenuClick()
+                                    onDismiss()
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -246,6 +248,7 @@ fun DrawerOptionsDialog(
                                     onDismiss()
                                 }
                             )
+
                         }
 
                         Row(
@@ -262,6 +265,7 @@ fun DrawerOptionsDialog(
                                 }
                             )
 
+
                             DrawerOptionButton(
                                 modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.settings_wallpaper_title),
@@ -271,6 +275,7 @@ fun DrawerOptionsDialog(
                                 }
                             )
                         }
+
                     }
                 }
 
@@ -334,7 +339,7 @@ fun DrawerOptionsDialog(
 }
 
 @Composable
-private fun DrawerOptionButton(
+fun DrawerOptionButton(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
