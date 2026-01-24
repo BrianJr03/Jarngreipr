@@ -9,5 +9,6 @@ enum class BackButtonShortcut {
     CUSTOM_THEME,
     MONITOR,
     CONTROL_PAD,
+    RECENT_APPS,
     APP
 }

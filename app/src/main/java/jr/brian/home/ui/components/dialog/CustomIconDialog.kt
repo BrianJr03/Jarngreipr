@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Gif
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -170,10 +171,20 @@ fun CustomIconDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 CustomIconActionButton(
-                    text = stringResource(R.string.app_options_custom_icon_set),
+                    text = stringResource(R.string.app_options_custom_icon_png),
                     icon = Icons.Default.Image,
                     onClick = {
                         imagePickerLauncher.launch("image/png")
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CustomIconActionButton(
+                    text = stringResource(R.string.app_options_custom_icon_gif),
+                    icon = Icons.Default.Gif,
+                    onClick = {
+                        imagePickerLauncher.launch("image/gif")
                     }
                 )
 

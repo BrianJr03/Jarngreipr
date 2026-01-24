@@ -75,6 +75,7 @@ fun BackButtonShortcutScreen(
         BackButtonShortcut.QUICK_DELETE to stringResource(R.string.back_button_shortcut_quick_delete),
         BackButtonShortcut.SETTINGS to stringResource(R.string.back_button_shortcut_settings),
         BackButtonShortcut.MONITOR to stringResource(R.string.back_button_shortcut_monitor),
+        BackButtonShortcut.RECENT_APPS to stringResource(R.string.back_button_shortcut_recent_apps),
         BackButtonShortcut.POWERED_OFF to stringResource(R.string.back_button_shortcut_powered_off)
     )
 

@@ -24,6 +24,7 @@ import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
+import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.screens.ControlPadScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
@@ -89,6 +90,7 @@ fun NavGraphBuilder.launcherScreen(
                         BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
                         BackButtonShortcut.MONITOR -> showMonitorSheet = true
                         BackButtonShortcut.CONTROL_PAD -> showControlPadSheet = true
+                        BackButtonShortcut.RECENT_APPS -> navController.navigate(Routes.RECENT_APPS)
                         BackButtonShortcut.APP -> {
                             backButtonShortcutAppPackage?.let { packageName ->
                                 launchApp(
@@ -102,6 +104,9 @@ fun NavGraphBuilder.launcherScreen(
                         }
                     }
                 }
+            },
+            onNavigateToRecentApps = {
+                navController.navigate(Routes.RECENT_APPS)
             }
         )
 
@@ -417,6 +422,23 @@ fun NavGraphBuilder.controlPadScreen(
 
         SlideInVertically(showScreen) {
             ControlPadScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.recentAppsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.RECENT_APPS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            RecentAppsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
