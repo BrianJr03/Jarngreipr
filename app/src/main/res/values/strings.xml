@@ -429,6 +429,24 @@
     <!-- Monitor Screen -->
     <string name="monitor_screen_title">System Monitor</string>
     <string name="monitor_screen_description">Real-time system information</string>
+
+    <!-- Control Pad Screen -->
+    <string name="control_pad_screen_title">Control Pad</string>
+    <string name="control_pad_screen_description">Quick access control buttons</string>
+    <string name="back_button_shortcut_control_pad">Control Pad</string>
+    <string name="control_pad_edit">Edit</string>
+    <string name="control_pad_done">Done</string>
+    <string name="control_pad_reset">Reset</string>
+    <string name="control_pad_tap_to_map">Tap to map</string>
+    <string name="control_pad_map_button_title">Map Button</string>
+    <string name="control_pad_close">Close</string>
+    <string name="control_pad_shizuku_not_running">Shizuku not running</string>
+    <string name="control_pad_shizuku_permission_required">Permission required</string>
+    <string name="control_pad_shizuku_grant_permission">Grant Permission</string>
+    <string name="control_pad_shizuku_connecting">Connecting…</string>
+    <string name="control_pad_shizuku_ready">Ready</string>
+    <string name="control_pad_no_mapping">No mapping</string>
+    <string name="control_pad_button_pressed">Button pressed</string>
     <string name="monitor_ram_label">RAM Usage</string>
     <string name="monitor_fps_label">FPS %d</string>
     <string name="monitor_cpu_label">CPU Usage</string>

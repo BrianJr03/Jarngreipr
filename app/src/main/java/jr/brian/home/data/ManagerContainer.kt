@@ -6,6 +6,7 @@ import jr.brian.home.ui.theme.managers.GlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalControlPadManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
@@ -43,6 +44,7 @@ data class ManagerContainer @Inject constructor(
     val customIconManager: CustomIconManager,
     val globalIconRefreshManager: GlobalIconRefreshManager,
     val folderManager: FolderManager,
+    val controlPadManager: ControlPadManager
     val notificationCountManager: NotificationCountManager,
     val recentAppsCacheManager: RecentAppsCacheManager,
     val shizukuManager: ShizukuManager,
@@ -72,6 +74,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalCustomIconManager provides customIconManager,
         LocalGlobalIconRefreshManager provides globalIconRefreshManager,
         LocalFolderManager provides folderManager,
+        LocalControlPadManager provides controlPadManager
         LocalNotificationCountManager provides notificationCountManager,
         LocalRecentAppsCacheManager provides recentAppsCacheManager,
         LocalShizukuManager provides shizukuManager,

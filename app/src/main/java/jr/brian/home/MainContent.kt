@@ -30,6 +30,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.ui.navigation.appSearchScreen
 import jr.brian.home.ui.navigation.backButtonShortcutScreen
+import jr.brian.home.ui.navigation.controlPadScreen
 import jr.brian.home.ui.navigation.crashLogsScreen
 import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.faqScreen
@@ -187,6 +188,8 @@ fun MainContent() {
                 )
 
                 monitorScreen(navController = navController)
+
+                controlPadScreen(navController = navController)
 
                 crashLogsScreen(navController = navController)
 
