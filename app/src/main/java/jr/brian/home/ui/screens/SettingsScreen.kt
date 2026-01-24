@@ -1,6 +1,7 @@
 package jr.brian.home.ui.screens
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -17,6 +19,8 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Monitor
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,10 +28,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +44,11 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.InfoBox
+import jr.brian.home.ui.components.UpdateAvailableDialog
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.util.UpdateChecker
+import jr.brian.home.util.UpdateInfo
+import kotlinx.coroutines.launch
 import jr.brian.home.ui.components.settings.AppNameToggleItem
 import jr.brian.home.ui.components.settings.FolderNameToggleItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
@@ -77,6 +88,22 @@ fun SettingsScreen(
     onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val appUpdateManager = LocalAppUpdateManager.current
+    
+    var isCheckingForUpdates by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    
+    val currentVersionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
+    
     Scaffold(
         containerColor = OledBackgroundColor,
     ) { innerPadding ->
@@ -98,7 +125,51 @@ fun SettingsScreen(
                     onNavigateToMonitor = onNavigateToMonitor,
                     onNavigateToControlPad = onNavigateToControlPad,
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
+                    isCheckingForUpdates = isCheckingForUpdates,
+                    onCheckForUpdates = {
+                        if (!isCheckingForUpdates) {
+                            isCheckingForUpdates = true
+                            scope.launch {
+                                appUpdateManager.clearSkippedVersion(context)
+                                appUpdateManager.clearDownloadedVersion(context)
+                                
+                                val update = UpdateChecker.checkForUpdate(currentVersionName)
+                                isCheckingForUpdates = false
+                                
+                                if (update.isUpdateAvailable) {
+                                    updateInfo = update
+                                    showUpdateDialog = true
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.update_not_available),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    },
                     onDismiss = onDismiss
+                )
+            }
+            
+            if (showUpdateDialog && updateInfo != null) {
+                UpdateAvailableDialog(
+                    updateInfo = updateInfo!!,
+                    currentVersion = currentVersionName,
+                    onDismiss = {
+                        showUpdateDialog = false
+                    },
+                    onRemindLater = {
+                        showUpdateDialog = false
+                    },
+                    onSkipVersion = {
+                        appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
+                        showUpdateDialog = false
+                    },
+                    onDownloadComplete = {
+                        appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
+                    }
                 )
             }
         }
@@ -115,6 +186,8 @@ private fun SettingsContent(
     onNavigateToMonitor: () -> Unit = {},
     onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
+    isCheckingForUpdates: Boolean = false,
+    onCheckForUpdates: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -298,6 +371,31 @@ private fun SettingsContent(
                         expandedItem = null
                         onNavigateToCrashLogs()
                     }
+                )
+            }
+
+            item {
+                SettingItem(
+                    title = stringResource(id = R.string.settings_check_updates_title),
+                    description = if (isCheckingForUpdates) {
+                        stringResource(id = R.string.update_checking)
+                    } else {
+                        stringResource(id = R.string.settings_check_updates_description)
+                    },
+                    icon = Icons.Default.SystemUpdate,
+                    onClick = {
+                        expandedItem = null
+                        onCheckForUpdates()
+                    },
+                    trailing = if (isCheckingForUpdates) {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else null
                 )
             }
 

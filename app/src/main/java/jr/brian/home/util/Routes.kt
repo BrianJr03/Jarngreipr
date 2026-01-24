@@ -11,6 +11,7 @@ object Routes {
     const val CRASH_LOGS = "crash_logs"
     const val CONTROL_PAD = "control_pad"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
+    const val RECENT_APPS = "recent_apps"
 
     fun widgetPicker(pageIndex: Int) = "widget_picker/$pageIndex"
 }

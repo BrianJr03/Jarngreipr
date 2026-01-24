@@ -122,6 +122,7 @@ fun AppsAndWidgetsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToRecentApps: () -> Unit = {},
     navController: NavHostController? = null
 ) {
     val widgetPageAppManager = LocalWidgetPageAppManager.current
@@ -334,7 +335,8 @@ fun AppsAndWidgetsTab(
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
                 showCreateFolderDialog = true
-            }
+            },
+            onRecentAppsClick = onNavigateToRecentApps
         )
     }
 

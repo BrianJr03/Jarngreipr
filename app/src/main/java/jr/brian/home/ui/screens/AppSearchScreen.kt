@@ -224,15 +224,20 @@ private fun AppGridItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        AppIconImage(
-            defaultIcon = app.icon,
-            packageName = app.packageName,
-            contentDescription = stringResource(R.string.app_icon_description, app.label),
-            customIconManager = customIconManager,
+        Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
+                .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
+                contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
+                modifier = Modifier.matchParentSize()
+            )
+        }
 
         Spacer(Modifier.height(4.dp))
         app.AppName()
