@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
@@ -16,7 +17,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
@@ -46,8 +52,8 @@ fun AppGridLayout(
         horizontal = 8.dp,
         vertical = if (isHeaderVisible) 8.dp else 20.dp,
     ),
+    gridState: LazyGridState = rememberLazyGridState()
 ) {
-    val gridState = rememberLazyGridState()
 
     val displayedApps = remember(apps, maxAppsPerPage) {
         apps.take(maxAppsPerPage)
@@ -66,6 +72,7 @@ fun AppGridLayout(
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
         verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+
     ) {
         // Render apps first
         items(displayedApps.size) { index ->
