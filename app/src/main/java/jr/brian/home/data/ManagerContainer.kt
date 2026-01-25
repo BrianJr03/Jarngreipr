@@ -44,7 +44,7 @@ data class ManagerContainer @Inject constructor(
     val customIconManager: CustomIconManager,
     val globalIconRefreshManager: GlobalIconRefreshManager,
     val folderManager: FolderManager,
-    val controlPadManager: ControlPadManager
+    val controlPadManager: ControlPadManager,
     val notificationCountManager: NotificationCountManager,
     val recentAppsCacheManager: RecentAppsCacheManager,
     val shizukuManager: ShizukuManager,
@@ -74,7 +74,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalCustomIconManager provides customIconManager,
         LocalGlobalIconRefreshManager provides globalIconRefreshManager,
         LocalFolderManager provides folderManager,
-        LocalControlPadManager provides controlPadManager
+        LocalControlPadManager provides controlPadManager,
         LocalNotificationCountManager provides notificationCountManager,
         LocalRecentAppsCacheManager provides recentAppsCacheManager,
         LocalShizukuManager provides shizukuManager,

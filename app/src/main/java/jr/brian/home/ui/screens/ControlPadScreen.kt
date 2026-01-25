@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -50,16 +49,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -68,6 +68,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import jr.brian.home.R
 import jr.brian.home.model.ControlPadItem
 import jr.brian.home.model.PhysicalButton
@@ -91,6 +93,8 @@ fun ControlPadScreen(
     val isShizukuAvailable by ShizukuInputManager.isShizukuAvailable.collectAsStateWithLifecycle()
     val isShizukuPermissionGranted by ShizukuInputManager.isShizukuPermissionGranted.collectAsStateWithLifecycle()
     val isServiceConnected by ShizukuInputManager.isServiceConnected.collectAsStateWithLifecycle()
+
+    val coroutineScope = rememberCoroutineScope()
 
     var isEditMode by remember { mutableStateOf(false) }
     var selectedCardIndex by remember { mutableIntStateOf(-1) }
@@ -144,15 +148,15 @@ fun ControlPadScreen(
                                     showButtonMappingDialog = true
                                 } else {
                                     controlPadItems[i].mappedButton?.let { button ->
-                                        ShizukuInputManager.injectButtonPress(button)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            ShizukuInputManager.injectButtonPress(button)
+                                        }
                                     }
                                 }
                             }
                         )
                     }
                 }
-
-                val  ctx = LocalContext.current
 
                 Column(
                     modifier = Modifier
@@ -171,7 +175,9 @@ fun ControlPadScreen(
                                     showButtonMappingDialog = true
                                 } else {
                                     controlPadItems[i].mappedButton?.let { button ->
-                                        ShizukuInputManager.injectButtonPress(button)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            ShizukuInputManager.injectButtonPress(button)
+                                        }
                                     }
                                 }
                             }
@@ -256,7 +262,6 @@ private fun ControlPadCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    var isFocused by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -275,7 +280,7 @@ private fun ControlPadCard(
     )
 
     val cardGradient = Brush.linearGradient(
-        colors = if (isFocused || isSelected || isPressed) {
+        colors = if (isSelected || isPressed) {
             listOf(
                 ThemePrimaryColor.copy(alpha = 0.9f),
                 ThemeSecondaryColor.copy(alpha = 0.9f)
@@ -292,17 +297,14 @@ private fun ControlPadCard(
         modifier = Modifier
             .size(100.dp)
             .offset(y = offsetY)
-            .scale(pressScale * animatedFocusedScale(isFocused))
-            .onFocusChanged {
-                isFocused = it.isFocused
-            }
+            .scale(pressScale)
             .background(
                 brush = cardGradient,
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = if (isFocused || isSelected) 3.dp else 2.dp,
-                brush = if (isFocused || isSelected) {
+                width = if (isSelected) 3.dp else 2.dp,
+                brush = if (isSelected) {
                     borderBrush(
                         isFocused = true,
                         colors = listOf(
@@ -325,7 +327,6 @@ private fun ControlPadCard(
                 interactionSource = interactionSource,
                 indication = null
             ) { onClick() }
-            .focusable()
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
