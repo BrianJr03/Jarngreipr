@@ -1,44 +1,40 @@
 package jr.brian.home.ui.screens
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.MutatePriority
-import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -46,6 +42,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
@@ -65,7 +62,8 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.viewmodels.PowerViewModel
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,222 +86,179 @@ fun AppDrawerTab(
     pageIndex: Int,
     onNavigateToRecentApps: () -> Unit = {}
 ) {
-
-    val bottomSheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-    )
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = bottomSheetState
-    )
-    val density = LocalDensity.current
-    val anchors = remember(density) {
-        val offset = with(density) {
-            200.dp.toPx()
-        }
-        DraggableAnchors {
-            SheetValue.Hidden at 0f
-            SheetValue.Expanded at offset
-        }
-    }
-
-    val state = remember {
-        AnchoredDraggableState(
-            initialValue = SheetValue.Hidden,
-            anchors = anchors
-        )
-    }
-
-    val interactionSource = remember { MutableInteractionSource() }
-
-    LaunchedEffect(state) {
-        snapshotFlow { state.currentValue }
-            .collectLatest { value ->
-                Log.i("Dragging", "value = $value")
-
-                if (value == SheetValue.Expanded) {
-                    bottomSheetState.expand()
-                }
-            }
-    }
-
-    LaunchedEffect(bottomSheetState) {
-        snapshotFlow { bottomSheetState.currentValue }
-            .collectLatest { value ->
-                if (value == SheetValue.Hidden) {
-                    state.anchoredDrag(
-                        targetValue = SheetValue.Hidden,
-                        dragPriority = MutatePriority.Default,
-                        block = { _, _ -> }
-                    )
-                }
-            }
-    }
-
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
+    val showAppDrawer = remember { mutableStateOf(false) }
+    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
+    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
     val filteredApps = remember(apps, maxAppsPerPage) {
         apps.sortedBy { it.label.uppercase() }
     }
 
-    BottomSheetScaffold(
-        modifier = modifier.onSizeChanged { size ->
-            state.updateAnchors(
-                DraggableAnchors {
-                    SheetValue.Hidden at 0f
-                    SheetValue.Expanded at (size.height * 0.5f )
-                }
-            )
-        },
-        containerColor = Color.Transparent,
-        sheetContainerColor = OledBackgroundColor,
-        scaffoldState = scaffoldState,
-        sheetDragHandle = {
-            Box {}
-        },
-        sheetContent = {
-            AppsModalContent(
-                apps = filteredApps,
-                appsUnfiltered = appsUnfiltered,
-                isLoading = isLoading,
-                allApps = allApps,
-                pageIndex = pageIndex,
-                isHeaderVisible = isHeaderVisible,
-            )
-        }
-    ) {
-        EmptyPage(
-            modifier = Modifier
-                .fillMaxSize()
-                .anchoredDraggable(
-                    state = state,
-                    reverseDirection = true,
-                    orientation = Orientation.Vertical,
-                    interactionSource = interactionSource,
-                    flingBehavior = AnchoredDraggableDefaults.flingBehavior(
-                        state = state,
-                        positionalThreshold = { distance: Float -> distance * 0.5f },
-                        animationSpec = tween()
-                    ),
-                ),
-            powerViewModel = powerViewModel,
-            totalPages = totalPages,
-            onShowBottomSheet = onShowBottomSheet,
-            onSettingsClick = onSettingsClick,
-            onDeletePage = onDeletePage,
-            pageIndicatorBorderColor = pageIndicatorBorderColor,
-            pagerState = pagerState,
-            onNavigateToSearch = onNavigateToSearch,
-            isHeaderVisible = isHeaderVisible,
-            onNavigateToRecentApps = onNavigateToRecentApps,
-            appsUnfiltered = appsUnfiltered,
-            pageIndex = pageIndex
-        )
-    }
-}
+    val animationScope = rememberCoroutineScope()
 
+    BackHandler(enabled = isPoweredOff) {}
 
-@Composable
-private fun EmptyPage(
-    modifier: Modifier = Modifier,
-    powerViewModel: PowerViewModel = hiltViewModel(),
-    totalPages: Int = 1,
-    onShowBottomSheet: () -> Unit = {},
-    onSettingsClick: () -> Unit = {},
-    onDeletePage: (Int) -> Unit = {},
-    onNavigateToSearch: () -> Unit = {},
-    pagerState: PagerState? = null,
-    pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    isHeaderVisible: Boolean,
-    onNavigateToRecentApps: () -> Unit,
-    appsUnfiltered: List<AppInfo>,
-    pageIndex: Int
-) {
-
-    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val viewHeight = remember { mutableIntStateOf(0) }
+    val scrollState = rememberLazyListState()
+    val snappingLayout = remember(scrollState) { SnapLayoutInfoProvider(scrollState) }
+    val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
+    val lastVisibleIndex = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+    val lastOffset = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.offset ?: 0
+    val settingsIconFocusRequester = remember { FocusRequester() }
+    val menuIconFocusRequester = remember { FocusRequester() }
+    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = isPoweredOff) {}
-
-    val powerSettingsManager = LocalPowerSettingsManager.current
-    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-
-    Column(
+    LazyColumn(
+        state = scrollState,
+        flingBehavior = flingBehavior,
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .then(
-                if (showDrawerOptionsDialog ||
-                    showHomeTabDialog
-                ) {
-                    Modifier.blockAllNavigation()
-                } else {
-                    Modifier.blockHorizontalNavigation()
-                }
-            )
-    ) {
-        if (pagerState != null) {
-            val settingsIconFocusRequester = remember { FocusRequester() }
-            val menuIconFocusRequester = remember { FocusRequester() }
+            .onSizeChanged { size ->
+                viewHeight.intValue = size.height
 
-            AnimatedVisibility(
-                visible = isHeaderVisible,
-                enter = slideInVertically(initialOffsetY = { -it }),
-                exit = slideOutVertically(targetOffsetY = { -it })
-            ) {
-                ScreenHeaderRow(
-                    totalPages = totalPages,
-                    pagerState = pagerState,
-                    leadingIcon = Icons.Default.Settings,
-                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                    onLeadingIconClick = onSettingsClick,
-                    leadingIconFocusRequester = settingsIconFocusRequester,
-                    trailingIcon = Icons.Default.Menu,
-                    trailingIconContentDescription = null,
-                    onTrailingIconClick = {
-                        showAppDrawerOptionsDialog = true
-                    },
-                    trailingIconFocusRequester = menuIconFocusRequester,
-                    onNavigateToGrid = {
-                        appFocusRequesters[0]?.requestFocus()
-                    },
-                    onNavigateFromGrid = {
-                        menuIconFocusRequester.requestFocus()
-                    },
-                    powerViewModel = powerViewModel,
-                    showPowerButton = isPowerButtonVisible,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                    onFolderClick = onShowBottomSheet,
-                    onDeletePage = onDeletePage,
-                    pageIndicatorBorderColor = pageIndicatorBorderColor,
-                    onNavigateToSearch = onNavigateToSearch
-                )
+                if (!showAppDrawer.value) {
+                    animationScope.launch {
+                        delay(300)
+                        scrollState.scrollToItem(0)
+                        showAppDrawer.value = true
+                    }
+                }
+            },
+    ) {
+        stickyHeader {
+            if (pagerState != null) {
+                AnimatedVisibility(
+                    visible = isHeaderVisible,
+                    enter = slideInVertically(initialOffsetY = { -it }),
+                    exit = slideOutVertically(targetOffsetY = { -it }),
+                    modifier = Modifier.statusBarsPadding()
+                ) {
+                    ScreenHeaderRow(
+                        totalPages = totalPages,
+                        pagerState = pagerState,
+                        leadingIcon = Icons.Default.Settings,
+                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                        onLeadingIconClick = onSettingsClick,
+                        leadingIconFocusRequester = settingsIconFocusRequester,
+                        trailingIcon = Icons.Default.Menu,
+                        trailingIconContentDescription = null,
+                        onTrailingIconClick = {
+                            showAppDrawerOptionsDialog = true
+                        },
+                        trailingIconFocusRequester = menuIconFocusRequester,
+                        onNavigateToGrid = {
+                            appFocusRequesters[0]?.requestFocus()
+                        },
+                        onNavigateFromGrid = {
+                            menuIconFocusRequester.requestFocus()
+                        },
+                        powerViewModel = powerViewModel,
+                        showPowerButton = isPowerButtonVisible,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                        onFolderClick = onShowBottomSheet,
+                        onDeletePage = onDeletePage,
+                        pageIndicatorBorderColor = pageIndicatorBorderColor,
+                        onNavigateToSearch = onNavigateToSearch
+                    )
+                }
+            }
+        }
+        items(2) { index ->
+            if (viewHeight.intValue > 0) {
+                val height = with(LocalDensity.current) {
+                    viewHeight.intValue.toDp()
+                }
+                val alpha = if (lastVisibleIndex == 0) {
+                    0f
+                } else {
+                    (1f * ((viewHeight.intValue - lastOffset).toFloat() / viewHeight.intValue.toFloat()))
+                        .coerceIn(0f, 1f)
+                }
+                if (index == 0) {
+                    Box(
+                        modifier = Modifier
+                            .requiredHeight(height)
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onDoubleTap = {
+                                        powerViewModel.togglePower()
+                                    },
+                                    onLongPress = {
+                                        showDrawerOptionsDialog = true
+                                    }
+                                )
+                            }
+                            .then(
+                                if (showDrawerOptionsDialog ||
+                                    showHomeTabDialog
+                                ) {
+                                    Modifier.blockAllNavigation()
+                                } else {
+                                    Modifier.blockHorizontalNavigation()
+                                }
+                            ),
+                    )
+                } else {
+                    Column(
+                        Modifier
+                            .requiredHeight(height)
+                            .padding(top = 24.dp)
+                            .background(
+                                OledBackgroundColor, shape = RoundedCornerShape(
+                                    topStart = 20.dp,
+                                    topEnd = 20.dp
+                                )
+                            )
+                            .alpha(if (showAppDrawer.value) alpha else 0f)
+                            .zIndex(10f),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(
+                                        width = 36.dp, height = 6.dp
+                                    )
+                                    .background(
+                                        ThemePrimaryColor,
+                                        shape = RoundedCornerShape(3.dp)
+                                    )
+                            )
+                        }
+                        AppsModalContent(
+                            modifier = Modifier.fillMaxSize(),
+                            apps = filteredApps,
+                            appsUnfiltered = appsUnfiltered,
+                            isLoading = isLoading,
+                            allApps = allApps,
+                            pageIndex = pageIndex,
+                            isHeaderVisible = isHeaderVisible,
+                            onAppOpened = {
+                                animationScope.launch {
+                                    scrollState.scrollToItem(0)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            powerViewModel.togglePower()
-                        },
-                        onLongPress = {
-                            showDrawerOptionsDialog = true
-                        }
-                    )
-                }
-        )
     }
 
     if (showDrawerOptionsDialog) {

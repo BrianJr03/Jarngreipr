@@ -6,11 +6,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,13 +18,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -46,16 +51,21 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppsModalContent(
+    modifier: Modifier = Modifier,
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
     allApps: List<AppInfo> = emptyList(),
     pageIndex: Int,
     isHeaderVisible: Boolean,
+    onAppOpened: () -> Unit
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -90,6 +100,55 @@ fun AppsModalContent(
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
+
+    val scope = rememberCoroutineScope()
+    val gridState = rememberLazyGridState()
+    val preventNestedScroll = remember { mutableStateOf(false) }
+    val scheduledJob = remember { mutableStateOf<Job?>(null) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0) {
+                    val firstIndex = gridState.firstVisibleItemIndex
+                    if (firstIndex == 0 && gridState.firstVisibleItemScrollOffset == 0) {
+                        return super.onPreScroll(available, source)
+                    }
+
+                    preventNestedScroll.value = true
+                }
+                return super.onPreScroll(available, source)
+            }
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity
+            ): Velocity {
+                if (preventNestedScroll.value) {
+                    return available.times(100f)
+                }
+                return super.onPostFling(consumed, available)
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+
+                if (preventNestedScroll.value) {
+                    scheduledJob.value?.cancel()
+                    scheduledJob.value = scope.launch {
+                        delay(300)
+                        preventNestedScroll.value = false
+                        scheduledJob.value = null
+                    }
+                    return available.times(100f)
+                }
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = 64f
@@ -184,9 +243,7 @@ fun AppsModalContent(
 
     Box(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
+            modifier
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
@@ -213,6 +270,7 @@ fun AppsModalContent(
                 appFocusRequesters = appFocusRequesters,
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppClick = { app ->
+                    onAppOpened()
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     } else {
@@ -223,12 +281,16 @@ fun AppsModalContent(
                         packageName = app.packageName,
                         displayPreference = displayPreference
                     )
+                    scope.launch {
+                        gridState.scrollToItem(0)
+                    }
                 },
                 onAppLongClick = { app ->
                     selectedApp = app
                     showAppOptionsMenu = true
                 },
                 onAppDoubleClick = { app ->
+                    onAppOpened()
                     // Launch on opposite display from current preference
                     val currentPreference =
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -239,6 +301,9 @@ fun AppsModalContent(
                             DisplayPreference.PRIMARY_DISPLAY
                         }
                     launchApp(context, app.packageName, oppositePreference)
+                    scope.launch {
+                        gridState.scrollToItem(0)
+                    }
                 },
                 allApps = appsUnfiltered,
                 folders = folders,
@@ -246,7 +311,9 @@ fun AppsModalContent(
                     selectedFolder = folder
                     showFolderContentsDialog = true
                 },
-                isHeaderVisible = isHeaderVisible
+                isHeaderVisible = isHeaderVisible,
+                gridState = gridState,
+                nestedScrollConnection = nestedScrollConnection
             )
         }
     }
@@ -284,6 +351,8 @@ private fun ModalAppSelectionContent(
     folders: List<Folder> = emptyList(),
     onFolderClick: (Folder) -> Unit = {},
     isHeaderVisible: Boolean,
+    gridState: LazyGridState,
+    nestedScrollConnection: NestedScrollConnection
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -298,11 +367,13 @@ private fun ModalAppSelectionContent(
         apps = filteredApps,
         columns = columns,
         maxAppsPerPage = maxAppsPerPage,
+        gridState = gridState,
         modifier = modifier
             .fillMaxSize()
             .padding(
                 horizontal = 20.dp,
-            ),
+            )
+            .nestedScroll(nestedScrollConnection),
         appFocusRequesters = appFocusRequesters,
         onFocusChanged = onAppFocusChanged,
         onNavigateLeft = {},
@@ -314,7 +385,7 @@ private fun ModalAppSelectionContent(
         onFolderClick = onFolderClick,
         isHeaderVisible = isHeaderVisible,
         contentPadding = PaddingValues(
-            top = 30.dp,
+            top = 10.dp,
             bottom = 20.dp,
         ),
         horizontalSpacing = 10.dp,
