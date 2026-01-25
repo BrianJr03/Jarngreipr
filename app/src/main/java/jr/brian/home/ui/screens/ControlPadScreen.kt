@@ -2,9 +2,6 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -13,8 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,7 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -74,6 +69,7 @@ import jr.brian.home.R
 import jr.brian.home.model.ControlPadItem
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
@@ -142,14 +138,31 @@ fun ControlPadScreen(
                             item = controlPadItems[i],
                             isEditMode = isEditMode,
                             isSelected = selectedCardIndex == i,
-                            onClick = {
+                            onPress = {
                                 if (isEditMode) {
                                     selectedCardIndex = i
                                     showButtonMappingDialog = true
                                 } else {
                                     controlPadItems[i].mappedButton?.let { button ->
                                         coroutineScope.launch(Dispatchers.IO) {
-                                            ShizukuInputManager.injectButtonPress(button)
+                                            if (ShizukuInputManager.isTriggerButton(button)) {
+                                                ShizukuInputManager.injectTriggerPress(button)
+                                            } else {
+                                                ShizukuInputManager.injectKeyDown(button)
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            onRelease = {
+                                if (!isEditMode) {
+                                    controlPadItems[i].mappedButton?.let { button ->
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            if (ShizukuInputManager.isTriggerButton(button)) {
+                                                ShizukuInputManager.injectTriggerRelease(button)
+                                            } else {
+                                                ShizukuInputManager.injectKeyUp(button)
+                                            }
                                         }
                                     }
                                 }
@@ -169,14 +182,31 @@ fun ControlPadScreen(
                             item = controlPadItems[i],
                             isEditMode = isEditMode,
                             isSelected = selectedCardIndex == i,
-                            onClick = {
+                            onPress = {
                                 if (isEditMode) {
                                     selectedCardIndex = i
                                     showButtonMappingDialog = true
                                 } else {
                                     controlPadItems[i].mappedButton?.let { button ->
                                         coroutineScope.launch(Dispatchers.IO) {
-                                            ShizukuInputManager.injectButtonPress(button)
+                                            if (ShizukuInputManager.isTriggerButton(button)) {
+                                                ShizukuInputManager.injectTriggerPress(button)
+                                            } else {
+                                                ShizukuInputManager.injectKeyDown(button)
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            onRelease = {
+                                if (!isEditMode) {
+                                    controlPadItems[i].mappedButton?.let { button ->
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            if (ShizukuInputManager.isTriggerButton(button)) {
+                                                ShizukuInputManager.injectTriggerRelease(button)
+                                            } else {
+                                                ShizukuInputManager.injectKeyUp(button)
+                                            }
                                         }
                                     }
                                 }
@@ -260,24 +290,11 @@ private fun ControlPadCard(
     item: ControlPadItem,
     isEditMode: Boolean,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onPress: () -> Unit,
+    onRelease: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    // Animate scale - shrink slightly when pressed
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = tween(durationMillis = 100),
-        label = "pressScale"
-    )
-
-    // Animate vertical offset - move down when pressed
-    val offsetY by animateDpAsState(
-        targetValue = if (isPressed) 3.dp else 0.dp,
-        animationSpec = tween(durationMillis = 100),
-        label = "offsetY"
-    )
+    var isPressed by remember { mutableStateOf(false) }
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     val cardGradient = Brush.linearGradient(
         colors = if (isSelected || isPressed) {
@@ -303,8 +320,8 @@ private fun ControlPadCard(
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = if (isSelected) 3.dp else 2.dp,
-                brush = if (isSelected) {
+                width = if (isSelected || isPressed) 3.dp else 2.dp,
+                brush = if (isSelected || isPressed) {
                     borderBrush(
                         isFocused = true,
                         colors = listOf(
@@ -323,10 +340,24 @@ private fun ControlPadCard(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) { onClick() }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        when {
+                            event.changes.any { it.pressed } && !isPressed -> {
+                                isPressed = true
+                                onPress()
+                            }
+                            event.changes.none { it.pressed } && isPressed -> {
+                                isPressed = false
+                                onRelease()
+                            }
+                        }
+                        event.changes.forEach { it.consume() }
+                    }
+                }
+            }
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {

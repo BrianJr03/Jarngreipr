@@ -5,6 +5,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
+import android.view.MotionEvent
 import jr.brian.home.IInputService
 import kotlin.system.exitProcess
 
@@ -58,12 +59,6 @@ class InputService : IInputService.Stub() {
         
         Log.d(TAG, "injectKeyEvent: keyCode=$keyCode, action=$action, isSystemKey=$isSystemKey")
         
-        // For non-system keys (gamepad buttons), we need to dismiss the overlay first
-        // so the button goes to the underlying app (e.g., a game)
-        if (!isSystemKey && action == KeyEvent.ACTION_DOWN) {
-            dismissOverlayFirst()
-        }
-        
         // Try InputManager first for all keys
         val success = injectViaInputManager(keyCode, action, isSystemKey)
         
@@ -71,40 +66,6 @@ class InputService : IInputService.Stub() {
             // Only use shell fallback on DOWN since it sends both down+up
             Log.d(TAG, "InputManager failed, trying shell")
             injectViaShell(keyCode, isSystemKey)
-        }
-    }
-    
-    private fun dismissOverlayFirst() {
-        try {
-            Log.d(TAG, "Dismissing overlay with BACK key")
-            
-            // Create and inject a BACK key event to dismiss the control pad
-            val im = inputManager
-            val method = injectInputEventMethod
-            
-            if (im != null && method != null) {
-                val now = SystemClock.uptimeMillis()
-                
-                // DOWN
-                val downEvent = KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK,
-                    0, 0, 0, 0, KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_KEYBOARD)
-                method.invoke(im, downEvent, INJECT_INPUT_EVENT_MODE_ASYNC)
-                
-                Thread.sleep(50)
-                
-                // UP
-                val upEvent = KeyEvent(now + 50, now + 50, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK,
-                    0, 0, 0, 0, KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_KEYBOARD)
-                method.invoke(im, upEvent, INJECT_INPUT_EVENT_MODE_ASYNC)
-            } else {
-                Runtime.getRuntime().exec(arrayOf("sh", "-c", "input keyevent ${KeyEvent.KEYCODE_BACK}")).waitFor()
-            }
-            
-            // Wait for focus to shift to the underlying app
-            Thread.sleep(300)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to dismiss overlay", e)
         }
     }
     
@@ -163,6 +124,66 @@ class InputService : IInputService.Stub() {
             Log.d(TAG, "Shell exit code: $exitCode")
         } catch (e: Exception) {
             Log.e(TAG, "Shell injection failed", e)
+        }
+    }
+    
+    override fun injectTrigger(axis: Int, value: Float) {
+        Log.d(TAG, "injectTrigger: axis=$axis, value=$value")
+        
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            
+            if (im == null || method == null) {
+                Log.e(TAG, "InputManager not available for trigger injection")
+                return
+            }
+            
+            val now = SystemClock.uptimeMillis()
+            
+            // Create pointer properties
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_UNKNOWN
+            })
+            
+            // Create pointer coords with the trigger axis value
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                x = 0f
+                y = 0f
+                pressure = 0f
+                size = 0f
+                setAxisValue(axis, value)
+            })
+            
+            // Use SOURCE_JOYSTICK - this is what real gamepads report for analog triggers
+            val source = InputDevice.SOURCE_JOYSTICK or InputDevice.SOURCE_GAMEPAD
+            
+            val event = MotionEvent.obtain(
+                now,                                    // downTime
+                now,                                    // eventTime
+                MotionEvent.ACTION_MOVE,                // action
+                1,                                      // pointerCount
+                pointerProperties,                      // pointer properties
+                pointerCoords,                          // pointer coords
+                0,                                      // metaState
+                0,                                      // buttonState
+                1f,                                     // xPrecision
+                1f,                                     // yPrecision
+                0,                                      // deviceId (0 = virtual)
+                0,                                      // edgeFlags
+                source,                                 // source
+                0                                       // flags
+            )
+            
+            Log.d(TAG, "Injecting trigger MotionEvent: axis=$axis, value=$value, source=$source")
+            val result = method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            Log.d(TAG, "Trigger injection result: $result")
+            
+            event.recycle()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Trigger injection failed", e)
         }
     }
 }

@@ -9,8 +9,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -53,7 +56,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,9 +68,12 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
+import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppGridItem
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
@@ -76,14 +81,12 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.model.app.Folder
-import jr.brian.home.ui.components.apps.AppIconImage
-import jr.brian.home.ui.components.dialog.FolderContentsDialog
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -124,7 +127,8 @@ fun AppsTab(
     val folderManager = LocalFolderManager.current
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-    val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
+    val folders by folderManager.getFolders(pageIndex)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val freeModeByPage by appPositionManager.isFreeModeByPage.collectAsStateWithLifecycle()
     val isFreeModeEnabled = freeModeByPage[pageIndex] ?: false
@@ -157,6 +161,10 @@ fun AppsTab(
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
@@ -315,16 +323,19 @@ fun AppsTab(
             Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            powerViewModel.togglePower()
-                        },
-                        onLongPress = {
-                            showDrawerOptionsDialog = true
-                        }
-                    )
-                },
+                .offset(y = offsetY)
+                .scale(pressScale)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = {},
+                    onDoubleClick = {
+                        powerViewModel.togglePower()
+                    },
+                    onLongClick = {
+                        showDrawerOptionsDialog = true
+                    }
+                ),
     ) {
         if (isLoading) {
             Box(
@@ -401,12 +412,14 @@ fun AppsTab(
                 },
                 onAppDoubleClick = { app ->
                     // Launch on opposite display from current preference
-                    val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                        DisplayPreference.CURRENT_DISPLAY
-                    } else {
-                        DisplayPreference.PRIMARY_DISPLAY
-                    }
+                    val currentPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val oppositePreference =
+                        if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
+                            DisplayPreference.CURRENT_DISPLAY
+                        } else {
+                            DisplayPreference.PRIMARY_DISPLAY
+                        }
                     launchApp(context, app.packageName, oppositePreference)
                 },
                 onSettingsClick = onSettingsClick,
@@ -431,9 +444,10 @@ fun AppsTab(
             )
         }
     }
-    
+
     if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps = appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
+        val folderApps =
+            appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
         FolderContentsDialog(
             folderName = selectedFolder!!.name,
             apps = folderApps,
@@ -653,7 +667,7 @@ private fun AppGridLayout(
                 },
             )
         }
-        
+
         // Render folders after apps
         items(folders.size) { index ->
             val folder = folders[index]
@@ -815,6 +829,7 @@ private fun FolderGridItemForAppsTab(
                         textAlign = TextAlign.Center
                     )
                 }
+
                 1 -> {
                     AppIconImage(
                         defaultIcon = previewApps[0].icon,
@@ -826,6 +841,7 @@ private fun FolderGridItemForAppsTab(
                             .clip(RoundedCornerShape(6.dp))
                     )
                 }
+
                 2 -> {
                     Row {
                         previewApps.forEach { app ->
@@ -842,6 +858,7 @@ private fun FolderGridItemForAppsTab(
                         }
                     }
                 }
+
                 3 -> {
                     Column {
                         AppIconImage(
@@ -870,6 +887,7 @@ private fun FolderGridItemForAppsTab(
                         }
                     }
                 }
+
                 else -> {
                     Column {
                         Row {
