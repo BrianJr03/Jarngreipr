@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
+import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
@@ -176,5 +177,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): WidgetProviderRepository {
         return WidgetProviderRepository(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideControlPadManager(
+        @ApplicationContext context: Context
+    ): ControlPadManager {
+        return ControlPadManager(context)
     }
 }
