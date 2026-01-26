@@ -63,7 +63,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -456,8 +455,7 @@ private fun TabContent(
                 swapSourceWidgetId = swapSourceWidgetId,
                 onSwapComplete = onSwapModeDisabled,
                 onSwapModeEnabled = onSwapModeEnabled,
-                onFolderClick = onFolderClick,
-                isHeaderVisible = isHeaderVisible
+                onFolderClick = onFolderClick
             )
         }
     }
@@ -545,15 +543,14 @@ private fun WidgetsAndAppsGrid(
     swapSourceWidgetId: Int?,
     onSwapComplete: () -> Unit,
     onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit,
-    isHeaderVisible: Boolean
+    onFolderClick: (Folder) -> Unit
 ) {
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columns),
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp, vertical = if (isHeaderVisible) 0.dp else 20.dp),
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -65,25 +66,27 @@ import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun AppDrawerTab(
+    pageIndex: Int,
+    apps: List<AppInfo>,
+    appsUnfiltered: List<AppInfo>,
     modifier: Modifier = Modifier,
-    powerViewModel: PowerViewModel = hiltViewModel(),
+    columns: Int = 4,
     totalPages: Int = 1,
+    isLoading: Boolean = false,
+    pagerState: PagerState? = null,
+    allApps: List<AppInfo> = emptyList(),
+    powerViewModel: PowerViewModel = hiltViewModel(),
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     onShowBottomSheet: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
-    pagerState: PagerState? = null,
-    pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    apps: List<AppInfo>,
-    appsUnfiltered: List<AppInfo>,
-    allApps: List<AppInfo> = emptyList(),
-    columns: Int = 4,
-    isLoading: Boolean = false,
-    pageIndex: Int,
     onNavigateToRecentApps: () -> Unit = {}
 ) {
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -174,91 +177,29 @@ fun AppDrawerTab(
             }
         }
         items(2) { index ->
-            if (viewHeight.intValue > 0) {
-                val height = with(LocalDensity.current) {
-                    viewHeight.intValue.toDp()
-                }
-                val alpha = if (lastVisibleIndex == 0) {
-                    0f
-                } else {
-                    (1f * ((viewHeight.intValue - lastOffset).toFloat() / viewHeight.intValue.toFloat()))
-                        .coerceIn(0f, 1f)
-                }
-                if (index == 0) {
-                    Box(
-                        modifier = Modifier
-                            .requiredHeight(height)
-                            .fillMaxWidth()
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onDoubleTap = {
-                                        powerViewModel.togglePower()
-                                    },
-                                    onLongPress = {
-                                        showDrawerOptionsDialog = true
-                                    }
-                                )
-                            }
-                            .then(
-                                if (showDrawerOptionsDialog ||
-                                    showHomeTabDialog
-                                ) {
-                                    Modifier.blockAllNavigation()
-                                } else {
-                                    Modifier.blockHorizontalNavigation()
-                                }
-                            ),
-                    )
-                } else {
-                    Column(
-                        Modifier
-                            .requiredHeight(height)
-                            .padding(top = 24.dp)
-                            .background(
-                                OledBackgroundColor, shape = RoundedCornerShape(
-                                    topStart = 20.dp,
-                                    topEnd = 20.dp
-                                )
-                            )
-                            .alpha(if (showAppDrawer.value) alpha else 0f)
-                            .zIndex(10f),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            contentAlignment = Alignment.TopCenter,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(
-                                        width = 36.dp, height = 6.dp
-                                    )
-                                    .background(
-                                        ThemePrimaryColor,
-                                        shape = RoundedCornerShape(3.dp)
-                                    )
-                            )
-                        }
-                        AppsModalContent(
-                            modifier = Modifier.fillMaxSize(),
-                            apps = filteredApps,
-                            appsUnfiltered = appsUnfiltered,
-                            isLoading = isLoading,
-                            allApps = allApps,
-                            pageIndex = pageIndex,
-                            isHeaderVisible = isHeaderVisible,
-                            onAppOpened = {
-                                animationScope.launch {
-                                    scrollState.scrollToItem(0)
-                                }
-                            }
-                        )
+            DrawerItem(
+                index = index,
+                viewHeight = viewHeight.intValue,
+                lastVisibleIndex = lastVisibleIndex,
+                lastOffset = lastOffset,
+                showAppDrawer = showAppDrawer.value,
+                showDrawerOptionsDialog = showDrawerOptionsDialog,
+                showHomeTabDialog = showHomeTabDialog,
+                onDoubleTap = { powerViewModel.togglePower() },
+                onLongPress = { showDrawerOptionsDialog = true },
+                apps = filteredApps,
+                appsUnfiltered = appsUnfiltered,
+                isLoading = isLoading,
+                allApps = allApps,
+                pageIndex = pageIndex,
+                isHeaderVisible = isHeaderVisible,
+                onAppOpened = {
+                    animationScope.launch {
+                        scrollState.scrollToItem(0)
                     }
                 }
-            }
+            )
         }
-
     }
 
     if (showDrawerOptionsDialog) {
@@ -322,6 +263,142 @@ fun AppDrawerTab(
             },
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch
+        )
+    }
+}
+
+@Composable
+private fun DrawerItem(
+    index: Int,
+    viewHeight: Int,
+    lastVisibleIndex: Int,
+    lastOffset: Int,
+    showAppDrawer: Boolean,
+    showDrawerOptionsDialog: Boolean,
+    showHomeTabDialog: Boolean,
+    onDoubleTap: () -> Unit,
+    onLongPress: () -> Unit,
+    apps: List<AppInfo>,
+    appsUnfiltered: List<AppInfo>,
+    isLoading: Boolean,
+    allApps: List<AppInfo>,
+    pageIndex: Int,
+    isHeaderVisible: Boolean,
+    onAppOpened: () -> Unit
+) {
+    if (viewHeight > 0) {
+        val height = with(LocalDensity.current) {
+            viewHeight.toDp()
+        }
+        val alpha = if (lastVisibleIndex == 0) {
+            0f
+        } else {
+            (1f * ((viewHeight - lastOffset).toFloat() / viewHeight.toFloat()))
+                .coerceIn(0f, 1f)
+        }
+
+        if (index == 0) {
+            DrawerTouchArea(
+                height = height,
+                showDrawerOptionsDialog = showDrawerOptionsDialog,
+                showHomeTabDialog = showHomeTabDialog,
+                onDoubleTap = onDoubleTap,
+                onLongPress = onLongPress
+            )
+        } else {
+            DrawerContent(
+                height = height,
+                alpha = alpha,
+                showAppDrawer = showAppDrawer,
+                apps = apps,
+                appsUnfiltered = appsUnfiltered,
+                isLoading = isLoading,
+                allApps = allApps,
+                pageIndex = pageIndex,
+                isHeaderVisible = isHeaderVisible,
+                onAppOpened = onAppOpened
+            )
+        }
+    }
+}
+
+@Composable
+private fun DrawerTouchArea(
+    height: androidx.compose.ui.unit.Dp,
+    showDrawerOptionsDialog: Boolean,
+    showHomeTabDialog: Boolean,
+    onDoubleTap: () -> Unit,
+    onLongPress: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .requiredHeight(height)
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = { onDoubleTap() },
+                    onLongPress = { onLongPress() }
+                )
+            }
+            .then(
+                if (showDrawerOptionsDialog || showHomeTabDialog) {
+                    Modifier.blockAllNavigation()
+                } else {
+                    Modifier.blockHorizontalNavigation()
+                }
+            )
+    )
+}
+
+@Composable
+private fun DrawerContent(
+    height: androidx.compose.ui.unit.Dp,
+    alpha: Float,
+    showAppDrawer: Boolean,
+    apps: List<AppInfo>,
+    appsUnfiltered: List<AppInfo>,
+    isLoading: Boolean,
+    allApps: List<AppInfo>,
+    pageIndex: Int,
+    isHeaderVisible: Boolean,
+    onAppOpened: () -> Unit
+) {
+    Column(
+        Modifier
+            .requiredHeight(height)
+            .padding(top = 24.dp)
+            .background(
+                OledBackgroundColor,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+            )
+            .alpha(if (showAppDrawer) alpha else 0f)
+            .zIndex(10f)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 36.dp, height = 6.dp)
+                    .background(
+                        ThemePrimaryColor,
+                        shape = RoundedCornerShape(3.dp)
+                    )
+            )
+        }
+
+        AppsModalContent(
+            modifier = Modifier.fillMaxSize(),
+            apps = apps,
+            appsUnfiltered = appsUnfiltered,
+            isLoading = isLoading,
+            allApps = allApps,
+            pageIndex = pageIndex,
+            isHeaderVisible = isHeaderVisible,
+            onAppOpened = onAppOpened
         )
     }
 }
