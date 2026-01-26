@@ -103,8 +103,8 @@ class ControlPadManager(context: Context) {
         private const val KEY_JOYSTICK_MODE = "joystick_mode"
         private const val CONTROL_PAD_COUNT = 6
         
-        const val MIN_CAMERA_SENSITIVITY = 0.015f
-        const val MAX_CAMERA_SENSITIVITY = 0.15f
-        const val DEFAULT_CAMERA_SENSITIVITY = 0.015f
+        const val MIN_CAMERA_SENSITIVITY = 0.01f
+        const val MAX_CAMERA_SENSITIVITY = 0.25f
+        const val DEFAULT_CAMERA_SENSITIVITY = 0.05f
     }
 }

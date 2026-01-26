@@ -145,25 +145,45 @@ fun GamePadScreen(
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                            val change = event.changes.firstOrNull()
+                            val change = event.changes.firstOrNull() ?: continue
                             
-                            if (change != null && !change.isConsumed) {
-                                val screenWidth = size.width
-                                
-                                when {
-                                    change.pressed && touchStartPosition == null -> {
-                                        // Started touching - determine which side and store start position
-                                        touchStartPosition = change.position
-                                        lastTouchPosition = change.position
-                                        touchStartedOnLeft = change.position.x < screenWidth / 2
-                                    }
-                                    change.pressed && touchStartPosition != null -> {
-                                        val currentPos = change.position
-                                        
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            when (joystickMode) {
-                                                JoystickMode.LEFT_ONLY -> {
-                                                    // Left stick only - use ABSOLUTE offset from start
+                            val screenWidth = size.width
+                            
+                            when {
+                                change.pressed && touchStartPosition == null -> {
+                                    // Started touching - determine which side and store start position
+                                    touchStartPosition = change.position
+                                    lastTouchPosition = change.position
+                                    touchStartedOnLeft = change.position.x < screenWidth / 2
+                                }
+                                change.pressed && touchStartPosition != null -> {
+                                    val currentPos = change.position
+                                    
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        when (joystickMode) {
+                                            JoystickMode.LEFT_ONLY -> {
+                                                // Left stick only - use ABSOLUTE offset from start
+                                                touchStartPosition?.let { start ->
+                                                    val offsetX = currentPos.x - start.x
+                                                    val offsetY = currentPos.y - start.y
+                                                    val x = (offsetX / joystickRadius).coerceIn(-1f, 1f)
+                                                    val y = (offsetY / joystickRadius).coerceIn(-1f, 1f)
+                                                    ShizukuInputManager.injectLeftJoystick(x, y)
+                                                }
+                                            }
+                                            JoystickMode.RIGHT_ONLY -> {
+                                                // Right stick - use ABSOLUTE offset from start
+                                                touchStartPosition?.let { start ->
+                                                    val offsetX = currentPos.x - start.x
+                                                    val offsetY = currentPos.y - start.y
+                                                    val x = (offsetX / joystickRadius).coerceIn(-1f, 1f)
+                                                    val y = (offsetY / joystickRadius).coerceIn(-1f, 1f)
+                                                    ShizukuInputManager.injectJoystick(x, y)
+                                                }
+                                            }
+                                            JoystickMode.LEFT_RIGHT -> {
+                                                if (touchStartedOnLeft) {
+                                                    // Left stick (movement) - use ABSOLUTE offset from start
                                                     touchStartPosition?.let { start ->
                                                         val offsetX = currentPos.x - start.x
                                                         val offsetY = currentPos.y - start.y
@@ -171,63 +191,37 @@ fun GamePadScreen(
                                                         val y = (offsetY / joystickRadius).coerceIn(-1f, 1f)
                                                         ShizukuInputManager.injectLeftJoystick(x, y)
                                                     }
-                                                }
-                                                JoystickMode.RIGHT_ONLY -> {
-                                                    // Camera uses delta (trackpad-like)
-                                                    lastTouchPosition?.let { last ->
-                                                        val deltaX = currentPos.x - last.x
-                                                        val deltaY = currentPos.y - last.y
-                                                        if (deltaX != 0f || deltaY != 0f) {
-                                                            val x = (deltaX * cameraSensitivity).coerceIn(-1f, 1f)
-                                                            val y = (deltaY * cameraSensitivity).coerceIn(-1f, 1f)
-                                                            ShizukuInputManager.injectJoystick(x, y)
-                                                        }
-                                                    }
-                                                }
-                                                JoystickMode.LEFT_RIGHT -> {
-                                                    if (touchStartedOnLeft) {
-                                                        // Left stick (movement) - use ABSOLUTE offset from start
-                                                        touchStartPosition?.let { start ->
-                                                            val offsetX = currentPos.x - start.x
-                                                            val offsetY = currentPos.y - start.y
-                                                            val x = (offsetX / joystickRadius).coerceIn(-1f, 1f)
-                                                            val y = (offsetY / joystickRadius).coerceIn(-1f, 1f)
-                                                            ShizukuInputManager.injectLeftJoystick(x, y)
-                                                        }
-                                                    } else {
-                                                        // Right stick (camera) - use delta (trackpad-like)
-                                                        lastTouchPosition?.let { last ->
-                                                            val deltaX = currentPos.x - last.x
-                                                            val deltaY = currentPos.y - last.y
-                                                            if (deltaX != 0f || deltaY != 0f) {
-                                                                val x = (deltaX * cameraSensitivity).coerceIn(-1f, 1f)
-                                                                val y = (deltaY * cameraSensitivity).coerceIn(-1f, 1f)
-                                                                ShizukuInputManager.injectJoystick(x, y)
-                                                            }
-                                                        }
+                                                } else {
+                                                    // Right stick (camera) - use ABSOLUTE offset from start
+                                                    touchStartPosition?.let { start ->
+                                                        val offsetX = currentPos.x - start.x
+                                                        val offsetY = currentPos.y - start.y
+                                                        val x = (offsetX / joystickRadius).coerceIn(-1f, 1f)
+                                                        val y = (offsetY / joystickRadius).coerceIn(-1f, 1f)
+                                                        ShizukuInputManager.injectJoystick(x, y)
                                                     }
                                                 }
                                             }
                                         }
-                                        lastTouchPosition = currentPos
                                     }
-                                    !change.pressed && touchStartPosition != null -> {
-                                        touchStartPosition = null
-                                        lastTouchPosition = null
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            when (joystickMode) {
-                                                JoystickMode.LEFT_ONLY -> {
+                                    lastTouchPosition = currentPos
+                                }
+                                !change.pressed && touchStartPosition != null -> {
+                                    touchStartPosition = null
+                                    lastTouchPosition = null
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        when (joystickMode) {
+                                            JoystickMode.LEFT_ONLY -> {
+                                                ShizukuInputManager.injectLeftJoystick(0f, 0f)
+                                            }
+                                            JoystickMode.RIGHT_ONLY -> {
+                                                ShizukuInputManager.injectJoystick(0f, 0f)
+                                            }
+                                            JoystickMode.LEFT_RIGHT -> {
+                                                if (touchStartedOnLeft) {
                                                     ShizukuInputManager.injectLeftJoystick(0f, 0f)
-                                                }
-                                                JoystickMode.RIGHT_ONLY -> {
+                                                } else {
                                                     ShizukuInputManager.injectJoystick(0f, 0f)
-                                                }
-                                                JoystickMode.LEFT_RIGHT -> {
-                                                    if (touchStartedOnLeft) {
-                                                        ShizukuInputManager.injectLeftJoystick(0f, 0f)
-                                                    } else {
-                                                        ShizukuInputManager.injectJoystick(0f, 0f)
-                                                    }
                                                 }
                                             }
                                         }
