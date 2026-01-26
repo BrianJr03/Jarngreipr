@@ -14,6 +14,7 @@ fun launchApp(
 ) {
     try {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+
         if (intent != null) {
             when (displayPreference) {
                 DisplayPreference.PRIMARY_DISPLAY -> {

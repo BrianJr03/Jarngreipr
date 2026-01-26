@@ -4,8 +4,11 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +28,14 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppIconImage
+import jr.brian.home.ui.components.apps.NotificationBadge
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
@@ -78,15 +84,29 @@ fun AppItem(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AppIconImage(
-            defaultIcon = app.icon,
-            packageName = app.packageName,
-            contentDescription = stringResource(R.string.app_icon_description, app.label),
-            customIconManager = customIconManager,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
+        Box {
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
+                contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+            
+            NotificationBadge(
+                packageName = app.packageName,
+                offsetX = 4.dp,
+                offsetY = (-4).dp
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        if (appVisibilityManager.showAppNames) {
+            app.AppName()
+        }
     }
 
     if (showOptionsDialog) {
@@ -124,8 +144,8 @@ fun AppItem(
         CustomIconDialog(
             packageName = app.packageName,
             appLabel = app.label,
-            customIconManager = customIconManager,
-            onDismiss = { showCustomIconDialog = false }
+            onDismiss = { showCustomIconDialog = false },
+            onIconChanged = {  }
         )
     }
 }

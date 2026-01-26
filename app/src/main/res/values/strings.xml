@@ -29,9 +29,8 @@
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
-    <string name="drawer_options_header_description">Toggle header bar visibility</string>
     <string name="settings_header_visibility_title">Show Tab Header</string>
-    <string name="settings_header_visibility_description">Toggle header bar visibility on home tabs</string>
+    <string name="settings_header_visibility_description">Show or hide header bar</string>
     <string name="drawer_options_tabs">Tabs</string>
     <string name="drawer_options_menu">Menu</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
@@ -43,25 +42,36 @@
 
     <!-- App Options Menu -->
     <string name="app_options_menu_title">App Options</string>
-    <string name="app_options_app_info">Open App Info</string>
-    <string name="app_options_resize">Resize Icon</string>
+    <string name="app_options_open_app_info">Open App Info</string>
+    <string name="app_options_resize">Resize</string>
     <string name="app_options_launch_external">Launch on External Display</string>
-    <string name="app_options_launch_external_descr">Bottom Display</string>
+    <string name="app_options_launch_external_descr">Bottom\nDisplay</string>
     <string name="app_options_launch_primary">Launch on Primary Display</string>
-    <string name="app_options_launch_primary_descr">Top Display</string>
+    <string name="app_options_launch_primary_descr">Top\nDisplay</string>
     <string name="app_options_selected">Selected</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
     <string name="app_options_custom_icon">Custom Icon</string>
-    <string name="app_options_custom_icon_set">Set Custom Icon</string>
+    <string name="app_options_custom_icon_png">Set Custom Icon (PNG)</string>
+    <string name="app_options_custom_icon_gif">Set Custom Icon (GIF)</string>
+    <string name="app_options_custom_icon_from_pack">Choose from Icon Packs</string>
+    <string name="app_options_icon_pack_browse_title">Choose Icon Pack</string>
+    <string name="app_options_icon_pack_loading_packs">Loading icon packs…</string>
+    <string name="app_options_icon_pack_loading_icons">Loading icons…</string>
+    <string name="app_options_icon_pack_no_icons">No icons found in this pack</string>
     <string name="app_options_custom_icon_remove">Remove Custom Icon</string>
-    <string name="app_options_custom_icon_description">Choose a PNG image</string>
     <string name="app_options_custom_icon_success">Custom icon set successfully</string>
     <string name="app_options_custom_icon_error">Failed to set custom icon</string>
     <string name="app_options_custom_icon_removed">Custom icon removed</string>
+    <string name="app_options_icon">Icon</string>
+    <string name="app_options_hide">Hide</string>
+    <string name="app_options_info">Info</string>
+    <string name="app_options_resize_preview">Icon Preview</string>
+    <string name="app_options_resize_cancel">Cancel</string>
+    <string name="app_options_resize_apply">Apply</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
-    <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
+    <string name="settings_color_theme_description">Customize app colors</string>
 
     <!-- Color Theme Names -->
     <string name="theme_pink_violet">Pink &amp; Violet</string>
@@ -86,10 +96,23 @@
     <string name="custom_theme_delete">Delete</string>
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
-    <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
+    <string name="settings_oled_mode_description">Pure black for OLED screens</string>
+
+    <string name="settings_show_app_names_title">Show App Names</string>
+    <string name="settings_show_app_names_description">Display names below app icons</string>
+
+    <string name="settings_show_folder_names_title">Show Folder Names</string>
+    <string name="settings_show_folder_names_description">Display names below folders</string>
+
+    <string name="settings_show_back_button_title">Show Settings Back Button</string>
+    <string name="settings_show_back_button_description">Display back button in settings</string>
+    <string name="settings_back_button">Back</string>
+
+    <string name="settings_visibility_options_title">Visibility Options</string>
+    <string name="settings_visibility_options_description">Toggle labels and headers</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
-    <string name="settings_wallpaper_description">Choose a wallpaper</string>
+    <string name="settings_wallpaper_description">Set background image or video</string>
     <string name="settings_wallpaper_default">Default</string>
     <string name="settings_wallpaper_transparent">System Wallpaper</string>
     <string name="settings_wallpaper_image_picker">Choose Image</string>
@@ -108,7 +131,7 @@
     <string name="settings_new_apps_visible_description">Show newly installed apps on home screen automatically</string>
 
     <string name="settings_grid_columns_title">Grid Layout</string>
-    <string name="settings_grid_columns_description">Customize columns and rows</string>
+    <string name="settings_grid_columns_description">Adjust grid size</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
     <string name="settings_grid_size_option">%1$d × %2$d</string>
     <string name="settings_grid_columns_label">Columns</string>
@@ -127,13 +150,13 @@
     <string name="settings_grid_reset">Reset</string>
 
     <string name="settings_icon_pack_title">Icon Pack</string>
-    <string name="settings_icon_pack_description">Apply custom icon packs</string>
+    <string name="settings_icon_pack_description">Use third-party icons</string>
     <string name="settings_icon_pack_default">System Default</string>
     <string name="settings_icon_pack_system_default">System Default Icons</string>
     <string name="settings_icon_pack_none_found">No icon packs installed</string>
 
     <string name="settings_thor_title">Thor Settings</string>
-    <string name="settings_thor_description">Settings exclusive to the Thor</string>
+    <string name="settings_thor_description">Thor-exclusive options</string>
     <string name="settings_thor_power_button">Show Power Button</string>
     <string name="settings_thor_quick_delete_button">Show Quick Delete Button</string>
     <string name="settings_thor_wake_method">Wake Method</string>
@@ -145,7 +168,7 @@
     <string name="settings_toggle_off">OFF</string>
 
     <string name="settings_back_button_shortcut_title">Back Button Shortcut</string>
-    <string name="settings_back_button_shortcut_description">Configure what the back button does</string>
+    <string name="settings_back_button_shortcut_description">Assign back button action</string>
     <string name="settings_back_button_shortcut_enabled">Enable Back Button Shortcut</string>
     <string name="settings_back_button_shortcut_choose">Choose Shortcut</string>
     <string name="back_button_shortcut_screen_title">Back Button Shortcut</string>
@@ -157,6 +180,7 @@
     <string name="back_button_shortcut_quick_delete">Quick Delete</string>
     <string name="back_button_shortcut_custom_theme">Create Custom Theme</string>
     <string name="back_button_shortcut_monitor">System Monitor</string>
+    <string name="back_button_shortcut_recent_apps">Recent Apps</string>
     <string name="back_button_shortcut_app">App Launch</string>
     <string name="back_button_shortcut_select_app">Select App</string>
     <string name="back_button_shortcut_selected_app">Selected: %1$s</string>
@@ -290,9 +314,11 @@
     <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
     <string name="home_tab_page_type_apps_tab">Apps Tab</string>
     <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
+    <string name="home_tab_page_type_app_drawer_tab">App Drawer Tab</string>
     <string name="home_tab_page_type">Tab  %1$d |  %2$s</string>
     <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
+    <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
@@ -313,6 +339,7 @@
 
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Apps Tab Options</string>
+    <string name="app_drawer_tab_options_title">Apps Drawer Tab Options</string>
 
     <!-- Widget Page Apps and Sections -->
     <string name="widget_page_section_apps">Apps</string>
@@ -368,6 +395,21 @@
     <string name="header_folder_options">Options</string>
     <string name="header_power_button">Power</string>
 
+    <!-- Create Folder Dialog -->
+    <string name="dialog_create_folder_title">Create Folder</string>
+    <string name="dialog_create_folder_description">Select apps to add to this folder</string>
+    <string name="dialog_create_folder_close">Close</string>
+    <string name="dialog_create_folder_select_all">Select All</string>
+    <string name="dialog_create_folder_deselect_all">Deselect All</string>
+    <string name="dialog_create_folder_ok">OK</string>
+    <string name="dialog_create_folder_apps_selected">%1$d apps selected</string>
+
+    <!-- Folder -->
+    <string name="folder_default_name">Folder</string>
+    <string name="folder_icon_description">Folder containing %1$d apps</string>
+    <string name="folder_empty">Empty folder</string>
+    <string name="folder_delete">Delete folder</string>
+
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
     <string name="app_drawer_layout_grid">Use Grid Layout</string>
@@ -397,13 +439,60 @@
     <!-- Monitor Screen -->
     <string name="monitor_screen_title">System Monitor</string>
     <string name="monitor_screen_description">Real-time system information</string>
+
+    <!-- Control Pad Screen -->
+    <string name="control_pad_screen_title">GamePad</string>
+    <string name="control_pad_screen_description">Control the main display</string>
+    <string name="back_button_shortcut_control_pad">GamePad</string>
+    <string name="control_pad_edit">Edit</string>
+    <string name="control_pad_done">Done</string>
+    <string name="control_pad_reset">Reset</string>
+    <string name="control_pad_tap_to_map">Tap to map</string>
+    <string name="control_pad_map_button_title">Map Button</string>
+    <string name="control_pad_close">Close</string>
+    <string name="control_pad_shizuku_not_running">Shizuku not running</string>
+    <string name="control_pad_shizuku_permission_required">Permission required</string>
+    <string name="control_pad_shizuku_grant_permission">Grant Permission</string>
+    <string name="control_pad_shizuku_connecting">Connecting…</string>
+    <string name="control_pad_shizuku_ready">Ready</string>
+    <string name="control_pad_no_mapping">No mapping</string>
+    <string name="control_pad_button_pressed">Button pressed</string>
+    <string name="control_pad_joystick">Joystick</string>
+    <string name="control_pad_joystick_l">L</string>
+    <string name="control_pad_joystick_lr">L/R</string>
+    <string name="control_pad_joystick_r">R</string>
+    <string name="control_pad_camera_sensitivity">Sensitivity</string>
+    <string name="control_pad_help">Help</string>
+    <string name="control_pad_help_title">Getting Started</string>
+    <string name="control_pad_help_section_shizuku">Setup Shizuku</string>
+    <string name="control_pad_help_step_1">1. Install Shizuku from the Play Store or GitHub</string>
+    <string name="control_pad_help_step_2">2. Open Shizuku and follow the setup instructions</string>
+    <string name="control_pad_help_section_termux">(Optional) Setup Termux</string>
+    <string name="control_pad_help_termux_1">1. Install Termux from the Play Store or GitHub</string>
+    <string name="control_pad_help_termux_2">2. Go to Settings → Developer Options → Wireless Debugging</string>
+    <string name="control_pad_help_termux_3">3. Enable Wireless Debugging and tap \"Pair device with pairing code\"</string>
+    <string name="control_pad_help_termux_4">4. In Termux, run: pkg install android-tools</string>
+    <string name="control_pad_help_termux_5">5. Pair: adb pair [IP:PORT] [PAIRING_CODE]</string>
+    <string name="control_pad_help_termux_6">6. Connect: adb connect [IP:PORT]</string>
+    <string name="control_pad_help_termux_7">7. Run command shown in Shizuku app to start it</string>
+    <string name="control_pad_help_section_finish">Finish Setup</string>
+    <string name="control_pad_help_finish_1">1. Return here and tap \"Permission required\" to grant access</string>
+    <string name="control_pad_help_finish_2">2. Tap \"Edit\" to customize button mappings and sensitivity</string>
+    <string name="control_pad_help_finish_3">3. Once status shows \"Ready\", you\'re all set</string>
+    <string name="control_pad_help_note_title">Note</string>
+    <string name="control_pad_help_note">Shizuku provides the elevated permissions needed to inject gamepad inputs into other apps. It must be running for GamePad to work, and you\'ll need to restart it after rebooting your device.</string>
+    <string name="control_pad_help_emulator_title">Emulator Compatibility</string>
+    <string name="control_pad_help_emulator_note">Some emulators may not respond to injected inputs because they only detect physical gamepad hardware. Native Android apps and games typically work best.</string>
     <string name="monitor_ram_label">RAM Usage</string>
+    <string name="monitor_fps_label">FPS %d</string>
     <string name="monitor_cpu_label">CPU Usage</string>
     <string name="monitor_battery_label">Battery Level</string>
     <string name="monitor_battery_time_label">Battery Time</string>
     <string name="monitor_storage_label">Storage</string>
     <string name="monitor_close">Close</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_crash_logs_title">Crash Logs</string>
+    <string name="settings_crash_logs_description">View crash reports or report an issue</string>
 
     <!-- Widget Picker -->
     <string name="widget_picker_title">Choose a Widget</string>
@@ -433,4 +522,69 @@
     <string name="crash_logs_delete_description">Delete</string>
     <string name="crash_logs_empty_title">No Crash Logs</string>
     <string name="crash_logs_empty_description">Your app hasn\'t crashed recently.\nCrash logs will appear here if the app encounters an error.</string>
+
+    <!-- Update Dialog -->
+    <string name="update_available_title">Update Available</string>
+    <string name="update_version_format">%1$s → %2$s</string>
+    <string name="update_download_size">Download size: %1$s</string>
+    <string name="update_whats_new">What\'s New</string>
+    <string name="update_button_later">Later</string>
+    <string name="update_button_download">Download</string>
+    <string name="update_choose_variant">Choose Version</string>
+    <string name="update_variant_standard">Standard</string>
+    <string name="update_variant_hidden">Hidden</string>
+    <string name="update_variant_hidden_description">• Hidden: Jarngreipr will be hidden in task switcher</string>
+    <string name="update_variant_size">%1$s</string>
+    <string name="update_downloading_title">Downloading Update</string>
+    <string name="update_downloading_message">Please wait while the update is being downloaded…</string>
+    <string name="update_progress_format">%1$s / %2$s</string>
+    <string name="update_progress_percent">%1$d%%</string>
+    <string name="update_complete_title">Download Complete</string>
+    <string name="update_complete_message">The update is ready to be installed. Tap Install to continue.</string>
+    <string name="update_button_install">Install</string>
+    <string name="update_failed_title">Download Failed</string>
+    <string name="update_button_retry">Retry</string>
+    <string name="update_button_download_browser">Download in Browser</string>
+    <string name="update_button_cancel">Cancel</string>
+    <string name="update_permission_title">Permission Required</string>
+    <string name="update_permission_message">To install updates directly, please allow this app to install apps from unknown sources in the settings.</string>
+    <string name="update_permission_granted_title">Permission Granted</string>
+    <string name="update_permission_granted_message">You can now download and install updates directly.</string>
+    <string name="update_button_open_settings">Open Settings</string>
+    <string name="update_button_start_download">Start Download</string>
+    <string name="update_close_description">Close</string>
+    <string name="update_scroll_down_description">Scroll down</string>
+    <string name="update_button_skip_version">Skip this version</string>
+    <string name="update_button_skip">Skip</string>
+    <string name="settings_check_updates_title">Check for Updates</string>
+    <string name="settings_check_updates_description">Check for new versions</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_not_available">You\'re up to date!</string>
+
+    <!-- Recent Apps Screen -->
+    <string name="recent_apps_screen_title">Recently Used Apps</string>
+    <string name="recent_apps_empty_title">No Recent Apps</string>
+    <string name="recent_apps_empty_description">Your recently used apps will appear here.</string>
+    <string name="recent_apps_permission_title">Permission Required</string>
+    <string name="recent_apps_permission_description">To view recent apps, please grant usage access permission.</string>
+    <string name="recent_apps_permission_button">Grant Permission</string>
+    <string name="recent_apps_icon_description">App icon for %1$s</string>
+    <string name="recent_apps_tap_to_open">Tap to open</string>
+    <string name="recent_apps_display_top">Top</string>
+    <string name="recent_apps_display_bottom">Bottom</string>
+    <string name="recent_apps_usage_time_format">Used for %1$s</string>
+    <string name="recent_apps_subtitle">%1$d apps used today</string>
+    <string name="recent_apps_refresh">Refresh</string>
+    <string name="recent_apps_loading">Loading recent apps…</string>
+    <string name="recent_apps_close">Close app</string>
+
+    <!-- Notification Access -->
+    <string name="notification_access_title">Enable Notification Badges</string>
+    <string name="notification_access_description">Grant notification access to show notification count badges on app icons. This helps you see which apps have unread notifications at a glance.</string>
+    <string name="notification_access_grant">Grant Access</string>
+    <string name="notification_access_later">Maybe Later</string>
+    <string name="notification_access_restricted_title">Restricted Setting (Android 13+)</string>
+    <string name="notification_access_restricted_steps">Since this app was installed outside the Play Store, you need to allow restricted settings first:\n\n1. Tap \"Open App Settings\" below\n2. Tap the ⋮ menu (top right)\n3. Select \"Allow restricted settings\"\n4. Return here and tap \"Grant Access\"</string>
+    <string name="notification_access_open_app_settings">Open App Settings</string>
+    <string name="notification_access_never">I\'ll Pass</string>
 </resources>

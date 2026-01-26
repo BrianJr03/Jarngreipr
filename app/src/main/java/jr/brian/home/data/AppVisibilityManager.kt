@@ -18,6 +18,15 @@ class AppVisibilityManager(context: Context) {
     private val _newAppsVisibleByDefault = MutableStateFlow(loadNewAppsVisibleByDefault())
     val newAppsVisibleByDefault = _newAppsVisibleByDefault.asStateFlow()
 
+    var showAppNames by mutableStateOf(loadShowAppNames())
+        private set
+
+    var showFolderNames by mutableStateOf(loadShowFolderNames())
+        private set
+
+    var showSettingsBackButton by mutableStateOf(loadShowSettingsBackButton())
+        private set
+
     init {
         loadAllPageData()
     }
@@ -46,6 +55,42 @@ class AppVisibilityManager(context: Context) {
 
     private fun loadNewAppsVisibleByDefault(): Boolean {
         return prefs.getBoolean(KEY_NEW_APPS_VISIBLE_BY_DEFAULT, true)
+    }
+
+    private fun loadShowAppNames(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_APP_NAMES, false)
+    }
+
+    private fun loadShowFolderNames(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_FOLDER_NAMES, true)
+    }
+
+    private fun loadShowSettingsBackButton(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_SETTINGS_BACK_BUTTON, true)
+    }
+
+    fun toggleShowAppNames() {
+        showAppNames = !showAppNames
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_APP_NAMES, showAppNames)
+            apply()
+        }
+    }
+
+    fun toggleShowFolderNames() {
+        showFolderNames = !showFolderNames
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_FOLDER_NAMES, showFolderNames)
+            apply()
+        }
+    }
+
+    fun toggleShowSettingsBackButton() {
+        showSettingsBackButton = !showSettingsBackButton
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_SETTINGS_BACK_BUTTON, showSettingsBackButton)
+            apply()
+        }
     }
 
     fun setNewAppsVisibleByDefault(visible: Boolean) {
@@ -111,6 +156,9 @@ class AppVisibilityManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"
+        private const val KEY_SHOW_APP_NAMES = "show_app_names"
+        private const val KEY_SHOW_FOLDER_NAMES = "show_folder_names"
+        private const val KEY_SHOW_SETTINGS_BACK_BUTTON = "show_settings_back_button"
         private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"
         private const val SEPARATOR = ","
     }

@@ -47,7 +47,7 @@ class WidgetViewModel @Inject constructor(
         appWidgetHost?.startListening()
 
         val pageTypes = pageTypeManager.pageTypes.value
-        val widgetPageCount = pageTypes.count { it == PageType.APPS_AND_WIDGETS_TAB }
+        val widgetPageCount = pageTypes.count { it != PageType.APPS_TAB }
 
         val pages = (0 until widgetPageCount).map { index ->
             WidgetPage(index = index)
@@ -69,7 +69,7 @@ class WidgetViewModel @Inject constructor(
                     return@collect
                 }
 
-                val widgetPageCount = pageTypes.count { it == PageType.APPS_AND_WIDGETS_TAB }
+                val widgetPageCount = pageTypes.count { it != PageType.APPS_TAB }
                 val currentPages = _uiState.value.widgetPages
 
                 when {

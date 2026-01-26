@@ -29,10 +29,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -46,6 +51,7 @@ fun FreePositionedAppItem(
     onOffsetChanged: (Float, Float) -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
+    onDoubleClick: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
     isDraggingEnabled: Boolean = true,
     iconSize: Float = 64f,
@@ -55,6 +61,7 @@ fun FreePositionedAppItem(
     customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val appVisibilityManager = LocalAppVisibilityManager.current
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
     var currentOffsetY by remember(offsetY) { mutableStateOf(offsetY) }
 
@@ -63,52 +70,67 @@ fun FreePositionedAppItem(
             .offset { IntOffset(currentOffsetX.roundToInt(), currentOffsetY.roundToInt()) }
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AppIconImage(
-                defaultIcon = app.icon,
-                packageName = app.packageName,
-                contentDescription = stringResource(R.string.app_icon_description, app.label),
-                customIconManager = customIconManager,
-                modifier = Modifier
-                    .size(iconSize.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .then(
-                        if (isDraggingEnabled) {
-                            Modifier.pointerInput(Unit) {
-                                detectDragGestures(
-                                    onDragStart = { onDragStart() },
-                                    onDragEnd = { onDragEnd() },
-                                    onDragCancel = { onDragEnd() }
-                                ) { change, dragAmount ->
-                                    change.consume()
-                                    currentOffsetX += dragAmount.x
-                                    currentOffsetY += dragAmount.y
-                                    onOffsetChanged(currentOffsetX, currentOffsetY)
-                                }
-                            }
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .then(
-                        if (isFocusable) {
-                            Modifier
-                                .focusRequester(focusRequester)
-                                .onFocusChanged {
-                                    if (it.isFocused && !isFocused) {
-                                        onFocusChanged()
+            Box {
+                AppIconImage(
+                    defaultIcon = app.icon,
+                    packageName = app.packageName,
+                    contentDescription = stringResource(R.string.app_icon_description, app.label),
+                    customIconManager = customIconManager,
+                    modifier = Modifier
+                        .size(iconSize.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .then(
+                            if (isDraggingEnabled) {
+                                Modifier.pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragStart = { onDragStart() },
+                                        onDragEnd = { onDragEnd() },
+                                        onDragCancel = { onDragEnd() }
+                                    ) { change, dragAmount ->
+                                        change.consume()
+                                        currentOffsetX += dragAmount.x
+                                        currentOffsetY += dragAmount.y
+                                        onOffsetChanged(currentOffsetX, currentOffsetY)
                                     }
-                                    isFocused = it.isFocused
                                 }
-                                .focusable()
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = onLongClick
-                    )
-            )
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .then(
+                            if (isFocusable) {
+                                Modifier
+                                    .focusRequester(focusRequester)
+                                    .onFocusChanged {
+                                        if (it.isFocused && !isFocused) {
+                                            onFocusChanged()
+                                        }
+                                        isFocused = it.isFocused
+                                    }
+                                    .focusable()
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .combinedClickable(
+                            onClick = onClick,
+                            onDoubleClick = onDoubleClick,
+                            onLongClick = onLongClick
+                        )
+                )
+                
+                NotificationBadge(
+                    packageName = app.packageName,
+                    offsetX = 4.dp,
+                    offsetY = (-4).dp
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            if (appVisibilityManager.showAppNames) {
+                app.AppName()
+            }
 
             if (!keyboardVisible && isFocusable) {
                 Spacer(Modifier.height(12.dp))

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
@@ -396,5 +397,48 @@ class IconPackManager(private val context: Context) {
         }
 
         return bitmap.toDrawable(context.resources)
+    }
+
+    /**
+     * Get all drawables from an icon pack
+     * @param packageName The icon pack's package name
+     * @return List of drawable resources (name, drawable) from the icon pack
+     */
+    suspend fun getAllDrawablesFromIconPack(packageName: String): Map<String, Drawable> = withContext(Dispatchers.IO) {
+        val drawables = mutableMapOf<String, Drawable>()
+
+        try {
+            val iconPackContext = context.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
+            val resources = iconPackContext.resources
+
+            Log.d("IconPackManager", "Loading drawables from: $packageName")
+
+            try {
+                val mappings = loadAppFilter(packageName)
+                Log.d("IconPackManager", "Found ${mappings.size} mappings in appfilter.xml")
+
+                for ((_, drawableName) in mappings) {
+                    try {
+                        val resId = resources.getIdentifier(drawableName, "drawable", packageName)
+                        if (resId != 0) {
+                            val drawable = resources.getDrawable(resId, null)
+                            drawables[drawableName] = drawable
+                        }
+                    } catch (e: Exception) {
+                        Log.w("IconPackManager", "Failed to load: $drawableName", e)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("IconPackManager", "Failed to load from appfilter.xml", e)
+            }
+
+            Log.d("IconPackManager", "Successfully loaded ${drawables.size} drawables total")
+
+            drawables.toSortedMap()
+        } catch (e: Exception) {
+            Log.e("IconPackManager", "Error in getAllDrawablesFromIconPack", e)
+            e.printStackTrace()
+            emptyMap()
+        }
     }
 }

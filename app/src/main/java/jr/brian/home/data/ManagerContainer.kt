@@ -2,14 +2,22 @@ package jr.brian.home.data
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import jr.brian.home.ui.theme.managers.GlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalControlPadManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
+import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
+import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
@@ -33,8 +41,20 @@ data class ManagerContainer @Inject constructor(
     val pageTypeManager: PageTypeManager,
     val iconPackManager: IconPackManager,
     val whatsNewManager: WhatsNewManager,
-    val customIconManager: CustomIconManager
-)
+    val customIconManager: CustomIconManager,
+    val globalIconRefreshManager: GlobalIconRefreshManager,
+    val folderManager: FolderManager,
+    val controlPadManager: ControlPadManager,
+    val notificationCountManager: NotificationCountManager,
+    val recentAppsCacheManager: RecentAppsCacheManager,
+    val shizukuManager: ShizukuManager,
+    val appUpdateManager: AppUpdateManager
+) {
+    init {
+        NotificationCountManager.setInstance(notificationCountManager)
+        shizukuManager.initialize()
+    }
+}
 
 @Composable
 fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> Unit) {
@@ -51,7 +71,14 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalPageTypeManager provides pageTypeManager,
         LocalIconPackManager provides iconPackManager,
         LocalWhatsNewManager provides whatsNewManager,
-        LocalCustomIconManager provides customIconManager
+        LocalCustomIconManager provides customIconManager,
+        LocalGlobalIconRefreshManager provides globalIconRefreshManager,
+        LocalFolderManager provides folderManager,
+        LocalControlPadManager provides controlPadManager,
+        LocalNotificationCountManager provides notificationCountManager,
+        LocalRecentAppsCacheManager provides recentAppsCacheManager,
+        LocalShizukuManager provides shizukuManager,
+        LocalAppUpdateManager provides appUpdateManager
     ) {
         content()
     }

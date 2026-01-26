@@ -18,13 +18,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Gif
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,27 +46,46 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.data.CustomIconManager
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import kotlinx.coroutines.launch
 
 @Composable
 fun CustomIconDialog(
     packageName: String,
     appLabel: String,
-    customIconManager: CustomIconManager,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onIconChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val customIconManager = LocalCustomIconManager.current
+    val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
     val scope = rememberCoroutineScope()
     var hasCustomIcon by remember { mutableStateOf(false) }
+    var showIconPackBrowser by remember { mutableStateOf(false) }
 
-    scope.launch {
+    LaunchedEffect(Unit) {
         hasCustomIcon = customIconManager.hasCustomIcon(packageName)
+    }
+
+    val handleIconChanged = {
+        globalIconRefreshManager?.triggerRefresh()
+        onIconChanged()
+    }
+
+    if (showIconPackBrowser) {
+        IconPackBrowseDialog(
+            packageName = packageName,
+            onDismiss = {
+                showIconPackBrowser = false
+            },
+            onIconChanged = handleIconChanged
+        )
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -79,6 +101,7 @@ fun CustomIconDialog(
                         Toast.LENGTH_SHORT
                     ).show()
                     hasCustomIcon = true
+                    handleIconChanged()
                     onDismiss()
                 } else {
                     Toast.makeText(
@@ -147,19 +170,31 @@ fun CustomIconDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = stringResource(R.string.app_options_custom_icon_description),
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 CustomIconActionButton(
-                    text = stringResource(R.string.app_options_custom_icon_set),
+                    text = stringResource(R.string.app_options_custom_icon_png),
                     icon = Icons.Default.Image,
                     onClick = {
                         imagePickerLauncher.launch("image/png")
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CustomIconActionButton(
+                    text = stringResource(R.string.app_options_custom_icon_gif),
+                    icon = Icons.Default.Gif,
+                    onClick = {
+                        imagePickerLauncher.launch("image/gif")
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CustomIconActionButton(
+                    text = stringResource(R.string.app_options_custom_icon_from_pack),
+                    icon = Icons.Default.Apps,
+                    onClick = {
+                        showIconPackBrowser = true
                     }
                 )
 
