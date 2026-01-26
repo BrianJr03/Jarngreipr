@@ -460,7 +460,7 @@
     <string name="control_pad_help_section_shizuku">Setup Shizuku</string>
     <string name="control_pad_help_step_1">1. Install Shizuku from the Play Store or GitHub</string>
     <string name="control_pad_help_step_2">2. Open Shizuku and follow the setup instructions</string>
-    <string name="control_pad_help_section_termux">Setup Termux</string>
+    <string name="control_pad_help_section_termux">(Optional) Setup Termux</string>
     <string name="control_pad_help_termux_1">1. Install Termux from the Play Store or GitHub</string>
     <string name="control_pad_help_termux_2">2. Go to Settings → Developer Options → Wireless Debugging</string>
     <string name="control_pad_help_termux_3">3. Enable Wireless Debugging and tap \"Pair device with pairing code\"</string>
