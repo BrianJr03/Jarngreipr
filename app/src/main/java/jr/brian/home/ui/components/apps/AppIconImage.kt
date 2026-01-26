@@ -37,7 +37,6 @@ fun AppIconImage(
 
     val customIconPath = customIconsMap[packageName]
 
-    // ImageLoader with GIF support
     val gifImageLoader = remember {
         ImageLoader.Builder(context)
             .components {

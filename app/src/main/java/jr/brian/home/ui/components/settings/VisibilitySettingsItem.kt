@@ -102,7 +102,6 @@ fun VisibilitySettingsItem(
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // Main Card
         Box(
             modifier =
                 Modifier
@@ -182,7 +181,6 @@ fun VisibilitySettingsItem(
             }
         }
 
-        // Expandable Options
         AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically() + fadeIn(),
@@ -194,7 +192,6 @@ fun VisibilitySettingsItem(
                     .padding(top = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Show App Names Toggle
                 VisibilityToggleOption(
                     focusRequester = firstOptionFocusRequester,
                     icon = Icons.Default.Api,
@@ -204,7 +201,6 @@ fun VisibilitySettingsItem(
                     onClick = { appVisibilityManager.toggleShowAppNames() }
                 )
 
-                // Show Folder Names Toggle
                 VisibilityToggleOption(
                     icon = Icons.Default.Folder,
                     title = stringResource(id = R.string.settings_show_folder_names_title),
@@ -213,7 +209,6 @@ fun VisibilitySettingsItem(
                     onClick = { appVisibilityManager.toggleShowFolderNames() }
                 )
 
-                // Show Tab Header Toggle
                 VisibilityToggleOption(
                     icon = Icons.Default.Visibility,
                     title = stringResource(id = R.string.settings_header_visibility_title),
