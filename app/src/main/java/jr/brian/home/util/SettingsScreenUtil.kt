@@ -10,4 +10,5 @@ object SettingsScreenUtil {
     const val EXPANDED_GRID = "grid"
     const val EXPANDED_THOR = "thor"
     const val EXPANDED_BACK_BUTTON = "back_button"
+    const val EXPANDED_VISIBILITY = "visibility"
 }

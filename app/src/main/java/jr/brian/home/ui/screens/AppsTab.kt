@@ -7,10 +7,20 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -32,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -42,6 +51,12 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
+import jr.brian.home.model.app.Folder
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.apps.AppGridItem
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
@@ -49,12 +64,15 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
+import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.widget.AppGridLayout
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -93,7 +111,8 @@ fun AppsTab(
     val folderManager = LocalFolderManager.current
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-    val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
+    val folders by folderManager.getFolders(pageIndex)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val freeModeByPage by appPositionManager.isFreeModeByPage.collectAsStateWithLifecycle()
     val isFreeModeEnabled = freeModeByPage[pageIndex] ?: false
@@ -126,6 +145,10 @@ fun AppsTab(
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {
@@ -284,16 +307,19 @@ fun AppsTab(
             Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            powerViewModel.togglePower()
-                        },
-                        onLongPress = {
-                            showDrawerOptionsDialog = true
-                        }
-                    )
-                },
+                .offset(y = offsetY)
+                .scale(pressScale)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = {},
+                    onDoubleClick = {
+                        powerViewModel.togglePower()
+                    },
+                    onLongClick = {
+                        showDrawerOptionsDialog = true
+                    }
+                ),
     ) {
         if (isLoading) {
             Box(
@@ -370,12 +396,14 @@ fun AppsTab(
                 },
                 onAppDoubleClick = { app ->
                     // Launch on opposite display from current preference
-                    val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                        DisplayPreference.CURRENT_DISPLAY
-                    } else {
-                        DisplayPreference.PRIMARY_DISPLAY
-                    }
+                    val currentPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val oppositePreference =
+                        if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
+                            DisplayPreference.CURRENT_DISPLAY
+                        } else {
+                            DisplayPreference.PRIMARY_DISPLAY
+                        }
                     launchApp(context, app.packageName, oppositePreference)
                 },
                 onSettingsClick = onSettingsClick,
@@ -400,9 +428,10 @@ fun AppsTab(
             )
         }
     }
-    
+
     if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps = appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
+        val folderApps =
+            appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
         FolderContentsDialog(
             folderName = selectedFolder!!.name,
             apps = folderApps,
@@ -532,3 +561,364 @@ private fun AppSelectionContent(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppGridLayout(
+    columns: Int,
+    maxAppsPerPage: Int,
+    apps: List<AppInfo>,
+    modifier: Modifier = Modifier,
+    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit = {},
+    onNavigateLeft: () -> Unit = {},
+    onAppClick: (AppInfo) -> Unit,
+    onAppLongClick: (AppInfo) -> Unit = {},
+    onAppDoubleClick: (AppInfo) -> Unit = {},
+    folders: List<Folder> = emptyList(),
+    allApps: List<AppInfo> = emptyList(),
+    onFolderClick: (Folder) -> Unit = {}
+) {
+    val gridState = rememberLazyGridState()
+
+    val displayedApps = remember(apps, maxAppsPerPage) {
+        apps.take(maxAppsPerPage)
+    }
+
+    LaunchedEffect(Unit) {
+        appFocusRequesters[0]?.requestFocus()
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        state = gridState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = 8.dp,
+            vertical = 8.dp,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        // Render apps first
+        items(displayedApps.size) { index ->
+            val app = displayedApps[index]
+            val itemFocusRequester =
+                remember(index) {
+                    FocusRequester().also { appFocusRequesters[index] = it }
+                }
+
+            AppGridItem(
+                app = app,
+                focusRequester = itemFocusRequester,
+                onClick = { onAppClick(app) },
+                onLongClick = { onAppLongClick(app) },
+                onDoubleClick = { onAppDoubleClick(app) },
+                onFocusChanged = { onFocusChanged(index) },
+                onNavigateUp = {
+                    val prevIndex = index - columns
+                    if (prevIndex >= 0) {
+                        coroutineScope.launch {
+                            gridState.animateScrollToItem(prevIndex)
+                        }
+                        appFocusRequesters[prevIndex]?.requestFocus()
+                    }
+                },
+                onNavigateDown = {
+                    val nextIndex = index + columns
+                    if (nextIndex < displayedApps.size) {
+                        coroutineScope.launch {
+                            gridState.animateScrollToItem(nextIndex)
+                        }
+                        appFocusRequesters[nextIndex]?.requestFocus()
+                    }
+                },
+                onNavigateLeft = {
+                    if (index % columns == 0) {
+                        onNavigateLeft()
+                    } else {
+                        val prevIndex = index - 1
+                        if (prevIndex >= 0) {
+                            appFocusRequesters[prevIndex]?.requestFocus()
+                        }
+                    }
+                },
+                onNavigateRight = {
+                    val nextIndex = index + 1
+                    if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
+                        appFocusRequesters[nextIndex]?.requestFocus()
+                    }
+                },
+            )
+        }
+
+        // Render folders after apps
+        items(folders.size) { index ->
+            val folder = folders[index]
+            val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+            FolderGridItemForAppsTab(
+                folder = folder,
+                apps = folderApps,
+                onClick = { onFolderClick(folder) }
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+}
+
+@Composable
+private fun EmptyAppsState(
+    onAddClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_title),
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(R.string.apps_tab_no_apps_description),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val cardGradient = Brush.linearGradient(
+                colors = if (isFocused) {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.9f),
+                        ThemeSecondaryColor.copy(alpha = 0.9f)
+                    )
+                } else {
+                    listOf(
+                        ThemePrimaryColor.copy(alpha = 0.4f),
+                        ThemeSecondaryColor.copy(alpha = 0.3f)
+                    )
+                }
+            )
+
+            Box(
+                modifier = Modifier
+                    .scale(animatedFocusedScale(isFocused))
+                    .onFocusChanged { isFocused = it.isFocused }
+                    .background(
+                        brush = cardGradient,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = if (isFocused) 3.dp else 2.dp,
+                        brush = if (isFocused) {
+                            borderBrush(
+                                isFocused = true,
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.8f),
+                                    ThemeSecondaryColor.copy(alpha = 0.6f)
+                                )
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    ThemePrimaryColor.copy(alpha = 0.6f),
+                                    ThemeSecondaryColor.copy(alpha = 0.4f)
+                                )
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onAddClick() }
+                    .focusable()
+                    .padding(horizontal = 48.dp, vertical = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Text(
+                        text = stringResource(R.string.apps_tab_add_button),
+                        color = Color.White,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FolderGridItemForAppsTab(
+    folder: Folder,
+    apps: List<AppInfo>,
+    onClick: () -> Unit
+) {
+    val customIconManager = LocalCustomIconManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val previewApps = apps.take(4)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable { onClick() }
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(OledCardColor.copy(alpha = 0.9f))
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when (previewApps.size) {
+                0 -> {
+                    Text(
+                        text = "Empty",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 8.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                1 -> {
+                    AppIconImage(
+                        defaultIcon = previewApps[0].icon,
+                        packageName = previewApps[0].packageName,
+                        contentDescription = previewApps[0].label,
+                        customIconManager = customIconManager,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                    )
+                }
+
+                2 -> {
+                    Row {
+                        previewApps.forEach { app ->
+                            AppIconImage(
+                                defaultIcon = app.icon,
+                                packageName = app.packageName,
+                                contentDescription = app.label,
+                                customIconManager = customIconManager,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(1.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                            )
+                        }
+                    }
+                }
+
+                3 -> {
+                    Column {
+                        AppIconImage(
+                            defaultIcon = previewApps[0].icon,
+                            packageName = previewApps[0].packageName,
+                            contentDescription = previewApps[0].label,
+                            customIconManager = customIconManager,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .padding(1.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                        )
+                        Row {
+                            previewApps.drop(1).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+
+                else -> {
+                    Column {
+                        Row {
+                            previewApps.take(2).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                        Row {
+                            previewApps.drop(2).take(2).forEach { app ->
+                                AppIconImage(
+                                    defaultIcon = app.icon,
+                                    packageName = app.packageName,
+                                    contentDescription = app.label,
+                                    customIconManager = customIconManager,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .padding(1.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        if (appVisibilityManager.showFolderNames) {
+            Text(
+                text = folder.name,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+        }
+    }
+}
