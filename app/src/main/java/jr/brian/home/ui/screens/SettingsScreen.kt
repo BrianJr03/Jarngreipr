@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
@@ -66,6 +68,21 @@ import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.OverlayInfoUtil
 import jr.brian.home.util.SettingsScreenUtil.DEFAULT_VERSION_NAME
@@ -94,6 +111,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val appUpdateManager = LocalAppUpdateManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val showBackButton = appVisibilityManager.showSettingsBackButton
     
     var isCheckingForUpdates by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
@@ -118,7 +137,10 @@ fun SettingsScreen(
                     .systemBarsPadding(),
         ) {
             Column {
-                VersionInfo()
+                SettingsHeader(
+                    showBackButton = showBackButton,
+                    onBackClick = onDismiss
+                )
                 SettingsContent(
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ,
@@ -564,7 +586,10 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun VersionInfo() {
+private fun SettingsHeader(
+    showBackButton: Boolean,
+    onBackClick: () -> Unit
+) {
     val context = LocalContext.current
     val versionName = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -572,18 +597,91 @@ private fun VersionInfo() {
     } catch (_: Exception) {
         DEFAULT_VERSION_NAME
     }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, end = 32.dp),
-        contentAlignment = Alignment.TopEnd
+            .padding(top = 16.dp, start = 32.dp, end = 32.dp)
     ) {
+        if (showBackButton) {
+            SettingsBackButton(
+                onClick = onBackClick,
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+        }
+
         Text(
             text = stringResource(R.string.settings_version_label, versionName),
             color = ThemeAccentColor,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterEnd)
         )
+    }
+}
+
+@Composable
+private fun SettingsBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val cardGradient = Brush.linearGradient(
+        colors = if (isFocused) {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.8f),
+                ThemeSecondaryColor.copy(alpha = 0.8f)
+            )
+        } else {
+            listOf(
+                OledCardLightColor,
+                OledCardColor
+            )
+        }
+    )
+
+    Box(
+        modifier = modifier
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                brush = borderBrush(
+                    isFocused = isFocused,
+                    colors = listOf(
+                        ThemePrimaryColor.copy(alpha = 0.8f),
+                        ThemeSecondaryColor.copy(alpha = 0.6f)
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .focusable()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.settings_back_button),
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = stringResource(R.string.settings_back_button),
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
+            )
+        }
     }
 }
