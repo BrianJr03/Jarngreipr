@@ -61,10 +61,11 @@ fun AppsTabOptionsDialog(
     onDismiss: () -> Unit,
     onShowAppVisibility: () -> Unit,
     isFreeModeEnabled: Boolean = false,
-    onToggleFreeMode: () -> Unit = {},
+    onToggleFreeMode: (() -> Unit)? = null,
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
-    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {}
+    onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
+    title: String = stringResource(R.string.app_drawer_options_title)
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -100,7 +101,7 @@ fun AppsTabOptionsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.app_drawer_options_title),
+                        text = title,
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -134,19 +135,21 @@ fun AppsTabOptionsDialog(
                         }
                     )
 
-                    GridOptionButton(
-                        modifier = Modifier.weight(1f),
-                        title = if (isFreeModeEnabled) {
-                            stringResource(R.string.app_drawer_layout_grid)
-                        } else {
-                            stringResource(R.string.app_drawer_layout_free)
-                        },
-                        icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
-                        onClick = {
-                            onDismiss()
-                            onToggleFreeMode()
-                        }
-                    )
+                    if (onToggleFreeMode != null) {
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = if (isFreeModeEnabled) {
+                                stringResource(R.string.app_drawer_layout_grid)
+                            } else {
+                                stringResource(R.string.app_drawer_layout_free)
+                            },
+                            icon = if (isFreeModeEnabled) Icons.Default.GridOn else Icons.Default.OpenWith,
+                            onClick = {
+                                onDismiss()
+                                onToggleFreeMode()
+                            }
+                        )
+                    }
                 }
 
                 if (isFreeModeEnabled) {

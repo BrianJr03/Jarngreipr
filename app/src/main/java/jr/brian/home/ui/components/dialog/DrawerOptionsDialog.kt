@@ -79,7 +79,7 @@ fun DrawerOptionsDialog(
     onMenuClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
-    onCreateFolderClick: () -> Unit,
+    onCreateFolderClick: (() -> Unit)?,
     onRecentAppsClick: () -> Unit = {}
 ) {
     val wallpaperManager = LocalWallpaperManager.current
@@ -205,6 +205,7 @@ fun DrawerOptionsDialog(
                                 onDismiss()
                             }
                         )
+
                     }
                 }
 
@@ -221,15 +222,17 @@ fun DrawerOptionsDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            DrawerOptionButton(
-                                modifier = Modifier.weight(1f),
-                                title = stringResource(R.string.dialog_create_folder_title),
-                                icon = Icons.Default.FolderOpen,
-                                onClick = {
-                                    onCreateFolderClick()
-                                    onDismiss()
-                                }
-                            )
+                            if (onCreateFolderClick != null) {
+                                DrawerOptionButton(
+                                    modifier = Modifier.weight(1f),
+                                    title = stringResource(R.string.dialog_create_folder_title),
+                                    icon = Icons.Default.FolderOpen,
+                                    onClick = {
+                                        onCreateFolderClick()
+                                        onDismiss()
+                                    }
+                                )
+                            }
 
                             DrawerOptionButton(
                                 modifier = Modifier.weight(1f),
@@ -244,6 +247,7 @@ fun DrawerOptionsDialog(
                                     onDismiss()
                                 }
                             )
+
                         }
 
                         Row(
@@ -260,6 +264,7 @@ fun DrawerOptionsDialog(
                                 }
                             )
 
+
                             DrawerOptionButton(
                                 modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.settings_wallpaper_title),
@@ -269,6 +274,7 @@ fun DrawerOptionsDialog(
                                 }
                             )
                         }
+
                     }
                 }
 
@@ -332,7 +338,7 @@ fun DrawerOptionsDialog(
 }
 
 @Composable
-private fun DrawerOptionButton(
+fun DrawerOptionButton(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
