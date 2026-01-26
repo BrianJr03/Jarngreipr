@@ -175,6 +175,6 @@ fun AppInfo.AppName() {
         color = Color.White,
         textAlign = TextAlign.Center,
         maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
     )
 }

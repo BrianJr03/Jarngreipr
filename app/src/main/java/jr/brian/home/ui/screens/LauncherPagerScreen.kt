@@ -250,6 +250,53 @@ fun LauncherPagerScreen(
                             }
                         }
                     }
+
+                    PageType.APP_DRAWER_TAB -> {
+                        val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+
+                        if (widgetPage != null) {
+                            val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
+                            val visibleApps = remember(homeUiState.allApps, hiddenApps) {
+                                homeUiState.allApps.filter { app ->
+                                    app.packageName !in hiddenApps
+                                }
+                            }
+
+                            key(globalIconRefreshManager?.refreshCounter) {
+                                AppDrawerTab(
+                                    powerViewModel = powerViewModel,
+                                    totalPages = totalPages,
+                                    onShowBottomSheet = onShowBottomSheet,
+                                    onSettingsClick = onSettingsClick,
+                                    apps = visibleApps,
+                                    appsUnfiltered = homeUiState.allAppsUnfiltered,
+                                    allApps = homeUiState.allAppsUnfiltered,
+                                    onDeletePage = { pagerPageIndex ->
+                                        scope.launch {
+                                            deleteTab(
+                                                totalPages = totalPages,
+                                                pagerPageIndex = pagerPageIndex,
+                                                pagerState = pagerState,
+                                                pageTypeManager = pageTypeManager,
+                                                pageCountManager = pageCountManager,
+                                                homeTabManager = homeTabManager,
+                                                onDeleteWidgetPage = { widgetPageIndex ->
+                                                    widgetViewModel.deletePage(widgetPageIndex)
+                                                }
+                                            )
+                                        }
+                                    },
+                                    pageIndicatorBorderColor = ThemeSecondaryColor,
+                                    pagerState = pagerState,
+                                    isLoading = homeUiState.isLoading,
+                                    pageIndex = page,
+                                    onNavigateToRecentApps = onNavigateToRecentApps,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -262,7 +309,7 @@ private fun getAppAndWidgetTabIndex(
 ): Int {
     var widgetPageCount = 0
     for (i in 0 until currentPageIndex) {
-        if (pageTypes.getOrNull(i) == PageType.APPS_AND_WIDGETS_TAB) {
+        if (pageTypes.getOrNull(i) != PageType.APPS_TAB) {
             widgetPageCount++
         }
     }
@@ -282,7 +329,7 @@ private suspend fun deleteTab(
     val pageType = pageTypes.getOrNull(pagerPageIndex)
     val currentHomeTabIndex = homeTabManager.homeTabIndex.value
 
-    if (pageType == PageType.APPS_AND_WIDGETS_TAB) {
+    if (pageType != PageType.APPS_TAB) {
         val widgetPageIndex = getAppAndWidgetTabIndex(
             pagerPageIndex,
             pageTypes

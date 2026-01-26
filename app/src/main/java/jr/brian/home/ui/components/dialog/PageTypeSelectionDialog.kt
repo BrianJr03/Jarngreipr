@@ -7,7 +7,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -96,6 +95,15 @@ fun PageTypeSelectionDialog(
                     description = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab_description),
                     onClick = {
                         onTypeSelected(PageType.APPS_AND_WIDGETS_TAB)
+                        onDismiss()
+                    }
+                )
+
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_app_drawer_tab),
+                    description = stringResource(R.string.home_tab_page_type_app_drawer_tab_description),
+                    onClick = {
+                        onTypeSelected(PageType.APP_DRAWER_TAB)
                         onDismiss()
                     }
                 )
