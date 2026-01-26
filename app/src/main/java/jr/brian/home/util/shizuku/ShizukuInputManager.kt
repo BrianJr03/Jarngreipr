@@ -235,6 +235,36 @@ object ShizukuInputManager {
     fun isTriggerButton(button: PhysicalButton): Boolean {
         return button == PhysicalButton.L2 || button == PhysicalButton.R2
     }
+    
+    /**
+     * Inject right joystick movement for camera control
+     * @param x Horizontal axis (-1.0 to 1.0, negative = left, positive = right)
+     * @param y Vertical axis (-1.0 to 1.0, negative = up, positive = down)
+     */
+    fun injectJoystick(x: Float, y: Float): Boolean {
+        return try {
+            inputService?.injectJoystick(x, y)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Joystick injection failed", e)
+            false
+        }
+    }
+    
+    /**
+     * Inject left joystick movement for character/movement control
+     * @param x Horizontal axis (-1.0 to 1.0, negative = left, positive = right)
+     * @param y Vertical axis (-1.0 to 1.0, negative = up, positive = down)
+     */
+    fun injectLeftJoystick(x: Float, y: Float): Boolean {
+        return try {
+            inputService?.injectLeftJoystick(x, y)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Left joystick injection failed", e)
+            false
+        }
+    }
 
     const val SHIZUKU_PERMISSION_REQUEST_CODE = 1001
 }

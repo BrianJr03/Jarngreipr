@@ -26,7 +26,7 @@ import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
-import jr.brian.home.ui.screens.ControlPadScreen
+import jr.brian.home.ui.screens.GamePadScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -208,7 +208,7 @@ fun NavGraphBuilder.launcherScreen(
 
         SlideInVertically(showControlPadSheet) {
             Box(modifier = Modifier.fillMaxSize()) {
-                ControlPadScreen(
+                GamePadScreen(
                     onDismiss = {
                         showControlPadSheet = false
                     }
@@ -421,7 +421,7 @@ fun NavGraphBuilder.controlPadScreen(
         var showScreen by remember { mutableStateOf(true) }
 
         SlideInVertically(showScreen) {
-            ControlPadScreen(
+            GamePadScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()

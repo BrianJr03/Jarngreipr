@@ -30,7 +30,7 @@
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
     <string name="settings_header_visibility_title">Show Tab Header</string>
-    <string name="settings_header_visibility_description">Toggle header bar visibility on home tabs</string>
+    <string name="settings_header_visibility_description">Show or hide header bar</string>
     <string name="drawer_options_tabs">Tabs</string>
     <string name="drawer_options_menu">Menu</string>
     <string name="drawer_options_wallpaper_section">Wallpaper</string>
@@ -71,7 +71,7 @@
     <string name="app_options_resize_apply">Apply</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
-    <string name="settings_color_theme_description">Change the look of Jarngreipr</string>
+    <string name="settings_color_theme_description">Customize app colors</string>
 
     <!-- Color Theme Names -->
     <string name="theme_pink_violet">Pink &amp; Violet</string>
@@ -96,16 +96,19 @@
     <string name="custom_theme_delete">Delete</string>
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
-    <string name="settings_oled_mode_description">Pure black UI for OLED displays</string>
+    <string name="settings_oled_mode_description">Pure black for OLED screens</string>
 
     <string name="settings_show_app_names_title">Show App Names</string>
-    <string name="settings_show_app_names_description">Show app names in Tabs</string>
+    <string name="settings_show_app_names_description">Display names below app icons</string>
 
     <string name="settings_show_folder_names_title">Show Folder Names</string>
-    <string name="settings_show_folder_names_description">Show folder names below folder icons</string>
+    <string name="settings_show_folder_names_description">Display names below folders</string>
+
+    <string name="settings_visibility_options_title">Visibility Options</string>
+    <string name="settings_visibility_options_description">Toggle labels and headers</string>
 
     <string name="settings_wallpaper_title">Wallpaper</string>
-    <string name="settings_wallpaper_description">Choose a wallpaper</string>
+    <string name="settings_wallpaper_description">Set background image or video</string>
     <string name="settings_wallpaper_default">Default</string>
     <string name="settings_wallpaper_transparent">System Wallpaper</string>
     <string name="settings_wallpaper_image_picker">Choose Image</string>
@@ -124,7 +127,7 @@
     <string name="settings_new_apps_visible_description">Show newly installed apps on home screen automatically</string>
 
     <string name="settings_grid_columns_title">Grid Layout</string>
-    <string name="settings_grid_columns_description">Customize columns and rows</string>
+    <string name="settings_grid_columns_description">Adjust grid size</string>
     <string name="settings_grid_columns_icon_description">Grid layout icon</string>
     <string name="settings_grid_size_option">%1$d × %2$d</string>
     <string name="settings_grid_columns_label">Columns</string>
@@ -143,13 +146,13 @@
     <string name="settings_grid_reset">Reset</string>
 
     <string name="settings_icon_pack_title">Icon Pack</string>
-    <string name="settings_icon_pack_description">Apply custom icon packs</string>
+    <string name="settings_icon_pack_description">Use third-party icons</string>
     <string name="settings_icon_pack_default">System Default</string>
     <string name="settings_icon_pack_system_default">System Default Icons</string>
     <string name="settings_icon_pack_none_found">No icon packs installed</string>
 
     <string name="settings_thor_title">Thor Settings</string>
-    <string name="settings_thor_description">Settings exclusive to the Thor</string>
+    <string name="settings_thor_description">Thor-exclusive options</string>
     <string name="settings_thor_power_button">Show Power Button</string>
     <string name="settings_thor_quick_delete_button">Show Quick Delete Button</string>
     <string name="settings_thor_wake_method">Wake Method</string>
@@ -161,7 +164,7 @@
     <string name="settings_toggle_off">OFF</string>
 
     <string name="settings_back_button_shortcut_title">Back Button Shortcut</string>
-    <string name="settings_back_button_shortcut_description">Configure what the back button does</string>
+    <string name="settings_back_button_shortcut_description">Assign back button action</string>
     <string name="settings_back_button_shortcut_enabled">Enable Back Button Shortcut</string>
     <string name="settings_back_button_shortcut_choose">Choose Shortcut</string>
     <string name="back_button_shortcut_screen_title">Back Button Shortcut</string>
@@ -431,9 +434,9 @@
     <string name="monitor_screen_description">Real-time system information</string>
 
     <!-- Control Pad Screen -->
-    <string name="control_pad_screen_title">Control Pad</string>
-    <string name="control_pad_screen_description">Quick access control buttons</string>
-    <string name="back_button_shortcut_control_pad">Control Pad</string>
+    <string name="control_pad_screen_title">GamePad</string>
+    <string name="control_pad_screen_description">Control the main display</string>
+    <string name="back_button_shortcut_control_pad">GamePad</string>
     <string name="control_pad_edit">Edit</string>
     <string name="control_pad_done">Done</string>
     <string name="control_pad_reset">Reset</string>
@@ -447,6 +450,32 @@
     <string name="control_pad_shizuku_ready">Ready</string>
     <string name="control_pad_no_mapping">No mapping</string>
     <string name="control_pad_button_pressed">Button pressed</string>
+    <string name="control_pad_joystick">Joystick</string>
+    <string name="control_pad_joystick_l">L</string>
+    <string name="control_pad_joystick_lr">L/R</string>
+    <string name="control_pad_joystick_r">R</string>
+    <string name="control_pad_camera_sensitivity">Sensitivity</string>
+    <string name="control_pad_help">Help</string>
+    <string name="control_pad_help_title">Getting Started</string>
+    <string name="control_pad_help_section_shizuku">Setup Shizuku</string>
+    <string name="control_pad_help_step_1">1. Install Shizuku from the Play Store or GitHub</string>
+    <string name="control_pad_help_step_2">2. Open Shizuku and follow the setup instructions</string>
+    <string name="control_pad_help_section_termux">Setup Termux</string>
+    <string name="control_pad_help_termux_1">1. Install Termux from the Play Store or GitHub</string>
+    <string name="control_pad_help_termux_2">2. Go to Settings → Developer Options → Wireless Debugging</string>
+    <string name="control_pad_help_termux_3">3. Enable Wireless Debugging and tap \"Pair device with pairing code\"</string>
+    <string name="control_pad_help_termux_4">4. In Termux, run: pkg install android-tools</string>
+    <string name="control_pad_help_termux_5">5. Pair: adb pair [IP:PORT] [PAIRING_CODE]</string>
+    <string name="control_pad_help_termux_6">6. Connect: adb connect [IP:PORT]</string>
+    <string name="control_pad_help_termux_7">7. Run command shown in Shizuku app to start it</string>
+    <string name="control_pad_help_section_finish">Finish Setup</string>
+    <string name="control_pad_help_finish_1">1. Return here and tap \"Permission required\" to grant access</string>
+    <string name="control_pad_help_finish_2">2. Tap \"Edit\" to customize button mappings and sensitivity</string>
+    <string name="control_pad_help_finish_3">3. Once status shows \"Ready\", you\'re all set</string>
+    <string name="control_pad_help_note_title">Note</string>
+    <string name="control_pad_help_note">Shizuku provides the elevated permissions needed to inject gamepad inputs into other apps. It must be running for GamePad to work, and you\'ll need to restart it after rebooting your device.</string>
+    <string name="control_pad_help_emulator_title">Emulator Compatibility</string>
+    <string name="control_pad_help_emulator_note">Some emulators may not respond to injected inputs because they only detect physical gamepad hardware. Native Android apps and games typically work best.</string>
     <string name="monitor_ram_label">RAM Usage</string>
     <string name="monitor_fps_label">FPS %d</string>
     <string name="monitor_cpu_label">CPU Usage</string>
@@ -456,7 +485,7 @@
     <string name="monitor_close">Close</string>
     <string name="settings_section_system">System</string>
     <string name="settings_crash_logs_title">Crash Logs</string>
-    <string name="settings_crash_logs_description">View and copy crash reports for debugging</string>
+    <string name="settings_crash_logs_description">View crash reports or report an issue</string>
 
     <!-- Widget Picker -->
     <string name="widget_picker_title">Choose a Widget</string>
@@ -521,7 +550,7 @@
     <string name="update_button_skip_version">Skip this version</string>
     <string name="update_button_skip">Skip</string>
     <string name="settings_check_updates_title">Check for Updates</string>
-    <string name="settings_check_updates_description">Check if a new version is available</string>
+    <string name="settings_check_updates_description">Check for new versions</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_not_available">You\'re up to date!</string>
 

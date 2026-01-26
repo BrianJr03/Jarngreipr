@@ -175,7 +175,7 @@ fun AppsAndWidgetsTab(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
 
     BackHandler(enabled = isPoweredOff) {}
 

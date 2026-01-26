@@ -186,4 +186,127 @@ class InputService : IInputService.Stub() {
             Log.e(TAG, "Trigger injection failed", e)
         }
     }
+    
+    override fun injectJoystick(rightX: Float, rightY: Float) {
+        Log.d(TAG, "injectJoystick: rightX=$rightX, rightY=$rightY")
+        
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            
+            if (im == null || method == null) {
+                Log.e(TAG, "InputManager not available for joystick injection")
+                return
+            }
+            
+            val now = SystemClock.uptimeMillis()
+            
+            // Create pointer properties
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_UNKNOWN
+            })
+            
+            // Create pointer coords with right stick axis values
+            // AXIS_Z = right stick X, AXIS_RZ = right stick Y (most common mapping)
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                x = 0f
+                y = 0f
+                pressure = 0f
+                size = 0f
+                setAxisValue(MotionEvent.AXIS_Z, rightX)
+                setAxisValue(MotionEvent.AXIS_RZ, rightY)
+                // Also set RX/RY as some games use these instead
+                setAxisValue(MotionEvent.AXIS_RX, rightX)
+                setAxisValue(MotionEvent.AXIS_RY, rightY)
+            })
+            
+            val source = InputDevice.SOURCE_JOYSTICK or InputDevice.SOURCE_GAMEPAD
+            
+            val event = MotionEvent.obtain(
+                now,                                    // downTime
+                now,                                    // eventTime
+                MotionEvent.ACTION_MOVE,                // action
+                1,                                      // pointerCount
+                pointerProperties,                      // pointer properties
+                pointerCoords,                          // pointer coords
+                0,                                      // metaState
+                0,                                      // buttonState
+                1f,                                     // xPrecision
+                1f,                                     // yPrecision
+                0,                                      // deviceId (0 = virtual)
+                0,                                      // edgeFlags
+                source,                                 // source
+                0                                       // flags
+            )
+            
+            Log.d(TAG, "Injecting joystick MotionEvent: rightX=$rightX, rightY=$rightY")
+            val result = method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            Log.d(TAG, "Joystick injection result: $result")
+            
+            event.recycle()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Joystick injection failed", e)
+        }
+    }
+    
+    override fun injectLeftJoystick(leftX: Float, leftY: Float) {
+        Log.d(TAG, "injectLeftJoystick: leftX=$leftX, leftY=$leftY")
+        
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            
+            if (im == null || method == null) {
+                Log.e(TAG, "InputManager not available for left joystick injection")
+                return
+            }
+            
+            val now = SystemClock.uptimeMillis()
+            
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_UNKNOWN
+            })
+            
+            // Left stick uses AXIS_X and AXIS_Y
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                x = 0f
+                y = 0f
+                pressure = 0f
+                size = 0f
+                setAxisValue(MotionEvent.AXIS_X, leftX)
+                setAxisValue(MotionEvent.AXIS_Y, leftY)
+            })
+            
+            val source = InputDevice.SOURCE_JOYSTICK or InputDevice.SOURCE_GAMEPAD
+            
+            val event = MotionEvent.obtain(
+                now,
+                now,
+                MotionEvent.ACTION_MOVE,
+                1,
+                pointerProperties,
+                pointerCoords,
+                0,
+                0,
+                1f,
+                1f,
+                0,
+                0,
+                source,
+                0
+            )
+            
+            Log.d(TAG, "Injecting left joystick MotionEvent: leftX=$leftX, leftY=$leftY")
+            val result = method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            Log.d(TAG, "Left joystick injection result: $result")
+            
+            event.recycle()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Left joystick injection failed", e)
+        }
+    }
 }

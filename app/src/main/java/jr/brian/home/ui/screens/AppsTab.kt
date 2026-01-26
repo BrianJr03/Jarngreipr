@@ -164,7 +164,7 @@ fun AppsTab(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
 
     if (showAppOptionsMenu && selectedApp != null) {
         val currentIconSize = if (isFreeModeEnabled) {

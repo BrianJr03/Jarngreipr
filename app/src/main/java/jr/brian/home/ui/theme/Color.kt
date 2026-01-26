@@ -17,6 +17,12 @@ val AppCardLight = Color(0xFF16213E)
 val ThemeBlack = Color(0xFF000000)
 val AlignmentGuideColor = Color(0xFFFFD700)
 
+// Status indicator colors
+val StatusGreen = Color(0xFF4CAF50)
+val StatusYellow = Color(0xFFFFC107)
+val StatusOrange = Color(0xFFFF9800)
+val StatusRed = Color(0xFFF44336)
+
 @Composable
 fun themePrimaryColor(): Color = LocalThemeManager.current.currentTheme.primaryColor
 
