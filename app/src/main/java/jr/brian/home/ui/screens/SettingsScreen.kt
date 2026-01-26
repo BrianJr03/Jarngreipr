@@ -12,11 +12,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,17 +54,15 @@ import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import kotlinx.coroutines.launch
-import jr.brian.home.ui.components.settings.AppNameToggleItem
-import jr.brian.home.ui.components.settings.FolderNameToggleItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
-import jr.brian.home.ui.components.settings.HeaderVisibilityToggleItem
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.ThorSettingsItem
+import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -70,8 +74,8 @@ import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THOR
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THEME
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_ICON_PACK
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
-import jr.brian.home.util.SettingsScreenUtil.EXPANDED_HEADER
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_OLED
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_VISIBILITY
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_WALLPAPER
 import kotlinx.coroutines.delay
 
@@ -83,6 +87,7 @@ fun SettingsScreen(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
+    onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
@@ -121,6 +126,7 @@ fun SettingsScreen(
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                     onNavigateToMonitor = onNavigateToMonitor,
+                    onNavigateToControlPad = onNavigateToControlPad,
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onCheckForUpdates = {
@@ -181,6 +187,7 @@ private fun SettingsContent(
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
+    onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
     onCheckForUpdates: () -> Unit = {},
@@ -192,6 +199,11 @@ private fun SettingsContent(
 
     val isThorDevice = remember {
         android.os.Build.MODEL == DeviceModel.THOR
+    }
+
+    // Helper to check if an item should be visible
+    fun isVisible(itemKey: String? = null): Boolean {
+        return expandedItem == null || expandedItem == itemKey
     }
 
     BackHandler {
@@ -214,14 +226,26 @@ private fun SettingsContent(
         contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        if (expandedItem == null || expandedItem == EXPANDED_THEME) {
-            item {
+        // ===== APPEARANCE SECTION =====
+        item(key = "header_appearance") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_THEME) || isVisible(EXPANDED_ICON_PACK) || isVisible(EXPANDED_WALLPAPER),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingsSectionHeader(
                     title = stringResource(id = R.string.settings_section_appearance)
                 )
             }
+        }
 
-            item {
+        // Color Theme
+        item(key = "theme") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_THEME),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 ThemeSelectorItem(
                     focusRequester = firstItemFocusRequester,
                     isExpanded = expandedItem == EXPANDED_THEME,
@@ -236,27 +260,13 @@ private fun SettingsContent(
             }
         }
 
-        if (expandedItem == null) {
-            item {
-                OledModeToggleItem(
-                    isExpanded = expandedItem == EXPANDED_OLED
-                )
-            }
-        }
-
-        if (expandedItem == null || expandedItem == EXPANDED_WALLPAPER) {
-            item {
-                WallpaperSelectorItem(
-                    isExpanded = expandedItem == EXPANDED_WALLPAPER,
-                    onExpandChanged = {
-                        expandedItem = if (it) EXPANDED_WALLPAPER else null
-                    }
-                )
-            }
-        }
-
-        if (expandedItem == null || expandedItem == EXPANDED_ICON_PACK) {
-            item {
+        // Icon Pack
+        item(key = "icon_pack") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_ICON_PACK),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 IconPackSelectorItem(
                     isExpanded = expandedItem == EXPANDED_ICON_PACK,
                     onExpandChanged = {
@@ -267,53 +277,55 @@ private fun SettingsContent(
             }
         }
 
-        if (expandedItem == null) {
-            item {
-                SettingsSectionHeader(
-                    title = stringResource(id = R.string.settings_section_layout)
-                )
-            }
-
-            item {
-                AppNameToggleItem()
-            }
-
-            item {
-                FolderNameToggleItem()
-            }
-
-            item {
-                HeaderVisibilityToggleItem(
-                    isExpanded = expandedItem == EXPANDED_HEADER
+        // OLED Black Mode
+        item(key = "oled") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                OledModeToggleItem(
+                    isExpanded = expandedItem == EXPANDED_OLED
                 )
             }
         }
 
-        if (expandedItem == null || expandedItem == EXPANDED_GRID) {
-            item {
-                GridColumnSelectorItem(
-                    isExpanded = expandedItem == EXPANDED_GRID,
+        // Wallpaper
+        item(key = "wallpaper") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_WALLPAPER),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                WallpaperSelectorItem(
+                    isExpanded = expandedItem == EXPANDED_WALLPAPER,
                     onExpandChanged = {
-                        expandedItem = if (it) EXPANDED_GRID else null
-                    },
-                    totalAppsCount = allAppsUnfiltered.size
-                )
-            }
-        }
-
-        if (isThorDevice && (expandedItem == null || expandedItem == EXPANDED_THOR)) {
-            item {
-                ThorSettingsItem(
-                    isExpanded = expandedItem == EXPANDED_THOR,
-                    onExpandChanged = {
-                        expandedItem = if (it) EXPANDED_THOR else null
+                        expandedItem = if (it) EXPANDED_WALLPAPER else null
                     }
                 )
             }
         }
 
-        if (expandedItem == null || expandedItem == EXPANDED_BACK_BUTTON) {
-            item {
+        // ===== LAYOUT SECTION =====
+        item(key = "header_layout") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_BACK_BUTTON) || isVisible(EXPANDED_GRID) || isVisible(EXPANDED_THOR) || isVisible(EXPANDED_VISIBILITY),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SettingsSectionHeader(
+                    title = stringResource(id = R.string.settings_section_layout)
+                )
+            }
+        }
+
+        // Back Button Shortcut
+        item(key = "back_button") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_BACK_BUTTON),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 BackButtonShortcutItem(
                     isExpanded = expandedItem == EXPANDED_BACK_BUTTON,
                     onExpandChanged = {
@@ -327,38 +339,77 @@ private fun SettingsContent(
             }
         }
 
-        if (expandedItem == null) {
-            item {
+        // Grid Layout
+        item(key = "grid") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_GRID),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                GridColumnSelectorItem(
+                    isExpanded = expandedItem == EXPANDED_GRID,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_GRID else null
+                    },
+                    totalAppsCount = allAppsUnfiltered.size
+                )
+            }
+        }
+
+        // Thor Settings (device-specific)
+        if (isThorDevice) {
+            item(key = "thor") {
+                AnimatedVisibility(
+                    visible = isVisible(EXPANDED_THOR),
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    ThorSettingsItem(
+                        isExpanded = expandedItem == EXPANDED_THOR,
+                        onExpandChanged = {
+                            expandedItem = if (it) EXPANDED_THOR else null
+                        }
+                    )
+                }
+            }
+        }
+
+        // Visibility Options
+        item(key = "visibility") {
+            AnimatedVisibility(
+                visible = isVisible(EXPANDED_VISIBILITY),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                VisibilitySettingsItem(
+                    isExpanded = expandedItem == EXPANDED_VISIBILITY,
+                    onExpandChanged = {
+                        expandedItem = if (it) EXPANDED_VISIBILITY else null
+                    }
+                )
+            }
+        }
+
+        // ===== SYSTEM SECTION =====
+        item(key = "header_system") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingsSectionHeader(
                     title = stringResource(id = R.string.settings_section_system)
                 )
             }
+        }
 
-            item {
-                SettingItem(
-                    title = stringResource(id = R.string.monitor_screen_title),
-                    description = stringResource(id = R.string.monitor_screen_description),
-                    icon = Icons.Default.Monitor,
-                    onClick = {
-                        expandedItem = null
-                        onNavigateToMonitor()
-                    }
-                )
-            }
-
-            item {
-                SettingItem(
-                    title = stringResource(id = R.string.settings_crash_logs_title),
-                    description = stringResource(id = R.string.settings_crash_logs_description),
-                    icon = Icons.Default.BugReport,
-                    onClick = {
-                        expandedItem = null
-                        onNavigateToCrashLogs()
-                    }
-                )
-            }
-
-            item {
+        // Check for Updates
+        item(key = "updates") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingItem(
                     title = stringResource(id = R.string.settings_check_updates_title),
                     description = if (isCheckingForUpdates) {
@@ -367,10 +418,7 @@ private fun SettingsContent(
                         stringResource(id = R.string.settings_check_updates_description)
                     },
                     icon = Icons.Default.SystemUpdate,
-                    onClick = {
-                        expandedItem = null
-                        onCheckForUpdates()
-                    },
+                    onClick = onCheckForUpdates,
                     trailing = if (isCheckingForUpdates) {
                         {
                             CircularProgressIndicator(
@@ -382,33 +430,82 @@ private fun SettingsContent(
                     } else null
                 )
             }
+        }
 
-            item {
+        // Crash Logs
+        item(key = "crash_logs") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SettingItem(
+                    title = stringResource(id = R.string.settings_crash_logs_title),
+                    description = stringResource(id = R.string.settings_crash_logs_description),
+                    icon = Icons.Default.BugReport,
+                    onClick = onNavigateToCrashLogs
+                )
+            }
+        }
+
+        // GamePad
+        item(key = "control_pad") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SettingItem(
+                    title = stringResource(id = R.string.control_pad_screen_title),
+                    description = stringResource(id = R.string.control_pad_screen_description),
+                    icon = Icons.Default.GridView,
+                    onClick = onNavigateToControlPad
+                )
+            }
+        }
+
+        // System Monitor
+        item(key = "monitor") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SettingItem(
+                    title = stringResource(id = R.string.monitor_screen_title),
+                    description = stringResource(id = R.string.monitor_screen_description),
+                    icon = Icons.Default.Monitor,
+                    onClick = onNavigateToMonitor
+                )
+            }
+        }
+
+        // ===== SUPPORT SECTION =====
+        item(key = "header_support") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingsSectionHeader(
                     title = stringResource(id = R.string.settings_section_support)
                 )
             }
+        }
 
-            item {
-                SettingItem(
-                    title = stringResource(id = R.string.settings_faq_title),
-                    description = stringResource(id = R.string.settings_faq_description),
-                    icon = Icons.AutoMirrored.Filled.Help,
-                    onClick = {
-                        expandedItem = null
-                        onNavigateToFAQ()
-                    },
-                )
-            }
-
-            item {
-                val url = stringResource(R.string.settings_buy_me_coffee_url)
+        // Buy Me A Coffee
+        item(key = "coffee") {
+            val url = stringResource(R.string.settings_buy_me_coffee_url)
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingItem(
                     title = stringResource(id = R.string.settings_buy_me_coffee_title),
                     description = stringResource(id = R.string.settings_buy_me_coffee_description),
                     icon = Icons.Default.Coffee,
                     onClick = {
-                        expandedItem = null
                         val intent = Intent(
                             Intent.ACTION_VIEW,
                             url.toUri()
@@ -417,15 +514,44 @@ private fun SettingsContent(
                     },
                 )
             }
+        }
 
-            item {
+        // FAQ
+        item(key = "faq") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                SettingItem(
+                    title = stringResource(id = R.string.settings_faq_title),
+                    description = stringResource(id = R.string.settings_faq_description),
+                    icon = Icons.AutoMirrored.Filled.Help,
+                    onClick = onNavigateToFAQ,
+                )
+            }
+        }
+
+        // ===== EXTRAS SECTION =====
+        item(key = "header_extras") {
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 SettingsSectionHeader(
                     title = stringResource(id = R.string.settings_section_extras)
                 )
             }
+        }
 
-            item {
-                val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
+        item(key = "thor_fact") {
+            val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
+            AnimatedVisibility(
+                visible = isVisible(),
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 InfoBox(
                     label = stringResource(R.string.welcome_overlay_thor_fact_label),
                     content = stringResource(randomMessage),

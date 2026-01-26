@@ -8,8 +8,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -75,6 +78,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
@@ -169,11 +173,17 @@ fun AppsAndWidgetsTab(
 
     val gridState = rememberLazyGridState()
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
+
     BackHandler(enabled = isPoweredOff) {}
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .scale(pressScale)
+            .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
             .then(
                 if (showWidgetPicker ||
@@ -186,16 +196,17 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        powerViewModel.togglePower()
-                    },
-                    onLongPress = {
-                        showDrawerOptionsDialog = true
-                    }
-                )
-            }
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {},
+                onDoubleClick = {
+                    powerViewModel.togglePower()
+                },
+                onLongClick = {
+                    showDrawerOptionsDialog = true
+                }
+            )
     ) {
         if (showWidgetPicker) {
             Box(

@@ -8,6 +8,7 @@ enum class BackButtonShortcut {
     QUICK_DELETE,
     CUSTOM_THEME,
     MONITOR,
+    CONTROL_PAD,
     RECENT_APPS,
     APP
 }
