@@ -1,19 +1,9 @@
 ## New Features
-### Adds Recently Used Apps screen
-  >Long Press on any tab or configure as back button shortcut to open
-  
-  >See recently used apps (opened within the last 10 minutes) and quickly launch
-  
-  >Chose which screen it'll launch on
+### Live Icons
+> You can now use GIFs as an app icon
 
-### Notification badges
-  >Displays number of notifications for each app
-  
-  >NOTE: Due to Android security policies, this may not work if Jarngreipr is sideloaded. 
+### GamePad
+> A virtual gamepad that allows you to control Android games played on the main screen
+> Find this in Settings or assign it as a back button shortcut
 
-  >Apps that do not come from the PlayStore are restricted from listening to the system's notifications. 
-
-## Quick Fixes
-- Fixes issue where app update wouldn't start downloading
-
-1.3
+1.4
