@@ -70,10 +70,12 @@ fun BackButtonShortcutScreen(
     val shortcuts = listOf(
         BackButtonShortcut.APP to stringResource(R.string.back_button_shortcut_app),
         BackButtonShortcut.APP_SEARCH to stringResource(R.string.back_button_shortcut_app_search),
+        BackButtonShortcut.CONTROL_PAD to stringResource(R.string.back_button_shortcut_control_pad),
         BackButtonShortcut.CUSTOM_THEME to stringResource(R.string.back_button_shortcut_custom_theme),
         BackButtonShortcut.QUICK_DELETE to stringResource(R.string.back_button_shortcut_quick_delete),
         BackButtonShortcut.SETTINGS to stringResource(R.string.back_button_shortcut_settings),
         BackButtonShortcut.MONITOR to stringResource(R.string.back_button_shortcut_monitor),
+        BackButtonShortcut.RECENT_APPS to stringResource(R.string.back_button_shortcut_recent_apps),
         BackButtonShortcut.POWERED_OFF to stringResource(R.string.back_button_shortcut_powered_off)
     )
 

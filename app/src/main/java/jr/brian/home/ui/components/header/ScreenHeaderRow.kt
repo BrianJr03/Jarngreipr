@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +37,6 @@ import jr.brian.home.ui.components.onboarding.HeaderOnboardingOverlay
 import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
@@ -68,7 +67,6 @@ fun ScreenHeaderRow(
     onFolderClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {}
 ) {
     val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
@@ -159,7 +157,6 @@ fun ScreenHeaderRow(
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
-            allApps = allApps,
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
@@ -234,7 +231,7 @@ fun ScreenHeaderRow(
                     onClick = onFolderClick
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FolderOpen,
+                        imageVector = Icons.Default.SdStorage,
                         contentDescription = stringResource(R.string.header_folder_options),
                         tint = Color.White.copy(alpha = 0.6f),
                         modifier = Modifier

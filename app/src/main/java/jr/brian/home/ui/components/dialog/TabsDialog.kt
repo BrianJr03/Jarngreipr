@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -51,7 +53,6 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageType
-import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
@@ -130,7 +131,9 @@ fun TabsDialog(
                 )
         ) {
             Column(
-                modifier = Modifier.padding(28.dp),
+                modifier = Modifier
+                    .padding(28.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -186,6 +189,7 @@ fun TabsDialog(
                     val pageLabel = when (pageType) {
                         PageType.APPS_TAB -> stringResource(R.string.home_tab_page_type_apps_tab)
                         PageType.APPS_AND_WIDGETS_TAB -> stringResource(R.string.home_tab_page_type_apps_and_widgets_tab)
+                        PageType.APP_DRAWER_TAB -> stringResource(R.string.home_tab_page_type_app_drawer_tab)
                     }
 
                     // When there's only one page, it's always the home tab (index 0)
@@ -325,7 +329,6 @@ private fun TabOption(
             }
         }
 
-        // Home badge overlapping the top-left corner
         if (isSelected) {
             val offset = Pair(
                 first = if (isFocused) (-18).dp else (-10).dp,
@@ -448,7 +451,6 @@ private fun AddPageButton(
 fun HomeTabSelectionDialog(
     currentTabIndex: Int,
     totalPages: Int,
-    allApps: List<AppInfo> = emptyList(),
     modifier: Modifier = Modifier,
     onTabSelected: (Int) -> Unit,
     onDismiss: () -> Unit,

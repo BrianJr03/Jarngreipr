@@ -3,8 +3,10 @@ package jr.brian.home.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.Log
+import androidx.core.graphics.drawable.toBitmap
 import jr.brian.home.data.database.CustomIconDao
 import jr.brian.home.data.database.CustomIconEntity
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manages custom app icons by storing PNG files in internal storage
+ * Manages custom app icons by storing image files (PNG/GIF) in internal storage
  * and maintaining a database mapping of package names to icon paths.
  */
 @Singleton
@@ -42,22 +44,102 @@ class CustomIconManager @Inject constructor(
         }
 
     /**
-     * Sets a custom icon for an app by copying the selected PNG to internal storage
+     * Checks if the given URI points to a GIF file
      */
-    suspend fun setCustomIcon(packageName: String, imageUri: Uri): Result<String> {
+    private fun isGifFile(uri: Uri): Boolean {
+        val mimeType = context.contentResolver.getType(uri)
+        return mimeType == "image/gif"
+    }
+
+    /**
+     * Sets a custom icon for an app by copying the selected image to internal storage.
+     * GIF files are copied directly to preserve animation, PNG files are decoded and re-encoded.
+     */
+    suspend fun setCustomIcon(
+        packageName: String,
+        imageUri: Uri
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Read the image from the URI
-                val inputStream = context.contentResolver.openInputStream(imageUri)
-                    ?: return@withContext Result.failure(Exception("Unable to open image"))
+                val isGif = isGifFile(imageUri)
+                
+                if (isGif) {
+                    // For GIFs, copy the file directly to preserve animation
+                    val fileName = "${packageName.replace(".", "_")}.gif"
+                    val iconFile = File(customIconsDir, fileName)
+                    
+                    context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                        FileOutputStream(iconFile).use { outputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    } ?: return@withContext Result.failure(Exception("Unable to open image"))
+                    
+                    // Save to database
+                    val customIcon = CustomIconEntity(
+                        packageName = packageName,
+                        customIconPath = iconFile.absolutePath
+                    )
+                    customIconDao.insertCustomIcon(customIcon)
+                    
+                    Log.d(
+                        "CustomIconManager",
+                        "Custom GIF icon saved for $packageName at ${iconFile.absolutePath}"
+                    )
+                    Result.success(iconFile.absolutePath)
+                } else {
+                    // For non-GIFs, decode and save as PNG
+                    val inputStream = context.contentResolver.openInputStream(imageUri)
+                        ?: return@withContext Result.failure(Exception("Unable to open image"))
 
-                // Decode the bitmap to validate it's a valid image
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                inputStream.close()
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    inputStream.close()
 
-                if (bitmap == null) {
-                    return@withContext Result.failure(Exception("Invalid image file"))
+                    if (bitmap == null) {
+                        return@withContext Result.failure(Exception("Invalid image file"))
+                    }
+
+                    val fileName = "${packageName.replace(".", "_")}.png"
+                    val iconFile = File(customIconsDir, fileName)
+
+                    FileOutputStream(iconFile).use { outputStream ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                    }
+
+                    bitmap.recycle()
+
+                    val customIcon = CustomIconEntity(
+                        packageName = packageName,
+                        customIconPath = iconFile.absolutePath
+                    )
+                    customIconDao.insertCustomIcon(customIcon)
+
+                    Log.d(
+                        "CustomIconManager",
+                        "Custom PNG icon saved for $packageName at ${iconFile.absolutePath}"
+                    )
+                    Result.success(iconFile.absolutePath)
                 }
+            } catch (e: Exception) {
+                Log.e("CustomIconManager", "Error setting custom icon", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Sets a custom icon for an app using a Drawable (e.g., from an icon pack)
+     */
+    suspend fun setCustomIcon(
+        packageName: String,
+        drawable: Drawable
+    ): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val bitmap = drawable.toBitmap(
+                    drawable.intrinsicWidth.takeIf { it > 0 } ?: 192,
+                    drawable.intrinsicHeight.takeIf { it > 0 } ?: 192,
+                    null
+                )
 
                 // Create a unique filename based on package name
                 val fileName = "${packageName.replace(".", "_")}.png"
@@ -68,7 +150,6 @@ class CustomIconManager @Inject constructor(
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
                 }
 
-                // Recycle bitmap to free memory
                 bitmap.recycle()
 
                 // Save to database
@@ -80,11 +161,11 @@ class CustomIconManager @Inject constructor(
 
                 Log.d(
                     "CustomIconManager",
-                    "Custom icon saved for $packageName at ${iconFile.absolutePath}"
+                    "Custom icon from drawable saved for $packageName at ${iconFile.absolutePath}"
                 )
                 Result.success(iconFile.absolutePath)
             } catch (e: Exception) {
-                Log.e("CustomIconManager", "Error setting custom icon", e)
+                Log.e("CustomIconManager", "Error setting custom icon from drawable", e)
                 Result.failure(e)
             }
         }

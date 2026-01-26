@@ -52,6 +52,7 @@ fun SettingItem(
     icon: ImageVector,
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
+    trailing: @Composable (() -> Unit)? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -140,6 +141,11 @@ fun SettingItem(
                     color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
                     fontSize = 14.sp,
                 )
+            }
+            
+            if (trailing != null) {
+                Spacer(modifier = Modifier.size(12.dp))
+                trailing()
             }
         }
     }
