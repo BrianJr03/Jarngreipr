@@ -104,6 +104,10 @@
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
 
+    <string name="settings_show_back_button_title">Show Settings Back Button</string>
+    <string name="settings_show_back_button_description">Display back button in settings</string>
+    <string name="settings_back_button">Back</string>
+
     <string name="settings_visibility_options_title">Visibility Options</string>
     <string name="settings_visibility_options_description">Toggle labels and headers</string>
 

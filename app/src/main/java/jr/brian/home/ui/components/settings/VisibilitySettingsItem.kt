@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -69,6 +70,7 @@ fun VisibilitySettingsItem(
     
     val showAppNames = appVisibilityManager.showAppNames
     val showFolderNames = appVisibilityManager.showFolderNames
+    val showSettingsBackButton = appVisibilityManager.showSettingsBackButton
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     
     var isFocused by remember { mutableStateOf(false) }
@@ -215,6 +217,14 @@ fun VisibilitySettingsItem(
                     description = stringResource(id = R.string.settings_header_visibility_description),
                     isEnabled = isHeaderVisible,
                     onClick = { powerSettingsManager.setHeaderVisibility(!isHeaderVisible) }
+                )
+
+                VisibilityToggleOption(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    title = stringResource(id = R.string.settings_show_back_button_title),
+                    description = stringResource(id = R.string.settings_show_back_button_description),
+                    isEnabled = showSettingsBackButton,
+                    onClick = { appVisibilityManager.toggleShowSettingsBackButton() }
                 )
             }
         }
