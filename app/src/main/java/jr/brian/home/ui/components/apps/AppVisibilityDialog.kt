@@ -269,9 +269,7 @@ private fun AppVisibilityItem(
                 packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 customIconManager = customIconManager,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.size(40.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))

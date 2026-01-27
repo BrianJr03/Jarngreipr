@@ -4,7 +4,9 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,6 +76,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
 @Composable
@@ -98,6 +101,8 @@ fun FolderContentsDialog(
     var editableName by remember { mutableStateOf(folderName) }
     var showEditAppsDialog by remember { mutableStateOf(false) }
     var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
+    var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
+    var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -258,6 +263,9 @@ fun FolderContentsDialog(
                                         displayPreference = displayPreference
                                     )
                                     onDismiss()
+                                },
+                                onLongClick = {
+                                    selectedAppForOptions = app
                                 }
                             )
                         }
@@ -308,14 +316,64 @@ fun FolderContentsDialog(
             }
         )
     }
+
+    if (selectedAppForOptions != null) {
+        val app = selectedAppForOptions!!
+        AppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                app.packageName
+            ),
+            onDismiss = { selectedAppForOptions = null },
+            onAppInfoClick = {
+                openAppInfo(context, app.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    app.packageName,
+                    preference
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay,
+            onHideApp = {
+                val newPackages = folderAppPackages - app.packageName
+                folderAppPackages = newPackages
+                scope.launch {
+                    if (newPackages.isEmpty()) {
+                        folderManager.deleteFolder(pageIndex, folderId, tabType)
+                        selectedAppForOptions = null
+                        onDismiss()
+                    } else {
+                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
+                    }
+                }
+                selectedAppForOptions = null
+            },
+            onCustomIconClick = {
+                appForCustomIcon = app
+                selectedAppForOptions = null
+            }
+        )
+    }
+
+    if (appForCustomIcon != null) {
+        CustomIconDialog(
+            packageName = appForCustomIcon!!.packageName,
+            appLabel = appForCustomIcon!!.label,
+            onDismiss = { appForCustomIcon = null },
+            onIconChanged = { }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FolderAppItem(
     app: AppInfo,
     customIconManager: CustomIconManager,
     showAppNames: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -355,7 +413,10 @@ private fun FolderAppItem(
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .focusable()
             .padding(8.dp)
     ) {
@@ -364,9 +425,7 @@ private fun FolderAppItem(
             packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             customIconManager = customIconManager,
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(8.dp))
+            modifier = Modifier.size(56.dp)
         )
 
         if (showAppNames) {

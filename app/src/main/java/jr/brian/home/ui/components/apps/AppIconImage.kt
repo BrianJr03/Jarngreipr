@@ -4,14 +4,18 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
@@ -27,7 +31,8 @@ fun AppIconImage(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     customIconManager: CustomIconManager? = null,
-    contentScale: ContentScale = ContentScale.Fit
+    contentScale: ContentScale = ContentScale.Fit,
+    shape: Shape = RoundedCornerShape(8.dp)
 ) {
     val context = LocalContext.current
     val customIconsMap by customIconManager?.customIconsMap?.collectAsStateWithLifecycle(
@@ -50,7 +55,7 @@ fun AppIconImage(
     }
 
     Box(
-        modifier = modifier,
+        modifier = modifier.clip(shape),
         contentAlignment = Alignment.Center
     ) {
         if (customIconPath != null && File(customIconPath).exists()) {
@@ -62,14 +67,18 @@ fun AppIconImage(
                     imageLoader = if (isGif) gifImageLoader else ImageLoader(context)
                 ),
                 contentDescription = contentDescription,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(shape),
                 contentScale = contentScale
             )
         } else {
             Image(
                 painter = rememberAsyncImagePainter(model = defaultIcon),
                 contentDescription = contentDescription,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(shape),
                 contentScale = contentScale
             )
         }
