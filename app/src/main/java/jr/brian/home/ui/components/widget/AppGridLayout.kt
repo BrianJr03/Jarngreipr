@@ -17,12 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
@@ -45,7 +40,7 @@ fun AppGridLayout(
     folders: List<Folder> = emptyList(),
     allApps: List<AppInfo> = emptyList(),
     onFolderClick: (Folder) -> Unit = {},
-    isHeaderVisible: Boolean,
+    isHeaderVisible: Boolean = true,
     horizontalSpacing: Dp = 32.dp,
     verticalSpacing: Dp = 24.dp,
     contentPadding: PaddingValues = PaddingValues(
@@ -126,7 +121,6 @@ fun AppGridLayout(
             )
         }
 
-        // Render folders after apps
         items(folders.size) { index ->
             val folder = folders[index]
             val folderApps = allApps.filter { it.packageName in folder.appPackageNames }

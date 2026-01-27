@@ -2,7 +2,6 @@ package jr.brian.home.ui.components.apps
 
 import android.graphics.drawable.Drawable
 import android.os.Build
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -11,16 +10,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import jr.brian.home.data.CustomIconManager
 import java.io.File
 
@@ -55,30 +55,34 @@ fun AppIconImage(
     }
 
     Box(
-        modifier = modifier.clip(shape),
+        modifier = modifier
+            .graphicsLayer {
+                clip = true
+                this.shape = shape
+            },
         contentAlignment = Alignment.Center
     ) {
         if (customIconPath != null && File(customIconPath).exists()) {
             val isGif = customIconPath.endsWith(".gif", ignoreCase = true)
             
-            Image(
-                painter = rememberAsyncImagePainter(
-                    model = File(customIconPath),
-                    imageLoader = if (isGif) gifImageLoader else ImageLoader(context)
-                ),
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(File(customIconPath))
+                    .crossfade(!isGif)
+                    .build(),
+                imageLoader = if (isGif) gifImageLoader else ImageLoader(context),
                 contentDescription = contentDescription,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(shape),
+                modifier = Modifier.matchParentSize(),
                 contentScale = contentScale
             )
         } else {
-            Image(
-                painter = rememberAsyncImagePainter(model = defaultIcon),
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(defaultIcon)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = contentDescription,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(shape),
+                modifier = Modifier.matchParentSize(),
                 contentScale = contentScale
             )
         }
