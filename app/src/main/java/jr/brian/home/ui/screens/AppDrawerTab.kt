@@ -2,9 +2,9 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -28,11 +28,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -63,6 +61,7 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -118,7 +117,7 @@ fun AppDrawerTab(
     val settingsIconFocusRequester = remember { FocusRequester() }
     val menuIconFocusRequester = remember { FocusRequester() }
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-    val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+    val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
 

@@ -46,6 +46,7 @@ import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -61,20 +62,12 @@ fun GridColumnSelectorItem(
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     var isFocused by remember { mutableStateOf(false) }
-    val mainCardFocusRequester = remember { FocusRequester() }
-    val columnsMinusFocusRequester = remember { FocusRequester() }
+    val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
+    val columnsMinusFocusRequester = rememberConditionalFocus(isExpanded)
 
     LaunchedEffect(totalAppsCount) {
         gridSettingsManager.setTotalAppsCount(totalAppsCount)
         gridSettingsManager.initializeDefaultRows(totalAppsCount)
-    }
-
-    LaunchedEffect(isExpanded) {
-        if (isExpanded) {
-            columnsMinusFocusRequester.requestFocus()
-        } else {
-            mainCardFocusRequester.requestFocus()
-        }
     }
 
     val cardGradient =

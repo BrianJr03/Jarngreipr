@@ -26,8 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,6 +65,7 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
@@ -126,7 +125,7 @@ fun AppsTab(
     val homeTabDialogState = rememberDialogState<Unit>()
     val createFolderDialogState = rememberDialogState<Unit>()
 
-    val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+    val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     val interactionSource = remember { MutableInteractionSource() }
