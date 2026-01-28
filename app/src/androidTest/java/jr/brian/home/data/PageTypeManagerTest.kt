@@ -22,7 +22,6 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class PageTypeManagerTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher + Job())
 
