@@ -112,15 +112,15 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 
 ---
 
-## 📸 Screenshots (taken on AYN Thor's bottom screen)
+## 📸 Screenshots
+`Note: All screenshots were captured from an AYN Thor's bottom screen.`
 <p>
   <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 03 50 PM" src="https://github.com/user-attachments/assets/d6e00fcc-3b59-43dd-b87b-f0ba514323f4" style="vertical-align: middle;" />
   <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 21 PM" src="https://github.com/user-attachments/assets/d4830507-979d-40a2-87f9-b2d8620f5842" style="vertical-align: middle;" />
   <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 11 PM" src="https://github.com/user-attachments/assets/991ca9ec-e04f-4942-a078-e165a3a37ea4" style="vertical-align: middle;" />
 </p>
-
 <p>
-  <video src="https://github.com/user-attachments/assets/0b9c33ef-6414-4c4f-8130-a4e436f36316" width="345" height="303" controls></video>
+  <video src="https://github.com/user-attachments/assets/dc904362-1076-49ff-a968-812133a53b02" width="345" height="303" controls></video>
 </p>
 
 ---
