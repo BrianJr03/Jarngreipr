@@ -47,6 +47,7 @@ import jr.brian.home.R
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.StatusOrange
 import jr.brian.home.ui.theme.StatusYellow
@@ -137,20 +138,6 @@ private fun ButtonMappingOption(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused || isSelected) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,7 +146,10 @@ private fun ButtonMappingOption(
                 isFocused = it.isFocused
             }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(
+                    isFocused = isFocused,
+                    isSelected = isSelected
+                ),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -255,7 +245,9 @@ fun GamePadHelpDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Shizuku Section
@@ -363,7 +355,9 @@ private fun HelpSectionHeader(text: String) {
         color = ThemePrimaryColor,
         fontSize = 16.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     )
 }
 

@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -64,20 +65,6 @@ fun BackButtonShortcutItem(
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor
-            )
-        }
-    )
-
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -94,7 +81,7 @@ fun BackButtonShortcutItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient,
+                        brush = subtleCardGradient(isFocused = isFocused),
                         shape = RoundedCornerShape(16.dp)
                     )
                     .border(

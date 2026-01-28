@@ -65,6 +65,7 @@ import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.AppName
@@ -378,20 +379,6 @@ private fun FolderAppItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.3f),
-                OledCardColor.copy(alpha = 0.3f),
-            )
-        }
-    )
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -399,7 +386,7 @@ private fun FolderAppItem(
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(

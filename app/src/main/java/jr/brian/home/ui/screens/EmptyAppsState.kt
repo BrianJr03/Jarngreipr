@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.emptyStateGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -75,26 +76,12 @@ fun EmptyAppsState(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val cardGradient = Brush.linearGradient(
-                colors = if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.9f),
-                        ThemeSecondaryColor.copy(alpha = 0.9f)
-                    )
-                } else {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.4f),
-                        ThemeSecondaryColor.copy(alpha = 0.3f)
-                    )
-                }
-            )
-
             Box(
                 modifier = Modifier
                     .scale(animatedFocusedScale(isFocused))
                     .onFocusChanged { isFocused = it.isFocused }
                     .background(
-                        brush = cardGradient,
+                        brush = emptyStateGradient(isFocused = isFocused),
                         shape = RoundedCornerShape(16.dp)
                     )
                     .border(

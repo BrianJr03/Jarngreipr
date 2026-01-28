@@ -49,7 +49,7 @@ import jr.brian.home.model.widget.WidgetCategory
 import jr.brian.home.model.widget.WidgetProviderInfo
 import jr.brian.home.model.widget.WidgetWithCategory
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -100,27 +100,12 @@ fun WidgetPreviewCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val sizeInfo = remember(widget) { repository.getWidgetSizeInfo(widget.providerInfo) }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.3f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        } else {
-            listOf(
-                OledCardColor,
-                OledCardColor
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
