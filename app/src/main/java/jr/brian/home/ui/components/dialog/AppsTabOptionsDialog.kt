@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +50,7 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -195,27 +195,12 @@ private fun GridOptionButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(

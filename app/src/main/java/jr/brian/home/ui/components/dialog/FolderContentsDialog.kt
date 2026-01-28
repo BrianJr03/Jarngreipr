@@ -4,7 +4,9 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +48,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import jr.brian.home.ui.util.rememberDialogState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -62,6 +65,7 @@ import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.AppName
@@ -74,6 +78,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
 @Composable
@@ -96,8 +101,10 @@ fun FolderContentsDialog(
     val focusManager = LocalFocusManager.current
 
     var editableName by remember { mutableStateOf(folderName) }
-    var showEditAppsDialog by remember { mutableStateOf(false) }
+    val editAppsDialogState = rememberDialogState<Unit>()
     var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
+    var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
+    var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -180,7 +187,7 @@ fun FolderContentsDialog(
 
                     Row {
                         IconButton(
-                            onClick = { showEditAppsDialog = true },
+                            onClick = { editAppsDialogState.show() },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
@@ -258,6 +265,9 @@ fun FolderContentsDialog(
                                         displayPreference = displayPreference
                                     )
                                     onDismiss()
+                                },
+                                onLongClick = {
+                                    selectedAppForOptions = app
                                 }
                             )
                         }
@@ -267,10 +277,10 @@ fun FolderContentsDialog(
         }
     }
 
-    if (showEditAppsDialog) {
+    if (editAppsDialogState.isVisible) {
         AppVisibilityDialog(
             apps = allApps,
-            onDismiss = { showEditAppsDialog = false },
+            onDismiss = editAppsDialogState::dismiss,
             pageIndex = pageIndex,
             isWidgetTabMode = true,
             visibleAppsOverride = folderAppPackages,
@@ -284,7 +294,7 @@ fun FolderContentsDialog(
                 scope.launch {
                     if (newPackages.isEmpty()) {
                         folderManager.deleteFolder(pageIndex, folderId, tabType)
-                        showEditAppsDialog = false
+                        editAppsDialogState.dismiss()
                         onDismiss()
                     } else {
                         folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
@@ -302,36 +312,71 @@ fun FolderContentsDialog(
                 folderAppPackages = emptySet()
                 scope.launch {
                     folderManager.deleteFolder(pageIndex, folderId, tabType)
-                    showEditAppsDialog = false
+                    editAppsDialogState.dismiss()
                     onDismiss()
                 }
             }
         )
     }
+
+    selectedAppForOptions?.let { app ->
+        AppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                app.packageName
+            ),
+            onDismiss = { selectedAppForOptions = null },
+            onAppInfoClick = {
+                openAppInfo(context, app.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    app.packageName,
+                    preference
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay,
+            onHideApp = {
+                val newPackages = folderAppPackages - app.packageName
+                folderAppPackages = newPackages
+                scope.launch {
+                    if (newPackages.isEmpty()) {
+                        folderManager.deleteFolder(pageIndex, folderId, tabType)
+                        selectedAppForOptions = null
+                        onDismiss()
+                    } else {
+                        folderManager.updateFolderApps(pageIndex, folderId, newPackages.toList(), tabType)
+                    }
+                }
+                selectedAppForOptions = null
+            },
+            onCustomIconClick = {
+                appForCustomIcon = app
+                selectedAppForOptions = null
+            }
+        )
+    }
+
+    appForCustomIcon?.let { app ->
+        CustomIconDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForCustomIcon = null },
+            onIconChanged = { }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FolderAppItem(
     app: AppInfo,
     customIconManager: CustomIconManager,
     showAppNames: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.3f),
-                OledCardColor.copy(alpha = 0.3f),
-            )
-        }
-    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -340,7 +385,7 @@ private fun FolderAppItem(
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -355,7 +400,10 @@ private fun FolderAppItem(
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .focusable()
             .padding(8.dp)
     ) {
@@ -364,9 +412,7 @@ private fun FolderAppItem(
             packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             customIconManager = customIconManager,
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(8.dp))
+            modifier = Modifier.size(56.dp)
         )
 
         if (showAppNames) {

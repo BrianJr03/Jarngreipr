@@ -77,9 +77,8 @@ fun FolderGridItem(
                         packageName = previewApps[0].packageName,
                         contentDescription = previewApps[0].label,
                         customIconManager = customIconManager,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(6.dp))
+                        modifier = Modifier.size(32.dp),
+                        shape = RoundedCornerShape(6.dp)
                     )
                 }
 
@@ -93,8 +92,8 @@ fun FolderGridItem(
                                 customIconManager = customIconManager,
                                 modifier = Modifier
                                     .size(18.dp)
-                                    .padding(1.dp)
-                                    .clip(RoundedCornerShape(4.dp))
+                                    .padding(1.dp),
+                                shape = RoundedCornerShape(4.dp)
                             )
                         }
                     }
@@ -109,8 +108,8 @@ fun FolderGridItem(
                             customIconManager = customIconManager,
                             modifier = Modifier
                                 .size(18.dp)
-                                .padding(1.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .padding(1.dp),
+                            shape = RoundedCornerShape(4.dp)
                         )
                         Row {
                             previewApps.drop(1).forEach { app ->
@@ -121,8 +120,8 @@ fun FolderGridItem(
                                     customIconManager = customIconManager,
                                     modifier = Modifier
                                         .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
+                                        .padding(1.dp),
+                                    shape = RoundedCornerShape(4.dp)
                                 )
                             }
                         }
@@ -140,8 +139,8 @@ fun FolderGridItem(
                                     customIconManager = customIconManager,
                                     modifier = Modifier
                                         .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
+                                        .padding(1.dp),
+                                    shape = RoundedCornerShape(4.dp)
                                 )
                             }
                         }
@@ -154,8 +153,8 @@ fun FolderGridItem(
                                     customIconManager = customIconManager,
                                     modifier = Modifier
                                         .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
+                                        .padding(1.dp),
+                                    shape = RoundedCornerShape(4.dp)
                                 )
                             }
                         }

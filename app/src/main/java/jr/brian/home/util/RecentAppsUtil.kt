@@ -76,7 +76,7 @@ object RecentAppsUtil {
      * Formats a duration in milliseconds to a human-readable string (e.g., "2h 30m").
      */
     fun formatUsageDuration(durationMs: Long): String {
-        if (durationMs <= 0) return "<1m"
+        if (durationMs < 60000) return "<1m"
 
         val totalMinutes = TimeUnit.MILLISECONDS.toMinutes(durationMs)
         val hours = totalMinutes / 60
@@ -84,8 +84,7 @@ object RecentAppsUtil {
 
         return when {
             hours <= 0 -> "${minutes}m"
-            minutes <= 0L -> "${hours}h"
-            else -> "${hours}h ${minutes}m"
+            else -> if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
         }
     }
 }

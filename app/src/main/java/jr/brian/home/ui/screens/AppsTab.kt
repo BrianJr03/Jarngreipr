@@ -6,58 +6,36 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
@@ -66,11 +44,9 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.components.apps.AppGridItem
-import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
-import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
+import jr.brian.home.ui.components.apps.AppsTabContent
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
@@ -78,22 +54,21 @@ import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
-import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -141,95 +116,97 @@ fun AppsTab(
         displayManager.displays.size > 1
     }
 
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var showAppOptionsMenu by remember { mutableStateOf(false) }
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
-    var showCustomIconDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var showFolderContentsDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
+    val appOptionsDialogState = rememberDialogState<AppInfo>()
+    val customIconDialogState = rememberDialogState<AppInfo>()
+    val folderContentsDialogState = rememberDialogState<Folder>()
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val appDrawerOptionsDialogState = rememberDialogState<Unit>()
+    val appVisibilityDialogState = rememberDialogState<Unit>()
+    val homeTabDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
 
-    val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+    val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
 
-    if (showAppOptionsMenu && selectedApp != null) {
-        val currentIconSize = if (isFreeModeEnabled) {
-            appPositionManager.getPosition(pageIndex, selectedApp!!.packageName)?.iconSize ?: 64f
-        } else {
-            64f
-        }
-
-        val appVisibilityManager = LocalAppVisibilityManager.current
-        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-        val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
-            appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
-        }
-
-        AppOptionsMenu(
-            appLabel = selectedApp!!.label,
-            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                selectedApp!!.packageName
-            ),
-            onDismiss = { showAppOptionsMenu = false },
-            onAppInfoClick = {
-                openAppInfo(context, selectedApp!!.packageName)
-            },
-            onDisplayPreferenceChange = { preference ->
-                appDisplayPreferenceManager.setAppDisplayPreference(
-                    selectedApp!!.packageName,
-                    preference
-                )
-            },
-            hasExternalDisplay = hasExternalDisplay,
-            app = if (isFreeModeEnabled) selectedApp else null,
-            currentIconSize = currentIconSize,
-            onIconSizeChange = { newSize ->
-                if (isFreeModeEnabled) {
-                    val currentPos = appPositionManager.getPosition(
-                        pageIndex,
-                        selectedApp!!.packageName
-                    )
-                    appPositionManager.savePosition(
-                        pageIndex,
-                        AppPosition(
-                            packageName = selectedApp!!.packageName,
-                            x = currentPos?.x ?: 0f,
-                            y = currentPos?.y ?: 0f,
-                            iconSize = newSize
-                        )
-                    )
-                }
-            },
-            onToggleVisibility = {
-                if (isAppHidden) {
-                    appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
-                } else {
-                    appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
-                }
-            },
-            onCustomIconClick = {
-                showAppOptionsMenu = false
-                showCustomIconDialog = true
+    appOptionsDialogState.item?.let { appInfo ->
+        if (appOptionsDialogState.isVisible) {
+            val currentIconSize = if (isFreeModeEnabled) {
+                appPositionManager.getPosition(pageIndex, appInfo.packageName)?.iconSize ?: 64f
+            } else {
+                64f
             }
-        )
+
+            val appVisibilityManager = LocalAppVisibilityManager.current
+            val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+            val isAppHidden = remember(appInfo, pageIndex, hiddenAppsByPage) {
+                appVisibilityManager.isAppHidden(pageIndex, appInfo.packageName)
+            }
+
+            AppOptionsMenu(
+                appLabel = appInfo.label,
+                currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                    appInfo.packageName
+                ),
+                onDismiss = appOptionsDialogState::dismiss,
+                onAppInfoClick = {
+                    openAppInfo(context, appInfo.packageName)
+                },
+                onDisplayPreferenceChange = { preference ->
+                    appDisplayPreferenceManager.setAppDisplayPreference(
+                        appInfo.packageName,
+                        preference
+                    )
+                },
+                hasExternalDisplay = hasExternalDisplay,
+                app = if (isFreeModeEnabled) appInfo else null,
+                currentIconSize = currentIconSize,
+                onIconSizeChange = { newSize ->
+                    if (isFreeModeEnabled) {
+                        val currentPos = appPositionManager.getPosition(
+                            pageIndex,
+                            appInfo.packageName
+                        )
+                        appPositionManager.savePosition(
+                            pageIndex,
+                            AppPosition(
+                                packageName = appInfo.packageName,
+                                x = currentPos?.x ?: 0f,
+                                y = currentPos?.y ?: 0f,
+                                iconSize = newSize
+                            )
+                        )
+                    }
+                },
+                onToggleVisibility = {
+                    if (isAppHidden) {
+                        appVisibilityManager.showApp(pageIndex, appInfo.packageName)
+                    } else {
+                        appVisibilityManager.hideApp(pageIndex, appInfo.packageName)
+                    }
+                },
+                onCustomIconClick = {
+                    customIconDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
+                }
+            )
+        }
     }
 
-    if (showCustomIconDialog && selectedApp != null) {
-        CustomIconDialog(
-            packageName = selectedApp!!.packageName,
-            appLabel = selectedApp!!.label,
-            onDismiss = { showCustomIconDialog = false }
-        )
+    customIconDialogState.item?.let { appInfo ->
+        if (customIconDialogState.isVisible) {
+            CustomIconDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = customIconDialogState::dismiss
+            )
+        }
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         val homeTabManager = LocalHomeTabManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageCountManager = LocalPageCountManager.current
@@ -242,7 +219,7 @@ fun AppsTab(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
@@ -255,40 +232,40 @@ fun AppsTab(
         )
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onPowerClick = {
                 powerViewModel.togglePower()
             },
             onTabsClick = {
-                showHomeTabDialog = true
+                homeTabDialogState.show()
             },
             onMenuClick = {
-                showAppDrawerOptionsDialog = true
+                appDrawerOptionsDialogState.show()
             },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
             onRecentAppsClick = onNavigateToRecentApps
         )
     }
 
-    if (showCreateFolderDialog) {
+    if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
             apps = apps,
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps
         )
     }
 
-    if (showAppDrawerOptionsDialog) {
+    if (appDrawerOptionsDialogState.isVisible) {
         AppsTabOptionsDialog(
-            onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onDismiss = appDrawerOptionsDialogState::dismiss,
+            onShowAppVisibility = { appVisibilityDialogState.show() },
             isFreeModeEnabled = isFreeModeEnabled,
             onToggleFreeMode = {
                 appPositionManager.setFreeMode(pageIndex, !isFreeModeEnabled)
@@ -303,10 +280,10 @@ fun AppsTab(
         )
     }
 
-    if (showAppVisibilityDialog) {
+    if (appVisibilityDialogState.isVisible) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false },
+            onDismiss = appVisibilityDialogState::dismiss,
             pageIndex = pageIndex
         )
     }
@@ -326,7 +303,7 @@ fun AppsTab(
                         powerViewModel.togglePower()
                     },
                     onLongClick = {
-                        showDrawerOptionsDialog = true
+                        drawerOptionsDialogState.show()
                     }
                 ),
     ) {
@@ -360,7 +337,7 @@ fun AppsTab(
                             leadingIconFocusRequester = settingsIconFocusRequester,
                             trailingIcon = Icons.Default.Menu,
                             trailingIconContentDescription = null,
-                            onTrailingIconClick = { showAppDrawerOptionsDialog = true },
+                            onTrailingIconClick = { appDrawerOptionsDialogState.show() },
                             trailingIconFocusRequester = menuIconFocusRequester,
                             onNavigateToGrid = {},
                             onNavigateFromGrid = {
@@ -378,11 +355,11 @@ fun AppsTab(
                 }
 
                 EmptyAppsState(
-                    onAddClick = { showAppVisibilityDialog = true }
+                    onAddClick = { appVisibilityDialogState.show() }
                 )
             }
         } else {
-            AppSelectionContent(
+            AppsTabContent(
                 apps = apps,
                 columns = gridSettingsManager.columnCount,
                 appFocusRequesters = appFocusRequesters,
@@ -400,8 +377,7 @@ fun AppsTab(
                     )
                 },
                 onAppLongClick = { app ->
-                    selectedApp = app
-                    showAppOptionsMenu = true
+                    appOptionsDialogState.show(app)
                 },
                 onAppDoubleClick = { app ->
                     // Launch on opposite display from current preference
@@ -419,7 +395,7 @@ fun AppsTab(
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
                 pagerState = pagerState,
-                onMenuClick = { showAppDrawerOptionsDialog = true },
+                onMenuClick = { appDrawerOptionsDialogState.show() },
                 onShowBottomSheet = onShowBottomSheet,
                 isFreeModeEnabled = isFreeModeEnabled,
                 appPositionManager = appPositionManager,
@@ -430,399 +406,22 @@ fun AppsTab(
                 allApps = appsUnfiltered,
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
-                onFolderClick = { folder ->
-                    selectedFolder = folder
-                    showFolderContentsDialog = true
-                }
+                onFolderClick = folderContentsDialogState::show
             )
         }
     }
 
-    if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps =
-            appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = selectedFolder!!.name,
-            apps = folderApps,
-            folderId = selectedFolder!!.id,
-            pageIndex = pageIndex,
-            allApps = appsUnfiltered,
-            onDismiss = {
-                showFolderContentsDialog = false
-                selectedFolder = null
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AppSelectionContent(
-    apps: List<AppInfo>,
-    modifier: Modifier = Modifier,
-    columns: Int = 4,
-    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    onAppFocusChanged: (Int) -> Unit,
-    onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    onAppDoubleClick: (AppInfo) -> Unit = {},
-    onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = null,
-    totalPages: Int = 1,
-    pagerState: PagerState? = null,
-    onMenuClick: () -> Unit = {},
-    onShowBottomSheet: () -> Unit = {},
-    isFreeModeEnabled: Boolean = false,
-    appPositionManager: jr.brian.home.data.AppPositionManager? = null,
-    onDeletePage: (Int) -> Unit = {},
-    isDragLocked: Boolean = false,
-    pageIndex: Int = 0,
-    pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {},
-    folders: List<Folder> = emptyList(),
-    onFolderClick: (Folder) -> Unit = {}
-) {
-    val gridSettingsManager = LocalGridSettingsManager.current
-    val rows = gridSettingsManager.rowCount
-    val unlimitedMode = gridSettingsManager.unlimitedMode
-    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
-
-    val filteredApps = remember(apps, maxAppsPerPage) {
-        apps.sortedBy { it.label.uppercase() }
-    }
-
-    val powerSettingsManager = LocalPowerSettingsManager.current
-    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
-
-    Column(modifier = modifier.fillMaxSize()) {
-        if (pagerState != null) {
-            val settingsIconFocusRequester = remember { FocusRequester() }
-            val menuIconFocusRequester = remember { FocusRequester() }
-
-            AnimatedVisibility(
-                visible = isHeaderVisible,
-                enter = slideInVertically(initialOffsetY = { -it }),
-                exit = slideOutVertically(targetOffsetY = { -it })
-            ) {
-                ScreenHeaderRow(
-                    totalPages = totalPages,
-                    pagerState = pagerState,
-                    leadingIcon = Icons.Default.Settings,
-                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                    onLeadingIconClick = onSettingsClick,
-                    leadingIconFocusRequester = settingsIconFocusRequester,
-                    trailingIcon = Icons.Default.Menu,
-                    trailingIconContentDescription = null,
-                    onTrailingIconClick = onMenuClick,
-                    trailingIconFocusRequester = menuIconFocusRequester,
-                    onNavigateToGrid = {
-                        appFocusRequesters[0]?.requestFocus()
-                    },
-                    onNavigateFromGrid = {
-                        menuIconFocusRequester.requestFocus()
-                    },
-                    powerViewModel = powerViewModel,
-                    showPowerButton = isPowerButtonVisible,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                    onFolderClick = onShowBottomSheet,
-                    onDeletePage = onDeletePage,
-                    pageIndicatorBorderColor = pageIndicatorBorderColor,
-                    onNavigateToSearch = onNavigateToSearch
-                )
-            }
-        }
-
-        if (isFreeModeEnabled && appPositionManager != null) {
-            FreePositionedAppsLayout(
-                apps = filteredApps,
-                appPositionManager = appPositionManager,
-                keyboardVisible = false,
-                onAppClick = onAppClick,
-                isDragLocked = isDragLocked,
-                pageIndex = pageIndex,
-                allApps = allApps,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            )
-        } else {
-            AppGridLayout(
-                apps = filteredApps,
-                columns = columns,
-                maxAppsPerPage = maxAppsPerPage,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize(),
-                appFocusRequesters = appFocusRequesters,
-                onFocusChanged = onAppFocusChanged,
-                onNavigateLeft = {},
-                onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
-                onAppDoubleClick = onAppDoubleClick,
-                folders = folders,
-                allApps = allApps,
-                onFolderClick = onFolderClick,
-                isHeaderVisible = isHeaderVisible
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AppGridLayout(
-    columns: Int,
-    maxAppsPerPage: Int,
-    apps: List<AppInfo>,
-    modifier: Modifier = Modifier,
-    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    onFocusChanged: (Int) -> Unit = {},
-    onNavigateLeft: () -> Unit = {},
-    onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    onAppDoubleClick: (AppInfo) -> Unit = {},
-    folders: List<Folder> = emptyList(),
-    allApps: List<AppInfo> = emptyList(),
-    onFolderClick: (Folder) -> Unit = {},
-    isHeaderVisible: Boolean = true
-) {
-    val gridState = rememberLazyGridState()
-
-    val displayedApps = remember(apps, maxAppsPerPage) {
-        apps.take(maxAppsPerPage)
-    }
-
-    LaunchedEffect(Unit) {
-        appFocusRequesters[0]?.requestFocus()
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = gridState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            horizontal = 8.dp,
-            vertical = 8.dp,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        // Render apps first
-        items(displayedApps.size) { index ->
-            val app = displayedApps[index]
-            val itemFocusRequester =
-                remember(index) {
-                    FocusRequester().also { appFocusRequesters[index] = it }
-                }
-
-            AppGridItem(
-                app = app,
-                focusRequester = itemFocusRequester,
-                onClick = { onAppClick(app) },
-                onLongClick = { onAppLongClick(app) },
-                onDoubleClick = { onAppDoubleClick(app) },
-                onFocusChanged = { onFocusChanged(index) },
-                onNavigateUp = {
-                    val prevIndex = index - columns
-                    if (prevIndex >= 0) {
-                        coroutineScope.launch {
-                            gridState.animateScrollToItem(prevIndex)
-                        }
-                        appFocusRequesters[prevIndex]?.requestFocus()
-                    }
-                },
-                onNavigateDown = {
-                    val nextIndex = index + columns
-                    if (nextIndex < displayedApps.size) {
-                        coroutineScope.launch {
-                            gridState.animateScrollToItem(nextIndex)
-                        }
-                        appFocusRequesters[nextIndex]?.requestFocus()
-                    }
-                },
-                onNavigateLeft = {
-                    if (index % columns == 0) {
-                        onNavigateLeft()
-                    } else {
-                        val prevIndex = index - 1
-                        if (prevIndex >= 0) {
-                            appFocusRequesters[prevIndex]?.requestFocus()
-                        }
-                    }
-                },
-                onNavigateRight = {
-                    val nextIndex = index + 1
-                    if (nextIndex < displayedApps.size && nextIndex / columns == index / columns) {
-                        appFocusRequesters[nextIndex]?.requestFocus()
-                    }
-                },
-            )
-        }
-
-        // Render folders after apps
-        items(folders.size) { index ->
-            val folder = folders[index]
-            val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
-            FolderGridItemForAppsTab(
-                folder = folder,
+    folderContentsDialogState.item?.let { folder ->
+        if (folderContentsDialogState.isVisible) {
+            val folderApps =
+                appsUnfiltered.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
                 apps = folderApps,
-                onClick = { onFolderClick(folder) }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(80.dp))
-        }
-    }
-}
-
-@Composable
-private fun FolderGridItemForAppsTab(
-    folder: Folder,
-    apps: List<AppInfo>,
-    onClick: () -> Unit
-) {
-    val customIconManager = LocalCustomIconManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
-    val previewApps = apps.take(4)
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable { onClick() }
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(OledCardColor.copy(alpha = 0.9f))
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            when (previewApps.size) {
-                0 -> {
-                    Text(
-                        text = "Empty",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 8.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                1 -> {
-                    AppIconImage(
-                        defaultIcon = previewApps[0].icon,
-                        packageName = previewApps[0].packageName,
-                        contentDescription = previewApps[0].label,
-                        customIconManager = customIconManager,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                    )
-                }
-
-                2 -> {
-                    Row {
-                        previewApps.forEach { app ->
-                            AppIconImage(
-                                defaultIcon = app.icon,
-                                packageName = app.packageName,
-                                contentDescription = app.label,
-                                customIconManager = customIconManager,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .padding(1.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                            )
-                        }
-                    }
-                }
-
-                3 -> {
-                    Column {
-                        AppIconImage(
-                            defaultIcon = previewApps[0].icon,
-                            packageName = previewApps[0].packageName,
-                            contentDescription = previewApps[0].label,
-                            customIconManager = customIconManager,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(1.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                        )
-                        Row {
-                            previewApps.drop(1).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                    }
-                }
-
-                else -> {
-                    Column {
-                        Row {
-                            previewApps.take(2).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                        Row {
-                            previewApps.drop(2).take(2).forEach { app ->
-                                AppIconImage(
-                                    defaultIcon = app.icon,
-                                    packageName = app.packageName,
-                                    contentDescription = app.label,
-                                    customIconManager = customIconManager,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(1.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        if (appVisibilityManager.showFolderNames) {
-            Text(
-                text = folder.name,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 1
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = appsUnfiltered,
+                onDismiss = folderContentsDialogState::dismiss
             )
         }
     }

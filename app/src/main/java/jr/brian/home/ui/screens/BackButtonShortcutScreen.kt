@@ -54,6 +54,7 @@ import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.util.rememberDialogState
 
 @Composable
 fun BackButtonShortcutScreen(
@@ -63,7 +64,7 @@ fun BackButtonShortcutScreen(
     val powerSettingsManager = LocalPowerSettingsManager.current
     val currentShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
     val currentAppPackage by powerSettingsManager.backButtonShortcutAppPackage.collectAsStateWithLifecycle()
-    var showAppSelectionDialog by remember { mutableStateOf(false) }
+    val appSelectionDialogState = rememberDialogState<Unit>()
 
     BackHandler(onBack = onDismiss)
 
@@ -155,7 +156,7 @@ fun BackButtonShortcutScreen(
                         onClick = {
                             powerSettingsManager.setBackButtonShortcut(shortcut)
                             if (shortcut == BackButtonShortcut.APP) {
-                                showAppSelectionDialog = true
+                                appSelectionDialogState.show()
                             } else {
                                 onDismiss()
                             }
@@ -178,7 +179,7 @@ fun BackButtonShortcutScreen(
                         ShortcutAppSelectionItem(
                             text = displayText,
                             onClick = {
-                                showAppSelectionDialog = true
+                                appSelectionDialogState.show()
                             }
                         )
                     }
@@ -187,16 +188,14 @@ fun BackButtonShortcutScreen(
         }
     }
 
-    if (showAppSelectionDialog) {
+    if (appSelectionDialogState.isVisible) {
         AppSelectionDialog(
             apps = allApps,
             onAppSelected = { app ->
                 powerSettingsManager.setBackButtonShortcutAppPackage(app.packageName)
-                showAppSelectionDialog = false
+                appSelectionDialogState.dismiss()
             },
-            onDismiss = {
-                showAppSelectionDialog = false
-            }
+            onDismiss = appSelectionDialogState::dismiss
         )
     }
 }

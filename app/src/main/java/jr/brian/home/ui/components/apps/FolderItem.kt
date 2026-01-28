@@ -146,9 +146,7 @@ fun FolderItem(
                             packageName = previewApps[0].packageName,
                             contentDescription = previewApps[0].label,
                             customIconManager = customIconManager,
-                            modifier = Modifier
-                                .size((iconSize * 0.6f).dp)
-                                .clip(RoundedCornerShape(8.dp))
+                            modifier = Modifier.size((iconSize * 0.6f).dp)
                         )
                     }
                     2 -> {
@@ -161,8 +159,8 @@ fun FolderItem(
                                     customIconManager = customIconManager,
                                     modifier = Modifier
                                         .size(iconPreviewSize)
-                                        .padding(2.dp)
-                                        .clip(RoundedCornerShape(6.dp))
+                                        .padding(2.dp),
+                                    shape = RoundedCornerShape(6.dp)
                                 )
                             }
                         }
@@ -176,8 +174,8 @@ fun FolderItem(
                                 customIconManager = customIconManager,
                                 modifier = Modifier
                                     .size(iconPreviewSize)
-                                    .padding(2.dp)
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .padding(2.dp),
+                                shape = RoundedCornerShape(6.dp)
                             )
                             Row {
                                 previewApps.drop(1).forEach { app ->
@@ -188,8 +186,8 @@ fun FolderItem(
                                         customIconManager = customIconManager,
                                         modifier = Modifier
                                             .size(iconPreviewSize)
-                                            .padding(2.dp)
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .padding(2.dp),
+                                        shape = RoundedCornerShape(6.dp)
                                     )
                                 }
                             }
@@ -206,8 +204,8 @@ fun FolderItem(
                                         customIconManager = customIconManager,
                                         modifier = Modifier
                                             .size(iconPreviewSize)
-                                            .padding(2.dp)
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .padding(2.dp),
+                                        shape = RoundedCornerShape(6.dp)
                                     )
                                 }
                             }
@@ -220,8 +218,8 @@ fun FolderItem(
                                         customIconManager = customIconManager,
                                         modifier = Modifier
                                             .size(iconPreviewSize)
-                                            .padding(2.dp)
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .padding(2.dp),
+                                        shape = RoundedCornerShape(6.dp)
                                     )
                                 }
                             }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +35,6 @@ fun AppOptionsMenu(
         hasExternalDisplay = hasExternalDisplay
     )
     var focusedIndex by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        focusRequesters.firstOrNull()?.requestFocus()
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
