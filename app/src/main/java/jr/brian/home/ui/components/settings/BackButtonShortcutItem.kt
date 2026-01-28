@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -62,27 +63,7 @@ fun BackButtonShortcutItem(
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
     var isFocused by remember { mutableStateOf(false) }
-    val mainCardFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(isExpanded) {
-        if (!isExpanded) {
-            mainCardFocusRequester.requestFocus()
-        }
-    }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor
-            )
-        }
-    )
+    val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -100,7 +81,7 @@ fun BackButtonShortcutItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient,
+                        brush = subtleCardGradient(isFocused = isFocused),
                         shape = RoundedCornerShape(16.dp)
                     )
                     .border(

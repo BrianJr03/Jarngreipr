@@ -117,9 +117,10 @@ fun LauncherPagerScreen(
         onBackButtonShortcut()
     }
 
-    if (showResizeScreen && resizeWidgetInfo != null) {
+    val widgetToResize = resizeWidgetInfo
+    if (showResizeScreen && widgetToResize != null) {
         WidgetResizeScreen(
-            widgetInfo = resizeWidgetInfo!!,
+            widgetInfo = widgetToResize,
             pageIndex = resizePageIndex,
             viewModel = widgetViewModel,
             onNavigateBack = {

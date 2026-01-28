@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -49,6 +49,7 @@ import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.Job
@@ -88,17 +89,15 @@ fun AppsModalContent(
         displayManager.displays.size > 1
     }
 
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var showAppOptionsMenu by remember { mutableStateOf(false) }
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
-    var showCustomIconDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var showFolderContentsDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
+    val appOptionsDialogState = rememberDialogState<AppInfo>()
+    val customIconDialogState = rememberDialogState<AppInfo>()
+    val folderContentsDialogState = rememberDialogState<Folder>()
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val appDrawerOptionsDialogState = rememberDialogState<Unit>()
+    val appVisibilityDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
 
-    val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+    val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     val scope = rememberCoroutineScope()
@@ -150,78 +149,82 @@ fun AppsModalContent(
         }
     }
 
-    if (showAppOptionsMenu && selectedApp != null) {
-        val currentIconSize = 64f
+    appOptionsDialogState.item?.let { appInfo ->
+        if (appOptionsDialogState.isVisible) {
+            val currentIconSize = 64f
 
-        val appVisibilityManager = LocalAppVisibilityManager.current
-        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-        val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
-            appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
-        }
-
-        AppOptionsMenu(
-            appLabel = selectedApp!!.label,
-            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                selectedApp!!.packageName
-            ),
-            onDismiss = { showAppOptionsMenu = false },
-            onAppInfoClick = {
-                openAppInfo(context, selectedApp!!.packageName)
-            },
-            onDisplayPreferenceChange = { preference ->
-                appDisplayPreferenceManager.setAppDisplayPreference(
-                    selectedApp!!.packageName,
-                    preference
-                )
-            },
-            hasExternalDisplay = hasExternalDisplay,
-            app = null,
-            currentIconSize = currentIconSize,
-            onIconSizeChange = {},
-            onToggleVisibility = {
-                if (isAppHidden) {
-                    appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
-                } else {
-                    appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
-                }
-            },
-            onCustomIconClick = {
-                showAppOptionsMenu = false
-                showCustomIconDialog = true
+            val appVisibilityManager = LocalAppVisibilityManager.current
+            val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+            val isAppHidden = remember(appInfo, pageIndex, hiddenAppsByPage) {
+                appVisibilityManager.isAppHidden(pageIndex, appInfo.packageName)
             }
-        )
+
+            AppOptionsMenu(
+                appLabel = appInfo.label,
+                currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                    appInfo.packageName
+                ),
+                onDismiss = appOptionsDialogState::dismiss,
+                onAppInfoClick = {
+                    openAppInfo(context, appInfo.packageName)
+                },
+                onDisplayPreferenceChange = { preference ->
+                    appDisplayPreferenceManager.setAppDisplayPreference(
+                        appInfo.packageName,
+                        preference
+                    )
+                },
+                hasExternalDisplay = hasExternalDisplay,
+                app = null,
+                currentIconSize = currentIconSize,
+                onIconSizeChange = {},
+                onToggleVisibility = {
+                    if (isAppHidden) {
+                        appVisibilityManager.showApp(pageIndex, appInfo.packageName)
+                    } else {
+                        appVisibilityManager.hideApp(pageIndex, appInfo.packageName)
+                    }
+                },
+                onCustomIconClick = {
+                    customIconDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
+                }
+            )
+        }
     }
 
-    if (showCustomIconDialog && selectedApp != null) {
-        CustomIconDialog(
-            packageName = selectedApp!!.packageName,
-            appLabel = selectedApp!!.label,
-            onDismiss = { showCustomIconDialog = false }
-        )
+    customIconDialogState.item?.let { appInfo ->
+        if (customIconDialogState.isVisible) {
+            CustomIconDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = customIconDialogState::dismiss
+            )
+        }
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         AppDrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
         )
     }
 
-    if (showCreateFolderDialog) {
+    if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
             apps = apps,
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps
         )
     }
 
-    if (showAppDrawerOptionsDialog) {
+    if (appDrawerOptionsDialogState.isVisible) {
         AppsTabOptionsDialog(
-            onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onDismiss = appDrawerOptionsDialogState::dismiss,
+            onShowAppVisibility = { appVisibilityDialogState.show() },
             isFreeModeEnabled = false,
             onResetPositions = {
                 appPositionManager.clearAllPositions(pageIndex)
@@ -233,10 +236,10 @@ fun AppsModalContent(
         )
     }
 
-    if (showAppVisibilityDialog) {
+    if (appVisibilityDialogState.isVisible) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false },
+            onDismiss = appVisibilityDialogState::dismiss,
             pageIndex = pageIndex
         )
     }
@@ -247,7 +250,7 @@ fun AppsModalContent(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
-                            showDrawerOptionsDialog = true
+                            drawerOptionsDialogState.show()
                         }
                     )
                 },
@@ -261,7 +264,7 @@ fun AppsModalContent(
             }
         } else if (apps.isEmpty()) {
             EmptyAppsState(
-                onAddClick = { showAppVisibilityDialog = true }
+                onAddClick = { appVisibilityDialogState.show() }
             )
         } else {
             ModalAppSelectionContent(
@@ -285,10 +288,7 @@ fun AppsModalContent(
                         gridState.scrollToItem(0)
                     }
                 },
-                onAppLongClick = { app ->
-                    selectedApp = app
-                    showAppOptionsMenu = true
-                },
+                onAppLongClick = appOptionsDialogState::show,
                 onAppDoubleClick = { app ->
                     onAppOpened()
                     // Launch on opposite display from current preference
@@ -307,10 +307,7 @@ fun AppsModalContent(
                 },
                 allApps = appsUnfiltered,
                 folders = folders,
-                onFolderClick = { folder ->
-                    selectedFolder = folder
-                    showFolderContentsDialog = true
-                },
+                onFolderClick = folderContentsDialogState::show,
                 isHeaderVisible = isHeaderVisible,
                 gridState = gridState,
                 nestedScrollConnection = nestedScrollConnection
@@ -318,20 +315,19 @@ fun AppsModalContent(
         }
     }
 
-    if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps =
-            appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = selectedFolder!!.name,
-            apps = folderApps,
-            folderId = selectedFolder!!.id,
-            pageIndex = pageIndex,
-            allApps = appsUnfiltered,
-            onDismiss = {
-                showFolderContentsDialog = false
-                selectedFolder = null
-            }
-        )
+    folderContentsDialogState.item?.let { folder ->
+        if (folderContentsDialogState.isVisible) {
+            val folderApps =
+                appsUnfiltered.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
+                apps = folderApps,
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = appsUnfiltered,
+                onDismiss = folderContentsDialogState::dismiss
+            )
+        }
     }
 }
 

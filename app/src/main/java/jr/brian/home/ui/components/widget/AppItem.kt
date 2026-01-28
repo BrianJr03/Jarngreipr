@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +19,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,8 +33,8 @@ import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
-import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -54,8 +52,8 @@ fun AppItem(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
     val scope = rememberCoroutineScope()
-    var showOptionsDialog by remember { mutableStateOf(false) }
-    var showCustomIconDialog by remember { mutableStateOf(false) }
+    val optionsDialogState = rememberDialogState<Unit>()
+    val customIconDialogState = rememberDialogState<Unit>()
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -79,7 +77,7 @@ fun AppItem(
                         displayPreference = displayPreference
                     )
                 },
-                onLongClick = { showOptionsDialog = true }
+                onLongClick = { optionsDialogState.show() }
             )
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -90,9 +88,7 @@ fun AppItem(
                 packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 customIconManager = customIconManager,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.size(48.dp)
             )
             
             NotificationBadge(
@@ -109,13 +105,13 @@ fun AppItem(
         }
     }
 
-    if (showOptionsDialog) {
+    if (optionsDialogState.isVisible) {
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                 app.packageName
             ),
-            onDismiss = { showOptionsDialog = false },
+            onDismiss = optionsDialogState::dismiss,
             onAppInfoClick = {
                 openAppInfo(context, app.packageName)
             },
@@ -131,20 +127,20 @@ fun AppItem(
                     appVisibilityManager.hideApp(pageIndex, app.packageName)
                     widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
             },
             onCustomIconClick = {
-                showOptionsDialog = false
-                showCustomIconDialog = true
+                customIconDialogState.show()
+                optionsDialogState.dismiss()
             }
         )
     }
 
-    if (showCustomIconDialog) {
+    if (customIconDialogState.isVisible) {
         CustomIconDialog(
             packageName = app.packageName,
             appLabel = app.label,
-            onDismiss = { showCustomIconDialog = false },
+            onDismiss = customIconDialogState::dismiss,
             onIconChanged = {  }
         )
     }

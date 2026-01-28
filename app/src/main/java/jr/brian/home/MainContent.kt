@@ -52,6 +52,7 @@ import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
@@ -75,10 +76,9 @@ fun MainContent() {
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
-    var showWhatsNewDialog by remember { mutableStateOf(false) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
-    var showNotificationAccessDialog by remember { mutableStateOf(false) }
-    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    val updateDialogState = rememberDialogState<UpdateInfo>()
+    val whatsNewDialogState = rememberDialogState<Unit>()
+    val notificationAccessDialogState = rememberDialogState<Unit>()
     var currentVersionName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -95,18 +95,19 @@ fun MainContent() {
 
         val update = UpdateChecker.checkForUpdate(versionName)
         if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)) {
-            updateInfo = update
-            showUpdateDialog = true
+            updateDialogState.show(update)
         }
 
         if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
             !hasUserDeclinedNotificationAccess(context)) {
-            showNotificationAccessDialog = true
+            notificationAccessDialogState.show()
         }
     }
 
     LaunchedEffect(shouldShowWhatsNew) {
-        showWhatsNewDialog = shouldShowWhatsNew
+        if (shouldShowWhatsNew) {
+            whatsNewDialogState.show()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -128,7 +129,7 @@ fun MainContent() {
                     Intent.ACTION_PACKAGE_ADDED,
                     Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
-                        mainViewModel.loadAllApps(context!!)
+                        context?.let { mainViewModel.loadAllApps(it) }
                     }
                 }
             }
@@ -216,7 +217,7 @@ fun MainContent() {
             )
         }
 
-        if (showWhatsNewDialog) {
+        if (whatsNewDialogState.isVisible) {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val versionName = packageInfo.versionName ?: "Unknown"
 
@@ -235,39 +236,35 @@ fun MainContent() {
                     patchNotes = notes,
                     onDismiss = {
                         whatsNewManager.markWhatsNewAsSeen(versionName)
-                        showWhatsNewDialog = false
+                        whatsNewDialogState.dismiss()
                     }
                 )
             }
         }
 
-        if (showUpdateDialog && updateInfo != null) {
-            UpdateAvailableDialog(
-                updateInfo = updateInfo!!,
-                currentVersion = currentVersionName,
-                onDismiss = {
-                    showUpdateDialog = false
-                },
-                onRemindLater = {
-                    showUpdateDialog = false
-                },
-                onSkipVersion = {
-                    appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
-                    showUpdateDialog = false
-                },
-                onDownloadComplete = {
-                    appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
-                }
-            )
+        updateDialogState.item?.let { updateInfo ->
+            if (updateDialogState.isVisible) {
+                UpdateAvailableDialog(
+                    updateInfo = updateInfo,
+                    currentVersion = currentVersionName,
+                    onDismiss = updateDialogState::dismiss,
+                    onRemindLater = updateDialogState::dismiss,
+                    onSkipVersion = {
+                        appUpdateManager.skipVersion(context, updateInfo.latestVersion)
+                        updateDialogState.dismiss()
+                    },
+                    onDownloadComplete = {
+                        appUpdateManager.markVersionDownloaded(context, updateInfo.latestVersion)
+                    }
+                )
+            }
         }
 
-        if (showNotificationAccessDialog) {
+        if (notificationAccessDialogState.isVisible) {
             NotificationAccessDialog(
-                onDismiss = {
-                    showNotificationAccessDialog = false
-                },
+                onDismiss = notificationAccessDialogState::dismiss,
                 onGrantAccess = {
-                    showNotificationAccessDialog = false
+                    notificationAccessDialogState.dismiss()
                     openNotificationAccessSettings(context)
                 },
                 onOpenAppSettings = {
@@ -275,7 +272,7 @@ fun MainContent() {
                 },
                 onNeverAskAgain = {
                     setNotificationAccessDeclined(context)
-                    showNotificationAccessDialog = false
+                    notificationAccessDialogState.dismiss()
                 }
             )
         }

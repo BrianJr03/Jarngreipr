@@ -57,6 +57,7 @@ import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -261,27 +262,13 @@ private fun AppSelectionItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.5f),
-                OledCardColor.copy(alpha = 0.5f),
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -309,9 +296,7 @@ private fun AppSelectionItem(
                 packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 customIconManager = customIconManager,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.size(40.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -346,26 +331,12 @@ private fun ActionButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.7f),
-                ThemeSecondaryColor.copy(alpha = 0.7f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.7f),
-                OledCardColor.copy(alpha = 0.7f),
-            )
-        }
-    )
-
     Box(
         modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = gradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(10.dp)
             )
             .border(

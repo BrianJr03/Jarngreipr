@@ -55,6 +55,7 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.OledCardColor
@@ -71,7 +72,7 @@ fun ThemeSelectorItem(
 ) {
     val themeManager = LocalThemeManager.current
     var isFocused by remember { mutableStateOf(false) }
-    val mainCardFocusRequester = remember { FocusRequester() }
+    val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
     val allThemes = remember(themeManager.allThemes.size) { themeManager.allThemes }
     val selectedThemeFocusRequesters =
         remember(allThemes.size) { allThemes.associateWith { FocusRequester() } }
@@ -80,8 +81,6 @@ fun ThemeSelectorItem(
         if (isExpanded) {
             val selectedTheme = themeManager.currentTheme
             selectedThemeFocusRequesters[selectedTheme]?.requestFocus()
-        } else {
-            mainCardFocusRequester.requestFocus()
         }
     }
 

@@ -2,9 +2,9 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -28,11 +28,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -62,6 +60,8 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,8 +96,8 @@ fun AppDrawerTab(
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
     val showAppDrawer = remember { mutableStateOf(false) }
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val homeTabDialogState = rememberDialogState<Unit>()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
     val filteredApps = remember(apps, maxAppsPerPage) {
@@ -117,9 +117,9 @@ fun AppDrawerTab(
     val settingsIconFocusRequester = remember { FocusRequester() }
     val menuIconFocusRequester = remember { FocusRequester() }
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-    val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
-    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
+    val appFocusRequesters = rememberFocusRequesterMap()
+    val appDrawerOptionsDialogState = rememberDialogState<Unit>()
+    val appVisibilityDialogState = rememberDialogState<Unit>()
 
     LazyColumn(
         state = scrollState,
@@ -156,7 +156,7 @@ fun AppDrawerTab(
                         trailingIcon = Icons.Default.Menu,
                         trailingIconContentDescription = null,
                         onTrailingIconClick = {
-                            showAppDrawerOptionsDialog = true
+                            appDrawerOptionsDialogState.show()
                         },
                         trailingIconFocusRequester = menuIconFocusRequester,
                         onNavigateToGrid = {
@@ -183,10 +183,10 @@ fun AppDrawerTab(
                 lastVisibleIndex = lastVisibleIndex,
                 lastOffset = lastOffset,
                 showAppDrawer = showAppDrawer.value,
-                showDrawerOptionsDialog = showDrawerOptionsDialog,
-                showHomeTabDialog = showHomeTabDialog,
+                showDrawerOptionsDialog = drawerOptionsDialogState.isVisible,
+                showHomeTabDialog = homeTabDialogState.isVisible,
                 onDoubleTap = { powerViewModel.togglePower() },
-                onLongPress = { showDrawerOptionsDialog = true },
+                onLongPress = { drawerOptionsDialogState.show() },
                 apps = filteredApps,
                 appsUnfiltered = appsUnfiltered,
                 isLoading = isLoading,
@@ -202,17 +202,17 @@ fun AppDrawerTab(
         }
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onPowerClick = {
                 powerViewModel.togglePower()
             },
             onTabsClick = {
-                showHomeTabDialog = true
+                homeTabDialogState.show()
             },
             onMenuClick = {
-                showAppDrawerOptionsDialog = true
+                appDrawerOptionsDialogState.show()
             },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
@@ -221,10 +221,10 @@ fun AppDrawerTab(
         )
     }
 
-    if (showAppDrawerOptionsDialog) {
+    if (appDrawerOptionsDialogState.isVisible) {
         AppsTabOptionsDialog(
-            onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onDismiss = appDrawerOptionsDialogState::dismiss,
+            onShowAppVisibility = { appVisibilityDialogState.show() },
             onResetPositions = {},
             isDragLocked = true,
             onToggleDragLock = { },
@@ -232,15 +232,15 @@ fun AppDrawerTab(
         )
     }
 
-    if (showAppVisibilityDialog) {
+    if (appVisibilityDialogState.isVisible) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false },
+            onDismiss = appVisibilityDialogState::dismiss,
             pageIndex = pageIndex
         )
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         val homeTabManager = LocalHomeTabManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageCountManager = LocalPageCountManager.current
@@ -253,7 +253,7 @@ fun AppDrawerTab(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },

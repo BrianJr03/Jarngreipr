@@ -172,19 +172,19 @@ private fun AppGrid(
         }
     }
 
-    if (selectedApp != null) {
+    selectedApp?.let { app ->
         SearchAppOptionsDialog(
-            app = selectedApp!!,
+            app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                selectedApp!!.packageName
+                app.packageName
             ),
             onDismiss = { selectedApp = null },
             onAppInfoClick = {
-                openAppInfo(context, selectedApp!!.packageName)
+                openAppInfo(context, app.packageName)
             },
             onDisplayPreferenceChange = { preference ->
                 appDisplayPreferenceManager.setAppDisplayPreference(
-                    selectedApp!!.packageName,
+                    app.packageName,
                     preference
                 )
             },

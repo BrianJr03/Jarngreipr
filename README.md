@@ -15,7 +15,8 @@
 
 **A powerful, fully-featured Android launcher designed for dual-screen devices and gamepad enthusiasts.**
 
-Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device. 
+Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. 
+Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
 
 It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), an app that transforms your Home button into a powerful dual-screen controller.
 
@@ -65,12 +66,12 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 ### 🎨 **Appearance & Themes**
 
 - **6 Built-in Color Themes**
-  - Pink & Violet
-  - Blue & Yellow
-  - Green & Cyan
-  - Purple & Orange
-  - Red & Blue
-  - Magenta & Lime
+    - Pink & Violet
+    - Blue & Yellow
+    - Green & Cyan
+    - Purple & Orange
+    - Red & Blue
+    - Magenta & Lime
 
 - **Custom Theme Creator** - Design your own themes with custom primary and secondary colors
 - **OLED Mode** - True black backgrounds for OLED displays to save battery
@@ -184,41 +185,41 @@ adb install app/build/outputs/apk/release/app-release.apk
 ### Getting Started
 
 1. **First Launch**
-   - Grant necessary permissions (Accessibility, Usage Stats)
-   - Choose your preferred theme
-   - Set up your first home screen page
+    - Grant necessary permissions (Accessibility, Usage Stats)
+    - Choose your preferred theme
+    - Set up your first home screen page
 
 2. **Adding Apps**
-   - Apps automatically appear on your first page
-   - Long press apps to move, hide, or add to folders
-   - Use the App Drawer to find and add apps
+    - Apps automatically appear on your first page
+    - Long press apps to move, hide, or add to folders
+    - Use the App Drawer to find and add apps
 
 3. **Creating Folders**
-   - Long press an app → "Create Folder"
-   - Name your folder and add multiple apps
-   - Tap folders to open, long press to edit
+    - Long press an app → "Create Folder"
+    - Name your folder and add multiple apps
+    - Tap folders to open, long press to edit
 
 4. **Adding Widgets**
-   - Create an "Apps & Widgets" page
-   - Tap "+" → Select widget
-   - Resize and position as needed
+    - Create an "Apps & Widgets" page
+    - Tap "+" → Select widget
+    - Resize and position as needed
 
 ### Customization
 
 **Themes & Appearance:**
 1. Tap **⚙️ Settings** icon
 2. **Appearance** section:
-   - **Theme Selector** - Choose from 6 themes or create custom
-   - **Icon Pack** - Browse and apply icon packs
-   - **OLED Mode** - Enable true black backgrounds
-   - **Wallpaper** - Set custom backgrounds
+    - **Theme Selector** - Choose from 6 themes or create custom
+    - **Icon Pack** - Browse and apply icon packs
+    - **OLED Mode** - Enable true black backgrounds
+    - **Wallpaper** - Set custom backgrounds
 
 **Layout Configuration:**
 1. **Settings** → **Layout** section:
-   - **Grid Settings** - Adjust columns/rows per page
-   - **Unlimited Mode** - Enable free-form positioning
-   - **Header Visibility** - Show/hide top bar
-   - **App Names** - Toggle name display
+    - **Grid Settings** - Adjust columns/rows per page
+    - **Unlimited Mode** - Enable free-form positioning
+    - **Header Visibility** - Show/hide top bar
+    - **App Names** - Toggle name display
 
 **Control Pad (Gamepad):**
 1. **Settings** → **Extras** → **Control Pad**
