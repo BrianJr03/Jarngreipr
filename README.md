@@ -13,44 +13,104 @@
   >
 </a> -->
 
-**A modern, customizable Android launcher designed for the AYN Thor (and other dual screen devices).**
+**A powerful, fully-featured Android launcher designed for dual-screen devices and gamepad enthusiasts.**
 
-Járngreipr is a sleek, gamepad-friendly
-launcher that features beautiful themes, custom wallpapers,
-and an intuitive interface optimized for the bottom screen of any dual screen Android device. 
-It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), 
-an app that allows you to transform your Home button into a powerful dual-screen controller.
+Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device. 
 
-Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **Mjolnir** 🔨, 
-this launcher helps you grip control of your Thor device's bottom screen.
+It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), an app that transforms your Home button into a powerful dual-screen controller.
+
+Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **Mjolnir** 🔨, this launcher helps you grip control of your device's interface.
+
+---
 
 ## ✨ Features
 
-### 🎨 **Customization**
+### 🏠 **Multiple Home Screen Modes**
 
-- **6 Beautiful Color Themes** - Switch between Pink & Violet, Blue & Yellow, Green & Cyan, Purple &
-  Orange, Red & Blue, and Magenta & Lime. You also can create your own theme!
+- **Apps Tab** - Traditional grid layout with apps only
+- **Apps & Widgets Tab** - Combine apps and Android widgets on the same page
+- **App Drawer** - Full app list with instant search and filtering
+- **Multiple Pages** - Create unlimited home screen pages with different layouts
+- **Page Customization** - Set different modes for each page independently
 
-- **Custom Wallpapers** - Set static images from your gallery
+### 📱 **Advanced App Management**
 
-### 🎮 **Gamepad-Optimized UI**
+- **Folder Support** - Organize apps into folders with custom names
+- **Free-Positioned Apps** - Drag apps anywhere on the screen, not just in grid cells
+- **Drag Lock** - Lock app positions to prevent accidental moves
+- **App Visibility Control** - Show/hide specific apps on each page
+- **Custom Icons** - Set custom icons for individual apps
+- **App Display Preferences** - Choose between icon only, name only, or both
+- **App Size Control** - Adjust app icon sizes per your preference
+- **Recent Apps** - Quick access to recently used applications
+- **Quick Delete** - Batch uninstall multiple apps at once
 
-- **On-Screen Keyboard** - Built-in keyboard to prevent system keyboard from overlapping apps
-- **Full Navigation Support** - Navigate with a gamepad or touch
+### 🧩 **Widget Support**
 
-### 📱 **App Management**
+- **Android Widgets** - Add resizable Android widgets to any Apps & Widgets page
+- **Widget Picker** - Browse and add widgets from all installed apps
+- **Resize Mode** - Dynamically resize widgets to fit your layout
+- **Widget Positioning** - Place widgets anywhere on compatible pages
 
-- **All Apps View** - Clean grid layout showing all installed apps
-- **Smart Search** - Filter apps as you type
-- **Quick Launch** - Single tap/press to launch apps
-- **App Info Access** - Long press any app to open system app info (uninstall, permissions, etc.)
-- **Auto-Refresh** - App list automatically updates when apps are installed/uninstalled
+### 🎮 **Gamepad & Control Features**
 
-### ⚙️ **Settings**
+- **Full D-Pad Navigation** - Complete gamepad support throughout the UI
+- **Control Pad Settings** - Customize gamepad button mappings
+- **Joystick Mode** - Configure analog stick sensitivity and behavior
+- **Button Mapping** - Map specific gamepad buttons to custom actions
+- **Focus Management** - Intelligent focus handling for seamless navigation
+- **On-Screen Keyboard** - Built-in keyboard that doesn't overlap your apps
+- **Back Button Shortcuts** - Configure custom back button actions
 
-- **Theme Selection** - Choose your preferred color scheme
-- **Wallpaper Options** - Default, Custom Image, or System Wallpaper
-- **Icon Packs** - Use your prefered icon packs
+### 🎨 **Appearance & Themes**
+
+- **6 Built-in Color Themes**
+  - Pink & Violet
+  - Blue & Yellow
+  - Green & Cyan
+  - Purple & Orange
+  - Red & Blue
+  - Magenta & Lime
+
+- **Custom Theme Creator** - Design your own themes with custom primary and secondary colors
+- **OLED Mode** - True black backgrounds for OLED displays to save battery
+- **Icon Pack Support** - Use any installed icon pack (Lawnicons, Arcticons, etc.)
+- **Icon Pack Browser** - Preview and switch between icon packs in-app
+
+### 🖼️ **Wallpaper Options**
+
+- **System Wallpaper** - Use your device's current wallpaper
+- **Custom Images** - Set any image from your gallery
+- **Default Themes** - Beautiful gradient backgrounds
+- **Live Preview** - See changes instantly
+
+### ⚙️ **Layout Customization**
+
+- **Grid Settings** - Customize rows and columns for each page
+- **Unlimited Mode** - Disable grid limits for free-form layouts
+- **Header Visibility** - Show/hide top header bar
+- **Power Button** - Toggle power button visibility
+- **App Names** - Show/hide app names under icons
+- **Notification Badges** - Display notification counts on app icons
+
+### 🔧 **System Features**
+
+- **Smart Search** - Fast app search across all pages and drawer
+- **Auto-Refresh** - Automatically updates when apps are installed/uninstalled
+- **Auto-Update Checker** - Get notified of new launcher versions
+- **Crash Logger** - Built-in crash reporting and log viewer
+- **Performance Monitor** - Track app performance metrics
+- **Shizuku Integration** - Enhanced system-level features with Shizuku
+
+### 🛠️ **Developer & Power User Features**
+
+- **Crash Logs Viewer** - View and export crash logs for debugging
+- **What's New Dialog** - See new features after updates
+- **FAQ & Help** - Built-in help documentation
+- **Export Settings** - Backup and restore your configuration
+- **Debug Mode** - Additional diagnostic information
+
+---
 
 ## 📸 Screenshots (taken on AYN Thor's bottom screen)
 <p>
@@ -59,70 +119,158 @@ this launcher helps you grip control of your Thor device's bottom screen.
   <img src="https://github.com/user-attachments/assets/57ad5108-97ce-4ef5-bbeb-f9c5010ca12f" alt="Screenshot 2025-11-22 at 4 29 50 PM" width="30%" style="vertical-align: middle;" />
 </p>
 
+---
+
 ## 📋 Requirements
 
 - **Android 13 (API 33)** or higher
+- **Recommended:** 4GB+ RAM for smooth widget performance
+- **Optional:** Shizuku for advanced features
+
+---
 
 ## 🚀 Installation
 
-### From Releases
+### From Releases (Recommended)
 
 1. Download the latest APK from the [Releases](../../releases) page
-2. Transfer to your device
-3. Enable "Install from Unknown Sources" in Settings
+2. Transfer to your device if needed
+3. Enable "Install from Unknown Sources" in Settings → Security
 4. Install the APK
-5. Set Járngreipr as your default launcher (optional)
+5. Set Járngreipr as your default launcher when prompted
 
 ### From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/jarngreipr.git
-cd jarngreipr
+git clone https://github.com/BrianJr03/Jarngreipr.git
+cd Jarngreipr
 
 # Build with Gradle
-./gradlew assembleDebug
+./gradlew assembleRelease
 
 # Install to connected device
-./gradlew installDebug
+adb install app/build/outputs/apk/release/app-release.apk
 ```
 
-## 🎯 Usage
+**Requirements for building:**
+- Android Studio Ladybug or higher
+- JDK 11 or higher
+- Android SDK 36
+
+---
+
+## 🎯 Usage Guide
 
 ### Basic Navigation
 
-- **D-Pad/Arrow Keys** - Navigate between apps and keyboard
+**Touch:**
+- Tap to select apps/options
+- Long press for context menus
+- Swipe left/right between pages
+- Pinch to zoom (where supported)
+
+**Gamepad/D-Pad:**
+- **Arrow Keys/D-Pad** - Navigate between apps and UI elements
 - **Enter/A Button** - Launch app or select option
-- **Back Button** - Toggle keyboard visibility
-- **Menu Button** - Long press apps for options
+- **Back/B Button** - Go back or cancel
+- **Menu/Start** - Open app options (long press)
+- **Triggers** - Page navigation (if configured)
+
+### Getting Started
+
+1. **First Launch**
+   - Grant necessary permissions (Accessibility, Usage Stats)
+   - Choose your preferred theme
+   - Set up your first home screen page
+
+2. **Adding Apps**
+   - Apps automatically appear on your first page
+   - Long press apps to move, hide, or add to folders
+   - Use the App Drawer to find and add apps
+
+3. **Creating Folders**
+   - Long press an app → "Create Folder"
+   - Name your folder and add multiple apps
+   - Tap folders to open, long press to edit
+
+4. **Adding Widgets**
+   - Create an "Apps & Widgets" page
+   - Tap "+" → Select widget
+   - Resize and position as needed
 
 ### Customization
 
-1. Click the **⚙️ Settings** icon in the search bar
-2. Select **Color Theme** to change colors
-3. Choose **Wallpaper** to customize background
-4. Changes save automatically
+**Themes & Appearance:**
+1. Tap **⚙️ Settings** icon
+2. **Appearance** section:
+   - **Theme Selector** - Choose from 6 themes or create custom
+   - **Icon Pack** - Browse and apply icon packs
+   - **OLED Mode** - Enable true black backgrounds
+   - **Wallpaper** - Set custom backgrounds
 
-### App Management
+**Layout Configuration:**
+1. **Settings** → **Layout** section:
+   - **Grid Settings** - Adjust columns/rows per page
+   - **Unlimited Mode** - Enable free-form positioning
+   - **Header Visibility** - Show/hide top bar
+   - **App Names** - Toggle name display
 
-1. **Long press** any app icon
-2. Select **App Info**
-3. Manage app from system settings (uninstall, permissions, storage, etc.)
+**Control Pad (Gamepad):**
+1. **Settings** → **Extras** → **Control Pad**
+2. Configure button mappings
+3. Adjust joystick sensitivity
+4. Choose joystick mode (L/R/Both)
+
+### Advanced Features
+
+**Free Positioning:**
+- Enable "Unlimited Mode" in Grid Settings
+- Long press and drag apps anywhere
+- Use "Drag Lock" to prevent accidental moves
+
+**App Visibility:**
+- Long press background → "App Visibility"
+- Toggle which apps appear on current page
+- Different pages can show different apps
+
+**Quick Delete:**
+- **Settings** → **Extras** → **Quick Delete**
+- Select multiple apps to uninstall at once
+- Useful for cleaning up after gaming sessions
+
+---
 
 ## 🎨 Available Themes
 
-| Theme | Primary | Secondary |
-|-------|---------|-----------|
-| Pink & Violet | Blue Violet | Hot Pink |
-| Blue & Yellow | Royal Blue | Gold |
-| Green & Cyan | Sea Green | Dark Cyan |
-| Purple & Orange | Dark Violet | Dark Orange |
-| Red & Blue | Royal Blue | Crimson |
-| Magenta & Lime | Magenta | Lime Green |
+| Theme | Primary | Secondary | Description |
+|-------|---------|-----------|-------------|
+| **Pink & Violet** | Blue Violet | Hot Pink | Vibrant and playful |
+| **Blue & Yellow** | Royal Blue | Gold | Classic and bold |
+| **Green & Cyan** | Sea Green | Dark Cyan | Fresh and modern |
+| **Purple & Orange** | Dark Violet | Dark Orange | Energetic contrast |
+| **Red & Blue** | Royal Blue | Crimson | Patriotic vibes |
+| **Magenta & Lime** | Magenta | Lime Green | Maximum pop |
+| **Custom** | Your Choice | Your Choice | Design your own! |
+
+---
+
+## 🔌 Shizuku Integration
+
+Járngreipr supports [Shizuku](https://shizuku.rikka.app/) for enhanced system features:
+
+1. Install Shizuku from Play Store or GitHub
+2. Grant Shizuku ADB permissions or root access
+3. Launch Járngreipr - it will detect Shizuku automatically
+4. Enjoy enhanced features like advanced app management
+
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Whether it's bug fixes, new features, or documentation improvements.
+
+**How to contribute:**
 
 1. Fork the project
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -130,14 +278,97 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+**Code Quality:**
+- The project uses Jetpack Compose and modern Android architecture (MVVM + Hilt)
+- Comprehensive test suite with 472+ tests
+- Clean code principles and consistent patterns
+- All PRs should maintain or improve test coverage
+
+---
+
+## 🐛 Bug Reports & Feature Requests
+
+Found a bug or have an idea? [Open an issue](../../issues) with:
+- **Bug Reports:** Device model, Android version, steps to reproduce
+- **Feature Requests:** Use case description and expected behavior
+- **Questions:** Check [FAQ](../../wiki/FAQ) first, then ask away!
+
+---
+
 ## 📝 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 💖 Support
+---
 
-If you enjoy using Járngreipr, consider supporting me. ☕ [Buy Me a Coffee](https://www.buymeacoffee.com/brianjr03)
+## 💖 Support the Project
+
+If you enjoy using Járngreipr, consider supporting development:
+
+☕ [Buy Me a Coffee](https://www.buymeacoffee.com/brianjr03)
+
+Your support helps maintain and improve the launcher with new features, bug fixes, and updates!
+
+---
+
+## 🏗️ Architecture & Tech Stack
+
+**Built with modern Android development practices:**
+
+- **UI:** 100% Jetpack Compose
+- **Architecture:** MVVM with Clean Architecture
+- **DI:** Hilt/Dagger
+- **Async:** Kotlin Coroutines & Flow
+- **Persistence:** DataStore Preferences
+- **Testing:** JUnit, Turbine, MockK (472+ tests)
+- **Material Design 3** with custom theming
+- **Minimum SDK:** 33 (Android 13)
+- **Target SDK:** 36 (Android 14+)
+
+---
+
+## 📚 Documentation
+
+- [FAQ & Help](../../wiki/FAQ) - Common questions and troubleshooting
+- [Changelog](../../releases) - Version history and updates
+- [API Documentation](../../wiki/API) - For developers extending the launcher
+
+---
+
+## 🙏 Acknowledgments
+
+- **AYN** - For creating the Thor handheld that inspired this launcher
+- **Mjolnir** - The companion app for enhanced dual-screen control
+- **Icon Pack Creators** - For beautiful icon packs that work seamlessly
+- **Community Contributors** - For feedback, bug reports, and feature ideas
+- **You** - For using Járngreipr! 🧤
+
+---
 
 ## 🗺️ Roadmap
-- [ Pending ] Enhanced widgets support
+
+**Completed ✅**
+- [x] Full widget support
+- [x] Folder management
+- [x] Free positioning mode
+- [x] Custom theme creator
+- [x] Control pad configuration
+- [x] OLED mode
+- [x] Icon pack support
+- [x] Quick delete feature
+- [x] Auto-update checker
+
+**Coming Soon 🚀**
+- [ ] Gesture customization
+- [ ] App groups/categories
+- [ ] Smart app suggestions
+- [ ] Backup/restore to cloud
+- [ ] Tablet-optimized layouts
+- [ ] Additional animation options
+- [ ] Plugin system for extensions
+
 ---
+
+**Made with ❤️ by [BrianJr03](https://github.com/BrianJr03)**
+
+*Wield your launcher like Thor wields Mjolnir* 🔨
