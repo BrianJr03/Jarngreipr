@@ -172,11 +172,13 @@ fun CrashLogsScreen(
         }
     }
 
-    if (crashDetailDialogState.isVisible && crashDetailDialogState.item != null) {
-        CrashLogDetailView(
-            crash = crashDetailDialogState.item!!,
-            onDismiss = crashDetailDialogState::dismiss
-        )
+    crashDetailDialogState.item?.let { crash ->
+        if (crashDetailDialogState.isVisible) {
+            CrashLogDetailView(
+                crash = crash,
+                onDismiss = crashDetailDialogState::dismiss
+            )
+        }
     }
 
     if (clearDialogState.isVisible) {

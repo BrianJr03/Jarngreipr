@@ -88,17 +88,17 @@ fun TabsDialog(
         )
     }
 
-    if (showDeleteConfirmation != null) {
+    showDeleteConfirmation?.let { pageIndex ->
         ConfirmationDialog(
             title = stringResource(R.string.home_tab_delete_page_title),
             message = stringResource(
                 R.string.home_tab_delete_page_message,
-                showDeleteConfirmation!! + 1
+                pageIndex + 1
             ),
             confirmText = stringResource(R.string.home_tab_delete_confirm),
             cancelText = stringResource(R.string.home_tab_delete_cancel),
             onConfirm = {
-                onDeletePage(showDeleteConfirmation!!)
+                onDeletePage(pageIndex)
                 showDeleteConfirmation = null
             },
             onDismiss = {

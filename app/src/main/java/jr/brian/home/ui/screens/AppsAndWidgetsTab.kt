@@ -303,20 +303,22 @@ fun AppsAndWidgetsTab(
             onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps,
-            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS
+            tabType = TAB_TYPE_WIDGETS
         )
     }
 
-    if (folderContentsDialogState.isVisible && folderContentsDialogState.item != null) {
-        val folderApps = allApps.filter { it.packageName in folderContentsDialogState.item!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = folderContentsDialogState.item!!.name,
-            apps = folderApps,
-            folderId = folderContentsDialogState.item!!.id,
-            pageIndex = pageIndex,
-            allApps = allApps,
-            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS,
-            onDismiss = folderContentsDialogState::dismiss
-        )
+    folderContentsDialogState.item?.let { folder ->
+        if (folderContentsDialogState.isVisible) {
+            val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
+                apps = folderApps,
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = allApps,
+                tabType = TAB_TYPE_WIDGETS,
+                onDismiss = folderContentsDialogState::dismiss
+            )
+        }
     }
 }
