@@ -48,8 +48,8 @@ import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.apps.AppOptionsMenu
+import jr.brian.home.ui.components.apps.AppsTabContent
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
-import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
@@ -57,7 +57,6 @@ import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.components.widget.AppGridLayout
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
@@ -359,7 +358,7 @@ fun AppsTab(
                 )
             }
         } else {
-            AppSelectionContent(
+            AppsTabContent(
                 apps = apps,
                 columns = gridSettingsManager.columnCount,
                 appFocusRequesters = appFocusRequesters,
@@ -429,120 +428,5 @@ fun AppsTab(
                 selectedFolder = null
             }
         )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AppSelectionContent(
-    apps: List<AppInfo>,
-    modifier: Modifier = Modifier,
-    columns: Int = 4,
-    appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
-    onAppFocusChanged: (Int) -> Unit,
-    onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    onAppDoubleClick: (AppInfo) -> Unit = {},
-    onSettingsClick: () -> Unit = {},
-    powerViewModel: PowerViewModel? = null,
-    totalPages: Int = 1,
-    pagerState: PagerState? = null,
-    onMenuClick: () -> Unit = {},
-    onShowBottomSheet: () -> Unit = {},
-    isFreeModeEnabled: Boolean = false,
-    appPositionManager: jr.brian.home.data.AppPositionManager? = null,
-    onDeletePage: (Int) -> Unit = {},
-    isDragLocked: Boolean = false,
-    pageIndex: Int = 0,
-    pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    allApps: List<AppInfo> = emptyList(),
-    onNavigateToSearch: () -> Unit = {},
-    folders: List<Folder> = emptyList(),
-    onFolderClick: (Folder) -> Unit = {}
-) {
-    val gridSettingsManager = LocalGridSettingsManager.current
-    val rows = gridSettingsManager.rowCount
-    val unlimitedMode = gridSettingsManager.unlimitedMode
-    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
-
-    val filteredApps = remember(apps, maxAppsPerPage) {
-        apps.sortedBy { it.label.uppercase() }
-    }
-
-    val powerSettingsManager = LocalPowerSettingsManager.current
-    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
-
-    Column(modifier = modifier.fillMaxSize()) {
-        if (pagerState != null) {
-            val settingsIconFocusRequester = remember { FocusRequester() }
-            val menuIconFocusRequester = remember { FocusRequester() }
-
-            AnimatedVisibility(
-                visible = isHeaderVisible,
-                enter = slideInVertically(initialOffsetY = { -it }),
-                exit = slideOutVertically(targetOffsetY = { -it })
-            ) {
-                ScreenHeaderRow(
-                    totalPages = totalPages,
-                    pagerState = pagerState,
-                    leadingIcon = Icons.Default.Settings,
-                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                    onLeadingIconClick = onSettingsClick,
-                    leadingIconFocusRequester = settingsIconFocusRequester,
-                    trailingIcon = Icons.Default.Menu,
-                    trailingIconContentDescription = null,
-                    onTrailingIconClick = onMenuClick,
-                    trailingIconFocusRequester = menuIconFocusRequester,
-                    onNavigateToGrid = {
-                        appFocusRequesters[0]?.requestFocus()
-                    },
-                    onNavigateFromGrid = {
-                        menuIconFocusRequester.requestFocus()
-                    },
-                    powerViewModel = powerViewModel,
-                    showPowerButton = isPowerButtonVisible,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                    onFolderClick = onShowBottomSheet,
-                    onDeletePage = onDeletePage,
-                    pageIndicatorBorderColor = pageIndicatorBorderColor,
-                    onNavigateToSearch = onNavigateToSearch
-                )
-            }
-        }
-
-        if (isFreeModeEnabled && appPositionManager != null) {
-            FreePositionedAppsLayout(
-                apps = filteredApps,
-                appPositionManager = appPositionManager,
-                keyboardVisible = false,
-                onAppClick = onAppClick,
-                isDragLocked = isDragLocked,
-                pageIndex = pageIndex,
-                allApps = allApps,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            )
-        } else {
-            AppGridLayout(
-                apps = filteredApps,
-                columns = columns,
-                maxAppsPerPage = maxAppsPerPage,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize(),
-                appFocusRequesters = appFocusRequesters,
-                onFocusChanged = onAppFocusChanged,
-                onNavigateLeft = {},
-                onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
-                onAppDoubleClick = onAppDoubleClick,
-                folders = folders,
-                allApps = allApps,
-                onFolderClick = onFolderClick,
-                isHeaderVisible = isHeaderVisible
-            )
-        }
     }
 }
