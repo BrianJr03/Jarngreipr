@@ -48,6 +48,7 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -97,12 +98,11 @@ fun AppsAndWidgetsTab(
     var showWidgetPicker by remember { mutableStateOf(false) }
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
+    val folderContentsDialogState = rememberDialogState<Folder>()
     var showFolderOptionsDialog by remember { mutableStateOf(false) }
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var showFolderContentsDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -207,10 +207,7 @@ fun AppsAndWidgetsTab(
                     swapModeEnabled = true
                     swapSourceWidgetId = widgetId
                 },
-                onFolderClick = { folder ->
-                    selectedFolder = folder
-                    showFolderContentsDialog = true
-                }
+                onFolderClick = folderContentsDialogState::show
             )
         }
     }
@@ -312,19 +309,16 @@ fun AppsAndWidgetsTab(
         )
     }
 
-    if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps = allApps.filter { it.packageName in selectedFolder!!.appPackageNames }
+    if (folderContentsDialogState.isVisible && folderContentsDialogState.item != null) {
+        val folderApps = allApps.filter { it.packageName in folderContentsDialogState.item!!.appPackageNames }
         FolderContentsDialog(
-            folderName = selectedFolder!!.name,
+            folderName = folderContentsDialogState.item!!.name,
             apps = folderApps,
-            folderId = selectedFolder!!.id,
+            folderId = folderContentsDialogState.item!!.id,
             pageIndex = pageIndex,
             allApps = allApps,
             tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS,
-            onDismiss = {
-                showFolderContentsDialog = false
-                selectedFolder = null
-            }
+            onDismiss = folderContentsDialogState::dismiss
         )
     }
 }

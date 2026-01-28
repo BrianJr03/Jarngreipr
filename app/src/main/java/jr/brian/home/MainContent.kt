@@ -52,6 +52,7 @@ import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
@@ -75,10 +76,9 @@ fun MainContent() {
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
+    val updateDialogState = rememberDialogState<UpdateInfo>()
     var showWhatsNewDialog by remember { mutableStateOf(false) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
     var showNotificationAccessDialog by remember { mutableStateOf(false) }
-    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     var currentVersionName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -95,8 +95,7 @@ fun MainContent() {
 
         val update = UpdateChecker.checkForUpdate(versionName)
         if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)) {
-            updateInfo = update
-            showUpdateDialog = true
+            updateDialogState.show(update)
         }
 
         if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
@@ -241,22 +240,18 @@ fun MainContent() {
             }
         }
 
-        if (showUpdateDialog && updateInfo != null) {
+        if (updateDialogState.isVisible && updateDialogState.item != null) {
             UpdateAvailableDialog(
-                updateInfo = updateInfo!!,
+                updateInfo = updateDialogState.item!!,
                 currentVersion = currentVersionName,
-                onDismiss = {
-                    showUpdateDialog = false
-                },
-                onRemindLater = {
-                    showUpdateDialog = false
-                },
+                onDismiss = updateDialogState::dismiss,
+                onRemindLater = updateDialogState::dismiss,
                 onSkipVersion = {
-                    appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
-                    showUpdateDialog = false
+                    appUpdateManager.skipVersion(context, updateDialogState.item!!.latestVersion)
+                    updateDialogState.dismiss()
                 },
                 onDownloadComplete = {
-                    appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
+                    appUpdateManager.markVersionDownloaded(context, updateDialogState.item!!.latestVersion)
                 }
             )
         }

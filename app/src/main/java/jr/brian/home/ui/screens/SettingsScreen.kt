@@ -34,6 +34,7 @@ import jr.brian.home.ui.components.settings.sections.systemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
@@ -58,9 +59,8 @@ fun SettingsScreen(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val showBackButton = appVisibilityManager.showSettingsBackButton
     
+    val updateDialogState = rememberDialogState<UpdateInfo>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
-    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
     
     val currentVersionName = remember {
         try {
@@ -106,8 +106,7 @@ fun SettingsScreen(
                                 isCheckingForUpdates = false
                                 
                                 if (update.isUpdateAvailable) {
-                                    updateInfo = update
-                                    showUpdateDialog = true
+                                    updateDialogState.show(update)
                                 } else {
                                     Toast.makeText(
                                         context,
@@ -122,22 +121,18 @@ fun SettingsScreen(
                 )
             }
             
-            if (showUpdateDialog && updateInfo != null) {
+            if (updateDialogState.isVisible && updateDialogState.item != null) {
                 UpdateAvailableDialog(
-                    updateInfo = updateInfo!!,
+                    updateInfo = updateDialogState.item!!,
                     currentVersion = currentVersionName,
-                    onDismiss = {
-                        showUpdateDialog = false
-                    },
-                    onRemindLater = {
-                        showUpdateDialog = false
-                    },
+                    onDismiss = updateDialogState::dismiss,
+                    onRemindLater = updateDialogState::dismiss,
                     onSkipVersion = {
-                        appUpdateManager.skipVersion(context, updateInfo!!.latestVersion)
-                        showUpdateDialog = false
+                        appUpdateManager.skipVersion(context, updateDialogState.item!!.latestVersion)
+                        updateDialogState.dismiss()
                     },
                     onDownloadComplete = {
-                        appUpdateManager.markVersionDownloaded(context, updateInfo!!.latestVersion)
+                        appUpdateManager.markVersionDownloaded(context, updateDialogState.item!!.latestVersion)
                     }
                 )
             }
