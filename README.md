@@ -15,7 +15,8 @@
 
 **A powerful, fully-featured Android launcher designed for dual-screen devices and gamepad enthusiasts.**
 
-Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
+Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. 
+Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
 
 It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), an app that transforms your Home button into a powerful dual-screen controller.
 
