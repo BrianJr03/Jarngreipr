@@ -30,7 +30,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -48,8 +47,8 @@ import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.apps.AppOptionsMenu
-import jr.brian.home.ui.components.apps.AppsTabContent
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.apps.AppsTabContent
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
@@ -67,6 +66,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
@@ -117,16 +117,14 @@ fun AppsTab(
         displayManager.displays.size > 1
     }
 
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
-    var showAppOptionsMenu by remember { mutableStateOf(false) }
+    val appOptionsDialogState = rememberDialogState<AppInfo>()
+    val customIconDialogState = rememberDialogState<AppInfo>()
+    val folderContentsDialogState = rememberDialogState<Folder>()
     var showDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
     var showAppVisibilityDialog by remember { mutableStateOf(false) }
     var showHomeTabDialog by remember { mutableStateOf(false) }
-    var showCustomIconDialog by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var showFolderContentsDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -135,47 +133,47 @@ fun AppsTab(
     val isPressed by interactionSource.collectIsPressedAsState()
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
 
-    if (showAppOptionsMenu && selectedApp != null) {
+    if (appOptionsDialogState.isVisible && appOptionsDialogState.item != null) {
         val currentIconSize = if (isFreeModeEnabled) {
-            appPositionManager.getPosition(pageIndex, selectedApp!!.packageName)?.iconSize ?: 64f
+            appPositionManager.getPosition(pageIndex, appOptionsDialogState.item!!.packageName)?.iconSize ?: 64f
         } else {
             64f
         }
 
         val appVisibilityManager = LocalAppVisibilityManager.current
         val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-        val isAppHidden = remember(selectedApp, pageIndex, hiddenAppsByPage) {
-            appVisibilityManager.isAppHidden(pageIndex, selectedApp!!.packageName)
+        val isAppHidden = remember(appOptionsDialogState.item, pageIndex, hiddenAppsByPage) {
+            appVisibilityManager.isAppHidden(pageIndex, appOptionsDialogState.item!!.packageName)
         }
 
         AppOptionsMenu(
-            appLabel = selectedApp!!.label,
+            appLabel = appOptionsDialogState.item!!.label,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                selectedApp!!.packageName
+                appOptionsDialogState.item!!.packageName
             ),
-            onDismiss = { showAppOptionsMenu = false },
+            onDismiss = appOptionsDialogState::dismiss,
             onAppInfoClick = {
-                openAppInfo(context, selectedApp!!.packageName)
+                openAppInfo(context, appOptionsDialogState.item!!.packageName)
             },
             onDisplayPreferenceChange = { preference ->
                 appDisplayPreferenceManager.setAppDisplayPreference(
-                    selectedApp!!.packageName,
+                    appOptionsDialogState.item!!.packageName,
                     preference
                 )
             },
             hasExternalDisplay = hasExternalDisplay,
-            app = if (isFreeModeEnabled) selectedApp else null,
+            app = if (isFreeModeEnabled) appOptionsDialogState.item else null,
             currentIconSize = currentIconSize,
             onIconSizeChange = { newSize ->
                 if (isFreeModeEnabled) {
                     val currentPos = appPositionManager.getPosition(
                         pageIndex,
-                        selectedApp!!.packageName
+                        appOptionsDialogState.item!!.packageName
                     )
                     appPositionManager.savePosition(
                         pageIndex,
                         AppPosition(
-                            packageName = selectedApp!!.packageName,
+                            packageName = appOptionsDialogState.item!!.packageName,
                             x = currentPos?.x ?: 0f,
                             y = currentPos?.y ?: 0f,
                             iconSize = newSize
@@ -185,23 +183,23 @@ fun AppsTab(
             },
             onToggleVisibility = {
                 if (isAppHidden) {
-                    appVisibilityManager.showApp(pageIndex, selectedApp!!.packageName)
+                    appVisibilityManager.showApp(pageIndex, appOptionsDialogState.item!!.packageName)
                 } else {
-                    appVisibilityManager.hideApp(pageIndex, selectedApp!!.packageName)
+                    appVisibilityManager.hideApp(pageIndex, appOptionsDialogState.item!!.packageName)
                 }
             },
             onCustomIconClick = {
-                showAppOptionsMenu = false
-                showCustomIconDialog = true
+                customIconDialogState.show(appOptionsDialogState.item)
+                appOptionsDialogState.dismiss()
             }
         )
     }
 
-    if (showCustomIconDialog && selectedApp != null) {
+    if (customIconDialogState.isVisible && customIconDialogState.item != null) {
         CustomIconDialog(
-            packageName = selectedApp!!.packageName,
-            appLabel = selectedApp!!.label,
-            onDismiss = { showCustomIconDialog = false }
+            packageName = customIconDialogState.item!!.packageName,
+            appLabel = customIconDialogState.item!!.label,
+            onDismiss = customIconDialogState::dismiss
         )
     }
 
@@ -376,8 +374,7 @@ fun AppsTab(
                     )
                 },
                 onAppLongClick = { app ->
-                    selectedApp = app
-                    showAppOptionsMenu = true
+                    appOptionsDialogState.show(app)
                 },
                 onAppDoubleClick = { app ->
                     // Launch on opposite display from current preference
@@ -406,27 +403,21 @@ fun AppsTab(
                 allApps = appsUnfiltered,
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
-                onFolderClick = { folder ->
-                    selectedFolder = folder
-                    showFolderContentsDialog = true
-                }
+                onFolderClick = folderContentsDialogState::show
             )
         }
     }
 
-    if (showFolderContentsDialog && selectedFolder != null) {
+    if (folderContentsDialogState.isVisible && folderContentsDialogState.item != null) {
         val folderApps =
-            appsUnfiltered.filter { it.packageName in selectedFolder!!.appPackageNames }
+            appsUnfiltered.filter { it.packageName in folderContentsDialogState.item!!.appPackageNames }
         FolderContentsDialog(
-            folderName = selectedFolder!!.name,
+            folderName = folderContentsDialogState.item!!.name,
             apps = folderApps,
-            folderId = selectedFolder!!.id,
+            folderId = folderContentsDialogState.item!!.id,
             pageIndex = pageIndex,
             allApps = appsUnfiltered,
-            onDismiss = {
-                showFolderContentsDialog = false
-                selectedFolder = null
-            }
+            onDismiss = folderContentsDialogState::dismiss
         )
     }
 }

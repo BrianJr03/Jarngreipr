@@ -47,6 +47,7 @@ import jr.brian.home.ui.components.crashlogs.EmptyCrashLogsView
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.CrashLogger
 import kotlinx.coroutines.launch
 
@@ -56,9 +57,9 @@ fun CrashLogsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val crashDetailDialogState = rememberDialogState<CrashLog>()
     var crashLogs by remember { mutableStateOf<List<CrashLog>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var selectedCrash by remember { mutableStateOf<CrashLog?>(null) }
     var showClearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -157,7 +158,7 @@ fun CrashLogsScreen(
                     else -> {
                         CrashLogsList(
                             crashLogs = crashLogs,
-                            onCrashClick = { selectedCrash = it },
+                            onCrashClick = crashDetailDialogState::show,
                             onDeleteClick = { crash ->
                                 scope.launch {
                                     CrashLogger.deleteCrashLog(crash.fileName)
@@ -171,10 +172,10 @@ fun CrashLogsScreen(
         }
     }
 
-    if (selectedCrash != null) {
+    if (crashDetailDialogState.isVisible && crashDetailDialogState.item != null) {
         CrashLogDetailView(
-            crash = selectedCrash!!,
-            onDismiss = { selectedCrash = null }
+            crash = crashDetailDialogState.item!!,
+            onDismiss = crashDetailDialogState::dismiss
         )
     }
 
