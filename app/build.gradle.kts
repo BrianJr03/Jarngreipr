@@ -47,6 +47,15 @@ android {
         aidl = true
         buildConfig = true
     }
+    
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md"
+            )
+        }
+    }
 }
 
 dependencies {
@@ -101,4 +110,5 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.turbine)
     androidTestImplementation(libs.androidx.arch.core.testing)
+    androidTestImplementation(libs.mockk.android)
 }
