@@ -37,6 +37,7 @@ import jr.brian.home.model.IconPack
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -55,7 +56,7 @@ fun IconPackSelectorItem(
     val scope = rememberCoroutineScope()
     val iconPackManager = LocalIconPackManager.current
     var isFocused by remember { mutableStateOf(false) }
-    val mainCardFocusRequester = remember { FocusRequester() }
+    val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
 
     var iconPacks by remember { mutableStateOf<List<IconPack>>(emptyList()) }
     var selectedPackage by remember { mutableStateOf<String?>(null) }
@@ -66,12 +67,6 @@ fun IconPackSelectorItem(
             iconPacks = iconPackManager.getInstalledIconPacks()
             selectedPackage = iconPackManager.selectedIconPack.first()
             isLoading = false
-        }
-    }
-
-    LaunchedEffect(isExpanded) {
-        if (!isExpanded) {
-            mainCardFocusRequester.requestFocus()
         }
     }
 

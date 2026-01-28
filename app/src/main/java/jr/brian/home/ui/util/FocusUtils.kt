@@ -2,6 +2,7 @@ package jr.brian.home.ui.util
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.focus.FocusRequester
@@ -54,7 +55,7 @@ fun rememberConditionalFocus(shouldFocus: Boolean): FocusRequester {
  */
 @Composable
 fun rememberFocusRequesterMap(): SnapshotStateMap<Int, FocusRequester> {
-    return remember { androidx.compose.runtime.mutableStateMapOf() }
+    return remember { mutableStateMapOf() }
 }
 
 /**

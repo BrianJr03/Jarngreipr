@@ -24,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
@@ -42,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
 import jr.brian.home.util.rememberFpsMonitor
 import kotlinx.coroutines.delay
@@ -55,7 +55,7 @@ fun PoweredOffScreen(
     onPowerOn: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
+    val focusRequester = rememberAutoFocus()
     val interactionSource = remember { MutableInteractionSource() }
     val powerSettingsManager = LocalPowerSettingsManager.current
     val wakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
@@ -75,10 +75,6 @@ fun PoweredOffScreen(
             override val doubleTapMinTimeMillis: Long = defaultConfig.doubleTapMinTimeMillis
             override val touchSlop: Float = defaultConfig.touchSlop
         }
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
     }
 
     LaunchedEffect(showInfo) {

@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
@@ -34,11 +32,11 @@ import jr.brian.home.ui.components.settings.sections.systemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -155,7 +153,7 @@ private fun SettingsContent(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val firstItemFocusRequester = remember { FocusRequester() }
+    val firstItemFocusRequester = rememberAutoFocus()
     var expandedItem by remember { mutableStateOf<String?>(null) }
 
     val isThorDevice = remember {
@@ -172,11 +170,6 @@ private fun SettingsContent(
         } else {
             onDismiss()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        delay(10)
-        firstItemFocusRequester.requestFocus()
     }
 
     LazyColumn(
