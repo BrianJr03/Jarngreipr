@@ -92,10 +92,10 @@ fun AppsModalContent(
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
     val folderContentsDialogState = rememberDialogState<Folder>()
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val appDrawerOptionsDialogState = rememberDialogState<Unit>()
+    val appVisibilityDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -199,28 +199,28 @@ fun AppsModalContent(
         )
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         AppDrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
         )
     }
 
-    if (showCreateFolderDialog) {
+    if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
             apps = apps,
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps
         )
     }
 
-    if (showAppDrawerOptionsDialog) {
+    if (appDrawerOptionsDialogState.isVisible) {
         AppsTabOptionsDialog(
-            onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onDismiss = appDrawerOptionsDialogState::dismiss,
+            onShowAppVisibility = { appVisibilityDialogState.show() },
             isFreeModeEnabled = false,
             onResetPositions = {
                 appPositionManager.clearAllPositions(pageIndex)
@@ -232,10 +232,10 @@ fun AppsModalContent(
         )
     }
 
-    if (showAppVisibilityDialog) {
+    if (appVisibilityDialogState.isVisible) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false },
+            onDismiss = appVisibilityDialogState::dismiss,
             pageIndex = pageIndex
         )
     }
@@ -246,7 +246,7 @@ fun AppsModalContent(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
-                            showDrawerOptionsDialog = true
+                            drawerOptionsDialogState.show()
                         }
                     )
                 },
@@ -260,7 +260,7 @@ fun AppsModalContent(
             }
         } else if (apps.isEmpty()) {
             EmptyAppsState(
-                onAddClick = { showAppVisibilityDialog = true }
+                onAddClick = { appVisibilityDialogState.show() }
             )
         } else {
             ModalAppSelectionContent(

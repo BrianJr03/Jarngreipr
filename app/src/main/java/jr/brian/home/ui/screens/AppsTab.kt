@@ -120,18 +120,18 @@ fun AppsTab(
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
     val folderContentsDialogState = rememberDialogState<Folder>()
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showAppVisibilityDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val appDrawerOptionsDialogState = rememberDialogState<Unit>()
+    val appVisibilityDialogState = rememberDialogState<Unit>()
+    val homeTabDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
 
     val appFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
 
     if (appOptionsDialogState.isVisible && appOptionsDialogState.item != null) {
         val currentIconSize = if (isFreeModeEnabled) {
@@ -203,7 +203,7 @@ fun AppsTab(
         )
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         val homeTabManager = LocalHomeTabManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageCountManager = LocalPageCountManager.current
@@ -216,7 +216,7 @@ fun AppsTab(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
@@ -229,40 +229,40 @@ fun AppsTab(
         )
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onPowerClick = {
                 powerViewModel.togglePower()
             },
             onTabsClick = {
-                showHomeTabDialog = true
+                homeTabDialogState.show()
             },
             onMenuClick = {
-                showAppDrawerOptionsDialog = true
+                appDrawerOptionsDialogState.show()
             },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
             onRecentAppsClick = onNavigateToRecentApps
         )
     }
 
-    if (showCreateFolderDialog) {
+    if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
             apps = apps,
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps
         )
     }
 
-    if (showAppDrawerOptionsDialog) {
+    if (appDrawerOptionsDialogState.isVisible) {
         AppsTabOptionsDialog(
-            onDismiss = { showAppDrawerOptionsDialog = false },
-            onShowAppVisibility = { showAppVisibilityDialog = true },
+            onDismiss = appDrawerOptionsDialogState::dismiss,
+            onShowAppVisibility = { appVisibilityDialogState.show() },
             isFreeModeEnabled = isFreeModeEnabled,
             onToggleFreeMode = {
                 appPositionManager.setFreeMode(pageIndex, !isFreeModeEnabled)
@@ -277,10 +277,10 @@ fun AppsTab(
         )
     }
 
-    if (showAppVisibilityDialog) {
+    if (appVisibilityDialogState.isVisible) {
         AppVisibilityDialog(
             apps = appsUnfiltered,
-            onDismiss = { showAppVisibilityDialog = false },
+            onDismiss = appVisibilityDialogState::dismiss,
             pageIndex = pageIndex
         )
     }
@@ -300,7 +300,7 @@ fun AppsTab(
                         powerViewModel.togglePower()
                     },
                     onLongClick = {
-                        showDrawerOptionsDialog = true
+                        drawerOptionsDialogState.show()
                     }
                 ),
     ) {
@@ -334,7 +334,7 @@ fun AppsTab(
                             leadingIconFocusRequester = settingsIconFocusRequester,
                             trailingIcon = Icons.Default.Menu,
                             trailingIconContentDescription = null,
-                            onTrailingIconClick = { showAppDrawerOptionsDialog = true },
+                            onTrailingIconClick = { appDrawerOptionsDialogState.show() },
                             trailingIconFocusRequester = menuIconFocusRequester,
                             onNavigateToGrid = {},
                             onNavigateFromGrid = {
@@ -352,7 +352,7 @@ fun AppsTab(
                 }
 
                 EmptyAppsState(
-                    onAddClick = { showAppVisibilityDialog = true }
+                    onAddClick = { appVisibilityDialogState.show() }
                 )
             }
         } else {
@@ -392,7 +392,7 @@ fun AppsTab(
                 powerViewModel = powerViewModel,
                 totalPages = totalPages,
                 pagerState = pagerState,
-                onMenuClick = { showAppDrawerOptionsDialog = true },
+                onMenuClick = { appDrawerOptionsDialogState.show() },
                 onShowBottomSheet = onShowBottomSheet,
                 isFreeModeEnabled = isFreeModeEnabled,
                 appPositionManager = appPositionManager,

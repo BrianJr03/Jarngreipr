@@ -38,6 +38,7 @@ import jr.brian.home.ui.components.controlpad.GamePadHelpDialog
 import jr.brian.home.ui.components.controlpad.ShizukuStatusIndicator
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalControlPadManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.shizuku.ShizukuInputManager
 
 @Composable
@@ -57,8 +58,8 @@ fun GamePadScreen(
 
     var isEditMode by remember { mutableStateOf(false) }
     var selectedCardIndex by remember { mutableIntStateOf(-1) }
-    var showButtonMappingDialog by remember { mutableStateOf(false) }
-    var showHelpDialog by remember { mutableStateOf(false) }
+    val buttonMappingDialogState = rememberDialogState<Unit>()
+    val helpDialogState = rememberDialogState<Unit>()
 
     DisposableEffect(Unit) {
         ShizukuInputManager.initialize()
@@ -197,7 +198,7 @@ fun GamePadScreen(
                     onCardPress = { index ->
                         if (isEditMode) {
                             selectedCardIndex = index
-                            showButtonMappingDialog = true
+                            buttonMappingDialogState.show()
                         } else {
                             gamePadItems[index].mappedButton?.let { button ->
                                 coroutineScope.launch(Dispatchers.IO) {
@@ -234,7 +235,7 @@ fun GamePadScreen(
                     onCardPress = { index ->
                         if (isEditMode) {
                             selectedCardIndex = index
-                            showButtonMappingDialog = true
+                            buttonMappingDialogState.show()
                         } else {
                             gamePadItems[index].mappedButton?.let { button ->
                                 coroutineScope.launch(Dispatchers.IO) {
@@ -268,7 +269,7 @@ fun GamePadScreen(
                 isShizukuAvailable = isShizukuAvailable,
                 isPermissionGranted = isShizukuPermissionGranted,
                 isServiceConnected = isServiceConnected,
-                onHelpClick = { showHelpDialog = true },
+                onHelpClick = { helpDialogState.show() },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 8.dp)
@@ -306,7 +307,7 @@ fun GamePadScreen(
         }
     }
 
-    if (showButtonMappingDialog && selectedCardIndex >= 0) {
+    if (buttonMappingDialogState.isVisible && selectedCardIndex >= 0) {
         ButtonMappingDialog(
             currentMapping = gamePadItems[selectedCardIndex].mappedButton,
             onButtonSelected = { button ->
@@ -317,17 +318,15 @@ fun GamePadScreen(
                         mappedButton = button
                     )
                 )
-                showButtonMappingDialog = false
+                buttonMappingDialogState.dismiss()
             },
-            onDismiss = {
-                showButtonMappingDialog = false
-            }
+            onDismiss = buttonMappingDialogState::dismiss
         )
     }
 
-    if (showHelpDialog) {
+    if (helpDialogState.isVisible) {
         GamePadHelpDialog(
-            onDismiss = { showHelpDialog = false }
+            onDismiss = helpDialogState::dismiss
         )
     }
 }

@@ -58,9 +58,9 @@ fun CrashLogsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val crashDetailDialogState = rememberDialogState<CrashLog>()
+    val clearDialogState = rememberDialogState<Unit>()
     var crashLogs by remember { mutableStateOf<List<CrashLog>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var showClearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -124,7 +124,7 @@ fun CrashLogsScreen(
                         // Clear All button (only show if there are crash logs)
                         if (crashLogs.isNotEmpty()) {
                             Button(
-                                onClick = { showClearDialog = true },
+                                onClick = { clearDialogState.show() },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.Red.copy(alpha = 0.3f)
                                 )
@@ -179,15 +179,15 @@ fun CrashLogsScreen(
         )
     }
 
-    if (showClearDialog) {
+    if (clearDialogState.isVisible) {
         ClearAllCrashLogsDialog(
             crashLogCount = crashLogs.size,
-            onDismiss = { showClearDialog = false },
+            onDismiss = clearDialogState::dismiss,
             onConfirm = {
                 scope.launch {
                     CrashLogger.clearAllCrashLogs()
                     crashLogs = emptyList()
-                    showClearDialog = false
+                    clearDialogState.dismiss()
                 }
             }
         )

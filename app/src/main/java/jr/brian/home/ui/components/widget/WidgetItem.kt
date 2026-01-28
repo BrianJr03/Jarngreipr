@@ -24,6 +24,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.dialog.EditWidgetOptionsDialog
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.WidgetViewModel
 
 @Composable
@@ -39,7 +40,7 @@ fun WidgetItem(
     onEnableSwapMode: () -> Unit = {},
     editModeEnabled: Boolean = false
 ) {
-    var showOptionsDialog by remember { mutableStateOf(false) }
+    val optionsDialogState = rememberDialogState<Unit>()
 
     val currentWidgetId by rememberUpdatedState(widgetInfo.widgetId)
     val currentProviderInfo by rememberUpdatedState(widgetInfo.providerInfo)
@@ -89,7 +90,7 @@ fun WidgetItem(
                             if (swapModeEnabled && !isSwapSource) {
                                 onSwapSelect(widgetInfo.widgetId)
                             } else if (!swapModeEnabled) {
-                                showOptionsDialog = true
+                                optionsDialogState.show()
                             }
                         },
                         modifier = Modifier.fillMaxSize(),
@@ -107,14 +108,14 @@ fun WidgetItem(
         }
     }
 
-    if (showOptionsDialog && !swapModeEnabled && editModeEnabled) {
+    if (optionsDialogState.isVisible && !swapModeEnabled && editModeEnabled) {
         EditWidgetOptionsDialog(
             widgetInfo = widgetInfo,
             currentPageIndex = pageIndex,
-            onDismiss = { showOptionsDialog = false },
+            onDismiss = optionsDialogState::dismiss,
             onDelete = {
                 viewModel.removeWidgetFromPage(widgetInfo.widgetId, pageIndex)
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
             },
             onMove = { targetPage ->
                 viewModel.moveWidgetToPage(
@@ -122,14 +123,14 @@ fun WidgetItem(
                     fromPageIndex = pageIndex,
                     toPageIndex = targetPage
                 )
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
             },
             onResize = {
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
                 onNavigateToResize(widgetInfo, pageIndex)
             },
             onSwap = {
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
                 onEnableSwapMode()
             }
         )
