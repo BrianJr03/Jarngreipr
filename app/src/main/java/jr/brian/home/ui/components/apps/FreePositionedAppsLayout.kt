@@ -38,6 +38,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
 import kotlinx.coroutines.launch
 
@@ -71,11 +72,9 @@ fun FreePositionedAppsLayout(
     }
     val scrollState = remember(pageIndex) { ScrollState(0) }
 
-    var showOptionsDialog by remember(pageIndex) { mutableStateOf(false) }
-    var showCustomIconDialog by remember(pageIndex) { mutableStateOf(false) }
-    var selectedApp by remember(pageIndex) { mutableStateOf<AppInfo?>(null) }
-    var showFolderDialog by remember(pageIndex) { mutableStateOf(false) }
-    var selectedFolder by remember(pageIndex) { mutableStateOf<Folder?>(null) }
+    val appOptionsDialogState = rememberDialogState<AppInfo>()
+    val customIconDialogState = rememberDialogState<AppInfo>()
+    val folderDialogState = rememberDialogState<Folder>()
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -181,8 +180,7 @@ fun FreePositionedAppsLayout(
                         alignmentState = AlignmentState()
                     },
                     onClick = {
-                        selectedFolder = folder
-                        showFolderDialog = true
+                        folderDialogState.show(folder)
                     },
                     onLongClick = {},
                     isDraggingEnabled = !isDragLocked
@@ -286,8 +284,7 @@ fun FreePositionedAppsLayout(
                     },
                     onLongClick = {
                         if (isDragLocked) {
-                            selectedApp = app
-                            showOptionsDialog = true
+                            appOptionsDialogState.show(app)
                         } else {
                             Toast.makeText(
                                 context,
@@ -306,11 +303,9 @@ fun FreePositionedAppsLayout(
     }
 
     FreePositionedDialogsManager(
-        showOptionsDialog = showOptionsDialog,
-        showCustomIconDialog = showCustomIconDialog,
-        showFolderDialog = showFolderDialog,
-        selectedApp = selectedApp,
-        selectedFolder = selectedFolder,
+        appOptionsDialogState = appOptionsDialogState,
+        customIconDialogState = customIconDialogState,
+        folderDialogState = folderDialogState,
         pageIndex = pageIndex,
         allApps = allApps,
         context = context,
@@ -318,24 +313,9 @@ fun FreePositionedAppsLayout(
         appPositionManager = appPositionManager,
         appDisplayPreferenceManager = appDisplayPreferenceManager,
         scope = scope,
-        onDismissOptionsDialog = {
-            showOptionsDialog = false
-            selectedApp = null
-        },
-        onDismissCustomIconDialog = {
-            showCustomIconDialog = false
-            selectedApp = null
-        },
-        onDismissFolderDialog = {
-            showFolderDialog = false
-            selectedFolder = null
-        },
         onHideApp = { packageName ->
             appVisibilityManager.hideApp(pageIndex, packageName)
             widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
-        },
-        onShowCustomIconDialog = {
-            showCustomIconDialog = true
         }
     )
 }

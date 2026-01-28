@@ -10,6 +10,7 @@ import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.util.DialogState
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -19,11 +20,9 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun FreePositionedDialogsManager(
-    showOptionsDialog: Boolean,
-    showCustomIconDialog: Boolean,
-    showFolderDialog: Boolean,
-    selectedApp: AppInfo?,
-    selectedFolder: Folder?,
+    appOptionsDialogState: DialogState<AppInfo>,
+    customIconDialogState: DialogState<AppInfo>,
+    folderDialogState: DialogState<Folder>,
     pageIndex: Int,
     allApps: List<AppInfo>,
     context: Context,
@@ -31,13 +30,10 @@ fun FreePositionedDialogsManager(
     appPositionManager: AppPositionManager,
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
     scope: CoroutineScope,
-    onDismissOptionsDialog: () -> Unit,
-    onDismissCustomIconDialog: () -> Unit,
-    onDismissFolderDialog: () -> Unit,
-    onHideApp: suspend (String) -> Unit,
-    onShowCustomIconDialog: () -> Unit
+    onHideApp: suspend (String) -> Unit
 ) {
-    if (showOptionsDialog && selectedApp != null) {
+    if (appOptionsDialogState.isVisible && appOptionsDialogState.item != null) {
+        val selectedApp = appOptionsDialogState.item!!
         val currentPosition = appPositionManager.getPosition(pageIndex, selectedApp.packageName)
         val currentIconSize = currentPosition?.iconSize ?: 64f
 
@@ -46,7 +42,7 @@ fun FreePositionedDialogsManager(
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                 selectedApp.packageName
             ),
-            onDismiss = onDismissOptionsDialog,
+            onDismiss = appOptionsDialogState::dismiss,
             onAppInfoClick = {
                 openAppInfo(context, selectedApp.packageName)
             },
@@ -74,32 +70,32 @@ fun FreePositionedDialogsManager(
                 scope.launch {
                     onHideApp(selectedApp.packageName)
                 }
-                onDismissOptionsDialog()
+                appOptionsDialogState.dismiss()
             },
             onCustomIconClick = {
-                onDismissOptionsDialog()
-                onShowCustomIconDialog()
+                customIconDialogState.show(selectedApp)
+                appOptionsDialogState.dismiss()
             }
         )
     }
 
-    if (showCustomIconDialog && selectedApp != null) {
+    if (customIconDialogState.isVisible && customIconDialogState.item != null) {
         CustomIconDialog(
-            packageName = selectedApp.packageName,
-            appLabel = selectedApp.label,
-            onDismiss = onDismissCustomIconDialog
+            packageName = customIconDialogState.item!!.packageName,
+            appLabel = customIconDialogState.item!!.label,
+            onDismiss = customIconDialogState::dismiss
         )
     }
 
-    if (showFolderDialog && selectedFolder != null) {
-        val folderApps = allApps.filter { it.packageName in selectedFolder.appPackageNames }
+    if (folderDialogState.isVisible && folderDialogState.item != null) {
+        val folderApps = allApps.filter { it.packageName in folderDialogState.item!!.appPackageNames }
         FolderContentsDialog(
-            folderName = selectedFolder.name,
+            folderName = folderDialogState.item!!.name,
             apps = folderApps,
-            folderId = selectedFolder.id,
+            folderId = folderDialogState.item!!.id,
             pageIndex = pageIndex,
             allApps = allApps,
-            onDismiss = onDismissFolderDialog
+            onDismiss = folderDialogState::dismiss
         )
     }
 }

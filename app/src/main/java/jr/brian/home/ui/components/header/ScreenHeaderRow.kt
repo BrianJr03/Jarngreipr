@@ -42,6 +42,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.PowerViewModel
 
 @Composable
@@ -77,7 +78,7 @@ fun ScreenHeaderRow(
     var isTrailingFocused by remember { mutableStateOf(false) }
     val folderIconFocusRequester = remember { FocusRequester() }
     val powerIconFocusRequester = remember { FocusRequester() }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val homeTabDialogState = rememberDialogState<Unit>()
     val homeTabManager = LocalHomeTabManager.current
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
@@ -153,14 +154,14 @@ fun ScreenHeaderRow(
         }
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
             totalPages = totalPages,
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
@@ -245,7 +246,7 @@ fun ScreenHeaderRow(
 
             Box(
                 modifier = Modifier
-                    .clickable { showHomeTabDialog = true }
+                    .clickable { homeTabDialogState.show() }
                     .onGloballyPositioned { coordinates ->
                         pageIndicatorsCoordinates = coordinates
                     }

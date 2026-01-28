@@ -34,6 +34,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -51,8 +52,8 @@ fun AppItem(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
     val scope = rememberCoroutineScope()
-    var showOptionsDialog by remember { mutableStateOf(false) }
-    var showCustomIconDialog by remember { mutableStateOf(false) }
+    val optionsDialogState = rememberDialogState<Unit>()
+    val customIconDialogState = rememberDialogState<Unit>()
 
     val hasExternalDisplay = remember {
         val displayManager =
@@ -76,7 +77,7 @@ fun AppItem(
                         displayPreference = displayPreference
                     )
                 },
-                onLongClick = { showOptionsDialog = true }
+                onLongClick = { optionsDialogState.show() }
             )
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -104,13 +105,13 @@ fun AppItem(
         }
     }
 
-    if (showOptionsDialog) {
+    if (optionsDialogState.isVisible) {
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                 app.packageName
             ),
-            onDismiss = { showOptionsDialog = false },
+            onDismiss = optionsDialogState::dismiss,
             onAppInfoClick = {
                 openAppInfo(context, app.packageName)
             },
@@ -126,20 +127,20 @@ fun AppItem(
                     appVisibilityManager.hideApp(pageIndex, app.packageName)
                     widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
                 }
-                showOptionsDialog = false
+                optionsDialogState.dismiss()
             },
             onCustomIconClick = {
-                showOptionsDialog = false
-                showCustomIconDialog = true
+                customIconDialogState.show()
+                optionsDialogState.dismiss()
             }
         )
     }
 
-    if (showCustomIconDialog) {
+    if (customIconDialogState.isVisible) {
         CustomIconDialog(
             packageName = app.packageName,
             appLabel = app.label,
-            onDismiss = { showCustomIconDialog = false },
+            onDismiss = customIconDialogState::dismiss,
             onIconChanged = {  }
         )
     }

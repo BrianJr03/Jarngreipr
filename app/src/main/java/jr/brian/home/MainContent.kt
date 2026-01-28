@@ -77,8 +77,8 @@ fun MainContent() {
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
 
     val updateDialogState = rememberDialogState<UpdateInfo>()
-    var showWhatsNewDialog by remember { mutableStateOf(false) }
-    var showNotificationAccessDialog by remember { mutableStateOf(false) }
+    val whatsNewDialogState = rememberDialogState<Unit>()
+    val notificationAccessDialogState = rememberDialogState<Unit>()
     var currentVersionName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -100,12 +100,14 @@ fun MainContent() {
 
         if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
             !hasUserDeclinedNotificationAccess(context)) {
-            showNotificationAccessDialog = true
+            notificationAccessDialogState.show()
         }
     }
 
     LaunchedEffect(shouldShowWhatsNew) {
-        showWhatsNewDialog = shouldShowWhatsNew
+        if (shouldShowWhatsNew) {
+            whatsNewDialogState.show()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -215,7 +217,7 @@ fun MainContent() {
             )
         }
 
-        if (showWhatsNewDialog) {
+        if (whatsNewDialogState.isVisible) {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val versionName = packageInfo.versionName ?: "Unknown"
 
@@ -234,7 +236,7 @@ fun MainContent() {
                     patchNotes = notes,
                     onDismiss = {
                         whatsNewManager.markWhatsNewAsSeen(versionName)
-                        showWhatsNewDialog = false
+                        whatsNewDialogState.dismiss()
                     }
                 )
             }
@@ -256,13 +258,11 @@ fun MainContent() {
             )
         }
 
-        if (showNotificationAccessDialog) {
+        if (notificationAccessDialogState.isVisible) {
             NotificationAccessDialog(
-                onDismiss = {
-                    showNotificationAccessDialog = false
-                },
+                onDismiss = notificationAccessDialogState::dismiss,
                 onGrantAccess = {
-                    showNotificationAccessDialog = false
+                    notificationAccessDialogState.dismiss()
                     openNotificationAccessSettings(context)
                 },
                 onOpenAppSettings = {
@@ -270,7 +270,7 @@ fun MainContent() {
                 },
                 onNeverAskAgain = {
                     setNotificationAccessDeclined(context)
-                    showNotificationAccessDialog = false
+                    notificationAccessDialogState.dismiss()
                 }
             )
         }

@@ -2,13 +2,16 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +34,7 @@ import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.appsandwidgets.AppVisibilityDialogForWidgetTab
 import jr.brian.home.ui.components.appsandwidgets.TabContent
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
@@ -53,13 +58,6 @@ import jr.brian.home.util.Routes
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import jr.brian.home.ui.animations.onPressScaleAndOffset
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -93,16 +91,16 @@ fun AppsAndWidgetsTab(
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
     val addWidgetIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
-    var showAddOptionsDialog by remember { mutableStateOf(false) }
-    var showAppSelectionDialog by remember { mutableStateOf(false) }
-    var showWidgetPicker by remember { mutableStateOf(false) }
+    val addOptionsDialogState = rememberDialogState<Unit>()
+    val appSelectionDialogState = rememberDialogState<Unit>()
+    val widgetPickerDialogState = rememberDialogState<Unit>()
+    val folderOptionsDialogState = rememberDialogState<Unit>()
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val homeTabDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
+    val folderContentsDialogState = rememberDialogState<Folder>()
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
-    val folderContentsDialogState = rememberDialogState<Folder>()
-    var showFolderOptionsDialog by remember { mutableStateOf(false) }
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -126,7 +124,7 @@ fun AppsAndWidgetsTab(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -137,9 +135,9 @@ fun AppsAndWidgetsTab(
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
             .then(
-                if (showWidgetPicker ||
-                    showAddOptionsDialog ||
-                    showAppSelectionDialog ||
+                if (widgetPickerDialogState.isVisible ||
+                    addOptionsDialogState.isVisible ||
+                    appSelectionDialogState.isVisible ||
                     swapModeEnabled
                 ) {
                     Modifier.blockAllNavigation()
@@ -155,11 +153,11 @@ fun AppsAndWidgetsTab(
                     powerViewModel.togglePower()
                 },
                 onLongClick = {
-                    showDrawerOptionsDialog = true
+                    drawerOptionsDialogState.show()
                 }
             )
     ) {
-        if (showWidgetPicker) {
+        if (widgetPickerDialogState.isVisible) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -181,7 +179,7 @@ fun AppsAndWidgetsTab(
                 isPowerButtonVisible = isPowerButtonVisible,
                 onSettingsClick = onSettingsClick,
                 settingsIconFocusRequester = settingsIconFocusRequester,
-                onShowOptionsDialog = { showAddOptionsDialog = true },
+                onShowOptionsDialog = { addOptionsDialogState.show() },
                 addWidgetIconFocusRequester = addWidgetIconFocusRequester,
                 onShowBottomSheet = onShowBottomSheet,
                 onDeletePage = onDeletePage,
@@ -212,16 +210,16 @@ fun AppsAndWidgetsTab(
         }
     }
 
-    if (showAddOptionsDialog || showFolderOptionsDialog) {
+    if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
 
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
-                showAddOptionsDialog = false
-                showFolderOptionsDialog = false
+                addOptionsDialogState.dismiss()
+                folderOptionsDialogState.dismiss()
             },
-            onAddWidget = { showWidgetPicker = true },
-            onAddApp = { showAppSelectionDialog = true },
+            onAddWidget = { widgetPickerDialogState.show() },
+            onAddApp = { appSelectionDialogState.show() },
             onSwapSections = {
                 scope.launch {
                     widgetPageAppManager.toggleSectionOrder(pageIndex)
@@ -235,24 +233,24 @@ fun AppsAndWidgetsTab(
         )
     }
 
-    if (showAppSelectionDialog) {
+    if (appSelectionDialogState.isVisible) {
         AppVisibilityDialogForWidgetTab(
             apps = allApps,
             visibleApps = visibleApps,
             pageIndex = pageIndex,
-            onDismiss = { showAppSelectionDialog = false },
+            onDismiss = appSelectionDialogState::dismiss,
             widgetPageAppManager = widgetPageAppManager
         )
     }
 
-    if (showWidgetPicker) {
+    if (widgetPickerDialogState.isVisible) {
         LaunchedEffect(Unit) {
             navController?.navigate(Routes.widgetPicker(pageIndex))
-            showWidgetPicker = false
+            widgetPickerDialogState.dismiss()
         }
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
@@ -265,7 +263,7 @@ fun AppsAndWidgetsTab(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
@@ -278,31 +276,31 @@ fun AppsAndWidgetsTab(
         )
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onPowerClick = {
                 powerViewModel.togglePower()
             },
             onTabsClick = {
-                showHomeTabDialog = true
+                homeTabDialogState.show()
             },
             onMenuClick = {
-                showAddOptionsDialog = true
+                addOptionsDialogState.show()
             },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
             onRecentAppsClick = onNavigateToRecentApps
         )
     }
 
-    if (showCreateFolderDialog) {
+    if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
             apps = displayedApps,
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps,
             tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS
