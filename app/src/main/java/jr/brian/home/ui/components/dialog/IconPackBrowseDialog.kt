@@ -87,7 +87,8 @@ fun IconPackBrowseDialog(
         }
     }
 
-    if (selectedIconPack == null) {
+    val currentIconPack = selectedIconPack
+    if (currentIconPack == null) {
         IconPackSelectionDialog(
             iconPacks = iconPacks,
             isLoading = isLoadingPacks,
@@ -96,7 +97,7 @@ fun IconPackBrowseDialog(
         )
     } else {
         DrawableSelectionDialog(
-            iconPack = selectedIconPack!!,
+            iconPack = currentIconPack,
             iconPackDrawables = iconPackDrawables,
             isLoadingDrawables = isLoadingDrawables,
             onDrawableSelected = { drawable ->

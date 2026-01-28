@@ -22,7 +22,9 @@ object CrashLogger {
 
     fun initialize(context: Context) {
         appContext = context.applicationContext
-        defaultHandler = Thread.getDefaultUncaughtExceptionHandler()!!
+        defaultHandler = requireNotNull(Thread.getDefaultUncaughtExceptionHandler()) {
+            "Default exception handler cannot be null"
+        }
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {

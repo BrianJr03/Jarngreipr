@@ -149,54 +149,58 @@ fun AppsModalContent(
         }
     }
 
-    if (appOptionsDialogState.isVisible && appOptionsDialogState.item != null) {
-        val currentIconSize = 64f
+    appOptionsDialogState.item?.let { appInfo ->
+        if (appOptionsDialogState.isVisible) {
+            val currentIconSize = 64f
 
-        val appVisibilityManager = LocalAppVisibilityManager.current
-        val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
-        val isAppHidden = remember(appOptionsDialogState.item, pageIndex, hiddenAppsByPage) {
-            appVisibilityManager.isAppHidden(pageIndex, appOptionsDialogState.item!!.packageName)
-        }
-
-        AppOptionsMenu(
-            appLabel = appOptionsDialogState.item!!.label,
-            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                appOptionsDialogState.item!!.packageName
-            ),
-            onDismiss = appOptionsDialogState::dismiss,
-            onAppInfoClick = {
-                openAppInfo(context, appOptionsDialogState.item!!.packageName)
-            },
-            onDisplayPreferenceChange = { preference ->
-                appDisplayPreferenceManager.setAppDisplayPreference(
-                    appOptionsDialogState.item!!.packageName,
-                    preference
-                )
-            },
-            hasExternalDisplay = hasExternalDisplay,
-            app = null,
-            currentIconSize = currentIconSize,
-            onIconSizeChange = {},
-            onToggleVisibility = {
-                if (isAppHidden) {
-                    appVisibilityManager.showApp(pageIndex, appOptionsDialogState.item!!.packageName)
-                } else {
-                    appVisibilityManager.hideApp(pageIndex, appOptionsDialogState.item!!.packageName)
-                }
-            },
-            onCustomIconClick = {
-                customIconDialogState.show(appOptionsDialogState.item)
-                appOptionsDialogState.dismiss()
+            val appVisibilityManager = LocalAppVisibilityManager.current
+            val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+            val isAppHidden = remember(appInfo, pageIndex, hiddenAppsByPage) {
+                appVisibilityManager.isAppHidden(pageIndex, appInfo.packageName)
             }
-        )
+
+            AppOptionsMenu(
+                appLabel = appInfo.label,
+                currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                    appInfo.packageName
+                ),
+                onDismiss = appOptionsDialogState::dismiss,
+                onAppInfoClick = {
+                    openAppInfo(context, appInfo.packageName)
+                },
+                onDisplayPreferenceChange = { preference ->
+                    appDisplayPreferenceManager.setAppDisplayPreference(
+                        appInfo.packageName,
+                        preference
+                    )
+                },
+                hasExternalDisplay = hasExternalDisplay,
+                app = null,
+                currentIconSize = currentIconSize,
+                onIconSizeChange = {},
+                onToggleVisibility = {
+                    if (isAppHidden) {
+                        appVisibilityManager.showApp(pageIndex, appInfo.packageName)
+                    } else {
+                        appVisibilityManager.hideApp(pageIndex, appInfo.packageName)
+                    }
+                },
+                onCustomIconClick = {
+                    customIconDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
+                }
+            )
+        }
     }
 
-    if (customIconDialogState.isVisible && customIconDialogState.item != null) {
-        CustomIconDialog(
-            packageName = customIconDialogState.item!!.packageName,
-            appLabel = customIconDialogState.item!!.label,
-            onDismiss = customIconDialogState::dismiss
-        )
+    customIconDialogState.item?.let { appInfo ->
+        if (customIconDialogState.isVisible) {
+            CustomIconDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = customIconDialogState::dismiss
+            )
+        }
     }
 
     if (drawerOptionsDialogState.isVisible) {
@@ -311,17 +315,19 @@ fun AppsModalContent(
         }
     }
 
-    if (folderContentsDialogState.isVisible && folderContentsDialogState.item != null) {
-        val folderApps =
-            appsUnfiltered.filter { it.packageName in folderContentsDialogState.item!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = folderContentsDialogState.item!!.name,
-            apps = folderApps,
-            folderId = folderContentsDialogState.item!!.id,
-            pageIndex = pageIndex,
-            allApps = appsUnfiltered,
-            onDismiss = folderContentsDialogState::dismiss
-        )
+    folderContentsDialogState.item?.let { folder ->
+        if (folderContentsDialogState.isVisible) {
+            val folderApps =
+                appsUnfiltered.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
+                apps = folderApps,
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = appsUnfiltered,
+                onDismiss = folderContentsDialogState::dismiss
+            )
+        }
     }
 }
 

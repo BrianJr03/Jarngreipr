@@ -319,8 +319,7 @@ fun FolderContentsDialog(
         )
     }
 
-    if (selectedAppForOptions != null) {
-        val app = selectedAppForOptions!!
+    selectedAppForOptions?.let { app ->
         AppOptionsDialog(
             app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -358,10 +357,10 @@ fun FolderContentsDialog(
         )
     }
 
-    if (appForCustomIcon != null) {
+    appForCustomIcon?.let { app ->
         CustomIconDialog(
-            packageName = appForCustomIcon!!.packageName,
-            appLabel = appForCustomIcon!!.label,
+            packageName = app.packageName,
+            appLabel = app.label,
             onDismiss = { appForCustomIcon = null },
             onIconChanged = { }
         )

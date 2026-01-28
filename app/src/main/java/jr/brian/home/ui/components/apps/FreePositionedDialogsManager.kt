@@ -32,9 +32,9 @@ fun FreePositionedDialogsManager(
     scope: CoroutineScope,
     onHideApp: suspend (String) -> Unit
 ) {
-    if (appOptionsDialogState.isVisible && appOptionsDialogState.item != null) {
-        val selectedApp = appOptionsDialogState.item!!
-        val currentPosition = appPositionManager.getPosition(pageIndex, selectedApp.packageName)
+    appOptionsDialogState.item?.let { selectedApp ->
+        if (appOptionsDialogState.isVisible) {
+            val currentPosition = appPositionManager.getPosition(pageIndex, selectedApp.packageName)
         val currentIconSize = currentPosition?.iconSize ?: 64f
 
         AppOptionsDialog(
@@ -77,25 +77,30 @@ fun FreePositionedDialogsManager(
                 appOptionsDialogState.dismiss()
             }
         )
+        }
     }
 
-    if (customIconDialogState.isVisible && customIconDialogState.item != null) {
-        CustomIconDialog(
-            packageName = customIconDialogState.item!!.packageName,
-            appLabel = customIconDialogState.item!!.label,
-            onDismiss = customIconDialogState::dismiss
-        )
+    customIconDialogState.item?.let { appInfo ->
+        if (customIconDialogState.isVisible) {
+            CustomIconDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = customIconDialogState::dismiss
+            )
+        }
     }
 
-    if (folderDialogState.isVisible && folderDialogState.item != null) {
-        val folderApps = allApps.filter { it.packageName in folderDialogState.item!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = folderDialogState.item!!.name,
-            apps = folderApps,
-            folderId = folderDialogState.item!!.id,
-            pageIndex = pageIndex,
-            allApps = allApps,
-            onDismiss = folderDialogState::dismiss
-        )
+    folderDialogState.item?.let { folder ->
+        if (folderDialogState.isVisible) {
+            val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
+                apps = folderApps,
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = allApps,
+                onDismiss = folderDialogState::dismiss
+            )
+        }
     }
 }

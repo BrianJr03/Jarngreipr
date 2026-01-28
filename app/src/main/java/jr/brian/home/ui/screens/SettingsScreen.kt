@@ -119,20 +119,22 @@ fun SettingsScreen(
                 )
             }
             
-            if (updateDialogState.isVisible && updateDialogState.item != null) {
-                UpdateAvailableDialog(
-                    updateInfo = updateDialogState.item!!,
-                    currentVersion = currentVersionName,
-                    onDismiss = updateDialogState::dismiss,
-                    onRemindLater = updateDialogState::dismiss,
-                    onSkipVersion = {
-                        appUpdateManager.skipVersion(context, updateDialogState.item!!.latestVersion)
-                        updateDialogState.dismiss()
-                    },
-                    onDownloadComplete = {
-                        appUpdateManager.markVersionDownloaded(context, updateDialogState.item!!.latestVersion)
-                    }
-                )
+            updateDialogState.item?.let { updateInfo ->
+                if (updateDialogState.isVisible) {
+                    UpdateAvailableDialog(
+                        updateInfo = updateInfo,
+                        currentVersion = currentVersionName,
+                        onDismiss = updateDialogState::dismiss,
+                        onRemindLater = updateDialogState::dismiss,
+                        onSkipVersion = {
+                            appUpdateManager.skipVersion(context, updateInfo.latestVersion)
+                            updateDialogState.dismiss()
+                        },
+                        onDownloadComplete = {
+                            appUpdateManager.markVersionDownloaded(context, updateInfo.latestVersion)
+                        }
+                    )
+                }
             }
         }
     }

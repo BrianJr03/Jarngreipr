@@ -100,9 +100,11 @@ class ShellService : IShellService.Stub() {
                     }
                     
                     // Check if this task belongs to our package
-                    if (currentTaskId != null && line.contains(packageName)) {
-                        taskIds.add(currentTaskId!!)
-                        currentTaskId = null
+                    if (line.contains(packageName)) {
+                        currentTaskId?.let { taskId ->
+                            taskIds.add(taskId)
+                            currentTaskId = null
+                        }
                     }
                 }
             }
