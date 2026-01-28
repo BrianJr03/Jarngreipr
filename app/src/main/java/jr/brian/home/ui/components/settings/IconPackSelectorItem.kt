@@ -37,6 +37,7 @@ import jr.brian.home.model.IconPack
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -72,20 +73,6 @@ fun IconPackSelectorItem(
 
     val selectedPack = iconPacks.find { it.packageName == selectedPackage }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
-
     Column(modifier = Modifier.fillMaxWidth()) {
         AnimatedVisibility(
             visible = !isExpanded,
@@ -100,7 +87,7 @@ fun IconPackSelectorItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient,
+                        brush = subtleCardGradient(isFocused = isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(

@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.model.CrashLog
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.emptyStateGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -57,26 +58,12 @@ fun CrashLogListItem(
     var isFocused by remember { mutableStateOf(false) }
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.US) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.3f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor
-            )
-        }
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = emptyStateGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(

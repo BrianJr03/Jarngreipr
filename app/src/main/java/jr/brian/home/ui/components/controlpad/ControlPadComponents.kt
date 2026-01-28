@@ -53,6 +53,7 @@ import jr.brian.home.model.ControlPadItem
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.StatusGreen
 import jr.brian.home.ui.theme.StatusOrange
@@ -73,27 +74,16 @@ fun GamePadCard(
     var isPressed by remember { mutableStateOf(false) }
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isSelected || isPressed) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .size(100.dp)
             .offset(y = offsetY)
             .scale(pressScale)
             .background(
-                brush = cardGradient,
+                brush = cardGradient(
+                    isSelected = isSelected,
+                    isPressed = isPressed
+                ),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -173,20 +163,6 @@ fun GamePadActionButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused || isHighlighted) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .scale(animatedFocusedScale(isFocused))
@@ -194,7 +170,7 @@ fun GamePadActionButton(
                 isFocused = it.isFocused
             }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused || isHighlighted),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -373,7 +349,9 @@ fun BottomActionButtons(
         GamePadActionButton(
             text = if (isEditMode) stringResource(R.string.control_pad_done) else stringResource(R.string.control_pad_edit),
             icon = if (isEditMode) Icons.Default.Close else Icons.Default.Edit,
-            contentDescription = if (isEditMode) stringResource(R.string.control_pad_done) else stringResource(R.string.control_pad_edit),
+            contentDescription = if (isEditMode) stringResource(R.string.control_pad_done) else stringResource(
+                R.string.control_pad_edit
+            ),
             isHighlighted = isEditMode,
             onClick = onEditToggle
         )
