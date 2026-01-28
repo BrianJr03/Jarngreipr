@@ -15,7 +15,7 @@
 
 **A powerful, fully-featured Android launcher designed for dual-screen devices and gamepad enthusiasts.**
 
-Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device. 
+Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
 
 It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), an app that transforms your Home button into a powerful dual-screen controller.
 
@@ -65,12 +65,12 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 ### 🎨 **Appearance & Themes**
 
 - **6 Built-in Color Themes**
-  - Pink & Violet
-  - Blue & Yellow
-  - Green & Cyan
-  - Purple & Orange
-  - Red & Blue
-  - Magenta & Lime
+    - Pink & Violet
+    - Blue & Yellow
+    - Green & Cyan
+    - Purple & Orange
+    - Red & Blue
+    - Magenta & Lime
 
 - **Custom Theme Creator** - Design your own themes with custom primary and secondary colors
 - **OLED Mode** - True black backgrounds for OLED displays to save battery
@@ -112,11 +112,15 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 
 ---
 
-## 📸 Screenshots (taken on AYN Thor's bottom screen)
+## 📸 Screenshots
+`Note: All screenshots were captured from an AYN Thor's bottom screen.`
 <p>
-  <img src="https://github.com/user-attachments/assets/1722b8b4-0273-4a1a-afcf-1af6d7b19bae" alt="Screenshot 2025-11-22 at 4 29 11 PM" width="30%" style="vertical-align: middle;" />
-  <img src="https://github.com/user-attachments/assets/f3c2b859-850f-4101-8824-6800aa676845" alt="Screenshot 2025-11-22 at 4 28 53 PM" width="30%" style="vertical-align: middle;" />
-  <img src="https://github.com/user-attachments/assets/57ad5108-97ce-4ef5-bbeb-f9c5010ca12f" alt="Screenshot 2025-11-22 at 4 29 50 PM" width="30%" style="vertical-align: middle;" />
+  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 03 50 PM" src="https://github.com/user-attachments/assets/d6e00fcc-3b59-43dd-b87b-f0ba514323f4" style="vertical-align: middle;" />
+  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 21 PM" src="https://github.com/user-attachments/assets/d4830507-979d-40a2-87f9-b2d8620f5842" style="vertical-align: middle;" />
+  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 11 PM" src="https://github.com/user-attachments/assets/991ca9ec-e04f-4942-a078-e165a3a37ea4" style="vertical-align: middle;" />
+</p>
+<p>
+  <video src="https://github.com/user-attachments/assets/dc904362-1076-49ff-a968-812133a53b02" width="345" height="303" controls></video>
 </p>
 
 ---
@@ -180,41 +184,41 @@ adb install app/build/outputs/apk/release/app-release.apk
 ### Getting Started
 
 1. **First Launch**
-   - Grant necessary permissions (Accessibility, Usage Stats)
-   - Choose your preferred theme
-   - Set up your first home screen page
+    - Grant necessary permissions (Accessibility, Usage Stats)
+    - Choose your preferred theme
+    - Set up your first home screen page
 
 2. **Adding Apps**
-   - Apps automatically appear on your first page
-   - Long press apps to move, hide, or add to folders
-   - Use the App Drawer to find and add apps
+    - Apps automatically appear on your first page
+    - Long press apps to move, hide, or add to folders
+    - Use the App Drawer to find and add apps
 
 3. **Creating Folders**
-   - Long press an app → "Create Folder"
-   - Name your folder and add multiple apps
-   - Tap folders to open, long press to edit
+    - Long press an app → "Create Folder"
+    - Name your folder and add multiple apps
+    - Tap folders to open, long press to edit
 
 4. **Adding Widgets**
-   - Create an "Apps & Widgets" page
-   - Tap "+" → Select widget
-   - Resize and position as needed
+    - Create an "Apps & Widgets" page
+    - Tap "+" → Select widget
+    - Resize and position as needed
 
 ### Customization
 
 **Themes & Appearance:**
 1. Tap **⚙️ Settings** icon
 2. **Appearance** section:
-   - **Theme Selector** - Choose from 6 themes or create custom
-   - **Icon Pack** - Browse and apply icon packs
-   - **OLED Mode** - Enable true black backgrounds
-   - **Wallpaper** - Set custom backgrounds
+    - **Theme Selector** - Choose from 6 themes or create custom
+    - **Icon Pack** - Browse and apply icon packs
+    - **OLED Mode** - Enable true black backgrounds
+    - **Wallpaper** - Set custom backgrounds
 
 **Layout Configuration:**
 1. **Settings** → **Layout** section:
-   - **Grid Settings** - Adjust columns/rows per page
-   - **Unlimited Mode** - Enable free-form positioning
-   - **Header Visibility** - Show/hide top bar
-   - **App Names** - Toggle name display
+    - **Grid Settings** - Adjust columns/rows per page
+    - **Unlimited Mode** - Enable free-form positioning
+    - **Header Visibility** - Show/hide top bar
+    - **App Names** - Toggle name display
 
 **Control Pad (Gamepad):**
 1. **Settings** → **Extras** → **Control Pad**
