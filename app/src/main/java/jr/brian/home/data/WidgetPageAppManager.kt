@@ -90,12 +90,12 @@ class WidgetPageAppManager(private val context: Context) {
             }
 
             tempData.forEach { (oldIndex, data) ->
-                val newIndex = if (oldIndex > deletedPageIndex) oldIndex - 1 else oldIndex
-                if (newIndex != deletedPageIndex) {
-                    preferences[visibleAppsKey(newIndex)] = data.first
-                    preferences[sectionOrderKey(newIndex)] = data.second
-                }
+            val newIndex = if (oldIndex > deletedPageIndex) oldIndex - 1 else oldIndex
+            if (oldIndex != deletedPageIndex) {
+                preferences[visibleAppsKey(newIndex)] = data.first
+                preferences[sectionOrderKey(newIndex)] = data.second
             }
+        }
         }
     }
 }
