@@ -47,7 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
-import jr.brian.home.ui.components.AppDock
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
@@ -67,6 +67,7 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -289,7 +290,7 @@ fun AppDrawerTab(
                 apps = appsUnfiltered,
                 onAppClick = { app ->
                     val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    jr.brian.home.util.launchApp(
+                    launchApp(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference
