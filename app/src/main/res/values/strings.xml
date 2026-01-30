@@ -104,8 +104,8 @@
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
 
-    <string name="settings_show_back_button_title">Show Settings Back Button</string>
-    <string name="settings_show_back_button_description">Display back button in settings</string>
+    <string name="settings_show_back_button_title">Show Back Button on Screens</string>
+    <string name="settings_show_back_button_description">Display back button on all screens</string>
     <string name="settings_back_button">Back</string>
 
     <string name="settings_visibility_options_title">Visibility Options</string>
@@ -455,6 +455,7 @@
     <string name="control_pad_shizuku_grant_permission">Grant Permission</string>
     <string name="control_pad_shizuku_connecting">Connecting…</string>
     <string name="control_pad_shizuku_ready">Ready</string>
+    <string name="control_pad_restart_connection">Restart Connection</string>
     <string name="control_pad_no_mapping">No mapping</string>
     <string name="control_pad_button_pressed">Button pressed</string>
     <string name="control_pad_joystick">Joystick</string>
@@ -491,8 +492,11 @@
     <string name="monitor_storage_label">Storage</string>
     <string name="monitor_close">Close</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_tag_experimental">Experimental</string>
     <string name="settings_crash_logs_title">Crash Logs</string>
     <string name="settings_crash_logs_description">View crash reports or report an issue</string>
+    <string name="settings_volume_controls_title">Volume Controls</string>
+    <string name="settings_volume_controls_description">Dual-screen volume management for Ayn Thor</string>
 
     <!-- Widget Picker -->
     <string name="widget_picker_title">Choose a Widget</string>
@@ -577,6 +581,22 @@
     <string name="recent_apps_refresh">Refresh</string>
     <string name="recent_apps_loading">Loading recent apps…</string>
     <string name="recent_apps_close">Close app</string>
+    
+    <string name="volume_controls_title">Volume Controls</string>
+    <string name="volume_controls_help">Help</string>
+    <string name="volume_controls_permission_required">Permission Required</string>
+    <string name="volume_controls_command_title">Grant Permission via ADB</string>
+    <string name="volume_controls_command">adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS</string>
+    <string name="volume_controls_copy">Copy</string>
+    <string name="volume_controls_copied">Command copied to clipboard</string>
+    <string name="volume_controls_go_to_settings">Go to Settings</string>
+    <string name="volume_controls_help_title">Volume Controls Setup</string>
+    <string name="volume_controls_help_section_permission">Grant Permission</string>
+    <string name="volume_controls_help_termux_note">Use Termux (optional) or connect via USB to run ADB commands</string>
+    <string name="volume_controls_help_finish">After granting permission, return here to use the volume sliders</string>
+    <string name="volume_controls_help_note_title">Note</string>
+    <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
+    <string name="back_button_shortcut_volume_controls">Volume Controls</string>
 
     <!-- Notification Access -->
     <string name="notification_access_title">Enable Notification Badges</string>
@@ -587,4 +607,31 @@
     <string name="notification_access_restricted_steps">Since this app was installed outside the Play Store, you need to allow restricted settings first:\n\n1. Tap \"Open App Settings\" below\n2. Tap the ⋮ menu (top right)\n3. Select \"Allow restricted settings\"\n4. Return here and tap \"Grant Access\"</string>
     <string name="notification_access_open_app_settings">Open App Settings</string>
     <string name="notification_access_never">I\'ll Pass</string>
+
+    <string name="dock_select_app_title">Select App for Dock</string>
+    <string name="dock_add_app">Add app to dock</string>
+    <string name="dock_remove_app">Remove</string>
+    
+    <!-- Dock Settings -->
+    <string name="dock_settings_title">Dock Settings</string>
+    <string name="dock_settings_description">Customize your dock appearance and behavior</string>
+    <string name="dock_visibility_title">Show Dock</string>
+    <string name="dock_visibility_description">Toggle dock visibility</string>
+    <string name="dock_preview_title">Dock Preview</string>
+    <string name="dock_preview_description">Long press and drag to reorder</string>
+    <string name="dock_add_slot_title">Add Empty Slot</string>
+    <string name="dock_add_slot_description">Add a new empty slot to the dock (%1$d/%2$d slots)</string>
+    <string name="dock_max_apps_title">Maximum Number of Apps</string>
+    <string name="dock_max_apps_description">Select how many apps can be added to the dock</string>
+    <string name="dock_size_title">Dock Size</string>
+    <string name="dock_color_title">Dock Color</string>
+    <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
+    <string name="dock_page_visibility_description">Choose which pages display the dock. If none are selected, the dock appears on all pages.</string>
+    <string name="dock_page_number">Page %1$d</string>
+    
+    <!-- Volume Controls -->
+    <string name="volume_top_screen">Top Screen Volume</string>
+    <string name="volume_bottom_screen">Bottom Screen Volume</string>
+    <string name="volume_down_description">Volume Down</string>
+    <string name="volume_up_description">Volume Up</string>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,17 +38,19 @@ import jr.brian.home.model.app.AppInfo
 fun AppOptionsMenuContent(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
-    onAppInfoClick: () -> Unit,
-    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     hasExternalDisplay: Boolean,
     focusRequesters: List<FocusRequester>,
-    onFocusedIndexChange: (Int) -> Unit,
-    onDismiss: () -> Unit,
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
+    isInDock: Boolean = false,
+    onDismiss: () -> Unit,
+    onAppInfoClick: () -> Unit,
+    onFocusedIndexChange: (Int) -> Unit,
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    onRemoveFromDock: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
@@ -82,17 +85,19 @@ fun AppOptionsMenuContent(
                         index = 0
                     )
                 )
-                add(
-                    GridItem.IconItem(
-                        icon = Icons.Default.VisibilityOff,
-                        label = stringResource(R.string.app_options_hide),
-                        onClick = {
-                            onToggleVisibility()
-                            onDismiss()
-                        },
-                        index = 1
+                if (!isInDock){
+                    add(
+                        GridItem.IconItem(
+                            icon = Icons.Default.VisibilityOff,
+                            label = stringResource(R.string.app_options_hide),
+                            onClick = {
+                                onToggleVisibility()
+                                onDismiss()
+                            },
+                            index = 1
+                        )
                     )
-                )
+                }
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Image,
@@ -101,21 +106,39 @@ fun AppOptionsMenuContent(
                         index = 2
                     )
                 )
-
-                if (app != null) {
+                
+                if (isInDock) {
                     add(
                         GridItem.IconItem(
-                            icon = Icons.Default.OpenInFull,
-                            label = stringResource(R.string.app_options_resize),
+                            icon = Icons.Default.RemoveCircleOutline,
+                            label = stringResource(R.string.dock_remove_app),
                             onClick = {
-                                showResizeMode = true
-                                previewIconSize = currentIconSize
+                                onRemoveFromDock()
+                                onDismiss()
                             },
                             index = 3
                         )
                     )
+                }
+
+                if (app != null) {
+                    val resizeIndex = if (isInDock) 4 else 3
+                    if (!isInDock) {
+                        add(
+                            GridItem.IconItem(
+                                icon = Icons.Default.OpenInFull,
+                                label = stringResource(R.string.app_options_resize),
+                                onClick = {
+                                    showResizeMode = true
+                                    previewIconSize = currentIconSize
+                                },
+                                index = resizeIndex
+                            )
+                        )
+                    }
 
                     if (hasExternalDisplay) {
+                        val displayIndexOffset = if (isInDock) 1 else 0
                         add(
                             GridItem.TextItem(
                                 text = stringResource(R.string.app_options_launch_primary_descr),
@@ -124,7 +147,7 @@ fun AppOptionsMenuContent(
                                     onDismiss()
                                 },
                                 isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                                index = 4
+                                index = 4 + displayIndexOffset
                             )
                         )
                         add(
@@ -135,11 +158,12 @@ fun AppOptionsMenuContent(
                                     onDismiss()
                                 },
                                 isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                                index = 5
+                                index = 5 + displayIndexOffset
                             )
                         )
                     }
                 } else if (hasExternalDisplay) {
+                    val displayIndexOffset = if (isInDock) 1 else 0
                     add(
                         GridItem.TextItem(
                             text = stringResource(R.string.app_options_launch_primary_descr),
@@ -148,7 +172,7 @@ fun AppOptionsMenuContent(
                                 onDismiss()
                             },
                             isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                            index = 3
+                            index = 3 + displayIndexOffset
                         )
                     )
                     add(
@@ -159,7 +183,7 @@ fun AppOptionsMenuContent(
                                 onDismiss()
                             },
                             isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                            index = 4
+                            index = 4 + displayIndexOffset
                         )
                     )
                 }

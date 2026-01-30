@@ -50,8 +50,7 @@ fun AppIconImage(
                 } else {
                     add(GifDecoder.Factory())
                 }
-            }
-            .build()
+            }.build()
     }
 
     Box(

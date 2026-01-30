@@ -7,10 +7,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
+import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetConfig
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.model.widget.WidgetPage

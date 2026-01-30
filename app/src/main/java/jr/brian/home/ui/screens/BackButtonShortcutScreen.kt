@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,10 +18,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +43,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.dialog.AppSelectionDialog
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -76,6 +72,7 @@ fun BackButtonShortcutScreen(
         BackButtonShortcut.QUICK_DELETE to stringResource(R.string.back_button_shortcut_quick_delete),
         BackButtonShortcut.SETTINGS to stringResource(R.string.back_button_shortcut_settings),
         BackButtonShortcut.MONITOR to stringResource(R.string.back_button_shortcut_monitor),
+        BackButtonShortcut.VOLUME_CONTROLS to stringResource(R.string.back_button_shortcut_volume_controls),
         BackButtonShortcut.RECENT_APPS to stringResource(R.string.back_button_shortcut_recent_apps),
         BackButtonShortcut.POWERED_OFF to stringResource(R.string.back_button_shortcut_powered_off)
     )
@@ -89,99 +86,75 @@ fun BackButtonShortcutScreen(
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp, bottom = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Spacer(modifier = Modifier.weight(1f))
+            Column {
+                ScreenHeader(onBackClick = onDismiss)
 
-                            Text(
-                                text = stringResource(R.string.back_button_shortcut_screen_title),
-                                color = Color.White,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(8f),
-                                textAlign = TextAlign.Center
-                            )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.back_button_shortcut_screen_title),
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
 
-                            Box(
-                                modifier = Modifier.weight(1f),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                IconButton(
-                                    onClick = onDismiss,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.clean_folders_close),
-                                        tint = Color.White
-                                    )
-                                }
-                            }
-                        }
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = stringResource(R.string.back_button_shortcut_screen_description),
-                            color = ThemeSecondaryColor,
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 32.dp)
-                        )
-                    }
-                }
-
-                items(shortcuts) { (shortcut, label) ->
-                    ShortcutOptionItem(
-                        label = label,
-                        isSelected = currentShortcut == shortcut,
-                        onClick = {
-                            powerSettingsManager.setBackButtonShortcut(shortcut)
-                            if (shortcut == BackButtonShortcut.APP) {
-                                appSelectionDialogState.show()
-                            } else {
-                                onDismiss()
-                            }
-                        }
+                    Text(
+                        text = stringResource(R.string.back_button_shortcut_screen_description),
+                        color = ThemeSecondaryColor,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
                     )
                 }
 
-                if (currentShortcut == BackButtonShortcut.APP) {
-                    item {
-                        val selectedApp = allApps.find { it.packageName == currentAppPackage }
-                        val displayText = if (selectedApp != null) {
-                            stringResource(
-                                R.string.back_button_shortcut_selected_app,
-                                selectedApp.label
-                            )
-                        } else {
-                            stringResource(R.string.back_button_shortcut_no_app)
-                        }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
 
-                        ShortcutAppSelectionItem(
-                            text = displayText,
+                    items(shortcuts) { (shortcut, label) ->
+                        ShortcutOptionItem(
+                            label = label,
+                            isSelected = currentShortcut == shortcut,
                             onClick = {
-                                appSelectionDialogState.show()
+                                powerSettingsManager.setBackButtonShortcut(shortcut)
+                                if (shortcut == BackButtonShortcut.APP) {
+                                    appSelectionDialogState.show()
+                                } else {
+                                    onDismiss()
+                                }
                             }
                         )
+                    }
+
+                    if (currentShortcut == BackButtonShortcut.APP) {
+                        item {
+                            val selectedApp = allApps.find { it.packageName == currentAppPackage }
+                            val displayText = if (selectedApp != null) {
+                                stringResource(
+                                    R.string.back_button_shortcut_selected_app,
+                                    selectedApp.label
+                                )
+                            } else {
+                                stringResource(R.string.back_button_shortcut_no_app)
+                            }
+
+                            ShortcutAppSelectionItem(
+                                text = displayText,
+                                onClick = {
+                                    appSelectionDialogState.show()
+                                }
+                            )
+                        }
                     }
                 }
             }

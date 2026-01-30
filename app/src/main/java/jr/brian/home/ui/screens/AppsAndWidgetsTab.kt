@@ -1,6 +1,9 @@
 package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,11 +37,14 @@ import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
+import androidx.compose.ui.platform.LocalContext
 import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.appsandwidgets.AppVisibilityDialogForWidgetTab
 import jr.brian.home.ui.components.appsandwidgets.TabContent
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
+import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -46,6 +52,8 @@ import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -55,6 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -76,12 +85,15 @@ fun AppsAndWidgetsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {},
+    onNavigateToDockSettings: () -> Unit = {},
     navController: NavHostController? = null
 ) {
+    val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val folderManager = LocalFolderManager.current
+    val dockManager = LocalDockManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
 
@@ -98,6 +110,7 @@ fun AppsAndWidgetsTab(
     val drawerOptionsDialogState = rememberDialogState<Unit>()
     val homeTabDialogState = rememberDialogState<Unit>()
     val createFolderDialogState = rememberDialogState<Unit>()
+    val dockAppSelectionDialogState = rememberDialogState<Int>()
     val folderContentsDialogState = rememberDialogState<Folder>()
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
@@ -113,6 +126,9 @@ fun AppsAndWidgetsTab(
     val displayedApps = remember(allApps, visibleApps) {
         allApps.filter { it.packageName in visibleApps }
     }
+
+    val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+    val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
@@ -208,6 +224,51 @@ fun AppsAndWidgetsTab(
                 onFolderClick = folderContentsDialogState::show
             )
         }
+
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            AppDock(
+                apps = allApps,
+                onAppClick = { app ->
+                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppLongClick = { _ -> },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                }
+            )
+        }
+    }
+
+    dockAppSelectionDialogState.item?.let { position ->
+        if (dockAppSelectionDialogState.isVisible) {
+            val availableApps = allApps.filter { app ->
+                !dockManager.isAppInDock(app.packageName)
+            }
+            DockAppSelectionDialog(
+                apps = availableApps,
+                onAppSelected = { app ->
+                    dockManager.addAppToDock(
+                        position = position,
+                        packageName = app.packageName,
+                    )
+                    dockAppSelectionDialogState.dismiss()
+                },
+                onDismiss = dockAppSelectionDialogState::dismiss
+            )
+        }
     }
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
@@ -293,7 +354,7 @@ fun AppsAndWidgetsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onRecentAppsClick = onNavigateToRecentApps
+            onDockSettingsClick = onNavigateToDockSettings
         )
     }
 

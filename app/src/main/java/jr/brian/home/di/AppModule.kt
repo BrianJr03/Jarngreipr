@@ -12,6 +12,7 @@ import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
+import jr.brian.home.data.DockManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -185,5 +186,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): ControlPadManager {
         return ControlPadManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDockManager(
+        @ApplicationContext context: Context
+    ): DockManager {
+        return DockManager(context)
     }
 }

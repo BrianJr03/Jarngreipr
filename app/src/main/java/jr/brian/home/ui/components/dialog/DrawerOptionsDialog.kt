@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,7 +80,7 @@ fun DrawerOptionsDialog(
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
-    onRecentAppsClick: () -> Unit = {}
+    onDockSettingsClick: () -> Unit
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
@@ -257,10 +256,10 @@ fun DrawerOptionsDialog(
                         ) {
                             DrawerOptionButton(
                                 modifier = Modifier.weight(1f),
-                                title = stringResource(R.string.recent_apps_screen_title),
-                                icon = Icons.Default.History,
+                                title = stringResource(R.string.dock_settings_title),
+                                icon = Icons.Default.Dashboard,
                                 onClick = {
-                                    onRecentAppsClick()
+                                    onDockSettingsClick()
                                     onDismiss()
                                 }
                             )
