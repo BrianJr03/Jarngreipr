@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.model.FAQItem
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -63,12 +64,14 @@ fun FAQScreen(
                 .systemBarsPadding()
         ) {
             Column {
+                ScreenHeader(onBackClick = onDismiss)
+                
                 Text(
                     text = stringResource(R.string.faq_screen_title),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 24.dp)
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
                 )
 
                 LazyColumn(

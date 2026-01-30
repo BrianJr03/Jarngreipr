@@ -20,8 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
+import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
@@ -51,7 +51,7 @@ fun LauncherPagerScreen(
     onShowBottomSheet: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onBackButtonShortcut: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -202,7 +202,7 @@ fun LauncherPagerScreen(
                                 pageIndicatorBorderColor = ThemePrimaryColor,
                                 allApps = homeUiState.allAppsUnfiltered,
                                 onNavigateToSearch = onNavigateToSearch,
-                                onNavigateToRecentApps = onNavigateToRecentApps
+                                onNavigateToDockSettings = onNavigateToDockSettings
                             )
                         }
                     }
@@ -245,7 +245,7 @@ fun LauncherPagerScreen(
                                     },
                                     pageIndicatorBorderColor = ThemeSecondaryColor,
                                     onNavigateToSearch = onNavigateToSearch,
-                                    onNavigateToRecentApps = onNavigateToRecentApps,
+                                    onNavigateToDockSettings = onNavigateToDockSettings,
                                     navController = navController
                                 )
                             }
@@ -293,7 +293,7 @@ fun LauncherPagerScreen(
                                     pagerState = pagerState,
                                     isLoading = homeUiState.isLoading,
                                     pageIndex = page,
-                                    onNavigateToRecentApps = onNavigateToRecentApps,
+                                    onNavigateToDockSettings = onNavigateToDockSettings,
                                 )
                             }
                         }
@@ -341,11 +341,9 @@ private suspend fun deleteTab(
     pageTypeManager.removePage(pagerPageIndex)
     pageCountManager.removePage()
 
-    // If the deleted tab was the current home tab, set the first tab as home
     if (pagerPageIndex == currentHomeTabIndex) {
         homeTabManager.setHomeTabIndex(0)
     } else if (pagerPageIndex < currentHomeTabIndex) {
-        // If a tab before the home tab was deleted, adjust the home tab index
         homeTabManager.setHomeTabIndex(currentHomeTabIndex - 1)
     }
 

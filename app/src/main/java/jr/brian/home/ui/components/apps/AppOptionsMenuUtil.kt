@@ -9,25 +9,30 @@ import jr.brian.home.ui.util.rememberAutoFocus
 @Composable
 fun rememberAppOptionsMenuFocusRequesters(
     hasResizeOption: Boolean,
-    hasExternalDisplay: Boolean
+    hasExternalDisplay: Boolean,
+    isInDock: Boolean = false
 ): List<FocusRequester> {
     val firstFocusRequester = rememberAutoFocus()
 
     return remember(
         firstFocusRequester,
         hasResizeOption,
-        hasExternalDisplay
+        hasExternalDisplay,
+        isInDock
     ) {
         buildList {
-            add(firstFocusRequester)  // Info (auto-focuses)
-            add(FocusRequester())  // Hide
-            add(FocusRequester())  // Icon
+            add(firstFocusRequester)
+            add(FocusRequester())
+            add(FocusRequester())
+            if (isInDock) {
+                add(FocusRequester())
+            }
             if (hasResizeOption) {
-                add(FocusRequester())  // Resize
+                add(FocusRequester())
             }
             if (hasExternalDisplay) {
-                add(FocusRequester())  // Top Display
-                add(FocusRequester())  // Bottom Display
+                add(FocusRequester())
+                add(FocusRequester())
             }
         }
     }

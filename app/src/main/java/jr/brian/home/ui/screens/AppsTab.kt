@@ -44,12 +44,14 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.AppsTabContent
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -58,6 +60,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -86,13 +89,14 @@ fun AppsTab(
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
+    val dockManager = LocalDockManager.current
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
@@ -124,6 +128,7 @@ fun AppsTab(
     val appVisibilityDialogState = rememberDialogState<Unit>()
     val homeTabDialogState = rememberDialogState<Unit>()
     val createFolderDialogState = rememberDialogState<Unit>()
+    val dockAppSelectionDialogState = rememberDialogState<Int>()
 
     val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -146,6 +151,8 @@ fun AppsTab(
                 appVisibilityManager.isAppHidden(pageIndex, appInfo.packageName)
             }
 
+            val isInDock = dockManager.isAppInDock(appInfo.packageName)
+
             AppOptionsMenu(
                 appLabel = appInfo.label,
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -164,6 +171,10 @@ fun AppsTab(
                 hasExternalDisplay = hasExternalDisplay,
                 app = if (isFreeModeEnabled) appInfo else null,
                 currentIconSize = currentIconSize,
+                isInDock = isInDock,
+                onRemoveFromDock = {
+                    dockManager.removeAppFromDock(appInfo.packageName)
+                },
                 onIconSizeChange = { newSize ->
                     if (isFreeModeEnabled) {
                         val currentPos = appPositionManager.getPosition(
@@ -249,7 +260,7 @@ fun AppsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onRecentAppsClick = onNavigateToRecentApps
+            onDockSettingsClick = onNavigateToDockSettings
         )
     }
 
@@ -407,6 +418,57 @@ fun AppsTab(
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
                 onFolderClick = folderContentsDialogState::show
+            )
+        }
+
+        val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+        val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            AppDock(
+                apps = appsUnfiltered,
+                onAppClick = { app ->
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppLongClick = { app ->
+                    appOptionsDialogState.show(app)
+                },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                }
+            )
+        }
+    }
+
+    dockAppSelectionDialogState.item?.let { position ->
+        if (dockAppSelectionDialogState.isVisible) {
+            val availableApps = appsUnfiltered.filter { app ->
+                !dockManager.isAppInDock(app.packageName)
+            }
+            DockAppSelectionDialog(
+                apps = availableApps,
+                onAppSelected = { app ->
+                    dockManager.addAppToDock(app.packageName, position)
+                    dockAppSelectionDialogState.dismiss()
+                },
+                onDismiss = dockAppSelectionDialogState::dismiss
             )
         }
     }

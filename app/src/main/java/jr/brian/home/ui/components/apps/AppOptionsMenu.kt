@@ -20,19 +20,22 @@ import jr.brian.home.ui.theme.OledCardColor
 fun AppOptionsMenu(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
+    hasExternalDisplay: Boolean = false,
+    app: AppInfo? = null,
+    isInDock: Boolean = false,
+    currentIconSize: Float = 64f,
     onDismiss: () -> Unit,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
-    hasExternalDisplay: Boolean = false,
-    app: AppInfo? = null,
-    currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    onRemoveFromDock: () -> Unit = {}
 ) {
     val focusRequesters = rememberAppOptionsMenuFocusRequesters(
-        app = app,
-        hasExternalDisplay = hasExternalDisplay
+        hasResizeOption = app != null,
+        hasExternalDisplay = hasExternalDisplay,
+        isInDock = isInDock
     )
     var focusedIndex by remember { mutableIntStateOf(0) }
 
@@ -46,19 +49,21 @@ fun AppOptionsMenu(
         },
         text = {
             AppOptionsMenuContent(
-                appLabel,
-                currentDisplayPreference,
-                onAppInfoClick,
-                onDisplayPreferenceChange,
-                hasExternalDisplay,
-                focusRequesters,
+                appLabel = appLabel,
+                currentDisplayPreference = currentDisplayPreference,
+                hasExternalDisplay = hasExternalDisplay,
+                focusRequesters = focusRequesters,
+                app = app,
+                currentIconSize = currentIconSize,
+                isInDock = isInDock,
+                onDismiss = onDismiss,
+                onAppInfoClick = onAppInfoClick,
                 onFocusedIndexChange = { focusedIndex = it },
-                onDismiss,
-                app,
-                currentIconSize,
-                onIconSizeChange,
-                onToggleVisibility,
-                onCustomIconClick
+                onDisplayPreferenceChange = onDisplayPreferenceChange,
+                onIconSizeChange = onIconSizeChange,
+                onToggleVisibility = onToggleVisibility,
+                onCustomIconClick = onCustomIconClick,
+                onRemoveFromDock = onRemoveFromDock
             )
         },
         confirmButton = {},

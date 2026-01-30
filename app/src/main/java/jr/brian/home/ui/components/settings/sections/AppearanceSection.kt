@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
@@ -22,7 +21,6 @@ fun LazyListScope.appearanceSection(
     expandedItem: String?,
     onExpandedItemChange: (String?) -> Unit,
     isVisible: (String?) -> Boolean,
-    firstItemFocusRequester: FocusRequester,
     onNavigateToCustomTheme: () -> Unit,
     onIconPackChanged: () -> Unit
 ) {
@@ -45,7 +43,6 @@ fun LazyListScope.appearanceSection(
             exit = shrinkVertically() + fadeOut()
         ) {
             ThemeSelectorItem(
-                focusRequester = firstItemFocusRequester,
                 isExpanded = expandedItem == EXPANDED_THEME,
                 onExpandChanged = {
                     onExpandedItemChange(if (it) EXPANDED_THEME else null)
