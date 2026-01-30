@@ -1,6 +1,5 @@
 package jr.brian.home.ui.components.dialog
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,13 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 
 @Composable
 fun DockAppSelectionDialog(
@@ -125,6 +124,7 @@ private fun DockAppSelectionItem(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val customIconManager = LocalCustomIconManager.current
 
     Column(
         modifier = Modifier
@@ -146,12 +146,13 @@ private fun DockAppSelectionItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            defaultIcon = app.icon,
+            packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(12.dp))
+            customIconManager = customIconManager,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(64.dp)
         )
 
         Text(

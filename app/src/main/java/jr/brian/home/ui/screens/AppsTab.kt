@@ -89,7 +89,7 @@ fun AppsTab(
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -260,7 +260,7 @@ fun AppsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onRecentAppsClick = onNavigateToRecentApps
+            onDockSettingsClick = onNavigateToDockSettings
         )
     }
 
@@ -421,34 +421,40 @@ fun AppsTab(
             )
         }
 
-        AppDock(
-            apps = appsUnfiltered,
-            onAppClick = { app ->
-                val displayPreference = if (hasExternalDisplay) {
-                    appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                } else {
-                    DisplayPreference.CURRENT_DISPLAY
-                }
-                launchApp(
-                    context = context,
-                    packageName = app.packageName,
-                    displayPreference = displayPreference
-                )
-            },
-            onAppLongClick = { app ->
-                appOptionsDialogState.show(app)
-            },
-            onEmptySlotClick = { position ->
-                dockAppSelectionDialogState.show(position)
-            },
-            onEmptySlotLongClick = { position ->
-                dockManager.removeEmptySlot(position)
-            },
-            onAddSlotClick = { position ->
-                dockManager.addEmptySlot(position)
-            },
+        val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+        val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        ) {
+            AppDock(
+                apps = appsUnfiltered,
+                onAppClick = { app ->
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppLongClick = { app ->
+                    appOptionsDialogState.show(app)
+                },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                }
+            )
+        }
     }
 
     dockAppSelectionDialogState.item?.let { position ->

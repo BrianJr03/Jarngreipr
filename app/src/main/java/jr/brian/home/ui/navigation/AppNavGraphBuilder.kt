@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
+import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
@@ -59,6 +60,7 @@ fun NavGraphBuilder.launcherScreen(
         var showMonitorSheet by remember { mutableStateOf(false) }
         var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
+        var showDockSettingsSheet by remember { mutableStateOf(false) }
 
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val backButtonShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
@@ -107,8 +109,8 @@ fun NavGraphBuilder.launcherScreen(
                     }
                 }
             },
-            onNavigateToRecentApps = {
-                navController.navigate(Routes.RECENT_APPS)
+            onNavigateToDockSettings = {
+                navController.navigate(Routes.APP_DOCK_SETTINGS)
             }
         )
 
@@ -152,6 +154,10 @@ fun NavGraphBuilder.launcherScreen(
                     onNavigateToCrashLogs = {
                         showSettingsSheet = false
                         navController.navigate(Routes.CRASH_LOGS)
+                    },
+                    onNavigateToDockSettings = {
+                        showSettingsSheet = false
+                        showDockSettingsSheet = true
                     },
                     onDismiss = {
                         showSettingsSheet = false
@@ -217,6 +223,17 @@ fun NavGraphBuilder.launcherScreen(
                 )
             }
         }
+
+        SlideInVertically(showDockSettingsSheet) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AppDockSettingsScreen(
+                    allApps = uiState.allAppsUnfiltered,
+                    onDismiss = {
+                        showDockSettingsSheet = false
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -263,6 +280,30 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.navigate(Routes.VOLUME_CONTROLS)
                 },
+                onNavigateToDockSettings = {
+                    showScreen = false
+                    navController.navigate(Routes.APP_DOCK_SETTINGS)
+                },
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.appDockSettingsScreen(
+    navController: NavHostController,
+    mainViewModel: MainViewModel
+) {
+    composable(Routes.APP_DOCK_SETTINGS) {
+        var showScreen by remember { mutableStateOf(true) }
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        SlideInVertically(showScreen) {
+            AppDockSettingsScreen(
+                allApps = uiState.allAppsUnfiltered,
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()

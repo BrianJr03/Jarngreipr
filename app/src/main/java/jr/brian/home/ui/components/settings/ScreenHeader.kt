@@ -15,14 +15,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.util.SettingsScreenUtil.DEFAULT_VERSION_NAME
 
 @Composable
-fun SettingsHeaderComponent(
-    showBackButton: Boolean,
+fun ScreenHeader(
+    showVersion: Boolean = false,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val showBackButton = appVisibilityManager.showSettingsBackButton
+    if (!showBackButton && !showVersion) return
+
     val versionName = try {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
             ?: DEFAULT_VERSION_NAME
@@ -33,22 +38,28 @@ fun SettingsHeaderComponent(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, start = 32.dp, end = 32.dp)
+            .padding(
+                top = 8.dp,
+                start = 16.dp,
+                end = 16.dp
+            )
     ) {
         if (showBackButton) {
-            SettingsBackButtonComponent(
+            BackButton(
                 onClick = onBackClick,
                 modifier = Modifier.align(Alignment.CenterStart)
             )
         }
 
-        Text(
-            text = stringResource(R.string.settings_version_label, versionName),
-            color = ThemeAccentColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterEnd)
-        )
+        if (showVersion) {
+            Text(
+                text = stringResource(R.string.settings_version_label, versionName),
+                color = ThemeAccentColor,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
     }
 }

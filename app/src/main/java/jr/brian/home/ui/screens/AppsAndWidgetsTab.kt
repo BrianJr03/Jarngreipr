@@ -1,6 +1,9 @@
 package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -81,7 +84,7 @@ fun AppsAndWidgetsTab(
     onDeletePage: (Int) -> Unit = {},
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {},
+    onNavigateToDockSettings: () -> Unit = {},
     navController: NavHostController? = null
 ) {
     val context = LocalContext.current
@@ -122,6 +125,9 @@ fun AppsAndWidgetsTab(
     val displayedApps = remember(allApps, visibleApps) {
         allApps.filter { it.packageName in visibleApps }
     }
+
+    val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+    val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
@@ -218,28 +224,31 @@ fun AppsAndWidgetsTab(
             )
         }
 
-        AppDock(
-            apps = allApps,
-            onAppClick = { app ->
-                val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                jr.brian.home.util.launchApp(
-                    context = context,
-                    packageName = app.packageName,
-                    displayPreference = displayPreference
-                )
-            },
-            onAppLongClick = { _ -> },
-            onEmptySlotClick = { position ->
-                dockAppSelectionDialogState.show(position)
-            },
-            onEmptySlotLongClick = { position ->
-                dockManager.removeEmptySlot(position)
-            },
-            onAddSlotClick = { position ->
-                dockManager.addEmptySlot(position)
-            },
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        ) {
+            AppDock(
+                apps = allApps,
+                onAppClick = { app ->
+                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    jr.brian.home.util.launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppLongClick = { _ -> },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                }
+            )
+        }
     }
 
     dockAppSelectionDialogState.item?.let { position ->
@@ -341,7 +350,7 @@ fun AppsAndWidgetsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onRecentAppsClick = onNavigateToRecentApps
+            onDockSettingsClick = onNavigateToDockSettings
         )
     }
 

@@ -10,11 +10,13 @@ import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
+import jr.brian.home.ui.components.settings.DockSettingsItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
 import jr.brian.home.ui.components.settings.ThorSettingsItem
 import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_DOCK
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_GRID
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THOR
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_VISIBILITY
@@ -25,14 +27,16 @@ fun LazyListScope.layoutSection(
     isVisible: (String?) -> Boolean,
     isThorDevice: Boolean,
     allAppsUnfiltered: List<AppInfo>,
-    onNavigateToBackButtonShortcut: () -> Unit
+    onNavigateToBackButtonShortcut: () -> Unit,
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     item(key = "header_layout") {
         AnimatedVisibility(
             visible = isVisible(EXPANDED_BACK_BUTTON)
                     || isVisible(EXPANDED_GRID)
                     || isVisible(EXPANDED_THOR)
-                    || isVisible(EXPANDED_VISIBILITY),
+                    || isVisible(EXPANDED_VISIBILITY)
+                    || isVisible(EXPANDED_DOCK),
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut()
         ) {
@@ -56,6 +60,21 @@ fun LazyListScope.layoutSection(
                 onConfigureClick = {
                     onExpandedItemChange(null)
                     onNavigateToBackButtonShortcut()
+                }
+            )
+        }
+    }
+
+    item(key = "dock") {
+        AnimatedVisibility(
+            visible = isVisible(EXPANDED_DOCK),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            DockSettingsItem(
+                onClick = {
+                    onExpandedItemChange(null)
+                    onNavigateToDockSettings()
                 }
             )
         }

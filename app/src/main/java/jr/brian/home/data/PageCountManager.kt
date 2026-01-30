@@ -39,7 +39,7 @@ class PageCountManager(context: Context) {
         private const val PREFS_NAME = "page_count_prefs"
         private const val KEY_PAGE_COUNT = "page_count"
         const val DEFAULT_PAGE_COUNT = 6
-        const val MIN_PAGE_COUNT = 0
+        const val MIN_PAGE_COUNT = 1
         const val MAX_PAGE_COUNT = 6
     }
 }

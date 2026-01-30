@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.UpdateAvailableDialog
-import jr.brian.home.ui.components.settings.SettingsHeaderComponent
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.sections.appearanceSection
 import jr.brian.home.ui.components.settings.sections.extrasSection
 import jr.brian.home.ui.components.settings.sections.layoutSection
@@ -31,7 +31,6 @@ import jr.brian.home.ui.components.settings.sections.supportSection
 import jr.brian.home.ui.components.settings.sections.systemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.UpdateChecker
@@ -49,13 +48,12 @@ fun SettingsScreen(
     onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     onNavigateToVolumeControls: () -> Unit = {},
+    onNavigateToDockSettings: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val appUpdateManager = LocalAppUpdateManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
-    val showBackButton = appVisibilityManager.showSettingsBackButton
     
     val updateDialogState = rememberDialogState<UpdateInfo>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
@@ -79,8 +77,8 @@ fun SettingsScreen(
                     .systemBarsPadding(),
         ) {
             Column {
-                SettingsHeaderComponent(
-                    showBackButton = showBackButton,
+                ScreenHeader(
+                    showVersion = true,
                     onBackClick = onDismiss
                 )
                 SettingsContent(
@@ -93,6 +91,7 @@ fun SettingsScreen(
                     onNavigateToControlPad = onNavigateToControlPad,
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
                     onNavigateToVolumeControls = onNavigateToVolumeControls,
+                    onNavigateToDockSettings = onNavigateToDockSettings,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
@@ -152,6 +151,7 @@ private fun SettingsContent(
     onNavigateToControlPad: () -> Unit = {},
     onNavigateToCrashLogs: () -> Unit = {},
     onNavigateToVolumeControls: () -> Unit = {},
+    onNavigateToDockSettings: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
     onCheckForUpdates: () -> Unit = {},
     onDismiss: () -> Unit
@@ -196,7 +196,8 @@ private fun SettingsContent(
             isVisible = ::isVisible,
             isThorDevice = isThorDevice,
             allAppsUnfiltered = allAppsUnfiltered,
-            onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut
+            onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
+            onNavigateToDockSettings = onNavigateToDockSettings
         )
 
         systemSection(

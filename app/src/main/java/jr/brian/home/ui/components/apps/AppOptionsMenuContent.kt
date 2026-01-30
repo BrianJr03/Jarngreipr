@@ -85,17 +85,19 @@ fun AppOptionsMenuContent(
                         index = 0
                     )
                 )
-                add(
-                    GridItem.IconItem(
-                        icon = Icons.Default.VisibilityOff,
-                        label = stringResource(R.string.app_options_hide),
-                        onClick = {
-                            onToggleVisibility()
-                            onDismiss()
-                        },
-                        index = 1
+                if (!isInDock){
+                    add(
+                        GridItem.IconItem(
+                            icon = Icons.Default.VisibilityOff,
+                            label = stringResource(R.string.app_options_hide),
+                            onClick = {
+                                onToggleVisibility()
+                                onDismiss()
+                            },
+                            index = 1
+                        )
                     )
-                )
+                }
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Image,
@@ -121,17 +123,19 @@ fun AppOptionsMenuContent(
 
                 if (app != null) {
                     val resizeIndex = if (isInDock) 4 else 3
-                    add(
-                        GridItem.IconItem(
-                            icon = Icons.Default.OpenInFull,
-                            label = stringResource(R.string.app_options_resize),
-                            onClick = {
-                                showResizeMode = true
-                                previewIconSize = currentIconSize
-                            },
-                            index = resizeIndex
+                    if (!isInDock) {
+                        add(
+                            GridItem.IconItem(
+                                icon = Icons.Default.OpenInFull,
+                                label = stringResource(R.string.app_options_resize),
+                                onClick = {
+                                    showResizeMode = true
+                                    previewIconSize = currentIconSize
+                                },
+                                index = resizeIndex
+                            )
                         )
-                    )
+                    }
 
                     if (hasExternalDisplay) {
                         val displayIndexOffset = if (isInDock) 1 else 0
