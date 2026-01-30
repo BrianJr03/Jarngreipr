@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,10 +21,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -48,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -90,218 +88,220 @@ fun CustomThemeScreen(
     }
 
     Scaffold(
-        containerColor = OledBackgroundColor,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .systemBarsPadding(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.custom_theme_dialog_title),
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                // Preview box in top bar
-                Box(
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(48.dp)
-                        .background(
-                            brush = if (isSolidColor) {
-                                Brush.linearGradient(
-                                    listOf(
-                                        selectedPrimaryColor,
-                                        selectedPrimaryColor
-                                    )
-                                )
-                            } else {
-                                Brush.linearGradient(
-                                    listOf(
-                                        selectedPrimaryColor,
-                                        selectedSecondaryColor
-                                    )
-                                )
-                            },
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                )
-            }
-        }
+        containerColor = OledBackgroundColor
     ) { innerPadding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 32.dp),
-            contentPadding = PaddingValues(vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .systemBarsPadding()
         ) {
-            // Solid color toggle
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = stringResource(R.string.custom_theme_solid_color),
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Switch(
-                        checked = isSolidColor,
-                        onCheckedChange = { isSolidColor = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = ThemePrimaryColor,
-                            checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color.DarkGray
-                        )
-                    )
-                }
-            }
+            Column {
+                ScreenHeader(
+                    onBackClick = onNavigateBack
+                )
 
-            // Color selection section
-            if (isSolidColor) {
-                // Single color section header
-                item {
-                    Text(
-                        text = stringResource(R.string.custom_theme_color),
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Color grid rows
-                val colorRows = colorOptions.chunked(8)
-                items(colorRows.size) { rowIndex ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(
-                            8.dp,
-                            Alignment.CenterHorizontally
-                        )
-                    ) {
-                        for (color in colorRows[rowIndex]) {
-                            ColorSwatch(
-                                color = color,
-                                isSelected = selectedPrimaryColor == color,
-                                onClick = { selectedPrimaryColor = color }
-                            )
-                        }
-                    }
-                }
-            } else {
-                // Split view headers
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.custom_theme_primary_color),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = stringResource(R.string.custom_theme_secondary_color),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                // Color grid rows - split view
-                val colorRows = colorOptions.chunked(4)
-                items(colorRows.size) { rowIndex ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Primary color column
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                8.dp,
-                                Alignment.CenterHorizontally
-                            )
-                        ) {
-                            for (color in colorRows[rowIndex]) {
-                                ColorSwatch(
-                                    color = color,
-                                    isSelected = selectedPrimaryColor == color,
-                                    onClick = { selectedPrimaryColor = color }
-                                )
-                            }
-                        }
-                        // Secondary color column
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                8.dp,
-                                Alignment.CenterHorizontally)
-                        ) {
-                            for (color in colorRows[rowIndex]) {
-                                ColorSwatch(
-                                    color = color,
-                                    isSelected = selectedSecondaryColor == color,
-                                    onClick = { selectedSecondaryColor = color }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Action buttons
-            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 32.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ActionButton(
-                        text = stringResource(R.string.dialog_cancel),
-                        onClick = onNavigateBack,
-                        isPrimary = false,
+                    Text(
+                        text = stringResource(R.string.custom_theme_dialog_title),
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
-                    ActionButton(
-                        text = stringResource(R.string.custom_theme_create),
-                        onClick = {
-                            val customTheme = ColorTheme.createCustomTheme(
-                                primaryColor = selectedPrimaryColor,
-                                secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
-                                name = "Custom Theme"
+                    // Preview box
+                    Box(
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(48.dp)
+                            .background(
+                                brush = if (isSolidColor) {
+                                    Brush.linearGradient(
+                                        listOf(
+                                            selectedPrimaryColor,
+                                            selectedPrimaryColor
+                                        )
+                                    )
+                                } else {
+                                    Brush.linearGradient(
+                                        listOf(
+                                            selectedPrimaryColor,
+                                            selectedSecondaryColor
+                                        )
+                                    )
+                                },
+                                shape = RoundedCornerShape(8.dp)
                             )
-                            onThemeCreated(customTheme)
-                        },
-                        isPrimary = true,
-                        modifier = Modifier.weight(1f)
+                            .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                     )
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    // Solid color toggle
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(R.string.custom_theme_solid_color),
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Switch(
+                                checked = isSolidColor,
+                                onCheckedChange = { isSolidColor = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ThemePrimaryColor,
+                                    checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
+                                    uncheckedThumbColor = Color.Gray,
+                                    uncheckedTrackColor = Color.DarkGray
+                                )
+                            )
+                        }
+                    }
+
+                    // Color selection section
+                    if (isSolidColor) {
+                        // Single color section header
+                        item {
+                            Text(
+                                text = stringResource(R.string.custom_theme_color),
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        // Color grid rows
+                        val colorRows = colorOptions.chunked(8)
+                        items(colorRows.size) { rowIndex ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    8.dp,
+                                    Alignment.CenterHorizontally
+                                )
+                            ) {
+                                for (color in colorRows[rowIndex]) {
+                                    ColorSwatch(
+                                        color = color,
+                                        isSelected = selectedPrimaryColor == color,
+                                        onClick = { selectedPrimaryColor = color }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Split view headers
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.custom_theme_primary_color),
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.custom_theme_secondary_color),
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        // Color grid rows - split view
+                        val colorRows = colorOptions.chunked(4)
+                        items(colorRows.size) { rowIndex ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Primary color column
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        8.dp,
+                                        Alignment.CenterHorizontally
+                                    )
+                                ) {
+                                    for (color in colorRows[rowIndex]) {
+                                        ColorSwatch(
+                                            color = color,
+                                            isSelected = selectedPrimaryColor == color,
+                                            onClick = { selectedPrimaryColor = color }
+                                        )
+                                    }
+                                }
+                                // Secondary color column
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        8.dp,
+                                        Alignment.CenterHorizontally
+                                    )
+                                ) {
+                                    for (color in colorRows[rowIndex]) {
+                                        ColorSwatch(
+                                            color = color,
+                                            isSelected = selectedSecondaryColor == color,
+                                            onClick = { selectedSecondaryColor = color }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Action buttons
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp, bottom = 32.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ActionButton(
+                                text = stringResource(R.string.dialog_cancel),
+                                onClick = onNavigateBack,
+                                isPrimary = false,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionButton(
+                                text = stringResource(R.string.custom_theme_create),
+                                onClick = {
+                                    val customTheme = ColorTheme.createCustomTheme(
+                                        primaryColor = selectedPrimaryColor,
+                                        secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
+                                        name = "Custom Theme"
+                                    )
+                                    onThemeCreated(customTheme)
+                                },
+                                isPrimary = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
         }

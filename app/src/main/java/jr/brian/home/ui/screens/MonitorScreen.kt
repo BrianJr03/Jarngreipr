@@ -15,10 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -112,24 +109,22 @@ fun MonitorScreen(
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 32.dp),
-                contentPadding = PaddingValues(vertical = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
+            Column {
+                ScreenHeader(onBackClick = onDismiss)
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item {
+                        Column {
                             Text(
                                 text = stringResource(R.string.monitor_screen_title),
                                 color = Color.White,
-                                fontSize = 28.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -139,57 +134,49 @@ fun MonitorScreen(
                                 fontSize = 14.sp
                             )
                         }
-
-                        IconButton(onClick = onDismiss) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.monitor_close),
-                                tint = Color.White
-                            )
-                        }
                     }
-                }
 
-                item {
-                    MonitorCard(
-                        label = stringResource(R.string.monitor_ram_label),
-                        value = "${ramUsagePercent.roundToInt()}%",
-                        subtitle = "%.2f GB / %.2f GB".format(ramUsedGB, ramTotalGB),
-                        progress = ramUsagePercent / 100f
-                    )
-                }
+                    item {
+                        MonitorCard(
+                            label = stringResource(R.string.monitor_ram_label),
+                            value = "${ramUsagePercent.roundToInt()}%",
+                            subtitle = "%.2f GB / %.2f GB".format(ramUsedGB, ramTotalGB),
+                            progress = ramUsagePercent / 100f
+                        )
+                    }
 
-                item {
-                    MonitorCard(
-                        label = stringResource(R.string.monitor_cpu_label),
-                        value = "${cpuUsagePercent.roundToInt()}%",
-                        progress = cpuUsagePercent / 100f
-                    )
-                }
+                    item {
+                        MonitorCard(
+                            label = stringResource(R.string.monitor_cpu_label),
+                            value = "${cpuUsagePercent.roundToInt()}%",
+                            progress = cpuUsagePercent / 100f
+                        )
+                    }
 
-                item {
-                    MonitorCard(
-                        label = stringResource(R.string.monitor_battery_label),
-                        value = "${batteryPercent.roundToInt()}%",
-                        progress = batteryPercent / 100f
-                    )
-                }
+                    item {
+                        MonitorCard(
+                            label = stringResource(R.string.monitor_battery_label),
+                            value = "${batteryPercent.roundToInt()}%",
+                            progress = batteryPercent / 100f
+                        )
+                    }
 
-                item {
-                    MonitorCard(
-                        label = stringResource(R.string.monitor_battery_time_label),
-                        value = batteryTime,
-                        progress = null
-                    )
-                }
+                    item {
+                        MonitorCard(
+                            label = stringResource(R.string.monitor_battery_time_label),
+                            value = batteryTime,
+                            progress = null
+                        )
+                    }
 
-                item {
-                    MonitorCard(
-                        label = stringResource(R.string.monitor_storage_label),
-                        value = "${storagePercent.roundToInt()}%",
-                        subtitle = "%.2f GB / %.2f GB".format(storageUsedGB, storageTotalGB),
-                        progress = storagePercent / 100f
-                    )
+                    item {
+                        MonitorCard(
+                            label = stringResource(R.string.monitor_storage_label),
+                            value = "${storagePercent.roundToInt()}%",
+                            subtitle = "%.2f GB / %.2f GB".format(storageUsedGB, storageTotalGB),
+                            progress = storagePercent / 100f
+                        )
+                    }
                 }
             }
         }

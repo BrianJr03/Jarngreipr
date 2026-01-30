@@ -38,6 +38,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,9 +46,6 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
-import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.AppDock
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
@@ -94,7 +92,7 @@ fun AppDrawerTab(
     onSettingsClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val dockManager = LocalDockManager.current
@@ -131,6 +129,9 @@ fun AppDrawerTab(
     val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
+
+    val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+    val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -229,7 +230,7 @@ fun AppDrawerTab(
                 onSettingsClick = onSettingsClick,
                 onQuickDeleteClick = onShowBottomSheet,
                 onCreateFolderClick = null,
-                onRecentAppsClick = onNavigateToRecentApps
+                onDockSettingsClick = onNavigateToDockSettings
             )
         }
 
@@ -278,28 +279,31 @@ fun AppDrawerTab(
             )
         }
 
-        AppDock(
-            apps = appsUnfiltered,
-            onAppClick = { app ->
-                val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                jr.brian.home.util.launchApp(
-                    context = context,
-                    packageName = app.packageName,
-                    displayPreference = displayPreference
-                )
-            },
-            onAppLongClick = { _ -> },
-            onEmptySlotClick = { position ->
-                dockAppSelectionDialogState.show(position)
-            },
-            onEmptySlotLongClick = { position ->
-                dockManager.removeEmptySlot(position)
-            },
-            onAddSlotClick = { position ->
-                dockManager.addEmptySlot(position)
-            },
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        ) {
+            AppDock(
+                apps = appsUnfiltered,
+                onAppClick = { app ->
+                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    jr.brian.home.util.launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppLongClick = { _ -> },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                }
+            )
+        }
     }
 
     dockAppSelectionDialogState.item?.let { position ->

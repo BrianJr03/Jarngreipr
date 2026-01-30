@@ -104,8 +104,8 @@
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
 
-    <string name="settings_show_back_button_title">Show Settings Back Button</string>
-    <string name="settings_show_back_button_description">Display back button in settings</string>
+    <string name="settings_show_back_button_title">Show Back Button on Screens</string>
+    <string name="settings_show_back_button_description">Display back button on all screens</string>
     <string name="settings_back_button">Back</string>
 
     <string name="settings_visibility_options_title">Visibility Options</string>
@@ -611,4 +611,21 @@
     <string name="dock_select_app_title">Select App for Dock</string>
     <string name="dock_add_app">Add app to dock</string>
     <string name="dock_remove_app">Remove</string>
+    
+    <!-- Dock Settings -->
+    <string name="dock_settings_title">Dock Settings</string>
+    <string name="dock_settings_description">Customize your dock appearance and behavior</string>
+    <string name="dock_visibility_title">Show Dock</string>
+    <string name="dock_visibility_description">Toggle dock visibility</string>
+    <string name="dock_preview_title">Dock Preview</string>
+    <string name="dock_preview_description">Long press and drag to reorder</string>
+    <string name="dock_add_slot_title">Add Empty Slot</string>
+    <string name="dock_add_slot_description">Add a new empty slot to the dock (%1$d/%2$d slots)</string>
+    <string name="dock_max_apps_title">Maximum Number of Apps</string>
+    <string name="dock_max_apps_description">Select how many apps can be added to the dock</string>
+    <string name="dock_size_title">Dock Size</string>
+    <string name="dock_color_title">Dock Color</string>
+    <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
+    <string name="dock_page_visibility_description">Choose which pages display the dock. If none are selected, the dock appears on all pages.</string>
+    <string name="dock_page_number">Page %1$d</string>
 </resources>

@@ -51,7 +51,7 @@ fun LauncherPagerScreen(
     onShowBottomSheet: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onBackButtonShortcut: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -202,7 +202,7 @@ fun LauncherPagerScreen(
                                 pageIndicatorBorderColor = ThemePrimaryColor,
                                 allApps = homeUiState.allAppsUnfiltered,
                                 onNavigateToSearch = onNavigateToSearch,
-                                onNavigateToRecentApps = onNavigateToRecentApps
+                                onNavigateToDockSettings = onNavigateToDockSettings
                             )
                         }
                     }
@@ -245,7 +245,7 @@ fun LauncherPagerScreen(
                                     },
                                     pageIndicatorBorderColor = ThemeSecondaryColor,
                                     onNavigateToSearch = onNavigateToSearch,
-                                    onNavigateToRecentApps = onNavigateToRecentApps,
+                                    onNavigateToDockSettings = onNavigateToDockSettings,
                                     navController = navController
                                 )
                             }
@@ -293,7 +293,7 @@ fun LauncherPagerScreen(
                                     pagerState = pagerState,
                                     isLoading = homeUiState.isLoading,
                                     pageIndex = page,
-                                    onNavigateToRecentApps = onNavigateToRecentApps,
+                                    onNavigateToDockSettings = onNavigateToDockSettings,
                                 )
                             }
                         }
@@ -341,11 +341,9 @@ private suspend fun deleteTab(
     pageTypeManager.removePage(pagerPageIndex)
     pageCountManager.removePage()
 
-    // If the deleted tab was the current home tab, set the first tab as home
     if (pagerPageIndex == currentHomeTabIndex) {
         homeTabManager.setHomeTabIndex(0)
     } else if (pagerPageIndex < currentHomeTabIndex) {
-        // If a tab before the home tab was deleted, adjust the home tab index
         homeTabManager.setHomeTabIndex(currentHomeTabIndex - 1)
     }
 

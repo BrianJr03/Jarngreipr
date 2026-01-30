@@ -45,10 +45,9 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.components.DualVolumeControls
 import jr.brian.home.ui.components.dialog.VolumeControlsHelpDialog
-import jr.brian.home.ui.components.settings.SettingsHeaderComponent
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.util.rememberDialogState
 
 @Composable
@@ -56,8 +55,6 @@ fun VolumeControlsScreen(
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
-    val showBackButton = appVisibilityManager.showSettingsBackButton
     val helpDialogState = rememberDialogState<Unit>()
     
     var canWriteSecureSettings by remember { mutableStateOf(false) }
@@ -85,10 +82,7 @@ fun VolumeControlsScreen(
                 .systemBarsPadding()
         ) {
             Column {
-                SettingsHeaderComponent(
-                    showBackButton = showBackButton,
-                    onBackClick = onDismiss
-                )
+                ScreenHeader(onBackClick = onDismiss)
                 
                 Column(
                     modifier = Modifier

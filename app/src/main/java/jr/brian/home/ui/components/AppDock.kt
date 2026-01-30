@@ -1,10 +1,8 @@
 package jr.brian.home.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,16 +27,17 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.data.DockManager
+import jr.brian.home.data.DockSize
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedDockItemAlpha
 import jr.brian.home.ui.animations.animatedDockItemScale
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.dockItemEnterAnimation
-import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 
 @Composable
@@ -53,15 +48,15 @@ fun AppDock(
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
     onEmptySlotClick: (Int) -> Unit,
-    onEmptySlotLongClick: (Int) -> Unit,
-    onAddSlotClick: (Int) -> Unit
+    onEmptySlotLongClick: (Int) -> Unit
 ) {
     val dockManager = LocalDockManager.current
-    val dockPackageNames by dockManager.dockApps.collectAsState()
+    val dockPackageNames by dockManager.dockApps.collectAsStateWithLifecycle()
+    val dockColor by dockManager.dockColor.collectAsStateWithLifecycle()
+    val dockSize by dockManager.dockSize.collectAsStateWithLifecycle()
 
     val totalSlots = dockPackageNames.size
     val currentSlotCount = maxOf(1, totalSlots)
-    val canAddMore = currentSlotCount < DockManager.MAX_DOCK_APPS
 
     Box(
         modifier = modifier
@@ -72,10 +67,10 @@ fun AppDock(
         Box(
             modifier = Modifier
                 .background(
-                    color = Color.Gray.copy(alpha = 0.15f),
+                    color = dockColor,
                     shape = RoundedCornerShape(16.dp)
                 )
-                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .padding(horizontal = dockSize.padding, vertical = dockSize.padding)
         ) {
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -83,7 +78,7 @@ fun AppDock(
             ) {
                 for (i in 0 until currentSlotCount) {
                     if (i > 0) {
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(dockSize.spacing))
                     }
 
                     val packageName = dockPackageNames.getOrNull(i)?.takeIf { it.isNotEmpty() }
@@ -94,22 +89,17 @@ fun AppDock(
                     if (app != null) {
                         DockAppItem(
                             app = app,
+                            size = dockSize,
                             onClick = { onAppClick(app) },
                             onLongClick = { onAppLongClick(app) }
                         )
                     } else {
                         DockEmptySlot(
+                            size = dockSize,
                             onClick = { onEmptySlotClick(i) },
                             onLongClick = { onEmptySlotLongClick(i) }
                         )
                     }
-                }
-
-                if (canAddMore) {
-                    Spacer(Modifier.width(8.dp))
-                    DockAddButton(
-                        onClick = { onAddSlotClick(currentSlotCount) }
-                    )
                 }
             }
         }
@@ -120,26 +110,24 @@ fun AppDock(
 @OptIn(ExperimentalFoundationApi::class)
 private fun DockAppItem(
     app: AppInfo,
+    size: DockSize,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val enterScale = animatedDockItemScale()
     val enterAlpha = animatedDockItemAlpha()
+    val customIconManager = LocalCustomIconManager.current
 
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(size.containerSize)
             .dockItemEnterAnimation(
                 scale = enterScale,
                 alpha = enterAlpha
             )
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = cardGradient(isFocused),
-                shape = RoundedCornerShape(12.dp)
-            )
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
                 color = if (isFocused) Color.White.copy(alpha = 0.8f) else Color.Transparent,
@@ -153,12 +141,13 @@ private fun DockAppItem(
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = rememberAsyncImagePainter(model = app.icon),
+        AppIconImage(
+            defaultIcon = app.icon,
+            packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(10.dp))
+            customIconManager = customIconManager,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.size(size.iconSize)
         )
     }
 }
@@ -166,6 +155,7 @@ private fun DockAppItem(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun DockEmptySlot(
+    size: DockSize,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -175,7 +165,7 @@ private fun DockEmptySlot(
 
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(size.containerSize)
             .dockItemEnterAnimation(
                 scale = enterScale,
                 alpha = enterAlpha
@@ -199,44 +189,4 @@ private fun DockEmptySlot(
             .focusable(),
         contentAlignment = Alignment.Center
     ) {}
-}
-
-@Composable
-private fun DockAddButton(
-    onClick: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    val enterScale = animatedDockItemScale()
-    val enterAlpha = animatedDockItemAlpha()
-
-    Box(
-        modifier = Modifier
-            .size(56.dp)
-            .dockItemEnterAnimation(
-                scale = enterScale,
-                alpha = enterAlpha
-            )
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                color = OledCardColor.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = 1.5.dp,
-                color = if (isFocused) Color.White.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .focusable(),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = stringResource(R.string.dock_add_app),
-            tint = Color.White.copy(alpha = 0.6f),
-            modifier = Modifier.size(24.dp)
-        )
-    }
 }

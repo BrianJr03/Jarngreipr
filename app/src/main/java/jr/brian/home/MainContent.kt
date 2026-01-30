@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import jr.brian.home.ui.navigation.appDockSettingsScreen
 import jr.brian.home.ui.navigation.appSearchScreen
 import jr.brian.home.ui.navigation.backButtonShortcutScreen
 import jr.brian.home.ui.navigation.controlPadScreen
@@ -171,15 +172,10 @@ fun MainContent() {
                     powerViewModel = powerViewModel
                 )
 
-                settingsScreen(
+                appDockSettingsScreen(
                     navController = navController,
-                    context = context,
                     mainViewModel = mainViewModel
                 )
-
-                faqScreen(navController = navController)
-
-                customThemeScreen(navController = navController)
 
                 appSearchScreen(
                     navController = navController,
@@ -191,11 +187,23 @@ fun MainContent() {
                     mainViewModel = mainViewModel
                 )
 
-                monitorScreen(navController = navController)
-
                 controlPadScreen(navController = navController)
 
                 crashLogsScreen(navController = navController)
+
+                customThemeScreen(navController = navController)
+
+                faqScreen(navController = navController)
+
+                monitorScreen(navController = navController)
+
+                recentAppsScreen(navController = navController)
+
+                settingsScreen(
+                    navController = navController,
+                    context = context,
+                    mainViewModel = mainViewModel
+                )
 
                 volumeControlsScreen(navController = navController)
 
@@ -203,8 +211,6 @@ fun MainContent() {
                     navController = navController,
                     widgetViewModel = widgetViewModel
                 )
-
-                recentAppsScreen(navController = navController)
             }
         }
 

@@ -44,6 +44,7 @@ import jr.brian.home.model.CrashLog
 import jr.brian.home.ui.components.crashlogs.CrashLogDetailView
 import jr.brian.home.ui.components.crashlogs.CrashLogsList
 import jr.brian.home.ui.components.crashlogs.EmptyCrashLogsView
+import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -80,17 +81,18 @@ fun CrashLogsScreen(
                 .systemBarsPadding()
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Header
+                ScreenHeader(onBackClick = onDismiss)
+                
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp, vertical = 24.dp),
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = stringResource(R.string.crash_logs_title),
-                        fontSize = 28.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -99,7 +101,6 @@ fun CrashLogsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Report Issue button
                         Button(
                             onClick = {
                                 val intent = Intent(
@@ -121,7 +122,6 @@ fun CrashLogsScreen(
                             Text(stringResource(R.string.crash_logs_report_issue))
                         }
 
-                        // Clear All button (only show if there are crash logs)
                         if (crashLogs.isNotEmpty()) {
                             Button(
                                 onClick = { clearDialogState.show() },
