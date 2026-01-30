@@ -1,14 +1,10 @@
 ## New Features
 ### Live Icons
-> You can now use GIFs as an app icon
+> Long press on any tab to enable the App Dock
+> You can customize the color, size, and apps
 
-### GamePad
-> A virtual gamepad that allows you to control Android games played on the main screen
-> Find this in Settings or assign it as a back button shortcut
+### Volume Controls
+> A slider that controls the volume has been added to the Powered Off Screen and Settings
+> This will control the volume for the main (top) screen only. Work on adjusting the bottom screen's volume is in progress.
 
-### App Drawer Tab
-> An empty tab with an app drawer 
-> Swipe up to open the drawer
-> Thanks @BenBaggley!
-
-1.4
+1.5

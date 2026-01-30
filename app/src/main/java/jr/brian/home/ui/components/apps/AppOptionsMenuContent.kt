@@ -38,18 +38,18 @@ import jr.brian.home.model.app.AppInfo
 fun AppOptionsMenuContent(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
-    onAppInfoClick: () -> Unit,
-    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     hasExternalDisplay: Boolean,
     focusRequesters: List<FocusRequester>,
-    onFocusedIndexChange: (Int) -> Unit,
-    onDismiss: () -> Unit,
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
+    isInDock: Boolean = false,
+    onDismiss: () -> Unit,
+    onAppInfoClick: () -> Unit,
+    onFocusedIndexChange: (Int) -> Unit,
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
     onCustomIconClick: () -> Unit = {},
-    isInDock: Boolean = false,
     onRemoveFromDock: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }

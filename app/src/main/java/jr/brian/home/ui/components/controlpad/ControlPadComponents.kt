@@ -251,7 +251,7 @@ fun ShizukuStatusIndicator(
         }
     }
     
-    val connectingDurationSeconds = if (isConnecting && connectingStartTime > 0) {
+    var connectingDurationSeconds = if (isConnecting && connectingStartTime > 0) {
         ((currentTime - connectingStartTime) / 1000).toInt()
     } else {
         0
@@ -355,7 +355,6 @@ fun ShizukuStatusIndicator(
             }
         }
         
-        // Restart button that appears after 30 seconds of connecting
         AnimatedVisibility(
             visible = showRestartButton,
             enter = fadeIn() + slideInVertically { -it },
@@ -377,6 +376,7 @@ fun ShizukuStatusIndicator(
                         coroutineScope.launch(Dispatchers.IO) {
                             ShizukuInputManager.restart()
                         }
+                        connectingDurationSeconds = 0
                     }
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
