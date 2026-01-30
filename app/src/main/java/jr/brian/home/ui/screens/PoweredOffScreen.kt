@@ -54,8 +54,7 @@ import java.util.Locale
 @Composable
 fun PoweredOffScreen(
     modifier: Modifier = Modifier,
-    onPowerOn: () -> Unit = {},
-    onNavigateToVolumeControls: () -> Unit = {}
+    onPowerOn: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val focusRequester = rememberAutoFocus()
@@ -209,11 +208,7 @@ fun PoweredOffScreen(
                     .align(Alignment.Center)
                     .fillMaxWidth(0.8f)
             ) {
-                DualVolumeControls(
-                    isVisible = showInfo,
-                    showPermissionWarning = true,
-                    onNavigateToSettings = onNavigateToVolumeControls
-                )
+                DualVolumeControls(isVisible = showInfo)
             }
         }
     }

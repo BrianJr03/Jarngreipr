@@ -289,7 +289,8 @@ fun AppDrawerTab(
             AppDock(
                 apps = appsUnfiltered,
                 onAppClick = { app ->
-                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val displayPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     launchApp(
                         context = context,
                         packageName = app.packageName,
@@ -315,7 +316,10 @@ fun AppDrawerTab(
             DockAppSelectionDialog(
                 apps = availableApps,
                 onAppSelected = { app ->
-                    dockManager.addAppToDock(app.packageName, position)
+                    dockManager.addAppToDock(
+                        position = position,
+                        packageName = app.packageName,
+                    )
                     dockAppSelectionDialogState.dismiss()
                 },
                 onDismiss = dockAppSelectionDialogState::dismiss

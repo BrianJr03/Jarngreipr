@@ -628,4 +628,10 @@
     <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
     <string name="dock_page_visibility_description">Choose which pages display the dock. If none are selected, the dock appears on all pages.</string>
     <string name="dock_page_number">Page %1$d</string>
+    
+    <!-- Volume Controls -->
+    <string name="volume_top_screen">Top Screen Volume</string>
+    <string name="volume_bottom_screen">Bottom Screen Volume</string>
+    <string name="volume_down_description">Volume Down</string>
+    <string name="volume_up_description">Volume Up</string>
 </resources>

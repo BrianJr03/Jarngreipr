@@ -260,7 +260,10 @@ fun AppsAndWidgetsTab(
             DockAppSelectionDialog(
                 apps = availableApps,
                 onAppSelected = { app ->
-                    dockManager.addAppToDock(app.packageName, position)
+                    dockManager.addAppToDock(
+                        position = position,
+                        packageName = app.packageName,
+                    )
                     dockAppSelectionDialogState.dismiss()
                 },
                 onDismiss = dockAppSelectionDialogState::dismiss

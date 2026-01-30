@@ -43,6 +43,7 @@ import jr.brian.home.ui.components.dock.DockSizeOption
 import jr.brian.home.ui.components.dock.DraggableDockPreview
 import jr.brian.home.ui.components.dock.MaxDockAppsOption
 import jr.brian.home.ui.components.dock.PageVisibilityOption
+import jr.brian.home.ui.theme.AlmostBlack
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -271,7 +272,7 @@ fun AppDockSettingsScreen(
                                         Color.White,
                                         Color.LightGray,
                                         Color.DarkGray,
-                                        Color(0xFF212121),
+                                        AlmostBlack,
                                         Color.Black,
                                         Color.Transparent
                                     )
