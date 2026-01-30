@@ -1,5 +1,5 @@
 ## New Features
-### Live Icons
+### App Dock
 > Long press on any tab to enable the App Dock
 > You can customize the color, size, and apps
 
