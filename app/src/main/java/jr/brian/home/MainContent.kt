@@ -39,6 +39,7 @@ import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.recentAppsScreen
 import jr.brian.home.ui.navigation.settingsScreen
+import jr.brian.home.ui.navigation.volumeControlsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
@@ -196,6 +197,8 @@ fun MainContent() {
 
                 crashLogsScreen(navController = navController)
 
+                volumeControlsScreen(navController = navController)
+
                 widgetPickerScreen(
                     navController = navController,
                     widgetViewModel = widgetViewModel
@@ -213,6 +216,9 @@ fun MainContent() {
             PoweredOffScreen(
                 onPowerOn = {
                     powerViewModel.powerOn()
+                },
+                onNavigateToVolumeControls = {
+                    navController.navigate(Routes.VOLUME_CONTROLS)
                 }
             )
         }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
+import jr.brian.home.ui.components.DualVolumeControls
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
@@ -52,7 +54,8 @@ import java.util.Locale
 @Composable
 fun PoweredOffScreen(
     modifier: Modifier = Modifier,
-    onPowerOn: () -> Unit = {}
+    onPowerOn: () -> Unit = {},
+    onNavigateToVolumeControls: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val focusRequester = rememberAutoFocus()
@@ -195,6 +198,21 @@ fun PoweredOffScreen(
                     color = Color.DarkGray,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            AnimatedVisibility(
+                visible = showInfo,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(0.8f)
+            ) {
+                DualVolumeControls(
+                    isVisible = showInfo,
+                    showPermissionWarning = true,
+                    onNavigateToSettings = onNavigateToVolumeControls
                 )
             }
         }

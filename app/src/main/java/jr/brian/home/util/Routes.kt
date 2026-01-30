@@ -10,6 +10,7 @@ object Routes {
     const val MONITOR = "monitor"
     const val CRASH_LOGS = "crash_logs"
     const val CONTROL_PAD = "control_pad"
+    const val VOLUME_CONTROLS = "volume_controls"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
     const val RECENT_APPS = "recent_apps"
 

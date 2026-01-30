@@ -27,6 +27,7 @@ import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.screens.GamePadScreen
+import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -90,6 +91,7 @@ fun NavGraphBuilder.launcherScreen(
                         BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
                         BackButtonShortcut.MONITOR -> showMonitorSheet = true
                         BackButtonShortcut.CONTROL_PAD -> showControlPadSheet = true
+                        BackButtonShortcut.VOLUME_CONTROLS -> navController.navigate(Routes.VOLUME_CONTROLS)
                         BackButtonShortcut.RECENT_APPS -> navController.navigate(Routes.RECENT_APPS)
                         BackButtonShortcut.APP -> {
                             backButtonShortcutAppPackage?.let { packageName ->
@@ -257,6 +259,10 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.navigate(Routes.CRASH_LOGS)
                 },
+                onNavigateToVolumeControls = {
+                    showScreen = false
+                    navController.navigate(Routes.VOLUME_CONTROLS)
+                },
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
@@ -374,6 +380,23 @@ fun NavGraphBuilder.crashLogsScreen(
 
         SlideInVertically(showScreen) {
             CrashLogsScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.volumeControlsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.VOLUME_CONTROLS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            VolumeControlsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
