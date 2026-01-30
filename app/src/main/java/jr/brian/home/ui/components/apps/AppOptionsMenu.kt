@@ -28,11 +28,14 @@ fun AppOptionsMenu(
     currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    isInDock: Boolean = false,
+    onRemoveFromDock: () -> Unit = {}
 ) {
     val focusRequesters = rememberAppOptionsMenuFocusRequesters(
-        app = app,
-        hasExternalDisplay = hasExternalDisplay
+        hasResizeOption = app != null,
+        hasExternalDisplay = hasExternalDisplay,
+        isInDock = isInDock
     )
     var focusedIndex by remember { mutableIntStateOf(0) }
 
@@ -58,7 +61,9 @@ fun AppOptionsMenu(
                 currentIconSize,
                 onIconSizeChange,
                 onToggleVisibility,
-                onCustomIconClick
+                onCustomIconClick,
+                isInDock,
+                onRemoveFromDock
             )
         },
         confirmButton = {},

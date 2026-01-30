@@ -19,6 +19,7 @@ import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
@@ -48,7 +49,8 @@ data class ManagerContainer @Inject constructor(
     val notificationCountManager: NotificationCountManager,
     val recentAppsCacheManager: RecentAppsCacheManager,
     val shizukuManager: ShizukuManager,
-    val appUpdateManager: AppUpdateManager
+    val appUpdateManager: AppUpdateManager,
+    val dockManager: DockManager
 ) {
     init {
         NotificationCountManager.setInstance(notificationCountManager)
@@ -78,7 +80,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalNotificationCountManager provides notificationCountManager,
         LocalRecentAppsCacheManager provides recentAppsCacheManager,
         LocalShizukuManager provides shizukuManager,
-        LocalAppUpdateManager provides appUpdateManager
+        LocalAppUpdateManager provides appUpdateManager,
+        LocalDockManager provides dockManager
     ) {
         content()
     }

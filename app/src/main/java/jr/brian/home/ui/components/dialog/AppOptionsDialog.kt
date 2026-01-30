@@ -43,7 +43,9 @@ fun AppOptionsDialog(
     onIconSizeChange: (Float) -> Unit = {},
     showResizeOption: Boolean = false,
     onHideApp: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    isInDock: Boolean = false,
+    onRemoveFromDock: () -> Unit = {}
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -86,12 +88,13 @@ fun AppOptionsDialog(
         text = {
             val focusRequesters = rememberAppOptionsMenuFocusRequesters(
                 hasResizeOption = showResizeOption,
-                hasExternalDisplay = hasExternalDisplay
+                hasExternalDisplay = hasExternalDisplay,
+                isInDock = isInDock
             )
             var focusedIndex by remember { mutableIntStateOf(0) }
 
             AppOptionsMenuContent(
-                appLabel = "", // Already displayed in title
+                appLabel = "",
                 currentDisplayPreference = currentDisplayPreference,
                 onAppInfoClick = onAppInfoClick,
                 onDisplayPreferenceChange = onDisplayPreferenceChange,
@@ -103,7 +106,9 @@ fun AppOptionsDialog(
                 currentIconSize = currentIconSize,
                 onIconSizeChange = onIconSizeChange,
                 onToggleVisibility = onHideApp,
-                onCustomIconClick = onCustomIconClick
+                onCustomIconClick = onCustomIconClick,
+                isInDock = isInDock,
+                onRemoveFromDock = onRemoveFromDock
             )
 
         },
