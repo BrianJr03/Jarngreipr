@@ -1,4 +1,4 @@
-package jr.brian.home.ui.components.settings.dock
+package jr.brian.home.ui.components.dock
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring

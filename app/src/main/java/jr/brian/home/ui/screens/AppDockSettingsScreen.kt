@@ -38,11 +38,11 @@ import jr.brian.home.data.DockSize
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.SettingCard
-import jr.brian.home.ui.components.settings.dock.ColorOption
-import jr.brian.home.ui.components.settings.dock.DockSizeOption
-import jr.brian.home.ui.components.settings.dock.DraggableDockPreview
-import jr.brian.home.ui.components.settings.dock.MaxDockAppsOption
-import jr.brian.home.ui.components.settings.dock.PageVisibilityOption
+import jr.brian.home.ui.components.dock.ColorOption
+import jr.brian.home.ui.components.dock.DockSizeOption
+import jr.brian.home.ui.components.dock.DraggableDockPreview
+import jr.brian.home.ui.components.dock.MaxDockAppsOption
+import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
