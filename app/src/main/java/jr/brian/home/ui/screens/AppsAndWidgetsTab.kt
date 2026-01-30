@@ -39,7 +39,7 @@ import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.components.AppDock
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.appsandwidgets.AppVisibilityDialogForWidgetTab
 import jr.brian.home.ui.components.appsandwidgets.TabContent
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
@@ -63,6 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -234,7 +235,7 @@ fun AppsAndWidgetsTab(
                 apps = allApps,
                 onAppClick = { app ->
                     val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    jr.brian.home.util.launchApp(
+                    launchApp(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference

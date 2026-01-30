@@ -44,7 +44,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.components.AppDock
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.AppsTabContent
