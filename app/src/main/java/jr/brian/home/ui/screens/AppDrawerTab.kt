@@ -45,9 +45,14 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.AppDock
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
+import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
@@ -55,6 +60,8 @@ import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -89,16 +96,20 @@ fun AppDrawerTab(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToRecentApps: () -> Unit = {}
 ) {
-    val powerSettingsManager = LocalPowerSettingsManager.current
-    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val dockManager = LocalDockManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val rows = gridSettingsManager.rowCount
+    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val unlimitedMode = gridSettingsManager.unlimitedMode
     val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
     val showAppDrawer = remember { mutableStateOf(false) }
-    val drawerOptionsDialogState = rememberDialogState<Unit>()
     val homeTabDialogState = rememberDialogState<Unit>()
-    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val dockAppSelectionDialogState = rememberDialogState<Int>()
 
     val filteredApps = remember(apps, maxAppsPerPage) {
         apps.sortedBy { it.label.uppercase() }
@@ -121,149 +132,190 @@ fun AppDrawerTab(
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
 
-    LazyColumn(
-        state = scrollState,
-        flingBehavior = flingBehavior,
-        modifier = modifier
-            .fillMaxSize()
-            .onSizeChanged { size ->
-                viewHeight.intValue = size.height
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = scrollState,
+            flingBehavior = flingBehavior,
+            modifier = modifier
+                .fillMaxSize()
+                .onSizeChanged { size ->
+                    viewHeight.intValue = size.height
 
-                if (!showAppDrawer.value) {
-                    animationScope.launch {
-                        delay(300)
-                        scrollState.scrollToItem(0)
-                        showAppDrawer.value = true
+                    if (!showAppDrawer.value) {
+                        animationScope.launch {
+                            delay(300)
+                            scrollState.scrollToItem(0)
+                            showAppDrawer.value = true
+                        }
                     }
-                }
-            },
-    ) {
-        stickyHeader {
-            if (pagerState != null) {
-                AnimatedVisibility(
-                    visible = isHeaderVisible,
-                    enter = slideInVertically(initialOffsetY = { -it }),
-                    exit = slideOutVertically(targetOffsetY = { -it }),
-                    modifier = Modifier.statusBarsPadding()
-                ) {
-                    ScreenHeaderRow(
-                        totalPages = totalPages,
-                        pagerState = pagerState,
-                        leadingIcon = Icons.Default.Settings,
-                        leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                        onLeadingIconClick = onSettingsClick,
-                        leadingIconFocusRequester = settingsIconFocusRequester,
-                        trailingIcon = Icons.Default.Menu,
-                        trailingIconContentDescription = null,
-                        onTrailingIconClick = {
-                            appDrawerOptionsDialogState.show()
-                        },
-                        trailingIconFocusRequester = menuIconFocusRequester,
-                        onNavigateToGrid = {
-                            appFocusRequesters[0]?.requestFocus()
-                        },
-                        onNavigateFromGrid = {
-                            menuIconFocusRequester.requestFocus()
-                        },
-                        powerViewModel = powerViewModel,
-                        showPowerButton = isPowerButtonVisible,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                        onFolderClick = onShowBottomSheet,
-                        onDeletePage = onDeletePage,
-                        pageIndicatorBorderColor = pageIndicatorBorderColor,
-                        onNavigateToSearch = onNavigateToSearch
-                    )
+                },
+        ) {
+            stickyHeader {
+                if (pagerState != null) {
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = slideInVertically(initialOffsetY = { -it }),
+                        exit = slideOutVertically(targetOffsetY = { -it }),
+                        modifier = Modifier.statusBarsPadding()
+                    ) {
+                        ScreenHeaderRow(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            leadingIcon = Icons.Default.Settings,
+                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
+                            onLeadingIconClick = onSettingsClick,
+                            leadingIconFocusRequester = settingsIconFocusRequester,
+                            trailingIcon = Icons.Default.Menu,
+                            trailingIconContentDescription = null,
+                            onTrailingIconClick = {
+                                appDrawerOptionsDialogState.show()
+                            },
+                            trailingIconFocusRequester = menuIconFocusRequester,
+                            onNavigateToGrid = {
+                                appFocusRequesters[0]?.requestFocus()
+                            },
+                            onNavigateFromGrid = {
+                                menuIconFocusRequester.requestFocus()
+                            },
+                            powerViewModel = powerViewModel,
+                            showPowerButton = isPowerButtonVisible,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                            onFolderClick = onShowBottomSheet,
+                            onDeletePage = onDeletePage,
+                            pageIndicatorBorderColor = pageIndicatorBorderColor,
+                            onNavigateToSearch = onNavigateToSearch
+                        )
+                    }
                 }
             }
-        }
-        items(2) { index ->
-            DrawerItem(
-                index = index,
-                viewHeight = viewHeight.intValue,
-                lastVisibleIndex = lastVisibleIndex,
-                lastOffset = lastOffset,
-                showAppDrawer = showAppDrawer.value,
-                showDrawerOptionsDialog = drawerOptionsDialogState.isVisible,
-                showHomeTabDialog = homeTabDialogState.isVisible,
-                onDoubleTap = { powerViewModel.togglePower() },
-                onLongPress = { drawerOptionsDialogState.show() },
-                apps = filteredApps,
-                appsUnfiltered = appsUnfiltered,
-                isLoading = isLoading,
-                allApps = allApps,
-                pageIndex = pageIndex,
-                isHeaderVisible = isHeaderVisible,
-                onAppOpened = {
-                    animationScope.launch {
-                        scrollState.scrollToItem(0)
+            items(2) { index ->
+                DrawerItem(
+                    index = index,
+                    viewHeight = viewHeight.intValue,
+                    lastVisibleIndex = lastVisibleIndex,
+                    lastOffset = lastOffset,
+                    showAppDrawer = showAppDrawer.value,
+                    showDrawerOptionsDialog = drawerOptionsDialogState.isVisible,
+                    showHomeTabDialog = homeTabDialogState.isVisible,
+                    onDoubleTap = { powerViewModel.togglePower() },
+                    onLongPress = { drawerOptionsDialogState.show() },
+                    apps = filteredApps,
+                    appsUnfiltered = appsUnfiltered,
+                    isLoading = isLoading,
+                    allApps = allApps,
+                    pageIndex = pageIndex,
+                    isHeaderVisible = isHeaderVisible,
+                    onAppOpened = {
+                        animationScope.launch {
+                            scrollState.scrollToItem(0)
+                        }
                     }
-                }
+                )
+            }
+        }
+
+        if (drawerOptionsDialogState.isVisible) {
+            DrawerOptionsDialog(
+                onDismiss = drawerOptionsDialogState::dismiss,
+                onPowerClick = {
+                    powerViewModel.togglePower()
+                },
+                onTabsClick = {
+                    homeTabDialogState.show()
+                },
+                onMenuClick = {
+                    appDrawerOptionsDialogState.show()
+                },
+                onSettingsClick = onSettingsClick,
+                onQuickDeleteClick = onShowBottomSheet,
+                onCreateFolderClick = null,
+                onRecentAppsClick = onNavigateToRecentApps
             )
         }
-    }
 
-    if (drawerOptionsDialogState.isVisible) {
-        DrawerOptionsDialog(
-            onDismiss = drawerOptionsDialogState::dismiss,
-            onPowerClick = {
-                powerViewModel.togglePower()
-            },
-            onTabsClick = {
-                homeTabDialogState.show()
-            },
-            onMenuClick = {
-                appDrawerOptionsDialogState.show()
-            },
-            onSettingsClick = onSettingsClick,
-            onQuickDeleteClick = onShowBottomSheet,
-            onCreateFolderClick = null,
-            onRecentAppsClick = onNavigateToRecentApps
-        )
-    }
+        if (appDrawerOptionsDialogState.isVisible) {
+            AppsTabOptionsDialog(
+                onDismiss = appDrawerOptionsDialogState::dismiss,
+                onShowAppVisibility = { appVisibilityDialogState.show() },
+                onResetPositions = {},
+                isDragLocked = true,
+                onToggleDragLock = { },
+                title = stringResource(R.string.app_drawer_tab_options_title)
+            )
+        }
 
-    if (appDrawerOptionsDialogState.isVisible) {
-        AppsTabOptionsDialog(
-            onDismiss = appDrawerOptionsDialogState::dismiss,
-            onShowAppVisibility = { appVisibilityDialogState.show() },
-            onResetPositions = {},
-            isDragLocked = true,
-            onToggleDragLock = { },
-            title = stringResource(R.string.app_drawer_tab_options_title)
-        )
-    }
+        if (appVisibilityDialogState.isVisible) {
+            AppVisibilityDialog(
+                apps = appsUnfiltered,
+                onDismiss = appVisibilityDialogState::dismiss,
+                pageIndex = pageIndex
+            )
+        }
 
-    if (appVisibilityDialogState.isVisible) {
-        AppVisibilityDialog(
+        if (homeTabDialogState.isVisible) {
+            val homeTabManager = LocalHomeTabManager.current
+            val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+            val pageCountManager = LocalPageCountManager.current
+            val pageTypeManager = LocalPageTypeManager.current
+            val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+
+            HomeTabSelectionDialog(
+                currentTabIndex = currentHomeTabIndex,
+                totalPages = totalPages,
+                onTabSelected = { index ->
+                    homeTabManager.setHomeTabIndex(index)
+                },
+                onDismiss = homeTabDialogState::dismiss,
+                onDeletePage = { pageIndex ->
+                    onDeletePage(pageIndex)
+                },
+                onAddPage = { pageType ->
+                    pageTypeManager.addPage(pageType)
+                    pageCountManager.addPage()
+                },
+                pageTypes = pageTypes,
+                onNavigateToSearch = onNavigateToSearch
+            )
+        }
+
+        AppDock(
             apps = appsUnfiltered,
-            onDismiss = appVisibilityDialogState::dismiss,
-            pageIndex = pageIndex
+            onAppClick = { app ->
+                val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                jr.brian.home.util.launchApp(
+                    context = context,
+                    packageName = app.packageName,
+                    displayPreference = displayPreference
+                )
+            },
+            onAppLongClick = { _ -> },
+            onEmptySlotClick = { position ->
+                dockAppSelectionDialogState.show(position)
+            },
+            onEmptySlotLongClick = { position ->
+                dockManager.removeEmptySlot(position)
+            },
+            onAddSlotClick = { position ->
+                dockManager.addEmptySlot(position)
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 
-    if (homeTabDialogState.isVisible) {
-        val homeTabManager = LocalHomeTabManager.current
-        val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
-        val pageCountManager = LocalPageCountManager.current
-        val pageTypeManager = LocalPageTypeManager.current
-        val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
-
-        HomeTabSelectionDialog(
-            currentTabIndex = currentHomeTabIndex,
-            totalPages = totalPages,
-            onTabSelected = { index ->
-                homeTabManager.setHomeTabIndex(index)
-            },
-            onDismiss = homeTabDialogState::dismiss,
-            onDeletePage = { pageIndex ->
-                onDeletePage(pageIndex)
-            },
-            onAddPage = { pageType ->
-                pageTypeManager.addPage(pageType)
-                pageCountManager.addPage()
-            },
-            pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
-        )
+    dockAppSelectionDialogState.item?.let { position ->
+        if (dockAppSelectionDialogState.isVisible) {
+            val availableApps = appsUnfiltered.filter { app ->
+                !dockManager.isAppInDock(app.packageName)
+            }
+            DockAppSelectionDialog(
+                apps = availableApps,
+                onAppSelected = { app ->
+                    dockManager.addAppToDock(app.packageName, position)
+                    dockAppSelectionDialogState.dismiss()
+                },
+                onDismiss = dockAppSelectionDialogState::dismiss
+            )
+        }
     }
 }
 

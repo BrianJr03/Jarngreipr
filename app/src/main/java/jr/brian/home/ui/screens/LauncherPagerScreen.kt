@@ -20,8 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageType
 import jr.brian.home.data.PageTypeManager
+import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.extensions.handleShoulderButtons
