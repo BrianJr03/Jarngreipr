@@ -15,6 +15,7 @@ val AppCardDark = Color(0xFF1E1E2E)
 val AppCardLight = Color(0xFF16213E)
 
 val ThemeBlack = Color(0xFF000000)
+val AlmostBlack = Color(0xFF212121)
 val AlignmentGuideColor = Color(0xFFFFD700)
 
 val StatusGreen = Color(0xFF4CAF50)

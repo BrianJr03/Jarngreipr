@@ -1,30 +1,22 @@
 package jr.brian.home.ui.components
 
 import android.content.Context
-import android.content.Intent
 import android.database.ContentObserver
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -41,9 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.R
 
 /**
  * Dual volume controls for devices with multiple screens (e.g., Ayn Thor)
@@ -61,9 +55,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DualVolumeControls(
     modifier: Modifier = Modifier,
-    isVisible: Boolean = true,
-    showPermissionWarning: Boolean = false,
-    onNavigateToSettings: (() -> Unit)? = null
+    isVisible: Boolean = true
 ) {
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
@@ -71,37 +63,26 @@ fun DualVolumeControls(
     var primaryVolume by remember { mutableFloatStateOf(0f) }
     var secondaryVolume by remember { mutableFloatStateOf(0f) }
     
-    // Check if we have permission to modify system settings (needed for secondary volume)
     var canWriteSettings by remember { mutableStateOf(Settings.System.canWrite(context)) }
     var canWriteSecureSettings by remember { mutableStateOf(false) }
     
-    // Recheck permission and load volumes when the component becomes visible
     LaunchedEffect(isVisible) {
         if (isVisible) {
             canWriteSettings = Settings.System.canWrite(context)
             
-            // Check if we can write to Global settings (test by attempting to read/write)
             canWriteSecureSettings = try {
-                // Try to write and immediately read back a test value
                 val testKey = "test_dual_volume_permission"
                 Settings.Global.putInt(context.contentResolver, testKey, 1)
                 Settings.Global.getInt(context.contentResolver, testKey) == 1
-            } catch (e: Exception) {
-                Log.w("DualVolumeControls", "Cannot write to Global settings: ${e.message}")
+            } catch (_: Exception) {
                 false
             }
             
-            Log.d("DualVolumeControls", "Permissions - WRITE_SETTINGS: $canWriteSettings, WRITE_SECURE_SETTINGS: $canWriteSecureSettings")
-            
-            // Load primary volume
             primaryVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()
             
-            // Try to load secondary volume from Global settings (Ayn Thor uses this)
             secondaryVolume = try {
                 Settings.Global.getInt(context.contentResolver, "secondary_screen_volume_level").toFloat()
-            } catch (e: Settings.SettingNotFoundException) {
-                // Fallback to primary volume if not found
-                Log.w("DualVolumeControls", "secondary_screen_volume_level not found in Global settings")
+            } catch (_: Settings.SettingNotFoundException) {
                 primaryVolume
             }
         }
@@ -115,8 +96,8 @@ fun DualVolumeControls(
                         context.contentResolver,
                         "secondary_screen_volume_level"
                     ).toFloat()
-                } catch (e: Settings.SettingNotFoundException) {
-                    Log.w("DualVolumeControls", "secondary_screen_volume_level not found")
+                } catch (_: Settings.SettingNotFoundException) {
+                    // Silently ignore - setting may not exist on all devices
                 }
             }
         }
@@ -128,14 +109,14 @@ fun DualVolumeControls(
                 secondaryVolumeObserver
             )
         } catch (e: Exception) {
-            Log.w("DualVolumeControls", "Could not register secondary volume observer", e)
+            Log.e("DualVolumeControls", "Failed to register volume observer", e)
         }
 
         onDispose {
             try {
                 context.contentResolver.unregisterContentObserver(secondaryVolumeObserver)
             } catch (e: Exception) {
-                Log.w("DualVolumeControls", "Error unregistering secondary volume observer", e)
+                Log.e("DualVolumeControls", "Failed to unregister volume observer", e)
             }
         }
     }
@@ -145,9 +126,8 @@ fun DualVolumeControls(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        
         VolumeSlider(
-            label = "Top Screen Volume",
+            label = stringResource(R.string.volume_top_screen),
             volume = primaryVolume,
             maxVolume = maxVolume.toFloat(),
             onVolumeChange = { newVolume ->
@@ -158,39 +138,35 @@ fun DualVolumeControls(
                         newVolume.toInt(),
                         AudioManager.FLAG_SHOW_UI
                     )
-                    Log.d("DualVolumeControls", "Primary volume set to: ${newVolume.toInt()}/${maxVolume}")
                 } catch (e: Exception) {
-                    Log.e("DualVolumeControls", "Error setting primary volume", e)
+                    Log.e("DualVolumeControls", "Failed to set primary volume", e)
                 }
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        VolumeSlider(
-            label = "Bottom Screen Volume",
-            volume = secondaryVolume,
-            maxVolume = maxVolume.toFloat(),
-            onVolumeChange = { newVolume ->
-                secondaryVolume = newVolume
-                if (!canWriteSecureSettings) {
-                    Log.w("DualVolumeControls", "Cannot set secondary volume - WRITE_SECURE_SETTINGS permission not granted")
-                    return@VolumeSlider
-                }
-                
-                try {
-                    // Use Settings.Global for Ayn Thor's secondary screen volume
-                    Settings.Global.putInt(
-                        context.contentResolver,
-                        "secondary_screen_volume_level",
-                        newVolume.toInt()
-                    )
-                    Log.d("DualVolumeControls", "Secondary volume set to: ${newVolume.toInt()}/${maxVolume}")
-                } catch (e: Exception) {
-                    Log.e("DualVolumeControls", "Error setting secondary volume - is WRITE_SECURE_SETTINGS granted?", e)
-                }
-            }
-        )
+//        TODO: Ask AYN for the correct way to control the bottom screen's volume
+//        Spacer(modifier = Modifier.height(16.dp))
+//        VolumeSlider(
+//            label = stringResource(R.string.volume_bottom_screen),
+//            volume = secondaryVolume,
+//            maxVolume = maxVolume.toFloat(),
+//            onVolumeChange = { newVolume ->
+//                secondaryVolume = newVolume
+//                if (!canWriteSecureSettings) {
+//                    return@VolumeSlider
+//                }
+//
+//                try {
+//                    Settings.Global.putInt(
+//                        context.contentResolver,
+//                        "secondary_screen_volume_level",
+//                        newVolume.toInt()
+//                    )
+//                } catch (e: Exception) {
+//                    Log.e("DualVolumeControls", "Failed to set secondary volume", e)
+//                }
+//            }
+//        )
     }
 }
 
@@ -223,7 +199,7 @@ fun VolumeSlider(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.VolumeDown,
-                contentDescription = "Volume Down",
+                contentDescription = stringResource(R.string.volume_down_description),
                 tint = Color.DarkGray
             )
             
@@ -249,7 +225,7 @@ fun VolumeSlider(
             
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                contentDescription = "Volume Up",
+                contentDescription = stringResource(R.string.volume_up_description),
                 tint = Color.DarkGray
             )
             

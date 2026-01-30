@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import jr.brian.home.ui.theme.AlmostBlack
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,8 +54,8 @@ class DockManager(context: Context) {
     }
 
     fun addAppToDock(
-        position: Int,
-        packageName: String
+        packageName: String,
+        position: Int
     ) {
         if (position !in 0 until _maxDockApps.value) return
 
@@ -110,7 +111,7 @@ class DockManager(context: Context) {
     }
 
     private fun loadDockColor(): Color {
-        val colorInt = prefs.getInt(KEY_DOCK_COLOR, Color.Gray.toArgb())
+        val colorInt = prefs.getInt(KEY_DOCK_COLOR, AlmostBlack.toArgb())
         return Color(colorInt)
     }
 

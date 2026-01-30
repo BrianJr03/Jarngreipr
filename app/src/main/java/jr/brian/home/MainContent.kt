@@ -222,9 +222,6 @@ fun MainContent() {
             PoweredOffScreen(
                 onPowerOn = {
                     powerViewModel.powerOn()
-                },
-                onNavigateToVolumeControls = {
-                    navController.navigate(Routes.VOLUME_CONTROLS)
                 }
             )
         }
