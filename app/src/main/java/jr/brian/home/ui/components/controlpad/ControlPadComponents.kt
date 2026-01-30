@@ -30,10 +30,16 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -227,6 +233,32 @@ fun ShizukuStatusIndicator(
     onHelpClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val isConnecting = isPermissionGranted && !isServiceConnected
+    var connectingStartTime by remember { mutableLongStateOf(0L) }
+    var currentTime by remember { mutableLongStateOf(0L) }
+    
+    LaunchedEffect(isConnecting) {
+        if (isConnecting) {
+            connectingStartTime = System.currentTimeMillis()
+            while (isConnecting) {
+                currentTime = System.currentTimeMillis()
+                delay(1000)
+            }
+        } else {
+            connectingStartTime = 0L
+            currentTime = 0L
+        }
+    }
+    
+    val connectingDurationSeconds = if (isConnecting && connectingStartTime > 0) {
+        ((currentTime - connectingStartTime) / 1000).toInt()
+    } else {
+        0
+    }
+    
+    val showRestartButton = connectingDurationSeconds >= 30
+    
     val statusColor = when {
         isServiceConnected -> StatusGreen
         isPermissionGranted -> StatusYellow
@@ -247,75 +279,126 @@ fun ShizukuStatusIndicator(
         else -> Icons.Default.Lock
     }
 
-    Row(
+    Column(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            modifier = Modifier
-                .background(
-                    color = OledCardColor.copy(alpha = 0.9f),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = statusColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .clip(RoundedCornerShape(20.dp))
-                .clickable(enabled = isShizukuAvailable && !isPermissionGranted) {
-                    ShizukuInputManager.requestPermission()
-                }
-                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Row(
+                modifier = Modifier
+                    .background(
+                        color = OledCardColor.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = statusColor.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable(enabled = isShizukuAvailable && !isPermissionGranted) {
+                        ShizukuInputManager.requestPermission()
+                    }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(statusColor, CircleShape)
+                )
+
+                Text(
+                    text = statusText,
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                if (isShizukuAvailable && !isPermissionGranted) {
+                    Icon(
+                        imageVector = statusIcon,
+                        contentDescription = null,
+                        tint = statusColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+
             Box(
                 modifier = Modifier
-                    .size(8.dp)
-                    .background(statusColor, CircleShape)
-            )
-
-            Text(
-                text = statusText,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-
-            if (isShizukuAvailable && !isPermissionGranted) {
-                Icon(
-                    imageVector = statusIcon,
-                    contentDescription = null,
-                    tint = statusColor,
-                    modifier = Modifier.size(14.dp)
+                    .background(
+                        color = OledCardColor.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = ThemePrimaryColor.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { onHelpClick() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.control_pad_help),
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
-
-        Box(
-            modifier = Modifier
-                .background(
-                    color = OledCardColor.copy(alpha = 0.9f),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .clip(RoundedCornerShape(20.dp))
-                .clickable { onHelpClick() }
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center
+        
+        // Restart button that appears after 30 seconds of connecting
+        AnimatedVisibility(
+            visible = showRestartButton,
+            enter = fadeIn() + slideInVertically { -it },
+            exit = fadeOut() + slideOutVertically { -it }
         ) {
-            Text(
-                text = stringResource(R.string.control_pad_help),
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = OledCardColor.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = StatusOrange.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            ShizukuInputManager.restart()
+                        }
+                    }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Restart connection",
+                        tint = StatusOrange,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.control_pad_restart_connection),
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
     }
 }

@@ -88,6 +88,13 @@ object ShizukuInputManager {
         Shizuku.removeRequestPermissionResultListener(permissionResultListener)
     }
 
+    fun restart() {
+        Log.d(TAG, "Restarting Shizuku connection")
+        cleanup()
+        Thread.sleep(100)
+        initialize()
+    }
+
     fun checkPermission() {
         if (!Shizuku.pingBinder()) {
             _isShizukuAvailable.value = false

@@ -42,8 +42,10 @@ import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.util.SettingsTag
 
 @Composable
 fun SettingItem(
@@ -53,6 +55,7 @@ fun SettingItem(
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
     trailing: @Composable (() -> Unit)? = null,
+    tag: SettingsTag? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -129,12 +132,40 @@ fun SettingItem(
             Spacer(modifier = Modifier.size(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = if (isFocused) 18.sp else 16.sp,
-                    fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontSize = if (isFocused) 18.sp else 16.sp,
+                        fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                    )
+                    
+                    if (tag != null) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = ThemeAccentColor.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = ThemeAccentColor.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = tag.stringRes),
+                                color = ThemeAccentColor,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = description,

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
+import jr.brian.home.util.SettingsTag
 
 fun LazyListScope.systemSection(
     isVisible: (String?) -> Boolean,
@@ -27,7 +29,8 @@ fun LazyListScope.systemSection(
     onCheckForUpdates: () -> Unit,
     onNavigateToCrashLogs: () -> Unit,
     onNavigateToControlPad: () -> Unit,
-    onNavigateToMonitor: () -> Unit
+    onNavigateToMonitor: () -> Unit,
+    onNavigateToVolumeControls: () -> Unit
 ) {
     item(key = "header_system") {
         AnimatedVisibility(
@@ -94,7 +97,8 @@ fun LazyListScope.systemSection(
                 title = stringResource(id = R.string.control_pad_screen_title),
                 description = stringResource(id = R.string.control_pad_screen_description),
                 icon = Icons.Default.GridView,
-                onClick = onNavigateToControlPad
+                onClick = onNavigateToControlPad,
+                tag = SettingsTag.EXPERIMENTAL
             )
         }
     }
@@ -110,6 +114,21 @@ fun LazyListScope.systemSection(
                 description = stringResource(id = R.string.monitor_screen_description),
                 icon = Icons.Default.Monitor,
                 onClick = onNavigateToMonitor
+            )
+        }
+    }
+
+    item(key = "volume_controls") {
+        AnimatedVisibility(
+            visible = isVisible(null),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            SettingItem(
+                title = stringResource(id = R.string.settings_volume_controls_title),
+                description = stringResource(id = R.string.settings_volume_controls_description),
+                icon = Icons.Default.VolumeUp,
+                onClick = onNavigateToVolumeControls
             )
         }
     }
