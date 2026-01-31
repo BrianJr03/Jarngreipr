@@ -618,7 +618,7 @@
     <string name="dock_visibility_title">Show Dock</string>
     <string name="dock_visibility_description">Toggle dock visibility</string>
     <string name="dock_preview_title">Dock Preview</string>
-    <string name="dock_preview_description">Long press and drag to reorder</string>
+    <string name="dock_preview_description">Tap to select, then tap another app to swap</string>
     <string name="dock_add_slot_title">Add Empty Slot</string>
     <string name="dock_add_slot_description">Add a new empty slot to the dock (%1$d/%2$d slots)</string>
     <string name="dock_max_apps_title">Maximum Number of Apps</string>
@@ -626,7 +626,7 @@
     <string name="dock_size_title">Dock Size</string>
     <string name="dock_color_title">Dock Color</string>
     <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
-    <string name="dock_page_visibility_description">Choose which pages display the dock. If none are selected, the dock appears on all pages.</string>
+    <string name="dock_page_visibility_description">Choose which pages display the dock</string>
     <string name="dock_page_number">Page %1$d</string>
     
     <!-- Volume Controls -->
