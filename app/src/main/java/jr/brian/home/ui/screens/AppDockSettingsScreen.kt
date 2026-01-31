@@ -40,8 +40,8 @@ import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.SettingCard
 import jr.brian.home.ui.components.dock.ColorOption
 import jr.brian.home.ui.components.dock.DockSizeOption
-import jr.brian.home.ui.components.dock.DraggableDockPreview
 import jr.brian.home.ui.components.dock.MaxDockAppsOption
+import jr.brian.home.ui.components.dock.SwappableDockPreview
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.theme.AlmostBlack
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -158,7 +158,7 @@ fun AppDockSettingsScreen(
                                         )
                                         .padding(vertical = 16.dp)
                                 ) {
-                                    DraggableDockPreview(
+                                    SwappableDockPreview(
                                         apps = allApps,
                                         dockColor = dockColor,
                                         dockSize = dockSize
