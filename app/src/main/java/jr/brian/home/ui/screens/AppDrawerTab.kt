@@ -281,7 +281,9 @@ fun AppDrawerTab(
         }
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage,
+            visible = isDockVisible && isDockVisibleOnPage && 
+                     scrollState.firstVisibleItemIndex == 0 && 
+                     scrollState.firstVisibleItemScrollOffset == 0,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)

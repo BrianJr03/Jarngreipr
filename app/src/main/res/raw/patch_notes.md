@@ -7,4 +7,7 @@
 > A slider that controls the volume has been added to the Powered Off Screen and Settings.
 > This will control the volume for the main (top) screen only. Work on adjusting the bottom screen's volume is in progress.
 
-1.5
+### Quick Fixes
+> App Dock now disappears when scrolling on a tab and no longer visible in the app drawer.
+
+1.5.1

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -26,8 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -38,6 +41,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
@@ -136,6 +141,22 @@ fun AppsTab(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
+
+    val gridState = rememberLazyGridState()
+    var isScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collect { scrolling ->
+                if (scrolling) {
+                    isScrolling = true
+                } else {
+                    delay(300) // Wait 300ms after scrolling stops
+                    isScrolling = false
+                }
+            }
+    }
 
     appOptionsDialogState.item?.let { appInfo ->
         if (appOptionsDialogState.isVisible) {
@@ -417,7 +438,8 @@ fun AppsTab(
                 allApps = appsUnfiltered,
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
-                onFolderClick = folderContentsDialogState::show
+                onFolderClick = folderContentsDialogState::show,
+                gridState = gridState
             )
         }
 
@@ -425,7 +447,7 @@ fun AppsTab(
         val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage,
+            visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)

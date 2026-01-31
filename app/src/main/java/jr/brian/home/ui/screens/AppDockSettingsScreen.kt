@@ -167,6 +167,42 @@ fun AppDockSettingsScreen(
                             }
                         }
 
+
+                        SettingCard {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.dock_color_title),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    val colors = listOf(
+                                        ThemePrimaryColor,
+                                        ThemeSecondaryColor,
+                                        Color.White,
+                                        Color.LightGray,
+                                        Color.DarkGray,
+                                        AlmostBlack,
+                                        Color.Black,
+                                        Color.Transparent
+                                    )
+                                    colors.forEach { color ->
+                                        ColorOption(
+                                            color = color,
+                                            isSelected = dockColor == color,
+                                            onSelect = { dockManager.setDockColor(color) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         if (canAddMoreSlots) {
                             SettingCard {
                                 Row(
@@ -246,41 +282,6 @@ fun AppDockSettingsScreen(
                                             isSelected = dockSize == size,
                                             onSelect = { dockManager.setDockSize(size) },
                                             modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        SettingCard {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.dock_color_title),
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    val colors = listOf(
-                                        ThemePrimaryColor,
-                                        ThemeSecondaryColor,
-                                        Color.White,
-                                        Color.LightGray,
-                                        Color.DarkGray,
-                                        AlmostBlack,
-                                        Color.Black,
-                                        Color.Transparent
-                                    )
-                                    colors.forEach { color ->
-                                        ColorOption(
-                                            color = color,
-                                            isSelected = dockColor == color,
-                                            onSelect = { dockManager.setDockColor(color) }
                                         )
                                     }
                                 }
