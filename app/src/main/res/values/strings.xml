@@ -625,9 +625,9 @@
     <string name="dock_max_apps_description">Select how many apps can be added to the dock</string>
     <string name="dock_size_title">Dock Size</string>
     <string name="dock_color_title">Dock Color</string>
-    <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
-    <string name="dock_page_visibility_description">Choose which pages display the dock</string>
-    <string name="dock_page_number">Page %1$d</string>
+    <string name="dock_page_visibility_title">Show Dock on Specific Tabs</string>
+    <string name="dock_page_visibility_description">Choose which tabs display the dock</string>
+    <string name="dock_page_number">Tab %1$d</string>
     
     <!-- Volume Controls -->
     <string name="volume_top_screen">Top Screen Volume</string>
