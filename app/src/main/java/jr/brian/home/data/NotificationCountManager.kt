@@ -9,6 +9,9 @@ import javax.inject.Singleton
 /**
  * Manager class that tracks notification counts per app package.
  * Works in conjunction with AppNotificationListenerService to receive updates.
+ * 
+ * This is a singleton scoped to the application lifecycle and is injected
+ * via Hilt into both UI components and the NotificationListenerService.
  */
 @Singleton
 class NotificationCountManager @Inject constructor() {
@@ -59,27 +62,5 @@ class NotificationCountManager @Inject constructor() {
         val currentCounts = _notificationCounts.value.toMutableMap()
         currentCounts.remove(packageName)
         _notificationCounts.value = currentCounts
-    }
-    
-    companion object {
-        @Volatile
-        private var instance: NotificationCountManager? = null
-        
-        /**
-         * Get or create singleton instance.
-         * This is used by the NotificationListenerService which runs outside of DI scope.
-         */
-        fun getInstance(): NotificationCountManager {
-            return instance ?: synchronized(this) {
-                instance ?: NotificationCountManager().also { instance = it }
-            }
-        }
-        
-        /**
-         * Set the singleton instance (called during DI initialization).
-         */
-        fun setInstance(manager: NotificationCountManager) {
-            instance = manager
-        }
     }
 }
