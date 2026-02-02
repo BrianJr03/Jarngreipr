@@ -3,9 +3,6 @@ package jr.brian.home.esde.ui
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -14,15 +11,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -42,7 +35,6 @@ import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.wallpaper.WallpaperState
-import kotlinx.coroutines.launch
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
@@ -77,6 +69,8 @@ fun ESDEWallpaperContainer(
 
         DimmingOverlay(alpha = state.dimmingLevel)
 
+        val isUsingDefaultBackground = state.currentImagePath == null
+        
         if (
             state.showSystemLogo
             && state.marqueePath != null
@@ -91,7 +85,11 @@ fun ESDEWallpaperContainer(
                 marqueePath = state.marqueePath,
                 modifier = Modifier
                     .size(300.dp, 150.dp)
-                    .align(logoAlignment)
+                    .align(logoAlignment),
+                animate = isUsingDefaultBackground,
+                animationStyle = state.animationStyle,
+                animationDuration = state.animationDuration,
+                animationScale = state.animationScale
             )
         }
 
@@ -121,56 +119,13 @@ private fun AnimatedWallpaperImage(
             .build()
     }
 
-    var previousPath by remember { mutableStateOf<String?>(null) }
-    val isSameImage = (previousPath == imagePath)
-
-    LaunchedEffect(imagePath) {
-        previousPath = imagePath
-    }
-
-    val shouldAnimateScale = animationStyle in listOf(
-        AnimationStyle.ScaleFade,
-        AnimationStyle.Custom
+    val animationState = rememberImageAnimationState(
+        imagePath = imagePath,
+        animate = true,
+        animationStyle = animationStyle,
+        animationDuration = animationDuration,
+        animationScale = animationScale
     )
-    val scaleAnimatable = remember(imagePath) {
-        Animatable(if (isSameImage || !shouldAnimateScale) 1f else animationScale)
-    }
-    val alphaAnimatable = remember(imagePath) {
-        Animatable(if (isSameImage || animationStyle == AnimationStyle.None) 1f else 0f)
-    }
-
-    LaunchedEffect(imagePath) {
-        if (!isSameImage && animationStyle != AnimationStyle.None) {
-            when (animationStyle) {
-                AnimationStyle.Fade -> {
-                    alphaAnimatable.animateTo(
-                        1f,
-                        animationSpec = tween(animationDuration)
-                    )
-                }
-
-                AnimationStyle.ScaleFade,
-                AnimationStyle.Custom -> {
-                    launch {
-                        scaleAnimatable.animateTo(
-                            1f,
-                            animationSpec = tween(animationDuration)
-                        )
-                    }
-                    launch {
-                        alphaAnimatable.animateTo(
-                            1f,
-                            animationSpec = tween(animationDuration)
-                        )
-                    }
-                }
-
-                else -> {
-                    // No animation
-                }
-            }
-        }
-    }
 
     val blurModifier = if (blurLevel > 0f) {
         Modifier.blur(blurLevel.dp)
@@ -196,11 +151,7 @@ private fun AnimatedWallpaperImage(
         modifier = modifier
             .fillMaxSize()
             .then(blurModifier)
-            .graphicsLayer {
-                scaleX = scaleAnimatable.value
-                scaleY = scaleAnimatable.value
-                alpha = alphaAnimatable.value
-            },
+            .run { with(animationState) { animatedGraphicsLayer() } },
         contentScale = ContentScale.Crop
     )
 }
@@ -219,7 +170,11 @@ private fun DimmingOverlay(alpha: Float) {
 @Composable
 private fun MarqueeImage(
     marqueePath: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    animate: Boolean = false,
+    animationStyle: AnimationStyle = AnimationStyle.Fade,
+    animationDuration: Int = 300,
+    animationScale: Float = 0.9f
 ) {
     if (marqueePath == null) return
 
@@ -241,13 +196,22 @@ private fun MarqueeImage(
         }
     }
 
+    val animationState = rememberImageAnimationState(
+        imagePath = marqueePath,
+        animate = animate,
+        animationStyle = animationStyle,
+        animationDuration = animationDuration,
+        animationScale = animationScale
+    )
+
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(imageData)
             .build(),
         imageLoader = imageLoader,
         contentDescription = "System/game logo",
-        modifier = modifier,
+        modifier = modifier
+            .run { with(animationState) { animatedGraphicsLayer() } },
         contentScale = ContentScale.Fit
     )
 }
