@@ -35,12 +35,16 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.wallpaper.WallpaperState
 import kotlinx.coroutines.launch
 import java.io.File
+
+private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
 
 @Composable
 fun ESDEWallpaperContainer(
@@ -53,6 +57,15 @@ fun ESDEWallpaperContainer(
             .fillMaxSize()
             .background(state.backgroundColor)
     ) {
+        AnimatedWallpaperImage(
+            imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
+            modifier = Modifier.fillMaxSize(),
+            blurLevel = state.blurLevel,
+            animationStyle = state.animationStyle,
+            animationDuration = state.animationDuration,
+            animationScale = state.animationScale
+        )
+
         if (state.isVideoPlaying && state.videoPath != null) {
             ESDEVideoPlayer(
                 videoPath = state.videoPath,
@@ -61,22 +74,19 @@ fun ESDEWallpaperContainer(
             )
         }
 
-        AnimatedWallpaperImage(
-            imagePath = state.currentImagePath,
-            blurLevel = state.blurLevel,
-            animationStyle = state.animationStyle,
-            animationDuration = state.animationDuration,
-            animationScale = state.animationScale
-        )
-
         DimmingOverlay(alpha = state.dimmingLevel)
 
-        if (state.marqueePath != null) {
+        if (state.showSystemLogo && state.marqueePath != null) {
+            val logoAlignment = when (state.logoAlignment) {
+                LogoAlignment.Top -> Alignment.TopCenter
+                LogoAlignment.Center -> Alignment.Center
+                LogoAlignment.Bottom -> Alignment.BottomCenter
+            }
             MarqueeImage(
                 marqueePath = state.marqueePath,
                 modifier = Modifier
                     .size(300.dp, 150.dp)
-                    .align(Alignment.Center)
+                    .align(logoAlignment)
             )
         }
 
@@ -86,14 +96,22 @@ fun ESDEWallpaperContainer(
 
 @Composable
 private fun AnimatedWallpaperImage(
-    imagePath: String?,
+    imagePath: String,
     modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
     animationScale: Float = 0.9f
 ) {
-    if (imagePath == null) return
+    val context = LocalContext.current
+
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(ImageDecoderDecoder.Factory())
+            }
+            .build()
+    }
 
     var previousPath by remember { mutableStateOf<String?>(null) }
     val isSameImage = (previousPath == imagePath)
@@ -102,8 +120,12 @@ private fun AnimatedWallpaperImage(
         previousPath = imagePath
     }
 
+    val shouldAnimateScale = animationStyle in listOf(
+        AnimationStyle.ScaleFade,
+        AnimationStyle.Custom
+    )
     val scaleAnimatable = remember(imagePath) {
-        Animatable(if (isSameImage || animationStyle == AnimationStyle.None) 1f else animationScale)
+        Animatable(if (isSameImage || !shouldAnimateScale) 1f else animationScale)
     }
     val alphaAnimatable = remember(imagePath) {
         Animatable(if (isSameImage || animationStyle == AnimationStyle.None) 1f else 0f)
@@ -148,11 +170,20 @@ private fun AnimatedWallpaperImage(
         Modifier
     }
 
+    val imageData = remember(imagePath) {
+        if (imagePath.startsWith("file:///android_asset/")) {
+            imagePath
+        } else {
+            File(imagePath)
+        }
+    }
+
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(File(imagePath))
+        model = ImageRequest.Builder(context)
+            .data(imageData)
             .crossfade(animationStyle == AnimationStyle.Fade)
             .build(),
+        imageLoader = imageLoader,
         contentDescription = "Background wallpaper",
         modifier = modifier
             .fillMaxSize()
@@ -223,7 +254,7 @@ private fun ESDEVideoPlayer(
 ) {
     val context = LocalContext.current
 
-    val exoPlayer = remember {
+    val exoPlayer = remember(videoPath) {
         ExoPlayer.Builder(context).build().apply {
             try {
                 val file = File(videoPath)
@@ -238,6 +269,10 @@ private fun ESDEVideoPlayer(
                 onError()
             }
         }
+    }
+
+    LaunchedEffect(audioEnabled) {
+        exoPlayer.volume = if (audioEnabled) 1f else 0f
     }
 
     DisposableEffect(videoPath) {
@@ -257,6 +292,9 @@ private fun ESDEVideoPlayer(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
+        },
+        update = { playerView ->
+            playerView.player = exoPlayer
         },
         modifier = modifier.fillMaxSize()
     )

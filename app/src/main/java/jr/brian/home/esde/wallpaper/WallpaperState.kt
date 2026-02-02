@@ -2,6 +2,7 @@ package jr.brian.home.esde.wallpaper
 
 import androidx.compose.ui.graphics.Color
 import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.preferences.LogoAlignment
 
 data class WallpaperState(
     val currentImagePath: String? = null,
@@ -15,5 +16,7 @@ data class WallpaperState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
     val animationScale: Float = 0.9f,
-    val backgroundColor: Color = Color.Black
+    val backgroundColor: Color = Color.Black,
+    val showSystemLogo: Boolean = true,
+    val logoAlignment: LogoAlignment = LogoAlignment.Center
 )
