@@ -57,7 +57,8 @@ class ESDEViewModel @Inject constructor(
                     videoAudioEnabled = prefsState.videoAudioEnabled,
                     videoDelaySeconds = prefsState.videoDelaySeconds,
                     showSystemLogo = prefsState.showSystemLogo,
-                    logoAlignment = prefsState.logoAlignment
+                    logoAlignment = prefsState.logoAlignment,
+                    hideContentOnVideo = prefsState.hideContentOnVideo
                 )
             }.launchIn(viewModelScope)
     }
@@ -96,7 +97,8 @@ class ESDEViewModel @Inject constructor(
             videoDelaySeconds = prefsState.videoDelaySeconds,
             marqueePath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
-            logoAlignment = prefsState.logoAlignment
+            logoAlignment = prefsState.logoAlignment,
+            hideContentOnVideo = prefsState.hideContentOnVideo
         )
     }
 

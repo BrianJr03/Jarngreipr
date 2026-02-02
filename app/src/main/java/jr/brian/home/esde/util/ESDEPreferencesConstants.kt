@@ -18,4 +18,5 @@ object ESDEPreferencesConstants {
     const val KEY_SHOW_SYSTEM_LOGO = "show_system_logo"
     const val KEY_LOGO_ALIGNMENT = "logo_alignment"
     const val KEY_RANDOM_SYSTEM_IMAGE = "random_system_image"
+    const val KEY_HIDE_CONTENT_ON_VIDEO = "hide_content_on_video"
 }

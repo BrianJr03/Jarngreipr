@@ -19,6 +19,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
@@ -81,7 +82,8 @@ class ESDEPreferencesManager(context: Context) {
             gameImageType = gameImageType,
             showSystemLogo = prefs.getBoolean(KEY_SHOW_SYSTEM_LOGO, true),
             logoAlignment = logoAlignment,
-            randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false)
+            randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
+            hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false)
         )
     }
 
@@ -169,5 +171,10 @@ class ESDEPreferencesManager(context: Context) {
     fun setRandomSystemImage(random: Boolean) {
         _state.value = _state.value.copy(randomSystemImage = random)
         prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
+    }
+
+    fun setHideContentOnVideo(hide: Boolean) {
+        _state.value = _state.value.copy(hideContentOnVideo = hide)
+        prefs.edit { putBoolean(KEY_HIDE_CONTENT_ON_VIDEO, hide) }
     }
 }

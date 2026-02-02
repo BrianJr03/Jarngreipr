@@ -18,5 +18,6 @@ data class WallpaperState(
     val animationScale: Float = 0.9f,
     val backgroundColor: Color = Color.Black,
     val showSystemLogo: Boolean = true,
-    val logoAlignment: LogoAlignment = LogoAlignment.Center
+    val logoAlignment: LogoAlignment = LogoAlignment.Center,
+    val hideContentOnVideo: Boolean = false
 )
