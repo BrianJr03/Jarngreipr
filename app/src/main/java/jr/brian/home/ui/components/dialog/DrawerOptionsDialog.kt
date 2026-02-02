@@ -334,7 +334,7 @@ private fun WallpaperOptionsSection(
             ) {
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "Default",
+                    title = stringResource(R.string.wallpaper_grid_default),
                     onClick = {
                         wallpaperManager.clearWallpaper()
                         onBack()
@@ -344,7 +344,7 @@ private fun WallpaperOptionsSection(
 
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "System",
+                    title = stringResource(R.string.wallpaper_grid_system),
                     onClick = {
                         wallpaperManager.setTransparent()
                         onBack()
@@ -354,7 +354,7 @@ private fun WallpaperOptionsSection(
 
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "Image",
+                    title = stringResource(R.string.wallpaper_grid_image),
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("image/*"))
                     }
@@ -367,7 +367,7 @@ private fun WallpaperOptionsSection(
             ) {
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "GIF",
+                    title = stringResource(R.string.wallpaper_grid_gif),
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("image/gif"))
                     }
@@ -375,7 +375,7 @@ private fun WallpaperOptionsSection(
 
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "Video",
+                    title = stringResource(R.string.wallpaper_grid_video),
                     onClick = {
                         mediaPickerLauncher.launch(arrayOf("video/*"))
                     }
@@ -383,7 +383,7 @@ private fun WallpaperOptionsSection(
 
                 WallpaperGridButton(
                     modifier = Modifier.weight(1f),
-                    title = "ESDE",
+                    title = stringResource(R.string.wallpaper_grid_esde),
                     onClick = {
                         onBack()
                         onDismiss()

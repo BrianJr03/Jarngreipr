@@ -120,6 +120,12 @@
     <string name="settings_wallpaper_gif_picker">Choose GIF</string>
     <string name="settings_wallpaper_video_picker">Choose Video</string>
     <string name="settings_wallpaper_esde">ES-DE</string>
+    <string name="wallpaper_grid_default">Default</string>
+    <string name="wallpaper_grid_system">System</string>
+    <string name="wallpaper_grid_image">Image</string>
+    <string name="wallpaper_grid_gif">GIF</string>
+    <string name="wallpaper_grid_video">Video</string>
+    <string name="wallpaper_grid_esde">ES-DE</string>
 
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
