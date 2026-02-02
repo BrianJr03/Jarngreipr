@@ -1,5 +1,9 @@
 package jr.brian.home.esde.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,25 +13,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -35,6 +45,12 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.setup.WarningType
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun SetupWizardDialog(
@@ -59,16 +75,22 @@ fun SetupWizardDialog(
             usePlatformDefaultWidth = false
         )
     ) {
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
-            shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF1A1A1A)
+                .wrapContentHeight()
+                .background(
+                    color = OledCardColor,
+                    shape = RoundedCornerShape(24.dp)
+                ).border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(24.dp)
+                ).padding(24.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
                 Row(
@@ -83,11 +105,15 @@ fun SetupWizardDialog(
                         color = Color.White,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(onClick = onDismiss) {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.esde_setup_close),
-                            tint = Color.White
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
@@ -118,156 +144,127 @@ fun SetupWizardDialog(
 
                 when (currentStep) {
                     is SetupStep.Welcome -> {
-                        Button(
+                        SetupButton(
+                            text = stringResource(R.string.esde_setup_start_setup),
                             onClick = onContinue,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                        ) {
-                            Text(stringResource(R.string.esde_setup_lets_do_it))
-                        }
+                            isPrimary = true
+                        )
                     }
 
                     is SetupStep.RequestPermissions -> {
-                        Button(
+                        SetupButton(
+                            text = stringResource(R.string.esde_setup_grant_permission),
                             onClick = onGrantPermission,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                        ) {
-                            Text(stringResource(R.string.esde_setup_grant_permission))
-                        }
+                            isPrimary = true
+                        )
                     }
 
                     is SetupStep.PermissionsGranted -> {
-                        Button(
+                        SetupButton(
+                            text = stringResource(R.string.esde_setup_next),
                             onClick = onContinue,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                        ) {
-                            Text(stringResource(R.string.esde_setup_continue))
-                        }
+                            isPrimary = true
+                        )
                     }
 
                     is SetupStep.SelectScriptsFolder -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedButton(
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_use_default),
                                 onClick = onUseDefaultScriptsPath,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                            ) {
-                                Text(stringResource(R.string.esde_setup_use_default))
-                            }
-                            Button(
+                                isPrimary = false
+                            )
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_select_folder),
                                 onClick = onSelectScriptsFolder,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(
-                                        0xFF6200EE
-                                    )
-                                )
-                            ) {
-                                Text(stringResource(R.string.esde_setup_select_folder))
-                            }
+                                isPrimary = true
+                            )
                         }
                     }
 
                     is SetupStep.CreateScripts -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedButton(
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_skip),
                                 onClick = onSkipScripts,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                            ) {
-                                Text(stringResource(R.string.esde_setup_skip))
-                            }
-                            Button(
+                                isPrimary = false
+                            )
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_create_scripts),
                                 onClick = onCreateScripts,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(
-                                        0xFF6200EE
-                                    )
-                                )
-                            ) {
-                                Text(stringResource(R.string.esde_setup_create_scripts))
-                            }
+                                isPrimary = true
+                            )
                         }
                     }
 
                     is SetupStep.SelectMediaFolder -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedButton(
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_use_default),
                                 onClick = onUseDefaultMediaPath,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                            ) {
-                                Text(stringResource(R.string.esde_setup_use_default))
-                            }
-                            Button(
+                                isPrimary = false
+                            )
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_select_folder),
                                 onClick = onSelectMediaFolder,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(
-                                        0xFF6200EE
-                                    )
-                                )
-                            ) {
-                                Text(stringResource(R.string.esde_setup_select_folder))
-                            }
+                                isPrimary = true
+                            )
                         }
                     }
 
                     is SetupStep.EnableScriptsInESDE -> {
-                        Button(
+                        SetupButton(
+                            text = stringResource(R.string.esde_setup_scripts_done),
                             onClick = onContinue,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                        ) {
-                            Text(stringResource(R.string.esde_setup_scripts_enabled))
-                        }
+                            isPrimary = true
+                        )
                     }
 
                     is SetupStep.Complete -> {
-                        Button(
+                        SetupButton(
+                            text = stringResource(R.string.esde_setup_next),
                             onClick = onContinue,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-                        ) {
-                            Text(stringResource(R.string.esde_setup_continue))
-                        }
+                            isPrimary = true
+                        )
                     }
 
                     is SetupStep.Warning -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedButton(
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_choose_again),
                                 onClick = onWarningChooseAgain,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                            ) {
-                                Text(stringResource(R.string.esde_setup_choose_again))
-                            }
-                            Button(
+                                isPrimary = false
+                            )
+                            SetupButton(
+                                text = stringResource(R.string.esde_setup_continue_anyway),
                                 onClick = onWarningContinue,
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(
-                                        0xFF6200EE
-                                    )
-                                )
-                            ) {
-                                Text(stringResource(R.string.esde_setup_continue_anyway))
-                            }
+                                isPrimary = true
+                            )
                         }
                     }
                 }
@@ -383,5 +380,73 @@ private fun getStepTitle(step: SetupStep): String {
         is SetupStep.EnableScriptsInESDE -> stringResource(R.string.esde_setup_title_enable_scripts)
         is SetupStep.Complete -> stringResource(R.string.esde_setup_title_complete)
         is SetupStep.Warning -> stringResource(R.string.esde_setup_title_warning)
+    }
+}
+
+@Composable
+private fun SetupButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isPrimary: Boolean = false
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val backgroundBrush = if (isPrimary) {
+        cardGradient(isFocused = isFocused, isSelected = true)
+    } else {
+        cardGradient(isFocused = isFocused)
+    }
+
+    val borderBrush = if (isFocused) {
+        borderBrush(
+            isFocused = true,
+            colors = listOf(
+                ThemePrimaryColor.copy(alpha = 0.8f),
+                ThemeSecondaryColor.copy(alpha = 0.6f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = if (isPrimary) {
+                listOf(
+                    ThemePrimaryColor.copy(alpha = 0.6f),
+                    ThemeSecondaryColor.copy(alpha = 0.4f)
+                )
+            } else {
+                listOf(
+                    ThemePrimaryColor.copy(alpha = 0.3f),
+                    ThemeSecondaryColor.copy(alpha = 0.2f)
+                )
+            }
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = backgroundBrush,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = borderBrush,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .focusable()
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
     }
 }

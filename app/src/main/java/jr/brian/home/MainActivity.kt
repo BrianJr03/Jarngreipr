@@ -41,7 +41,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         esdeEventManager.startWatching()
-        // Also enable polling as a fallback since FileObserver can be unreliable
         esdeEventManager.startPolling()
         checkAndCreateScripts()
 
@@ -55,30 +54,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
-                    // TODO: Testing ESDE - comment out to restore original behavior
-                    // val wallpaperManager = LocalWallpaperManager.current
-                    //
-                    // LaunchedEffect(wallpaperManager.currentWallpaper) {
-                    //     if (wallpaperManager.isTransparent()) {
-                    //         window.setBackgroundDrawable(null)
-                    //         window.decorView.setBackgroundColor(Color.TRANSPARENT)
-                    //     } else {
-                    //         window.setBackgroundDrawableResource(android.R.color.transparent)
-                    //     }
-                    // }
-                    //
-                    // MainContent()
-
-                    // ESDE Testing - remove this block to restore original behavior
                     val esdeViewModel: ESDEViewModel = hiltViewModel()
                     val wallpaperState by esdeViewModel.wallpaperState
-
-                    // Wire ES-DE events to the ViewModel
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
                             esdeViewModel.updateForSystem(systemName)
                         }
-                        esdeEventListener.onGameSelected = { gameFilename, gameName, systemName ->
+                        esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
                             esdeViewModel.updateForGame(systemName, gameFilename)
                         }
                         esdeEventListener.onGameStarted = { _, _, _ ->
@@ -93,11 +75,10 @@ class MainActivity : ComponentActivity() {
                         esdeEventListener.onScreensaverEnded = { _ ->
                             esdeViewModel.handleScreensaverEnded()
                         }
-                        esdeEventListener.onScreensaverGameSelected = { gameFilename, gameName, systemName ->
+                        esdeEventListener.onScreensaverGameSelected = { gameFilename, _, systemName ->
                             esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
                         }
                     }
-
                     ESDEWallpaperContainer(state = wallpaperState) {
                         MainContent()
                     }

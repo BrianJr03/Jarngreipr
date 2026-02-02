@@ -35,6 +35,7 @@ import jr.brian.home.ui.navigation.backButtonShortcutScreen
 import jr.brian.home.ui.navigation.controlPadScreen
 import jr.brian.home.ui.navigation.crashLogsScreen
 import jr.brian.home.ui.navigation.customThemeScreen
+import jr.brian.home.ui.navigation.esdeSettingsScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
@@ -210,6 +211,10 @@ fun MainContent() {
                 widgetPickerScreen(
                     navController = navController,
                     widgetViewModel = widgetViewModel
+                )
+
+                esdeSettingsScreen(
+                    navController = navController
                 )
             }
         }

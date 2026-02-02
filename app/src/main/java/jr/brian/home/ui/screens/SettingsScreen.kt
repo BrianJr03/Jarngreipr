@@ -49,6 +49,7 @@ fun SettingsScreen(
     onNavigateToCrashLogs: () -> Unit = {},
     onNavigateToVolumeControls: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToEsdeSettings: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -92,6 +93,7 @@ fun SettingsScreen(
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
                     onNavigateToVolumeControls = onNavigateToVolumeControls,
                     onNavigateToDockSettings = onNavigateToDockSettings,
+                    onNavigateToEsdeSettings = onNavigateToEsdeSettings,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
@@ -152,6 +154,7 @@ private fun SettingsContent(
     onNavigateToCrashLogs: () -> Unit = {},
     onNavigateToVolumeControls: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToEsdeSettings: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
     onCheckForUpdates: () -> Unit = {},
     onDismiss: () -> Unit
@@ -187,7 +190,8 @@ private fun SettingsContent(
             onExpandedItemChange = { expandedItem = it },
             isVisible = ::isVisible,
             onNavigateToCustomTheme = onNavigateToCustomTheme,
-            onIconPackChanged = onIconPackChanged
+            onIconPackChanged = onIconPackChanged,
+            onNavigateToEsdeSettings = onNavigateToEsdeSettings
         )
 
         layoutSection(

@@ -6,23 +6,28 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
+import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.SettingsSectionHeader
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_ICON_PACK
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THEME
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_WALLPAPER
+import jr.brian.home.util.SettingsTag
 
 fun LazyListScope.appearanceSection(
     expandedItem: String?,
     onExpandedItemChange: (String?) -> Unit,
     isVisible: (String?) -> Boolean,
     onNavigateToCustomTheme: () -> Unit,
-    onIconPackChanged: () -> Unit
+    onIconPackChanged: () -> Unit,
+    onNavigateToEsdeSettings: () -> Unit = {}
 ) {
     item(key = "header_appearance") {
         AnimatedVisibility(
@@ -94,6 +99,22 @@ fun LazyListScope.appearanceSection(
                 onExpandChanged = {
                     onExpandedItemChange(if (it) EXPANDED_WALLPAPER else null)
                 }
+            )
+        }
+    }
+
+    item(key = "esde_settings") {
+        AnimatedVisibility(
+            visible = isVisible(null),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            SettingItem(
+                tag = SettingsTag.EXPERIMENTAL,
+                title = stringResource(R.string.esde_settings_title),
+                description = stringResource(R.string.esde_settings_description),
+                icon = Icons.Default.Gamepad,
+                onClick = onNavigateToEsdeSettings
             )
         }
     }

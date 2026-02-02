@@ -2,6 +2,7 @@ package jr.brian.home.esde.ui
 
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.annotation.OptIn
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -54,6 +56,7 @@ fun ESDEWallpaperContainer(
         if (state.isVideoPlaying && state.videoPath != null) {
             ESDEVideoPlayer(
                 videoPath = state.videoPath,
+                audioEnabled = state.videoAudioEnabled,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -84,15 +87,14 @@ fun ESDEWallpaperContainer(
 @Composable
 private fun AnimatedWallpaperImage(
     imagePath: String?,
+    modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
-    animationScale: Float = 0.9f,
-    modifier: Modifier = Modifier
+    animationScale: Float = 0.9f
 ) {
     if (imagePath == null) return
 
-    // Track previous image path to detect changes
     var previousPath by remember { mutableStateOf<String?>(null) }
     val isSameImage = (previousPath == imagePath)
 
@@ -100,7 +102,6 @@ private fun AnimatedWallpaperImage(
         previousPath = imagePath
     }
 
-    // Animation state
     val scaleAnimatable = remember(imagePath) {
         Animatable(if (isSameImage || animationStyle == AnimationStyle.None) 1f else animationScale)
     }
@@ -108,7 +109,6 @@ private fun AnimatedWallpaperImage(
         Animatable(if (isSameImage || animationStyle == AnimationStyle.None) 1f else 0f)
     }
 
-    // Animate when image changes
     LaunchedEffect(imagePath) {
         if (!isSameImage && animationStyle != AnimationStyle.None) {
             when (animationStyle) {
@@ -186,7 +186,6 @@ private fun MarqueeImage(
 
     val context = LocalContext.current
 
-    // Create ImageLoader with SVG decoder support
     val imageLoader = remember {
         ImageLoader.Builder(context)
             .components {
@@ -195,13 +194,10 @@ private fun MarqueeImage(
             .build()
     }
 
-    // Determine the data source - asset URI or file path
     val imageData = remember(marqueePath) {
         if (marqueePath.startsWith("file:///android_asset/")) {
-            // Asset URI - pass as string for Coil to handle
             marqueePath
         } else {
-            // File path
             File(marqueePath)
         }
     }
@@ -217,6 +213,7 @@ private fun MarqueeImage(
     )
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 private fun ESDEVideoPlayer(
     videoPath: String,

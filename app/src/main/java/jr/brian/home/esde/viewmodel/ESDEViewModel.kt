@@ -4,19 +4,39 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
+import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.wallpaper.WallpaperState
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
-    private val prefs: ESDEPreferencesManager
+    val prefs: ESDEPreferencesManager
 ) : ViewModel() {
-
     private val _wallpaperState = mutableStateOf(createInitialState())
     val wallpaperState: State<WallpaperState> = _wallpaperState
+
+    init {
+        prefs.state
+            .onEach { prefsState ->
+                _wallpaperState.value = _wallpaperState.value.copy(
+                    dimmingLevel = prefsState.dimmingLevelFloat,
+                    blurLevel = prefsState.blurLevel.toFloat(),
+                    animationStyle = prefsState.animationStyle,
+                    animationDuration = prefsState.animationDuration,
+                    animationScale = prefsState.animationScale,
+                    backgroundColor = Color(prefsState.backgroundColor),
+                    videoAudioEnabled = prefsState.videoAudioEnabled,
+                    videoDelaySeconds = prefsState.videoDelaySeconds
+                )
+            }
+            .launchIn(viewModelScope)
+    }
 
     private fun createInitialState(): WallpaperState {
         val prefsState = prefs.state.value
@@ -28,6 +48,8 @@ class ESDEViewModel @Inject constructor(
             animationDuration = prefsState.animationDuration,
             animationScale = prefsState.animationScale,
             backgroundColor = Color(prefsState.backgroundColor),
+            videoAudioEnabled = prefsState.videoAudioEnabled,
+            videoDelaySeconds = prefsState.videoDelaySeconds,
             marqueePath = lastSystem?.let { getSystemLogoPath(it) }
         )
     }
@@ -35,7 +57,7 @@ class ESDEViewModel @Inject constructor(
     fun updateForSystem(systemName: String) {
         prefs.setLastSelectedSystem(systemName)
         _wallpaperState.value = _wallpaperState.value.copy(
-//            currentImagePath = getSystemImagePath(systemName),
+            currentImagePath = getSystemImagePath(systemName),
             isVideoPlaying = false,
             marqueePath = getSystemLogoPath(systemName)
         )
@@ -46,7 +68,7 @@ class ESDEViewModel @Inject constructor(
         gameFilename: String
     ) {
         _wallpaperState.value = _wallpaperState.value.copy(
-//            currentImagePath = getGameImagePath(systemName, gameFilename),
+            currentImagePath = getGameImagePath(systemName, gameFilename),
             isVideoPlaying = false,
             marqueePath = getGameMarqueePath(systemName, gameFilename)
         )
@@ -91,25 +113,18 @@ class ESDEViewModel @Inject constructor(
         gameFilename: String
     ) {
         _wallpaperState.value = _wallpaperState.value.copy(
-//            currentImagePath = getGameImagePath(systemName, gameFilename),
+            currentImagePath = getGameImagePath(systemName, gameFilename),
             dimmingLevel = prefs.state.value.dimmingLevelFloat
         )
     }
 
-    @Suppress("unused")
-    fun refreshFromPreferences() {
-        val prefsState = prefs.state.value
-        _wallpaperState.value = _wallpaperState.value.copy(
-            dimmingLevel = prefsState.dimmingLevelFloat,
-            blurLevel = prefsState.blurLevel.toFloat(),
-            animationStyle = prefsState.animationStyle,
-            animationDuration = prefsState.animationDuration,
-            animationScale = prefsState.animationScale,
-            backgroundColor = Color(prefsState.backgroundColor)
-        )
-    }
-
     private fun getSystemImagePath(systemName: String): String? {
+        val systemImageType = prefs.state.value.systemImageType
+        
+        if (systemImageType == SystemImageType.None) {
+            return null
+        }
+        
         // First check for custom system images
         val customSystemImages = File("/storage/emulated/0/ES-DE Companion/system_images")
         if (customSystemImages.exists()) {
@@ -119,16 +134,28 @@ class ESDEViewModel @Inject constructor(
                 if (customImage.exists()) return customImage.absolutePath
             }
         }
-
-        // ES-DE downloaded_media has per-game fanart, not system-level
-        // So pick a random game's fanart/screenshot from this system
-        val mediaTypes = listOf("fanart", "screenshots", "titlescreens")
-        for (mediaType in mediaTypes) {
-            val mediaDir = File(ESDE_MEDIA_PATH, "$systemName/$mediaType")
-            if (mediaDir.exists() && mediaDir.isDirectory) {
-                val images = mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+        
+        // Use the preferred media type from settings
+        val preferredFolder = systemImageType.folderName ?: return null
+        val mediaDir = File(ESDE_MEDIA_PATH, "$systemName/$preferredFolder")
+        if (mediaDir.exists() && mediaDir.isDirectory) {
+            val images = mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+            if (!images.isNullOrEmpty()) {
+                // Use first image instead of random to prevent flickering
+                return images.first().absolutePath
+            }
+        }
+        
+        // Fallback to other media types if preferred type has no images
+        val fallbackTypes = listOf("fanart", "screenshots", "titlescreens")
+            .filter { it != preferredFolder }
+        
+        for (mediaType in fallbackTypes) {
+            val fallbackDir = File(ESDE_MEDIA_PATH, "$systemName/$mediaType")
+            if (fallbackDir.exists() && fallbackDir.isDirectory) {
+                val images = fallbackDir.listFiles()?.filter { it.isFile && isImageFile(it) }
                 if (!images.isNullOrEmpty()) {
-                    return (images.randomOrNull() ?: images.first()).absolutePath
+                    return images.first().absolutePath
                 }
             }
         }

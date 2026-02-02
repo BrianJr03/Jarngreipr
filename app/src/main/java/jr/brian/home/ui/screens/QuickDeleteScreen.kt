@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,8 +28,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.FolderDelete
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,9 +64,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.state.DeleteResult
+import jr.brian.home.model.state.DeleteType
 import jr.brian.home.ui.components.quick_delete.ActionButton
 import jr.brian.home.ui.components.quick_delete.AddFolderButton
 import jr.brian.home.ui.components.quick_delete.DeleteConfirmationDialog
+import jr.brian.home.ui.components.quick_delete.EmptyFolderConfirmationDialog
 import jr.brian.home.ui.components.quick_delete.FileExtensionCheckboxItem
 import jr.brian.home.ui.components.quick_delete.FolderPathItem
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -103,7 +109,11 @@ fun QuickDeleteScreen(
         LaunchedEffect(result) {
             val message = when (result) {
                 is DeleteResult.Success -> {
-                    "Successfully deleted ${result.deletedCount} file(s)"
+                    val itemType = when (result.deleteType) {
+                        DeleteType.FILES -> "file(s)"
+                        DeleteType.FOLDERS -> "folder(s)"
+                    }
+                    "Successfully deleted ${result.deletedCount} $itemType"
                 }
 
                 is DeleteResult.Failure -> {
@@ -136,6 +146,18 @@ fun QuickDeleteScreen(
             },
             onDismiss = {
                 viewModel.hideDeleteConfirmation()
+            }
+        )
+    }
+
+    if (uiState.showEmptyFolderConfirmation) {
+        EmptyFolderConfirmationDialog(
+            folderCount = uiState.emptyFolderCount,
+            onConfirm = {
+                viewModel.deleteEmptySubfolders()
+            },
+            onDismiss = {
+                viewModel.hideEmptyFolderConfirmation()
             }
         )
     }
@@ -260,6 +282,49 @@ fun QuickDeleteScreen(
                             isLoading = uiState.isScanning,
                             isPrimary = true
                         )
+                    }
+
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Checkbox(
+                                    checked = uiState.includeSystemInfoFolders,
+                                    onCheckedChange = { viewModel.toggleIncludeSystemInfoFolders() },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = ThemePrimaryColor,
+                                        uncheckedColor = ThemeSecondaryColor,
+                                        checkmarkColor = Color.White
+                                    ),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.clean_folders_include_systeminfo),
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+                            ActionButton(
+                                text = if (uiState.isDeletingEmptyFolders) {
+                                    stringResource(R.string.clean_folders_deleting_empty_folders)
+                                } else {
+                                    stringResource(R.string.clean_folders_delete_empty_folders)
+                                },
+                                icon = Icons.Default.FolderDelete,
+                                onClick = {
+                                    viewModel.showEmptyFolderConfirmation()
+                                },
+                                enabled = !uiState.isDeletingEmptyFolders && !uiState.isScanning,
+                                isLoading = uiState.isDeletingEmptyFolders,
+                                isPrimary = false
+                            )
+                        }
                     }
                 } else {
                     item {
