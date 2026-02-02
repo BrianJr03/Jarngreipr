@@ -51,7 +51,8 @@ data class ESDEPrefsState(
     val gameImageType: GameImageType = GameImageType.Screenshots,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
-    val randomSystemImage: Boolean = false
+    val randomSystemImage: Boolean = false,
+    val hideContentOnVideo: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
 }

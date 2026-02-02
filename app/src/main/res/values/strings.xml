@@ -703,6 +703,8 @@
     <string name="esde_settings_video_delay">Video Delay</string>
     <string name="esde_settings_video_audio">Video Audio</string>
     <string name="esde_settings_video_audio_description">Enable audio during video playback</string>
+    <string name="esde_settings_hide_content_on_video">Hide Content During Video</string>
+    <string name="esde_settings_hide_content_on_video_description">Hide all tab content when a video is playing</string>
     <string name="esde_settings_system_image_type">System Background</string>
     <string name="esde_settings_system_image_type_description">Choose which media type to show when browsing systems</string>
     <string name="esde_settings_system_image_none">None</string>

@@ -245,6 +245,17 @@ fun ESDESettingsScreen(
                                 }
                             )
                         }
+
+                        item {
+                            ToggleSetting(
+                                title = stringResource(R.string.esde_settings_hide_content_on_video),
+                                description = stringResource(R.string.esde_settings_hide_content_on_video_description),
+                                checked = prefsState.hideContentOnVideo,
+                                onCheckedChange = { hide ->
+                                    preferencesManager.setHideContentOnVideo(hide)
+                                }
+                            )
+                        }
                     }
 
                     item {

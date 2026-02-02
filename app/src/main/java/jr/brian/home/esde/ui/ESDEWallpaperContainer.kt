@@ -77,10 +77,10 @@ fun ESDEWallpaperContainer(
 
         DimmingOverlay(alpha = state.dimmingLevel)
 
-        AnimatedVisibility(
+        if (
             state.showSystemLogo
-                    && state.marqueePath != null
-                    && !state.isVideoPlaying
+            && state.marqueePath != null
+            && !state.isVideoPlaying
         ) {
             val logoAlignment = when (state.logoAlignment) {
                 LogoAlignment.Top -> Alignment.TopCenter
@@ -95,7 +95,10 @@ fun ESDEWallpaperContainer(
             )
         }
 
-        content?.invoke(this)
+        val shouldShowContent = !(state.hideContentOnVideo && state.isVideoPlaying)
+        if (shouldShowContent) {
+            content?.invoke(this)
+        }
     }
 }
 
