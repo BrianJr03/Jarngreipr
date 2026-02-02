@@ -21,8 +21,10 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import javax.inject.Inject
 
 /**
@@ -76,6 +78,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalIconPackManager provides ui.iconPackManager,
         LocalCustomIconManager provides ui.customIconManager,
         LocalGlobalIconRefreshManager provides ui.globalIconRefreshManager,
+        LocalWallpaperManager provides ui.wallpaperManager,
         
         // App Management
         LocalAppVisibilityManager provides app.appVisibilityManager,
@@ -92,6 +95,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         // Feature Management
         LocalDockManager provides feature.dockManager,
         LocalControlPadManager provides feature.controlPadManager,
+        LocalESDEPreferencesManager provides feature.esdePreferencesManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,

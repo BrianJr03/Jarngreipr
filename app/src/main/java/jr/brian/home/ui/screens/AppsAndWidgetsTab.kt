@@ -50,6 +50,9 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -115,6 +118,8 @@ fun AppsAndWidgetsTab(
     val createFolderDialogState = rememberDialogState<Unit>()
     val dockAppSelectionDialogState = rememberDialogState<Int>()
     val folderContentsDialogState = rememberDialogState<Folder>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
 
@@ -372,9 +377,20 @@ fun AppsAndWidgetsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onDockSettingsClick = onNavigateToDockSettings
+            onDockSettingsClick = onNavigateToDockSettings,
+            onESDESetupClick = {
+                esdeSetupDialogState.show(SetupStep.Welcome)
+            }
         )
     }
+
+    ESDESetupScreen(
+        dialogState = esdeSetupDialogState,
+        onDismiss = { },
+        onSetupComplete = {
+            wallpaperManager.setESDE()
+        }
+    )
 
     if (createFolderDialogState.isVisible) {
         CreateFolderDialog(

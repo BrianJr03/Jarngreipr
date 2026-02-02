@@ -7,6 +7,7 @@ object Routes {
     const val CONTROL_PAD = "control_pad"
     const val CRASH_LOGS = "crash_logs"
     const val CUSTOM_THEME = "custom_theme"
+    const val ESDE_SETTINGS = "esde_settings"
     const val FAQ = "faq"
     const val LAUNCHER = "launcher"
     const val MONITOR = "monitor"

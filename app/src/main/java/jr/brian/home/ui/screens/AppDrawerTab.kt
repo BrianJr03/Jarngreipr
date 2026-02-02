@@ -53,6 +53,9 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -130,6 +133,8 @@ fun AppDrawerTab(
     val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
 
     val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
     val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
@@ -231,9 +236,20 @@ fun AppDrawerTab(
                 onSettingsClick = onSettingsClick,
                 onQuickDeleteClick = onShowBottomSheet,
                 onCreateFolderClick = null,
-                onDockSettingsClick = onNavigateToDockSettings
+                onDockSettingsClick = onNavigateToDockSettings,
+                onESDESetupClick = {
+                    esdeSetupDialogState.show(SetupStep.Welcome)
+                }
             )
         }
+
+        ESDESetupScreen(
+            dialogState = esdeSetupDialogState,
+            onDismiss = { },
+            onSetupComplete = {
+                wallpaperManager.setESDE()
+            }
+        )
 
         if (appDrawerOptionsDialogState.isVisible) {
             AppsTabOptionsDialog(

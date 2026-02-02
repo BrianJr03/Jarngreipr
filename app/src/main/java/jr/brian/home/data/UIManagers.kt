@@ -1,6 +1,7 @@
 package jr.brian.home.data
 
 import jr.brian.home.ui.theme.managers.GlobalIconRefreshManager
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,6 +13,7 @@ import javax.inject.Singleton
  * - Icon display preferences
  * - Power state visualization
  * - Icon pack management
+ * - Wallpaper management
  */
 @Singleton
 data class UIManagers @Inject constructor(
@@ -31,5 +33,8 @@ data class UIManagers @Inject constructor(
     val customIconManager: CustomIconManager,
     
     /** Triggers global icon refresh when icon pack changes */
-    val globalIconRefreshManager: GlobalIconRefreshManager
+    val globalIconRefreshManager: GlobalIconRefreshManager,
+    
+    /** Manages wallpaper settings (image, video, GIF, ESDE) */
+    val wallpaperManager: WallpaperManager
 )
