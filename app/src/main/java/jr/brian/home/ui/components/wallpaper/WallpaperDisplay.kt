@@ -143,6 +143,37 @@ fun WallpaperDisplay(
                 } ?: FallbackWallpaper(modifier)
             }
         }
+
+        WallpaperType.ESDE -> {
+            // ESDE mode: show artwork from file path, or transparent if no artwork
+            wallpaperUri?.let { filePath ->
+                // Check if it's a file path (ESDE sets file paths, not content URIs)
+                val isFilePath = filePath.startsWith("/")
+                
+                if (isFilePath) {
+                    val file = java.io.File(filePath)
+                    if (file.exists()) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = file,
+                                onError = { 
+                                    // On error, just show transparent - don't clear wallpaper type
+                                }
+                            ),
+                            contentDescription = "ES-DE Wallpaper",
+                            modifier = modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // File doesn't exist, show transparent background
+                        Box(modifier = modifier.fillMaxSize())
+                    }
+                } else {
+                    // It's the initial "ESDE" marker, show transparent background
+                    Box(modifier = modifier.fillMaxSize())
+                }
+            } ?: Box(modifier = modifier.fillMaxSize()) // No URI, show transparent
+        }
     }
 }
 

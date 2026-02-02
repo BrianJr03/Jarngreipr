@@ -11,13 +11,15 @@ private const val PREFS_NAME = "launcher_prefs"
 private const val KEY_WALLPAPER = "selected_wallpaper"
 private const val KEY_WALLPAPER_TYPE = "wallpaper_type"
 const val WALLPAPER_TRANSPARENT = "TRANSPARENT"
+const val WALLPAPER_ESDE = "ESDE"
 
 enum class WallpaperType {
     NONE,
     IMAGE,
     GIF,
     VIDEO,
-    TRANSPARENT
+    TRANSPARENT,
+    ESDE
 }
 
 data class WallpaperInfo(
@@ -41,9 +43,15 @@ class WallpaperManager(
             WallpaperType.NONE
         }
 
-        if (uri != null && type != WallpaperType.NONE && type != WallpaperType.TRANSPARENT) {
+        // Check URI accessibility for image/video types (skip for TRANSPARENT/ESDE/NONE)
+        if (uri != null && type != WallpaperType.NONE && type != WallpaperType.TRANSPARENT && type != WallpaperType.ESDE) {
             if (!isUriAccessible(uri)) {
-                clearWallpaper()
+                // Don't call clearWallpaper() here to avoid circular initialization
+                // Just clear the prefs and return default
+                prefs.edit {
+                    remove(KEY_WALLPAPER)
+                    remove(KEY_WALLPAPER_TYPE)
+                }
                 return WallpaperInfo(null, WallpaperType.NONE)
             }
         }
@@ -78,6 +86,10 @@ class WallpaperManager(
         setWallpaper(WALLPAPER_TRANSPARENT, WallpaperType.TRANSPARENT)
     }
 
+    fun setESDE() {
+        setWallpaper(WALLPAPER_ESDE, WallpaperType.ESDE)
+    }
+
     fun clearWallpaper() {
         try {
             val wallpaperDir = java.io.File(context.filesDir, "wallpapers")
@@ -91,7 +103,8 @@ class WallpaperManager(
     }
 
     fun isTransparent(): Boolean {
-        return currentWallpaper.type == WallpaperType.TRANSPARENT
+        return currentWallpaper.type == WallpaperType.TRANSPARENT ||
+               currentWallpaper.type == WallpaperType.ESDE
     }
 
     fun getWallpaperType(): WallpaperType {

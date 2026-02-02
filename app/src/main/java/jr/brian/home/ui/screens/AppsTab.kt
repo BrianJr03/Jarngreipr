@@ -59,6 +59,9 @@ import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -134,6 +137,8 @@ fun AppsTab(
     val homeTabDialogState = rememberDialogState<Unit>()
     val createFolderDialogState = rememberDialogState<Unit>()
     val dockAppSelectionDialogState = rememberDialogState<Int>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
 
     val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -281,9 +286,20 @@ fun AppsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onDockSettingsClick = onNavigateToDockSettings
+            onDockSettingsClick = onNavigateToDockSettings,
+            onESDESetupClick = {
+                esdeSetupDialogState.show(SetupStep.Welcome)
+            }
         )
     }
+
+    ESDESetupScreen(
+        dialogState = esdeSetupDialogState,
+        onDismiss = { },
+        onSetupComplete = {
+            wallpaperManager.setESDE()
+        }
+    )
 
     if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
@@ -335,7 +351,12 @@ fun AppsTab(
                         powerViewModel.togglePower()
                     },
                     onLongClick = {
-                        drawerOptionsDialogState.show()
+                        // Show AppsTabOptionsDialog when in free mode with drag unlocked, otherwise show DrawerOptionsDialog
+                        if (isFreeModeEnabled && !isDragLocked) {
+                            appDrawerOptionsDialogState.show()
+                        } else {
+                            drawerOptionsDialogState.show()
+                        }
                     }
                 ),
     ) {

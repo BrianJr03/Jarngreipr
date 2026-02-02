@@ -1,0 +1,17 @@
+package jr.brian.home.esde.wallpaper
+
+import androidx.compose.ui.graphics.Color
+import jr.brian.home.esde.animation.AnimationStyle
+
+data class WallpaperState(
+    val currentImagePath: String? = null,
+    val marqueePath: String? = null,
+    val videoPath: String? = null,
+    val isVideoPlaying: Boolean = false,
+    val dimmingLevel: Float = 0.2f,
+    val blurLevel: Float = 0f,
+    val animationStyle: AnimationStyle = AnimationStyle.Fade,
+    val animationDuration: Int = 300,
+    val animationScale: Float = 0.9f,
+    val backgroundColor: Color = Color.Black
+)

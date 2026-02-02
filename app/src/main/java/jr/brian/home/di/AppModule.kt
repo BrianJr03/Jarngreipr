@@ -27,6 +27,7 @@ import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.data.WhatsNewManager
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Singleton
 
 @Module
@@ -194,5 +195,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): DockManager {
         return DockManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWallpaperManager(
+        @ApplicationContext context: Context
+    ): WallpaperManager {
+        return WallpaperManager(context)
     }
 }
