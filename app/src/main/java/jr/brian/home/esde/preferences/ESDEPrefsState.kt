@@ -14,6 +14,27 @@ enum class SystemImageType(val folderName: String?) {
     TitleScreens("titlescreens")
 }
 
+/**
+ * Defines the preferred media type for game background images
+ */
+enum class GameImageType(val folderName: String?) {
+    None(null),
+    Screenshots("screenshots"),
+    Fanart("fanart"),
+    TitleScreens("titlescreens"),
+    Covers("covers"),
+    MixImages("miximages")
+}
+
+/**
+ * Defines the alignment position for the system logo
+ */
+enum class LogoAlignment {
+    Top,
+    Center,
+    Bottom
+}
+
 data class ESDEPrefsState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
@@ -26,7 +47,11 @@ data class ESDEPrefsState(
     val videoAudioEnabled: Boolean = false,
     val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
-    val systemImageType: SystemImageType = SystemImageType.Fanart
+    val systemImageType: SystemImageType = SystemImageType.Fanart,
+    val gameImageType: GameImageType = GameImageType.Screenshots,
+    val showSystemLogo: Boolean = true,
+    val logoAlignment: LogoAlignment = LogoAlignment.Center,
+    val randomSystemImage: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
 }

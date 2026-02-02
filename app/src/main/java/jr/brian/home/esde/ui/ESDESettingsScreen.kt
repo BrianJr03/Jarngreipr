@@ -26,21 +26,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.R
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.AnimationStyleSelector
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
+import jr.brian.home.esde.ui.components.GameImageTypeSelector
+import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.SectionHeader
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 
 @Composable
 fun ESDESettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: ESDEViewModel = hiltViewModel()
 ) {
     val preferencesManager = LocalESDEPreferencesManager.current
     val prefsState by preferencesManager.state.collectAsState()
@@ -106,7 +111,11 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    if (prefsState.animationStyle in listOf(AnimationStyle.ScaleFade, AnimationStyle.Custom)) {
+                    if (prefsState.animationStyle in listOf(
+                            AnimationStyle.ScaleFade,
+                            AnimationStyle.Custom
+                        )
+                    ) {
                         item {
                             SliderSetting(
                                 title = stringResource(R.string.esde_settings_animation_scale),
@@ -131,6 +140,28 @@ fun ESDESettingsScreen(
                             selectedType = prefsState.systemImageType,
                             onTypeSelected = { type ->
                                 preferencesManager.setSystemImageType(type)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_random_system_image),
+                            description = stringResource(R.string.esde_settings_random_system_image_description),
+                            checked = prefsState.randomSystemImage,
+                            onCheckedChange = { random ->
+                                preferencesManager.setRandomSystemImage(random)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
+                        GameImageTypeSelector(
+                            selectedType = prefsState.gameImageType,
+                            onTypeSelected = { type ->
+                                preferencesManager.setGameImageType(type)
                             }
                         )
                     }
@@ -141,9 +172,9 @@ fun ESDESettingsScreen(
                             value = prefsState.blurLevel.toFloat(),
                             valueRange = 0f..25f,
                             steps = 24,
-                            valueText = if (prefsState.blurLevel == 0) 
-                                stringResource(R.string.esde_settings_off) 
-                            else 
+                            valueText = if (prefsState.blurLevel == 0)
+                                stringResource(R.string.esde_settings_off)
+                            else
                                 "${prefsState.blurLevel}",
                             onValueChange = { blur ->
                                 preferencesManager.setBlurLevel(blur.toInt())
@@ -210,6 +241,33 @@ fun ESDESettingsScreen(
                                 checked = prefsState.videoAudioEnabled,
                                 onCheckedChange = { enabled ->
                                     preferencesManager.setVideoAudioEnabled(enabled)
+                                }
+                            )
+                        }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_logo))
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_show_system_logo),
+                            description = stringResource(R.string.esde_settings_show_system_logo_description),
+                            checked = prefsState.showSystemLogo,
+                            onCheckedChange = { show ->
+                                preferencesManager.setShowSystemLogo(show)
+                            }
+                        )
+                    }
+
+                    if (prefsState.showSystemLogo) {
+                        item {
+                            LogoAlignmentSelector(
+                                selectedAlignment = prefsState.logoAlignment,
+                                onAlignmentSelected = { alignment ->
+                                    preferencesManager.setLogoAlignment(alignment)
                                 }
                             )
                         }
