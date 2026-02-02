@@ -22,6 +22,9 @@ import jr.brian.home.ui.screens.BackButtonShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.esde.ui.ESDESettingsScreen
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
@@ -526,14 +529,24 @@ fun NavGraphBuilder.esdeSettingsScreen(
 ) {
     composable(Routes.ESDE_SETTINGS) {
         var showScreen by remember { mutableStateOf(true) }
+        val esdeSetupDialogState = rememberDialogState<SetupStep>()
 
         SlideInVertically(showScreen) {
             ESDESettingsScreen(
                 onNavigateBack = {
                     showScreen = false
                     navController.popBackStack()
+                },
+                onRunSetupWizard = {
+                    esdeSetupDialogState.show(SetupStep.Welcome)
                 }
             )
         }
+
+        ESDESetupScreen(
+            dialogState = esdeSetupDialogState,
+            onDismiss = { },
+            onSetupComplete = { }
+        )
     }
 }

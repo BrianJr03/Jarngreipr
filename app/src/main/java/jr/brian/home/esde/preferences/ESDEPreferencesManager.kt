@@ -9,6 +9,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.content.edit
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_DURATION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_STYLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BACKGROUND_COLOR
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BLUR_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DIMMING_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 @Suppress("unused")
 class ESDEPreferencesManager(context: Context) {
@@ -152,25 +169,5 @@ class ESDEPreferencesManager(context: Context) {
     fun setRandomSystemImage(random: Boolean) {
         _state.value = _state.value.copy(randomSystemImage = random)
         prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
-    }
-
-    companion object {
-        private const val PREFS_NAME = "esde_prefs"
-        private const val KEY_ANIMATION_STYLE = "animation_style"
-        private const val KEY_ANIMATION_DURATION = "animation_duration"
-        private const val KEY_ANIMATION_SCALE = "animation_scale"
-        private const val KEY_BLUR_LEVEL = "blur_level"
-        private const val KEY_DIMMING_LEVEL = "dimming_level"
-        private const val KEY_BACKGROUND_COLOR = "background_color"
-        private const val KEY_VIDEO_ENABLED = "video_enabled"
-        private const val KEY_VIDEO_DELAY = "video_delay"
-        private const val KEY_VIDEO_AUDIO_ENABLED = "video_audio_enabled"
-        private const val KEY_ESDE_ENABLED = "esde_enabled"
-        private const val KEY_LAST_SELECTED_SYSTEM = "last_selected_system"
-        private const val KEY_SYSTEM_IMAGE_TYPE = "system_image_type"
-        private const val KEY_GAME_IMAGE_TYPE = "game_image_type"
-        private const val KEY_SHOW_SYSTEM_LOGO = "show_system_logo"
-        private const val KEY_LOGO_ALIGNMENT = "logo_alignment"
-        private const val KEY_RANDOM_SYSTEM_IMAGE = "random_system_image"
     }
 }

@@ -59,7 +59,9 @@ fun WallpaperDisplay(
             )
         }
 
-        WallpaperType.TRANSPARENT -> {
+        WallpaperType.TRANSPARENT,
+        WallpaperType.ESDE -> {
+            // Transparent - actual wallpaper is rendered by ESDEWallpaperContainer
             Box(modifier = modifier.fillMaxSize())
         }
 
@@ -140,24 +142,7 @@ fun WallpaperDisplay(
             }
         }
 
-        WallpaperType.ESDE -> {
-            val file = wallpaperUri?.takeIf {
-                it.startsWith("/")
-            }?.let { java.io.File(it) }
-            if (file?.exists() == true) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = file,
-                        onError = { }
-                    ),
-                    contentDescription = "ES-DE Wallpaper",
-                    modifier = modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                FallbackWallpaper(modifier)
-            }
-        }
+
     }
 }
 

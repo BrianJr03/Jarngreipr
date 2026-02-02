@@ -1,6 +1,6 @@
 package jr.brian.home.esde.events
 
-class ESDEEventListenerImpl : ESDEEventManager.ESDEEventListener {
+class ESDEEventListenerImpl : ESDEEventListener {
     var onSystemSelected: ((systemName: String) -> Unit)? = null
     var onGameSelected: ((gameFilename: String, gameName: String?, systemName: String) -> Unit)? = null
     var onGameStarted: ((gameFilename: String, gameName: String?, systemName: String) -> Unit)? = null

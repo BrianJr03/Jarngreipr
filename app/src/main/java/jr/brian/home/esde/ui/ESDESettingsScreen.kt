@@ -45,6 +45,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 @Composable
 fun ESDESettingsScreen(
     onNavigateBack: () -> Unit,
+    onRunSetupWizard: () -> Unit,
     viewModel: ESDEViewModel = hiltViewModel()
 ) {
     val preferencesManager = LocalESDEPreferencesManager.current
@@ -271,6 +272,21 @@ fun ESDESettingsScreen(
                                 }
                             )
                         }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_setup))
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_run_setup_wizard),
+                            description = stringResource(R.string.esde_settings_run_setup_wizard_description),
+                            checked = false,
+                            showToggle = false,
+                            onClick = onRunSetupWizard
+                        )
                     }
                 }
             }

@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import jr.brian.home.esde.events.ESDEEventListener
 import jr.brian.home.esde.events.ESDEEventListenerImpl
 import jr.brian.home.esde.events.ESDEEventManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
@@ -33,14 +34,14 @@ object ESDEModule {
     @Singleton
     fun provideESDEEventListener(
         impl: ESDEEventListenerImpl
-    ): ESDEEventManager.ESDEEventListener {
+    ): ESDEEventListener {
         return impl
     }
 
     @Provides
     @Singleton
     fun provideESDEEventManager(
-        eventListener: ESDEEventManager.ESDEEventListener
+        eventListener: ESDEEventListener
     ): ESDEEventManager {
         return ESDEEventManager(eventListener)
     }
