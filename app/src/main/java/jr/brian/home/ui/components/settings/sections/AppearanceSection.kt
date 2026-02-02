@@ -98,7 +98,8 @@ fun LazyListScope.appearanceSection(
                 isExpanded = expandedItem == EXPANDED_WALLPAPER,
                 onExpandChanged = {
                     onExpandedItemChange(if (it) EXPANDED_WALLPAPER else null)
-                }
+                },
+                onESDESetupClick = onNavigateToEsdeSettings
             )
         }
     }

@@ -1,13 +1,10 @@
 ## New Features
-### App Dock
-> Long press on any tab to enable the App Dock.
-> You can customize the color, size, and apps.
+### ES-DE Wallpaper
+> You can now chose the 'ES-DE' option when selecting a wallpaper.
 
-### Volume Controls
-> A slider that controls the volume has been added to the Powered Off Screen and Settings.
-> This will control the volume for the main (top) screen only. Work on adjusting the bottom screen's volume is in progress.
+> Most functionality has been ported over from ES-DE Companion.
+This is experimental and may not have/receive every update ES-DE Companion will.
+> 
+> Shoutout to @RobZombie9043 and the beauty of open source software :)
 
-### Quick Fixes
-> App Dock now disappears when scrolling on a tab and no longer visible in the app drawer.
-
-1.5.1
+1.6
