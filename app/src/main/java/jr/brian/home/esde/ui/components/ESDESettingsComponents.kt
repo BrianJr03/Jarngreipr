@@ -127,7 +127,9 @@ fun ToggleSetting(
     title: String,
     description: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit = {},
+    showToggle: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -154,7 +156,7 @@ fun ToggleSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .clickable { onCheckedChange(!checked) }
+            .clickable { onClick?.invoke() ?: onCheckedChange(!checked) }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp),
@@ -175,17 +177,19 @@ fun ToggleSetting(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        if (showToggle) {
+            Spacer(modifier = Modifier.width(12.dp))
 
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = ThemePrimaryColor,
-                checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
-                uncheckedThumbColor = Color.Gray,
-                uncheckedTrackColor = Color.DarkGray
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = ThemePrimaryColor,
+                    checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = Color.DarkGray
+                )
             )
-        )
+        }
     }
 }

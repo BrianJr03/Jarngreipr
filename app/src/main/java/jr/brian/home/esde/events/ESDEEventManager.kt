@@ -3,44 +3,38 @@ package jr.brian.home.esde.events
 import android.os.FileObserver
 import android.os.Handler
 import android.os.Looper
+import jr.brian.home.esde.util.ESDEEventConstants.DEBOUNCE_DELAY
+import jr.brian.home.esde.util.ESDEEventConstants.DEFAULT_SCREENSAVER_END_REASON
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMEEND_FILENAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMEEND_NAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMEEND_SYSTEM
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMESTART_FILENAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMESTART_NAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAMESTART_SYSTEM
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAME_FILENAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAME_NAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_GAME_SYSTEM
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SCREENSAVER_END
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SCREENSAVER_GAME_FILENAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SCREENSAVER_GAME_NAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SCREENSAVER_GAME_SYSTEM
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SCREENSAVER_START
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_SYSTEM_NAME
+import jr.brian.home.esde.util.ESDEEventConstants.FILE_WRITE_DELAY
+import jr.brian.home.esde.util.ESDEEventConstants.LOGS_PATH
+import jr.brian.home.esde.util.ESDEEventConstants.POLL_INTERVAL
 import java.io.File
 
 class ESDEEventManager(private val eventListener: ESDEEventListener) {
-
-    companion object {
-        private const val DEBOUNCE_DELAY = 100 // milliseconds
-        private const val LOGS_PATH = "/storage/emulated/0/ES-DE Companion/logs"
-        private const val FILE_WRITE_DELAY = 50
-        private const val POLL_INTERVAL = 500L // Fallback polling interval in ms
-    }
-
     private var lastEventTime = 0L
     private var fileObserver: FileObserver? = null
     
-    // Track last known file contents for change detection
     private var lastSystemName: String? = null
     private var lastGameFilename: String? = null
     
-    // Handler for polling fallback
     private val pollHandler = Handler(Looper.getMainLooper())
     private var isPolling = false
 
-    /**
-     * Interface for event callbacks
-     */
-    interface ESDEEventListener {
-        fun onSystemSelected(systemName: String)
-        fun onGameSelected(gameFilename: String, gameName: String?, systemName: String)
-        fun onGameStarted(gameFilename: String, gameName: String?, systemName: String)
-        fun onGameEnded(gameFilename: String, gameName: String?, systemName: String)
-        fun onScreensaverStarted()
-        fun onScreensaverEnded(reason: String = "cancel")
-        fun onScreensaverGameSelected(gameFilename: String, gameName: String?, systemName: String)
-    }
-
-    /**
-     * Start monitoring for ES-DE events
-     */
     fun startWatching() {
         val watchDir = File(LOGS_PATH)
 
@@ -65,27 +59,18 @@ class ESDEEventManager(private val eventListener: ESDEEventListener) {
         fileObserver?.startWatching()
     }
 
-    /**
-     * Stop monitoring for ES-DE events
-     */
     fun stopWatching() {
         fileObserver?.stopWatching()
         fileObserver = null
         stopPolling()
     }
-    
-    /**
-     * Start polling as a fallback (useful if FileObserver doesn't work)
-     */
+
     fun startPolling() {
         if (isPolling) return
         isPolling = true
         pollForChanges()
     }
-    
-    /**
-     * Stop polling
-     */
+
     fun stopPolling() {
         isPolling = false
         pollHandler.removeCallbacksAndMessages(null)
@@ -94,81 +79,78 @@ class ESDEEventManager(private val eventListener: ESDEEventListener) {
     private fun pollForChanges() {
         if (!isPolling) return
         
-        // Check for system changes
-        val currentSystemName = readTextFile("esde_system_name.txt")
+        val currentSystemName = readTextFile(FILE_SYSTEM_NAME)
         if (currentSystemName != null && currentSystemName != lastSystemName) {
             lastSystemName = currentSystemName
             eventListener.onSystemSelected(currentSystemName)
         }
         
-        // Check for game changes
-        val currentGameFilename = readTextFile("esde_game_filename.txt")
+        val currentGameFilename = readTextFile(FILE_GAME_FILENAME)
         if (currentGameFilename != null && currentGameFilename != lastGameFilename) {
             lastGameFilename = currentGameFilename
-            val gameName = readTextFile("esde_game_name.txt")
-            val systemName = readTextFile("esde_game_system.txt")
+            val gameName = readTextFile(FILE_GAME_NAME)
+            val systemName = readTextFile(FILE_GAME_SYSTEM)
             if (systemName != null) {
                 eventListener.onGameSelected(currentGameFilename, gameName, systemName)
             }
         }
         
-        // Schedule next poll
         pollHandler.postDelayed({ pollForChanges() }, POLL_INTERVAL)
     }
 
     private fun isValidLogFile(path: String): Boolean {
-        return path == "esde_game_filename.txt" ||
-                path == "esde_system_name.txt" ||
-                path == "esde_gamestart_filename.txt" ||
-                path == "esde_gameend_filename.txt" ||
-                path == "esde_screensaver_start.txt" ||
-                path == "esde_screensaver_end.txt" ||
-                path == "esde_screensavergameselect_filename.txt"
+        return path == FILE_GAME_FILENAME ||
+                path == FILE_SYSTEM_NAME ||
+                path == FILE_GAMESTART_FILENAME ||
+                path == FILE_GAMEEND_FILENAME ||
+                path == FILE_SCREENSAVER_START ||
+                path == FILE_SCREENSAVER_END ||
+                path == FILE_SCREENSAVER_GAME_FILENAME
     }
 
     private fun processEvent(filename: String) {
         when (filename) {
-            "esde_system_name.txt" -> {
-                val systemName = readTextFile("esde_system_name.txt")
+            FILE_SYSTEM_NAME -> {
+                val systemName = readTextFile(FILE_SYSTEM_NAME)
                 if (systemName != null) {
                     eventListener.onSystemSelected(systemName)
                 }
             }
-            "esde_game_filename.txt" -> {
-                val gameFilename = readTextFile("esde_game_filename.txt")
-                val gameName = readTextFile("esde_game_name.txt")
-                val systemName = readTextFile("esde_game_system.txt")
+            FILE_GAME_FILENAME -> {
+                val gameFilename = readTextFile(FILE_GAME_FILENAME)
+                val gameName = readTextFile(FILE_GAME_NAME)
+                val systemName = readTextFile(FILE_GAME_SYSTEM)
                 if (gameFilename != null && systemName != null) {
                     eventListener.onGameSelected(gameFilename, gameName, systemName)
                 }
             }
-            "esde_gamestart_filename.txt" -> {
-                val gameFilename = readTextFile("esde_gamestart_filename.txt")
-                val gameName = readTextFile("esde_gamestart_name.txt")
-                val systemName = readTextFile("esde_gamestart_system.txt")
+            FILE_GAMESTART_FILENAME -> {
+                val gameFilename = readTextFile(FILE_GAMESTART_FILENAME)
+                val gameName = readTextFile(FILE_GAMESTART_NAME)
+                val systemName = readTextFile(FILE_GAMESTART_SYSTEM)
                 if (gameFilename != null && systemName != null) {
                     eventListener.onGameStarted(gameFilename, gameName, systemName)
                 }
             }
-            "esde_gameend_filename.txt" -> {
-                val gameFilename = readTextFile("esde_gameend_filename.txt")
-                val gameName = readTextFile("esde_gameend_name.txt")
-                val systemName = readTextFile("esde_gameend_system.txt")
+            FILE_GAMEEND_FILENAME -> {
+                val gameFilename = readTextFile(FILE_GAMEEND_FILENAME)
+                val gameName = readTextFile(FILE_GAMEEND_NAME)
+                val systemName = readTextFile(FILE_GAMEEND_SYSTEM)
                 if (gameFilename != null && systemName != null) {
                     eventListener.onGameEnded(gameFilename, gameName, systemName)
                 }
             }
-            "esde_screensaver_start.txt" -> {
+            FILE_SCREENSAVER_START -> {
                 eventListener.onScreensaverStarted()
             }
-            "esde_screensaver_end.txt" -> {
-                val reason = readTextFile("esde_screensaver_end.txt") ?: "cancel"
+            FILE_SCREENSAVER_END -> {
+                val reason = readTextFile(FILE_SCREENSAVER_END) ?: DEFAULT_SCREENSAVER_END_REASON
                 eventListener.onScreensaverEnded(reason)
             }
-            "esde_screensavergameselect_filename.txt" -> {
-                val gameFilename = readTextFile("esde_screensavergameselect_filename.txt")
-                val gameName = readTextFile("esde_screensavergameselect_name.txt")
-                val systemName = readTextFile("esde_screensavergameselect_system.txt")
+            FILE_SCREENSAVER_GAME_FILENAME -> {
+                val gameFilename = readTextFile(FILE_SCREENSAVER_GAME_FILENAME)
+                val gameName = readTextFile(FILE_SCREENSAVER_GAME_NAME)
+                val systemName = readTextFile(FILE_SCREENSAVER_GAME_SYSTEM)
                 if (gameFilename != null && systemName != null) {
                     eventListener.onScreensaverGameSelected(gameFilename, gameName, systemName)
                 }
@@ -184,7 +166,7 @@ class ESDEEventManager(private val eventListener: ESDEEventListener) {
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

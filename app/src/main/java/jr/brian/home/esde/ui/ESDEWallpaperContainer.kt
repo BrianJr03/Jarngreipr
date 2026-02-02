@@ -3,6 +3,7 @@ package jr.brian.home.esde.ui
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -76,7 +77,11 @@ fun ESDEWallpaperContainer(
 
         DimmingOverlay(alpha = state.dimmingLevel)
 
-        if (state.showSystemLogo && state.marqueePath != null) {
+        AnimatedVisibility(
+            state.showSystemLogo
+                    && state.marqueePath != null
+                    && !state.isVideoPlaying
+        ) {
             val logoAlignment = when (state.logoAlignment) {
                 LogoAlignment.Top -> Alignment.TopCenter
                 LogoAlignment.Center -> Alignment.Center

@@ -1,6 +1,7 @@
 package jr.brian.home.esde.scripts
 
 import android.util.Log
+import jr.brian.home.esde.util.ESDEEventConstants.LOGS_PATH
 import java.io.File
 import kotlin.collections.iterator
 
@@ -9,9 +10,6 @@ import kotlin.collections.iterator
  * Provides a single source of truth for script creation, validation, and updates
  */
 object ScriptManager {
-
-    // Hardcoded paths - must match MainActivity.getLogsPath()
-    const val LOGS_PATH = "/storage/emulated/0/ES-DE Companion/logs"
     const val DEFAULT_SCRIPTS_PATH = "/storage/emulated/0/ES-DE/scripts"
 
     // Script directory names

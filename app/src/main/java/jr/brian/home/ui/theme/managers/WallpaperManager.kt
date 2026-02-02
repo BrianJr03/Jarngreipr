@@ -13,20 +13,6 @@ private const val KEY_WALLPAPER_TYPE = "wallpaper_type"
 const val WALLPAPER_TRANSPARENT = "TRANSPARENT"
 const val WALLPAPER_ESDE = "ESDE"
 
-enum class WallpaperType {
-    NONE,
-    IMAGE,
-    GIF,
-    VIDEO,
-    TRANSPARENT,
-    ESDE
-}
-
-data class WallpaperInfo(
-    val uri: String?,
-    val type: WallpaperType
-)
-
 class WallpaperManager(
     private val context: Context,
 ) {

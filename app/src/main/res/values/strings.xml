@@ -731,4 +731,7 @@
     <string name="esde_settings_logo_alignment_bottom">Bottom</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
+    <string name="esde_settings_section_setup">Setup</string>
+    <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
+    <string name="esde_settings_run_setup_wizard_description">Re-run the setup wizard to configure paths and scripts</string>
 </resources>
