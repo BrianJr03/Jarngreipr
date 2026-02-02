@@ -1,9 +1,9 @@
 package jr.brian.home.ui.components.wallpaper
 
 import android.content.Context
-import android.os.Build
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,12 +23,12 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
-import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -100,11 +100,7 @@ fun WallpaperDisplay(
                         val imageLoader = remember {
                             ImageLoader.Builder(context)
                                 .components {
-                                    if (Build.VERSION.SDK_INT >= 28) {
-                                        add(ImageDecoderDecoder.Factory())
-                                    } else {
-                                        add(GifDecoder.Factory())
-                                    }
+                                    add(ImageDecoderDecoder.Factory())
                                 }
                                 .build()
                         }
@@ -145,34 +141,22 @@ fun WallpaperDisplay(
         }
 
         WallpaperType.ESDE -> {
-            // ESDE mode: show artwork from file path, or transparent if no artwork
-            wallpaperUri?.let { filePath ->
-                // Check if it's a file path (ESDE sets file paths, not content URIs)
-                val isFilePath = filePath.startsWith("/")
-                
-                if (isFilePath) {
-                    val file = java.io.File(filePath)
-                    if (file.exists()) {
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                model = file,
-                                onError = { 
-                                    // On error, just show transparent - don't clear wallpaper type
-                                }
-                            ),
-                            contentDescription = "ES-DE Wallpaper",
-                            modifier = modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        // File doesn't exist, show transparent background
-                        Box(modifier = modifier.fillMaxSize())
-                    }
-                } else {
-                    // It's the initial "ESDE" marker, show transparent background
-                    Box(modifier = modifier.fillMaxSize())
-                }
-            } ?: Box(modifier = modifier.fillMaxSize()) // No URI, show transparent
+            val file = wallpaperUri?.takeIf {
+                it.startsWith("/")
+            }?.let { java.io.File(it) }
+            if (file?.exists() == true) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = file,
+                        onError = { }
+                    ),
+                    contentDescription = "ES-DE Wallpaper",
+                    modifier = modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                FallbackWallpaper(modifier)
+            }
         }
     }
 }
@@ -198,6 +182,7 @@ private fun isUriAccessible(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 private fun VideoWallpaper(
     uri: String,
