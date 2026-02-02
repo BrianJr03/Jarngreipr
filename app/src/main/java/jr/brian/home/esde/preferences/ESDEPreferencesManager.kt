@@ -26,6 +26,13 @@ class ESDEPreferencesManager(context: Context) {
             AnimationStyle.Fade
         }
         
+        val systemImageTypeName = prefs.getString(KEY_SYSTEM_IMAGE_TYPE, SystemImageType.Fanart.name)
+        val systemImageType = try {
+            SystemImageType.valueOf(systemImageTypeName ?: SystemImageType.Fanart.name)
+        } catch (_: IllegalArgumentException) {
+            SystemImageType.Fanart
+        }
+        
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -37,7 +44,8 @@ class ESDEPreferencesManager(context: Context) {
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
             videoAudioEnabled = prefs.getBoolean(KEY_VIDEO_AUDIO_ENABLED, false),
             esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
-            lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null)
+            lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
+            systemImageType = systemImageType
         )
     }
 
@@ -102,6 +110,11 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
+    fun setSystemImageType(type: SystemImageType) {
+        _state.value = _state.value.copy(systemImageType = type)
+        prefs.edit().putString(KEY_SYSTEM_IMAGE_TYPE, type.name).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "esde_prefs"
         private const val KEY_ANIMATION_STYLE = "animation_style"
@@ -115,5 +128,6 @@ class ESDEPreferencesManager(context: Context) {
         private const val KEY_VIDEO_AUDIO_ENABLED = "video_audio_enabled"
         private const val KEY_ESDE_ENABLED = "esde_enabled"
         private const val KEY_LAST_SELECTED_SYSTEM = "last_selected_system"
+        private const val KEY_SYSTEM_IMAGE_TYPE = "system_image_type"
     }
 }

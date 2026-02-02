@@ -44,7 +44,6 @@ fun ESDESetupScreen(
         )
     }
     
-    // Folder picker for scripts
     val scriptsFolderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -61,7 +60,6 @@ fun ESDESetupScreen(
         }
     }
     
-    // Folder picker for media
     val mediaFolderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
@@ -78,7 +76,6 @@ fun ESDESetupScreen(
         }
     }
     
-    // Permission launcher for Android 11+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -87,7 +84,6 @@ fun ESDESetupScreen(
         }
     }
     
-    // Legacy permission launcher
     val legacyPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -215,10 +211,8 @@ fun ESDESetupScreen(
  * Convert content URI to file path
  */
 private fun getPathFromUri(uri: Uri): String? {
-    // Handle content:// URIs from document picker
     val path = uri.path ?: return null
     
-    // Common patterns for document tree URIs
     return when {
         path.contains("/tree/primary:") -> {
             val relativePath = path.substringAfter("/tree/primary:")

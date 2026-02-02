@@ -119,7 +119,7 @@
     <string name="settings_wallpaper_image_picker">Choose Image</string>
     <string name="settings_wallpaper_gif_picker">Choose GIF</string>
     <string name="settings_wallpaper_video_picker">Choose Video</string>
-    <string name="settings_wallpaper_esde">ESDE</string>
+    <string name="settings_wallpaper_esde">ES-DE</string>
 
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
@@ -392,6 +392,11 @@
     <string name="clean_folders_selected_folders">Selected Folders</string>
     <string name="clean_folders_file_extensions">File Extensions (%1$d)</string>
     <string name="clean_folders_files_separator"> • %1$d files</string>
+    <string name="clean_folders_delete_empty_folders">Delete Empty Folders</string>
+    <string name="clean_folders_deleting_empty_folders">Deleting…</string>
+    <string name="clean_folders_empty_folder_confirm_title">Delete Empty Folders</string>
+    <string name="clean_folders_empty_folder_confirm_message">Delete %1$d empty folder(s)?</string>
+    <string name="clean_folders_include_systeminfo">Include folders with only systeminfo.txt</string>
 
     <!-- Header Icons -->
     <string name="header_folder_options">Options</string>
@@ -639,7 +644,7 @@
 
     <!-- ESDE Setup Wizard -->
     <string name="esde_setup_close">Close</string>
-    <string name="esde_setup_continue">Continue</string>
+    <string name="esde_setup_next">Next</string>
     <string name="esde_setup_use_default">Use Default</string>
     <string name="esde_setup_select_folder">Select Folder</string>
     <string name="esde_setup_skip">Skip</string>
@@ -647,13 +652,13 @@
     <string name="esde_setup_continue_anyway">Continue Anyway</string>
     <string name="esde_setup_grant_permission">Grant Permission</string>
     <string name="esde_setup_create_scripts">Create Scripts</string>
-    <string name="esde_setup_scripts_enabled">I\'ve Enabled Scripts</string>
-    <string name="esde_setup_lets_do_it">Yeah man, I wanna do it</string>
+    <string name="esde_setup_scripts_done">Done</string>
+    <string name="esde_setup_start_setup">Start Setup</string>
 
     <!-- ESDE Setup Wizard Step Titles -->
-    <string name="esde_setup_title_welcome">Welcome to Quick Setup</string>
+    <string name="esde_setup_title_welcome">ES-DE x Jarngreipr</string>
     <string name="esde_setup_title_permissions">Step 1: Storage Permissions</string>
-    <string name="esde_setup_title_permissions_granted">Step 1: Storage Permissions ✓</string>
+    <string name="esde_setup_title_permissions_granted">Step 1 Complete</string>
     <string name="esde_setup_title_scripts_folder">Step 2: ES-DE Scripts Folder</string>
     <string name="esde_setup_title_create_scripts">Step 3: Create Script Files</string>
     <string name="esde_setup_title_media_folder">Step 4: Downloaded Media Folder</string>
@@ -662,17 +667,46 @@
     <string name="esde_setup_title_warning">Warning</string>
 
     <!-- ESDE Setup Wizard Content -->
-    <string name="esde_setup_welcome_content">This will guide you through setting up your app:\n\n1. Grant storage permissions\n2. Select ES-DE scripts folder\n3. Create script files\n4. Select downloaded media folder\n5. Enable scripts in ES-DE\n\nReady to begin?</string>
-    <string name="esde_setup_permissions_content">The app needs storage permissions to create script files and access media folders.\n\nClick \'Grant Permission\' to open system settings. After granting permission, the wizard will automatically continue.</string>
-    <string name="esde_setup_permissions_granted_content">Storage permissions are already granted! ✓\n\nThe app can access external storage to create scripts and read media files.\n\nClick \'Continue\' to proceed.</string>
-    <string name="esde_setup_scripts_folder_content">Now select your ES-DE scripts folder.\n\nThis needs to be the scripts folder where your ES-DE application data directory has been set up:\n~/ES-DE/scripts\n\nClick \'Select Folder\' to choose, or \'Use Default\' to use the default internal storage path (ES-DE is setup on internal storage in the default location).</string>
-    <string name="esde_setup_create_scripts_content">Now we\'ll create the ES-DE integration script files in the folder you selected.\n\nClick \'Create Scripts\' to continue, or \'Skip\' if scripts already exist.</string>
-    <string name="esde_setup_media_folder_content">Select your ES-DE downloaded_media folder where game artwork is stored.\n\nDefault location:\n/storage/emulated/0/ES-DE/downloaded_media\n\nClick \'Select Folder\' to choose, or \'Use Default\' to use the default internal storage path (downloaded_media is in the default internal storage location).</string>
-    <string name="esde_setup_enable_scripts_content">Final step! You need to enable both custom script options in ES-DE:\n\n1. Open ES-DE\n2. Press START to open Main Menu\n3. Go to Other Settings\n4. Toggle ON \'Custom Event Scripts\'\n5. Toggle ON \'Browsing Custom Events\'\n\nOnce both are enabled, ES-DE will send game/system information to this app!\n\nClick \'I\'ve Enabled Scripts\' when done.</string>
-    <string name="esde_setup_complete_content">Your ES-DE Companion is now configured and ready to use! 🎉\n\n🎮 Quick Tips:\n\n• Long press to open widget menu\n• Swipe up anywhere to open the app drawer\n• Tap the hamburger button (☰) to access the app settings\n\n📱 Using with ES-DE:\n\n• Browse games in ES-DE to see artwork on this screen\n• Game videos will play if enabled in settings\n• System logos appear when browsing systems\n\nEnjoy your enhanced retro gaming experience!</string>
+    <string name="esde_setup_welcome_content">Before using ES-DE with Jarngreipr, you\'ll need to follow these steps\n\n1. Grant storage permissions\n2. Select ES-DE scripts folder\n3. Create script files\n4. Select downloaded media folder\n5. Enable scripts in ES-DE\n\nIf you\'re familiar with ES-DE Companion, this is the exact same process.</string>
+    <string name="esde_setup_permissions_content">Storage access is required to create scripts and access media.\n\nTap \'Grant Permission\' to open settings. The wizard will continue once granted.</string>
+    <string name="esde_setup_permissions_granted_content">The app can now manage scripts and media files.</string>
+    <string name="esde_setup_scripts_folder_content">Select your ES-DE scripts folder (typically ~/ES-DE/scripts).\n\nTap \'Select Folder\' to choose, or \'Use Default\' for the standard internal storage path.</string>
+    <string name="esde_setup_create_scripts_content">Now we will create the necessary integration scripts in your selected folder.\n\nTap \'Create Scripts\' to proceed, or \'Skip\' if they already exist.</string>
+    <string name="esde_setup_media_folder_content">Select your ES-DE downloaded_media folder.\n\nDefault path:\n/ES-DE/downloaded_media\n\nTap \'Select Folder\' to choose, or \'Use Default\' for internal storage.</string>
+    <string name="esde_setup_enable_scripts_content">Final step! Enable these settings in ES-DE\n\n1. Open ES-DE Menu (START)\n2. Go to Other Settings\n3. Toggle ON \'Custom Event Scripts\'\n4. Toggle ON \'Browsing Custom Events\'</string>
+    <string name="esde_setup_complete_content">You can now switch between ES-DE and any other type of wallpaper.\n\nShout out to @RobZombie9043 for ES-DE Companion and the beauty of open source :)</string>
 
     <!-- ESDE Setup Wizard Warnings -->
-    <string name="esde_setup_warning_scripts_path">Warning: The selected path doesn\'t appear to be the ES-DE scripts folder.\n\nSelected: %1$s\n\nExpected path should contain:\n• ES-DE\n• scripts\n\nES-DE may not find the scripts if they\'re not in the correct location.\n\nContinue anyway?</string>
-    <string name="esde_setup_warning_media_path">Warning: The selected path doesn\'t appear to be the ES-DE downloaded_media folder.\n\nSelected: %1$s\n\nExpected path should contain:\n• downloaded_media\n\nThe app may not find game artwork if it\'s not in the correct location.\n\nContinue anyway?</string>
-    <string name="esde_setup_warning_scripts_missing">Warning: All 7 script files were not found in the selected folder.\n\nWithout these scripts, ES-DE will not be able to communicate game selections to this app, and game media will not be displayed.\n\nYou can:\n• Go back and create the scripts\n• Continue anyway (you can create scripts later from settings)</string>
+    <string name="esde_setup_warning_scripts_path">Warning: This doesn\'t look like the ES-DE scripts folder.\n\nSelected: %1$s\n\nES-DE may not find the scripts in this location.\n\nContinue anyway?</string>
+    <string name="esde_setup_warning_media_path">Warning: This doesn\'t look like the ES-DE downloaded_media folder.\n\nSelected: %1$s\n\nArtwork may not display correctly.\n\nContinue anyway?</string>
+    <string name="esde_setup_warning_scripts_missing">Warning: Required scripts are missing from this folder.\n\nWithout these, the app cannot receive game information from ES-DE.\n\nContinue anyway?</string>
+
+    <!-- ESDE Settings Screen -->
+    <string name="esde_settings_title">ES-DE Display Settings</string>
+    <string name="esde_settings_description">Configure ES-DE wallpaper and effects</string>
+    <string name="esde_settings_section_animation">Animation</string>
+    <string name="esde_settings_section_effects">Visual Effects</string>
+    <string name="esde_settings_section_video">Video</string>
+    <string name="esde_settings_animation_style">Animation Style</string>
+    <string name="esde_settings_animation_none">None</string>
+    <string name="esde_settings_animation_fade">Fade</string>
+    <string name="esde_settings_animation_scale_fade">Scale</string>
+    <string name="esde_settings_animation_custom">Custom</string>
+    <string name="esde_settings_animation_duration">Animation Duration</string>
+    <string name="esde_settings_animation_scale">Animation Scale</string>
+    <string name="esde_settings_blur_level">Background Blur</string>
+    <string name="esde_settings_dimming_level">Background Dimming</string>
+    <string name="esde_settings_background_color">Background Color</string>
+    <string name="esde_settings_off">Off</string>
+    <string name="esde_settings_video_enabled">Video Playback</string>
+    <string name="esde_settings_video_enabled_description">Play game videos when browsing</string>
+    <string name="esde_settings_video_delay">Video Delay</string>
+    <string name="esde_settings_video_audio">Video Audio</string>
+    <string name="esde_settings_video_audio_description">Enable audio during video playback</string>
+    <string name="esde_settings_system_image_type">System Background</string>
+    <string name="esde_settings_system_image_type_description">Choose which media type to show when browsing systems</string>
+    <string name="esde_settings_system_image_none">None</string>
+    <string name="esde_settings_system_image_fanart">Fanart</string>
+    <string name="esde_settings_system_image_screenshots">Screenshots</string>
+    <string name="esde_settings_system_image_titlescreens">Title Screens</string>
 </resources>

@@ -21,6 +21,7 @@ import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
+import jr.brian.home.esde.ui.ESDESettingsScreen
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
@@ -159,6 +160,10 @@ fun NavGraphBuilder.launcherScreen(
                         showSettingsSheet = false
                         showDockSettingsSheet = true
                     },
+                    onNavigateToEsdeSettings = {
+                        showSettingsSheet = false
+                        navController.navigate(Routes.ESDE_SETTINGS)
+                    },
                     onDismiss = {
                         showSettingsSheet = false
                     }
@@ -283,6 +288,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToDockSettings = {
                     showScreen = false
                     navController.navigate(Routes.APP_DOCK_SETTINGS)
+                },
+                onNavigateToEsdeSettings = {
+                    showScreen = false
+                    navController.navigate(Routes.ESDE_SETTINGS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -504,6 +513,23 @@ fun NavGraphBuilder.recentAppsScreen(
         SlideInVertically(showScreen) {
             RecentAppsScreen(
                 onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.esdeSettingsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.ESDE_SETTINGS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            ESDESettingsScreen(
+                onNavigateBack = {
                     showScreen = false
                     navController.popBackStack()
                 }
