@@ -5,16 +5,22 @@ import android.content.Context
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.NotificationCountManager
+import javax.inject.Inject
 
 /**
  * Service that listens for notification events and updates the NotificationCountManager.
  * User must grant notification access permission for this service to work.
+ * 
+ * Uses Hilt for dependency injection - the NotificationCountManager is injected
+ * as a singleton and shared across the entire application.
  */
+@AndroidEntryPoint
 class AppNotificationListenerService : NotificationListenerService() {
     
-    private val notificationCountManager: NotificationCountManager
-        get() = NotificationCountManager.getInstance()
+    @Inject
+    lateinit var notificationCountManager: NotificationCountManager
     
     override fun onListenerConnected() {
         super.onListenerConnected()

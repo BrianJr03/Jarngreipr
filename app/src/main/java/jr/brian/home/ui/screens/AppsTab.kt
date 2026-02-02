@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -26,8 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -38,6 +41,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
@@ -54,6 +59,9 @@ import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -129,6 +137,8 @@ fun AppsTab(
     val homeTabDialogState = rememberDialogState<Unit>()
     val createFolderDialogState = rememberDialogState<Unit>()
     val dockAppSelectionDialogState = rememberDialogState<Int>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
 
     val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
@@ -136,6 +146,22 @@ fun AppsTab(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
+
+    val gridState = rememberLazyGridState()
+    var isScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collect { scrolling ->
+                if (scrolling) {
+                    isScrolling = true
+                } else {
+                    delay(300) // Wait 300ms after scrolling stops
+                    isScrolling = false
+                }
+            }
+    }
 
     appOptionsDialogState.item?.let { appInfo ->
         if (appOptionsDialogState.isVisible) {
@@ -260,9 +286,20 @@ fun AppsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onDockSettingsClick = onNavigateToDockSettings
+            onDockSettingsClick = onNavigateToDockSettings,
+            onESDESetupClick = {
+                esdeSetupDialogState.show(SetupStep.Welcome)
+            }
         )
     }
+
+    ESDESetupScreen(
+        dialogState = esdeSetupDialogState,
+        onDismiss = { },
+        onSetupComplete = {
+            wallpaperManager.setESDE()
+        }
+    )
 
     if (createFolderDialogState.isVisible) {
         CreateFolderDialog(
@@ -314,7 +351,12 @@ fun AppsTab(
                         powerViewModel.togglePower()
                     },
                     onLongClick = {
-                        drawerOptionsDialogState.show()
+                        // Show AppsTabOptionsDialog when in free mode with drag unlocked, otherwise show DrawerOptionsDialog
+                        if (isFreeModeEnabled && !isDragLocked) {
+                            appDrawerOptionsDialogState.show()
+                        } else {
+                            drawerOptionsDialogState.show()
+                        }
                     }
                 ),
     ) {
@@ -417,7 +459,8 @@ fun AppsTab(
                 allApps = appsUnfiltered,
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
-                onFolderClick = folderContentsDialogState::show
+                onFolderClick = folderContentsDialogState::show,
+                gridState = gridState
             )
         }
 
@@ -425,7 +468,7 @@ fun AppsTab(
         val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage,
+            visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)

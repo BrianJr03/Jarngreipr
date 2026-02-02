@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -32,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.navigation.NavHostController
 import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
 import jr.brian.home.model.app.AppInfo
@@ -47,6 +50,9 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -112,6 +118,8 @@ fun AppsAndWidgetsTab(
     val createFolderDialogState = rememberDialogState<Unit>()
     val dockAppSelectionDialogState = rememberDialogState<Int>()
     val folderContentsDialogState = rememberDialogState<Folder>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
 
@@ -141,6 +149,21 @@ fun AppsAndWidgetsTab(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
+
+    var isScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collect { scrolling ->
+                if (scrolling) {
+                    isScrolling = true
+                } else {
+                    delay(300) // Wait 300ms after scrolling stops
+                    isScrolling = false
+                }
+            }
+    }
 
     BackHandler(enabled = isPoweredOff) {}
 
@@ -226,7 +249,7 @@ fun AppsAndWidgetsTab(
         }
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage,
+            visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -354,9 +377,20 @@ fun AppsAndWidgetsTab(
             onCreateFolderClick = {
                 createFolderDialogState.show()
             },
-            onDockSettingsClick = onNavigateToDockSettings
+            onDockSettingsClick = onNavigateToDockSettings,
+            onESDESetupClick = {
+                esdeSetupDialogState.show(SetupStep.Welcome)
+            }
         )
     }
+
+    ESDESetupScreen(
+        dialogState = esdeSetupDialogState,
+        onDismiss = { },
+        onSetupComplete = {
+            wallpaperManager.setESDE()
+        }
+    )
 
     if (createFolderDialogState.isVisible) {
         CreateFolderDialog(

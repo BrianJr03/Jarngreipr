@@ -1,9 +1,9 @@
 package jr.brian.home.ui.components.wallpaper
 
 import android.content.Context
-import android.os.Build
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,12 +23,12 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
-import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -59,7 +59,9 @@ fun WallpaperDisplay(
             )
         }
 
-        WallpaperType.TRANSPARENT -> {
+        WallpaperType.TRANSPARENT,
+        WallpaperType.ESDE -> {
+            // Transparent - actual wallpaper is rendered by ESDEWallpaperContainer
             Box(modifier = modifier.fillMaxSize())
         }
 
@@ -100,11 +102,7 @@ fun WallpaperDisplay(
                         val imageLoader = remember {
                             ImageLoader.Builder(context)
                                 .components {
-                                    if (Build.VERSION.SDK_INT >= 28) {
-                                        add(ImageDecoderDecoder.Factory())
-                                    } else {
-                                        add(GifDecoder.Factory())
-                                    }
+                                    add(ImageDecoderDecoder.Factory())
                                 }
                                 .build()
                         }
@@ -143,6 +141,8 @@ fun WallpaperDisplay(
                 } ?: FallbackWallpaper(modifier)
             }
         }
+
+
     }
 }
 
@@ -167,6 +167,7 @@ private fun isUriAccessible(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 private fun VideoWallpaper(
     uri: String,

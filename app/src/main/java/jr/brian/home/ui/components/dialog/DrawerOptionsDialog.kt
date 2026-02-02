@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.dialog
 
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -56,18 +57,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.wallpaper.WallpaperOptionButton
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
 
@@ -80,10 +83,13 @@ fun DrawerOptionsDialog(
     onSettingsClick: () -> Unit,
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
-    onDockSettingsClick: () -> Unit
+    onDockSettingsClick: () -> Unit,
+    onESDESetupClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
+    val setupPreferences = remember { SetupPreferences(context) }
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
@@ -149,7 +155,21 @@ fun DrawerOptionsDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (!isHeaderVisible) {
+                WallpaperOptionsSection(
+                    isVisible = isWallpaperExpanded,
+                    wallpaperManager = wallpaperManager,
+                    setupPreferences = setupPreferences,
+                    mediaPickerLauncher = mediaPickerLauncher,
+                    onBack = { isWallpaperExpanded = false },
+                    onDismiss = onDismiss,
+                    onESDESetupClick = onESDESetupClick
+                )
+
+                AnimatedVisibility(
+                    visible = !isHeaderVisible && !isWallpaperExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -278,60 +298,102 @@ fun DrawerOptionsDialog(
                     }
                 }
 
-                AnimatedVisibility(
-                    visible = isWallpaperExpanded,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        WallpaperOptionButton(
-                            text = stringResource(R.string.settings_wallpaper_default),
-                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.NONE,
-                            onClick = {
-                                wallpaperManager.clearWallpaper()
-                                isWallpaperExpanded = false
-                                onDismiss()
-                            }
-                        )
+            }
+        }
+    }
+}
 
-                        WallpaperOptionButton(
-                            text = stringResource(R.string.settings_wallpaper_transparent),
-                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
-                            onClick = {
-                                wallpaperManager.setTransparent()
-                                isWallpaperExpanded = false
-                                onDismiss()
-                            }
-                        )
+@Composable
+private fun WallpaperOptionsSection(
+    isVisible: Boolean,
+    wallpaperManager: WallpaperManager,
+    setupPreferences: SetupPreferences,
+    mediaPickerLauncher: ActivityResultLauncher<Array<String>>,
+    onBack: () -> Unit,
+    onDismiss: () -> Unit,
+    onESDESetupClick: () -> Unit
+) {
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            WallpaperGridButton(
+                modifier = Modifier.fillMaxWidth(),
+                title = stringResource(R.string.drawer_options_back),
+                onClick = onBack
+            )
 
-                        WallpaperOptionButton(
-                            text = stringResource(R.string.settings_wallpaper_image_picker),
-                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.IMAGE,
-                            onClick = {
-                                mediaPickerLauncher.launch(arrayOf("image/*"))
-                            }
-                        )
-
-                        WallpaperOptionButton(
-                            text = stringResource(R.string.settings_wallpaper_gif_picker),
-                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.GIF,
-                            onClick = {
-                                mediaPickerLauncher.launch(arrayOf("image/gif"))
-                            }
-                        )
-
-                        WallpaperOptionButton(
-                            text = stringResource(R.string.settings_wallpaper_video_picker),
-                            isSelected = wallpaperManager.getWallpaperType() == WallpaperType.VIDEO,
-                            onClick = {
-                                mediaPickerLauncher.launch(arrayOf("video/*"))
-                            }
-                        )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_default),
+                    onClick = {
+                        wallpaperManager.clearWallpaper()
+                        onBack()
+                        onDismiss()
                     }
-                }
+                )
+
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_system),
+                    onClick = {
+                        wallpaperManager.setTransparent()
+                        onBack()
+                        onDismiss()
+                    }
+                )
+
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_image),
+                    onClick = {
+                        mediaPickerLauncher.launch(arrayOf("image/*"))
+                    }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_gif),
+                    onClick = {
+                        mediaPickerLauncher.launch(arrayOf("image/gif"))
+                    }
+                )
+
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_video),
+                    onClick = {
+                        mediaPickerLauncher.launch(arrayOf("video/*"))
+                    }
+                )
+
+                WallpaperGridButton(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.wallpaper_grid_esde),
+                    onClick = {
+                        onBack()
+                        onDismiss()
+                        if (setupPreferences.setupCompleted) {
+                            wallpaperManager.setESDE()
+                        } else {
+                            onESDESetupClick()
+                        }
+                    }
+                )
             }
         }
     }
@@ -453,6 +515,58 @@ private fun QuickAccessIconButton(
             contentDescription = contentDescription,
             tint = Color.White,
             modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
+@Composable
+private fun WallpaperGridButton(
+    modifier: Modifier = Modifier,
+    title: String,
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient(isFocused = isFocused),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = if (isFocused) {
+                    borderBrush(
+                        isFocused = true,
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.8f),
+                            ThemeSecondaryColor.copy(alpha = 0.6f)
+                        )
+                    )
+                } else {
+                    Brush.linearGradient(
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.4f),
+                            ThemeSecondaryColor.copy(alpha = 0.3f)
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onClick() }
+            .focusable()
+            .padding(vertical = 10.dp, horizontal = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
         )
     }
 }
