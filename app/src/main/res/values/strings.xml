@@ -26,6 +26,7 @@
     <string name="app_info_message">Open app info for %1$s</string>
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">Close</string>
+    <string name="drawer_options_back">Back</string>
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
@@ -118,6 +119,13 @@
     <string name="settings_wallpaper_image_picker">Choose Image</string>
     <string name="settings_wallpaper_gif_picker">Choose GIF</string>
     <string name="settings_wallpaper_video_picker">Choose Video</string>
+    <string name="settings_wallpaper_esde">ES-DE</string>
+    <string name="wallpaper_grid_default">Default</string>
+    <string name="wallpaper_grid_system">System</string>
+    <string name="wallpaper_grid_image">Image</string>
+    <string name="wallpaper_grid_gif">GIF</string>
+    <string name="wallpaper_grid_video">Video</string>
+    <string name="wallpaper_grid_esde">ES-DE</string>
 
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
@@ -390,6 +398,11 @@
     <string name="clean_folders_selected_folders">Selected Folders</string>
     <string name="clean_folders_file_extensions">File Extensions (%1$d)</string>
     <string name="clean_folders_files_separator"> • %1$d files</string>
+    <string name="clean_folders_delete_empty_folders">Delete Empty Folders</string>
+    <string name="clean_folders_deleting_empty_folders">Deleting…</string>
+    <string name="clean_folders_empty_folder_confirm_title">Delete Empty Folders</string>
+    <string name="clean_folders_empty_folder_confirm_message">Delete %1$d empty folder(s)?</string>
+    <string name="clean_folders_include_systeminfo">Include folders with only systeminfo.txt</string>
 
     <!-- Header Icons -->
     <string name="header_folder_options">Options</string>
@@ -625,13 +638,108 @@
     <string name="dock_max_apps_description">Select how many apps can be added to the dock</string>
     <string name="dock_size_title">Dock Size</string>
     <string name="dock_color_title">Dock Color</string>
-    <string name="dock_page_visibility_title">Show Dock on Specific Pages</string>
-    <string name="dock_page_visibility_description">Choose which pages display the dock</string>
-    <string name="dock_page_number">Page %1$d</string>
+    <string name="dock_page_visibility_title">Show Dock on Specific Tabs</string>
+    <string name="dock_page_visibility_description">Choose which tabs display the dock</string>
+    <string name="dock_page_number">Tab %1$d</string>
     
     <!-- Volume Controls -->
     <string name="volume_top_screen">Top Screen Volume</string>
     <string name="volume_bottom_screen">Bottom Screen Volume</string>
     <string name="volume_down_description">Volume Down</string>
     <string name="volume_up_description">Volume Up</string>
+
+    <!-- ESDE Setup Wizard -->
+    <string name="esde_setup_close">Close</string>
+    <string name="esde_setup_next">Next</string>
+    <string name="esde_setup_use_default">Use Default</string>
+    <string name="esde_setup_select_folder">Select Folder</string>
+    <string name="esde_setup_skip">Skip</string>
+    <string name="esde_setup_choose_again">Choose Again</string>
+    <string name="esde_setup_continue_anyway">Continue Anyway</string>
+    <string name="esde_setup_grant_permission">Grant Permission</string>
+    <string name="esde_setup_create_scripts">Create Scripts</string>
+    <string name="esde_setup_scripts_done">Done</string>
+    <string name="esde_setup_start_setup">Start Setup</string>
+
+    <!-- ESDE Setup Wizard Step Titles -->
+    <string name="esde_setup_title_welcome">ES-DE x Jarngreipr</string>
+    <string name="esde_setup_title_permissions">Step 1: Storage Permissions</string>
+    <string name="esde_setup_title_permissions_granted">Step 1 Complete</string>
+    <string name="esde_setup_title_scripts_folder">Step 2: ES-DE Scripts Folder</string>
+    <string name="esde_setup_title_create_scripts">Step 3: Create Script Files</string>
+    <string name="esde_setup_title_media_folder">Step 4: Downloaded Media Folder</string>
+    <string name="esde_setup_title_enable_scripts">Step 5: Enable Scripts in ES-DE</string>
+    <string name="esde_setup_title_complete">Setup Complete! 🎉</string>
+    <string name="esde_setup_title_warning">Warning</string>
+
+    <!-- ESDE Setup Wizard Content -->
+    <string name="esde_setup_welcome_content">Before using ES-DE with Jarngreipr, you\'ll need to follow these steps\n\n1. Grant storage permissions\n2. Select ES-DE scripts folder\n3. Create script files\n4. Select downloaded media folder\n5. Enable scripts in ES-DE\n\nIf you\'re familiar with ES-DE Companion, this is the exact same process.</string>
+    <string name="esde_setup_permissions_content">Storage access is required to create scripts and access media.\n\nTap \'Grant Permission\' to open settings. The wizard will continue once granted.</string>
+    <string name="esde_setup_permissions_granted_content">The app can now manage scripts and media files.</string>
+    <string name="esde_setup_scripts_folder_content">Select your ES-DE scripts folder (typically ~/ES-DE/scripts).\n\nTap \'Select Folder\' to choose, or \'Use Default\' for the standard internal storage path.</string>
+    <string name="esde_setup_create_scripts_content">Now we will create the necessary integration scripts in your selected folder.\n\nTap \'Create Scripts\' to proceed, or \'Skip\' if they already exist.</string>
+    <string name="esde_setup_media_folder_content">Select your ES-DE downloaded_media folder.\n\nDefault path:\n/ES-DE/downloaded_media\n\nTap \'Select Folder\' to choose, or \'Use Default\' for internal storage.</string>
+    <string name="esde_setup_enable_scripts_content">Final step! Enable these settings in ES-DE\n\n1. Open ES-DE Menu (START)\n2. Go to Other Settings\n3. Toggle ON \'Custom Event Scripts\'\n4. Toggle ON \'Browsing Custom Events\'</string>
+    <string name="esde_setup_complete_content">You can now switch between ES-DE and any other type of wallpaper.\n\nShout out to @RobZombie9043 for ES-DE Companion and the beauty of open source :)</string>
+
+    <!-- ESDE Setup Wizard Warnings -->
+    <string name="esde_setup_warning_scripts_path">Warning: This doesn\'t look like the ES-DE scripts folder.\n\nSelected: %1$s\n\nES-DE may not find the scripts in this location.\n\nContinue anyway?</string>
+    <string name="esde_setup_warning_media_path">Warning: This doesn\'t look like the ES-DE downloaded_media folder.\n\nSelected: %1$s\n\nArtwork may not display correctly.\n\nContinue anyway?</string>
+    <string name="esde_setup_warning_scripts_missing">Warning: Required scripts are missing from this folder.\n\nWithout these, the app cannot receive game information from ES-DE.\n\nContinue anyway?</string>
+
+    <!-- ESDE Settings Screen -->
+    <string name="esde_settings_title">ES-DE Display Settings</string>
+    <string name="esde_settings_description">Configure ES-DE wallpaper and effects</string>
+    <string name="esde_settings_section_animation">Animation</string>
+    <string name="esde_settings_section_effects">Visual Effects</string>
+    <string name="esde_settings_section_video">Video</string>
+    <string name="esde_settings_animation_style">Animation Style</string>
+    <string name="esde_settings_animation_none">None</string>
+    <string name="esde_settings_animation_fade">Fade</string>
+    <string name="esde_settings_animation_scale_fade">Scale</string>
+    <string name="esde_settings_animation_custom">Custom</string>
+    <string name="esde_settings_animation_duration">Animation Duration</string>
+    <string name="esde_settings_animation_scale">Animation Scale</string>
+    <string name="esde_settings_blur_level">Background Blur</string>
+    <string name="esde_settings_dimming_level">Background Dimming</string>
+    <string name="esde_settings_background_color">Background Color</string>
+    <string name="esde_settings_off">Off</string>
+    <string name="esde_settings_video_enabled">Video Playback</string>
+    <string name="esde_settings_video_enabled_description">Play game videos when browsing</string>
+    <string name="esde_settings_video_delay">Video Delay</string>
+    <string name="esde_settings_video_audio">Video Audio</string>
+    <string name="esde_settings_video_audio_description">Enable audio during video playback</string>
+    <string name="esde_settings_hide_content_on_video">Hide Content During Video</string>
+    <string name="esde_settings_hide_content_on_video_description">Hide all tab content when a video is playing</string>
+    <string name="esde_settings_system_image_type">System Background</string>
+    <string name="esde_settings_system_image_type_description">Choose which media type to show when browsing systems</string>
+    <string name="esde_settings_system_image_none">None</string>
+    <string name="esde_settings_system_image_custom">Custom</string>
+    <string name="esde_settings_system_image_fanart">Fanart</string>
+    <string name="esde_settings_system_image_screenshots">Screenshots</string>
+    <string name="esde_settings_system_image_titlescreens">Title Screens</string>
+    <string name="esde_settings_custom_image">Custom Background Image</string>
+    <string name="esde_settings_custom_image_description">Tap to choose an image or GIF</string>
+    <string name="esde_settings_custom_image_selected">Image selected</string>
+    <string name="esde_settings_custom_image_clear">Clear</string>
+    <string name="esde_settings_game_image_type">Game Background</string>
+    <string name="esde_settings_game_image_type_description">Choose which media type to show when browsing games</string>
+    <string name="esde_settings_game_image_none">None</string>
+    <string name="esde_settings_game_image_screenshots">Screenshots</string>
+    <string name="esde_settings_game_image_fanart">Fanart</string>
+    <string name="esde_settings_game_image_titlescreens">Titles</string>
+    <string name="esde_settings_game_image_covers">Covers</string>
+    <string name="esde_settings_game_image_miximages">Mix</string>
+    <string name="esde_settings_section_logo">System Logo</string>
+    <string name="esde_settings_show_system_logo">Show System Logo</string>
+    <string name="esde_settings_show_system_logo_description">Display system/game logo on wallpaper</string>
+    <string name="esde_settings_logo_alignment">Logo Alignment</string>
+    <string name="esde_settings_logo_alignment_top">Top</string>
+    <string name="esde_settings_logo_alignment_center">Center</string>
+    <string name="esde_settings_logo_alignment_bottom">Bottom</string>
+    <string name="esde_settings_random_system_image">Random System Background</string>
+    <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
+    <string name="esde_settings_section_setup">Setup</string>
+    <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
+    <string name="esde_settings_run_setup_wizard_description">Re-run the setup wizard to configure paths and scripts</string>
 </resources>

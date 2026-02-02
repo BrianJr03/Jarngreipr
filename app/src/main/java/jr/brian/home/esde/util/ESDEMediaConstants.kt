@@ -1,0 +1,31 @@
+package jr.brian.home.esde.util
+
+/**
+ * Constants for ES-DE media paths, folder names, and file extensions.
+ */
+object ESDEMediaConstants {
+    // Base paths
+    const val ESDE_MEDIA_PATH = "/storage/emulated/0/ES-DE/downloaded_media"
+    const val SYSTEM_LOGOS_PATH = "file:///android_asset/system_logos"
+
+    // Media folder names
+    const val FOLDER_FANART = "fanart"
+    const val FOLDER_SCREENSHOTS = "screenshots"
+    const val FOLDER_TITLESCREENS = "titlescreens"
+    const val FOLDER_COVERS = "covers"
+    const val FOLDER_MIXIMAGES = "miximages"
+    const val FOLDER_MARQUEES = "marquees"
+    const val FOLDER_VIDEOS = "videos"
+    const val FOLDER_WHEEL_2D = "images/wheel-2d"
+    const val FOLDER_WHEEL_3D = "images/wheel-3d"
+
+    // File extensions
+    val IMAGE_EXTENSIONS = listOf("png", "jpg", "jpeg", "webp")
+    val IMAGE_EXTENSIONS_WITH_SVG = listOf("png", "jpg", "jpeg", "webp", "svg")
+    val VIDEO_EXTENSIONS = listOf("mp4", "mkv", "avi", "wmv", "mov", "webm")
+
+    // Fallback folder lists
+    val SYSTEM_IMAGE_FALLBACKS = listOf(FOLDER_FANART, FOLDER_SCREENSHOTS, FOLDER_TITLESCREENS)
+    val GAME_IMAGE_FALLBACKS = listOf(FOLDER_SCREENSHOTS, FOLDER_FANART, FOLDER_TITLESCREENS, FOLDER_COVERS, FOLDER_MIXIMAGES)
+    val MARQUEE_FALLBACK_DIRS = listOf(FOLDER_WHEEL_2D, FOLDER_WHEEL_3D)
+}

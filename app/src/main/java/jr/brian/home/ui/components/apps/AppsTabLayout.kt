@@ -7,6 +7,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -58,7 +60,8 @@ fun AppsTabContent(
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
     folders: List<Folder> = emptyList(),
-    onFolderClick: (Folder) -> Unit = {}
+    onFolderClick: (Folder) -> Unit = {},
+    gridState: LazyGridState = rememberLazyGridState()
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -141,7 +144,8 @@ fun AppsTabContent(
                 folders = folders,
                 allApps = allApps,
                 onFolderClick = onFolderClick,
-                isHeaderVisible = isHeaderVisible
+                isHeaderVisible = isHeaderVisible,
+                gridState = gridState
             )
         }
     }

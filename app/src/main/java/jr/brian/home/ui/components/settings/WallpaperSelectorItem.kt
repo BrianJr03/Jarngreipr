@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.wallpaper.WallpaperOptionButton
@@ -53,14 +54,18 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun WallpaperSelectorItem(
     focusRequester: FocusRequester? = null,
     isExpanded: Boolean = false,
-    onExpandChanged: (Boolean) -> Unit = {}
+    onExpandChanged: (Boolean) -> Unit = {},
+    onESDESetupClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
+    val setupPreferences = remember { SetupPreferences(context) }
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
     val mediaPickerLauncher = MediaPickerLauncher(
@@ -216,6 +221,20 @@ fun WallpaperSelectorItem(
                     onClick = {
                         wallpaperManager.setTransparent()
                         onExpandChanged(false)
+                    }
+                )
+
+                WallpaperOptionButton(
+                    text = stringResource(id = R.string.settings_wallpaper_esde),
+                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.ESDE,
+                    onClick = {
+                        if (setupPreferences.setupCompleted) {
+                            wallpaperManager.setESDE()
+                            onExpandChanged(false)
+                        } else {
+                            onExpandChanged(false)
+                            onESDESetupClick()
+                        }
                     }
                 )
             }
