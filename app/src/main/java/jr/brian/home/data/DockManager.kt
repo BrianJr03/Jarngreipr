@@ -34,9 +34,7 @@ class DockManager(context: Context) {
     private fun loadDockApps(): List<String> {
         val slotCount = prefs.getInt(KEY_DOCK_SLOT_COUNT, 0)
         if (slotCount == 0) {
-            val defaultSlot = listOf("")
-            saveDockApps(defaultSlot)
-            return defaultSlot
+            return emptyList()
         }
 
         return (0 until slotCount).map { dockIndex ->
@@ -125,7 +123,7 @@ class DockManager(context: Context) {
     }
 
     private fun loadDockVisibility(): Boolean {
-        return prefs.getBoolean(KEY_DOCK_VISIBLE, false)
+        return prefs.getBoolean(KEY_DOCK_VISIBLE, true)
     }
 
     private fun loadDockVisiblePages(): Set<Int> {
