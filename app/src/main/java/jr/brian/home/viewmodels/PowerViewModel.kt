@@ -21,4 +21,10 @@ class PowerViewModel @Inject constructor() : ViewModel() {
             _isPoweredOff.value = false
         }
     }
+
+    fun powerOff() {
+        if (!_isPoweredOff.value) {
+            _isPoweredOff.value = true
+        }
+    }
 }

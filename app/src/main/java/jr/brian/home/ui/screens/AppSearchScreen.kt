@@ -50,6 +50,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 
 @Composable
@@ -156,14 +157,11 @@ private fun AppGrid(
                     )
                 },
                 onAppDoubleClick = {
-                    // Launch on opposite display from current preference
-                    val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                        DisplayPreference.CURRENT_DISPLAY
-                    } else {
-                        DisplayPreference.PRIMARY_DISPLAY
-                    }
-                    launchApp(context, app.packageName, oppositePreference)
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
                 },
                 onAppLongClick = {
                     selectedApp = app

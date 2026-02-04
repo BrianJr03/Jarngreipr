@@ -40,6 +40,7 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -273,14 +274,11 @@ fun FreePositionedAppsLayout(
                     },
                     onClick = { onAppClick(app) },
                     onDoubleClick = {
-                        // Launch on opposite display from current preference
-                        val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                        val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                            DisplayPreference.CURRENT_DISPLAY
-                        } else {
-                            DisplayPreference.PRIMARY_DISPLAY
-                        }
-                        launchApp(context, app.packageName, oppositePreference)
+                        launchAppOnOppositeDisplay(
+                            context = context,
+                            packageName = app.packageName,
+                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                        )
                     },
                     onLongClick = {
                         if (isDragLocked) {
