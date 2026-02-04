@@ -51,6 +51,7 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -291,16 +292,11 @@ fun AppsModalContent(
                 onAppLongClick = appOptionsDialogState::show,
                 onAppDoubleClick = { app ->
                     onAppOpened()
-                    // Launch on opposite display from current preference
-                    val currentPreference =
-                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference =
-                        if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                            DisplayPreference.CURRENT_DISPLAY
-                        } else {
-                            DisplayPreference.PRIMARY_DISPLAY
-                        }
-                    launchApp(context, app.packageName, oppositePreference)
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
                     scope.launch {
                         gridState.scrollToItem(0)
                     }

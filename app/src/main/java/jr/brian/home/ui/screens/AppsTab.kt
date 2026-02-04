@@ -78,6 +78,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 
@@ -433,16 +434,11 @@ fun AppsTab(
                     appOptionsDialogState.show(app)
                 },
                 onAppDoubleClick = { app ->
-                    // Launch on opposite display from current preference
-                    val currentPreference =
-                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference =
-                        if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                            DisplayPreference.CURRENT_DISPLAY
-                        } else {
-                            DisplayPreference.PRIMARY_DISPLAY
-                        }
-                    launchApp(context, app.packageName, oppositePreference)
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
                 },
                 onSettingsClick = onSettingsClick,
                 powerViewModel = powerViewModel,
@@ -485,6 +481,13 @@ fun AppsTab(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = { app ->
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     )
                 },
                 onAppLongClick = { app ->

@@ -78,6 +78,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
@@ -266,6 +267,14 @@ fun FolderContentsDialog(
                                     )
                                     onDismiss()
                                 },
+                                onDoubleClick = {
+                                    launchAppOnOppositeDisplay(
+                                        context = context,
+                                        packageName = app.packageName,
+                                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                                    )
+                                    onDismiss()
+                                },
                                 onLongClick = {
                                     selectedAppForOptions = app
                                 }
@@ -374,6 +383,7 @@ private fun FolderAppItem(
     customIconManager: CustomIconManager,
     showAppNames: Boolean,
     onClick: () -> Unit,
+    onDoubleClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -402,6 +412,7 @@ private fun FolderAppItem(
             .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
+                onDoubleClick = onDoubleClick,
                 onLongClick = onLongClick
             )
             .focusable()
