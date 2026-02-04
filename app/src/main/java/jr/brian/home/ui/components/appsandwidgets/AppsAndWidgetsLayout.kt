@@ -85,32 +85,24 @@ fun TabContent(
             onEditModeToggle = onEditModeToggle
         )
 
-        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty() && folders.isEmpty()
-
-        if (isTabEmpty && !editModeEnabled) {
-            EmptyWidgetsState(
-                onAddClick = onShowOptionsDialog
-            )
-        } else {
-            WidgetsAndAppsGrid(
-                gridState = gridState,
-                columns = columns,
-                appsFirst = appsFirst,
-                displayedApps = displayedApps,
-                folders = folders,
-                allApps = allApps,
-                widgets = widgets,
-                editModeEnabled = editModeEnabled,
-                pageIndex = pageIndex,
-                viewModel = viewModel,
-                onNavigateToResize = onNavigateToResize,
-                swapModeEnabled = swapModeEnabled,
-                swapSourceWidgetId = swapSourceWidgetId,
-                onSwapComplete = onSwapModeDisabled,
-                onSwapModeEnabled = onSwapModeEnabled,
-                onFolderClick = onFolderClick
-            )
-        }
+        WidgetsAndAppsGrid(
+            gridState = gridState,
+            columns = columns,
+            appsFirst = appsFirst,
+            displayedApps = displayedApps,
+            folders = folders,
+            allApps = allApps,
+            widgets = widgets,
+            editModeEnabled = editModeEnabled,
+            pageIndex = pageIndex,
+            viewModel = viewModel,
+            onNavigateToResize = onNavigateToResize,
+            swapModeEnabled = swapModeEnabled,
+            swapSourceWidgetId = swapSourceWidgetId,
+            onSwapComplete = onSwapModeDisabled,
+            onSwapModeEnabled = onSwapModeEnabled,
+            onFolderClick = onFolderClick
+        )
     }
 }
 

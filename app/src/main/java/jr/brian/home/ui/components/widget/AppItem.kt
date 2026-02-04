@@ -36,6 +36,7 @@ import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
@@ -75,6 +76,13 @@ fun AppItem(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference
+                    )
+                },
+                onDoubleClick = {
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     )
                 },
                 onLongClick = { optionsDialogState.show() }

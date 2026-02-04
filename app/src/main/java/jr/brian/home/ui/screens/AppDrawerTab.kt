@@ -71,6 +71,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -313,6 +314,13 @@ fun AppDrawerTab(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = { app ->
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     )
                 },
                 onAppLongClick = { _ -> },

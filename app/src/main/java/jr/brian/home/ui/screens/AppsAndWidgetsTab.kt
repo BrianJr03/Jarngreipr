@@ -70,6 +70,7 @@ import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -262,6 +263,13 @@ fun AppsAndWidgetsTab(
                         context = context,
                         packageName = app.packageName,
                         displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = { app ->
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     )
                 },
                 onAppLongClick = { _ -> },
