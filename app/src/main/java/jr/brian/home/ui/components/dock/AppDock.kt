@@ -46,6 +46,7 @@ fun AppDock(
     apps: List<AppInfo>,
     modifier: Modifier = Modifier,
     onAppClick: (AppInfo) -> Unit,
+    onAppDoubleClick: (AppInfo) -> Unit = {},
     onAppLongClick: (AppInfo) -> Unit,
     onEmptySlotClick: (Int) -> Unit,
     onEmptySlotLongClick: (Int) -> Unit
@@ -91,6 +92,7 @@ fun AppDock(
                             app = app,
                             size = dockSize,
                             onClick = { onAppClick(app) },
+                            onDoubleClick = { onAppDoubleClick(app) },
                             onLongClick = { onAppLongClick(app) }
                         )
                     } else {
@@ -112,6 +114,7 @@ private fun DockAppItem(
     app: AppInfo,
     size: DockSize,
     onClick: () -> Unit,
+    onDoubleClick: () -> Unit = {},
     onLongClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -136,6 +139,7 @@ private fun DockAppItem(
             .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
+                onDoubleClick = onDoubleClick,
                 onLongClick = onLongClick
             )
             .focusable(),

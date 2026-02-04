@@ -35,6 +35,8 @@ import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.wallpaper.WallpaperState
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
@@ -46,57 +48,73 @@ fun ESDEWallpaperContainer(
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     val rememberContent = remember { content }
+    val wallpaperManager = LocalWallpaperManager.current
+    val wallpaperType = wallpaperManager.getWallpaperType()
+    
+    // Use transparent background when "System" wallpaper is selected,
+    // otherwise use ESDE background color
+    val backgroundColor = if (wallpaperType == WallpaperType.TRANSPARENT) {
+        Color.Transparent
+    } else {
+        state.backgroundColor
+    }
+    
+    // Only show ESDE wallpaper content when ESDE wallpaper type is selected
+    val showEsdeContent = wallpaperType == WallpaperType.ESDE
+    
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(state.backgroundColor)
+            .background(backgroundColor)
     ) {
-        AnimatedWallpaperImage(
-            imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-            modifier = Modifier.fillMaxSize(),
-            blurLevel = state.blurLevel,
-            animationStyle = state.animationStyle,
-            animationDuration = state.animationDuration,
-            animationScale = state.animationScale
-        )
-
-        if (state.isVideoPlaying && state.videoPath != null) {
-            ESDEVideoPlayer(
-                videoPath = state.videoPath,
-                audioEnabled = state.videoAudioEnabled,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        if (!state.isVideoPlaying) {
-            DimmingOverlay(alpha = state.dimmingLevel)
-        }
-
-        val isUsingDefaultBackground = state.currentImagePath == null
-        
-        if (
-            state.showSystemLogo
-            && state.marqueePath != null
-            && !state.isVideoPlaying
-        ) {
-            val logoAlignment = when (state.logoAlignment) {
-                LogoAlignment.Top -> Alignment.TopCenter
-                LogoAlignment.Center -> Alignment.Center
-                LogoAlignment.Bottom -> Alignment.BottomCenter
-            }
-            MarqueeImage(
-                marqueePath = state.marqueePath,
-                modifier = Modifier
-                    .size(300.dp, 150.dp)
-                    .align(logoAlignment),
-                animate = isUsingDefaultBackground,
+        if (showEsdeContent) {
+            AnimatedWallpaperImage(
+                imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
+                modifier = Modifier.fillMaxSize(),
+                blurLevel = state.blurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
                 animationScale = state.animationScale
             )
+
+            if (state.isVideoPlaying && state.videoPath != null) {
+                ESDEVideoPlayer(
+                    videoPath = state.videoPath,
+                    audioEnabled = state.videoAudioEnabled,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            if (!state.isVideoPlaying) {
+                DimmingOverlay(alpha = state.dimmingLevel)
+            }
+
+            val isUsingDefaultBackground = state.currentImagePath == null
+            
+            if (
+                state.showSystemLogo
+                && state.marqueePath != null
+                && !state.isVideoPlaying
+            ) {
+                val logoAlignment = when (state.logoAlignment) {
+                    LogoAlignment.Top -> Alignment.TopCenter
+                    LogoAlignment.Center -> Alignment.Center
+                    LogoAlignment.Bottom -> Alignment.BottomCenter
+                }
+                MarqueeImage(
+                    marqueePath = state.marqueePath,
+                    modifier = Modifier
+                        .size(300.dp, 150.dp)
+                        .align(logoAlignment),
+                    animate = isUsingDefaultBackground,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale
+                )
+            }
         }
 
-        val shouldShowContent = !(state.hideContentOnVideo && state.isVideoPlaying)
+        val shouldShowContent = !(state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent)
         if (shouldShowContent) {
             rememberContent?.invoke(this)
         }
