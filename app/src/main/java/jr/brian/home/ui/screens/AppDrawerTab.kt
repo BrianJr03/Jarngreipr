@@ -68,6 +68,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
@@ -140,6 +141,10 @@ fun AppDrawerTab(
     val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
     val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
+    val esdePrefsManager = LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    val drawerOpacity = esdePrefsState.appDrawerOpacityFloat
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = scrollState,
@@ -205,6 +210,7 @@ fun AppDrawerTab(
                     showAppDrawer = showAppDrawer.value,
                     showDrawerOptionsDialog = drawerOptionsDialogState.isVisible,
                     showHomeTabDialog = homeTabDialogState.isVisible,
+                    drawerOpacity = drawerOpacity,
                     onDoubleTap = { powerViewModel.togglePower() },
                     onLongPress = { drawerOptionsDialogState.show() },
                     apps = filteredApps,
@@ -363,6 +369,7 @@ private fun DrawerItem(
     showAppDrawer: Boolean,
     showDrawerOptionsDialog: Boolean,
     showHomeTabDialog: Boolean,
+    drawerOpacity: Float,
     onDoubleTap: () -> Unit,
     onLongPress: () -> Unit,
     apps: List<AppInfo>,
@@ -396,6 +403,7 @@ private fun DrawerItem(
             DrawerContent(
                 height = height,
                 alpha = alpha,
+                drawerOpacity = drawerOpacity,
                 showAppDrawer = showAppDrawer,
                 apps = apps,
                 appsUnfiltered = appsUnfiltered,
@@ -441,6 +449,7 @@ private fun DrawerTouchArea(
 private fun DrawerContent(
     height: androidx.compose.ui.unit.Dp,
     alpha: Float,
+    drawerOpacity: Float,
     showAppDrawer: Boolean,
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
@@ -455,7 +464,7 @@ private fun DrawerContent(
             .requiredHeight(height)
             .padding(top = 24.dp)
             .background(
-                OledBackgroundColor,
+                OledBackgroundColor.copy(alpha = drawerOpacity),
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
             )
             .alpha(if (showAppDrawer) alpha else 0f)

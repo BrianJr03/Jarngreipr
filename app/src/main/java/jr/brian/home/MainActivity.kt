@@ -22,6 +22,7 @@ import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.ScreensaverBehavior
 import java.io.File
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.viewmodels.PowerViewModel
@@ -82,9 +83,15 @@ class MainActivity : ComponentActivity() {
                         }
                         esdeEventListener.onScreensaverStarted = {
                             esdeViewModel.handleScreensaverStarted()
+                            if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
+                                powerViewModel.powerOff()
+                            }
                         }
                         esdeEventListener.onScreensaverEnded = { _ ->
                             esdeViewModel.handleScreensaverEnded()
+                            if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
+                                powerViewModel.powerOn()
+                            }
                         }
                         esdeEventListener.onScreensaverGameSelected =
                             { gameFilename, _, systemName ->

@@ -32,4 +32,23 @@ object ESDEMediaConstants {
     val SYSTEM_IMAGE_FALLBACKS = listOf(FOLDER_FANART, FOLDER_SCREENSHOTS, FOLDER_TITLESCREENS)
     val GAME_IMAGE_FALLBACKS = listOf(FOLDER_SCREENSHOTS, FOLDER_FANART, FOLDER_TITLESCREENS, FOLDER_COVERS, FOLDER_MIXIMAGES)
     val MARQUEE_FALLBACK_DIRS = listOf(FOLDER_WHEEL_2D, FOLDER_WHEEL_3D)
+
+    /**
+     * Maps system variants to their parent systems for media lookup.
+     * When ES-DE reports a system like "snes-msu1", we should look for media
+     * under the parent "snes" folder since that's where the assets are stored.
+     */
+    val SYSTEM_MEDIA_ALIASES = mapOf(
+        "snes-msu1" to "snes",
+        "snesna-msu1" to "snesna",
+        "sfc-msu1" to "sfc"
+    )
+
+    /**
+     * Returns the system name to use for media lookups.
+     * Maps variant systems to their parent systems where media is typically stored.
+     */
+    fun getMediaSystemName(systemName: String): String {
+        return SYSTEM_MEDIA_ALIASES[systemName] ?: systemName
+    }
 }

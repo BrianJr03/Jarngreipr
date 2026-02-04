@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,11 +22,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.settings.ScreenHeader
+import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.sections.appearanceSection
 import jr.brian.home.ui.components.settings.sections.extrasSection
 import jr.brian.home.ui.components.settings.sections.layoutSection
@@ -185,6 +191,22 @@ private fun SettingsContent(
         contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item(key = "coffee") {
+            val url = stringResource(R.string.settings_buy_me_coffee_url)
+            SettingItem(
+                title = stringResource(id = R.string.settings_buy_me_coffee_title),
+                description = stringResource(id = R.string.settings_buy_me_coffee_description),
+                icon = Icons.Default.Coffee,
+                onClick = {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        url.toUri()
+                    )
+                    context.startActivity(intent)
+                },
+            )
+        }
+
         appearanceSection(
             expandedItem = expandedItem,
             onExpandedItemChange = { expandedItem = it },

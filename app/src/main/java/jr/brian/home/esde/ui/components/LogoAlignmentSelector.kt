@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,10 +32,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun LogoAlignmentSelector(
@@ -48,25 +44,7 @@ fun LogoAlignmentSelector(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    } else {
-                        listOf(OledCardLightColor, OledCardColor)
-                    }
-                ),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .border(
-                width = if (isFocused) 2.dp else 0.dp,
-                color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
-                shape = RoundedCornerShape(16.dp)
-            )
+            .focusableSettingCard(isFocused)
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp)

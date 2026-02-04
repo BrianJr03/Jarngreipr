@@ -22,9 +22,19 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_HEIGHT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_WIDTH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_GAME_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
@@ -69,6 +79,21 @@ class ESDEPreferencesManager(context: Context) {
             LogoAlignment.Center
         }
         
+        val screensaverBehaviorName = prefs.getString(KEY_SCREENSAVER_BEHAVIOR, ScreensaverBehavior.ShowContent.name)
+        val screensaverBehavior = try {
+            val behaviorName = screensaverBehaviorName ?: ScreensaverBehavior.ShowContent.name
+            // Migrate old Blackout and DimOverlay to PowerOff
+            when (behaviorName) {
+                "Blackout", "DimOverlay" -> ScreensaverBehavior.PowerOff
+                else -> ScreensaverBehavior.valueOf(behaviorName)
+            }
+        } catch (_: IllegalArgumentException) {
+            ScreensaverBehavior.ShowContent
+        }
+
+        val musicVideoBehaviorName = prefs.getString(KEY_MUSIC_VIDEO_BEHAVIOR, MusicVideoBehavior.Duck.value)
+        val musicVideoBehavior = MusicVideoBehavior.fromValue(musicVideoBehaviorName ?: MusicVideoBehavior.Duck.value)
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -90,7 +115,18 @@ class ESDEPreferencesManager(context: Context) {
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
-            customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null)
+            customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null),
+            marqueeWidth = prefs.getInt(KEY_MARQUEE_WIDTH, 300),
+            marqueeHeight = prefs.getInt(KEY_MARQUEE_HEIGHT, 150),
+            screensaverBehavior = screensaverBehavior,
+            // Music settings
+            musicEnabled = prefs.getBoolean(KEY_MUSIC_ENABLED, false),
+            musicPath = prefs.getString(KEY_MUSIC_PATH, null),
+            musicSystemEnabled = prefs.getBoolean(KEY_MUSIC_SYSTEM_ENABLED, true),
+            musicGameEnabled = prefs.getBoolean(KEY_MUSIC_GAME_ENABLED, true),
+            musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
+            musicVideoBehavior = musicVideoBehavior,
+            appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100)
         )
     }
 
@@ -207,5 +243,63 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
         }
+    }
+
+    fun setMarqueeWidth(width: Int) {
+        val coercedWidth = width.coerceIn(100, 600)
+        _state.value = _state.value.copy(marqueeWidth = coercedWidth)
+        prefs.edit { putInt(KEY_MARQUEE_WIDTH, coercedWidth) }
+    }
+
+    fun setMarqueeHeight(height: Int) {
+        val coercedHeight = height.coerceIn(50, 400)
+        _state.value = _state.value.copy(marqueeHeight = coercedHeight)
+        prefs.edit { putInt(KEY_MARQUEE_HEIGHT, coercedHeight) }
+    }
+
+    fun setScreensaverBehavior(behavior: ScreensaverBehavior) {
+        _state.value = _state.value.copy(screensaverBehavior = behavior)
+        prefs.edit { putString(KEY_SCREENSAVER_BEHAVIOR, behavior.name) }
+    }
+
+    // Music settings
+    fun setMusicEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(musicEnabled = enabled)
+        prefs.edit { putBoolean(KEY_MUSIC_ENABLED, enabled) }
+    }
+
+    fun setMusicPath(path: String?) {
+        _state.value = _state.value.copy(musicPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_MUSIC_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_MUSIC_PATH) }
+        }
+    }
+
+    fun setMusicSystemEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(musicSystemEnabled = enabled)
+        prefs.edit { putBoolean(KEY_MUSIC_SYSTEM_ENABLED, enabled) }
+    }
+
+    fun setMusicGameEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(musicGameEnabled = enabled)
+        prefs.edit { putBoolean(KEY_MUSIC_GAME_ENABLED, enabled) }
+    }
+
+    fun setMusicScreensaverEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(musicScreensaverEnabled = enabled)
+        prefs.edit { putBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, enabled) }
+    }
+
+    fun setMusicVideoBehavior(behavior: MusicVideoBehavior) {
+        _state.value = _state.value.copy(musicVideoBehavior = behavior)
+        prefs.edit { putString(KEY_MUSIC_VIDEO_BEHAVIOR, behavior.value) }
+    }
+
+    fun setAppDrawerOpacity(opacity: Int) {
+        val coercedOpacity = opacity.coerceIn(0, 100)
+        _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
+        prefs.edit { putInt(KEY_APP_DRAWER_OPACITY, coercedOpacity) }
     }
 }
