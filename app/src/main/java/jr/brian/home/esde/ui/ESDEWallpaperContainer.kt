@@ -200,6 +200,7 @@ private fun MarqueeImage(
     val imageLoader = remember {
         ImageLoader.Builder(context)
             .components {
+                add(ImageDecoderDecoder.Factory())
                 add(SvgDecoder.Factory())
             }
             .build()

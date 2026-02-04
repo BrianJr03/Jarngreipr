@@ -11,8 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -31,6 +37,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -191,5 +198,103 @@ fun ToggleSetting(
                 )
             )
         }
+    }
+}
+
+@Composable
+fun PathSetting(
+    title: String,
+    description: String,
+    currentPath: String?,
+    defaultText: String,
+    onSelectPath: () -> Unit,
+    onClearPath: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = if (isFocused) {
+                        listOf(
+                            ThemePrimaryColor.copy(alpha = 0.3f),
+                            ThemeSecondaryColor.copy(alpha = 0.2f)
+                        )
+                    } else {
+                        listOf(OledCardLightColor, OledCardColor)
+                    }
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onSelectPath() }
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            IconButton(onClick = onSelectPath) {
+                Icon(
+                    imageVector = Icons.Default.FolderOpen,
+                    contentDescription = "Select folder",
+                    tint = ThemePrimaryColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            if (currentPath != null) {
+                IconButton(onClick = onClearPath) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear path",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = currentPath ?: defaultText,
+            color = if (currentPath != null) ThemePrimaryColor else Color.Gray,
+            fontSize = 12.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        )
     }
 }

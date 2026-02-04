@@ -186,10 +186,14 @@ class ESDEViewModel @Inject constructor(
 
     fun handleGameStarted() {
         stopVideo()
-        _wallpaperState.value = _wallpaperState.value.copy(
-            dimmingLevel = 1.0f,
-            marqueePath = null
-        )
+        
+        // If persistOnGameLaunch is enabled, keep the current wallpaper and marquee visible
+        if (!prefs.state.value.persistOnGameLaunch) {
+            _wallpaperState.value = _wallpaperState.value.copy(
+                dimmingLevel = 1.0f,
+                marqueePath = null
+            )
+        }
     }
 
     fun handleGameEnded() {
@@ -236,7 +240,23 @@ class ESDEViewModel @Inject constructor(
             return systemImageCache[systemName]
         }
 
-        // First check system_images folder inside downloaded_media (matches ES-DE Companion structure)
+        // First check custom system_images path if configured
+        val customImagesPath = prefsState.customSystemImagesPath
+        if (customImagesPath != null) {
+            val customImagesDir = File(customImagesPath)
+            if (customImagesDir.exists() && customImagesDir.isDirectory) {
+                for (ext in IMAGE_EXTENSIONS) {
+                    val customImage = File(customImagesDir, "$systemName.$ext")
+                    if (customImage.exists()) {
+                        Log.d(TAG, "Found custom system image: ${customImage.absolutePath}")
+                        systemImageCache[systemName] = customImage.absolutePath
+                        return customImage.absolutePath
+                    }
+                }
+            }
+        }
+
+        // Then check system_images folder inside downloaded_media (matches ES-DE Companion structure)
         // This contains system-level background images like n64.png, snes.png, etc.
         val systemImagesDir = File(mediaPath, "system_images")
         if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
@@ -284,6 +304,23 @@ class ESDEViewModel @Inject constructor(
     }
 
     private fun getSystemLogoPath(systemName: String): String? {
+        val prefsState = prefs.state.value
+        
+        // First check custom system_logos path if configured
+        val customLogosPath = prefsState.customSystemLogosPath
+        if (customLogosPath != null) {
+            val customLogosDir = File(customLogosPath)
+            if (customLogosDir.exists() && customLogosDir.isDirectory) {
+                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                    val customLogo = File(customLogosDir, "$systemName.$ext")
+                    if (customLogo.exists()) {
+                        Log.d(TAG, "Found custom system logo: ${customLogo.absolutePath}")
+                        return customLogo.absolutePath
+                    }
+                }
+            }
+        }
+        
         // Check user's system_logos folder inside downloaded_media (matches ES-DE Companion structure)
         // e.g. downloaded_media/system_logos/n64.svg
         val userLogosDir = File(mediaPath, "system_logos")

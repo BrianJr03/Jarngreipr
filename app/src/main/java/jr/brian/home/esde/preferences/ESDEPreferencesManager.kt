@@ -20,6 +20,9 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
@@ -84,7 +87,10 @@ class ESDEPreferencesManager(context: Context) {
             logoAlignment = logoAlignment,
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
             hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false),
-            powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true)
+            powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
+            persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
+            customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
+            customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null)
         )
     }
 
@@ -178,5 +184,28 @@ class ESDEPreferencesManager(context: Context) {
     fun setPowerEventsEnabled(enabled: Boolean) {
         _state.value = _state.value.copy(powerEventsEnabled = enabled)
         prefs.edit { putBoolean(KEY_POWER_EVENTS_ENABLED, enabled) }
+    }
+
+    fun setPersistOnGameLaunch(persist: Boolean) {
+        _state.value = _state.value.copy(persistOnGameLaunch = persist)
+        prefs.edit { putBoolean(KEY_PERSIST_ON_GAME_LAUNCH, persist) }
+    }
+
+    fun setCustomSystemLogosPath(path: String?) {
+        _state.value = _state.value.copy(customSystemLogosPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_CUSTOM_SYSTEM_LOGOS_PATH) }
+        }
+    }
+
+    fun setCustomSystemImagesPath(path: String?) {
+        _state.value = _state.value.copy(customSystemImagesPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
+        }
     }
 }
