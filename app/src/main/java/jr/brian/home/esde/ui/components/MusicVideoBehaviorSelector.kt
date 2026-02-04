@@ -30,14 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.SystemImageType
+import jr.brian.home.esde.preferences.MusicVideoBehavior
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
-fun SystemImageTypeSelector(
-    selectedType: SystemImageType,
-    onTypeSelected: (SystemImageType) -> Unit
+fun MusicVideoBehaviorSelector(
+    selectedBehavior: MusicVideoBehavior,
+    onBehaviorSelected: (MusicVideoBehavior) -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -50,7 +50,7 @@ fun SystemImageTypeSelector(
             .padding(16.dp)
     ) {
         Text(
-            text = stringResource(R.string.esde_settings_system_image_type),
+            text = stringResource(R.string.esde_settings_music_video_behavior),
             color = Color.White,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
@@ -59,7 +59,7 @@ fun SystemImageTypeSelector(
         Spacer(modifier = Modifier.height(4.dp))
         
         Text(
-            text = stringResource(R.string.esde_settings_system_image_type_description),
+            text = stringResource(R.string.esde_settings_music_video_behavior_description),
             color = Color.Gray,
             fontSize = 14.sp
         )
@@ -70,11 +70,11 @@ fun SystemImageTypeSelector(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SystemImageType.entries.forEach { type ->
-                SystemImageTypeChip(
-                    type = type,
-                    isSelected = type == selectedType,
-                    onClick = { onTypeSelected(type) },
+            MusicVideoBehavior.entries.forEach { behavior ->
+                MusicVideoBehaviorChip(
+                    behavior = behavior,
+                    isSelected = behavior == selectedBehavior,
+                    onClick = { onBehaviorSelected(behavior) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -83,19 +83,18 @@ fun SystemImageTypeSelector(
 }
 
 @Composable
-private fun SystemImageTypeChip(
-    type: SystemImageType,
+private fun MusicVideoBehaviorChip(
+    behavior: MusicVideoBehavior,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val typeName = when (type) {
-        SystemImageType.None -> stringResource(R.string.esde_settings_system_image_none)
-        SystemImageType.Fanart -> stringResource(R.string.esde_settings_system_image_fanart)
-        SystemImageType.Screenshots -> stringResource(R.string.esde_settings_system_image_screenshots)
-        SystemImageType.TitleScreens -> stringResource(R.string.esde_settings_system_image_titlescreens)
+    val behaviorName = when (behavior) {
+        MusicVideoBehavior.Continue -> stringResource(R.string.esde_settings_music_video_continue)
+        MusicVideoBehavior.Duck -> stringResource(R.string.esde_settings_music_video_duck)
+        MusicVideoBehavior.Pause -> stringResource(R.string.esde_settings_music_video_pause)
     }
 
     Box(
@@ -122,7 +121,7 @@ private fun SystemImageTypeChip(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = typeName,
+            text = behaviorName,
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium

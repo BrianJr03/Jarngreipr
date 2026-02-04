@@ -34,7 +34,9 @@ import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.wallpaper.WallpaperState
+import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
@@ -81,10 +83,6 @@ fun ESDEWallpaperContainer(
                 )
             }
 
-            if (!state.isVideoPlaying) {
-                DimmingOverlay(alpha = state.dimmingLevel)
-            }
-
             val isUsingDefaultBackground = state.currentImagePath == null
             
             if (
@@ -100,7 +98,7 @@ fun ESDEWallpaperContainer(
                 MarqueeImage(
                     marqueePath = state.marqueePath,
                     modifier = Modifier
-                        .size(300.dp, 150.dp)
+                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp)
                         .align(logoAlignment),
                     animate = isUsingDefaultBackground,
                     animationStyle = state.animationStyle,
@@ -110,9 +108,27 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        val shouldShowContent = !(state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent)
+        val hideForVideo = state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent
+        val hideForScreensaver = state.isScreensaverActive && 
+            state.screensaverBehavior == ScreensaverBehavior.PowerOff && 
+            showEsdeContent
+        val shouldShowContent = !hideForVideo && !hideForScreensaver
+
+        if (state.isScreensaverActive &&
+            state.screensaverBehavior == ScreensaverBehavior.PowerOff && 
+            showEsdeContent
+        ) {
+            PoweredOffScreen(
+                onPowerOn = {}
+            )
+        }
+
         if (shouldShowContent) {
             rememberContent?.invoke(this)
+        }
+
+        if (showEsdeContent && !state.isVideoPlaying) {
+            DimmingOverlay(alpha = state.dimmingLevel)
         }
     }
 }

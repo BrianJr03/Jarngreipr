@@ -31,13 +31,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.R
-import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.AnimationStyleSelector
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
+import jr.brian.home.esde.ui.components.MarqueeSizeSetting
+import jr.brian.home.esde.ui.components.MusicVideoBehaviorSelector
 import jr.brian.home.esde.ui.components.PathSetting
+import jr.brian.home.esde.ui.components.ScreensaverBehaviorSelector
 import jr.brian.home.esde.ui.components.SectionHeader
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
@@ -80,6 +82,17 @@ fun ESDESettingsScreen(
         }
     }
 
+    val musicFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            val path = getPathFromUri(it)
+            if (path != null) {
+                preferencesManager.setMusicPath(path)
+            }
+        }
+    }
+
     Scaffold(
         containerColor = OledBackgroundColor
     ) { innerPadding ->
@@ -115,16 +128,8 @@ fun ESDESettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
+                        Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_animation))
-                    }
-
-                    item {
-                        AnimationStyleSelector(
-                            selectedStyle = prefsState.animationStyle,
-                            onStyleSelected = { style ->
-                                preferencesManager.setAnimationStyle(style)
-                            }
-                        )
                     }
 
                     item {
@@ -140,23 +145,78 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    if (prefsState.animationStyle in listOf(
-                            AnimationStyle.ScaleFade,
-                            AnimationStyle.Custom
+                    item {
+                        SliderSetting(
+                            title = stringResource(R.string.esde_settings_animation_scale),
+                            value = prefsState.animationScale,
+                            valueRange = 0.5f..1.0f,
+                            steps = 9,
+                            valueText = "${(prefsState.animationScale * 100).toInt()}%",
+                            onValueChange = { scale ->
+                                preferencesManager.setAnimationScale(scale)
+                            }
                         )
-                    ) {
-                        item {
-                            SliderSetting(
-                                title = stringResource(R.string.esde_settings_animation_scale),
-                                value = prefsState.animationScale,
-                                valueRange = 0.5f..1.0f,
-                                steps = 9,
-                                valueText = "${(prefsState.animationScale * 100).toInt()}%",
-                                onValueChange = { scale ->
-                                    preferencesManager.setAnimationScale(scale)
-                                }
-                            )
-                        }
+                    }
+
+                    item {
+                        AnimationStyleSelector(
+                            selectedStyle = prefsState.animationStyle,
+                            onStyleSelected = { style ->
+                                preferencesManager.setAnimationStyle(style)
+                            }
+                        )
+                    }
+
+                    // App Drawer Section
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_app_drawer))
+                    }
+
+                    item {
+                        SliderSetting(
+                            title = stringResource(R.string.esde_settings_app_drawer_opacity),
+                            value = prefsState.appDrawerOpacity.toFloat(),
+                            valueRange = 0f..100f,
+                            steps = 19,
+                            valueText = "${prefsState.appDrawerOpacity}%",
+                            onValueChange = { opacity ->
+                                preferencesManager.setAppDrawerOpacity(opacity.toInt())
+                            }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_custom_paths))
+                    }
+
+                    item {
+                        PathSetting(
+                            title = stringResource(R.string.esde_settings_custom_system_images_path),
+                            description = stringResource(R.string.esde_settings_custom_system_images_path_description),
+                            currentPath = prefsState.customSystemImagesPath,
+                            defaultText = stringResource(R.string.esde_settings_path_not_set),
+                            onSelectPath = { systemImagesFolderPicker.launch(null) },
+                            onClearPath = {
+                                preferencesManager.setCustomSystemImagesPath(null)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
+                        PathSetting(
+                            title = stringResource(R.string.esde_settings_custom_system_logos_path),
+                            description = stringResource(R.string.esde_settings_custom_system_logos_path_description),
+                            currentPath = prefsState.customSystemLogosPath,
+                            defaultText = stringResource(R.string.esde_settings_path_not_set),
+                            onSelectPath = { systemLogosFolderPicker.launch(null) },
+                            onClearPath = {
+                                preferencesManager.setCustomSystemLogosPath(null)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
                     }
 
                     item {
@@ -165,32 +225,10 @@ fun ESDESettingsScreen(
                     }
 
                     item {
-                        SystemImageTypeSelector(
-                            selectedType = prefsState.systemImageType,
-                            onTypeSelected = { type ->
-                                preferencesManager.setSystemImageType(type)
-                                viewModel.refreshSystemImage()
-                            }
-                        )
-                    }
-
-                    item {
-                        ToggleSetting(
-                            title = stringResource(R.string.esde_settings_random_system_image),
-                            description = stringResource(R.string.esde_settings_random_system_image_description),
-                            checked = prefsState.randomSystemImage,
-                            onCheckedChange = { random ->
-                                preferencesManager.setRandomSystemImage(random)
-                                viewModel.refreshSystemImage()
-                            }
-                        )
-                    }
-
-                    item {
-                        GameImageTypeSelector(
-                            selectedType = prefsState.gameImageType,
-                            onTypeSelected = { type ->
-                                preferencesManager.setGameImageType(type)
+                        BackgroundColorSelector(
+                            selectedColor = Color(prefsState.backgroundColor),
+                            onColorSelected = { color ->
+                                preferencesManager.setBackgroundColor(color.toArgb())
                             }
                         )
                     }
@@ -225,67 +263,37 @@ fun ESDESettingsScreen(
                     }
 
                     item {
-                        BackgroundColorSelector(
-                            selectedColor = Color(prefsState.backgroundColor),
-                            onColorSelected = { color ->
-                                preferencesManager.setBackgroundColor(color.toArgb())
+                        GameImageTypeSelector(
+                            selectedType = prefsState.gameImageType,
+                            onTypeSelected = { type ->
+                                preferencesManager.setGameImageType(type)
                             }
                         )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(text = stringResource(R.string.esde_settings_section_video))
                     }
 
                     item {
                         ToggleSetting(
-                            title = stringResource(R.string.esde_settings_video_enabled),
-                            description = stringResource(R.string.esde_settings_video_enabled_description),
-                            checked = prefsState.videoEnabled,
-                            onCheckedChange = { enabled ->
-                                preferencesManager.setVideoEnabled(enabled)
+                            title = stringResource(R.string.esde_settings_random_system_image),
+                            description = stringResource(R.string.esde_settings_random_system_image_description),
+                            checked = prefsState.randomSystemImage,
+                            onCheckedChange = { random ->
+                                preferencesManager.setRandomSystemImage(random)
+                                viewModel.refreshSystemImage()
                             }
                         )
                     }
 
-                    if (prefsState.videoEnabled) {
-                        item {
-                            SliderSetting(
-                                title = stringResource(R.string.esde_settings_video_delay),
-                                value = prefsState.videoDelaySeconds.toFloat(),
-                                valueRange = 0f..10f,
-                                steps = 9,
-                                valueText = "${prefsState.videoDelaySeconds}s",
-                                onValueChange = { delay ->
-                                    preferencesManager.setVideoDelaySeconds(delay.toInt())
-                                }
-                            )
-                        }
-
-                        item {
-                            ToggleSetting(
-                                title = stringResource(R.string.esde_settings_video_audio),
-                                description = stringResource(R.string.esde_settings_video_audio_description),
-                                checked = prefsState.videoAudioEnabled,
-                                onCheckedChange = { enabled ->
-                                    preferencesManager.setVideoAudioEnabled(enabled)
-                                }
-                            )
-                        }
-
-                        item {
-                            ToggleSetting(
-                                title = stringResource(R.string.esde_settings_hide_content_on_video),
-                                description = stringResource(R.string.esde_settings_hide_content_on_video_description),
-                                checked = prefsState.hideContentOnVideo,
-                                onCheckedChange = { hide ->
-                                    preferencesManager.setHideContentOnVideo(hide)
-                                }
-                            )
-                        }
+                    item {
+                        SystemImageTypeSelector(
+                            selectedType = prefsState.systemImageType,
+                            onTypeSelected = { type ->
+                                preferencesManager.setSystemImageType(type)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
                     }
 
+                    // Logo Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_logo))
@@ -311,22 +319,108 @@ fun ESDESettingsScreen(
                                 }
                             )
                         }
+
+                        item {
+                            MarqueeSizeSetting(
+                                title = stringResource(R.string.esde_settings_logo_size),
+                                description = stringResource(R.string.esde_settings_logo_size_description),
+                                width = prefsState.marqueeWidth,
+                                height = prefsState.marqueeHeight,
+                                widthLabel = stringResource(R.string.esde_settings_logo_width),
+                                heightLabel = stringResource(R.string.esde_settings_logo_height),
+                                resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
+                                onWidthChange = { width ->
+                                    preferencesManager.setMarqueeWidth(width)
+                                },
+                                onHeightChange = { height ->
+                                    preferencesManager.setMarqueeHeight(height)
+                                },
+                                onReset = {
+                                    preferencesManager.setMarqueeWidth(300)
+                                    preferencesManager.setMarqueeHeight(150)
+                                }
+                            )
+                        }
                     }
 
+                    // Music Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(text = stringResource(R.string.esde_settings_section_power))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_music))
                     }
 
                     item {
                         ToggleSetting(
-                            title = stringResource(R.string.esde_settings_power_events),
-                            description = stringResource(R.string.esde_settings_power_events_description),
-                            checked = prefsState.powerEventsEnabled,
+                            title = stringResource(R.string.esde_settings_music_enabled),
+                            description = stringResource(R.string.esde_settings_music_enabled_description),
+                            checked = prefsState.musicEnabled,
                             onCheckedChange = { enabled ->
-                                preferencesManager.setPowerEventsEnabled(enabled)
+                                preferencesManager.setMusicEnabled(enabled)
                             }
                         )
+                    }
+
+                    if (prefsState.musicEnabled) {
+                        item {
+                            PathSetting(
+                                title = stringResource(R.string.esde_settings_music_path),
+                                description = stringResource(R.string.esde_settings_music_path_description),
+                                currentPath = prefsState.musicPath,
+                                defaultText = stringResource(R.string.esde_settings_path_not_set),
+                                onSelectPath = { musicFolderPicker.launch(null) },
+                                onClearPath = {
+                                    preferencesManager.setMusicPath(null)
+                                }
+                            )
+                        }
+
+                        item {
+                            ToggleSetting(
+                                title = stringResource(R.string.esde_settings_music_game),
+                                description = stringResource(R.string.esde_settings_music_game_description),
+                                checked = prefsState.musicGameEnabled,
+                                onCheckedChange = { enabled ->
+                                    preferencesManager.setMusicGameEnabled(enabled)
+                                }
+                            )
+                        }
+
+                        item {
+                            ToggleSetting(
+                                title = stringResource(R.string.esde_settings_music_screensaver),
+                                description = stringResource(R.string.esde_settings_music_screensaver_description),
+                                checked = prefsState.musicScreensaverEnabled,
+                                onCheckedChange = { enabled ->
+                                    preferencesManager.setMusicScreensaverEnabled(enabled)
+                                }
+                            )
+                        }
+
+                        item {
+                            ToggleSetting(
+                                title = stringResource(R.string.esde_settings_music_system),
+                                description = stringResource(R.string.esde_settings_music_system_description),
+                                checked = prefsState.musicSystemEnabled,
+                                onCheckedChange = { enabled ->
+                                    preferencesManager.setMusicSystemEnabled(enabled)
+                                }
+                            )
+                        }
+
+                        item {
+                            MusicVideoBehaviorSelector(
+                                selectedBehavior = prefsState.musicVideoBehavior,
+                                onBehaviorSelected = { behavior ->
+                                    preferencesManager.setMusicVideoBehavior(behavior)
+                                }
+                            )
+                        }
+                    }
+
+                    // Power Section
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_power))
                     }
 
                     item {
@@ -341,38 +435,32 @@ fun ESDESettingsScreen(
                     }
 
                     item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_power_events),
+                            description = stringResource(R.string.esde_settings_power_events_description),
+                            checked = prefsState.powerEventsEnabled,
+                            onCheckedChange = { enabled ->
+                                preferencesManager.setPowerEventsEnabled(enabled)
+                            }
+                        )
+                    }
+
+                    // Screensaver Section
+                    item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(text = stringResource(R.string.esde_settings_section_custom_paths))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_screensaver))
                     }
 
                     item {
-                        PathSetting(
-                            title = stringResource(R.string.esde_settings_custom_system_logos_path),
-                            description = stringResource(R.string.esde_settings_custom_system_logos_path_description),
-                            currentPath = prefsState.customSystemLogosPath,
-                            defaultText = stringResource(R.string.esde_settings_path_not_set),
-                            onSelectPath = { systemLogosFolderPicker.launch(null) },
-                            onClearPath = {
-                                preferencesManager.setCustomSystemLogosPath(null)
-                                viewModel.refreshSystemImage()
+                        ScreensaverBehaviorSelector(
+                            selectedBehavior = prefsState.screensaverBehavior,
+                            onBehaviorSelected = { behavior ->
+                                preferencesManager.setScreensaverBehavior(behavior)
                             }
                         )
                     }
 
-                    item {
-                        PathSetting(
-                            title = stringResource(R.string.esde_settings_custom_system_images_path),
-                            description = stringResource(R.string.esde_settings_custom_system_images_path_description),
-                            currentPath = prefsState.customSystemImagesPath,
-                            defaultText = stringResource(R.string.esde_settings_path_not_set),
-                            onSelectPath = { systemImagesFolderPicker.launch(null) },
-                            onClearPath = {
-                                preferencesManager.setCustomSystemImagesPath(null)
-                                viewModel.refreshSystemImage()
-                            }
-                        )
-                    }
-
+                    // Setup Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_setup))
@@ -385,6 +473,58 @@ fun ESDESettingsScreen(
                             checked = false,
                             showToggle = false,
                             onClick = onRunSetupWizard
+                        )
+                    }
+
+                    // Video Section
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_video))
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_hide_content_on_video),
+                            description = stringResource(R.string.esde_settings_hide_content_on_video_description),
+                            checked = prefsState.hideContentOnVideo,
+                            onCheckedChange = { hide ->
+                                preferencesManager.setHideContentOnVideo(hide)
+                            }
+                        )
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_video_audio),
+                            description = stringResource(R.string.esde_settings_video_audio_description),
+                            checked = prefsState.videoAudioEnabled,
+                            onCheckedChange = { enabled ->
+                                preferencesManager.setVideoAudioEnabled(enabled)
+                            }
+                        )
+                    }
+
+                    item {
+                        SliderSetting(
+                            title = stringResource(R.string.esde_settings_video_delay),
+                            value = prefsState.videoDelaySeconds.toFloat(),
+                            valueRange = 0f..10f,
+                            steps = 9,
+                            valueText = "${prefsState.videoDelaySeconds}s",
+                            onValueChange = { delay ->
+                                preferencesManager.setVideoDelaySeconds(delay.toInt())
+                            }
+                        )
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_video_enabled),
+                            description = stringResource(R.string.esde_settings_video_enabled_description),
+                            checked = prefsState.videoEnabled,
+                            onCheckedChange = { enabled ->
+                                preferencesManager.setVideoEnabled(enabled)
+                            }
                         )
                     }
                 }
@@ -404,12 +544,14 @@ private fun getPathFromUri(uri: Uri): String? {
             val relativePath = path.substringAfter("/tree/primary:")
             "/storage/emulated/0/$relativePath"
         }
+
         path.contains("/tree/") -> {
             // Handle external SD card or other storage
             val storagePart = path.substringAfter("/tree/").substringBefore(":")
             val relativePath = path.substringAfter(":")
             "/storage/$storagePart/$relativePath"
         }
+
         else -> null
     }
 }
