@@ -8,4 +8,5 @@
 
 ## Improvements
 > Removed empty state screens for cleaner UI when tabs have no content.
+> Videos won't have dim overlay when playing
 1.6.1

@@ -237,19 +237,16 @@ class ESDEViewModel @Inject constructor(
             return systemImageCache[systemName]
         }
 
-        // First check system_images folder at ES-DE root level (same level as downloaded_media)
-        // This contains system-level background images like nes.png, snes.png, etc.
-        val mediaParent = File(mediaPath).parentFile
-        if (mediaParent != null) {
-            val systemImagesDir = File(mediaParent, "system_images")
-            if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
-                for (ext in IMAGE_EXTENSIONS) {
-                    val systemImage = File(systemImagesDir, "$systemName.$ext")
-                    if (systemImage.exists()) {
-                        Log.d(TAG, "Found system image: ${systemImage.absolutePath}")
-                        systemImageCache[systemName] = systemImage.absolutePath
-                        return systemImage.absolutePath
-                    }
+        // First check system_images folder inside downloaded_media (matches ES-DE Companion structure)
+        // This contains system-level background images like n64.png, snes.png, etc.
+        val systemImagesDir = File(mediaPath, "system_images")
+        if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
+            for (ext in IMAGE_EXTENSIONS) {
+                val systemImage = File(systemImagesDir, "$systemName.$ext")
+                if (systemImage.exists()) {
+                    Log.d(TAG, "Found system image: ${systemImage.absolutePath}")
+                    systemImageCache[systemName] = systemImage.absolutePath
+                    return systemImage.absolutePath
                 }
             }
         }
@@ -288,12 +285,10 @@ class ESDEViewModel @Inject constructor(
     }
 
     private fun getSystemLogoPath(systemName: String): String? {
-        // First check user's media folder for custom system logos
-        // system_logos is typically at the same level as downloaded_media,
-        // so we check the parent directory
-        val mediaParent = File(mediaPath).parentFile
-        if (mediaParent != null) {
-            val userLogosDir = File(mediaParent, "system_logos")
+        // Check user's system_logos folder inside downloaded_media (matches ES-DE Companion structure)
+        // e.g. downloaded_media/system_logos/n64.svg
+        val userLogosDir = File(mediaPath, "system_logos")
+        if (userLogosDir.exists() && userLogosDir.isDirectory) {
             for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
                 val userLogo = File(userLogosDir, "$systemName.$ext")
                 if (userLogo.exists()) {

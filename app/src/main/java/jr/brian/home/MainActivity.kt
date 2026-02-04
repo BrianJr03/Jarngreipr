@@ -21,6 +21,7 @@ import jr.brian.home.esde.setup.ESDESetupHelper
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import java.io.File
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.viewmodels.PowerViewModel
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
                     val esdeViewModel: ESDEViewModel = hiltViewModel()
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val wallpaperState by esdeViewModel.wallpaperState
+                    val esdePreferencesManager = LocalESDEPreferencesManager.current
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
                             esdeViewModel.updateForSystem(systemName)
@@ -65,15 +67,18 @@ class MainActivity : ComponentActivity() {
                         }
                         esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
                             esdeViewModel.updateForGame(systemName, gameFilename)
-                            powerViewModel.powerOn()
                         }
                         esdeEventListener.onGameStarted = { _, _, _ ->
                             esdeViewModel.handleGameStarted()
-                            powerViewModel.powerOff()
+                            if (esdePreferencesManager.state.value.powerEventsEnabled) {
+                                powerViewModel.powerOff()
+                            }
                         }
                         esdeEventListener.onGameEnded = { _, _, _ ->
                             esdeViewModel.handleGameEnded()
-                            powerViewModel.powerOn()
+                            if (esdePreferencesManager.state.value.powerEventsEnabled) {
+                                powerViewModel.powerOn()
+                            }
                         }
                         esdeEventListener.onScreensaverStarted = {
                             esdeViewModel.handleScreensaverStarted()

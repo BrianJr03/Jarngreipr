@@ -742,4 +742,6 @@
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Re-run the setup wizard to configure paths and scripts</string>
-</resources>
+    <string name="esde_settings_section_power">Power Events</string>
+    <string name="esde_settings_power_events">Control Power on Game Events</string>
+    <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string></resources>

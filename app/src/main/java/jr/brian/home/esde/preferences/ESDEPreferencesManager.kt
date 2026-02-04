@@ -20,6 +20,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
@@ -82,7 +83,8 @@ class ESDEPreferencesManager(context: Context) {
             showSystemLogo = prefs.getBoolean(KEY_SHOW_SYSTEM_LOGO, true),
             logoAlignment = logoAlignment,
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
-            hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false)
+            hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false),
+            powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true)
         )
     }
 
@@ -171,5 +173,10 @@ class ESDEPreferencesManager(context: Context) {
     fun setHideContentOnVideo(hide: Boolean) {
         _state.value = _state.value.copy(hideContentOnVideo = hide)
         prefs.edit { putBoolean(KEY_HIDE_CONTENT_ON_VIDEO, hide) }
+    }
+
+    fun setPowerEventsEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(powerEventsEnabled = enabled)
+        prefs.edit { putBoolean(KEY_POWER_EVENTS_ENABLED, enabled) }
     }
 }

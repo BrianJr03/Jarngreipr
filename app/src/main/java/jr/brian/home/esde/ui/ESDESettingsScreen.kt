@@ -287,6 +287,22 @@ fun ESDESettingsScreen(
 
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_power))
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_power_events),
+                            description = stringResource(R.string.esde_settings_power_events_description),
+                            checked = prefsState.powerEventsEnabled,
+                            onCheckedChange = { enabled ->
+                                preferencesManager.setPowerEventsEnabled(enabled)
+                            }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_setup))
                     }
 
