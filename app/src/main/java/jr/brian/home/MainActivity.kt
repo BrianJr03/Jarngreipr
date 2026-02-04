@@ -23,6 +23,7 @@ import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import java.io.File
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.viewmodels.PowerViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
                     val esdeViewModel: ESDEViewModel = hiltViewModel()
+                    val powerViewModel: PowerViewModel = hiltViewModel()
                     val wallpaperState by esdeViewModel.wallpaperState
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
@@ -65,9 +67,11 @@ class MainActivity : ComponentActivity() {
                         }
                         esdeEventListener.onGameStarted = { _, _, _ ->
                             esdeViewModel.handleGameStarted()
+                            powerViewModel.powerOff()
                         }
                         esdeEventListener.onGameEnded = { _, _, _ ->
                             esdeViewModel.handleGameEnded()
+                            powerViewModel.powerOn()
                         }
                         esdeEventListener.onScreensaverStarted = {
                             esdeViewModel.handleScreensaverStarted()
@@ -75,13 +79,17 @@ class MainActivity : ComponentActivity() {
                         esdeEventListener.onScreensaverEnded = { _ ->
                             esdeViewModel.handleScreensaverEnded()
                         }
-                        esdeEventListener.onScreensaverGameSelected = { gameFilename, _, systemName ->
-                            esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                        esdeEventListener.onScreensaverGameSelected =
+                            { gameFilename, _, systemName ->
+                                esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                            }
+                    }
+                    ESDEWallpaperContainer(
+                        state = wallpaperState,
+                        content = {
+                            MainContent()
                         }
-                    }
-                    ESDEWallpaperContainer(state = wallpaperState) {
-                        MainContent()
-                    }
+                    )
                 }
             }
         }

@@ -45,6 +45,7 @@ fun ESDEWallpaperContainer(
     modifier: Modifier = Modifier,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
+    val rememberContent = remember { content }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -67,7 +68,9 @@ fun ESDEWallpaperContainer(
             )
         }
 
-        DimmingOverlay(alpha = state.dimmingLevel)
+        if (!state.isVideoPlaying) {
+            DimmingOverlay(alpha = state.dimmingLevel)
+        }
 
         val isUsingDefaultBackground = state.currentImagePath == null
         
@@ -95,7 +98,7 @@ fun ESDEWallpaperContainer(
 
         val shouldShowContent = !(state.hideContentOnVideo && state.isVideoPlaying)
         if (shouldShowContent) {
-            content?.invoke(this)
+            rememberContent?.invoke(this)
         }
     }
 }

@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.content.ContextCompat
 import jr.brian.home.esde.scripts.ScriptManager
 import java.io.File
@@ -26,20 +25,14 @@ object ESDESetupHelper {
     fun requestStoragePermission(activity: Activity) {
         val permissions = mutableListOf<String>()
 
-        // Android 13+ uses different permissions
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
-            permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
-        } else {
-            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
+        permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
 
         activity.requestPermissions(permissions.toTypedArray(), REQUEST_STORAGE_PERMISSION)
     }
 
     fun initializeESDEIntegration(context: Context): SetupResult {
         return try {
-            // Check storage permission
             if (!hasStoragePermission(context)) {
                 return SetupResult(
                     success = false,
@@ -48,13 +41,11 @@ object ESDESetupHelper {
                 )
             }
 
-            // Create scripts directory structure
             val scriptsDir = File("/storage/emulated/0/ES-DE/scripts")
             if (!scriptsDir.exists()) {
                 scriptsDir.mkdirs()
             }
 
-            // Create all ES-DE scripts
             val scriptResult = ScriptManager.createAllScripts(scriptsDir)
 
             SetupResult(
