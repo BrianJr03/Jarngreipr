@@ -24,8 +24,8 @@ object ESDEMediaConstants {
     const val FOLDER_WHEEL_3D = "images/wheel-3d"
 
     // File extensions
-    val IMAGE_EXTENSIONS = listOf("png", "jpg", "jpeg", "webp")
-    val IMAGE_EXTENSIONS_WITH_SVG = listOf("png", "jpg", "jpeg", "webp", "svg")
+    val IMAGE_EXTENSIONS = listOf("png", "jpg", "jpeg", "webp", "gif")
+    val IMAGE_EXTENSIONS_WITH_SVG = listOf("png", "jpg", "jpeg", "webp", "gif", "svg")
     val VIDEO_EXTENSIONS = listOf("mp4", "mkv", "avi", "wmv", "mov", "webm")
 
     // Fallback folder lists

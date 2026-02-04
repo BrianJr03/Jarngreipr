@@ -1,6 +1,9 @@
 package jr.brian.home.esde.ui
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +37,7 @@ import jr.brian.home.esde.ui.components.AnimationStyleSelector
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
+import jr.brian.home.esde.ui.components.PathSetting
 import jr.brian.home.esde.ui.components.SectionHeader
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
@@ -51,6 +55,30 @@ fun ESDESettingsScreen(
     val preferencesManager = LocalESDEPreferencesManager.current
     val prefsState by preferencesManager.state.collectAsState()
     BackHandler(onBack = onNavigateBack)
+
+    val systemLogosFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            val path = getPathFromUri(it)
+            if (path != null) {
+                preferencesManager.setCustomSystemLogosPath(path)
+                viewModel.refreshSystemImage()
+            }
+        }
+    }
+
+    val systemImagesFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            val path = getPathFromUri(it)
+            if (path != null) {
+                preferencesManager.setCustomSystemImagesPath(path)
+                viewModel.refreshSystemImage()
+            }
+        }
+    }
 
     Scaffold(
         containerColor = OledBackgroundColor
@@ -302,6 +330,50 @@ fun ESDESettingsScreen(
                     }
 
                     item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_persist_on_game_launch),
+                            description = stringResource(R.string.esde_settings_persist_on_game_launch_description),
+                            checked = prefsState.persistOnGameLaunch,
+                            onCheckedChange = { persist ->
+                                preferencesManager.setPersistOnGameLaunch(persist)
+                            }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_custom_paths))
+                    }
+
+                    item {
+                        PathSetting(
+                            title = stringResource(R.string.esde_settings_custom_system_logos_path),
+                            description = stringResource(R.string.esde_settings_custom_system_logos_path_description),
+                            currentPath = prefsState.customSystemLogosPath,
+                            defaultText = stringResource(R.string.esde_settings_path_not_set),
+                            onSelectPath = { systemLogosFolderPicker.launch(null) },
+                            onClearPath = {
+                                preferencesManager.setCustomSystemLogosPath(null)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
+                        PathSetting(
+                            title = stringResource(R.string.esde_settings_custom_system_images_path),
+                            description = stringResource(R.string.esde_settings_custom_system_images_path_description),
+                            currentPath = prefsState.customSystemImagesPath,
+                            defaultText = stringResource(R.string.esde_settings_path_not_set),
+                            onSelectPath = { systemImagesFolderPicker.launch(null) },
+                            onClearPath = {
+                                preferencesManager.setCustomSystemImagesPath(null)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_setup))
                     }
@@ -318,5 +390,26 @@ fun ESDESettingsScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Convert content URI to file path
+ */
+private fun getPathFromUri(uri: Uri): String? {
+    val path = uri.path ?: return null
+
+    return when {
+        path.contains("/tree/primary:") -> {
+            val relativePath = path.substringAfter("/tree/primary:")
+            "/storage/emulated/0/$relativePath"
+        }
+        path.contains("/tree/") -> {
+            // Handle external SD card or other storage
+            val storagePart = path.substringAfter("/tree/").substringBefore(":")
+            val relativePath = path.substringAfter(":")
+            "/storage/$storagePart/$relativePath"
+        }
+        else -> null
     }
 }
