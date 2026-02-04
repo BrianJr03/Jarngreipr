@@ -10,11 +10,20 @@ import jr.brian.home.esde.events.ESDEEventListener
 import jr.brian.home.esde.events.ESDEEventListenerImpl
 import jr.brian.home.esde.events.ESDEEventManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
+import jr.brian.home.esde.setup.SetupPreferences
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object ESDEModule {
+
+    @Provides
+    @Singleton
+    fun provideSetupPreferences(
+        @ApplicationContext context: Context
+    ): SetupPreferences {
+        return SetupPreferences(context)
+    }
 
     @Provides
     @Singleton

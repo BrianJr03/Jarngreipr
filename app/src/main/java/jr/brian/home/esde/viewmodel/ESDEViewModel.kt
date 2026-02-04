@@ -12,7 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.SystemImageType
-import jr.brian.home.esde.util.ESDEMediaConstants.ESDE_MEDIA_PATH
+import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_VIDEOS
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_WHEEL_3D
@@ -21,7 +21,7 @@ import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS_WITH_SVG
 import jr.brian.home.esde.util.ESDEMediaConstants.MARQUEE_FALLBACK_DIRS
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_IMAGE_FALLBACKS
-import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_PATH
+import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.wallpaper.WallpaperState
 import kotlinx.coroutines.flow.launchIn
@@ -31,9 +31,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
-    val prefs: ESDEPreferencesManager
+    val prefs: ESDEPreferencesManager,
+    private val setupPreferences: SetupPreferences
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
+
+    /** The user-configured media path (e.g. SD card or internal storage) */
+    private val mediaPath: String
+        get() = setupPreferences.mediaPath
 
     private val _wallpaperState = mutableStateOf(createInitialState())
     val wallpaperState: State<WallpaperState> = _wallpaperState
@@ -45,6 +50,9 @@ class ESDEViewModel @Inject constructor(
     private var currentGameFilename: String? = null
 
     init {
+        Log.d(TAG, "ESDE Media path configured: $mediaPath")
+        Log.d(TAG, "Parent folder (for system_images/system_logos): ${File(mediaPath).parentFile?.absolutePath}")
+
         prefs.state
             .onEach { prefsState ->
                 _wallpaperState.value = _wallpaperState.value.copy(
@@ -229,8 +237,26 @@ class ESDEViewModel @Inject constructor(
             return systemImageCache[systemName]
         }
 
+        // First check system_images folder at ES-DE root level (same level as downloaded_media)
+        // This contains system-level background images like nes.png, snes.png, etc.
+        val mediaParent = File(mediaPath).parentFile
+        if (mediaParent != null) {
+            val systemImagesDir = File(mediaParent, "system_images")
+            if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
+                for (ext in IMAGE_EXTENSIONS) {
+                    val systemImage = File(systemImagesDir, "$systemName.$ext")
+                    if (systemImage.exists()) {
+                        Log.d(TAG, "Found system image: ${systemImage.absolutePath}")
+                        systemImageCache[systemName] = systemImage.absolutePath
+                        return systemImage.absolutePath
+                    }
+                }
+            }
+        }
+
+        // Then check in downloaded_media/<system>/<imageType>/ folders
         val preferredFolder = systemImageType.folderName ?: return null
-        val mediaDir = File(ESDE_MEDIA_PATH, "$systemName/$preferredFolder")
+        val mediaDir = File(mediaPath, "$systemName/$preferredFolder")
         if (mediaDir.exists() && mediaDir.isDirectory) {
             val images = mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
             if (!images.isNullOrEmpty()) {
@@ -245,7 +271,7 @@ class ESDEViewModel @Inject constructor(
             .filter { it != preferredFolder }
 
         for (mediaType in fallbackTypes) {
-            val fallbackDir = File(ESDE_MEDIA_PATH, "$systemName/$mediaType")
+            val fallbackDir = File(mediaPath, "$systemName/$mediaType")
             if (fallbackDir.exists() && fallbackDir.isDirectory) {
                 val images = fallbackDir.listFiles()?.filter { it.isFile && isImageFile(it) }
                 if (!images.isNullOrEmpty()) {
@@ -261,8 +287,24 @@ class ESDEViewModel @Inject constructor(
         return null
     }
 
-    private fun getSystemLogoPath(systemName: String): String {
-        return "$SYSTEM_LOGOS_PATH/$systemName.svg"
+    private fun getSystemLogoPath(systemName: String): String? {
+        // First check user's media folder for custom system logos
+        // system_logos is typically at the same level as downloaded_media,
+        // so we check the parent directory
+        val mediaParent = File(mediaPath).parentFile
+        if (mediaParent != null) {
+            val userLogosDir = File(mediaParent, "system_logos")
+            for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                val userLogo = File(userLogosDir, "$systemName.$ext")
+                if (userLogo.exists()) {
+                    Log.d(TAG, "Found user system logo: ${userLogo.absolutePath}")
+                    return userLogo.absolutePath
+                }
+            }
+        }
+
+        // Fall back to bundled asset logos
+        return "$SYSTEM_LOGOS_ASSET_PATH/$systemName.svg"
     }
 
     private fun getGameImagePath(
@@ -280,7 +322,7 @@ class ESDEViewModel @Inject constructor(
         val preferredFolder = preferredType.folderName
         if (preferredFolder != null) {
             for (ext in IMAGE_EXTENSIONS) {
-                val file = File(ESDE_MEDIA_PATH, "$systemName/$preferredFolder/$nameOnly.$ext")
+                val file = File(mediaPath, "$systemName/$preferredFolder/$nameOnly.$ext")
                 if (file.exists()) return file.absolutePath
             }
         }
@@ -290,13 +332,13 @@ class ESDEViewModel @Inject constructor(
 
         for (mediaType in fallbackTypes) {
             for (ext in IMAGE_EXTENSIONS) {
-                val file = File(ESDE_MEDIA_PATH, "$systemName/$mediaType/$nameOnly.$ext")
+                val file = File(mediaPath, "$systemName/$mediaType/$nameOnly.$ext")
                 if (file.exists()) return file.absolutePath
             }
         }
 
         for (ext in IMAGE_EXTENSIONS) {
-            val wheelFile = File(ESDE_MEDIA_PATH, "$systemName/$FOLDER_WHEEL_3D/$nameOnly.$ext")
+            val wheelFile = File(mediaPath, "$systemName/$FOLDER_WHEEL_3D/$nameOnly.$ext")
             if (wheelFile.exists()) return wheelFile.absolutePath
         }
 
@@ -307,13 +349,13 @@ class ESDEViewModel @Inject constructor(
         val nameOnly = File(gameFilename).nameWithoutExtension
 
         for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-            val file = File(ESDE_MEDIA_PATH, "$systemName/$FOLDER_MARQUEES/$nameOnly.$ext")
+            val file = File(mediaPath, "$systemName/$FOLDER_MARQUEES/$nameOnly.$ext")
             if (file.exists()) return file.absolutePath
         }
 
         for (dir in MARQUEE_FALLBACK_DIRS) {
             for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                val file = File(ESDE_MEDIA_PATH, "$systemName/$dir/$nameOnly.$ext")
+                val file = File(mediaPath, "$systemName/$dir/$nameOnly.$ext")
                 if (file.exists()) return file.absolutePath
             }
         }
@@ -323,7 +365,7 @@ class ESDEViewModel @Inject constructor(
 
     private fun getGameVideoPath(systemName: String, gameFilename: String): String? {
         val nameOnly = File(gameFilename).nameWithoutExtension
-        val videoDir = File(ESDE_MEDIA_PATH, "$systemName/$FOLDER_VIDEOS")
+        val videoDir = File(mediaPath, "$systemName/$FOLDER_VIDEOS")
 
         if (!videoDir.exists() || !videoDir.isDirectory) {
             Log.d(TAG, "Video directory does not exist: ${videoDir.absolutePath}")

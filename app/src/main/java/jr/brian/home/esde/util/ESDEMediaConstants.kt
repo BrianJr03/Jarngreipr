@@ -5,8 +5,12 @@ package jr.brian.home.esde.util
  */
 object ESDEMediaConstants {
     // Base paths
-    const val ESDE_MEDIA_PATH = "/storage/emulated/0/ES-DE/downloaded_media"
-    const val SYSTEM_LOGOS_PATH = "file:///android_asset/system_logos"
+    const val DEFAULT_MEDIA_PATH = "/storage/emulated/0/ES-DE/downloaded_media"
+    const val SYSTEM_LOGOS_ASSET_PATH = "file:///android_asset/system_logos"
+
+    // Folder names for system-level media
+    const val FOLDER_SYSTEM_LOGOS = "system_logos"
+    const val FOLDER_SYSTEM_IMAGES = "system_images"
 
     // Media folder names
     const val FOLDER_FANART = "fanart"

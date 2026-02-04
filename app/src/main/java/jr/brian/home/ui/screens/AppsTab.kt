@@ -368,50 +368,6 @@ fun AppsTab(
             ) {
                 CircularProgressIndicator()
             }
-        } else if (apps.isEmpty()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (pagerState != null) {
-                    val settingsIconFocusRequester = remember { FocusRequester() }
-                    val menuIconFocusRequester = remember { FocusRequester() }
-                    val powerSettingsManager = LocalPowerSettingsManager.current
-                    val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-                    val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
-
-                    AnimatedVisibility(
-                        visible = isHeaderVisible,
-                        enter = slideInVertically(initialOffsetY = { -it }),
-                        exit = slideOutVertically(targetOffsetY = { -it })
-                    ) {
-                        ScreenHeaderRow(
-                            totalPages = totalPages,
-                            pagerState = pagerState,
-                            leadingIcon = Icons.Default.Settings,
-                            leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                            onLeadingIconClick = onSettingsClick,
-                            leadingIconFocusRequester = settingsIconFocusRequester,
-                            trailingIcon = Icons.Default.Menu,
-                            trailingIconContentDescription = null,
-                            onTrailingIconClick = { appDrawerOptionsDialogState.show() },
-                            trailingIconFocusRequester = menuIconFocusRequester,
-                            onNavigateToGrid = {},
-                            onNavigateFromGrid = {
-                                menuIconFocusRequester.requestFocus()
-                            },
-                            powerViewModel = powerViewModel,
-                            showPowerButton = isPowerButtonVisible,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                            onFolderClick = onShowBottomSheet,
-                            onDeletePage = onDeletePage,
-                            pageIndicatorBorderColor = pageIndicatorBorderColor,
-                            onNavigateToSearch = onNavigateToSearch
-                        )
-                    }
-                }
-
-                EmptyAppsState(
-                    onAddClick = { appVisibilityDialogState.show() }
-                )
-            }
         } else {
             AppsTabContent(
                 apps = apps,
