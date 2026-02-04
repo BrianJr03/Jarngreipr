@@ -1,6 +1,5 @@
 package jr.brian.home.esde.viewmodel
 
-import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -36,7 +35,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
-    application: Application,
     val prefs: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences
 ) : ViewModel() {
@@ -233,10 +231,10 @@ class ESDEViewModel @Inject constructor(
         stopVideo()
         val behavior = prefs.state.value.screensaverBehavior
         
-        // For ShowContent: use 50% dimming overlay
+        // For ShowContent: use 80% dimming overlay
         // For PowerOff: don't change dimming - MainActivity will use powerViewModel.powerOff()
         val dimmingLevel = when (behavior) {
-            ScreensaverBehavior.ShowContent -> 0.5f
+            ScreensaverBehavior.ShowContent -> 0.8f
             ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
         }
         
