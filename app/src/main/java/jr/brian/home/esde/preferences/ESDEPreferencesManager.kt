@@ -28,7 +28,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
-@Suppress("unused")
 class ESDEPreferencesManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
@@ -134,10 +133,6 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_VIDEO_AUDIO_ENABLED, enabled) }
     }
 
-    fun setEsdeEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(esdeEnabled = enabled)
-        prefs.edit { putBoolean(KEY_ESDE_ENABLED, enabled) }
-    }
 
     fun setLastSelectedSystem(systemName: String?) {
         _state.value = _state.value.copy(lastSelectedSystem = systemName)

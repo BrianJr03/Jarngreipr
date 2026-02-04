@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as GraphicsColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -70,9 +71,9 @@ fun MainContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = rememberNavController()
-    val mainViewModel: MainViewModel = viewModel()
-    val widgetViewModel: WidgetViewModel = viewModel()
-    val powerViewModel: PowerViewModel = viewModel()
+    val mainViewModel: MainViewModel = hiltViewModel()
+    val widgetViewModel: WidgetViewModel = hiltViewModel()
+    val powerViewModel: PowerViewModel = hiltViewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
     val appUpdateManager = LocalAppUpdateManager.current
