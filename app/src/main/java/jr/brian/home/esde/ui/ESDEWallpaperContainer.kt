@@ -50,16 +50,12 @@ fun ESDEWallpaperContainer(
     val rememberContent = remember { content }
     val wallpaperManager = LocalWallpaperManager.current
     val wallpaperType = wallpaperManager.getWallpaperType()
-    
-    // Use transparent background when "System" wallpaper is selected,
-    // otherwise use ESDE background color
+
     val backgroundColor = if (wallpaperType == WallpaperType.TRANSPARENT) {
         Color.Transparent
     } else {
         state.backgroundColor
     }
-    
-    // Only show ESDE wallpaper content when ESDE wallpaper type is selected
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
     
     Box(

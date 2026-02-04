@@ -36,7 +36,6 @@ class ESDEViewModel @Inject constructor(
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
-    /** The user-configured media path (e.g. SD card or internal storage) */
     private val mediaPath: String
         get() = setupPreferences.mediaPath
 
