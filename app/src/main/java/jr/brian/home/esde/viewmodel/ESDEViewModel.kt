@@ -231,9 +231,18 @@ class ESDEViewModel @Inject constructor(
 
     fun handleScreensaverStarted() {
         stopVideo()
+        val behavior = prefs.state.value.screensaverBehavior
+        
+        // For ShowContent: use 50% dimming overlay
+        // For PowerOff: don't change dimming - MainActivity will use powerViewModel.powerOff()
+        val dimmingLevel = when (behavior) {
+            ScreensaverBehavior.ShowContent -> 0.5f
+            ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
+        }
+        
         _wallpaperState.value = _wallpaperState.value.copy(
             isScreensaverActive = true,
-            dimmingLevel = 1.0f
+            dimmingLevel = dimmingLevel
         )
         musicController.onScreensaverStarted()
     }
@@ -253,10 +262,17 @@ class ESDEViewModel @Inject constructor(
         val behavior = prefs.state.value.screensaverBehavior
         val shouldShowContent = behavior == ScreensaverBehavior.ShowContent
         
+        // For ShowContent: use 50% dimming overlay with content visible
+        // For PowerOff: use normal dimming - MainActivity handles powerViewModel.powerOff()
+        val dimmingLevel = when (behavior) {
+            ScreensaverBehavior.ShowContent -> 0.7f
+            ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
+        }
+        
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
             marqueePath = if (shouldShowContent) getGameMarqueePath(systemName, gameFilename) else null,
-            dimmingLevel = if (shouldShowContent) prefs.state.value.dimmingLevelFloat else 1.0f,
+            dimmingLevel = dimmingLevel,
             isScreensaverActive = true
         )
     }
