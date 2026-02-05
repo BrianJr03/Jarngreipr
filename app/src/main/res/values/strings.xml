@@ -739,9 +739,57 @@
     <string name="esde_settings_logo_alignment_bottom">Bottom</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
+    <string name="esde_settings_logo_size">Logo Size</string>
+    <string name="esde_settings_logo_size_description">Adjust the system logo dimensions</string>
+    <string name="esde_settings_logo_width">Width</string>
+    <string name="esde_settings_logo_height">Height</string>
+    <string name="esde_settings_logo_size_reset">Reset</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Re-run the setup wizard to configure paths and scripts</string>
     <string name="esde_settings_section_power">Power Events</string>
     <string name="esde_settings_power_events">Control Power on Game Events</string>
-    <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string></resources>
+    <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string>
+    <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
+    <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and marquee visible when a game is launched</string>
+    <string name="esde_settings_section_custom_paths">Custom Paths</string>
+    <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
+    <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
+    <string name="esde_settings_custom_system_images_path">System Backgrounds Folder</string>
+    <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images</string>
+    <string name="esde_settings_path_not_set">Not set (using default)</string>
+    <string name="esde_settings_clear_path">Clear</string>
+    <string name="esde_settings_select_folder">Select Folder</string>
+    
+    <!-- ESDE Screensaver Settings -->
+    <string name="esde_settings_section_screensaver">Screensaver</string>
+    <string name="esde_settings_screensaver_behavior">Screen Behavior</string>
+    <string name="esde_settings_screensaver_behavior_description">What to display when ES-DE screensaver is active</string>
+    <string name="esde_settings_screensaver_show_companion">Show Content</string>
+    <string name="esde_settings_screensaver_show_companion_description">Display screensaver game artwork</string>
+    <string name="esde_settings_screensaver_power_off">Power Off</string>
+    <string name="esde_settings_screensaver_power_off_description">Show clock and battery info</string>
+
+    <!-- ESDE Music Settings -->
+    <string name="esde_settings_section_music">Background Music</string>
+    <string name="esde_settings_music_enabled">Enable Music</string>
+    <string name="esde_settings_music_enabled_description">Play background music while browsing</string>
+    <string name="esde_settings_music_system">System Browsing Music</string>
+    <string name="esde_settings_music_system_description">Play music when browsing systems</string>
+    <string name="esde_settings_music_game">Game Browsing Music</string>
+    <string name="esde_settings_music_game_description">Play music when browsing games</string>
+    <string name="esde_settings_music_screensaver">Screensaver Music</string>
+    <string name="esde_settings_music_screensaver_description">Play music during screensaver</string>
+    <string name="esde_settings_music_path">Music Folder</string>
+    <string name="esde_settings_music_path_description">Select your music folder (e.g., ~/ES-DE Jarngreipr/music)</string>
+    <string name="esde_settings_music_video_behavior">Video Behavior</string>
+    <string name="esde_settings_music_video_behavior_description">What to do with music when video plays</string>
+    <string name="esde_settings_music_video_continue">Continue</string>
+    <string name="esde_settings_music_video_duck">Duck</string>
+    <string name="esde_settings_music_video_pause">Pause</string>
+
+    <!-- App Drawer Settings -->
+    <string name="esde_settings_section_app_drawer">App Drawer</string>
+    <string name="esde_settings_app_drawer_opacity">Drawer Background Opacity</string>
+    <string name="esde_settings_app_drawer_opacity_description">Adjust the transparency of the drawer background</string>
+</resources>
