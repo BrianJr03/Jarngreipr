@@ -83,8 +83,6 @@ fun ESDEWallpaperContainer(
                 )
             }
 
-            // Background-only dimming (when NOT in screensaver mode)
-            // During screensaver, dimming is applied after marquee to dim everything
             if (!state.isVideoPlaying && !state.isScreensaverActive) {
                 DimmingOverlay(alpha = state.dimmingLevel)
             }
@@ -133,8 +131,6 @@ fun ESDEWallpaperContainer(
             rememberContent?.invoke(this)
         }
 
-        // Screensaver dimming - dims EVERYTHING (background, marquee, apps) except SettingsScreen
-        // SettingsScreen is a separate screen not wrapped in ESDEWallpaperContainer
         if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
             DimmingOverlay(alpha = state.dimmingLevel)
         }
