@@ -60,6 +60,22 @@ fun LazyListScope.appearanceSection(
         }
     }
 
+    item(key = "esde_settings") {
+        AnimatedVisibility(
+            visible = isVisible(null),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            SettingItem(
+                tag = SettingsTag.EXPERIMENTAL,
+                title = stringResource(R.string.esde_settings_title),
+                description = stringResource(R.string.esde_settings_description),
+                icon = Icons.Default.Gamepad,
+                onClick = onNavigateToEsdeSettings
+            )
+        }
+    }
+
     item(key = "icon_pack") {
         AnimatedVisibility(
             visible = isVisible(EXPANDED_ICON_PACK),
@@ -100,22 +116,6 @@ fun LazyListScope.appearanceSection(
                     onExpandedItemChange(if (it) EXPANDED_WALLPAPER else null)
                 },
                 onESDESetupClick = onNavigateToEsdeSettings
-            )
-        }
-    }
-
-    item(key = "esde_settings") {
-        AnimatedVisibility(
-            visible = isVisible(null),
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            SettingItem(
-                tag = SettingsTag.EXPERIMENTAL,
-                title = stringResource(R.string.esde_settings_title),
-                description = stringResource(R.string.esde_settings_description),
-                icon = Icons.Default.Gamepad,
-                onClick = onNavigateToEsdeSettings
             )
         }
     }

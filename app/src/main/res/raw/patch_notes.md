@@ -1,12 +1,23 @@
 ## New Features
 ### ES-DE Enhancements
-> **Configurable Media Path** - ES-DE media path is now configurable, allowing you to use SD card or custom storage locations instead of the default internal storage path.
+> Configurable Custom Asset Paths - Custom system logos and system images paths are now individually configurable in settings.
 
-> **Custom System Logos** - The app now checks for custom system logos in a `system_logos` folder before falling back to bundled assets.
+> Background Music Support - Play music while browsing systems, games, and during screensaver with configurable video behavior (continue, duck, or pause).
 
-> **Custom System Images** - Added support for a `system_images` folder containing system-level background images (e.g., nes.png, snes.png).
+> Screensaver Behavior Options - Choose to show companion content or power off screen when ES-DE screensaver activates.
+
+> Adjustable Logo Size - System logo width and height can now be customized in settings.
+
+> App Drawer Background Opacity - Control the transparency of the drawer background.
+
+> Persist Display on Game Launch - Option to keep wallpaper and marquee visible when a game is launched.
 
 ## Improvements
-> Removed empty state screens for cleaner UI when tabs have no content.
-> Videos won't have dim overlay when playing
-1.6.1
+> System logos now support animated GIFs and APNGs.
+
+## Bug Fixes
+> Fixed system background not displaying correctly.
+
+> Fixed double tap required to launch apps issue.
+
+1.6.2

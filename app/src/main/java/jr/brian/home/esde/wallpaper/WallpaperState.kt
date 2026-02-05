@@ -3,6 +3,7 @@ package jr.brian.home.esde.wallpaper
 import androidx.compose.ui.graphics.Color
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.preferences.ScreensaverBehavior
 
 data class WallpaperState(
     val currentImagePath: String? = null,
@@ -19,5 +20,9 @@ data class WallpaperState(
     val backgroundColor: Color = Color.Black,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
-    val hideContentOnVideo: Boolean = false
+    val hideContentOnVideo: Boolean = false,
+    val marqueeWidth: Int = 300,
+    val marqueeHeight: Int = 150,
+    val isScreensaverActive: Boolean = false,
+    val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff
 )

@@ -20,4 +20,21 @@ object ESDEPreferencesConstants {
     const val KEY_RANDOM_SYSTEM_IMAGE = "random_system_image"
     const val KEY_HIDE_CONTENT_ON_VIDEO = "hide_content_on_video"
     const val KEY_POWER_EVENTS_ENABLED = "power_events_enabled"
+    const val KEY_PERSIST_ON_GAME_LAUNCH = "persist_on_game_launch"
+    const val KEY_CUSTOM_SYSTEM_LOGOS_PATH = "custom_system_logos_path"
+    const val KEY_CUSTOM_SYSTEM_IMAGES_PATH = "custom_system_images_path"
+    const val KEY_MARQUEE_WIDTH = "marquee_width"
+    const val KEY_MARQUEE_HEIGHT = "marquee_height"
+    const val KEY_SCREENSAVER_BEHAVIOR = "screensaver_behavior"
+
+    // Music settings
+    const val KEY_MUSIC_ENABLED = "music_enabled"
+    const val KEY_MUSIC_PATH = "music_path"
+    const val KEY_MUSIC_SYSTEM_ENABLED = "music_system_enabled"
+    const val KEY_MUSIC_GAME_ENABLED = "music_game_enabled"
+    const val KEY_MUSIC_SCREENSAVER_ENABLED = "music_screensaver_enabled"
+    const val KEY_MUSIC_VIDEO_BEHAVIOR = "music_video_behavior"
+
+    // App Drawer settings
+    const val KEY_APP_DRAWER_OPACITY = "app_drawer_opacity"
 }
