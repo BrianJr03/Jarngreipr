@@ -297,6 +297,17 @@ fun ESDESettingsScreen(
                     }
 
                     item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_exclude_effects_from_home),
+                            description = stringResource(R.string.esde_settings_exclude_effects_from_home_description),
+                            checked = prefsState.excludeEffectsFromHome,
+                            onCheckedChange = { exclude ->
+                                preferencesManager.setExcludeEffectsFromHome(exclude)
+                            }
+                        )
+                    }
+
+                    item {
                         GameImageTypeSelector(
                             selectedType = prefsState.gameImageType,
                             onTypeSelected = { type ->

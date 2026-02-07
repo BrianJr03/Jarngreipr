@@ -737,6 +737,8 @@
     <string name="esde_settings_animation_scale">Animation Scale</string>
     <string name="esde_settings_blur_level">Background Blur</string>
     <string name="esde_settings_dimming_level">Background Dimming</string>
+    <string name="esde_settings_exclude_effects_from_home">Exclude Home Tab</string>
+    <string name="esde_settings_exclude_effects_from_home_description">Keep the home tab background clear without blur or dimming effects</string>
     <string name="esde_settings_background_color">Background Color</string>
     <string name="esde_settings_off">Off</string>
     <string name="esde_settings_video_enabled">Video Playback</string>

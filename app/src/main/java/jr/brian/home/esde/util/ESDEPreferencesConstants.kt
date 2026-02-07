@@ -46,4 +46,5 @@ object ESDEPreferencesConstants {
     const val KEY_LOGO_BRIGHTNESS = "logo_brightness"
     const val KEY_GAME_BACKGROUND_DIMMING = "game_background_dimming"
     const val KEY_CUSTOM_MEDIA_PATH = "custom_media_path"
+    const val KEY_EXCLUDE_EFFECTS_FROM_HOME = "exclude_effects_from_home"
 }

@@ -236,9 +236,7 @@ class ESDEViewModel @Inject constructor(
     fun handleScreensaverStarted() {
         stopVideo()
         val behavior = prefs.state.value.screensaverBehavior
-        
-        // For ShowContent: use 80% dimming overlay
-        // For PowerOff: don't change dimming - MainActivity will use powerViewModel.powerOff()
+
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.8f
             ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
