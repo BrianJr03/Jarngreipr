@@ -31,6 +31,11 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_EN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_OVERLAY_PAGES
+import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
@@ -94,6 +99,27 @@ class ESDEPreferencesManager(context: Context) {
         val musicVideoBehaviorName = prefs.getString(KEY_MUSIC_VIDEO_BEHAVIOR, MusicVideoBehavior.Duck.value)
         val musicVideoBehavior = MusicVideoBehavior.fromValue(musicVideoBehaviorName ?: MusicVideoBehavior.Duck.value)
 
+        val marqueePressShortcutName = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT, Shortcut.NONE.name)
+        val marqueePressShortcut = try {
+            Shortcut.valueOf(marqueePressShortcutName ?: Shortcut.NONE.name)
+        } catch (_: IllegalArgumentException) {
+            Shortcut.NONE
+        }
+
+        val marqueeHiddenPagesString = prefs.getString(KEY_MARQUEE_VISIBLE_PAGES, null)
+        val marqueeHiddenPages = marqueeHiddenPagesString
+            ?.split(",")
+            ?.mapNotNull { it.toIntOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
+        val marqueeOverlayDisabledPagesString = prefs.getString(KEY_MARQUEE_OVERLAY_PAGES, null)
+        val marqueeOverlayDisabledPages = marqueeOverlayDisabledPagesString
+            ?.split(",")
+            ?.mapNotNull { it.toIntOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -126,7 +152,14 @@ class ESDEPreferencesManager(context: Context) {
             musicGameEnabled = prefs.getBoolean(KEY_MUSIC_GAME_ENABLED, true),
             musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
             musicVideoBehavior = musicVideoBehavior,
-            appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100)
+            appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
+            // Marquee Press Shortcut settings
+            marqueePressShortcut = marqueePressShortcut,
+            marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
+            // Marquee Hidden Pages (pages where marquee is hidden)
+            marqueeHiddenPages = marqueeHiddenPages,
+            // Marquee Overlay Disabled Pages (pages where overlay is disabled)
+            marqueeOverlayDisabledPages = marqueeOverlayDisabledPages
         )
     }
 
@@ -301,5 +334,76 @@ class ESDEPreferencesManager(context: Context) {
         val coercedOpacity = opacity.coerceIn(0, 100)
         _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
         prefs.edit { putInt(KEY_APP_DRAWER_OPACITY, coercedOpacity) }
+    }
+
+    // Marquee Press Shortcut settings
+    fun setMarqueePressShortcut(shortcut: Shortcut) {
+        _state.value = _state.value.copy(marqueePressShortcut = shortcut)
+        prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT, shortcut.name) }
+    }
+
+    fun setMarqueePressShortcutAppPackage(packageName: String?) {
+        _state.value = _state.value.copy(marqueePressShortcutAppPackage = packageName)
+        if (packageName != null) {
+            prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, packageName) }
+        } else {
+            prefs.edit { remove(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE) }
+        }
+    }
+
+    // Marquee Hidden Pages - toggle whether marquee is hidden on a specific page
+    // Set contains pages where marquee is HIDDEN
+    fun toggleMarqueePageVisibility(pageIndex: Int) {
+        val hiddenPages = _state.value.marqueeHiddenPages
+        val newPages = if (hiddenPages.contains(pageIndex)) {
+            // Currently hidden, remove from set to show
+            hiddenPages - pageIndex
+        } else {
+            // Currently visible, add to set to hide
+            hiddenPages + pageIndex
+        }
+        
+        _state.value = _state.value.copy(marqueeHiddenPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_MARQUEE_VISIBLE_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_MARQUEE_VISIBLE_PAGES, newPages.joinToString(",")) }
+        }
+    }
+
+    /**
+     * Check if marquee should be visible on a specific page.
+     * Page is visible if NOT in the hidden set.
+     */
+    fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
+        return !_state.value.marqueeHiddenPages.contains(pageIndex)
+    }
+
+    // Marquee Overlay Disabled Pages - toggle whether overlay is disabled on a specific page
+    // Set contains pages where overlay is DISABLED
+    fun toggleMarqueeOverlayPage(pageIndex: Int) {
+        val disabledPages = _state.value.marqueeOverlayDisabledPages
+        val newPages = if (disabledPages.contains(pageIndex)) {
+            // Currently disabled, remove from set to enable
+            disabledPages - pageIndex
+        } else {
+            // Currently enabled, add to set to disable
+            disabledPages + pageIndex
+        }
+        
+        _state.value = _state.value.copy(marqueeOverlayDisabledPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_MARQUEE_OVERLAY_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_MARQUEE_OVERLAY_PAGES, newPages.joinToString(",")) }
+        }
+    }
+
+    /**
+     * Check if marquee overlay mode should be enabled on a specific page.
+     * Overlay is enabled if NOT in the disabled set.
+     */
+    fun isMarqueeOverlayOnPage(pageIndex: Int): Boolean {
+        return !_state.value.marqueeOverlayDisabledPages.contains(pageIndex)
     }
 }

@@ -194,6 +194,36 @@
     <string name="back_button_shortcut_selected_app">Selected: %1$s</string>
     <string name="back_button_shortcut_no_app">No app selected</string>
 
+    <!-- Generic Shortcut Strings -->
+    <string name="shortcut_settings">Settings</string>
+    <string name="shortcut_app_search">App Search</string>
+    <string name="shortcut_powered_off">Turn Off Display</string>
+    <string name="shortcut_quick_delete">Quick Delete</string>
+    <string name="shortcut_custom_theme">Create Custom Theme</string>
+    <string name="shortcut_monitor">System Monitor</string>
+    <string name="shortcut_control_pad">GamePad</string>
+    <string name="shortcut_volume_controls">Volume Controls</string>
+    <string name="shortcut_recent_apps">Recent Apps</string>
+    <string name="shortcut_app">App Launch</string>
+    <string name="shortcut_none">None</string>
+    <string name="shortcut_selected_app">Selected: %1$s</string>
+    <string name="shortcut_no_app">No app selected</string>
+
+    <!-- Marquee Press Shortcut -->
+    <string name="marquee_press_shortcut_screen_title">Marquee Long Press Shortcut</string>
+    <string name="marquee_press_shortcut_screen_description">Select what happens when you long press the marquee</string>
+    <string name="esde_settings_marquee_press_shortcut">Marquee Long Press Shortcut</string>
+    <string name="esde_settings_marquee_press_shortcut_description">Choose an action when the marquee is long pressed</string>
+    <string name="esde_settings_marquee_press_shortcut_choose">Choose Shortcut</string>
+
+    <!-- Consolidated Marquee Tab Settings -->
+    <string name="esde_settings_marquee_tab_settings_title">Marquee Tab Settings</string>
+    <string name="esde_settings_marquee_tab_settings_description">Configure marquee visibility and overlay mode per tab.</string>
+    <string name="esde_settings_marquee_tab_number">Tab %1$d</string>
+    <string name="esde_settings_marquee_show_on_tab">Show marquee</string>
+    <string name="esde_settings_marquee_overlay_on_tab">Overlay mode</string>
+    <string name="esde_settings_marquee_overlay_on_tab_description">Marquee floats over tab content</string>
+
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
@@ -730,9 +760,7 @@
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
-    <string name="esde_settings_section_logo">System Logo</string>
-    <string name="esde_settings_show_system_logo">Show System Logo</string>
-    <string name="esde_settings_show_system_logo_description">Display system/game logo on wallpaper</string>
+    <string name="esde_settings_section_marquee">Marquee</string>
     <string name="esde_settings_logo_alignment">Logo Alignment</string>
     <string name="esde_settings_logo_alignment_top">Top</string>
     <string name="esde_settings_logo_alignment_center">Center</string>
