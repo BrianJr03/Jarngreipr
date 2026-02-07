@@ -47,6 +47,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -159,7 +160,8 @@ class ESDEPreferencesManager(context: Context) {
             marqueeHiddenPages = marqueeHiddenPages,
             marqueeOverlayDisabledPages = marqueeOverlayDisabledPages,
             logoBrightness = prefs.getInt(KEY_LOGO_BRIGHTNESS, 100),
-            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20)
+            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20),
+            customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null)
         )
     }
 
@@ -390,5 +392,14 @@ class ESDEPreferencesManager(context: Context) {
         val coercedLevel = level.coerceIn(0, 70)
         _state.value = _state.value.copy(gameBackgroundDimming = coercedLevel)
         prefs.edit { putInt(KEY_GAME_BACKGROUND_DIMMING, coercedLevel) }
+    }
+
+    fun setCustomMediaPath(path: String?) {
+        _state.value = _state.value.copy(customMediaPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_CUSTOM_MEDIA_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_CUSTOM_MEDIA_PATH) }
+        }
     }
 }
