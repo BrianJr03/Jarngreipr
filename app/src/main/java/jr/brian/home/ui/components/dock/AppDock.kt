@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -87,20 +88,22 @@ fun AppDock(
                         apps.find { it.packageName == pkgName }
                     }
 
-                    if (app != null) {
-                        DockAppItem(
-                            app = app,
-                            size = dockSize,
-                            onClick = { onAppClick(app) },
-                            onDoubleClick = { onAppDoubleClick(app) },
-                            onLongClick = { onAppLongClick(app) }
-                        )
-                    } else {
-                        DockEmptySlot(
-                            size = dockSize,
-                            onClick = { onEmptySlotClick(i) },
-                            onLongClick = { onEmptySlotLongClick(i) }
-                        )
+                    key(packageName ?: "empty_$i") {
+                        if (app != null) {
+                            DockAppItem(
+                                app = app,
+                                size = dockSize,
+                                onClick = { onAppClick(app) },
+                                onDoubleClick = { onAppDoubleClick(app) },
+                                onLongClick = { onAppLongClick(app) }
+                            )
+                        } else {
+                            DockEmptySlot(
+                                size = dockSize,
+                                onClick = { onEmptySlotClick(i) },
+                                onLongClick = { onEmptySlotLongClick(i) }
+                            )
+                        }
                     }
                 }
             }

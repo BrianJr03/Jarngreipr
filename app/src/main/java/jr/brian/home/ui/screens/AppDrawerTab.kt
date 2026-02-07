@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -138,8 +139,16 @@ fun AppDrawerTab(
     val esdeSetupDialogState = rememberDialogState<SetupStep>()
     val wallpaperManager = LocalWallpaperManager.current
 
-    val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+    val isDockEnabled by dockManager.isDockVisible.collectAsStateWithLifecycle()
     val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+    
+    val isDockVisible by remember {
+        derivedStateOf {
+            val isAtTop = scrollState.firstVisibleItemIndex == 0 &&
+                    scrollState.firstVisibleItemScrollOffset < 50
+            isDockEnabled && isDockVisibleOnPage && isAtTop
+        }
+    }
 
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
@@ -219,6 +228,7 @@ fun AppDrawerTab(
                     allApps = allApps,
                     pageIndex = pageIndex,
                     isHeaderVisible = isHeaderVisible,
+                    isDockVisible = isDockVisible,
                     onAppOpened = {
                         animationScope.launch {
                             scrollState.scrollToItem(0)
@@ -304,9 +314,7 @@ fun AppDrawerTab(
         }
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage && 
-                     scrollState.firstVisibleItemIndex == 0 && 
-                     scrollState.firstVisibleItemScrollOffset == 0,
+            visible = isDockVisible,
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -378,6 +386,7 @@ private fun DrawerItem(
     allApps: List<AppInfo>,
     pageIndex: Int,
     isHeaderVisible: Boolean,
+    isDockVisible: Boolean,
     onAppOpened: () -> Unit
 ) {
     if (viewHeight > 0) {
@@ -396,6 +405,7 @@ private fun DrawerItem(
                 height = height,
                 showDrawerOptionsDialog = showDrawerOptionsDialog,
                 showHomeTabDialog = showHomeTabDialog,
+                isDockVisible = isDockVisible,
                 onDoubleTap = onDoubleTap,
                 onLongPress = onLongPress
             )
@@ -417,17 +427,26 @@ private fun DrawerItem(
     }
 }
 
+private val DOCK_TOUCH_AREA_HEIGHT = 100.dp
+
 @Composable
 private fun DrawerTouchArea(
     height: androidx.compose.ui.unit.Dp,
     showDrawerOptionsDialog: Boolean,
     showHomeTabDialog: Boolean,
+    isDockVisible: Boolean,
     onDoubleTap: () -> Unit,
     onLongPress: () -> Unit
 ) {
+    val adjustedHeight = if (isDockVisible) {
+        (height - DOCK_TOUCH_AREA_HEIGHT).coerceAtLeast(0.dp)
+    } else {
+        height
+    }
+    
     Box(
         modifier = Modifier
-            .requiredHeight(height)
+            .requiredHeight(adjustedHeight)
             .fillMaxWidth()
             .pointerInput(Unit) {
                 detectTapGestures(

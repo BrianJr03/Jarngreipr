@@ -469,6 +469,10 @@ class MusicManager(
 
         // Save reference to old player BEFORE changing musicPlayer
         val oldPlayer = musicPlayer
+        
+        // IMPORTANT: Clear musicPlayer reference so playTrack() doesn't release it
+        // The old player will be faded out and released independently below
+        musicPlayer = null
 
         // Load new playlist
         val newPlaylist = loadPlaylist(newSource)
@@ -561,11 +565,14 @@ class MusicManager(
                 }
                 setOnCompletionListener {
                     android.util.Log.d(TAG, "Track completed, playing next")
-                    playNextTrack()
+                    // IMPORTANT: Post to handler to avoid calling release() from within callback
+                    // Releasing a MediaPlayer from its own callback can cause undefined behavior
+                    handler.post { playNextTrack() }
                 }
                 setOnErrorListener { _, what, extra ->
                     android.util.Log.e(TAG, "MediaPlayer error: what=$what, extra=$extra")
-                    playNextTrack() // Skip to next track on error
+                    // IMPORTANT: Post to handler to avoid calling release() from within callback
+                    handler.post { playNextTrack() }
                     true
                 }
                 prepareAsync()
@@ -573,7 +580,8 @@ class MusicManager(
 
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error playing track: ${file.name}", e)
-            playNextTrack()
+            // Post to handler to avoid potential recursive issues
+            handler.post { playNextTrack() }
         }
     }
 
