@@ -180,6 +180,7 @@ fun LauncherPagerScreen(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1,
             ) { page ->
                 val pageType =
                     if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
