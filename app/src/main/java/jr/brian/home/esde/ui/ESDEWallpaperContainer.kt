@@ -43,12 +43,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.decode.ImageDecoderDecoder
-import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.wallpaper.WallpaperState
@@ -211,14 +209,7 @@ private fun AnimatedWallpaperImage(
     animationScale: Float = 0.9f
 ) {
     val context = LocalContext.current
-
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components {
-                add(ImageDecoderDecoder.Factory())
-            }
-            .build()
-    }
+    val imageLoader = LocalESDEImageLoader.current
 
     val animationState = rememberImageAnimationState(
         imagePath = imagePath,
@@ -282,15 +273,7 @@ private fun MarqueeImage(
     if (marqueePath == null) return
 
     val context = LocalContext.current
-
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components {
-                add(ImageDecoderDecoder.Factory())
-                add(SvgDecoder.Factory())
-            }
-            .build()
-    }
+    val imageLoader = LocalESDEImageLoader.current
 
     val imageData = remember(marqueePath) {
         if (marqueePath.startsWith("file:///android_asset/")) {

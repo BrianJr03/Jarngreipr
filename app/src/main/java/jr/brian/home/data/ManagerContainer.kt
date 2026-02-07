@@ -26,6 +26,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import javax.inject.Inject
 
 /**
@@ -98,6 +99,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalDockManager provides feature.dockManager,
         LocalControlPadManager provides feature.controlPadManager,
         LocalESDEPreferencesManager provides feature.esdePreferencesManager,
+        LocalESDEImageLoader provides feature.esdeImageLoader,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,
