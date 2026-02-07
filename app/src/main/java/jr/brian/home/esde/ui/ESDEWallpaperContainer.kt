@@ -83,6 +83,10 @@ fun ESDEWallpaperContainer(
                 )
             }
 
+            if (!state.isVideoPlaying && !state.isScreensaverActive) {
+                DimmingOverlay(alpha = state.dimmingLevel)
+            }
+
             val isUsingDefaultBackground = state.currentImagePath == null
             
             if (
@@ -127,7 +131,7 @@ fun ESDEWallpaperContainer(
             rememberContent?.invoke(this)
         }
 
-        if (showEsdeContent && !state.isVideoPlaying) {
+        if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
             DimmingOverlay(alpha = state.dimmingLevel)
         }
     }

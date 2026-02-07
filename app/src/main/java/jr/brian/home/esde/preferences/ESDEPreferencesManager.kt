@@ -99,7 +99,7 @@ class ESDEPreferencesManager(context: Context) {
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
             animationScale = prefs.getInt(KEY_ANIMATION_SCALE, 90).toFloat() / 100f,
             blurLevel = prefs.getInt(KEY_BLUR_LEVEL, 0),
-            dimmingLevel = prefs.getInt(KEY_DIMMING_LEVEL, 20),
+            dimmingLevel = prefs.getInt(KEY_DIMMING_LEVEL, 20).coerceAtMost(70),
             backgroundColor = prefs.getInt(KEY_BACKGROUND_COLOR, Color.Black.toArgb()),
             videoEnabled = prefs.getBoolean(KEY_VIDEO_ENABLED, false),
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
@@ -152,7 +152,7 @@ class ESDEPreferencesManager(context: Context) {
     }
 
     fun setDimmingLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 100)
+        val coercedLevel = level.coerceIn(0, 70)
         _state.value = _state.value.copy(dimmingLevel = coercedLevel)
         prefs.edit { putInt(KEY_DIMMING_LEVEL, coercedLevel) }
     }
