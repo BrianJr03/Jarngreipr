@@ -17,6 +17,11 @@
     <string name="keyboard_label_settings">Settings</string>
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
+    <string name="keyboard_label_flip">Flip Layout</string>
+
+    <!-- Search Screen Onboarding -->
+    <string name="search_onboarding_title">Switch Layout</string>
+    <string name="search_onboarding_description">Tap this icon to switch between vertical (alphabetical keyboard) and horizontal (QWERTY keyboard) layouts.</string>
 
     <string name="dialog_cancel">Cancel</string>
     <string name="wallpaper">"Wallpaper"</string>

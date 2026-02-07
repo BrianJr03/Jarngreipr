@@ -31,7 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.model.widget.WidgetCategory
 import jr.brian.home.model.widget.WidgetInfo
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.widgetpicker.EmptyStateView
 import jr.brian.home.ui.components.widgetpicker.LoadingView
 import jr.brian.home.ui.components.widgetpicker.WidgetCategoryList
@@ -226,7 +226,7 @@ fun WidgetPickerScreen(
                         remember { SnapshotStateMap<Int, FocusRequester>() }
                     var focusedKeyIndex by remember { mutableIntStateOf(0) }
 
-                    OnScreenKeyboard(
+                    VerticalKeyboard(
                         searchQuery = searchQuery,
                         showQueryText = false,
                         onQueryChange = { searchQuery = it },
