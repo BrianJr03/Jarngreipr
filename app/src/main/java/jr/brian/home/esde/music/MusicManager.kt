@@ -76,6 +76,7 @@ class MusicManager(
 
     // Track if activity is visible (onStart/onStop lifecycle)
     private var isActivityVisible: Boolean = true
+
     // Track if music was playing before becoming invisible
     private var wasMusicPlayingBeforeInvisible: Boolean = false
 
@@ -140,7 +141,10 @@ class MusicManager(
         }
 
         // Determine if cross-fade needed
-        val needsCrossFade = shouldCrossFade(currentMusicSource, actualSource, lastSystemName, systemName)
+        val needsCrossFade = shouldCrossFade(
+            currentMusicSource,
+            actualSource
+        )
 
         if (needsCrossFade) {
             crossFadeToSource(actualSource)
@@ -278,9 +282,11 @@ class MusicManager(
                 // Do nothing - music stays at 100%
                 android.util.Log.d(TAG, "Continuing music at full volume")
             }
+
             MusicVideoBehavior.Duck -> {
                 duckMusic()
             }
+
             MusicVideoBehavior.Pause -> {
                 pauseMusicForVideo()
             }
@@ -715,7 +721,10 @@ class MusicManager(
         }
 
         // Find all audio files recursively, excluding "systems" subfolder for generic source
-        val audioFiles = scanAudioFilesRecursively(sourceDir, excludeSystemsFolder = (source is MusicSource.Generic))
+        val audioFiles = scanAudioFilesRecursively(
+            sourceDir,
+            excludeSystemsFolder = (source is MusicSource.Generic)
+        )
 
         if (audioFiles.isEmpty()) {
             android.util.Log.d(TAG, "No audio files found in: $sourcePath")
@@ -741,7 +750,10 @@ class MusicManager(
     /**
      * Recursively scan a directory for audio files.
      */
-    private fun scanAudioFilesRecursively(directory: File, excludeSystemsFolder: Boolean = false): List<File> {
+    private fun scanAudioFilesRecursively(
+        directory: File,
+        excludeSystemsFolder: Boolean = false
+    ): List<File> {
         val audioFiles = mutableListOf<File>()
         val filesToProcess = mutableListOf(directory)
 
@@ -753,7 +765,10 @@ class MusicManager(
 
             // Skip "systems" folder if this is generic music scan
             if (excludeSystemsFolder && currentDir.name == "systems" && currentDir.parentFile == directory) {
-                android.util.Log.d(TAG, "Skipping systems folder in generic scan: ${currentDir.absolutePath}")
+                android.util.Log.d(
+                    TAG,
+                    "Skipping systems folder in generic scan: ${currentDir.absolutePath}"
+                )
                 continue
             }
 
@@ -765,6 +780,7 @@ class MusicManager(
                         // Audio file found - add to list
                         audioFiles.add(file)
                     }
+
                     file.isDirectory -> {
                         // Subdirectory found - add to processing queue
                         filesToProcess.add(file)
@@ -834,12 +850,19 @@ class MusicManager(
 
     /**
      * Determine if a state transition requires cross-fading.
+     *
+     * Cross-fade when:
+     * - Source changes (e.g., Generic → System("snes"))
+     * - System changes AND the system has its own music folder
+     *
+     * Continue without cross-fade when:
+     * - SystemBrowsing → GameBrowsing (same system)
+     * - GameBrowsing → SystemBrowsing (same system)
+     * - Two different systems both fallback to Generic music
      */
     private fun shouldCrossFade(
         oldSource: MusicSource?,
-        newSource: MusicSource,
-        oldSystemName: String?,
-        newSystemName: String?
+        newSource: MusicSource
     ): Boolean {
         // If no old source, we're starting fresh (not a cross-fade)
         if (oldSource == null) {
@@ -851,14 +874,9 @@ class MusicManager(
             return true
         }
 
-        // Sources are the same - check if system changed
-        // This handles the case where two different systems fall back to Generic
-        if (oldSystemName != newSystemName) {
-            // System changed but both map to same source - cross-fade for freshness
-            return true
-        }
-
-        // Same source, same system - continue playing
+        // Sources are the same - do NOT cross-fade
+        // This prevents restarting music when switching between systems
+        // that both fall back to the same Generic source
         return false
     }
 }
