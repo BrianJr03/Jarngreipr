@@ -86,27 +86,22 @@ data class ESDEPrefsState(
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.ShowContent,
-    // Music settings
     val musicEnabled: Boolean = false,
     val musicPath: String? = null,
     val musicSystemEnabled: Boolean = true,
     val musicGameEnabled: Boolean = true,
     val musicScreensaverEnabled: Boolean = true,
     val musicVideoBehavior: MusicVideoBehavior = MusicVideoBehavior.Duck,
-    // App Drawer settings
     val appDrawerOpacity: Int = 100,
-    // Marquee Press Shortcut settings
     val marqueePressShortcut: Shortcut = Shortcut.NONE,
     val marqueePressShortcutAppPackage: String? = null,
-    // Marquee Hidden Pages - pages where marquee is HIDDEN (empty = visible on all)
     val marqueeHiddenPages: Set<Int> = emptySet(),
-    // Marquee Overlay Disabled Pages - pages where overlay is DISABLED (empty = overlay on all)
-    // When overlay is enabled: marquee floats over tab content with animations and long-press
-    // When overlay is disabled: marquee is embedded in content flow (original behavior)
-    val marqueeOverlayDisabledPages: Set<Int> = emptySet()
+    val marqueeOverlayDisabledPages: Set<Int> = emptySet(),
+    val logoBrightness: Int = 100
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
+    val logoBrightnessFloat: Float get() = logoBrightness / 100f
     
     /**
      * Check if marquee should be visible on a specific page.
