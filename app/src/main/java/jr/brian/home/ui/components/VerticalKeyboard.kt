@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,14 +46,13 @@ import jr.brian.home.R
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.extensions.handleRightNavigation
-import jr.brian.home.ui.theme.AppCardDark
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
-fun OnScreenKeyboard(
+fun VerticalKeyboard(
     searchQuery: String,
     modifier: Modifier = Modifier,
     showQueryText: Boolean = true,
@@ -59,6 +60,7 @@ fun OnScreenKeyboard(
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onNavigateRight: () -> Unit = {},
+    onFlipLayout: () -> Unit = {},
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
     val letters = ('A'..'Z').toList()
@@ -89,6 +91,21 @@ fun OnScreenKeyboard(
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                     modifier = Modifier.weight(1f),
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(ThemePrimaryColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                        .clickable { onFlipLayout() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FlipCameraAndroid,
+                        contentDescription = stringResource(R.string.keyboard_label_flip),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 

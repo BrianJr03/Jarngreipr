@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.VerticalKeyboard
 
 @Composable
 fun IconPackSearchBar(
@@ -17,7 +17,7 @@ fun IconPackSearchBar(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
-        OnScreenKeyboard(
+        VerticalKeyboard(
             searchQuery = searchQuery,
             onQueryChange = onSearchQueryChange,
             showQueryText = true,

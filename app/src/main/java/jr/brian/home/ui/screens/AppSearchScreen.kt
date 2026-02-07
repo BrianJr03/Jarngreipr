@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,14 +44,16 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.QwertyKeyboard
+import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
+import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -59,6 +64,10 @@ fun AppSearchScreen(
     onDismiss: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val searchLayoutManager = LocalSearchLayoutManager.current
+    val isHorizontalLayout = searchLayoutManager.isHorizontalLayout
+    val hasCompletedOnboarding = searchLayoutManager.hasCompletedOnboarding
+    var showOnboarding by remember { mutableStateOf(!hasCompletedOnboarding) }
 
     BackHandler(onBack = onDismiss)
 
@@ -72,46 +81,129 @@ fun AppSearchScreen(
         }
     }
 
-    Surface(
-        color = OledBackgroundColor,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            color = OledBackgroundColor,
+            modifier = Modifier.fillMaxSize()
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                AppGrid(
-                    apps = filteredApps,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(.8f)
-                    .fillMaxSize()
-                    .background(OledBackgroundColor)
-            ) {
-                val keyboardFocusRequesters =
-                    remember { SnapshotStateMap<Int, FocusRequester>() }
-                var focusedKeyIndex by remember { mutableIntStateOf(0) }
-
-                OnScreenKeyboard(
+            if (isHorizontalLayout) {
+                HorizontalSearchLayout(
                     searchQuery = searchQuery,
+                    filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    keyboardFocusRequesters = keyboardFocusRequesters,
-                    onFocusChanged = { focusedKeyIndex = it },
-                    onNavigateRight = {},
-                    modifier = Modifier.fillMaxSize()
+                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                )
+            } else {
+                VerticalSearchLayout(
+                    searchQuery = searchQuery,
+                    filteredApps = filteredApps,
+                    onQueryChange = { searchQuery = it },
+                    onFlipLayout = { searchLayoutManager.toggleLayout() }
                 )
             }
+        }
+
+        if (showOnboarding) {
+            SearchOnboardingOverlay(
+                onComplete = {
+                    showOnboarding = false
+                    searchLayoutManager.markOnboardingComplete()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun VerticalSearchLayout(
+    searchQuery: String,
+    filteredApps: List<AppInfo>,
+    onQueryChange: (String) -> Unit,
+    onFlipLayout: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+        ) {
+            AppGrid(
+                apps = filteredApps,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(.8f)
+                .fillMaxSize()
+                .background(OledBackgroundColor)
+        ) {
+            val keyboardFocusRequesters =
+                remember { SnapshotStateMap<Int, FocusRequester>() }
+            var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+            VerticalKeyboard(
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = { focusedKeyIndex = it },
+                onNavigateRight = {},
+                onFlipLayout = onFlipLayout,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun HorizontalSearchLayout(
+    searchQuery: String,
+    filteredApps: List<AppInfo>,
+    onQueryChange: (String) -> Unit,
+    onFlipLayout: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Apps on top with 2 rows, max columns
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            HorizontalAppGrid(
+                apps = filteredApps,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(OledBackgroundColor)
+        ) {
+            val keyboardFocusRequesters =
+                remember { SnapshotStateMap<Int, FocusRequester>() }
+            var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+            QwertyKeyboard(
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = { focusedKeyIndex = it },
+                onNavigateUp = {},
+                onFlipLayout = onFlipLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -193,6 +285,132 @@ private fun AppGrid(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+private fun HorizontalAppGrid(
+    apps: List<AppInfo>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+
+    val hasExternalDisplay = remember {
+        val displayManager =
+            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        displayManager.displays.size > 1
+    }
+
+    LazyHorizontalGrid(
+        rows = GridCells.Fixed(2),
+        modifier = modifier
+            .background(OledBackgroundColor)
+            .padding(horizontal = 8.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(apps, key = { it.packageName }) { app ->
+            HorizontalAppGridItem(
+                app = app,
+                onAppClick = {
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = {
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
+                },
+                onAppLongClick = {
+                    selectedApp = app
+                }
+            )
+        }
+    }
+
+    selectedApp?.let { app ->
+        SearchAppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                app.packageName
+            ),
+            onDismiss = { selectedApp = null },
+            onAppInfoClick = {
+                openAppInfo(context, app.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    app.packageName,
+                    preference
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HorizontalAppGridItem(
+    app: AppInfo,
+    modifier: Modifier = Modifier,
+    onAppClick: () -> Unit,
+    onAppDoubleClick: () -> Unit = {},
+    onAppLongClick: () -> Unit
+) {
+    val customIconManager = LocalCustomIconManager.current
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .width(80.dp)
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient(isFocused),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clip(RoundedCornerShape(10.dp))
+            .combinedClickable(
+                onClick = onAppClick,
+                onDoubleClick = onAppDoubleClick,
+                onLongClick = onAppLongClick
+            )
+            .focusable()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
+                contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
+                modifier = Modifier.matchParentSize()
+            )
+        }
+
+        Spacer(Modifier.height(2.dp))
+        app.AppName()
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 private fun AppGridItem(
     app: AppInfo,
     modifier: Modifier = Modifier,
@@ -201,7 +419,6 @@ private fun AppGridItem(
     onAppLongClick: () -> Unit
 ) {
     val customIconManager = LocalCustomIconManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
     var isFocused by remember { mutableStateOf(false) }
 
     Column(

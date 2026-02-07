@@ -21,6 +21,7 @@ import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.SearchLayoutManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.data.WidgetProviderRepository
@@ -203,5 +204,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): WallpaperManager {
         return WallpaperManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchLayoutManager(
+        @ApplicationContext context: Context
+    ): SearchLayoutManager {
+        return SearchLayoutManager(context)
     }
 }

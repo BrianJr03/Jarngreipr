@@ -14,6 +14,7 @@ import javax.inject.Singleton
  * - Power state visualization
  * - Icon pack management
  * - Wallpaper management
+ * - Search layout preferences
  */
 @Singleton
 data class UIManagers @Inject constructor(
@@ -36,5 +37,8 @@ data class UIManagers @Inject constructor(
     val globalIconRefreshManager: GlobalIconRefreshManager,
     
     /** Manages wallpaper settings (image, video, GIF, ESDE) */
-    val wallpaperManager: WallpaperManager
+    val wallpaperManager: WallpaperManager,
+    
+    /** Manages search screen layout preferences (horizontal/vertical) */
+    val searchLayoutManager: SearchLayoutManager
 )
