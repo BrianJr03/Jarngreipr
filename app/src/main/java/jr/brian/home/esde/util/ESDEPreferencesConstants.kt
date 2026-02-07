@@ -44,4 +44,5 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_OVERLAY_PAGES = "marquee_overlay_pages"
 
     const val KEY_LOGO_BRIGHTNESS = "logo_brightness"
+    const val KEY_GAME_BACKGROUND_DIMMING = "game_background_dimming"
 }
