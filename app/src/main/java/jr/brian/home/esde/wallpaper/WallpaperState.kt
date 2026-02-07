@@ -24,5 +24,6 @@ data class WallpaperState(
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val isScreensaverActive: Boolean = false,
-    val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff
+    val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff,
+    val logoBrightness: Float = 1.0f
 )

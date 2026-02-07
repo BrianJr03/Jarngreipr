@@ -1,13 +1,8 @@
 package jr.brian.home.esde.ui
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,23 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
@@ -51,6 +36,7 @@ import jr.brian.home.esde.ui.components.BackgroundColorSelector
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
+import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
 import jr.brian.home.esde.ui.components.MusicVideoBehaviorSelector
 import jr.brian.home.esde.ui.components.PathSetting
 import jr.brian.home.esde.ui.components.ScreensaverBehaviorSelector
@@ -58,12 +44,11 @@ import jr.brian.home.esde.ui.components.SectionHeader
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.Shortcut
-import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 
 @Composable
@@ -272,19 +257,6 @@ fun ESDESettingsScreen(
                     }
 
                     item {
-                        SliderSetting(
-                            title = stringResource(R.string.esde_settings_dimming_level),
-                            value = prefsState.dimmingLevel.toFloat(),
-                            valueRange = 0f..70f,
-                            steps = 19,
-                            valueText = "${prefsState.dimmingLevel}%",
-                            onValueChange = { dimming ->
-                                preferencesManager.setDimmingLevel(dimming.toInt())
-                            }
-                        )
-                    }
-
-                    item {
                         GameImageTypeSelector(
                             selectedType = prefsState.gameImageType,
                             onTypeSelected = { type ->
@@ -380,7 +352,6 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    // Consolidated Marquee Tab Settings (Visibility + Overlay)
                     if (pageCount > 1) {
                         item {
                             Column {
@@ -423,7 +394,6 @@ fun ESDESettingsScreen(
                         }
                     }
 
-                    // Music Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_music))
@@ -497,7 +467,6 @@ fun ESDESettingsScreen(
                         }
                     }
 
-                    // Power Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_power))
@@ -510,6 +479,9 @@ fun ESDESettingsScreen(
                             checked = prefsState.persistOnGameLaunch,
                             onCheckedChange = { persist ->
                                 preferencesManager.setPersistOnGameLaunch(persist)
+                                if (persist) {
+                                    preferencesManager.setPowerEventsEnabled(false)
+                                }
                             }
                         )
                     }
@@ -521,11 +493,41 @@ fun ESDESettingsScreen(
                             checked = prefsState.powerEventsEnabled,
                             onCheckedChange = { enabled ->
                                 preferencesManager.setPowerEventsEnabled(enabled)
+                                if (enabled) {
+                                    preferencesManager.setPersistOnGameLaunch(false)
+                                }
                             }
                         )
                     }
 
-                    // Screensaver Section
+                    item {
+                        SliderSetting(
+                            title = stringResource(R.string.esde_settings_dimming_level),
+                            value = prefsState.dimmingLevel.toFloat(),
+                            valueRange = 0f..70f,
+                            steps = 19,
+                            valueText = "${prefsState.dimmingLevel}%",
+                            onValueChange = { dimming ->
+                                preferencesManager.setDimmingLevel(dimming.toInt())
+                            }
+                        )
+                    }
+
+                    if (prefsState.persistOnGameLaunch) {
+                        item {
+                            SliderSetting(
+                                title = stringResource(R.string.esde_settings_logo_brightness),
+                                value = prefsState.logoBrightness.toFloat(),
+                                valueRange = 0f..100f,
+                                steps = 19,
+                                valueText = "${prefsState.logoBrightness}%",
+                                onValueChange = { brightness ->
+                                    preferencesManager.setLogoBrightness(brightness.toInt())
+                                }
+                            )
+                        }
+                    }
+
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_screensaver))
@@ -540,7 +542,6 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    // Setup Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_setup))
@@ -556,7 +557,6 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    // Video Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(text = stringResource(R.string.esde_settings_section_video))
@@ -613,148 +613,4 @@ fun ESDESettingsScreen(
     }
 }
 
-/**
- * Convert content URI to file path
- */
-private fun getPathFromUri(uri: Uri): String? {
-    val path = uri.path ?: return null
 
-    return when {
-        path.contains("/tree/primary:") -> {
-            val relativePath = path.substringAfter("/tree/primary:")
-            "/storage/emulated/0/$relativePath"
-        }
-
-        path.contains("/tree/") -> {
-            // Handle external SD card or other storage
-            val storagePart = path.substringAfter("/tree/").substringBefore(":")
-            val relativePath = path.substringAfter(":")
-            "/storage/$storagePart/$relativePath"
-        }
-
-        else -> null
-    }
-}
-
-/**
- * Consolidated marquee tab settings - visibility and overlay mode in one component.
- * Shows the visibility toggle, and when visible, shows a nested overlay toggle.
- */
-@Composable
-private fun MarqueeTabSettingsOption(
-    pageIndex: Int,
-    isVisible: Boolean,
-    isOverlayEnabled: Boolean,
-    onVisibilityToggle: () -> Unit,
-    onOverlayToggle: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    var isOverlayFocused by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = OledBackgroundColor,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = Color.Gray.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clip(RoundedCornerShape(10.dp))
-    ) {
-        // Main visibility toggle
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
-                .onFocusChanged { isFocused = it.isFocused }
-                .background(
-                    color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.1f) else Color.Transparent
-                )
-                .clickable { onVisibilityToggle() }
-                .focusable()
-                .padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.esde_settings_marquee_tab_number, pageIndex + 1),
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = stringResource(R.string.esde_settings_marquee_show_on_tab),
-                        color = Color.Gray.copy(alpha = 0.7f),
-                        fontSize = 12.sp
-                    )
-                }
-                Switch(
-                    checked = isVisible,
-                    onCheckedChange = { onVisibilityToggle() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = ThemePrimaryColor,
-                        checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
-                        uncheckedThumbColor = Color.Gray,
-                        uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
-                    )
-                )
-            }
-        }
-        
-        // Nested overlay toggle - only shown when marquee is visible on this tab
-        if (isVisible) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .scale(animatedFocusedScale(isOverlayFocused))
-                    .onFocusChanged { isOverlayFocused = it.isFocused }
-                    .background(
-                        color = if (isOverlayFocused) ThemePrimaryColor.copy(alpha = 0.1f) 
-                               else Color.DarkGray.copy(alpha = 0.15f)
-                    )
-                    .clickable { onOverlayToggle() }
-                    .focusable()
-                    .padding(start = 28.dp, end = 14.dp, top = 10.dp, bottom = 12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab),
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                        Text(
-                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab_description),
-                            color = Color.Gray.copy(alpha = 0.6f),
-                            fontSize = 11.sp
-                        )
-                    }
-                    Switch(
-                        checked = isOverlayEnabled,
-                        onCheckedChange = { onOverlayToggle() },
-                        modifier = Modifier.scale(0.85f),
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = ThemePrimaryColor,
-                            checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
-                        )
-                    )
-                }
-            }
-        }
-    }
-}

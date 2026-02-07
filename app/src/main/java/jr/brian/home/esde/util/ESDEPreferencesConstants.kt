@@ -27,7 +27,6 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_HEIGHT = "marquee_height"
     const val KEY_SCREENSAVER_BEHAVIOR = "screensaver_behavior"
 
-    // Music settings
     const val KEY_MUSIC_ENABLED = "music_enabled"
     const val KEY_MUSIC_PATH = "music_path"
     const val KEY_MUSIC_SYSTEM_ENABLED = "music_system_enabled"
@@ -35,19 +34,14 @@ object ESDEPreferencesConstants {
     const val KEY_MUSIC_SCREENSAVER_ENABLED = "music_screensaver_enabled"
     const val KEY_MUSIC_VIDEO_BEHAVIOR = "music_video_behavior"
 
-    // App Drawer settings
     const val KEY_APP_DRAWER_OPACITY = "app_drawer_opacity"
 
-    // Marquee Press Shortcut settings
     const val KEY_MARQUEE_PRESS_SHORTCUT = "marquee_press_shortcut"
     const val KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE = "marquee_press_shortcut_app_package"
 
-    // Marquee Tab Visibility settings
     const val KEY_MARQUEE_VISIBLE_PAGES = "marquee_visible_pages"
 
-    // Marquee Overlay Mode
-    const val KEY_MARQUEE_OVERLAY_MODE = "marquee_overlay_mode"
-    
-    // Marquee Overlay Pages (per-tab overlay mode)
     const val KEY_MARQUEE_OVERLAY_PAGES = "marquee_overlay_pages"
+
+    const val KEY_LOGO_BRIGHTNESS = "logo_brightness"
 }
