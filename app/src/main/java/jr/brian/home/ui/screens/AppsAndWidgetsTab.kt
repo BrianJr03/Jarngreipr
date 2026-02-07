@@ -5,9 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +54,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.extensions.pagerFriendlyClickable
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -148,8 +147,8 @@ fun AppsAndWidgetsTab(
     val gridState = rememberLazyGridState()
 
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
+    val isPressedState = remember { mutableStateOf(false) }
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressedState.value && !drawerOptionsDialogState.isVisible)
 
     var isScrolling by remember { mutableStateOf(false) }
 
@@ -185,16 +184,11 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
-            .combinedClickable(
+            .pagerFriendlyClickable(
                 interactionSource = interactionSource,
-                indication = null,
-                onClick = {},
-                onDoubleClick = {
-                    powerViewModel.togglePower()
-                },
-                onLongClick = {
-                    drawerOptionsDialogState.show()
-                }
+                isPressedState = isPressedState,
+                onDoubleTap = { powerViewModel.togglePower() },
+                onLongPress = { drawerOptionsDialogState.show() }
             )
     ) {
         if (widgetPickerDialogState.isVisible) {
