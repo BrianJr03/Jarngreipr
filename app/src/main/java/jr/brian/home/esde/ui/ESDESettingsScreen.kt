@@ -257,6 +257,19 @@ fun ESDESettingsScreen(
                     }
 
                     item {
+                        SliderSetting(
+                            title = stringResource(R.string.esde_settings_dimming_level),
+                            value = prefsState.dimmingLevel.toFloat(),
+                            valueRange = 0f..70f,
+                            steps = 13,
+                            valueText = "${prefsState.dimmingLevel}%",
+                            onValueChange = { dimming ->
+                                preferencesManager.setDimmingLevel(dimming.toInt())
+                            }
+                        )
+                    }
+
+                    item {
                         GameImageTypeSelector(
                             selectedType = prefsState.gameImageType,
                             onTypeSelected = { type ->
@@ -500,19 +513,6 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    item {
-                        SliderSetting(
-                            title = stringResource(R.string.esde_settings_dimming_level),
-                            value = prefsState.dimmingLevel.toFloat(),
-                            valueRange = 0f..70f,
-                            steps = 19,
-                            valueText = "${prefsState.dimmingLevel}%",
-                            onValueChange = { dimming ->
-                                preferencesManager.setDimmingLevel(dimming.toInt())
-                            }
-                        )
-                    }
-
                     if (prefsState.persistOnGameLaunch) {
                         item {
                             SliderSetting(
@@ -523,6 +523,19 @@ fun ESDESettingsScreen(
                                 valueText = "${prefsState.logoBrightness}%",
                                 onValueChange = { brightness ->
                                     preferencesManager.setLogoBrightness(brightness.toInt())
+                                }
+                            )
+                        }
+
+                        item {
+                            SliderSetting(
+                                title = stringResource(R.string.esde_settings_game_background_dimming),
+                                value = prefsState.gameBackgroundDimming.toFloat(),
+                                valueRange = 0f..70f,
+                                steps = 13,
+                                valueText = "${prefsState.gameBackgroundDimming}%",
+                                onValueChange = { dimming ->
+                                    preferencesManager.setGameBackgroundDimming(dimming.toInt())
                                 }
                             )
                         }

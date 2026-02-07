@@ -212,7 +212,7 @@ class ESDEViewModel @Inject constructor(
         musicController.onGameStarted()
         if (prefs.state.value.persistOnGameLaunch) {
             _wallpaperState.value = _wallpaperState.value.copy(
-                dimmingLevel = prefs.state.value.dimmingLevelFloat,
+                dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
                 logoBrightness = prefs.state.value.logoBrightnessFloat
             )
         } else {

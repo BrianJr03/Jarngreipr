@@ -37,6 +37,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_OVERLAY_PAGES
 import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_BRIGHTNESS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
@@ -157,7 +158,8 @@ class ESDEPreferencesManager(context: Context) {
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
             marqueeHiddenPages = marqueeHiddenPages,
             marqueeOverlayDisabledPages = marqueeOverlayDisabledPages,
-            logoBrightness = prefs.getInt(KEY_LOGO_BRIGHTNESS, 100)
+            logoBrightness = prefs.getInt(KEY_LOGO_BRIGHTNESS, 100),
+            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20)
         )
     }
 
@@ -382,5 +384,11 @@ class ESDEPreferencesManager(context: Context) {
         val coercedBrightness = brightness.coerceIn(0, 100)
         _state.value = _state.value.copy(logoBrightness = coercedBrightness)
         prefs.edit { putInt(KEY_LOGO_BRIGHTNESS, coercedBrightness) }
+    }
+
+    fun setGameBackgroundDimming(level: Int) {
+        val coercedLevel = level.coerceIn(0, 70)
+        _state.value = _state.value.copy(gameBackgroundDimming = coercedLevel)
+        prefs.edit { putInt(KEY_GAME_BACKGROUND_DIMMING, coercedLevel) }
     }
 }

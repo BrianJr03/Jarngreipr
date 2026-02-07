@@ -97,11 +97,13 @@ data class ESDEPrefsState(
     val marqueePressShortcutAppPackage: String? = null,
     val marqueeHiddenPages: Set<Int> = emptySet(),
     val marqueeOverlayDisabledPages: Set<Int> = emptySet(),
-    val logoBrightness: Int = 100
+    val logoBrightness: Int = 100,
+    val gameBackgroundDimming: Int = 20
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
     val logoBrightnessFloat: Float get() = logoBrightness / 100f
+    val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     
     /**
      * Check if marquee should be visible on a specific page.
