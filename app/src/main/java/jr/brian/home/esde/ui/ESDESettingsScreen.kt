@@ -4,6 +4,10 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,14 +20,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
@@ -46,17 +59,25 @@ import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.model.Shortcut
+import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 
 @Composable
 fun ESDESettingsScreen(
     onNavigateBack: () -> Unit,
     onRunSetupWizard: () -> Unit,
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
     viewModel: ESDEViewModel = hiltViewModel()
 ) {
+    val pageTypeManager = LocalPageTypeManager.current
     val preferencesManager = LocalESDEPreferencesManager.current
     val prefsState by preferencesManager.state.collectAsState()
+    val pageTypes by pageTypeManager.pageTypes.collectAsState()
+    val pageCount = pageTypes.size
     BackHandler(onBack = onNavigateBack)
 
     val systemLogosFolderPicker = rememberLauncherForActivityResult(
@@ -294,53 +315,111 @@ fun ESDESettingsScreen(
                         )
                     }
 
-                    // Logo Section
+                    // Marquee Section
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(text = stringResource(R.string.esde_settings_section_logo))
+                        SectionHeader(text = stringResource(R.string.esde_settings_section_marquee))
                     }
 
                     item {
-                        ToggleSetting(
-                            title = stringResource(R.string.esde_settings_show_system_logo),
-                            description = stringResource(R.string.esde_settings_show_system_logo_description),
-                            checked = prefsState.showSystemLogo,
-                            onCheckedChange = { show ->
-                                preferencesManager.setShowSystemLogo(show)
+                        LogoAlignmentSelector(
+                            selectedAlignment = prefsState.logoAlignment,
+                            onAlignmentSelected = { alignment ->
+                                preferencesManager.setLogoAlignment(alignment)
                             }
                         )
                     }
 
-                    if (prefsState.showSystemLogo) {
-                        item {
-                            LogoAlignmentSelector(
-                                selectedAlignment = prefsState.logoAlignment,
-                                onAlignmentSelected = { alignment ->
-                                    preferencesManager.setLogoAlignment(alignment)
-                                }
-                            )
+                    item {
+                        MarqueeSizeSetting(
+                            title = stringResource(R.string.esde_settings_logo_size),
+                            description = stringResource(R.string.esde_settings_logo_size_description),
+                            width = prefsState.marqueeWidth,
+                            height = prefsState.marqueeHeight,
+                            widthLabel = stringResource(R.string.esde_settings_logo_width),
+                            heightLabel = stringResource(R.string.esde_settings_logo_height),
+                            resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
+                            onWidthChange = { width ->
+                                preferencesManager.setMarqueeWidth(width)
+                            },
+                            onHeightChange = { height ->
+                                preferencesManager.setMarqueeHeight(height)
+                            },
+                            onReset = {
+                                preferencesManager.setMarqueeWidth(300)
+                                preferencesManager.setMarqueeHeight(150)
+                            }
+                        )
+                    }
+
+                    item {
+                        val currentShortcutLabel = when (prefsState.marqueePressShortcut) {
+                            Shortcut.NONE -> stringResource(R.string.shortcut_none)
+                            Shortcut.SETTINGS -> stringResource(R.string.shortcut_settings)
+                            Shortcut.APP_SEARCH -> stringResource(R.string.shortcut_app_search)
+                            Shortcut.POWERED_OFF -> stringResource(R.string.shortcut_powered_off)
+                            Shortcut.QUICK_DELETE -> stringResource(R.string.shortcut_quick_delete)
+                            Shortcut.CUSTOM_THEME -> stringResource(R.string.shortcut_custom_theme)
+                            Shortcut.MONITOR -> stringResource(R.string.shortcut_monitor)
+                            Shortcut.CONTROL_PAD -> stringResource(R.string.shortcut_control_pad)
+                            Shortcut.VOLUME_CONTROLS -> stringResource(R.string.shortcut_volume_controls)
+                            Shortcut.RECENT_APPS -> stringResource(R.string.shortcut_recent_apps)
+                            Shortcut.APP -> stringResource(R.string.shortcut_app)
                         }
 
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_marquee_press_shortcut),
+                            description = stringResource(
+                                R.string.esde_settings_marquee_press_shortcut_description
+                            ) + "\n" + stringResource(
+                                R.string.esde_settings_marquee_press_shortcut_choose
+                            ) + ": $currentShortcutLabel",
+                            checked = false,
+                            showToggle = false,
+                            onClick = onNavigateToMarqueePressShortcut
+                        )
+                    }
+
+                    // Consolidated Marquee Tab Settings (Visibility + Overlay)
+                    if (pageCount > 1) {
                         item {
-                            MarqueeSizeSetting(
-                                title = stringResource(R.string.esde_settings_logo_size),
-                                description = stringResource(R.string.esde_settings_logo_size_description),
-                                width = prefsState.marqueeWidth,
-                                height = prefsState.marqueeHeight,
-                                widthLabel = stringResource(R.string.esde_settings_logo_width),
-                                heightLabel = stringResource(R.string.esde_settings_logo_height),
-                                resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
-                                onWidthChange = { width ->
-                                    preferencesManager.setMarqueeWidth(width)
-                                },
-                                onHeightChange = { height ->
-                                    preferencesManager.setMarqueeHeight(height)
-                                },
-                                onReset = {
-                                    preferencesManager.setMarqueeWidth(300)
-                                    preferencesManager.setMarqueeHeight(150)
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.esde_settings_marquee_tab_settings_title),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = stringResource(R.string.esde_settings_marquee_tab_settings_description),
+                                    color = Color.Gray.copy(alpha = 0.7f),
+                                    fontSize = 13.sp,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    for (pageIndex in 0 until pageCount) {
+                                        // Visible if NOT in hidden set
+                                        val isPageVisible = !prefsState.marqueeHiddenPages.contains(pageIndex)
+                                        // Overlay enabled if NOT in disabled set
+                                        val isOverlayEnabled = !prefsState.marqueeOverlayDisabledPages.contains(pageIndex)
+                                        
+                                        MarqueeTabSettingsOption(
+                                            pageIndex = pageIndex,
+                                            isVisible = isPageVisible,
+                                            isOverlayEnabled = isOverlayEnabled,
+                                            onVisibilityToggle = {
+                                                preferencesManager.toggleMarqueePageVisibility(pageIndex)
+                                            },
+                                            onOverlayToggle = {
+                                                preferencesManager.toggleMarqueeOverlayPage(pageIndex)
+                                            }
+                                        )
+                                    }
                                 }
-                            )
+                            }
                         }
                     }
 
@@ -554,5 +633,128 @@ private fun getPathFromUri(uri: Uri): String? {
         }
 
         else -> null
+    }
+}
+
+/**
+ * Consolidated marquee tab settings - visibility and overlay mode in one component.
+ * Shows the visibility toggle, and when visible, shows a nested overlay toggle.
+ */
+@Composable
+private fun MarqueeTabSettingsOption(
+    pageIndex: Int,
+    isVisible: Boolean,
+    isOverlayEnabled: Boolean,
+    onVisibilityToggle: () -> Unit,
+    onOverlayToggle: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    var isOverlayFocused by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = OledBackgroundColor,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = Color.Gray.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clip(RoundedCornerShape(10.dp))
+    ) {
+        // Main visibility toggle
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .scale(animatedFocusedScale(isFocused))
+                .onFocusChanged { isFocused = it.isFocused }
+                .background(
+                    color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.1f) else Color.Transparent
+                )
+                .clickable { onVisibilityToggle() }
+                .focusable()
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.esde_settings_marquee_tab_number, pageIndex + 1),
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = stringResource(R.string.esde_settings_marquee_show_on_tab),
+                        color = Color.Gray.copy(alpha = 0.7f),
+                        fontSize = 12.sp
+                    )
+                }
+                Switch(
+                    checked = isVisible,
+                    onCheckedChange = { onVisibilityToggle() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = ThemePrimaryColor,
+                        checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
+                        uncheckedThumbColor = Color.Gray,
+                        uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+                    )
+                )
+            }
+        }
+        
+        // Nested overlay toggle - only shown when marquee is visible on this tab
+        if (isVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .scale(animatedFocusedScale(isOverlayFocused))
+                    .onFocusChanged { isOverlayFocused = it.isFocused }
+                    .background(
+                        color = if (isOverlayFocused) ThemePrimaryColor.copy(alpha = 0.1f) 
+                               else Color.DarkGray.copy(alpha = 0.15f)
+                    )
+                    .clickable { onOverlayToggle() }
+                    .focusable()
+                    .padding(start = 28.dp, end = 14.dp, top = 10.dp, bottom = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab),
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                        Text(
+                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab_description),
+                            color = Color.Gray.copy(alpha = 0.6f),
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = isOverlayEnabled,
+                        onCheckedChange = { onOverlayToggle() },
+                        modifier = Modifier.scale(0.85f),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = ThemePrimaryColor,
+                            checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
+                            uncheckedThumbColor = Color.Gray,
+                            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+            }
+        }
     }
 }

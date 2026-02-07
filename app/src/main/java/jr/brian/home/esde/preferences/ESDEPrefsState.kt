@@ -3,6 +3,7 @@ package jr.brian.home.esde.preferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.model.Shortcut
 
 /**
  * Defines the preferred media type for system background images
@@ -93,8 +94,33 @@ data class ESDEPrefsState(
     val musicScreensaverEnabled: Boolean = true,
     val musicVideoBehavior: MusicVideoBehavior = MusicVideoBehavior.Duck,
     // App Drawer settings
-    val appDrawerOpacity: Int = 100
+    val appDrawerOpacity: Int = 100,
+    // Marquee Press Shortcut settings
+    val marqueePressShortcut: Shortcut = Shortcut.NONE,
+    val marqueePressShortcutAppPackage: String? = null,
+    // Marquee Hidden Pages - pages where marquee is HIDDEN (empty = visible on all)
+    val marqueeHiddenPages: Set<Int> = emptySet(),
+    // Marquee Overlay Disabled Pages - pages where overlay is DISABLED (empty = overlay on all)
+    // When overlay is enabled: marquee floats over tab content with animations and long-press
+    // When overlay is disabled: marquee is embedded in content flow (original behavior)
+    val marqueeOverlayDisabledPages: Set<Int> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
+    
+    /**
+     * Check if marquee should be visible on a specific page.
+     * Page is visible if NOT in the hidden set.
+     */
+    fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
+        return !marqueeHiddenPages.contains(pageIndex)
+    }
+    
+    /**
+     * Check if marquee overlay mode should be enabled on a specific page.
+     * Overlay is enabled if NOT in the disabled set.
+     */
+    fun isMarqueeOverlayOnPage(pageIndex: Int): Boolean {
+        return !marqueeOverlayDisabledPages.contains(pageIndex)
+    }
 }

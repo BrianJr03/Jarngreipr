@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.ui.navigation.appDockSettingsScreen
 import jr.brian.home.ui.navigation.appSearchScreen
@@ -37,6 +38,7 @@ import jr.brian.home.ui.navigation.controlPadScreen
 import jr.brian.home.ui.navigation.crashLogsScreen
 import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.esdeSettingsScreen
+import jr.brian.home.ui.navigation.marqueePressShortcutScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.monitorScreen
@@ -53,8 +55,13 @@ import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
 import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.screens.PoweredOffScreen
+import jr.brian.home.data.AppDisplayPreferenceManager
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.model.Shortcut
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.util.launchApp
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.PatchNotesUtil
@@ -67,7 +74,13 @@ import jr.brian.home.viewmodels.WidgetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent() {
+fun MainContent(
+    triggerMarqueePressShortcut: Boolean = false,
+    onMarqueePressShortcutHandled: () -> Unit = {},
+    onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
+    onCurrentPageChanged: (Int) -> Unit = {},
+    onPagerScrollProgressChanged: (Float) -> Unit = {}
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = rememberNavController()
@@ -77,13 +90,40 @@ fun MainContent() {
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
     val appUpdateManager = LocalAppUpdateManager.current
+    val esdePreferencesManager = LocalESDEPreferencesManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
+    val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+    // Track actual pager page (not the saved home tab preference)
+    var currentPagerPage by remember { mutableStateOf(0) }
+    // Track when launcher sheets (settings, app search, etc.) are visible
+    var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
+
+    // Track if we're not on the launcher screen (any other route means an overlay is visible)
+    val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER
+
+    LaunchedEffect(currentPagerPage) {
+        onCurrentPageChanged(currentPagerPage)
+    }
 
     val updateDialogState = rememberDialogState<UpdateInfo>()
     val whatsNewDialogState = rememberDialogState<Unit>()
     val notificationAccessDialogState = rememberDialogState<Unit>()
     var currentVersionName by remember { mutableStateOf("") }
+
+    // Track if any overlay/dialog is visible (includes navigation, dialogs, and launcher sheets)
+    val isAnyDialogVisible = whatsNewDialogState.isVisible || 
+                              updateDialogState.isVisible || 
+                              notificationAccessDialogState.isVisible ||
+                              isPoweredOff
+    val isAnyOverlayVisible = isNotOnLauncher || isAnyDialogVisible || isAnyLauncherSheetVisible
+    
+    LaunchedEffect(isAnyOverlayVisible) {
+        onAnyOverlayVisibleChanged(isAnyOverlayVisible)
+    }
 
     LaunchedEffect(Unit) {
         mainViewModel.loadAllApps(context)
@@ -111,6 +151,40 @@ fun MainContent() {
     LaunchedEffect(shouldShowWhatsNew) {
         if (shouldShowWhatsNew) {
             whatsNewDialogState.show()
+        }
+    }
+
+    // Handle marquee long-press shortcut
+    LaunchedEffect(triggerMarqueePressShortcut) {
+        if (triggerMarqueePressShortcut) {
+            when (esdePrefsState.marqueePressShortcut) {
+                Shortcut.NONE -> {
+                    // Default to ESDE settings when no shortcut configured
+                    navController.navigate(Routes.ESDE_SETTINGS)
+                }
+                Shortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
+                Shortcut.APP_SEARCH -> navController.navigate(Routes.APP_SEARCH)
+                Shortcut.POWERED_OFF -> powerViewModel.togglePower()
+                Shortcut.QUICK_DELETE -> {
+                    // Quick delete is handled via sheets in LauncherPagerScreen
+                    // Navigate to launcher which will handle this
+                }
+                Shortcut.CUSTOM_THEME -> navController.navigate(Routes.CUSTOM_THEME)
+                Shortcut.MONITOR -> navController.navigate(Routes.MONITOR)
+                Shortcut.CONTROL_PAD -> navController.navigate(Routes.CONTROL_PAD)
+                Shortcut.VOLUME_CONTROLS -> navController.navigate(Routes.VOLUME_CONTROLS)
+                Shortcut.RECENT_APPS -> navController.navigate(Routes.RECENT_APPS)
+                Shortcut.APP -> {
+                    esdePrefsState.marqueePressShortcutAppPackage?.let { packageName ->
+                        launchApp(
+                            context = context,
+                            packageName = packageName,
+                            displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(packageName)
+                        )
+                    }
+                }
+            }
+            onMarqueePressShortcutHandled()
         }
     }
 
@@ -171,7 +245,10 @@ fun MainContent() {
                     context = context,
                     mainViewModel = mainViewModel,
                     widgetViewModel = widgetViewModel,
-                    powerViewModel = powerViewModel
+                    powerViewModel = powerViewModel,
+                    onPagerScrollProgressChanged = onPagerScrollProgressChanged,
+                    onCurrentPageChanged = { page -> currentPagerPage = page },
+                    onSheetVisibilityChanged = { visible -> isAnyLauncherSheetVisible = visible }
                 )
 
                 appDockSettingsScreen(
@@ -216,6 +293,11 @@ fun MainContent() {
 
                 esdeSettingsScreen(
                     navController = navController
+                )
+
+                marqueePressShortcutScreen(
+                    navController = navController,
+                    mainViewModel = mainViewModel
                 )
             }
         }

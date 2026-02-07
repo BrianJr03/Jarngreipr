@@ -23,6 +23,11 @@ import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.preferences.ScreensaverBehavior
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import java.io.File
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.viewmodels.PowerViewModel
@@ -61,6 +66,10 @@ class MainActivity : ComponentActivity() {
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val wallpaperState by esdeViewModel.wallpaperState
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
+                    var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
+                    var isAnyOverlayVisible by remember { mutableStateOf(false) }
+                    var currentPageIndex by remember { mutableStateOf(0) }
+                    var pagerScrollProgress by remember { mutableStateOf(0f) }
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
                             esdeViewModel.updateForSystem(systemName)
@@ -98,10 +107,29 @@ class MainActivity : ComponentActivity() {
                                 esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
                             }
                     }
+                    val prefsState by esdePreferencesManager.state.collectAsState()
+                    val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
+                    // Per-page overlay mode: when enabled, marquee overlaps content with animations
+                    // When disabled on a page, marquee is embedded (original behavior, no overlap)
+                    val overlayMode = prefsState.isMarqueeOverlayOnPage(currentPageIndex)
+                    
+                    // In overlay mode, hide marquee when any overlay/dialog is visible or tab not allowed
+                    val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
+
                     ESDEWallpaperContainer(
                         state = wallpaperState,
+                        onMarqueeLongClick = if (overlayMode) {{ triggerMarqueePressShortcut = true }} else null,
+                        hideMarquee = shouldHideMarquee,
+                        pagerScrollProgress = pagerScrollProgress,
+                        overlayMode = overlayMode,
                         content = {
-                            MainContent()
+                            MainContent(
+                                triggerMarqueePressShortcut = triggerMarqueePressShortcut,
+                                onMarqueePressShortcutHandled = { triggerMarqueePressShortcut = false },
+                                onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
+                                onCurrentPageChanged = { currentPageIndex = it },
+                                onPagerScrollProgressChanged = { pagerScrollProgress = it }
+                            )
                         }
                     )
                 }

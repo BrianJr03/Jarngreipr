@@ -2,20 +2,36 @@ package jr.brian.home.esde.ui
 
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -36,6 +52,7 @@ import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.wallpaper.WallpaperState
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.screens.PoweredOffScreen
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -47,6 +64,10 @@ private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/defa
 fun ESDEWallpaperContainer(
     state: WallpaperState,
     modifier: Modifier = Modifier,
+    onMarqueeLongClick: (() -> Unit)? = null,
+    hideMarquee: Boolean = false,
+    pagerScrollProgress: Float = 0f,
+    overlayMode: Boolean = true,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     val rememberContent = remember { content }
@@ -60,6 +81,16 @@ fun ESDEWallpaperContainer(
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
     
+    val showMarquee = showEsdeContent &&
+            state.marqueePath != null &&
+            !state.isVideoPlaying
+
+    val logoAlignment = when (state.logoAlignment) {
+        LogoAlignment.Top -> Alignment.TopCenter
+        LogoAlignment.Center -> Alignment.Center
+        LogoAlignment.Bottom -> Alignment.BottomCenter
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -86,40 +117,31 @@ fun ESDEWallpaperContainer(
             if (!state.isVideoPlaying && !state.isScreensaverActive) {
                 DimmingOverlay(alpha = state.dimmingLevel)
             }
+        }
 
+        if (showMarquee && !overlayMode && !hideMarquee) {
             val isUsingDefaultBackground = state.currentImagePath == null
-            
-            if (
-                state.showSystemLogo
-                && state.marqueePath != null
-                && !state.isVideoPlaying
-            ) {
-                val logoAlignment = when (state.logoAlignment) {
-                    LogoAlignment.Top -> Alignment.TopCenter
-                    LogoAlignment.Center -> Alignment.Center
-                    LogoAlignment.Bottom -> Alignment.BottomCenter
-                }
-                MarqueeImage(
-                    marqueePath = state.marqueePath,
-                    modifier = Modifier
-                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp)
-                        .align(logoAlignment),
-                    animate = isUsingDefaultBackground,
-                    animationStyle = state.animationStyle,
-                    animationDuration = state.animationDuration,
-                    animationScale = state.animationScale
-                )
-            }
+            MarqueeImage(
+                marqueePath = state.marqueePath,
+                modifier = Modifier
+                    .align(logoAlignment)
+                    .size(state.marqueeWidth.dp, state.marqueeHeight.dp),
+                animate = isUsingDefaultBackground,
+                animationStyle = state.animationStyle,
+                animationDuration = state.animationDuration,
+                animationScale = state.animationScale,
+                onLongClick = null // No long click in original mode
+            )
         }
 
         val hideForVideo = state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent
-        val hideForScreensaver = state.isScreensaverActive && 
-            state.screensaverBehavior == ScreensaverBehavior.PowerOff && 
-            showEsdeContent
+        val hideForScreensaver = state.isScreensaverActive &&
+                state.screensaverBehavior == ScreensaverBehavior.PowerOff &&
+                showEsdeContent
         val shouldShowContent = !hideForVideo && !hideForScreensaver
 
         if (state.isScreensaverActive &&
-            state.screensaverBehavior == ScreensaverBehavior.PowerOff && 
+            state.screensaverBehavior == ScreensaverBehavior.PowerOff &&
             showEsdeContent
         ) {
             PoweredOffScreen(
@@ -129,6 +151,48 @@ fun ESDEWallpaperContainer(
 
         if (shouldShowContent) {
             rememberContent?.invoke(this)
+        }
+
+        if (showMarquee && overlayMode) {
+            val isUsingDefaultBackground = state.currentImagePath == null
+
+            val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
+            val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
+
+            AnimatedVisibility(
+                visible = !hideMarquee,
+                enter = fadeIn(
+                    animationSpec = tween(durationMillis = 400)
+                ) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    transformOrigin = TransformOrigin.Center
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(durationMillis = 300)
+                ) + scaleOut(
+                    targetScale = 0.6f,
+                    animationSpec = tween(durationMillis = 300),
+                    transformOrigin = TransformOrigin.Center
+                ),
+                modifier = Modifier.align(logoAlignment)
+            ) {
+                MarqueeImage(
+                    marqueePath = state.marqueePath,
+                    modifier = Modifier
+                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp)
+                        .scale(bubbleScale)
+                        .graphicsLayer { alpha = bubbleAlpha },
+                    animate = isUsingDefaultBackground,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale,
+                    onLongClick = onMarqueeLongClick
+                )
+            }
         }
 
         if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
@@ -204,6 +268,7 @@ private fun DimmingOverlay(alpha: Float) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MarqueeImage(
     marqueePath: String?,
@@ -211,7 +276,8 @@ private fun MarqueeImage(
     animate: Boolean = false,
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
-    animationScale: Float = 0.9f
+    animationScale: Float = 0.9f,
+    onLongClick: (() -> Unit)? = null
 ) {
     if (marqueePath == null) return
 
@@ -242,6 +308,10 @@ private fun MarqueeImage(
         animationScale = animationScale
     )
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(imageData)
@@ -249,7 +319,16 @@ private fun MarqueeImage(
         imageLoader = imageLoader,
         contentDescription = "System/game logo",
         modifier = modifier
-            .run { with(animationState) { animatedGraphicsLayer() } },
+            .run { with(animationState) { animatedGraphicsLayer() } }
+            .scale(pressScale)
+            .offset(y = offsetY)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {},
+                onDoubleClick = {},
+                onLongClick = { onLongClick?.invoke() }
+            ),
         contentScale = ContentScale.Fit
     )
 }

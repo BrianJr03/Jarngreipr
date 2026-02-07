@@ -3,6 +3,7 @@ package jr.brian.home.ui.navigation
 import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,7 @@ import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
+import jr.brian.home.esde.ui.MarqueePressShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.esde.ui.ESDESettingsScreen
@@ -49,7 +51,10 @@ fun NavGraphBuilder.launcherScreen(
     navController: NavHostController,
     mainViewModel: MainViewModel,
     widgetViewModel: WidgetViewModel,
-    powerViewModel: PowerViewModel
+    powerViewModel: PowerViewModel,
+    onPagerScrollProgressChanged: (Float) -> Unit = {},
+    onCurrentPageChanged: (Int) -> Unit = {},
+    onSheetVisibilityChanged: (Boolean) -> Unit = {}
 ) {
     composable(Routes.LAUNCHER) {
         val homeTabManager = LocalHomeTabManager.current
@@ -65,6 +70,15 @@ fun NavGraphBuilder.launcherScreen(
         var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
         var showDockSettingsSheet by remember { mutableStateOf(false) }
+
+        // Track when any sheet is visible to hide marquee overlay
+        val isAnySheetVisible = showSettingsSheet || showAppSearchSheet || 
+            showCustomThemeSheet || showQuickDeleteSheet || showMonitorSheet || 
+            showControlPadSheet || showBackButtonShortcutSheet || showDockSettingsSheet
+        
+        LaunchedEffect(isAnySheetVisible) {
+            onSheetVisibilityChanged(isAnySheetVisible)
+        }
 
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val backButtonShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
@@ -115,7 +129,9 @@ fun NavGraphBuilder.launcherScreen(
             },
             onNavigateToDockSettings = {
                 navController.navigate(Routes.APP_DOCK_SETTINGS)
-            }
+            },
+            onPagerScrollProgressChanged = onPagerScrollProgressChanged,
+            onCurrentPageChanged = onCurrentPageChanged
         )
 
         SlideInVertically(showQuickDeleteSheet) {
@@ -539,6 +555,10 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 },
                 onRunSetupWizard = {
                     esdeSetupDialogState.show(SetupStep.Welcome)
+                },
+                onNavigateToMarqueePressShortcut = {
+                    showScreen = false
+                    navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
                 }
             )
         }
@@ -548,5 +568,27 @@ fun NavGraphBuilder.esdeSettingsScreen(
             onDismiss = { },
             onSetupComplete = { }
         )
+    }
+}
+
+fun NavGraphBuilder.marqueePressShortcutScreen(
+    navController: NavHostController,
+    mainViewModel: MainViewModel
+) {
+    composable(Routes.MARQUEE_PRESS_SHORTCUT) {
+        var showScreen by remember { mutableStateOf(true) }
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        SlideInVertically(showScreen) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                MarqueePressShortcutScreen(
+                    allApps = uiState.allAppsUnfiltered,
+                    onDismiss = {
+                        showScreen = false
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
     }
 }

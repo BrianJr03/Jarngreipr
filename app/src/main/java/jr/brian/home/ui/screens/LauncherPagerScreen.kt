@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,7 +52,9 @@ fun LauncherPagerScreen(
     onShowBottomSheet: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onBackButtonShortcut: () -> Unit = {},
-    onNavigateToDockSettings: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {},
+    onPagerScrollProgressChanged: (Float) -> Unit = {},
+    onCurrentPageChanged: (Int) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -90,6 +93,23 @@ fun LauncherPagerScreen(
         if (totalPages == 0) {
             homeTabManager.setHomeTabIndex(0)
         }
+    }
+
+    // Track pager scroll progress for marquee bubble animation
+    LaunchedEffect(pagerState) {
+        snapshotFlow { 
+            kotlin.math.abs(pagerState.currentPageOffsetFraction)
+        }.collect { offsetFraction ->
+            onPagerScrollProgressChanged(offsetFraction)
+        }
+    }
+
+    // Track actual current page for per-tab marquee settings
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collect { page ->
+                onCurrentPageChanged(page)
+            }
     }
 
     BackHandler(enabled = showResizeScreen) {
