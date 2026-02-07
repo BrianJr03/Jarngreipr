@@ -68,6 +68,8 @@ fun AppIconImage(
                 model = ImageRequest.Builder(context)
                     .data(File(customIconPath))
                     .crossfade(!isGif)
+                    .memoryCacheKey("${packageName}_custom")
+                    .placeholderMemoryCacheKey("${packageName}_custom")
                     .build(),
                 imageLoader = if (isGif) gifImageLoader else ImageLoader(context),
                 contentDescription = contentDescription,
@@ -79,6 +81,8 @@ fun AppIconImage(
                 model = ImageRequest.Builder(context)
                     .data(defaultIcon)
                     .crossfade(true)
+                    .memoryCacheKey(packageName)
+                    .placeholderMemoryCacheKey(packageName)
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
