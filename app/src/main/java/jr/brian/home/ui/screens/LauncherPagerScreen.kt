@@ -1,6 +1,9 @@
 package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -320,6 +323,18 @@ fun LauncherPagerScreen(
                         }
                     }
                 }
+            }
+
+            AnimatedVisibility(
+                visible = isPoweredOff,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                PoweredOffScreen(
+                    onPowerOn = {
+                        powerViewModel.powerOn()
+                    }
+                )
             }
         }
     }

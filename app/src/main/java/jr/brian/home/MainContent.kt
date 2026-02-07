@@ -4,9 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,32 +17,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as GraphicsColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import jr.brian.home.ui.navigation.appDockSettingsScreen
-import jr.brian.home.ui.navigation.appSearchScreen
-import jr.brian.home.ui.navigation.backButtonShortcutScreen
-import jr.brian.home.ui.navigation.controlPadScreen
-import jr.brian.home.ui.navigation.crashLogsScreen
-import jr.brian.home.ui.navigation.customThemeScreen
-import jr.brian.home.ui.navigation.esdeSettingsScreen
-import jr.brian.home.ui.navigation.marqueePressShortcutScreen
-import jr.brian.home.ui.navigation.faqScreen
-import jr.brian.home.ui.navigation.launcherScreen
-import jr.brian.home.ui.navigation.monitorScreen
-import jr.brian.home.ui.navigation.recentAppsScreen
-import jr.brian.home.ui.navigation.settingsScreen
-import jr.brian.home.ui.navigation.volumeControlsScreen
-import jr.brian.home.ui.navigation.widgetPickerScreen
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.model.Shortcut
+import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.components.dialog.NotificationAccessDialog
@@ -53,24 +36,35 @@ import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
 import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
-import jr.brian.home.service.AppNotificationListenerService
-import jr.brian.home.ui.screens.PoweredOffScreen
-import jr.brian.home.data.AppDisplayPreferenceManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.model.Shortcut
+import jr.brian.home.ui.navigation.appDockSettingsScreen
+import jr.brian.home.ui.navigation.appSearchScreen
+import jr.brian.home.ui.navigation.backButtonShortcutScreen
+import jr.brian.home.ui.navigation.controlPadScreen
+import jr.brian.home.ui.navigation.crashLogsScreen
+import jr.brian.home.ui.navigation.customThemeScreen
+import jr.brian.home.ui.navigation.esdeSettingsScreen
+import jr.brian.home.ui.navigation.faqScreen
+import jr.brian.home.ui.navigation.launcherScreen
+import jr.brian.home.ui.navigation.marqueePressShortcutScreen
+import jr.brian.home.ui.navigation.monitorScreen
+import jr.brian.home.ui.navigation.recentAppsScreen
+import jr.brian.home.ui.navigation.settingsScreen
+import jr.brian.home.ui.navigation.volumeControlsScreen
+import jr.brian.home.ui.navigation.widgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.util.launchApp
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,17 +86,13 @@ fun MainContent(
     val appUpdateManager = LocalAppUpdateManager.current
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
-    // Track actual pager page (not the saved home tab preference)
     var currentPagerPage by remember { mutableStateOf(0) }
-    // Track when launcher sheets (settings, app search, etc.) are visible
     var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
 
-    // Track if we're not on the launcher screen (any other route means an overlay is visible)
     val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER
 
     LaunchedEffect(currentPagerPage) {
@@ -114,13 +104,11 @@ fun MainContent(
     val notificationAccessDialogState = rememberDialogState<Unit>()
     var currentVersionName by remember { mutableStateOf("") }
 
-    // Track if any overlay/dialog is visible (includes navigation, dialogs, and launcher sheets)
-    val isAnyDialogVisible = whatsNewDialogState.isVisible || 
-                              updateDialogState.isVisible || 
-                              notificationAccessDialogState.isVisible ||
-                              isPoweredOff
+    val isAnyDialogVisible = whatsNewDialogState.isVisible ||
+            updateDialogState.isVisible ||
+            notificationAccessDialogState.isVisible
     val isAnyOverlayVisible = isNotOnLauncher || isAnyDialogVisible || isAnyLauncherSheetVisible
-    
+
     LaunchedEffect(isAnyOverlayVisible) {
         onAnyOverlayVisibleChanged(isAnyOverlayVisible)
     }
@@ -138,12 +126,14 @@ fun MainContent(
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
         val update = UpdateChecker.checkForUpdate(versionName)
-        if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)) {
+        if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)
+        ) {
             updateDialogState.show(update)
         }
 
         if (!AppNotificationListenerService.isNotificationAccessGranted(context) &&
-            !hasUserDeclinedNotificationAccess(context)) {
+            !hasUserDeclinedNotificationAccess(context)
+        ) {
             notificationAccessDialogState.show()
         }
     }
@@ -154,21 +144,14 @@ fun MainContent(
         }
     }
 
-    // Handle marquee long-press shortcut
     LaunchedEffect(triggerMarqueePressShortcut) {
         if (triggerMarqueePressShortcut) {
             when (esdePrefsState.marqueePressShortcut) {
-                Shortcut.NONE -> {
-                    // Default to ESDE settings when no shortcut configured
-                    navController.navigate(Routes.ESDE_SETTINGS)
-                }
+                Shortcut.NONE -> navController.navigate(Routes.ESDE_SETTINGS)
                 Shortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                 Shortcut.APP_SEARCH -> navController.navigate(Routes.APP_SEARCH)
                 Shortcut.POWERED_OFF -> powerViewModel.togglePower()
-                Shortcut.QUICK_DELETE -> {
-                    // Quick delete is handled via sheets in LauncherPagerScreen
-                    // Navigate to launcher which will handle this
-                }
+                Shortcut.QUICK_DELETE -> {}
                 Shortcut.CUSTOM_THEME -> navController.navigate(Routes.CUSTOM_THEME)
                 Shortcut.MONITOR -> navController.navigate(Routes.MONITOR)
                 Shortcut.CONTROL_PAD -> navController.navigate(Routes.CONTROL_PAD)
@@ -179,7 +162,9 @@ fun MainContent(
                         launchApp(
                             context = context,
                             packageName = packageName,
-                            displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(packageName)
+                            displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                packageName
+                            )
                         )
                     }
                 }
@@ -300,18 +285,6 @@ fun MainContent(
                     mainViewModel = mainViewModel
                 )
             }
-        }
-
-        AnimatedVisibility(
-            visible = isPoweredOff,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            PoweredOffScreen(
-                onPowerOn = {
-                    powerViewModel.powerOn()
-                }
-            )
         }
 
         if (whatsNewDialogState.isVisible) {

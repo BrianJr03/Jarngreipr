@@ -48,6 +48,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -161,7 +162,8 @@ class ESDEPreferencesManager(context: Context) {
             marqueeOverlayDisabledPages = marqueeOverlayDisabledPages,
             logoBrightness = prefs.getInt(KEY_LOGO_BRIGHTNESS, 100),
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20),
-            customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null)
+            customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
+            excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false)
         )
     }
 
@@ -401,5 +403,10 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             prefs.edit { remove(KEY_CUSTOM_MEDIA_PATH) }
         }
+    }
+
+    fun setExcludeEffectsFromHome(exclude: Boolean) {
+        _state.value = _state.value.copy(excludeEffectsFromHome = exclude)
+        prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
     }
 }

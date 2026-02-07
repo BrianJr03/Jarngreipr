@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -48,12 +49,12 @@ import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.preferences.LogoAlignment
-import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.wallpaper.WallpaperState
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.screens.PoweredOffScreen
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
@@ -66,11 +67,22 @@ fun ESDEWallpaperContainer(
     hideMarquee: Boolean = false,
     pagerScrollProgress: Float = 0f,
     overlayMode: Boolean = true,
+    currentPageIndex: Int = 0,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     val rememberContent = remember { content }
     val wallpaperManager = LocalWallpaperManager.current
     val wallpaperType = wallpaperManager.getWallpaperType()
+    
+    val homeTabManager = LocalHomeTabManager.current
+    val preferencesManager = LocalESDEPreferencesManager.current
+    val homeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+    val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
+
+    val isOnHomePage = currentPageIndex == homeTabIndex
+    val excludeEffectsFromHome = prefsState.excludeEffectsFromHome
+    val effectiveBlurLevel = if (excludeEffectsFromHome && isOnHomePage) 0f else state.blurLevel
+    val effectiveDimmingLevel = if (excludeEffectsFromHome && isOnHomePage) 0f else state.dimmingLevel
 
     val backgroundColor = if (wallpaperType == WallpaperType.TRANSPARENT) {
         Color.Transparent
@@ -98,7 +110,7 @@ fun ESDEWallpaperContainer(
             AnimatedWallpaperImage(
                 imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
                 modifier = Modifier.fillMaxSize(),
-                blurLevel = state.blurLevel,
+                blurLevel = effectiveBlurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
                 animationScale = state.animationScale
@@ -113,7 +125,7 @@ fun ESDEWallpaperContainer(
             }
 
             if (!state.isVideoPlaying && !state.isScreensaverActive) {
-                DimmingOverlay(alpha = state.dimmingLevel)
+                DimmingOverlay(alpha = effectiveDimmingLevel)
             }
         }
 
@@ -133,19 +145,7 @@ fun ESDEWallpaperContainer(
         }
 
         val hideForVideo = state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent
-        val hideForScreensaver = state.isScreensaverActive &&
-                state.screensaverBehavior == ScreensaverBehavior.PowerOff &&
-                showEsdeContent
-        val shouldShowContent = !hideForVideo && !hideForScreensaver
-
-        if (state.isScreensaverActive &&
-            state.screensaverBehavior == ScreensaverBehavior.PowerOff &&
-            showEsdeContent
-        ) {
-            PoweredOffScreen(
-                onPowerOn = {}
-            )
-        }
+        val shouldShowContent = !hideForVideo
 
         if (shouldShowContent) {
             rememberContent?.invoke(this)
@@ -194,7 +194,7 @@ fun ESDEWallpaperContainer(
         }
 
         if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
-            DimmingOverlay(alpha = state.dimmingLevel)
+            DimmingOverlay(alpha = effectiveDimmingLevel)
         }
     }
 }

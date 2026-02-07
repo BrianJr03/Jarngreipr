@@ -7,30 +7,30 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.events.ESDEEventListenerImpl
 import jr.brian.home.esde.events.ESDEEventManager
-import jr.brian.home.esde.setup.ESDESetupHelper
-import jr.brian.home.esde.viewmodel.ESDEViewModel
-import jr.brian.home.esde.scripts.ScriptManager
-import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.preferences.ScreensaverBehavior
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import java.io.File
+import jr.brian.home.esde.scripts.ScriptManager
+import jr.brian.home.esde.setup.ESDESetupHelper
+import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.viewmodels.PowerViewModel
+import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -64,12 +64,14 @@ class MainActivity : ComponentActivity() {
                 managers.ManagerCompositionLocalProvider {
                     val esdeViewModel: ESDEViewModel = hiltViewModel()
                     val powerViewModel: PowerViewModel = hiltViewModel()
+                    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
                     var currentPageIndex by remember { mutableStateOf(0) }
                     var pagerScrollProgress by remember { mutableStateOf(0f) }
+                    
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
                             esdeViewModel.updateForSystem(systemName)
@@ -109,19 +111,16 @@ class MainActivity : ComponentActivity() {
                     }
                     val prefsState by esdePreferencesManager.state.collectAsState()
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
-                    // Per-page overlay mode: when enabled, marquee overlaps content with animations
-                    // When disabled on a page, marquee is embedded (original behavior, no overlap)
                     val overlayMode = prefsState.isMarqueeOverlayOnPage(currentPageIndex)
-                    
-                    // In overlay mode, hide marquee when any overlay/dialog is visible or tab not allowed
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
 
                     ESDEWallpaperContainer(
                         state = wallpaperState,
                         onMarqueeLongClick = if (overlayMode) {{ triggerMarqueePressShortcut = true }} else null,
-                        hideMarquee = shouldHideMarquee,
+                        hideMarquee = shouldHideMarquee || isPoweredOff,
                         pagerScrollProgress = pagerScrollProgress,
                         overlayMode = overlayMode,
+                        currentPageIndex = currentPageIndex,
                         content = {
                             MainContent(
                                 triggerMarqueePressShortcut = triggerMarqueePressShortcut,
