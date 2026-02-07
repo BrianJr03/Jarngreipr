@@ -41,7 +41,7 @@ class ESDEViewModel @Inject constructor(
     private val systemImageCache = mutableMapOf<String, String?>()
 
     private val mediaPath: String
-        get() = setupPreferences.mediaPath
+        get() = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
 
     private val _wallpaperState = mutableStateOf(createInitialState())
     val wallpaperState: State<WallpaperState> = _wallpaperState

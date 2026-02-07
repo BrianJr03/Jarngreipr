@@ -3,6 +3,7 @@ package jr.brian.home.esde.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -96,6 +97,18 @@ fun ESDESettingsScreen(
             val path = getPathFromUri(it)
             if (path != null) {
                 preferencesManager.setMusicPath(path)
+            }
+        }
+    }
+
+    val mediaFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            val path = getPathFromUri(it)
+            if (path != null) {
+                preferencesManager.setCustomMediaPath(path)
+                viewModel.refreshSystemImage()
             }
         }
     }
@@ -221,6 +234,20 @@ fun ESDESettingsScreen(
                             onSelectPath = { systemLogosFolderPicker.launch(null) },
                             onClearPath = {
                                 preferencesManager.setCustomSystemLogosPath(null)
+                                viewModel.refreshSystemImage()
+                            }
+                        )
+                    }
+
+                    item {
+                        PathSetting(
+                            title = stringResource(R.string.esde_settings_custom_media_path),
+                            description = stringResource(R.string.esde_settings_custom_media_path_description),
+                            currentPath = prefsState.customMediaPath,
+                            defaultText = stringResource(R.string.esde_settings_path_not_set),
+                            onSelectPath = { mediaFolderPicker.launch(null) },
+                            onClearPath = {
+                                preferencesManager.setCustomMediaPath(null)
                                 viewModel.refreshSystemImage()
                             }
                         )
@@ -386,19 +413,27 @@ fun ESDESettingsScreen(
                                 ) {
                                     for (pageIndex in 0 until pageCount) {
                                         // Visible if NOT in hidden set
-                                        val isPageVisible = !prefsState.marqueeHiddenPages.contains(pageIndex)
+                                        val isPageVisible =
+                                            !prefsState.marqueeHiddenPages.contains(pageIndex)
                                         // Overlay enabled if NOT in disabled set
-                                        val isOverlayEnabled = !prefsState.marqueeOverlayDisabledPages.contains(pageIndex)
-                                        
+                                        val isOverlayEnabled =
+                                            !prefsState.marqueeOverlayDisabledPages.contains(
+                                                pageIndex
+                                            )
+
                                         MarqueeTabSettingsOption(
                                             pageIndex = pageIndex,
                                             isVisible = isPageVisible,
                                             isOverlayEnabled = isOverlayEnabled,
                                             onVisibilityToggle = {
-                                                preferencesManager.toggleMarqueePageVisibility(pageIndex)
+                                                preferencesManager.toggleMarqueePageVisibility(
+                                                    pageIndex
+                                                )
                                             },
                                             onOverlayToggle = {
-                                                preferencesManager.toggleMarqueeOverlayPage(pageIndex)
+                                                preferencesManager.toggleMarqueeOverlayPage(
+                                                    pageIndex
+                                                )
                                             }
                                         )
                                     }
@@ -500,21 +535,7 @@ fun ESDESettingsScreen(
                     }
 
                     item {
-                        ToggleSetting(
-                            title = stringResource(R.string.esde_settings_power_events),
-                            description = stringResource(R.string.esde_settings_power_events_description),
-                            checked = prefsState.powerEventsEnabled,
-                            onCheckedChange = { enabled ->
-                                preferencesManager.setPowerEventsEnabled(enabled)
-                                if (enabled) {
-                                    preferencesManager.setPersistOnGameLaunch(false)
-                                }
-                            }
-                        )
-                    }
-
-                    if (prefsState.persistOnGameLaunch) {
-                        item {
+                        AnimatedVisibility(prefsState.persistOnGameLaunch) {
                             SliderSetting(
                                 title = stringResource(R.string.esde_settings_logo_brightness),
                                 value = prefsState.logoBrightness.toFloat(),
@@ -526,8 +547,10 @@ fun ESDESettingsScreen(
                                 }
                             )
                         }
+                    }
 
-                        item {
+                    item {
+                        AnimatedVisibility(prefsState.persistOnGameLaunch) {
                             SliderSetting(
                                 title = stringResource(R.string.esde_settings_game_background_dimming),
                                 value = prefsState.gameBackgroundDimming.toFloat(),
@@ -539,6 +562,20 @@ fun ESDESettingsScreen(
                                 }
                             )
                         }
+                    }
+
+                    item {
+                        ToggleSetting(
+                            title = stringResource(R.string.esde_settings_power_events),
+                            description = stringResource(R.string.esde_settings_power_events_description),
+                            checked = prefsState.powerEventsEnabled,
+                            onCheckedChange = { enabled ->
+                                preferencesManager.setPowerEventsEnabled(enabled)
+                                if (enabled) {
+                                    preferencesManager.setPersistOnGameLaunch(false)
+                                }
+                            }
+                        )
                     }
 
                     item {

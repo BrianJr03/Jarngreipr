@@ -98,7 +98,8 @@ data class ESDEPrefsState(
     val marqueeHiddenPages: Set<Int> = emptySet(),
     val marqueeOverlayDisabledPages: Set<Int> = emptySet(),
     val logoBrightness: Int = 100,
-    val gameBackgroundDimming: Int = 20
+    val gameBackgroundDimming: Int = 20,
+    val customMediaPath: String? = null
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
