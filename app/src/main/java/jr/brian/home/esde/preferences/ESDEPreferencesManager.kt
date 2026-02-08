@@ -30,6 +30,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VOLUME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
@@ -91,7 +92,6 @@ class ESDEPreferencesManager(context: Context) {
         val screensaverBehaviorName = prefs.getString(KEY_SCREENSAVER_BEHAVIOR, ScreensaverBehavior.ShowContent.name)
         val screensaverBehavior = try {
             val behaviorName = screensaverBehaviorName ?: ScreensaverBehavior.ShowContent.name
-            // Migrate old Blackout and DimOverlay to PowerOff
             when (behaviorName) {
                 "Blackout", "DimOverlay" -> ScreensaverBehavior.PowerOff
                 else -> ScreensaverBehavior.valueOf(behaviorName)
@@ -117,8 +117,8 @@ class ESDEPreferencesManager(context: Context) {
             ?.toSet()
             ?: emptySet()
 
-        val marqueeOverlayDisabledPagesString = prefs.getString(KEY_MARQUEE_OVERLAY_PAGES, null)
-        val marqueeOverlayDisabledPages = marqueeOverlayDisabledPagesString
+        val marqueeOverlayEnabledPagesString = prefs.getString(KEY_MARQUEE_OVERLAY_PAGES, null)
+        val marqueeOverlayEnabledPages = marqueeOverlayEnabledPagesString
             ?.split(",")
             ?.mapNotNull { it.toIntOrNull() }
             ?.toSet()
@@ -155,11 +155,12 @@ class ESDEPreferencesManager(context: Context) {
             musicGameEnabled = prefs.getBoolean(KEY_MUSIC_GAME_ENABLED, true),
             musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
             musicVideoBehavior = musicVideoBehavior,
+            musicVolume = prefs.getInt(KEY_MUSIC_VOLUME, 100),
             appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
             marqueePressShortcut = marqueePressShortcut,
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
             marqueeHiddenPages = marqueeHiddenPages,
-            marqueeOverlayDisabledPages = marqueeOverlayDisabledPages,
+            marqueeOverlayEnabledPages = marqueeOverlayEnabledPages,
             logoBrightness = prefs.getInt(KEY_LOGO_BRIGHTNESS, 100),
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
@@ -328,6 +329,12 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_MUSIC_VIDEO_BEHAVIOR, behavior.value) }
     }
 
+    fun setMusicVolume(volume: Int) {
+        val coercedVolume = volume.coerceIn(0, 100)
+        _state.value = _state.value.copy(musicVolume = coercedVolume)
+        prefs.edit { putInt(KEY_MUSIC_VOLUME, coercedVolume) }
+    }
+
     fun setAppDrawerOpacity(opacity: Int) {
         val coercedOpacity = opacity.coerceIn(0, 100)
         _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
@@ -367,16 +374,16 @@ class ESDEPreferencesManager(context: Context) {
     }
 
     fun toggleMarqueeOverlayPage(pageIndex: Int) {
-        val disabledPages = _state.value.marqueeOverlayDisabledPages
-        val newPages = if (disabledPages.contains(pageIndex)) {
-            // Currently disabled, remove from set to enable
-            disabledPages - pageIndex
+        val enabledPages = _state.value.marqueeOverlayEnabledPages
+        val newPages = if (enabledPages.contains(pageIndex)) {
+            // Currently enabled, remove from set to disable
+            enabledPages - pageIndex
         } else {
-            // Currently enabled, add to set to disable
-            disabledPages + pageIndex
+            // Currently disabled, add to set to enable
+            enabledPages + pageIndex
         }
         
-        _state.value = _state.value.copy(marqueeOverlayDisabledPages = newPages)
+        _state.value = _state.value.copy(marqueeOverlayEnabledPages = newPages)
         if (newPages.isEmpty()) {
             prefs.edit { remove(KEY_MARQUEE_OVERLAY_PAGES) }
         } else {

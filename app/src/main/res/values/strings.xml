@@ -767,6 +767,7 @@
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
+    <string name="esde_settings_game_image_description">Description</string>
     <string name="esde_settings_section_marquee">Marquee</string>
     <string name="esde_settings_logo_alignment">Logo Alignment</string>
     <string name="esde_settings_logo_alignment_top">Top</string>
@@ -826,6 +827,7 @@
     <string name="esde_settings_music_video_continue">Continue</string>
     <string name="esde_settings_music_video_duck">Duck</string>
     <string name="esde_settings_music_video_pause">Pause</string>
+    <string name="esde_settings_music_volume">Music Volume</string>
 
     <!-- App Drawer Settings -->
     <string name="esde_settings_section_app_drawer">App Drawer</string>

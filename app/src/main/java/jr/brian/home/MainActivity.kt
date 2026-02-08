@@ -24,6 +24,8 @@ import jr.brian.home.esde.events.ESDEEventListenerImpl
 import jr.brian.home.esde.events.ESDEEventManager
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.preferences.ScreensaverBehavior
+import jr.brian.home.model.PageType
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.setup.ESDESetupHelper
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
@@ -110,8 +112,11 @@ class MainActivity : ComponentActivity() {
                             }
                     }
                     val prefsState by esdePreferencesManager.state.collectAsState()
+                    val pageTypeManager = LocalPageTypeManager.current
+                    val pageTypes by pageTypeManager.pageTypes.collectAsState()
+                    val isAppDrawerTab = pageTypes.getOrNull(currentPageIndex) == PageType.APP_DRAWER_TAB
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
-                    val overlayMode = prefsState.isMarqueeOverlayOnPage(currentPageIndex)
+                    val overlayMode = !isAppDrawerTab && prefsState.isMarqueeOverlayOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
 
                     ESDEWallpaperContainer(

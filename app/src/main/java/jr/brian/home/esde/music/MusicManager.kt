@@ -46,8 +46,15 @@ class MusicManager(
         private const val CROSS_FADE_DURATION = 300L
         private const val DUCK_FADE_DURATION = 300L
 
-        private const val NORMAL_VOLUME = 1.0f
         private const val DUCKED_VOLUME = 0.2f
+    }
+
+    /**
+     * Get the normal volume level from preferences.
+     * Converts 0-100 preference value to 0.0-1.0 range.
+     */
+    private fun getNormalVolume(): Float {
+        return prefsManager.state.value.musicVolumeFloat
     }
 
     // ========== PLAYBACK STATE ==========
@@ -56,8 +63,8 @@ class MusicManager(
     private var currentMusicSource: MusicSource? = null
     private var currentPlaylist: List<File> = emptyList()
     private var currentTrackIndex: Int = 0
-    private var currentVolume: Float = NORMAL_VOLUME
-    private var targetVolume: Float = NORMAL_VOLUME
+    private var currentVolume: Float = getNormalVolume()
+    private var targetVolume: Float = getNormalVolume()
 
     // Video interaction state
     private var isMusicDucked: Boolean = false
@@ -379,7 +386,7 @@ class MusicManager(
                 android.util.Log.d(TAG, "Resuming music via user control")
                 player.start()
                 // Ensure volume is at normal level
-                fadeVolume(currentVolume, NORMAL_VOLUME, DUCK_FADE_DURATION)
+                fadeVolume(currentVolume, getNormalVolume(), DUCK_FADE_DURATION)
             }
         }
     }
@@ -428,7 +435,7 @@ class MusicManager(
         currentTrackIndex = 0
 
         // Reset volume state for new playback
-        targetVolume = NORMAL_VOLUME
+        targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
 
@@ -457,7 +464,7 @@ class MusicManager(
             isMusicDucked = false
             wasMusicPausedForVideo = false
             isMusicPlaying = false
-            targetVolume = NORMAL_VOLUME
+            targetVolume = getNormalVolume()
         }
     }
 
@@ -489,7 +496,7 @@ class MusicManager(
 
         // Reset volume state for new playback - start from silence
         currentVolume = 0f
-        targetVolume = NORMAL_VOLUME
+        targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
 
@@ -616,9 +623,10 @@ class MusicManager(
      * Restore music volume after video ends.
      */
     private fun restoreMusicVolume() {
-        android.util.Log.d(TAG, "Restoring music to ${NORMAL_VOLUME * 100}%")
+        val normalVolume = getNormalVolume()
+        android.util.Log.d(TAG, "Restoring music to ${normalVolume * 100}%")
         isMusicDucked = false
-        fadeVolume(currentVolume, NORMAL_VOLUME, DUCK_FADE_DURATION)
+        fadeVolume(currentVolume, normalVolume, DUCK_FADE_DURATION)
     }
 
     /**
@@ -642,7 +650,25 @@ class MusicManager(
         wasMusicPausedForVideo = false
 
         musicPlayer?.start()
-        fadeVolume(0f, NORMAL_VOLUME, DUCK_FADE_DURATION)
+        fadeVolume(0f, getNormalVolume(), DUCK_FADE_DURATION)
+    }
+
+    override fun setVolume(volume: Float) {
+        val clampedVolume = volume.coerceIn(0f, 1f)
+        android.util.Log.d(TAG, "Setting volume to ${clampedVolume * 100}%")
+        
+        // Cancel any existing fade that would override this manual volume setting
+        volumeFadeRunnable?.let { handler.removeCallbacks(it) }
+        volumeFadeRunnable = null
+        
+        targetVolume = clampedVolume
+        currentVolume = clampedVolume
+        
+        try {
+            musicPlayer?.setVolume(clampedVolume, clampedVolume)
+        } catch (e: IllegalStateException) {
+            android.util.Log.w(TAG, "Could not set volume - player released")
+        }
     }
 
     /**

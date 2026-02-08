@@ -27,6 +27,7 @@ import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_IMAGE_FALLBACKS
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
+import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.wallpaper.WallpaperState
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -42,6 +43,17 @@ class ESDEViewModel @Inject constructor(
 
     private val mediaPath: String
         get() = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
+
+    /**
+     * Get ES-DE root folder path by navigating up from scripts path.
+     * Scripts path is typically: /storage/emulated/0/ES-DE/scripts
+     * ES-DE root would be: /storage/emulated/0/ES-DE
+     */
+    private val esdeRootPath: String?
+        get() {
+            val scriptsPath = setupPreferences.scriptsPath
+            return File(scriptsPath).parentFile?.absolutePath
+        }
 
     private val _wallpaperState = mutableStateOf(createInitialState())
     val wallpaperState: State<WallpaperState> = _wallpaperState
@@ -138,7 +150,8 @@ class ESDEViewModel @Inject constructor(
             currentImagePath = getSystemImagePath(systemName),
             isVideoPlaying = false,
             videoPath = null,
-            marqueePath = getSystemLogoPath(systemName)
+            marqueePath = getSystemLogoPath(systemName),
+            gameDescription = null
         )
 
         musicController.onSystemChanged(systemName)
@@ -154,11 +167,17 @@ class ESDEViewModel @Inject constructor(
         currentGameSystem = systemName
         currentGameFilename = gameFilename
 
+        // Fetch game description from ES-DE's gamelist.xml
+        val gameDescription = esdeRootPath?.let { rootPath ->
+            GamelistParser.getGameDescription(rootPath, systemName, gameFilename)
+        }
+
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
             isVideoPlaying = false,
             videoPath = null,
-            marqueePath = getGameMarqueePath(systemName, gameFilename)
+            marqueePath = getGameMarqueePath(systemName, gameFilename),
+            gameDescription = gameDescription
         )
 
         musicController.onGameSelected(systemName, gameFilename)
