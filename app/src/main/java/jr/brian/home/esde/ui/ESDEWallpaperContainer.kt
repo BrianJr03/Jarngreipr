@@ -18,7 +18,10 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -54,7 +57,9 @@ import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
@@ -91,9 +96,17 @@ fun ESDEWallpaperContainer(
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
     
+    // Show description instead of marquee when Description mode is selected and description is available
+    val showDescription = showEsdeContent &&
+//            prefsState.gameImageType == GameImageType.Description &&
+            state.gameDescription != null &&
+            !state.isVideoPlaying
+    
+    // Hide marquee when showing description (description replaces marquee)
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
-            !state.isVideoPlaying
+            !state.isVideoPlaying &&
+            !showDescription
 
     val logoAlignment = when (state.logoAlignment) {
         LogoAlignment.Top -> Alignment.TopCenter
@@ -195,6 +208,39 @@ fun ESDEWallpaperContainer(
 
         if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
             DimmingOverlay(alpha = effectiveDimmingLevel)
+        }
+        
+        // Show scrolling description in place of marquee when Description mode is selected
+        if (showDescription && state.gameDescription != null && !hideMarquee) {
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(
+                    animationSpec = tween(durationMillis = 400)
+                ) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    transformOrigin = TransformOrigin.Center
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(durationMillis = 300)
+                ) + scaleOut(
+                    targetScale = 0.6f,
+                    animationSpec = tween(durationMillis = 300),
+                    transformOrigin = TransformOrigin.Center
+                ),
+                modifier = Modifier.align(logoAlignment)
+            ) {
+                ScrollingDescriptionBox(
+                    description = state.gameDescription,
+                    modifier = Modifier
+                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp),
+                    scrollSpeed = 30f,
+                    pauseDurationMs = 3000
+                )
+            }
         }
     }
 }

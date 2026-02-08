@@ -24,7 +24,8 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
-    MixImages("miximages")
+    MixImages("miximages"),
+//    Description(null)
 }
 
 /**
@@ -92,11 +93,12 @@ data class ESDEPrefsState(
     val musicGameEnabled: Boolean = true,
     val musicScreensaverEnabled: Boolean = true,
     val musicVideoBehavior: MusicVideoBehavior = MusicVideoBehavior.Duck,
+    val musicVolume: Int = 100,
     val appDrawerOpacity: Int = 100,
     val marqueePressShortcut: Shortcut = Shortcut.NONE,
     val marqueePressShortcutAppPackage: String? = null,
     val marqueeHiddenPages: Set<Int> = emptySet(),
-    val marqueeOverlayDisabledPages: Set<Int> = emptySet(),
+    val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
     val logoBrightness: Int = 100,
     val gameBackgroundDimming: Int = 20,
     val customMediaPath: String? = null,
@@ -104,6 +106,7 @@ data class ESDEPrefsState(
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
+    val musicVolumeFloat: Float get() = musicVolume / 100f
     val logoBrightnessFloat: Float get() = logoBrightness / 100f
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     
@@ -117,9 +120,9 @@ data class ESDEPrefsState(
     
     /**
      * Check if marquee overlay mode should be enabled on a specific page.
-     * Overlay is enabled if NOT in the disabled set.
+     * Overlay is enabled only if the page IS in the enabled set.
      */
     fun isMarqueeOverlayOnPage(pageIndex: Int): Boolean {
-        return !marqueeOverlayDisabledPages.contains(pageIndex)
+        return marqueeOverlayEnabledPages.contains(pageIndex)
     }
 }

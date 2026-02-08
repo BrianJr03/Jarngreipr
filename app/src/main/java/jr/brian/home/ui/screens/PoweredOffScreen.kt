@@ -7,19 +7,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.components.DualVolumeControls
+import jr.brian.home.ui.components.VolumeSlider
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
@@ -54,7 +61,10 @@ import java.util.Locale
 @Composable
 fun PoweredOffScreen(
     modifier: Modifier = Modifier,
-    onPowerOn: () -> Unit = {}
+    onPowerOn: () -> Unit = {},
+    isEsdeMode: Boolean = false,
+    musicVolume: Int = 100,
+    onMusicVolumeChange: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val focusRequester = rememberAutoFocus()
@@ -66,6 +76,7 @@ fun PoweredOffScreen(
     var batteryPercentage by remember { mutableStateOf(0) }
     var isCharging by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf("") }
+    var localMusicVolume by remember(musicVolume) { mutableFloatStateOf(musicVolume.toFloat()) }
 
     val fps = rememberFpsMonitor().value
 
@@ -208,8 +219,45 @@ fun PoweredOffScreen(
                     .align(Alignment.Center)
                     .fillMaxWidth(0.8f)
             ) {
-                DualVolumeControls(isVisible = showInfo)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (isEsdeMode) {
+                        MusicVolumeSlider(
+                            volume = localMusicVolume,
+                            onVolumeChange = { newVolume ->
+                                localMusicVolume = newVolume
+                                onMusicVolumeChange(newVolume.toInt())
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    DualVolumeControls(isVisible = showInfo)
+                }
             }
         }
     }
+}
+
+@Composable
+private fun MusicVolumeSlider(
+    volume: Float,
+    onVolumeChange: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    VolumeSlider(
+        label = stringResource(R.string.esde_settings_music_volume),
+        volume = volume,
+        maxVolume = 100f,
+        onVolumeChange = onVolumeChange,
+        modifier = modifier,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.DarkGray
+            )
+        }
+    )
 }

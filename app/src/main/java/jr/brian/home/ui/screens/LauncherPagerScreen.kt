@@ -38,6 +38,9 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -49,6 +52,7 @@ fun LauncherPagerScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
     powerViewModel: PowerViewModel = hiltViewModel(),
+    esdeViewModel: ESDEViewModel = hiltViewModel(),
     navController: NavHostController? = null,
     initialPage: Int = 0,
     onSettingsClick: () -> Unit,
@@ -65,6 +69,9 @@ fun LauncherPagerScreen(
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
+    val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+    val esdePrefsManager = LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
     val homeTabManager = LocalHomeTabManager.current
     val pageTypeManager = LocalPageTypeManager.current
@@ -333,6 +340,12 @@ fun LauncherPagerScreen(
                 PoweredOffScreen(
                     onPowerOn = {
                         powerViewModel.powerOn()
+                    },
+                    isEsdeMode = isEsdeMode && esdePrefsState.musicEnabled,
+                    musicVolume = esdePrefsState.musicVolume,
+                    onMusicVolumeChange = { volume ->
+                        esdePrefsManager.setMusicVolume(volume)
+                        esdeViewModel.musicController.setVolume(volume / 100f)
                     }
                 )
             }

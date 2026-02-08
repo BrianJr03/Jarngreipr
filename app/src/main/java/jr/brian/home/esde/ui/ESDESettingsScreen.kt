@@ -47,6 +47,7 @@ import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.model.PageType
 import jr.brian.home.model.Shortcut
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -423,14 +424,13 @@ fun ESDESettingsScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     for (pageIndex in 0 until pageCount) {
-                                        // Visible if NOT in hidden set
                                         val isPageVisible =
                                             !prefsState.marqueeHiddenPages.contains(pageIndex)
-                                        // Overlay enabled if NOT in disabled set
                                         val isOverlayEnabled =
-                                            !prefsState.marqueeOverlayDisabledPages.contains(
+                                            prefsState.marqueeOverlayEnabledPages.contains(
                                                 pageIndex
                                             )
+                                        val isAppDrawerTab = pageTypes.getOrNull(pageIndex) == PageType.APP_DRAWER_TAB
 
                                         MarqueeTabSettingsOption(
                                             pageIndex = pageIndex,
@@ -445,7 +445,8 @@ fun ESDESettingsScreen(
                                                 preferencesManager.toggleMarqueeOverlayPage(
                                                     pageIndex
                                                 )
-                                            }
+                                            },
+                                            showOverlayOption = !isAppDrawerTab
                                         )
                                     }
                                 }
@@ -470,6 +471,20 @@ fun ESDESettingsScreen(
                     }
 
                     if (prefsState.musicEnabled) {
+                        item {
+                            SliderSetting(
+                                title = stringResource(R.string.esde_settings_music_volume),
+                                value = prefsState.musicVolume.toFloat(),
+                                valueRange = 0f..100f,
+                                steps = 19,
+                                valueText = "${prefsState.musicVolume}%",
+                                onValueChange = { volume ->
+                                    preferencesManager.setMusicVolume(volume.toInt())
+                                    viewModel.musicController.setVolume(volume / 100f)
+                                }
+                            )
+                        }
+
                         item {
                             PathSetting(
                                 title = stringResource(R.string.esde_settings_music_path),

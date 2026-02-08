@@ -176,7 +176,8 @@ fun VolumeSlider(
     volume: Float,
     maxVolume: Float,
     onVolumeChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null
 ) {
     var tempVolume by remember(volume) { mutableFloatStateOf(volume) }
     
@@ -197,11 +198,15 @@ fun VolumeSlider(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.VolumeDown,
-                contentDescription = stringResource(R.string.volume_down_description),
-                tint = Color.DarkGray
-            )
+            if (leadingIcon != null) {
+                leadingIcon()
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.VolumeDown,
+                    contentDescription = stringResource(R.string.volume_down_description),
+                    tint = Color.DarkGray
+                )
+            }
             
             Spacer(modifier = Modifier.width(8.dp))
             

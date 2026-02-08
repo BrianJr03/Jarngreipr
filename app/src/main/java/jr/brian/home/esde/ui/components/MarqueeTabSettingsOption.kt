@@ -40,7 +40,8 @@ fun MarqueeTabSettingsOption(
     isVisible: Boolean,
     isOverlayEnabled: Boolean,
     onVisibilityToggle: () -> Unit,
-    onOverlayToggle: () -> Unit
+    onOverlayToggle: () -> Unit,
+    showOverlayOption: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isOverlayFocused by remember { mutableStateOf(false) }
@@ -102,7 +103,7 @@ fun MarqueeTabSettingsOption(
             }
         }
 
-        if (isVisible) {
+        if (isVisible && showOverlayOption) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
