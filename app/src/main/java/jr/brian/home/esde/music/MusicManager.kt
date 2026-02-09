@@ -214,9 +214,7 @@ class MusicManager(
 
     override fun onGameStarted() {
         android.util.Log.d(TAG, "━━━ GAME STARTED ━━━")
-        // Always stop music during gameplay regardless of settings
         stopMusic()
-        isInGameBrowsing = false
     }
 
     override fun onGameEnded() {
