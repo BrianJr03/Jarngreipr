@@ -62,8 +62,10 @@
         <activity
             android:name=".esde.ui.VideoPlayerActivity"
             android:exported="false"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.Home"
             android:excludeFromRecents="true"
+            android:noHistory="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
         <provider
             android:name="androidx.core.content.FileProvider"

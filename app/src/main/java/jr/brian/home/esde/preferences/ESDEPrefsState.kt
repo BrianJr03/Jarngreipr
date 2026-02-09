@@ -62,6 +62,16 @@ enum class MusicVideoBehavior(val value: String) {
     }
 }
 
+/**
+ * Defines how videos are scaled to fit the screen
+ */
+enum class VideoScaleMode {
+    /** Fill the screen, cropping edges if necessary */
+    FillScreen,
+    /** Fit the entire video, showing black bars on unused areas */
+    FitVideo
+}
+
 data class ESDEPrefsState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
@@ -72,6 +82,7 @@ data class ESDEPrefsState(
     val videoEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val videoAudioEnabled: Boolean = false,
+    val videoScaleMode: VideoScaleMode = VideoScaleMode.FillScreen,
     val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
