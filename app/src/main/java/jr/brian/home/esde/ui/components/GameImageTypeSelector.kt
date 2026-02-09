@@ -98,6 +98,7 @@ private fun GameImageTypeChip(
 
     val typeName = when (type) {
         GameImageType.None -> stringResource(R.string.esde_settings_game_image_none)
+        GameImageType.All -> stringResource(R.string.esde_settings_game_image_all)
         GameImageType.Screenshots -> stringResource(R.string.esde_settings_game_image_screenshots)
         GameImageType.Fanart -> stringResource(R.string.esde_settings_game_image_fanart)
         GameImageType.TitleScreens -> stringResource(R.string.esde_settings_game_image_titlescreens)

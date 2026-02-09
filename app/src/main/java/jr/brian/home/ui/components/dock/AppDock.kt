@@ -153,7 +153,6 @@ private fun DockAppItem(
             packageName = app.packageName,
             contentDescription = stringResource(R.string.app_icon_description, app.label),
             customIconManager = customIconManager,
-            shape = RoundedCornerShape(10.dp),
             modifier = Modifier.size(size.iconSize)
         )
     }

@@ -385,6 +385,26 @@ class ESDEViewModel @Inject constructor(
             }
         }
 
+        if (systemImageType == SystemImageType.All) {
+            val allImages = mutableListOf<File>()
+            for (type in SystemImageType.randomizableTypes()) {
+                for (name in listOf(systemName, mediaSystemName).distinct()) {
+                    val mediaDir = File(mediaPath, "$name/${type.folderName}")
+                    if (mediaDir.exists() && mediaDir.isDirectory) {
+                        mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+                            ?.let { allImages.addAll(it) }
+                    }
+                }
+            }
+            if (allImages.isNotEmpty()) {
+                val selectedPath = allImages.random().absolutePath
+                systemImageCache[systemName] = selectedPath
+                return selectedPath
+            }
+            systemImageCache[systemName] = null
+            return null
+        }
+
         // Then check in downloaded_media/<system>/<imageType>/ folders
         val preferredFolder = systemImageType.folderName ?: return null
         // Try both exact system name and parent system for game media folders
@@ -479,6 +499,20 @@ class ESDEViewModel @Inject constructor(
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
+
+        // Handle "All" type by randomly selecting from all available media types
+        if (preferredType == GameImageType.All) {
+            val allImages = mutableListOf<File>()
+            for (type in GameImageType.randomizableTypes()) {
+                for (name in listOf(systemName, mediaSystemName).distinct()) {
+                    for (ext in IMAGE_EXTENSIONS) {
+                        val file = File(mediaPath, "$name/${type.folderName}/$nameOnly.$ext")
+                        if (file.exists()) allImages.add(file)
+                    }
+                }
+            }
+            return if (allImages.isNotEmpty()) allImages.random().absolutePath else null
+        }
 
         val preferredFolder = preferredType.folderName
         if (preferredFolder != null) {
