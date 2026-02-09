@@ -25,6 +25,6 @@ data class WallpaperState(
     val marqueeHeight: Int = 150,
     val isScreensaverActive: Boolean = false,
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff,
-    val logoBrightness: Float = 1.0f,
+    val isGameRunning: Boolean = false,
     val gameDescription: String? = null
 )

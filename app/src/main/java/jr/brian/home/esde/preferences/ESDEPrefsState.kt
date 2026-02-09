@@ -99,7 +99,6 @@ data class ESDEPrefsState(
     val marqueePressShortcutAppPackage: String? = null,
     val marqueeHiddenPages: Set<Int> = emptySet(),
     val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
-    val logoBrightness: Int = 100,
     val gameBackgroundDimming: Int = 20,
     val customMediaPath: String? = null,
     val excludeEffectsFromHome: Boolean = false
@@ -107,7 +106,6 @@ data class ESDEPrefsState(
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
     val musicVolumeFloat: Float get() = musicVolume / 100f
-    val logoBrightnessFloat: Float get() = logoBrightness / 100f
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     
     /**

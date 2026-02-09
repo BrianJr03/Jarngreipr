@@ -77,7 +77,6 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
                             esdeViewModel.updateForSystem(systemName)
-                            powerViewModel.powerOn()
                         }
                         esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
                             esdeViewModel.updateForGame(systemName, gameFilename)
