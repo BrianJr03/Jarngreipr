@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, VideoPlayerActivity::class.java).apply {
             putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
             putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
+            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
         }
         videoPlayerLauncher.launch(intent)
     }
@@ -100,15 +101,19 @@ class MainActivity : ComponentActivity() {
                     
                     LaunchedEffect(esdeViewModel) {
                         esdeViewModel.videoLaunchEvent.collect { event ->
-                            launchVideoPlayer(event)
+                            if (!powerViewModel.isPoweredOff.value) {
+                                launchVideoPlayer(event)
+                            }
                         }
                     }
                     
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
+                            VideoPlayerActivity.finishIfRunning()
                             esdeViewModel.updateForSystem(systemName)
                         }
                         esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
+                            VideoPlayerActivity.finishIfRunning()
                             esdeViewModel.updateForGame(systemName, gameFilename)
                         }
                         esdeEventListener.onGameStarted = { _, _, _ ->

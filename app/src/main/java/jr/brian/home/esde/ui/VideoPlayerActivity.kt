@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import java.lang.ref.WeakReference
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import jr.brian.home.esde.preferences.VideoScaleMode
 import java.io.File
 
 /**
@@ -48,10 +50,23 @@ class VideoPlayerActivity : ComponentActivity() {
     companion object {
         const val EXTRA_VIDEO_PATH = "extra_video_path"
         const val EXTRA_AUDIO_ENABLED = "extra_audio_enabled"
+        const val EXTRA_SCALE_MODE = "extra_scale_mode"
+        
+        private var currentInstance: WeakReference<VideoPlayerActivity>? = null
+        
+        /**
+         * Finishes any currently running VideoPlayerActivity instance.
+         * Called when browsing games or systems to dismiss the video.
+         */
+        fun finishIfRunning() {
+            currentInstance?.get()?.finish()
+            currentInstance = null
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentInstance = WeakReference(this)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -62,6 +77,12 @@ class VideoPlayerActivity : ComponentActivity() {
 
         val videoPath = intent.getStringExtra(EXTRA_VIDEO_PATH)
         val audioEnabled = intent.getBooleanExtra(EXTRA_AUDIO_ENABLED, false)
+        val scaleModeName = intent.getStringExtra(EXTRA_SCALE_MODE)
+        val scaleMode = try {
+            scaleModeName?.let { VideoScaleMode.valueOf(it) } ?: VideoScaleMode.FillScreen
+        } catch (_: IllegalArgumentException) {
+            VideoScaleMode.FillScreen
+        }
 
         if (videoPath == null) {
             finish()
@@ -72,6 +93,7 @@ class VideoPlayerActivity : ComponentActivity() {
             VideoPlayerScreen(
                 videoPath = videoPath,
                 audioEnabled = audioEnabled,
+                scaleMode = scaleMode,
                 onDismiss = { finish() }
             )
         }
@@ -91,6 +113,13 @@ class VideoPlayerActivity : ComponentActivity() {
         }
         return super.dispatchTouchEvent(ev)
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (currentInstance?.get() == this) {
+            currentInstance = null
+        }
+    }
 }
 
 @OptIn(UnstableApi::class)
@@ -98,6 +127,7 @@ class VideoPlayerActivity : ComponentActivity() {
 private fun VideoPlayerScreen(
     videoPath: String,
     audioEnabled: Boolean,
+    scaleMode: VideoScaleMode,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -141,12 +171,16 @@ private fun VideoPlayerScreen(
                 onClick = onDismiss
             )
     ) {
+        val resizeMode = when (scaleMode) {
+            VideoScaleMode.FillScreen -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            VideoScaleMode.FitVideo -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     player = exoPlayer
                     useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    this.resizeMode = resizeMode
                     layoutParams = FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
@@ -155,6 +189,7 @@ private fun VideoPlayerScreen(
             },
             update = { playerView ->
                 playerView.player = exoPlayer
+                playerView.resizeMode = resizeMode
             },
             modifier = Modifier.fillMaxSize()
         )

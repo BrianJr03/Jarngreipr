@@ -11,6 +11,7 @@ object ESDEPreferencesConstants {
     const val KEY_VIDEO_ENABLED = "video_enabled"
     const val KEY_VIDEO_DELAY = "video_delay"
     const val KEY_VIDEO_AUDIO_ENABLED = "video_audio_enabled"
+    const val KEY_VIDEO_SCALE_MODE = "video_scale_mode"
     const val KEY_ESDE_ENABLED = "esde_enabled"
     const val KEY_LAST_SELECTED_SYSTEM = "last_selected_system"
     const val KEY_SYSTEM_IMAGE_TYPE = "system_image_type"

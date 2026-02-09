@@ -47,6 +47,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
@@ -102,6 +103,13 @@ class ESDEPreferencesManager(context: Context) {
         val musicVideoBehaviorName = prefs.getString(KEY_MUSIC_VIDEO_BEHAVIOR, MusicVideoBehavior.Duck.value)
         val musicVideoBehavior = MusicVideoBehavior.fromValue(musicVideoBehaviorName ?: MusicVideoBehavior.Duck.value)
 
+        val videoScaleModeName = prefs.getString(KEY_VIDEO_SCALE_MODE, VideoScaleMode.FillScreen.name)
+        val videoScaleMode = try {
+            VideoScaleMode.valueOf(videoScaleModeName ?: VideoScaleMode.FillScreen.name)
+        } catch (_: IllegalArgumentException) {
+            VideoScaleMode.FillScreen
+        }
+
         val marqueePressShortcutName = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT, Shortcut.NONE.name)
         val marqueePressShortcut = try {
             Shortcut.valueOf(marqueePressShortcutName ?: Shortcut.NONE.name)
@@ -133,6 +141,7 @@ class ESDEPreferencesManager(context: Context) {
             videoEnabled = prefs.getBoolean(KEY_VIDEO_ENABLED, false),
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
             videoAudioEnabled = prefs.getBoolean(KEY_VIDEO_AUDIO_ENABLED, false),
+            videoScaleMode = videoScaleMode,
             esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
             systemImageType = systemImageType,
@@ -213,6 +222,10 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_VIDEO_AUDIO_ENABLED, enabled) }
     }
 
+    fun setVideoScaleMode(mode: VideoScaleMode) {
+        _state.value = _state.value.copy(videoScaleMode = mode)
+        prefs.edit { putString(KEY_VIDEO_SCALE_MODE, mode.name) }
+    }
 
     fun setLastSelectedSystem(systemName: String?) {
         _state.value = _state.value.copy(lastSelectedSystem = systemName)

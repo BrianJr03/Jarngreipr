@@ -73,6 +73,12 @@ class ESDEViewModel @Inject constructor(
     private var currentSystem: String? = null
     private var currentGameSystem: String? = null
     private var currentGameFilename: String? = null
+    
+    /**
+     * Tracks whether the launcher screen is currently active.
+     * Video playback should only launch when this is true.
+     */
+    private var isLauncherActive: Boolean = true
 
     init {
         Log.d(TAG, "ESDE Media path configured: $mediaPath")
@@ -206,12 +212,13 @@ class ESDEViewModel @Inject constructor(
         Log.d(TAG, "Scheduling video playback in ${delayMs}ms")
 
         pendingVideoRunnable = Runnable {
-            if (currentGameSystem == systemName && currentGameFilename == gameFilename) {
+            if (currentGameSystem == systemName && currentGameFilename == gameFilename && isLauncherActive) {
                 viewModelScope.launch {
                     _videoLaunchEvent.emit(
                         VideoLaunchEvent(
                             videoPath = videoPath,
-                            audioEnabled = prefs.state.value.videoAudioEnabled
+                            audioEnabled = prefs.state.value.videoAudioEnabled,
+                            scaleMode = prefs.state.value.videoScaleMode
                         )
                     )
                 }
@@ -244,6 +251,19 @@ class ESDEViewModel @Inject constructor(
      */
     fun onVideoActivityFinished() {
         musicController.onVideoEnded()
+    }
+
+    /**
+     * Sets whether the launcher screen is currently active.
+     * When navigating away from the launcher (e.g., to settings),
+     * call this with false to prevent videos from launching.
+     */
+    fun setLauncherActive(active: Boolean) {
+        isLauncherActive = active
+        if (!active) {
+            // Cancel any pending video when leaving the launcher
+            cancelPendingVideo()
+        }
     }
 
     fun handleGameStarted() {

@@ -45,6 +45,7 @@ import jr.brian.home.esde.ui.components.SectionHeader
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.esde.ui.components.VideoScaleModeSelector
 import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.PageType
@@ -641,6 +642,15 @@ fun ESDESettingsScreen(
                             checked = prefsState.videoAudioEnabled,
                             onCheckedChange = { enabled ->
                                 preferencesManager.setVideoAudioEnabled(enabled)
+                            }
+                        )
+                    }
+
+                    item {
+                        VideoScaleModeSelector(
+                            selectedMode = prefsState.videoScaleMode,
+                            onModeSelected = { mode ->
+                                preferencesManager.setVideoScaleMode(mode)
                             }
                         )
                     }

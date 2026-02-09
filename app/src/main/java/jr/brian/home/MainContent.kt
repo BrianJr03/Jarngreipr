@@ -27,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
@@ -81,6 +82,7 @@ fun MainContent(
     val mainViewModel: MainViewModel = hiltViewModel()
     val widgetViewModel: WidgetViewModel = hiltViewModel()
     val powerViewModel: PowerViewModel = hiltViewModel()
+    val esdeViewModel: ESDEViewModel = hiltViewModel()
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
     val appUpdateManager = LocalAppUpdateManager.current
@@ -94,6 +96,10 @@ fun MainContent(
     var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
 
     val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER
+
+    LaunchedEffect(isNotOnLauncher) {
+        esdeViewModel.setLauncherActive(!isNotOnLauncher)
+    }
 
     LaunchedEffect(currentPagerPage) {
         onCurrentPageChanged(currentPagerPage)
