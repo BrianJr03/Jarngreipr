@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -134,8 +135,21 @@ fun CollapsibleSection(
                     shape = RoundedCornerShape(16.dp)
                 )
                 .border(
-                    width = if (isFocused) 2.dp else 0.dp,
-                    color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                    width = if (isFocused) 2.dp else 1.dp,
+                    brush = borderBrush(
+                        isFocused = true,
+                        colors = if (isFocused) {
+                            listOf(
+                                ThemePrimaryColor.copy(alpha = 0.8f),
+                                ThemeSecondaryColor.copy(alpha = 0.6f),
+                            )
+                        } else {
+                            listOf(
+                                ThemePrimaryColor.copy(alpha = 0.4f),
+                                ThemeSecondaryColor.copy(alpha = 0.3f),
+                            )
+                        }
+                    ),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .clip(RoundedCornerShape(16.dp))
