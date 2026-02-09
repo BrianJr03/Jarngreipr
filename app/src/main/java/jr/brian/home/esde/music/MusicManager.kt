@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.MusicVideoBehavior
+import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import java.io.File
 
 /**
@@ -733,40 +734,59 @@ class MusicManager(
     /**
      * Load all audio files from a music source.
      * Scans recursively through all subdirectories.
+     * 
+     * For system sources, tries both exact and normalized system names.
      */
     private fun loadPlaylist(source: MusicSource): List<File> {
-        val sourcePath = source.getPath(getMusicPath())
+        val baseMusicPath = getMusicPath()
+        
+        // For system sources, try both exact and normalized names
+        if (source is MusicSource.System) {
+            val systemName = source.systemName
+            val normalizedSystemName = getMediaSystemName(systemName)
+            val systemNamesToTry = listOf(systemName, normalizedSystemName).distinct()
+            
+            for (name in systemNamesToTry) {
+                val sourcePath = "$baseMusicPath/systems/$name"
+                val sourceDir = File(sourcePath)
+                
+                android.util.Log.d(TAG, "Loading playlist from: $sourcePath")
+                
+                if (sourceDir.exists() && sourceDir.isDirectory) {
+                    val audioFiles = scanAudioFilesRecursively(sourceDir, excludeSystemsFolder = false)
+                    if (audioFiles.isNotEmpty()) {
+                        val sortedFiles = audioFiles.sortedBy { it.absolutePath }
+                        val shuffledFiles = sortedFiles.shuffled()
+                        android.util.Log.d(TAG, "Found ${shuffledFiles.size} audio files in $name (shuffled)")
+                        return shuffledFiles
+                    }
+                }
+            }
+            
+            // No system-specific folder found, fall back to generic
+            android.util.Log.d(TAG, "System folder not found for: $systemName (tried: $systemNamesToTry), falling back to generic")
+            return loadPlaylist(MusicSource.Generic)
+        }
+        
+        // For generic source
+        val sourcePath = source.getPath(baseMusicPath)
         val sourceDir = File(sourcePath)
 
         android.util.Log.d(TAG, "Loading playlist from: $sourcePath")
 
         if (!sourceDir.exists() || !sourceDir.isDirectory) {
             android.util.Log.d(TAG, "Music directory does not exist: $sourcePath")
-
-            // If system-specific folder doesn't exist, try generic as fallback
-            if (source is MusicSource.System) {
-                android.util.Log.d(TAG, "System folder not found, falling back to generic")
-                return loadPlaylist(MusicSource.Generic)
-            }
-
             return emptyList()
         }
 
         // Find all audio files recursively, excluding "systems" subfolder for generic source
         val audioFiles = scanAudioFilesRecursively(
             sourceDir,
-            excludeSystemsFolder = (source is MusicSource.Generic)
+            excludeSystemsFolder = true
         )
 
         if (audioFiles.isEmpty()) {
             android.util.Log.d(TAG, "No audio files found in: $sourcePath")
-
-            // If system-specific folder is empty, try generic as fallback
-            if (source is MusicSource.System) {
-                android.util.Log.d(TAG, "System folder empty, falling back to generic")
-                return loadPlaylist(MusicSource.Generic)
-            }
-
             return emptyList()
         }
 
@@ -835,6 +855,11 @@ class MusicManager(
 
     /**
      * Resolve the actual music source after fallback logic.
+     * 
+     * For system sources, this tries:
+     * 1. Exact system name folder (e.g., snes-msu1)
+     * 2. Parent/normalized system name folder (e.g., snes)
+     * 3. Generic music folder as final fallback
      */
     private fun resolveActualSource(requestedSource: MusicSource): MusicSource? {
         val baseMusicPath = getMusicPath()
@@ -847,15 +872,25 @@ class MusicManager(
 
         // For System source, check if system folder exists with audio files
         if (requestedSource is MusicSource.System) {
-            val sourcePath = requestedSource.getPath(baseMusicPath)
-
-            // If system folder has audio files, use it
-            if (hasAudioFiles(sourcePath)) {
-                return requestedSource
+            val systemName = requestedSource.systemName
+            
+            // Get normalized system name (e.g., snes-msu1 -> snes)
+            val normalizedSystemName = getMediaSystemName(systemName)
+            
+            // Try both exact and normalized names
+            val systemNamesToTry = listOf(systemName, normalizedSystemName).distinct()
+            
+            for (name in systemNamesToTry) {
+                val sourcePath = "$baseMusicPath/systems/$name"
+                if (hasAudioFiles(sourcePath)) {
+                    android.util.Log.d(TAG, "Found music folder for system: $name")
+                    // Return the actual source that was found (may be different from requested)
+                    return if (name == systemName) requestedSource else MusicSource.System(name)
+                }
             }
 
             // System folder doesn't exist/is empty - will fall back to Generic
-            android.util.Log.d(TAG, "System folder not found/empty, will use generic fallback")
+            android.util.Log.d(TAG, "System folder not found/empty for: $systemName (tried: $systemNamesToTry), will use generic fallback")
             val genericPath = MusicSource.Generic.getPath(baseMusicPath)
             return if (hasAudioFiles(genericPath)) MusicSource.Generic else null
         }

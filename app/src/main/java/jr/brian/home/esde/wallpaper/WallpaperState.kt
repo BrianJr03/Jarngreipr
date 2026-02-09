@@ -20,7 +20,6 @@ data class WallpaperState(
     val backgroundColor: Color = Color.Black,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
-    val hideContentOnVideo: Boolean = false,
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val isScreensaverActive: Boolean = false,

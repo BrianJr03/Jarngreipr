@@ -102,7 +102,6 @@ class ESDEViewModel @Inject constructor(
                     videoDelaySeconds = prefsState.videoDelaySeconds,
                     showSystemLogo = prefsState.showSystemLogo,
                     logoAlignment = prefsState.logoAlignment,
-                    hideContentOnVideo = prefsState.hideContentOnVideo,
                     marqueeWidth = prefsState.marqueeWidth,
                     marqueeHeight = prefsState.marqueeHeight,
                     screensaverBehavior = prefsState.screensaverBehavior
@@ -145,7 +144,6 @@ class ESDEViewModel @Inject constructor(
             marqueePath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
             logoAlignment = prefsState.logoAlignment,
-            hideContentOnVideo = prefsState.hideContentOnVideo,
             marqueeWidth = prefsState.marqueeWidth,
             marqueeHeight = prefsState.marqueeHeight,
             screensaverBehavior = prefsState.screensaverBehavior
