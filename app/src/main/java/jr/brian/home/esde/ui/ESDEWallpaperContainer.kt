@@ -102,7 +102,6 @@ fun ESDEWallpaperContainer(
             state.gameDescription != null &&
             !state.isVideoPlaying
     
-    // Hide marquee when showing description (description replaces marquee)
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
             !state.isVideoPlaying &&
@@ -137,7 +136,7 @@ fun ESDEWallpaperContainer(
                 )
             }
 
-            if (!state.isVideoPlaying && !state.isScreensaverActive) {
+            if (!state.isVideoPlaying && !state.isScreensaverActive && !state.isGameRunning) {
                 DimmingOverlay(alpha = effectiveDimmingLevel)
             }
         }
@@ -206,11 +205,6 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showEsdeContent && !state.isVideoPlaying && state.isScreensaverActive) {
-            DimmingOverlay(alpha = effectiveDimmingLevel)
-        }
-        
-        // Show scrolling description in place of marquee when Description mode is selected
         if (showDescription && state.gameDescription != null && !hideMarquee) {
             AnimatedVisibility(
                 visible = true,
@@ -241,6 +235,10 @@ fun ESDEWallpaperContainer(
                     pauseDurationMs = 3000
                 )
             }
+        }
+
+        if (showEsdeContent && !state.isVideoPlaying && (state.isGameRunning || state.isScreensaverActive)) {
+            DimmingOverlay(alpha = effectiveDimmingLevel)
         }
     }
 }

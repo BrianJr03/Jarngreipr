@@ -563,21 +563,6 @@ fun ESDESettingsScreen(
                     item {
                         AnimatedVisibility(prefsState.persistOnGameLaunch) {
                             SliderSetting(
-                                title = stringResource(R.string.esde_settings_logo_brightness),
-                                value = prefsState.logoBrightness.toFloat(),
-                                valueRange = 0f..100f,
-                                steps = 19,
-                                valueText = "${prefsState.logoBrightness}%",
-                                onValueChange = { brightness ->
-                                    preferencesManager.setLogoBrightness(brightness.toInt())
-                                }
-                            )
-                        }
-                    }
-
-                    item {
-                        AnimatedVisibility(prefsState.persistOnGameLaunch) {
-                            SliderSetting(
                                 title = stringResource(R.string.esde_settings_game_background_dimming),
                                 value = prefsState.gameBackgroundDimming.toFloat(),
                                 valueRange = 0f..70f,
