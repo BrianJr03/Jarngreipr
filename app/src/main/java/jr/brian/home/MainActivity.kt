@@ -1,11 +1,14 @@
 package jr.brian.home
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,7 +32,9 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.setup.ESDESetupHelper
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.viewmodels.PowerViewModel
 import java.io.File
@@ -45,6 +50,21 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
+
+    private var esdeViewModelRef: ESDEViewModel? = null
+    
+    private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            esdeViewModelRef?.onVideoActivityFinished()
+        }
+
+    private fun launchVideoPlayer(event: VideoLaunchEvent) {
+        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
+            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
+        }
+        videoPlayerLauncher.launch(intent)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +93,16 @@ class MainActivity : ComponentActivity() {
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
                     var currentPageIndex by remember { mutableStateOf(0) }
                     var pagerScrollProgress by remember { mutableStateOf(0f) }
+                    
+                    LaunchedEffect(esdeViewModel) {
+                        esdeViewModelRef = esdeViewModel
+                    }
+                    
+                    LaunchedEffect(esdeViewModel) {
+                        esdeViewModel.videoLaunchEvent.collect { event ->
+                            launchVideoPlayer(event)
+                        }
+                    }
                     
                     LaunchedEffect(Unit) {
                         esdeEventListener.onSystemSelected = { systemName ->
