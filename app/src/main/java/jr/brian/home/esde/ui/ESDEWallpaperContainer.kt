@@ -1,7 +1,5 @@
 package jr.brian.home.esde.ui
 
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -18,14 +16,9 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,15 +31,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
@@ -57,7 +42,6 @@ import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
-import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
 import java.io.File
@@ -73,9 +57,8 @@ fun ESDEWallpaperContainer(
     pagerScrollProgress: Float = 0f,
     overlayMode: Boolean = true,
     currentPageIndex: Int = 0,
-    content: (@Composable BoxScope.() -> Unit)? = null
+    content: @Composable BoxScope.() -> Unit
 ) {
-    val rememberContent = remember { content }
     val wallpaperManager = LocalWallpaperManager.current
     val wallpaperType = wallpaperManager.getWallpaperType()
     
@@ -99,12 +82,10 @@ fun ESDEWallpaperContainer(
     // Show description instead of marquee when Description mode is selected and description is available
     val showDescription = showEsdeContent &&
 //            prefsState.gameImageType == GameImageType.Description &&
-            state.gameDescription != null &&
-            !state.isVideoPlaying
+            state.gameDescription != null
     
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
-            !state.isVideoPlaying &&
             !showDescription
 
     val logoAlignment = when (state.logoAlignment) {
@@ -128,15 +109,7 @@ fun ESDEWallpaperContainer(
                 animationScale = state.animationScale
             )
 
-            if (state.isVideoPlaying && state.videoPath != null) {
-                ESDEVideoPlayer(
-                    videoPath = state.videoPath,
-                    audioEnabled = state.videoAudioEnabled,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            if (!state.isVideoPlaying && !state.isScreensaverActive && !state.isGameRunning) {
+            if (!state.isScreensaverActive && !state.isGameRunning) {
                 DimmingOverlay(alpha = effectiveDimmingLevel)
             }
         }
@@ -152,16 +125,11 @@ fun ESDEWallpaperContainer(
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
                 animationScale = state.animationScale,
-                onLongClick = null // No long click in original mode
+                onLongClick = null
             )
         }
 
-        val hideForVideo = state.hideContentOnVideo && state.isVideoPlaying && showEsdeContent
-        val shouldShowContent = !hideForVideo
-
-        if (shouldShowContent) {
-            rememberContent?.invoke(this)
-        }
+        content()
 
         if (showMarquee && overlayMode) {
             val isUsingDefaultBackground = state.currentImagePath == null
@@ -237,7 +205,7 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showEsdeContent && !state.isVideoPlaying && (state.isGameRunning || state.isScreensaverActive)) {
+        if (showEsdeContent && (state.isGameRunning || state.isScreensaverActive)) {
             DimmingOverlay(alpha = effectiveDimmingLevel)
         }
     }
@@ -360,58 +328,3 @@ private fun MarqueeImage(
     )
 }
 
-@OptIn(UnstableApi::class)
-@Composable
-private fun ESDEVideoPlayer(
-    videoPath: String,
-    modifier: Modifier = Modifier,
-    audioEnabled: Boolean = false,
-    onError: () -> Unit = {}
-) {
-    val context = LocalContext.current
-
-    val exoPlayer = remember(videoPath) {
-        ExoPlayer.Builder(context).build().apply {
-            try {
-                val file = File(videoPath)
-                if (file.exists()) {
-                    setMediaItem(MediaItem.fromUri(file.toUri()))
-                    repeatMode = Player.REPEAT_MODE_ALL
-                    volume = if (audioEnabled) 1f else 0f
-                    prepare()
-                    playWhenReady = true
-                }
-            } catch (_: Exception) {
-                onError()
-            }
-        }
-    }
-
-    LaunchedEffect(audioEnabled) {
-        exoPlayer.volume = if (audioEnabled) 1f else 0f
-    }
-
-    DisposableEffect(videoPath) {
-        onDispose {
-            exoPlayer.release()
-        }
-    }
-
-    AndroidView(
-        factory = { ctx ->
-            PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = false
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
-        },
-        update = { playerView ->
-            playerView.player = exoPlayer
-        },
-        modifier = modifier.fillMaxSize()
-    )
-}

@@ -29,8 +29,13 @@ import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.wallpaper.WallpaperState
+import jr.brian.home.model.VideoLaunchEvent
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -58,6 +63,9 @@ class ESDEViewModel @Inject constructor(
     private val _wallpaperState = mutableStateOf(createInitialState())
     val wallpaperState: State<WallpaperState> = _wallpaperState
 
+    private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()
+    val videoLaunchEvent: SharedFlow<VideoLaunchEvent> = _videoLaunchEvent.asSharedFlow()
+
     val musicController: MusicController = MusicManager(prefs)
 
     private val videoDelayHandler = Handler(Looper.getMainLooper())
@@ -72,8 +80,6 @@ class ESDEViewModel @Inject constructor(
 
         prefs.state
             .onEach { prefsState ->
-                // Preserve current dimming when in game or screensaver mode
-                // (those modes set their own dimming levels)
                 val currentDimming = if (_wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning) {
                     _wallpaperState.value.dimmingLevel
                 } else {
@@ -201,10 +207,14 @@ class ESDEViewModel @Inject constructor(
 
         pendingVideoRunnable = Runnable {
             if (currentGameSystem == systemName && currentGameFilename == gameFilename) {
-                _wallpaperState.value = _wallpaperState.value.copy(
-                    isVideoPlaying = true,
-                    videoPath = videoPath
-                )
+                viewModelScope.launch {
+                    _videoLaunchEvent.emit(
+                        VideoLaunchEvent(
+                            videoPath = videoPath,
+                            audioEnabled = prefs.state.value.videoAudioEnabled
+                        )
+                    )
+                }
                 musicController.onVideoStarted()
             }
         }
@@ -225,6 +235,14 @@ class ESDEViewModel @Inject constructor(
             isVideoPlaying = false,
             videoPath = null
         )
+        musicController.onVideoEnded()
+    }
+
+    /**
+     * Called when the VideoPlayerActivity finishes (user tapped or pressed back).
+     * Restores music playback state.
+     */
+    fun onVideoActivityFinished() {
         musicController.onVideoEnded()
     }
 
@@ -285,9 +303,7 @@ class ESDEViewModel @Inject constructor(
     ) {
         val behavior = prefs.state.value.screensaverBehavior
         val shouldShowContent = behavior == ScreensaverBehavior.ShowContent
-        
-        // For ShowContent: use 50% dimming overlay with content visible
-        // For PowerOff: use normal dimming - MainActivity handles powerViewModel.powerOff()
+
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
