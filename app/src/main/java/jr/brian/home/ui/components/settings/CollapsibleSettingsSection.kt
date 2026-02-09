@@ -92,13 +92,20 @@ fun CollapsibleSettingsSection(
                     shape = RoundedCornerShape(16.dp)
                 )
                 .border(
-                    width = if (isFocused || isExpanded) 2.dp else 0.dp,
+                    width = if (isFocused || isExpanded) 2.dp else 1.dp,
                     brush = borderBrush(
-                        isFocused = isFocused || isExpanded,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f),
-                        )
+                        isFocused = true,
+                        colors = if (isFocused || isExpanded) {
+                            listOf(
+                                ThemePrimaryColor.copy(alpha = 0.8f),
+                                ThemeSecondaryColor.copy(alpha = 0.6f),
+                            )
+                        } else {
+                            listOf(
+                                ThemePrimaryColor.copy(alpha = 0.4f),
+                                ThemeSecondaryColor.copy(alpha = 0.3f),
+                            )
+                        }
                     ),
                     shape = RoundedCornerShape(16.dp)
                 )
