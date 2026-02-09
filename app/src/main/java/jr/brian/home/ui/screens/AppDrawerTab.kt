@@ -75,6 +75,7 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
@@ -134,6 +135,7 @@ fun AppDrawerTab(
     BackHandler(enabled = isPoweredOff) {}
 
     val viewHeight = remember { mutableIntStateOf(0) }
+    val headerHeight = remember { mutableIntStateOf(0) }
     val scrollState = rememberLazyListState()
     val snappingLayout = remember(scrollState) { SnapLayoutInfoProvider(scrollState) }
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
@@ -142,6 +144,7 @@ fun AppDrawerTab(
     val settingsIconFocusRequester = remember { FocusRequester() }
     val menuIconFocusRequester = remember { FocusRequester() }
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    val setupPreferences = remember { SetupPreferences(context) }
     val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
@@ -153,7 +156,8 @@ fun AppDrawerTab(
 
     val isDockVisible by remember {
         derivedStateOf {
-            val isAtTop = scrollState.firstVisibleItemIndex == 0 || scrollState.firstVisibleItemIndex == 1
+            val isAtTop =
+                scrollState.firstVisibleItemIndex == 0 || scrollState.firstVisibleItemIndex == 1
             isDockEnabled && isDockVisibleOnPage && isAtTop
         }
     }
@@ -163,8 +167,8 @@ fun AppDrawerTab(
     LaunchedEffect(scrollState, viewHeight.intValue) {
         if (viewHeight.intValue == 0) return@LaunchedEffect
         val halfHeight = viewHeight.intValue / 2
-        
-        snapshotFlow { 
+
+        snapshotFlow {
             Triple(
                 scrollState.firstVisibleItemIndex,
                 scrollState.firstVisibleItemScrollOffset,
@@ -182,6 +186,7 @@ fun AppDrawerTab(
                             scrollState.animateScrollToItem(0) // Snap to top (dock visible)
                         }
                     }
+
                     2 -> {
                         // On drawer - always snap to show it fully
                         scrollState.animateScrollToItem(2)
@@ -219,7 +224,11 @@ fun AppDrawerTab(
                         visible = isHeaderVisible,
                         enter = slideInVertically(initialOffsetY = { -it }),
                         exit = slideOutVertically(targetOffsetY = { -it }),
-                        modifier = Modifier.statusBarsPadding()
+                        modifier = Modifier
+                            .statusBarsPadding()
+                            .onSizeChanged { size ->
+                                headerHeight.intValue = size.height
+                            }
                     ) {
                         ScreenHeaderRow(
                             totalPages = totalPages,
@@ -254,11 +263,12 @@ fun AppDrawerTab(
             item {
                 if (viewHeight.intValue > 0) {
                     val isDockEnabledOnPage = isDockEnabled && isDockVisibleOnPage
+                    val effectiveHeaderHeight = if (isHeaderVisible) headerHeight.intValue else 0
                     val touchAreaHeight = with(LocalDensity.current) {
                         if (isDockEnabledOnPage) {
-                            (viewHeight.intValue - DOCK_ITEM_HEIGHT.roundToPx()).toDp()
+                            (viewHeight.intValue - DOCK_ITEM_HEIGHT.roundToPx() - effectiveHeaderHeight).toDp()
                         } else {
-                            viewHeight.intValue.toDp() // Full height when no dock
+                            (viewHeight.intValue - effectiveHeaderHeight).toDp()
                         }
                     }
                     DrawerTouchArea(
@@ -270,7 +280,7 @@ fun AppDrawerTab(
                     )
                 }
             }
-            
+
             // Item 1: Dock (visible with touch area on home screen)
             item {
                 val isDockEnabledOnPage = isDockEnabled && isDockVisibleOnPage
@@ -291,7 +301,9 @@ fun AppDrawerTab(
                                 launchAppOnOppositeDisplay(
                                     context = context,
                                     packageName = app.packageName,
-                                    currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                                    currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                        app.packageName
+                                    )
                                 )
                             },
                             onAppLongClick = { app ->
@@ -307,7 +319,7 @@ fun AppDrawerTab(
                     }
                 }
             }
-            
+
             // Item 2: Drawer content
             item {
                 if (viewHeight.intValue > 0) {
