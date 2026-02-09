@@ -28,13 +28,17 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.UpdateAvailableDialog
+import jr.brian.home.ui.components.dialog.NotificationAccessDialog
+import jr.brian.home.ui.components.dialog.openAppSettings
+import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
+import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.SettingItem
-import jr.brian.home.ui.components.settings.sections.appearanceSection
-import jr.brian.home.ui.components.settings.sections.extrasSection
-import jr.brian.home.ui.components.settings.sections.layoutSection
-import jr.brian.home.ui.components.settings.sections.supportSection
-import jr.brian.home.ui.components.settings.sections.systemSection
+import jr.brian.home.ui.components.settings.sections.AppearanceSection
+import jr.brian.home.ui.components.settings.sections.ExtrasSection
+import jr.brian.home.ui.components.settings.sections.LayoutSection
+import jr.brian.home.ui.components.settings.sections.SupportSection
+import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.util.rememberDialogState
@@ -42,6 +46,12 @@ import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import kotlinx.coroutines.launch
+
+private const val SECTION_APPEARANCE = "appearance"
+private const val SECTION_LAYOUT = "layout"
+private const val SECTION_SYSTEM = "system"
+private const val SECTION_SUPPORT = "support"
+private const val SECTION_EXTRAS = "extras"
 
 @Composable
 fun SettingsScreen(
@@ -63,6 +73,7 @@ fun SettingsScreen(
     val appUpdateManager = LocalAppUpdateManager.current
     
     val updateDialogState = rememberDialogState<UpdateInfo>()
+    val notificationAccessDialogState = rememberDialogState<Unit>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
     
     val currentVersionName = remember {
@@ -101,6 +112,7 @@ fun SettingsScreen(
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToEsdeSettings = onNavigateToEsdeSettings,
                     isCheckingForUpdates = isCheckingForUpdates,
+                    onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -144,6 +156,23 @@ fun SettingsScreen(
                     )
                 }
             }
+            
+            if (notificationAccessDialogState.isVisible) {
+                NotificationAccessDialog(
+                    onDismiss = notificationAccessDialogState::dismiss,
+                    onGrantAccess = {
+                        notificationAccessDialogState.dismiss()
+                        openNotificationAccessSettings(context)
+                    },
+                    onOpenAppSettings = {
+                        openAppSettings(context)
+                    },
+                    onNeverAskAgain = {
+                        setNotificationAccessDeclined(context)
+                        notificationAccessDialogState.dismiss()
+                    }
+                )
+            }
         }
     }
 }
@@ -162,23 +191,20 @@ private fun SettingsContent(
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToEsdeSettings: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
+    onNotificationBadgeClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    var expandedItem by remember { mutableStateOf<String?>(null) }
+    var expandedSection by remember { mutableStateOf<String?>(null) }
 
     val isThorDevice = remember {
         android.os.Build.MODEL == DeviceModel.THOR
     }
 
-    fun isVisible(itemKey: String? = null): Boolean {
-        return expandedItem == null || expandedItem == itemKey
-    }
-
     BackHandler {
-        if (expandedItem != null) {
-            expandedItem = null
+        if (expandedSection != null) {
+            expandedSection = null
         } else {
             onDismiss()
         }
@@ -207,43 +233,64 @@ private fun SettingsContent(
             )
         }
 
-        appearanceSection(
-            expandedItem = expandedItem,
-            onExpandedItemChange = { expandedItem = it },
-            isVisible = ::isVisible,
-            onNavigateToCustomTheme = onNavigateToCustomTheme,
-            onIconPackChanged = onIconPackChanged,
-            onNavigateToEsdeSettings = onNavigateToEsdeSettings
-        )
+        item(key = SECTION_APPEARANCE) {
+            AppearanceSection(
+                isExpanded = expandedSection == SECTION_APPEARANCE,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_APPEARANCE) null else SECTION_APPEARANCE
+                },
+                onNavigateToCustomTheme = onNavigateToCustomTheme,
+                onIconPackChanged = onIconPackChanged,
+                onNavigateToEsdeSettings = onNavigateToEsdeSettings
+            )
+        }
 
-        layoutSection(
-            expandedItem = expandedItem,
-            onExpandedItemChange = { expandedItem = it },
-            isVisible = ::isVisible,
-            isThorDevice = isThorDevice,
-            allAppsUnfiltered = allAppsUnfiltered,
-            onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
-            onNavigateToDockSettings = onNavigateToDockSettings
-        )
+        item(key = SECTION_LAYOUT) {
+            LayoutSection(
+                isExpanded = expandedSection == SECTION_LAYOUT,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_LAYOUT) null else SECTION_LAYOUT
+                },
+                isThorDevice = isThorDevice,
+                allAppsUnfiltered = allAppsUnfiltered,
+                onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
+                onNavigateToDockSettings = onNavigateToDockSettings
+            )
+        }
 
-        systemSection(
-            isVisible = ::isVisible,
-            isCheckingForUpdates = isCheckingForUpdates,
-            onCheckForUpdates = onCheckForUpdates,
-            onNavigateToCrashLogs = onNavigateToCrashLogs,
-            onNavigateToControlPad = onNavigateToControlPad,
-            onNavigateToMonitor = onNavigateToMonitor,
-            onNavigateToVolumeControls = onNavigateToVolumeControls
-        )
+        item(key = SECTION_SYSTEM) {
+            SystemSection(
+                isExpanded = expandedSection == SECTION_SYSTEM,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_SYSTEM) null else SECTION_SYSTEM
+                },
+                isCheckingForUpdates = isCheckingForUpdates,
+                onCheckForUpdates = onCheckForUpdates,
+                onNavigateToCrashLogs = onNavigateToCrashLogs,
+                onNavigateToControlPad = onNavigateToControlPad,
+                onNavigateToMonitor = onNavigateToMonitor,
+                onNavigateToVolumeControls = onNavigateToVolumeControls,
+                onNotificationBadgeClick = onNotificationBadgeClick
+            )
+        }
 
-        supportSection(
-            isVisible = ::isVisible,
-            context = context,
-            onNavigateToFAQ = onNavigateToFAQ
-        )
+        item(key = SECTION_SUPPORT) {
+            SupportSection(
+                isExpanded = expandedSection == SECTION_SUPPORT,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_SUPPORT) null else SECTION_SUPPORT
+                },
+                onNavigateToFAQ = onNavigateToFAQ
+            )
+        }
 
-        extrasSection(
-            isVisible = ::isVisible
-        )
+        item(key = SECTION_EXTRAS) {
+            ExtrasSection(
+                isExpanded = expandedSection == SECTION_EXTRAS,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_EXTRAS) null else SECTION_EXTRAS
+                }
+            )
+        }
     }
 }

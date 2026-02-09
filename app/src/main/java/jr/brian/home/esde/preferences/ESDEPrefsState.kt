@@ -10,9 +10,16 @@ import jr.brian.home.model.Shortcut
  */
 enum class SystemImageType(val folderName: String?) {
     None(null),
+    All(null),
     Fanart("fanart"),
     Screenshots("screenshots"),
-    TitleScreens("titlescreens")
+    TitleScreens("titlescreens");
+
+    companion object {
+        /** Returns all types that have actual media folders (excludes None and All) */
+        fun randomizableTypes(): List<SystemImageType> =
+            entries.filter { it.folderName != null }
+    }
 }
 
 /**
@@ -20,12 +27,19 @@ enum class SystemImageType(val folderName: String?) {
  */
 enum class GameImageType(val folderName: String?) {
     None(null),
+    All(null),
     Screenshots("screenshots"),
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
-    MixImages("miximages"),
+    MixImages("miximages");
 //    Description(null)
+
+    companion object {
+        /** Returns all types that have actual media folders (excludes None and All) */
+        fun randomizableTypes(): List<GameImageType> =
+            entries.filter { it.folderName != null }
+    }
 }
 
 /**

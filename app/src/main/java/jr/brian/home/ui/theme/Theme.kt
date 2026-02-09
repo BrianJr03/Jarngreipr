@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.ui.theme.managers.IconShapeManager
+import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.ui.theme.managers.OledModeManager
@@ -15,10 +17,12 @@ fun LauncherTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val themeManager = remember { ThemeManager(context) }
     val oledModeManager = remember { OledModeManager(context) }
+    val iconShapeManager = remember { IconShapeManager(context) }
 
     CompositionLocalProvider(
         LocalThemeManager provides themeManager,
-        LocalOledModeManager provides oledModeManager
+        LocalOledModeManager provides oledModeManager,
+        LocalIconShapeManager provides iconShapeManager
     ) {
         MaterialTheme(
             colorScheme =

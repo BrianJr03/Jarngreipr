@@ -12,9 +12,9 @@
     <string name="keyboard_button_clear">Clear</string>
     <string name="keyboard_button_backspace">Backspace</string>
     <string name="keyboard_label_space">Space</string>
-    <string name="keyboard_label_clear">Clear</string>
+    <string name="keyboard_label_clear">@string/common_clear</string>
     <string name="keyboard_label_search">Search</string>
-    <string name="keyboard_label_settings">Settings</string>
+    <string name="keyboard_label_settings">@string/common_settings</string>
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
     <string name="keyboard_label_flip">Flip Layout</string>
@@ -23,15 +23,15 @@
     <string name="search_onboarding_title">Switch Layout</string>
     <string name="search_onboarding_description">Tap this icon to switch between vertical (alphabetical keyboard) and horizontal (QWERTY keyboard) layouts.</string>
 
-    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_cancel">@string/common_cancel</string>
     <string name="wallpaper">"Wallpaper"</string>
     <string name="dialog_add_to_home">Add to Home</string>
     <string name="dialog_app_info">App Info</string>
     <string name="add_app_message">Add this app to your home page</string>
     <string name="app_info_message">Open app info for %1$s</string>
     <string name="drawer_options_title">Drawer Options</string>
-    <string name="drawer_options_close">Close</string>
-    <string name="drawer_options_back">Back</string>
+    <string name="drawer_options_close">@string/common_close</string>
+    <string name="drawer_options_back">@string/common_back</string>
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
@@ -73,7 +73,7 @@
     <string name="app_options_hide">Hide</string>
     <string name="app_options_info">Info</string>
     <string name="app_options_resize_preview">Icon Preview</string>
-    <string name="app_options_resize_cancel">Cancel</string>
+    <string name="app_options_resize_cancel">@string/common_cancel</string>
     <string name="app_options_resize_apply">Apply</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
@@ -90,7 +90,7 @@
     <string name="theme_custom">Custom</string>
 
     <!-- Custom Theme Dialog -->
-    <string name="custom_theme_dialog_title">Create Custom Theme</string>
+    <string name="custom_theme_dialog_title">@string/common_create_custom_theme</string>
     <string name="custom_theme_solid_color">Solid Color</string>
     <string name="custom_theme_preview">Preview</string>
     <string name="custom_theme_color">Color</string>
@@ -99,10 +99,15 @@
     <string name="custom_theme_create">Create</string>
     <string name="custom_theme_name">Custom Theme</string>
     <string name="custom_theme_add">Create Custom</string>
-    <string name="custom_theme_delete">Delete</string>
+    <string name="custom_theme_delete">@string/common_delete</string>
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
+
+    <string name="settings_icon_shape_title">Icon Shape</string>
+    <string name="settings_icon_shape_description">Choose between rounded or square icons</string>
+    <string name="settings_icon_shape_rounded">Rounded</string>
+    <string name="settings_icon_shape_square">Square</string>
 
     <string name="settings_show_app_names_title">Show App Names</string>
     <string name="settings_show_app_names_description">Display names below app icons</string>
@@ -112,7 +117,7 @@
 
     <string name="settings_show_back_button_title">Show Back Button on Screens</string>
     <string name="settings_show_back_button_description">Display back button on all screens</string>
-    <string name="settings_back_button">Back</string>
+    <string name="settings_back_button">@string/common_back</string>
 
     <string name="settings_visibility_options_title">Visibility Options</string>
     <string name="settings_visibility_options_description">Toggle labels and headers</string>
@@ -157,10 +162,10 @@
     <string name="settings_grid_all_apps_visible_plural">%1$d apps can be displayed. All selected apps will be visible.</string>
     <string name="settings_grid_unlimited_mode_singular">%1$d selected app will be displayed.</string>
     <string name="settings_grid_unlimited_mode_plural">All %1$d selected apps will be displayed.</string>
-    <string name="settings_grid_done">Done</string>
+    <string name="settings_grid_done">@string/common_done</string>
     <string name="settings_grid_minus">−</string>
     <string name="settings_grid_plus">+</string>
-    <string name="settings_grid_reset">Reset</string>
+    <string name="settings_grid_reset">@string/common_reset</string>
 
     <string name="settings_icon_pack_title">Icon Pack</string>
     <string name="settings_icon_pack_description">Use third-party icons</string>
@@ -187,32 +192,32 @@
     <string name="back_button_shortcut_screen_title">Back Button Shortcut</string>
     <string name="back_button_shortcut_screen_description">Select what happens when you press the back button</string>
     <string name="back_button_shortcut_none">None (Default Navigation)</string>
-    <string name="back_button_shortcut_settings">Settings</string>
-    <string name="back_button_shortcut_app_search">App Search</string>
-    <string name="back_button_shortcut_powered_off">Turn Off Display</string>
-    <string name="back_button_shortcut_quick_delete">Quick Delete</string>
-    <string name="back_button_shortcut_custom_theme">Create Custom Theme</string>
-    <string name="back_button_shortcut_monitor">System Monitor</string>
-    <string name="back_button_shortcut_recent_apps">Recent Apps</string>
-    <string name="back_button_shortcut_app">App Launch</string>
+    <string name="back_button_shortcut_settings">@string/common_settings</string>
+    <string name="back_button_shortcut_app_search">@string/common_app_search</string>
+    <string name="back_button_shortcut_powered_off">@string/common_turn_off_display</string>
+    <string name="back_button_shortcut_quick_delete">@string/common_quick_delete</string>
+    <string name="back_button_shortcut_custom_theme">@string/common_create_custom_theme</string>
+    <string name="back_button_shortcut_monitor">@string/common_system_monitor</string>
+    <string name="back_button_shortcut_recent_apps">@string/common_recent_apps</string>
+    <string name="back_button_shortcut_app">@string/common_app_launch</string>
     <string name="back_button_shortcut_select_app">Select App</string>
-    <string name="back_button_shortcut_selected_app">Selected: %1$s</string>
-    <string name="back_button_shortcut_no_app">No app selected</string>
+    <string name="back_button_shortcut_selected_app">@string/common_selected_app</string>
+    <string name="back_button_shortcut_no_app">@string/common_no_app_selected</string>
 
     <!-- Generic Shortcut Strings -->
-    <string name="shortcut_settings">Settings</string>
-    <string name="shortcut_app_search">App Search</string>
-    <string name="shortcut_powered_off">Turn Off Display</string>
-    <string name="shortcut_quick_delete">Quick Delete</string>
-    <string name="shortcut_custom_theme">Create Custom Theme</string>
-    <string name="shortcut_monitor">System Monitor</string>
-    <string name="shortcut_control_pad">GamePad</string>
-    <string name="shortcut_volume_controls">Volume Controls</string>
-    <string name="shortcut_recent_apps">Recent Apps</string>
-    <string name="shortcut_app">App Launch</string>
-    <string name="shortcut_none">None</string>
-    <string name="shortcut_selected_app">Selected: %1$s</string>
-    <string name="shortcut_no_app">No app selected</string>
+    <string name="shortcut_settings">@string/common_settings</string>
+    <string name="shortcut_app_search">@string/common_app_search</string>
+    <string name="shortcut_powered_off">@string/common_turn_off_display</string>
+    <string name="shortcut_quick_delete">@string/common_quick_delete</string>
+    <string name="shortcut_custom_theme">@string/common_create_custom_theme</string>
+    <string name="shortcut_monitor">@string/common_system_monitor</string>
+    <string name="shortcut_control_pad">@string/common_gamepad</string>
+    <string name="shortcut_volume_controls">@string/common_volume_controls</string>
+    <string name="shortcut_recent_apps">@string/common_recent_apps</string>
+    <string name="shortcut_app">@string/common_app_launch</string>
+    <string name="shortcut_none">@string/common_none</string>
+    <string name="shortcut_selected_app">@string/common_selected_app</string>
+    <string name="shortcut_no_app">@string/common_no_app_selected</string>
 
     <!-- Marquee Press Shortcut -->
     <string name="marquee_press_shortcut_screen_title">Marquee Long Press Shortcut</string>
@@ -232,7 +237,7 @@
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
     <string name="dialog_app_visibility_search">Search apps…</string>
-    <string name="dialog_app_visibility_close">Close</string>
+    <string name="dialog_app_visibility_close">@string/common_close</string>
     <string name="dialog_app_visibility_hidden_count">%1$d app(s) hidden</string>
     <string name="dialog_app_visibility_show_all">Show All</string>
     <string name="dialog_app_visibility_hide_all">Hide All</string>
@@ -254,10 +259,10 @@
     <string name="widget_swap_description">Swap with another widget</string>
     <string name="widget_swap_mode_title">Select Widget to Swap With</string>
     <string name="widget_swap_mode_instructions">Tap on a widget to swap positions</string>
-    <string name="widget_swap_cancel">Cancel</string>
+    <string name="widget_swap_cancel">@string/common_cancel</string>
     <string name="widget_resize_mode_title">Resize Mode</string>
     <string name="widget_resize_mode_instructions">Use the + and - buttons below to adjust size</string>
-    <string name="widget_resize_done">Done</string>
+    <string name="widget_resize_done">@string/common_done</string>
     <string name="widget_resize_dimensions">%1$d × %2$d cells</string>
 
     <!-- Settings Screen -->
@@ -278,7 +283,7 @@
     <!-- Welcome Overlay -->
     <string name="welcome_overlay_title">Welcome to Járngreipr</string>
     <string name="welcome_overlay_button">Got It</string>
-    <string name="launch_settings_overlay_button">Settings</string>
+    <string name="launch_settings_overlay_button">@string/common_settings</string>
     <string name="welcome_overlay_thor_fact_label">⚡ Thor Fact</string>
     <string name="welcome_overlay_note_label">📌 Important Note</string>
     <string name="welcome_overlay_keyboard_note">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen and then try again.</string>
@@ -352,8 +357,8 @@
     <string name="home_tab_add_page">Add Page</string>
     <string name="home_tab_delete_page_title">Delete Page</string>
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
-    <string name="home_tab_delete_confirm">Delete</string>
-    <string name="home_tab_delete_cancel">Cancel</string>
+    <string name="home_tab_delete_confirm">@string/common_delete</string>
+    <string name="home_tab_delete_cancel">@string/common_cancel</string>
     <string name="home_tab_page_type_dialog_title">Choose Page Type</string>
     <string name="home_tab_page_type_apps_tab">Apps Tab</string>
     <string name="home_tab_page_type_apps_and_widgets_tab">Apps &amp; Widgets Tab</string>
@@ -369,7 +374,7 @@
     <string name="all_apps_screen_search_hint">Search apps…</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_settings_title">Settings</string>
+    <string name="onboarding_settings_title">@string/common_settings</string>
     <string name="onboarding_settings_description">Access app settings, themes, wallpapers, and customization options.</string>
     <string name="onboarding_page_indicators_title">Page Indicators</string>
     <string name="onboarding_page_indicators_description">Shows current page position. Click to quickly change your Home tab.</string>
@@ -405,7 +410,7 @@
     <string name="widget_edit_tap_instruction">Tap a widget to edit</string>
 
     <!-- Clean Folders Screen -->
-    <string name="clean_folders_title">Quick Delete</string>
+    <string name="clean_folders_title">@string/common_quick_delete</string>
     <string name="clean_folders_description">Quickly delete files you no longer need</string>
     <string name="clean_folders_add_path">Add Folder</string>
     <string name="clean_folders_no_paths">No folders added yet</string>
@@ -418,18 +423,18 @@
     <string name="clean_folders_extension_count">%1$d file(s)</string>
     <string name="clean_folders_delete_confirm_title">Confirm Deletion</string>
     <string name="clean_folders_delete_confirm_message">Delete %1$d file(s) with %2$d extension(s)?</string>
-    <string name="clean_folders_delete_confirm">Delete</string>
-    <string name="clean_folders_delete_cancel">Cancel</string>
+    <string name="clean_folders_delete_confirm">@string/common_delete</string>
+    <string name="clean_folders_delete_cancel">@string/common_cancel</string>
     <string name="clean_folders_delete_success">Successfully deleted %1$d file(s)</string>
     <string name="clean_folders_delete_failed">Failed to delete some files</string>
-    <string name="clean_folders_select_all">Select All</string>
-    <string name="clean_folders_deselect_all">Deselect All</string>
-    <string name="clean_folders_remove_path">Remove</string>
+    <string name="clean_folders_select_all">@string/common_select_all</string>
+    <string name="clean_folders_deselect_all">@string/common_deselect_all</string>
+    <string name="clean_folders_remove_path">@string/common_remove</string>
     <string name="clean_folders_total_size">Total: %1$s</string>
     <string name="clean_folders_icon_description">Clean folders icon</string>
     <string name="clean_folders_path_invalid">Invalid folder path</string>
     <string name="clean_folders_open_file_manager">Open File Manager</string>
-    <string name="clean_folders_close">Close</string>
+    <string name="clean_folders_close">@string/common_close</string>
     <string name="clean_folders_selected_folders">Selected Folders</string>
     <string name="clean_folders_file_extensions">File Extensions (%1$d)</string>
     <string name="clean_folders_files_separator"> • %1$d files</string>
@@ -446,9 +451,9 @@
     <!-- Create Folder Dialog -->
     <string name="dialog_create_folder_title">Create Folder</string>
     <string name="dialog_create_folder_description">Select apps to add to this folder</string>
-    <string name="dialog_create_folder_close">Close</string>
-    <string name="dialog_create_folder_select_all">Select All</string>
-    <string name="dialog_create_folder_deselect_all">Deselect All</string>
+    <string name="dialog_create_folder_close">@string/common_close</string>
+    <string name="dialog_create_folder_select_all">@string/common_select_all</string>
+    <string name="dialog_create_folder_deselect_all">@string/common_deselect_all</string>
     <string name="dialog_create_folder_ok">OK</string>
     <string name="dialog_create_folder_apps_selected">%1$d apps selected</string>
 
@@ -464,7 +469,7 @@
     <string name="app_drawer_layout_free">Use Free Positioning</string>
     <string name="app_drawer_reset_positions">Reset Positions</string>
     <string name="app_drawer_reset_positions_message">Reset app positions and icon sizes</string>
-    <string name="app_drawer_reset_confirm">Reset</string>
+    <string name="app_drawer_reset_confirm">@string/common_reset</string>
     <string name="app_drawer_arrange_apps">Arrange Apps</string>
     <string name="app_drawer_arrange_apps_description_fpm">Drag around and resize app icons</string>
     <string name="app_drawer_arrange_apps_description_grid">Default layout</string>
@@ -485,19 +490,19 @@
     <string name="widgets_tab_add_button">Add</string>
 
     <!-- Monitor Screen -->
-    <string name="monitor_screen_title">System Monitor</string>
+    <string name="monitor_screen_title">@string/common_system_monitor</string>
     <string name="monitor_screen_description">Real-time system information</string>
 
     <!-- Control Pad Screen -->
-    <string name="control_pad_screen_title">GamePad</string>
+    <string name="control_pad_screen_title">@string/common_gamepad</string>
     <string name="control_pad_screen_description">Control the main display</string>
-    <string name="back_button_shortcut_control_pad">GamePad</string>
-    <string name="control_pad_edit">Edit</string>
-    <string name="control_pad_done">Done</string>
-    <string name="control_pad_reset">Reset</string>
+    <string name="back_button_shortcut_control_pad">@string/common_gamepad</string>
+    <string name="control_pad_edit">@string/common_edit</string>
+    <string name="control_pad_done">@string/common_done</string>
+    <string name="control_pad_reset">@string/common_reset</string>
     <string name="control_pad_tap_to_map">Tap to map</string>
     <string name="control_pad_map_button_title">Map Button</string>
-    <string name="control_pad_close">Close</string>
+    <string name="control_pad_close">@string/common_close</string>
     <string name="control_pad_shizuku_not_running">Shizuku not running</string>
     <string name="control_pad_shizuku_permission_required">Permission required</string>
     <string name="control_pad_shizuku_grant_permission">Grant Permission</string>
@@ -511,7 +516,7 @@
     <string name="control_pad_joystick_lr">L/R</string>
     <string name="control_pad_joystick_r">R</string>
     <string name="control_pad_camera_sensitivity">Sensitivity</string>
-    <string name="control_pad_help">Help</string>
+    <string name="control_pad_help">@string/common_help</string>
     <string name="control_pad_help_title">Getting Started</string>
     <string name="control_pad_help_section_shizuku">Setup Shizuku</string>
     <string name="control_pad_help_step_1">1. Install Shizuku from the Play Store or GitHub</string>
@@ -538,12 +543,12 @@
     <string name="monitor_battery_label">Battery Level</string>
     <string name="monitor_battery_time_label">Battery Time</string>
     <string name="monitor_storage_label">Storage</string>
-    <string name="monitor_close">Close</string>
+    <string name="monitor_close">@string/common_close</string>
     <string name="settings_section_system">System</string>
     <string name="settings_tag_experimental">Experimental</string>
     <string name="settings_crash_logs_title">Crash Logs</string>
     <string name="settings_crash_logs_description">View crash reports or report an issue</string>
-    <string name="settings_volume_controls_title">Volume Controls</string>
+    <string name="settings_volume_controls_title">@string/common_volume_controls</string>
     <string name="settings_volume_controls_description">Dual-screen volume management for Ayn Thor</string>
 
     <!-- Widget Picker -->
@@ -562,16 +567,16 @@
     <string name="crash_logs_description">View and manage app crash reports</string>
     <string name="crash_logs_report_issue">Report Issue</string>
     <string name="crash_logs_report_issue_url">https://github.com/BrianJr03/Jarngreipr/issues/new</string>
-    <string name="crash_logs_clear_all">Clear All</string>
+    <string name="crash_logs_clear_all">@string/common_clear_all</string>
     <string name="crash_logs_clear_all_dialog_title">Clear All Crash Logs?</string>
     <string name="crash_logs_clear_all_dialog_message">This will permanently delete all %1$d crash log(s).</string>
-    <string name="crash_logs_clear_all_confirm">Clear All</string>
-    <string name="crash_logs_clear_all_cancel">Cancel</string>
+    <string name="crash_logs_clear_all_confirm">@string/common_clear_all</string>
+    <string name="crash_logs_clear_all_cancel">@string/common_cancel</string>
     <string name="crash_logs_detail_title">Crash Details</string>
-    <string name="crash_logs_detail_copy">Copy</string>
-    <string name="crash_logs_detail_close">Close</string>
+    <string name="crash_logs_detail_copy">@string/common_copy</string>
+    <string name="crash_logs_detail_close">@string/common_close</string>
     <string name="crash_logs_copied_toast">Copied to clipboard</string>
-    <string name="crash_logs_delete_description">Delete</string>
+    <string name="crash_logs_delete_description">@string/common_delete</string>
     <string name="crash_logs_empty_title">No Crash Logs</string>
     <string name="crash_logs_empty_description">Your app hasn\'t crashed recently.\nCrash logs will appear here if the app encounters an error.</string>
 
@@ -597,17 +602,17 @@
     <string name="update_failed_title">Download Failed</string>
     <string name="update_button_retry">Retry</string>
     <string name="update_button_download_browser">Download in Browser</string>
-    <string name="update_button_cancel">Cancel</string>
+    <string name="update_button_cancel">@string/common_cancel</string>
     <string name="update_permission_title">Permission Required</string>
     <string name="update_permission_message">To install updates directly, please allow this app to install apps from unknown sources in the settings.</string>
     <string name="update_permission_granted_title">Permission Granted</string>
     <string name="update_permission_granted_message">You can now download and install updates directly.</string>
     <string name="update_button_open_settings">Open Settings</string>
     <string name="update_button_start_download">Start Download</string>
-    <string name="update_close_description">Close</string>
+    <string name="update_close_description">@string/common_close</string>
     <string name="update_scroll_down_description">Scroll down</string>
     <string name="update_button_skip_version">Skip this version</string>
-    <string name="update_button_skip">Skip</string>
+    <string name="update_button_skip">@string/common_skip</string>
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_description">Check for new versions</string>
     <string name="update_checking">Checking for updates…</string>
@@ -622,20 +627,20 @@
     <string name="recent_apps_permission_button">Grant Permission</string>
     <string name="recent_apps_icon_description">App icon for %1$s</string>
     <string name="recent_apps_tap_to_open">Tap to open</string>
-    <string name="recent_apps_display_top">Top</string>
-    <string name="recent_apps_display_bottom">Bottom</string>
+    <string name="recent_apps_display_top">@string/common_top</string>
+    <string name="recent_apps_display_bottom">@string/common_bottom</string>
     <string name="recent_apps_usage_time_format">Used for %1$s</string>
     <string name="recent_apps_subtitle">%1$d apps used today</string>
     <string name="recent_apps_refresh">Refresh</string>
     <string name="recent_apps_loading">Loading recent apps…</string>
     <string name="recent_apps_close">Close app</string>
     
-    <string name="volume_controls_title">Volume Controls</string>
-    <string name="volume_controls_help">Help</string>
+    <string name="volume_controls_title">@string/common_volume_controls</string>
+    <string name="volume_controls_help">@string/common_help</string>
     <string name="volume_controls_permission_required">Permission Required</string>
     <string name="volume_controls_command_title">Grant Permission via ADB</string>
     <string name="volume_controls_command">adb shell pm grant %1$s android.permission.WRITE_SECURE_SETTINGS</string>
-    <string name="volume_controls_copy">Copy</string>
+    <string name="volume_controls_copy">@string/common_copy</string>
     <string name="volume_controls_copied">Command copied to clipboard</string>
     <string name="volume_controls_go_to_settings">Go to Settings</string>
     <string name="volume_controls_help_title">Volume Controls Setup</string>
@@ -644,9 +649,11 @@
     <string name="volume_controls_help_finish">After granting permission, return here to use the volume sliders</string>
     <string name="volume_controls_help_note_title">Note</string>
     <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
-    <string name="back_button_shortcut_volume_controls">Volume Controls</string>
+    <string name="back_button_shortcut_volume_controls">@string/common_volume_controls</string>
 
     <!-- Notification Access -->
+    <string name="settings_notification_badge_title">Notification Badges</string>
+    <string name="settings_notification_badge_description">Show notification counts on app icons</string>
     <string name="notification_access_title">Enable Notification Badges</string>
     <string name="notification_access_description">Grant notification access to show notification count badges on app icons. This helps you see which apps have unread notifications at a glance.</string>
     <string name="notification_access_grant">Grant Access</string>
@@ -658,7 +665,7 @@
 
     <string name="dock_select_app_title">Select App for Dock</string>
     <string name="dock_add_app">Add app to dock</string>
-    <string name="dock_remove_app">Remove</string>
+    <string name="dock_remove_app">@string/common_remove</string>
     
     <!-- Dock Settings -->
     <string name="dock_settings_title">Dock Settings</string>
@@ -684,16 +691,16 @@
     <string name="volume_up_description">Volume Up</string>
 
     <!-- ESDE Setup Wizard -->
-    <string name="esde_setup_close">Close</string>
+    <string name="esde_setup_close">@string/common_close</string>
     <string name="esde_setup_next">Next</string>
     <string name="esde_setup_use_default">Use Default</string>
-    <string name="esde_setup_select_folder">Select Folder</string>
-    <string name="esde_setup_skip">Skip</string>
+    <string name="esde_setup_select_folder">@string/common_select_folder</string>
+    <string name="esde_setup_skip">@string/common_skip</string>
     <string name="esde_setup_choose_again">Choose Again</string>
     <string name="esde_setup_continue_anyway">Continue Anyway</string>
     <string name="esde_setup_grant_permission">Grant Permission</string>
     <string name="esde_setup_create_scripts">Create Scripts</string>
-    <string name="esde_setup_scripts_done">Done</string>
+    <string name="esde_setup_scripts_done">@string/common_done</string>
     <string name="esde_setup_start_setup">Start Setup</string>
 
     <!-- ESDE Setup Wizard Step Titles -->
@@ -729,7 +736,7 @@
     <string name="esde_settings_section_effects">Visual Effects</string>
     <string name="esde_settings_section_video">Video</string>
     <string name="esde_settings_animation_style">Animation Style</string>
-    <string name="esde_settings_animation_none">None</string>
+    <string name="esde_settings_animation_none">@string/common_none</string>
     <string name="esde_settings_animation_fade">Fade</string>
     <string name="esde_settings_animation_scale_fade">Scale</string>
     <string name="esde_settings_animation_custom">Custom</string>
@@ -752,36 +759,38 @@
     <string name="esde_settings_video_scale_fit">Fit Video</string>
     <string name="esde_settings_system_image_type">System Background</string>
     <string name="esde_settings_system_image_type_description">Choose which media type to show when browsing systems</string>
-    <string name="esde_settings_system_image_none">None</string>
+    <string name="esde_settings_system_image_none">@string/common_none</string>
+    <string name="esde_settings_system_image_all">All</string>
     <string name="esde_settings_system_image_custom">Custom</string>
-    <string name="esde_settings_system_image_fanart">Fanart</string>
-    <string name="esde_settings_system_image_screenshots">Screenshots</string>
+    <string name="esde_settings_system_image_fanart">@string/common_fanart</string>
+    <string name="esde_settings_system_image_screenshots">@string/common_screenshots</string>
     <string name="esde_settings_system_image_titlescreens">Title Screens</string>
     <string name="esde_settings_custom_image">Custom Background Image</string>
     <string name="esde_settings_custom_image_description">Tap to choose an image or GIF</string>
     <string name="esde_settings_custom_image_selected">Image selected</string>
-    <string name="esde_settings_custom_image_clear">Clear</string>
+    <string name="esde_settings_custom_image_clear">@string/common_clear</string>
     <string name="esde_settings_game_image_type">Game Background</string>
     <string name="esde_settings_game_image_type_description">Choose which media type to show when browsing games</string>
-    <string name="esde_settings_game_image_none">None</string>
-    <string name="esde_settings_game_image_screenshots">Screenshots</string>
-    <string name="esde_settings_game_image_fanart">Fanart</string>
+    <string name="esde_settings_game_image_none">@string/common_none</string>
+    <string name="esde_settings_game_image_all">All</string>
+    <string name="esde_settings_game_image_screenshots">@string/common_screenshots</string>
+    <string name="esde_settings_game_image_fanart">@string/common_fanart</string>
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
     <string name="esde_settings_game_image_description">Description</string>
     <string name="esde_settings_section_marquee">Marquee</string>
     <string name="esde_settings_logo_alignment">Logo Alignment</string>
-    <string name="esde_settings_logo_alignment_top">Top</string>
-    <string name="esde_settings_logo_alignment_center">Center</string>
-    <string name="esde_settings_logo_alignment_bottom">Bottom</string>
+    <string name="esde_settings_logo_alignment_top">@string/common_top</string>
+    <string name="esde_settings_logo_alignment_center">@string/common_center</string>
+    <string name="esde_settings_logo_alignment_bottom">@string/common_bottom</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
     <string name="esde_settings_logo_size">Logo Size</string>
     <string name="esde_settings_logo_size_description">Adjust the system logo dimensions</string>
     <string name="esde_settings_logo_width">Width</string>
     <string name="esde_settings_logo_height">Height</string>
-    <string name="esde_settings_logo_size_reset">Reset</string>
+    <string name="esde_settings_logo_size_reset">@string/common_reset</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Re-run the setup wizard to configure paths and scripts</string>
@@ -800,8 +809,8 @@
     <string name="esde_settings_custom_media_path">Downloaded Media Folder</string>
     <string name="esde_settings_custom_media_path_description">Custom folder for game media (videos, screenshots, fanart, etc.). Overrides the default ES-DE downloaded_media path for the companion screen.</string>
     <string name="esde_settings_path_not_set">Not set (using default)</string>
-    <string name="esde_settings_clear_path">Clear</string>
-    <string name="esde_settings_select_folder">Select Folder</string>
+    <string name="esde_settings_clear_path">@string/common_clear</string>
+    <string name="esde_settings_select_folder">@string/common_select_folder</string>
     
     <!-- ESDE Screensaver Settings -->
     <string name="esde_settings_section_screensaver">Screensaver</string>
