@@ -90,7 +90,6 @@ data class ESDEPrefsState(
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
     val randomSystemImage: Boolean = false,
-    val hideContentOnVideo: Boolean = false,
     val powerEventsEnabled: Boolean = true,
     val persistOnGameLaunch: Boolean = false,
     val customSystemLogosPath: String? = null,

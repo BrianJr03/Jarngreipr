@@ -19,7 +19,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
+
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_HEIGHT
@@ -149,7 +149,6 @@ class ESDEPreferencesManager(context: Context) {
             showSystemLogo = prefs.getBoolean(KEY_SHOW_SYSTEM_LOGO, true),
             logoAlignment = logoAlignment,
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
-            hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false),
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
@@ -254,11 +253,6 @@ class ESDEPreferencesManager(context: Context) {
     fun setRandomSystemImage(random: Boolean) {
         _state.value = _state.value.copy(randomSystemImage = random)
         prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
-    }
-
-    fun setHideContentOnVideo(hide: Boolean) {
-        _state.value = _state.value.copy(hideContentOnVideo = hide)
-        prefs.edit { putBoolean(KEY_HIDE_CONTENT_ON_VIDEO, hide) }
     }
 
     fun setPowerEventsEnabled(enabled: Boolean) {

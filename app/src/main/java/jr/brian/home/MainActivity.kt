@@ -179,6 +179,16 @@ class MainActivity : ComponentActivity() {
         super.onConfigurationChanged(newConfig)
     }
 
+    override fun onStart() {
+        super.onStart()
+        esdeViewModelRef?.musicController?.onActivityVisible()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        esdeViewModelRef?.musicController?.onActivityInvisible()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         esdeEventManager.stopWatching()
