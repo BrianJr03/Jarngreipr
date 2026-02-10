@@ -15,6 +15,7 @@ import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.SettingItem
+import jr.brian.home.ui.components.settings.TabAnimationToggleItem
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_ICON_PACK
@@ -70,6 +71,10 @@ fun AppearanceSection(
         )
 
         OledModeToggleItem(
+            isExpanded = false
+        )
+
+        TabAnimationToggleItem(
             isExpanded = false
         )
 

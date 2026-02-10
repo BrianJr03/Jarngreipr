@@ -65,7 +65,7 @@ fun AppsAndWidgetsOptionsDialog(
     isEditModeActive: Boolean = false,
     isEmpty: Boolean = false
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

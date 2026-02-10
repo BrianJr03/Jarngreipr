@@ -266,6 +266,8 @@ class ESDEViewModel @Inject constructor(
 
     fun handleGameStarted() {
         stopVideo()
+        currentGameSystem = null
+        currentGameFilename = null
         musicController.onGameStarted()
         if (prefs.state.value.persistOnGameLaunch) {
             _wallpaperState.value = _wallpaperState.value.copy(
@@ -275,7 +277,7 @@ class ESDEViewModel @Inject constructor(
         } else {
             _wallpaperState.value = _wallpaperState.value.copy(
                 isGameRunning = true,
-                dimmingLevel = 1.0f,
+                dimmingLevel = 0.7f,
                 marqueePath = null
             )
         }
@@ -296,7 +298,7 @@ class ESDEViewModel @Inject constructor(
         val behavior = prefs.state.value.screensaverBehavior
 
         val dimmingLevel = when (behavior) {
-            ScreensaverBehavior.ShowContent -> 0.8f
+            ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
         }
         

@@ -466,7 +466,6 @@ fun AppDrawerTab(
                         preference
                     )
                 },
-                hasExternalDisplay = false,
                 isInDock = true,
                 onRemoveFromDock = {
                     dockManager.removeAppFromDock(appInfo.packageName)

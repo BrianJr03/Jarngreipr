@@ -40,7 +40,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun VolumeControlsHelpDialog(
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

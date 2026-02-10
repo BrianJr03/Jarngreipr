@@ -104,6 +104,9 @@
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
 
+    <string name="settings_tab_animation_title">Tab Animation</string>
+    <string name="settings_tab_animation_description">Long press animation on tabs. When disabled, uses standard long press without animation</string>
+
     <string name="settings_icon_shape_title">Icon Shape</string>
     <string name="settings_icon_shape_description">Choose between rounded or square icons</string>
     <string name="settings_icon_shape_rounded">Rounded</string>
@@ -839,6 +842,7 @@
     <string name="esde_settings_music_video_duck">Duck</string>
     <string name="esde_settings_music_video_pause">Pause</string>
     <string name="esde_settings_music_volume">Music Volume</string>
+    <string name="esde_settings_music_slider_description">Not supported yet. Please use system slider.</string>
 
     <!-- App Drawer Settings -->
     <string name="esde_settings_section_app_drawer">App Drawer</string>

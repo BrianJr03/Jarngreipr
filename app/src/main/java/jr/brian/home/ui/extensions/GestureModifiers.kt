@@ -1,5 +1,7 @@
 package jr.brian.home.ui.extensions
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -13,10 +15,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 /**
  * A composable modifier that handles tap gestures (press, double-tap, long-press)
  * without blocking parent horizontal swipe gestures (e.g., HorizontalPager).
- *
- * Unlike `combinedClickable`, this uses `detectTapGestures` which waits to determine
- * the gesture type before consuming events, allowing parent gesture detectors
- * (like HorizontalPager) to intercept horizontal swipes.
  *
  * @param key Optional key(s) to trigger recomposition of the pointer input
  * @param interactionSource The interaction source to emit press interactions to
@@ -52,19 +50,22 @@ fun Modifier.pagerFriendlyClickable(
 }
 
 /**
- * Simplified version that creates its own interaction source and press state.
- * Returns the interaction source and press state for use in animations.
+ * A simplified version that uses standard combinedClickable without press animation.
+ *
+ * @param onDoubleTap Callback when double-tap is detected
+ * @param onLongPress Callback when long-press is detected
+ * @param onTap Optional callback when single tap is detected
  */
-data class PagerFriendlyClickableState(
-    val interactionSource: MutableInteractionSource,
-    val isPressed: MutableState<Boolean>
-)
-
 @Composable
-fun rememberPagerFriendlyClickableState(): PagerFriendlyClickableState {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed = remember { androidx.compose.runtime.mutableStateOf(false) }
-    return remember(interactionSource, isPressed) {
-        PagerFriendlyClickableState(interactionSource, isPressed)
-    }
-}
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.pagerFriendlyClickableSimple(
+    onDoubleTap: (() -> Unit)? = null,
+    onLongPress: (() -> Unit)? = null,
+    onTap: (() -> Unit)? = null
+): Modifier = this.combinedClickable(
+    onClick = onTap ?: {},
+    onDoubleClick = onDoubleTap,
+    onLongClick = onLongPress,
+    indication = null,
+    interactionSource = remember { MutableInteractionSource() }
+)

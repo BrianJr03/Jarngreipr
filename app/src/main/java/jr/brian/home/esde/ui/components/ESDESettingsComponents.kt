@@ -123,10 +123,10 @@ fun CollapsibleSection(
                 .scale(animatedFocusedScale(isFocused))
                 .background(
                     brush = Brush.linearGradient(
-                        colors = if (isFocused) {
+                        colors = if (isFocused || isExpanded) {
                             listOf(
-                                ThemePrimaryColor.copy(alpha = 0.3f),
-                                ThemeSecondaryColor.copy(alpha = 0.2f)
+                                ThemePrimaryColor.copy(alpha = 0.8f),
+                                ThemeSecondaryColor.copy(alpha = 0.6f)
                             )
                         } else {
                             listOf(OledCardLightColor, OledCardColor)
@@ -135,10 +135,10 @@ fun CollapsibleSection(
                     shape = RoundedCornerShape(16.dp)
                 )
                 .border(
-                    width = if (isFocused) 2.dp else 1.dp,
+                    width = if (isFocused || isExpanded) 2.dp else 1.dp,
                     brush = borderBrush(
                         isFocused = true,
-                        colors = if (isFocused) {
+                        colors = if (isFocused || isExpanded) {
                             listOf(
                                 ThemePrimaryColor.copy(alpha = 0.8f),
                                 ThemeSecondaryColor.copy(alpha = 0.6f),
@@ -162,7 +162,7 @@ fun CollapsibleSection(
         ) {
             Text(
                 text = title,
-                color = ThemePrimaryColor,
+                color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -170,7 +170,7 @@ fun CollapsibleSection(
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = ThemePrimaryColor,
+                tint = Color.White,
                 modifier = Modifier
                     .size(24.dp)
                     .graphicsLayer { rotationZ = rotationAngle }
@@ -201,7 +201,9 @@ fun SliderSetting(
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
     valueText: String,
-    onValueChange: (Float) -> Unit
+    onValueChange: (Float) -> Unit,
+    enabled: Boolean = true,
+    description: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -220,15 +222,24 @@ fun SliderSetting(
         ) {
             Text(
                 text = title,
-                color = Color.White,
+                color = if (enabled) Color.White else Color.White.copy(alpha = 0.4f),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = valueText,
-                color = ThemePrimaryColor,
+                color = if (enabled) ThemePrimaryColor else ThemePrimaryColor.copy(alpha = 0.4f),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (description != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 12.sp
             )
         }
 
@@ -239,10 +250,14 @@ fun SliderSetting(
             onValueChange = onValueChange,
             valueRange = valueRange,
             steps = steps,
+            enabled = enabled,
             colors = SliderDefaults.colors(
                 thumbColor = ThemePrimaryColor,
                 activeTrackColor = ThemePrimaryColor,
-                inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                disabledThumbColor = ThemePrimaryColor.copy(alpha = 0.4f),
+                disabledActiveTrackColor = ThemePrimaryColor.copy(alpha = 0.4f),
+                disabledInactiveTrackColor = Color.White.copy(alpha = 0.1f)
             )
         )
     }

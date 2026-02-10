@@ -88,6 +88,9 @@ class MusicManager(
     // Track if music was playing before becoming invisible
     private var wasMusicPlayingBeforeInvisible: Boolean = false
 
+    // Track if music was playing before game started
+    private var wasMusicPlayingBeforeGame: Boolean = false
+
     init {
         android.util.Log.d(TAG, "MusicManager initialized")
         android.util.Log.d(TAG, "Base music path: ${getMusicPath()}")
@@ -215,28 +218,33 @@ class MusicManager(
 
     override fun onGameStarted() {
         android.util.Log.d(TAG, "━━━ GAME STARTED ━━━")
+        wasMusicPlayingBeforeGame = isMusicPlaying
         stopMusic()
     }
 
     override fun onGameEnded() {
         android.util.Log.d(TAG, "━━━ GAME ENDED ━━━")
 
-        // Resume music based on last known state
+        if (!wasMusicPlayingBeforeGame) {
+            wasMusicPlayingBeforeGame = false
+            return
+        }
+
         if (isMusicEnabled() && isActivityVisible) {
             if (isInGameBrowsing && prefsManager.state.value.musicGameEnabled) {
-                // Resume game browsing music
                 lastSystemName?.let { systemName ->
                     val source = resolveActualSource(MusicSource.System(systemName))
                     source?.let { startMusic(it) }
                 }
             } else if (prefsManager.state.value.musicSystemEnabled) {
-                // Resume system browsing music
                 lastSystemName?.let { systemName ->
                     val source = resolveActualSource(MusicSource.System(systemName))
                     source?.let { startMusic(it) }
                 }
             }
         }
+
+        wasMusicPlayingBeforeGame = false
     }
 
     override fun onScreensaverStarted() {

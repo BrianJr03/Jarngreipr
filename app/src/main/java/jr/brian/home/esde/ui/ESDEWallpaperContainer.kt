@@ -48,11 +48,13 @@ import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ESDEWallpaperContainer(
     state: WallpaperState,
     modifier: Modifier = Modifier,
     onMarqueeLongClick: (() -> Unit)? = null,
+    onWallpaperDoubleClick: (() -> Unit)? = null,
     hideMarquee: Boolean = false,
     pagerScrollProgress: Float = 0f,
     overlayMode: Boolean = true,
@@ -98,6 +100,18 @@ fun ESDEWallpaperContainer(
         modifier = modifier
             .fillMaxSize()
             .background(backgroundColor)
+            .then(
+                if (onWallpaperDoubleClick != null) {
+                    Modifier.combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onDoubleClick = onWallpaperDoubleClick
+                    )
+                } else {
+                    Modifier
+                }
+            )
     ) {
         if (showEsdeContent) {
             AnimatedWallpaperImage(

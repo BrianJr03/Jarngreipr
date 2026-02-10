@@ -107,7 +107,7 @@ fun TabsDialog(
         )
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,

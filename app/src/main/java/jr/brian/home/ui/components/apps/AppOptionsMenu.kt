@@ -15,12 +15,12 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 
 @Composable
 fun AppOptionsMenu(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
-    hasExternalDisplay: Boolean = false,
     app: AppInfo? = null,
     isInDock: Boolean = false,
     currentIconSize: Float = 64f,
@@ -32,6 +32,7 @@ fun AppOptionsMenu(
     onCustomIconClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}
 ) {
+    val hasExternalDisplay = rememberHasExternalDisplay()
     val focusRequesters = rememberAppOptionsMenuFocusRequesters(
         hasResizeOption = app != null,
         hasExternalDisplay = hasExternalDisplay,

@@ -9,8 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,17 +25,18 @@ import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.events.ESDEEventListenerImpl
 import jr.brian.home.esde.events.ESDEEventManager
+import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.preferences.ScreensaverBehavior
-import jr.brian.home.model.PageType
-import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.setup.ESDESetupHelper
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.model.PageType
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.viewmodels.PowerViewModel
 import java.io.File
 import javax.inject.Inject
@@ -52,20 +53,11 @@ class MainActivity : ComponentActivity() {
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
     private var esdeViewModelRef: ESDEViewModel? = null
-    
+
     private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             esdeViewModelRef?.onVideoActivityFinished()
         }
-
-    private fun launchVideoPlayer(event: VideoLaunchEvent) {
-        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
-            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
-            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
-        }
-        videoPlayerLauncher.launch(intent)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,73 +81,44 @@ class MainActivity : ComponentActivity() {
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
+                    val pageTypeManager = LocalPageTypeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
                     var currentPageIndex by remember { mutableStateOf(0) }
                     var pagerScrollProgress by remember { mutableStateOf(0f) }
-                    
-                    LaunchedEffect(esdeViewModel) {
-                        esdeViewModelRef = esdeViewModel
-                    }
-                    
-                    LaunchedEffect(esdeViewModel) {
-                        esdeViewModel.videoLaunchEvent.collect { event ->
-                            if (!powerViewModel.isPoweredOff.value) {
-                                launchVideoPlayer(event)
-                            }
-                        }
-                    }
-                    
-                    LaunchedEffect(Unit) {
-                        esdeEventListener.onSystemSelected = { systemName ->
-                            VideoPlayerActivity.finishIfRunning()
-                            esdeViewModel.updateForSystem(systemName)
-                        }
-                        esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
-                            VideoPlayerActivity.finishIfRunning()
-                            esdeViewModel.updateForGame(systemName, gameFilename)
-                        }
-                        esdeEventListener.onGameStarted = { _, _, _ ->
-                            esdeViewModel.handleGameStarted()
-                            if (esdePreferencesManager.state.value.powerEventsEnabled) {
-                                powerViewModel.powerOff()
-                            }
-                        }
-                        esdeEventListener.onGameEnded = { _, _, _ ->
-                            esdeViewModel.handleGameEnded()
-                            if (esdePreferencesManager.state.value.powerEventsEnabled) {
-                                powerViewModel.powerOn()
-                            }
-                        }
-                        esdeEventListener.onScreensaverStarted = {
-                            esdeViewModel.handleScreensaverStarted()
-                            if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
-                                powerViewModel.powerOff()
-                            }
-                        }
-                        esdeEventListener.onScreensaverEnded = { _ ->
-                            esdeViewModel.handleScreensaverEnded()
-                            if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
-                                powerViewModel.powerOn()
-                            }
-                        }
-                        esdeEventListener.onScreensaverGameSelected =
-                            { gameFilename, _, systemName ->
-                                esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
-                            }
-                    }
-                    val prefsState by esdePreferencesManager.state.collectAsState()
-                    val pageTypeManager = LocalPageTypeManager.current
-                    val pageTypes by pageTypeManager.pageTypes.collectAsState()
-                    val isAppDrawerTab = pageTypes.getOrNull(currentPageIndex) == PageType.APP_DRAWER_TAB
+                    var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
+                    val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+                    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+                    val isAppDrawerTab =
+                        pageTypes.getOrNull(currentPageIndex) == PageType.APP_DRAWER_TAB
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
-                    val overlayMode = !isAppDrawerTab && prefsState.isMarqueeOverlayOnPage(currentPageIndex)
+                    val overlayMode =
+                        !isAppDrawerTab && prefsState.isMarqueeOverlayOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
+
+                    ObserveESDEViewModel(esdeViewModel)
+
+                    ObserveVideoLaunchEvents(
+                        esdeViewModel = esdeViewModel,
+                        powerViewModel = powerViewModel
+                    )
+
+                    SetupESDEEventListeners(
+                        esdeViewModel = esdeViewModel,
+                        powerViewModel = powerViewModel,
+                        esdePreferencesManager = esdePreferencesManager,
+                        onScreensaverUIVisibilityChanged = { hideLauncherUIForScreensaver = it }
+                    )
 
                     ESDEWallpaperContainer(
                         state = wallpaperState,
-                        onMarqueeLongClick = if (overlayMode) {{ triggerMarqueePressShortcut = true }} else null,
+                        onMarqueeLongClick = if (overlayMode) {
+                            { triggerMarqueePressShortcut = true }
+                        } else null,
+                        onWallpaperDoubleClick = if (wallpaperState.isScreensaverActive) {
+                            { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
+                        } else null,
                         hideMarquee = shouldHideMarquee || isPoweredOff,
                         pagerScrollProgress = pagerScrollProgress,
                         overlayMode = overlayMode,
@@ -163,10 +126,13 @@ class MainActivity : ComponentActivity() {
                         content = {
                             MainContent(
                                 triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                onMarqueePressShortcutHandled = { triggerMarqueePressShortcut = false },
+                                onMarqueePressShortcutHandled = {
+                                    triggerMarqueePressShortcut = false
+                                },
                                 onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
                                 onCurrentPageChanged = { currentPageIndex = it },
-                                onPagerScrollProgressChanged = { pagerScrollProgress = it }
+                                onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                hideLauncherUI = wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver
                             )
                         }
                     )
@@ -216,6 +182,88 @@ class MainActivity : ComponentActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+    }
+
+    private fun launchVideoPlayer(event: VideoLaunchEvent) {
+        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
+            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
+            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
+        }
+        videoPlayerLauncher.launch(intent)
+    }
+
+
+    @Composable
+    private fun ObserveESDEViewModel(esdeViewModel: ESDEViewModel) {
+        LaunchedEffect(esdeViewModel) {
+            esdeViewModelRef = esdeViewModel
+        }
+    }
+
+    @Composable
+    private fun ObserveVideoLaunchEvents(
+        esdeViewModel: ESDEViewModel,
+        powerViewModel: PowerViewModel
+    ) {
+        LaunchedEffect(esdeViewModel) {
+            esdeViewModel.videoLaunchEvent.collect { event ->
+                if (!powerViewModel.isPoweredOff.value) {
+                    launchVideoPlayer(event)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun SetupESDEEventListeners(
+        esdeViewModel: ESDEViewModel,
+        powerViewModel: PowerViewModel,
+        esdePreferencesManager: ESDEPreferencesManager,
+        onScreensaverUIVisibilityChanged: (Boolean) -> Unit
+    ) {
+        LaunchedEffect(Unit) {
+            esdeEventListener.onSystemSelected = { systemName ->
+                VideoPlayerActivity.finishIfRunning()
+                esdeViewModel.updateForSystem(systemName)
+            }
+            esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
+                VideoPlayerActivity.finishIfRunning()
+                esdeViewModel.updateForGame(systemName, gameFilename)
+            }
+            esdeEventListener.onGameStarted = { _, _, _ ->
+                VideoPlayerActivity.finishIfRunning()
+                esdeViewModel.handleGameStarted()
+                if (esdePreferencesManager.state.value.powerEventsEnabled) {
+                    powerViewModel.powerOff()
+                }
+            }
+            esdeEventListener.onGameEnded = { _, _, _ ->
+                esdeViewModel.handleGameEnded()
+                if (esdePreferencesManager.state.value.powerEventsEnabled) {
+                    powerViewModel.powerOn()
+                }
+            }
+            esdeEventListener.onScreensaverStarted = {
+                VideoPlayerActivity.finishIfRunning()
+                onScreensaverUIVisibilityChanged(true)
+                esdeViewModel.handleScreensaverStarted()
+                if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
+                    powerViewModel.powerOff()
+                }
+            }
+            esdeEventListener.onScreensaverEnded = { _ ->
+                onScreensaverUIVisibilityChanged(false)
+                esdeViewModel.handleScreensaverEnded()
+                if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
+                    powerViewModel.powerOn()
+                }
+            }
+            esdeEventListener.onScreensaverGameSelected =
+                { gameFilename, _, systemName ->
+                    esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                }
         }
     }
 }

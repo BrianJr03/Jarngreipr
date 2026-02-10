@@ -71,7 +71,6 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
 
 @Composable
@@ -101,7 +100,7 @@ fun DrawerOptionsDialog(
         }
     )
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
