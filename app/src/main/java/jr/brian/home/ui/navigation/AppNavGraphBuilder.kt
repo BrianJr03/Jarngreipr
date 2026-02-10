@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -46,6 +47,7 @@ import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 
+@UnstableApi
 fun NavGraphBuilder.launcherScreen(
     context: Context,
     navController: NavHostController,

@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
             esdeViewModelRef?.onVideoActivityFinished()
         }
 
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

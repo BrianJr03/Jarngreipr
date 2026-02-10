@@ -69,6 +69,7 @@ import jr.brian.home.viewmodels.WidgetViewModel
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
+@androidx.media3.common.util.UnstableApi
 @Composable
 fun MainContent(
     triggerMarqueePressShortcut: Boolean = false,
