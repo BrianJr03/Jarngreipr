@@ -21,6 +21,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
@@ -46,6 +47,7 @@ import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 
+@UnstableApi
 @Composable
 fun LauncherPagerScreen(
     modifier: Modifier = Modifier,

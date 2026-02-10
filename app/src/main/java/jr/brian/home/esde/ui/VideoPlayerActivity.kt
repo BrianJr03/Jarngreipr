@@ -65,6 +65,7 @@ class VideoPlayerActivity : ComponentActivity() {
         }
     }
 
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         currentInstance = WeakReference(this)
