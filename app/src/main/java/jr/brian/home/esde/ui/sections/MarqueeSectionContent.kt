@@ -33,7 +33,9 @@ fun MarqueeSectionContent(
     onMarqueeSizeReset: () -> Unit,
     onNavigateToMarqueePressShortcut: () -> Unit,
     onToggleMarqueePageVisibility: (Int) -> Unit,
-    onToggleMarqueeOverlayPage: (Int) -> Unit
+    onToggleMarqueeOverlayPage: (Int) -> Unit,
+    onShowMarqueeForSystemChange: (Boolean) -> Unit,
+    onShowMarqueeForGameChange: (Boolean) -> Unit
 ) {
     val pageCount = pageTypes.size
 
@@ -81,6 +83,20 @@ fun MarqueeSectionContent(
         checked = false,
         showToggle = false,
         onClick = onNavigateToMarqueePressShortcut
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_marquee_show_for_system),
+        description = stringResource(R.string.esde_settings_marquee_show_for_system_description),
+        checked = prefsState.showMarqueeForSystem,
+        onCheckedChange = { show -> onShowMarqueeForSystemChange(show) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_marquee_show_for_game),
+        description = stringResource(R.string.esde_settings_marquee_show_for_game_description),
+        checked = prefsState.showMarqueeForGame,
+        onCheckedChange = { show -> onShowMarqueeForGameChange(show) }
     )
 
     if (pageCount > 1) {

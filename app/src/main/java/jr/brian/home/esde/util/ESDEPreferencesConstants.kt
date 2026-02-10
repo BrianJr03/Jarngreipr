@@ -47,6 +47,8 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_VISIBLE_PAGES = "marquee_visible_pages"
 
     const val KEY_MARQUEE_OVERLAY_PAGES = "marquee_overlay_pages"
+    const val KEY_SHOW_MARQUEE_FOR_SYSTEM = "show_marquee_for_system"
+    const val KEY_SHOW_MARQUEE_FOR_GAME = "show_marquee_for_game"
 
     const val KEY_GAME_BACKGROUND_DIMMING = "game_background_dimming"
     const val KEY_SYSTEM_BACKGROUND_DIMMING = "system_background_dimming"
