@@ -874,6 +874,8 @@
 
     <!-- Extras Settings -->
     <string name="esde_settings_section_extras">Extras</string>
+    <string name="esde_settings_hide_ui_for_game_browsing">Hide UI When Browsing Games</string>
+    <string name="esde_settings_hide_ui_for_game_browsing_description">Hide apps, docks, and folders when browsing games. UI reappears when returning to system selection.</string>
     <string name="esde_settings_add_cleanup_folder">Add Folder for Cleanup</string>
     <string name="esde_settings_add_cleanup_folder_description">Select a folder to scan for empty directories</string>
     <string name="esde_settings_selected_folders">Selected Folders</string>

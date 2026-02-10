@@ -17,6 +17,8 @@ import jr.brian.home.ui.components.quick_delete.FolderPathItem
 
 @Composable
 fun ExtrasSectionContent(
+    hideUIForGameBrowsing: Boolean,
+    onHideUIForGameBrowsingChange: (Boolean) -> Unit,
     folderPaths: List<String>,
     onAddFolder: () -> Unit,
     onRemoveFolder: (String) -> Unit,
@@ -25,6 +27,13 @@ fun ExtrasSectionContent(
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_hide_ui_for_game_browsing),
+            description = stringResource(R.string.esde_settings_hide_ui_for_game_browsing_description),
+            checked = hideUIForGameBrowsing,
+            onCheckedChange = onHideUIForGameBrowsingChange
+        )
+
         ToggleSetting(
             title = stringResource(R.string.esde_settings_add_cleanup_folder),
             description = stringResource(R.string.esde_settings_add_cleanup_folder_description),

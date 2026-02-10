@@ -531,6 +531,10 @@ fun ESDESettingsScreen(
                             title = stringResource(R.string.esde_settings_section_extras)
                         ) {
                             ExtrasSectionContent(
+                                hideUIForGameBrowsing = prefsState.hideUIForGameBrowsing,
+                                onHideUIForGameBrowsingChange = { hide ->
+                                    preferencesManager.setHideUIForGameBrowsing(hide)
+                                },
                                 folderPaths = cleanupFolderPaths.toList(),
                                 onAddFolder = {
                                     cleanupFolderPicker.launch(null)
