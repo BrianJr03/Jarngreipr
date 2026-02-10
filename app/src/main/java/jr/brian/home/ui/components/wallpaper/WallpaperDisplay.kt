@@ -167,7 +167,7 @@ private fun isUriAccessible(
     }
 }
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 @Composable
 private fun VideoWallpaper(
     uri: String,
