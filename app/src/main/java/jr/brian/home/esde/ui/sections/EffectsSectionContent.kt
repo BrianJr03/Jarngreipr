@@ -5,11 +5,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
+import jr.brian.home.esde.preferences.BackgroundScaleMode
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
+import jr.brian.home.esde.ui.components.GameBackgroundScaleModeSelector
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
+import jr.brian.home.esde.ui.components.SystemBackgroundScaleModeSelector
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
@@ -18,8 +21,13 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 fun EffectsSectionContent(
     prefsState: ESDEPrefsState,
     onBackgroundColorChange: (Int) -> Unit,
-    onBlurLevelChange: (Int) -> Unit,
+    onSystemBackgroundScaleModeChange: (BackgroundScaleMode) -> Unit,
+    onGameBackgroundScaleModeChange: (BackgroundScaleMode) -> Unit,
+    onSystemBlurLevelChange: (Int) -> Unit,
+    onGameBlurLevelChange: (Int) -> Unit,
     onDimmingLevelChange: (Int) -> Unit,
+    onGameBackgroundDimmingChange: (Int) -> Unit,
+    onSystemBackgroundDimmingChange: (Int) -> Unit,
     onExcludeEffectsFromHomeChange: (Boolean) -> Unit,
     onGameImageTypeChange: (GameImageType) -> Unit,
     onRandomSystemImageChange: (Boolean) -> Unit,
@@ -32,17 +40,45 @@ fun EffectsSectionContent(
         }
     )
 
+    SystemBackgroundScaleModeSelector(
+        selectedMode = prefsState.systemBackgroundScaleMode,
+        onModeSelected = { mode ->
+            onSystemBackgroundScaleModeChange(mode)
+        }
+    )
+
+    GameBackgroundScaleModeSelector(
+        selectedMode = prefsState.gameBackgroundScaleMode,
+        onModeSelected = { mode ->
+            onGameBackgroundScaleModeChange(mode)
+        }
+    )
+
     SliderSetting(
-        title = stringResource(R.string.esde_settings_blur_level),
-        value = prefsState.blurLevel.toFloat(),
+        title = stringResource(R.string.esde_settings_system_blur_level),
+        value = prefsState.systemBlurLevel.toFloat(),
         valueRange = 0f..25f,
         steps = 24,
-        valueText = if (prefsState.blurLevel == 0)
+        valueText = if (prefsState.systemBlurLevel == 0)
             stringResource(R.string.esde_settings_off)
         else
-            "${prefsState.blurLevel}",
+            "${prefsState.systemBlurLevel}",
         onValueChange = { blur ->
-            onBlurLevelChange(blur.toInt())
+            onSystemBlurLevelChange(blur.toInt())
+        }
+    )
+
+    SliderSetting(
+        title = stringResource(R.string.esde_settings_game_blur_level),
+        value = prefsState.gameBlurLevel.toFloat(),
+        valueRange = 0f..25f,
+        steps = 24,
+        valueText = if (prefsState.gameBlurLevel == 0)
+            stringResource(R.string.esde_settings_off)
+        else
+            "${prefsState.gameBlurLevel}",
+        onValueChange = { blur ->
+            onGameBlurLevelChange(blur.toInt())
         }
     )
 
@@ -54,6 +90,28 @@ fun EffectsSectionContent(
         valueText = "${prefsState.dimmingLevel}%",
         onValueChange = { dimming ->
             onDimmingLevelChange(dimming.toInt())
+        }
+    )
+
+    SliderSetting(
+        title = stringResource(R.string.esde_settings_game_background_dimming),
+        value = prefsState.gameBackgroundDimming.toFloat(),
+        valueRange = 0f..70f,
+        steps = 13,
+        valueText = "${prefsState.gameBackgroundDimming}%",
+        onValueChange = { dimming ->
+            onGameBackgroundDimmingChange(dimming.toInt())
+        }
+    )
+
+    SliderSetting(
+        title = stringResource(R.string.esde_settings_system_background_dimming),
+        value = prefsState.systemBackgroundDimming.toFloat(),
+        valueRange = 0f..70f,
+        steps = 13,
+        valueText = "${prefsState.systemBackgroundDimming}%",
+        onValueChange = { dimming ->
+            onSystemBackgroundDimmingChange(dimming.toInt())
         }
     )
 

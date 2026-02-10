@@ -86,17 +86,31 @@ enum class VideoScaleMode {
     FitVideo
 }
 
+/**
+ * Defines how background images are scaled to fit the screen
+ */
+enum class BackgroundScaleMode {
+    /** Crop to fill the screen (zoomed effect) */
+    Crop,
+    /** Fit the entire image, showing background color in unused areas */
+    Fit
+}
+
 data class ESDEPrefsState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
     val animationScale: Float = 0.9f,
     val blurLevel: Int = 0,
+    val systemBlurLevel: Int = 0,
+    val gameBlurLevel: Int = 0,
     val dimmingLevel: Int = 20,
     val backgroundColor: Int = Color.Black.toArgb(),
     val videoEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val videoAudioEnabled: Boolean = false,
     val videoScaleMode: VideoScaleMode = VideoScaleMode.FillScreen,
+    val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
+    val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
@@ -124,6 +138,7 @@ data class ESDEPrefsState(
     val marqueeHiddenPages: Set<Int> = emptySet(),
     val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
     val gameBackgroundDimming: Int = 20,
+    val systemBackgroundDimming: Int = 20,
     val customMediaPath: String? = null,
     val excludeEffectsFromHome: Boolean = false
 ) {
@@ -131,6 +146,7 @@ data class ESDEPrefsState(
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
     val musicVolumeFloat: Float get() = musicVolume / 100f
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
+    val systemBackgroundDimmingFloat: Float get() = systemBackgroundDimming / 100f
     
     /**
      * Check if marquee should be visible on a specific page.

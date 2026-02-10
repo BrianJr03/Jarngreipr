@@ -36,6 +36,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.esde.preferences.BackgroundScaleMode
 import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.wallpaper.WallpaperState
 import jr.brian.home.ui.animations.onPressScaleAndOffset
@@ -114,13 +115,20 @@ fun ESDEWallpaperContainer(
             )
     ) {
         if (showEsdeContent) {
+            val backgroundScaleMode = if (state.isShowingGameBackground) {
+                prefsState.gameBackgroundScaleMode
+            } else {
+                prefsState.systemBackgroundScaleMode
+            }
+            
             AnimatedWallpaperImage(
                 imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
                 modifier = Modifier.fillMaxSize(),
                 blurLevel = effectiveBlurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
-                animationScale = state.animationScale
+                animationScale = state.animationScale,
+                backgroundScaleMode = backgroundScaleMode
             )
 
             if (!state.isScreensaverActive && !state.isGameRunning) {
@@ -232,7 +240,8 @@ private fun AnimatedWallpaperImage(
     blurLevel: Float = 0f,
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
-    animationScale: Float = 0.9f
+    animationScale: Float = 0.9f,
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
 ) {
     val context = LocalContext.current
     val imageLoader = LocalESDEImageLoader.current
@@ -259,6 +268,11 @@ private fun AnimatedWallpaperImage(
         }
     }
 
+    val contentScale = when (backgroundScaleMode) {
+        BackgroundScaleMode.Crop -> ContentScale.Crop
+        BackgroundScaleMode.Fit -> ContentScale.Fit
+    }
+
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(imageData)
@@ -270,7 +284,7 @@ private fun AnimatedWallpaperImage(
             .fillMaxSize()
             .then(blurModifier)
             .run { with(animationState) { animatedGraphicsLayer() } },
-        contentScale = ContentScale.Crop
+        contentScale = contentScale
     )
 }
 

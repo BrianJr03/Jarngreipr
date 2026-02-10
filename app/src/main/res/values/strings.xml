@@ -746,7 +746,11 @@
     <string name="esde_settings_animation_duration">Animation Duration</string>
     <string name="esde_settings_animation_scale">Animation Scale</string>
     <string name="esde_settings_blur_level">Background Blur</string>
+    <string name="esde_settings_system_blur_level">System Background Blur</string>
+    <string name="esde_settings_game_blur_level">Game Background Blur</string>
     <string name="esde_settings_dimming_level">Background Dimming</string>
+    <string name="esde_settings_game_background_dimming">Game Background Dimming</string>
+    <string name="esde_settings_system_background_dimming">System Background Dimming</string>
     <string name="esde_settings_exclude_effects_from_home">Exclude Home Tab</string>
     <string name="esde_settings_exclude_effects_from_home_description">Keep the home tab background clear without blur or dimming effects</string>
     <string name="esde_settings_background_color">Background Color</string>
@@ -760,6 +764,12 @@
     <string name="esde_settings_video_scale_mode_description">How videos fit on the display</string>
     <string name="esde_settings_video_scale_fill">Fill Screen</string>
     <string name="esde_settings_video_scale_fit">Fit Video</string>
+    <string name="esde_settings_system_background_scale_mode">System Background Scaling</string>
+    <string name="esde_settings_system_background_scale_mode_description">How system background images fit on the screen</string>
+    <string name="esde_settings_game_background_scale_mode">Game Background Scaling</string>
+    <string name="esde_settings_game_background_scale_mode_description">How game background images fit on the screen</string>
+    <string name="esde_settings_background_scale_crop">Crop (Zoomed)</string>
+    <string name="esde_settings_background_scale_fit">Fit (No Zoom)</string>
     <string name="esde_settings_system_image_type">System Background</string>
     <string name="esde_settings_system_image_type_description">Choose which media type to show when browsing systems</string>
     <string name="esde_settings_system_image_none">@string/common_none</string>
@@ -803,7 +813,6 @@
     <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
     <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and marquee visible when a game is launched</string>
     <string name="esde_settings_logo_brightness">Logo Brightness</string>
-    <string name="esde_settings_game_background_dimming">Background Dimming</string>
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
     <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
