@@ -13,6 +13,7 @@ object SettingsScreenUtil {
     const val EXPANDED_BACK_BUTTON = "back_button"
     const val EXPANDED_VISIBILITY = "visibility"
     const val EXPANDED_DOCK = "dock"
+    const val EXPANDED_ESDE = "esde"
 }
 
 enum class SettingsTag(@StringRes val stringRes: Int) {

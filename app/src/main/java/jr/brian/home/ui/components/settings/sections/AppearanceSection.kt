@@ -1,7 +1,6 @@
 package jr.brian.home.ui.components.settings.sections
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,14 +13,12 @@ import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
-import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.TabAnimationToggleItem
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_ICON_PACK
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THEME
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_WALLPAPER
-import jr.brian.home.util.SettingsTag
 
 @Composable
 fun AppearanceSection(
@@ -48,14 +45,6 @@ fun AppearanceSection(
                 expandedItem = null
                 onNavigateToCustomTheme()
             }
-        )
-
-        SettingItem(
-            tag = SettingsTag.EXPERIMENTAL,
-            title = stringResource(R.string.esde_settings_title),
-            description = stringResource(R.string.esde_settings_description),
-            icon = Icons.Default.Gamepad,
-            onClick = onNavigateToEsdeSettings
         )
 
         IconPackSelectorItem(

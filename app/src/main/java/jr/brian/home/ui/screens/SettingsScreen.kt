@@ -35,6 +35,7 @@ import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.sections.AppearanceSection
+import jr.brian.home.ui.components.settings.sections.ESDEDisplaySection
 import jr.brian.home.ui.components.settings.sections.ExtrasSection
 import jr.brian.home.ui.components.settings.sections.LayoutSection
 import jr.brian.home.ui.components.settings.sections.SupportSection
@@ -48,6 +49,7 @@ import jr.brian.home.util.UpdateInfo
 import kotlinx.coroutines.launch
 
 private const val SECTION_APPEARANCE = "appearance"
+private const val SECTION_ESDE = "esde"
 private const val SECTION_LAYOUT = "layout"
 private const val SECTION_SYSTEM = "system"
 private const val SECTION_SUPPORT = "support"
@@ -66,6 +68,8 @@ fun SettingsScreen(
     onNavigateToVolumeControls: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToEsdeSettings: () -> Unit = {},
+    onRunSetupWizard: () -> Unit = {},
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -111,6 +115,8 @@ fun SettingsScreen(
                     onNavigateToVolumeControls = onNavigateToVolumeControls,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToEsdeSettings = onNavigateToEsdeSettings,
+                    onRunSetupWizard = onRunSetupWizard,
+                    onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onCheckForUpdates = {
@@ -190,6 +196,8 @@ private fun SettingsContent(
     onNavigateToVolumeControls: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToEsdeSettings: () -> Unit = {},
+    onRunSetupWizard: () -> Unit = {},
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
     onNotificationBadgeClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
@@ -242,6 +250,17 @@ private fun SettingsContent(
                 onNavigateToCustomTheme = onNavigateToCustomTheme,
                 onIconPackChanged = onIconPackChanged,
                 onNavigateToEsdeSettings = onNavigateToEsdeSettings
+            )
+        }
+
+        item(key = SECTION_ESDE) {
+            ESDEDisplaySection(
+                isExpanded = expandedSection == SECTION_ESDE,
+                onToggle = {
+                    expandedSection = if (expandedSection == SECTION_ESDE) null else SECTION_ESDE
+                },
+                onRunSetupWizard = onRunSetupWizard,
+                onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut
             )
         }
 
