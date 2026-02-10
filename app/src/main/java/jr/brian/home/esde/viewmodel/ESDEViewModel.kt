@@ -190,6 +190,10 @@ class ESDEViewModel @Inject constructor(
         systemName: String,
         gameFilename: String
     ) {
+        if (_wallpaperState.value.isGameRunning) {
+            return
+        }
+        
         cancelPendingVideo()
 
         currentSystem = null
@@ -214,12 +218,19 @@ class ESDEViewModel @Inject constructor(
 
         musicController.onGameSelected(systemName, gameFilename)
 
+        // Only schedule video if enabled
         if (prefs.state.value.videoEnabled) {
             scheduleVideoPlayback(systemName, gameFilename)
         }
     }
 
     private fun scheduleVideoPlayback(systemName: String, gameFilename: String) {
+        // Don't schedule video if a game is currently running
+        if (_wallpaperState.value.isGameRunning) {
+            Log.d(TAG, "Not scheduling video - game is currently running")
+            return
+        }
+        
         val videoPath = getGameVideoPath(systemName, gameFilename)
         if (videoPath == null) {
             Log.d(TAG, "No video found for: $systemName / $gameFilename")
@@ -230,7 +241,7 @@ class ESDEViewModel @Inject constructor(
         Log.d(TAG, "Scheduling video playback in ${delayMs}ms")
 
         pendingVideoRunnable = Runnable {
-            if (currentGameSystem == systemName && currentGameFilename == gameFilename && isLauncherActive) {
+            if (currentGameSystem == systemName && currentGameFilename == gameFilename && isLauncherActive && !_wallpaperState.value.isGameRunning) {
                 viewModelScope.launch {
                     _videoLaunchEvent.emit(
                         VideoLaunchEvent(
