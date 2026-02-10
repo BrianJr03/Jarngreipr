@@ -169,7 +169,10 @@ data class ESDEPrefsState(
     val customMediaPath: String? = null,
     
     // Home screen settings
-    val excludeEffectsFromHome: Boolean = false
+    val excludeEffectsFromHome: Boolean = false,
+    
+    // UI visibility settings
+    val hideUIForGameBrowsing: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

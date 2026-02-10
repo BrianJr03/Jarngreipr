@@ -58,4 +58,5 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_BACKGROUND_DIMMING = "system_background_dimming"
     const val KEY_CUSTOM_MEDIA_PATH = "custom_media_path"
     const val KEY_EXCLUDE_EFFECTS_FROM_HOME = "exclude_effects_from_home"
+    const val KEY_HIDE_UI_FOR_GAME_BROWSING = "hide_ui_for_game_browsing"
 }

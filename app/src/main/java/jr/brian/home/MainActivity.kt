@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     var currentPageIndex by remember { mutableStateOf(0) }
                     var pagerScrollProgress by remember { mutableStateOf(0f) }
                     var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
+                    var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
                     val isAppDrawerTab =
@@ -108,7 +109,8 @@ class MainActivity : ComponentActivity() {
                         esdeViewModel = esdeViewModel,
                         powerViewModel = powerViewModel,
                         esdePreferencesManager = esdePreferencesManager,
-                        onScreensaverUIVisibilityChanged = { hideLauncherUIForScreensaver = it }
+                        onScreensaverUIVisibilityChanged = { hideLauncherUIForScreensaver = it },
+                        onGameBrowsingUIVisibilityChanged = { hideLauncherUIForGameBrowsing = it }
                     )
 
                     ESDEWallpaperContainer(
@@ -132,7 +134,8 @@ class MainActivity : ComponentActivity() {
                                 onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
                                 onCurrentPageChanged = { currentPageIndex = it },
                                 onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                hideLauncherUI = wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver
+                                hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
+                                        (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
                             )
                         }
                     )
@@ -222,16 +225,19 @@ class MainActivity : ComponentActivity() {
         esdeViewModel: ESDEViewModel,
         powerViewModel: PowerViewModel,
         esdePreferencesManager: ESDEPreferencesManager,
-        onScreensaverUIVisibilityChanged: (Boolean) -> Unit
+        onScreensaverUIVisibilityChanged: (Boolean) -> Unit,
+        onGameBrowsingUIVisibilityChanged: (Boolean) -> Unit
     ) {
         LaunchedEffect(Unit) {
             esdeEventListener.onSystemSelected = { systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.updateForSystem(systemName)
+                onGameBrowsingUIVisibilityChanged(false)
             }
             esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.updateForGame(systemName, gameFilename)
+                onGameBrowsingUIVisibilityChanged(true)
             }
             esdeEventListener.onGameStarted = { _, _, _ ->
                 VideoPlayerActivity.finishIfRunning()
@@ -250,6 +256,7 @@ class MainActivity : ComponentActivity() {
                 VideoPlayerActivity.finishIfRunning()
                 onScreensaverUIVisibilityChanged(true)
                 esdeViewModel.handleScreensaverStarted()
+                onGameBrowsingUIVisibilityChanged(false)
                 if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
                     powerViewModel.powerOff()
                 }
@@ -257,6 +264,7 @@ class MainActivity : ComponentActivity() {
             esdeEventListener.onScreensaverEnded = { _ ->
                 onScreensaverUIVisibilityChanged(false)
                 esdeViewModel.handleScreensaverEnded()
+                onGameBrowsingUIVisibilityChanged(false)
                 if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
                     powerViewModel.powerOn()
                 }
@@ -264,6 +272,8 @@ class MainActivity : ComponentActivity() {
             esdeEventListener.onScreensaverGameSelected =
                 { gameFilename, _, systemName ->
                     esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                    // Don't hide UI during screensaver
+                    onGameBrowsingUIVisibilityChanged(false)
                 }
         }
     }
