@@ -16,6 +16,7 @@ import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.setup.SetupPreferences
+import jr.brian.home.esde.util.ESDECleanupHelper
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_VIDEOS
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_WHEEL_3D
@@ -30,6 +31,7 @@ import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.wallpaper.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
+import jr.brian.home.model.state.DeleteResult
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -42,7 +44,9 @@ import javax.inject.Inject
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
     val prefs: ESDEPreferencesManager,
-    private val setupPreferences: SetupPreferences
+    private val setupPreferences: SetupPreferences,
+    private val cleanupHelper: ESDECleanupHelper,
+    val cleanupManager: jr.brian.home.data.ESDECleanupManager
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
@@ -73,6 +77,9 @@ class ESDEViewModel @Inject constructor(
     private var currentSystem: String? = null
     private var currentGameSystem: String? = null
     private var currentGameFilename: String? = null
+
+    private val _deleteEmptyFoldersResult = mutableStateOf<DeleteResult?>(null)
+    val deleteEmptyFoldersResult: State<DeleteResult?> = _deleteEmptyFoldersResult
     
     /**
      * Tracks whether we're currently viewing a system or a game.
@@ -402,7 +409,20 @@ class ESDEViewModel @Inject constructor(
             return systemImageCache[systemName]
         }
 
-        // First check custom system_images path if configured
+        val singleImagePath = prefsState.singleSystemImagePath
+        if (singleImagePath != null) {
+            if (singleImagePath.startsWith("content://")) {
+                systemImageCache[systemName] = singleImagePath
+                return singleImagePath
+            } else {
+                val singleImageFile = File(singleImagePath)
+                if (singleImageFile.exists() && singleImageFile.isFile) {
+                    systemImageCache[systemName] = singleImageFile.absolutePath
+                    return singleImageFile.absolutePath
+                }
+            }
+        }
+
         val customImagesPath = prefsState.customSystemImagesPath
         if (customImagesPath != null) {
             val customImagesDir = File(customImagesPath)
@@ -500,7 +520,18 @@ class ESDEViewModel @Inject constructor(
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
         
-        // First check custom system_logos path if configured
+        val singleLogoPath = prefsState.singleSystemLogoPath
+        if (singleLogoPath != null) {
+            if (singleLogoPath.startsWith("content://")) {
+                return singleLogoPath
+            } else {
+                val singleLogoFile = File(singleLogoPath)
+                if (singleLogoFile.exists() && singleLogoFile.isFile) {
+                    return singleLogoFile.absolutePath
+                }
+            }
+        }
+        
         val customLogosPath = prefsState.customSystemLogosPath
         if (customLogosPath != null) {
             val customLogosDir = File(customLogosPath)
@@ -542,12 +573,24 @@ class ESDEViewModel @Inject constructor(
         systemName: String,
         gameFilename: String
     ): String? {
-        val preferredType = prefs.state.value.gameImageType
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
+        val prefsState = prefs.state.value
+        val preferredType = prefsState.gameImageType
         val mediaSystemName = getMediaSystemName(systemName)
 
         if (preferredType == GameImageType.None) {
             return null
+        }
+
+        val singleGameImagePath = prefsState.singleGameImagePath
+        if (singleGameImagePath != null) {
+            if (singleGameImagePath.startsWith("content://")) {
+                return singleGameImagePath
+            } else {
+                val singleGameImageFile = File(singleGameImagePath)
+                if (singleGameImageFile.exists() && singleGameImageFile.isFile) {
+                    return singleGameImageFile.absolutePath
+                }
+            }
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
@@ -600,9 +643,22 @@ class ESDEViewModel @Inject constructor(
     }
 
     private fun getGameMarqueePath(systemName: String, gameFilename: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
+        val prefsState = prefs.state.value
         val mediaSystemName = getMediaSystemName(systemName)
+
+        val singleGameLogoPath = prefsState.singleGameLogoPath
+        if (singleGameLogoPath != null) {
+            if (singleGameLogoPath.startsWith("content://")) {
+                return singleGameLogoPath
+            } else {
+                val singleGameLogoFile = File(singleGameLogoPath)
+                if (singleGameLogoFile.exists() && singleGameLogoFile.isFile) {
+                    return singleGameLogoFile.absolutePath
+                }
+            }
+        }
+
+        val nameOnly = File(gameFilename).nameWithoutExtension
 
         for (name in listOf(systemName, mediaSystemName).distinct()) {
             for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
@@ -668,6 +724,26 @@ class ESDEViewModel @Inject constructor(
     private fun isImageFile(file: File): Boolean {
         val ext = file.extension.lowercase()
         return ext in IMAGE_EXTENSIONS
+    }
+
+
+    
+    /**
+     * Deletes all empty folders in the selected cleanup folders.
+     * Folders containing only systeminfo.txt are considered empty.
+     */
+    fun deleteEmptyESDEFolders() {
+        viewModelScope.launch {
+            val result = cleanupHelper.deleteEmptyESDEFolders()
+            _deleteEmptyFoldersResult.value = result
+        }
+    }
+    
+    /**
+     * Clears the delete result state
+     */
+    fun clearDeleteResult() {
+        _deleteEmptyFoldersResult.value = null
     }
 
     override fun onCleared() {

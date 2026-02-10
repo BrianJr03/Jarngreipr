@@ -24,6 +24,10 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
 
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_SYSTEM_IMAGE_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_SYSTEM_LOGO_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_GAME_IMAGE_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_GAME_LOGO_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_HEIGHT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_WIDTH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_ENABLED
@@ -190,6 +194,10 @@ class ESDEPreferencesManager(context: Context) {
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
             customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null),
+            singleSystemImagePath = prefs.getString(KEY_SINGLE_SYSTEM_IMAGE_PATH, null),
+            singleSystemLogoPath = prefs.getString(KEY_SINGLE_SYSTEM_LOGO_PATH, null),
+            singleGameImagePath = prefs.getString(KEY_SINGLE_GAME_IMAGE_PATH, null),
+            singleGameLogoPath = prefs.getString(KEY_SINGLE_GAME_LOGO_PATH, null),
             marqueeWidth = prefs.getInt(KEY_MARQUEE_WIDTH, 300),
             marqueeHeight = prefs.getInt(KEY_MARQUEE_HEIGHT, 150),
             screensaverBehavior = screensaverBehavior,
@@ -342,6 +350,42 @@ class ESDEPreferencesManager(context: Context) {
             prefs.edit { putString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, path) }
         } else {
             prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
+        }
+    }
+
+    fun setSingleSystemImagePath(path: String?) {
+        _state.value = _state.value.copy(singleSystemImagePath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_SYSTEM_IMAGE_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_SYSTEM_IMAGE_PATH) }
+        }
+    }
+
+    fun setSingleSystemLogoPath(path: String?) {
+        _state.value = _state.value.copy(singleSystemLogoPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_SYSTEM_LOGO_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_SYSTEM_LOGO_PATH) }
+        }
+    }
+
+    fun setSingleGameImagePath(path: String?) {
+        _state.value = _state.value.copy(singleGameImagePath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_GAME_IMAGE_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_GAME_IMAGE_PATH) }
+        }
+    }
+
+    fun setSingleGameLogoPath(path: String?) {
+        _state.value = _state.value.copy(singleGameLogoPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_GAME_LOGO_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_GAME_LOGO_PATH) }
         }
     }
 

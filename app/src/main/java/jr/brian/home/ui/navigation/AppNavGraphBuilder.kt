@@ -567,8 +567,8 @@ fun NavGraphBuilder.esdeSettingsScreen(
 
         ESDESetupScreen(
             dialogState = esdeSetupDialogState,
-            onDismiss = { },
-            onSetupComplete = { }
+            onDismiss = {},
+            onSetupComplete = {}
         )
     }
 }

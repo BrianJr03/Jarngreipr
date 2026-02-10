@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -64,7 +65,7 @@ fun ESDEWallpaperContainer(
 ) {
     val wallpaperManager = LocalWallpaperManager.current
     val wallpaperType = wallpaperManager.getWallpaperType()
-    
+
     val homeTabManager = LocalHomeTabManager.current
     val preferencesManager = LocalESDEPreferencesManager.current
     val homeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
@@ -73,7 +74,8 @@ fun ESDEWallpaperContainer(
     val isOnHomePage = currentPageIndex == homeTabIndex
     val excludeEffectsFromHome = prefsState.excludeEffectsFromHome
     val effectiveBlurLevel = if (excludeEffectsFromHome && isOnHomePage) 0f else state.blurLevel
-    val effectiveDimmingLevel = if (excludeEffectsFromHome && isOnHomePage) 0f else state.dimmingLevel
+    val effectiveDimmingLevel =
+        if (excludeEffectsFromHome && isOnHomePage) 0f else state.dimmingLevel
 
     val backgroundColor = if (wallpaperType == WallpaperType.TRANSPARENT) {
         Color.Transparent
@@ -81,18 +83,18 @@ fun ESDEWallpaperContainer(
         state.backgroundColor
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
-    
+
     // Show description instead of marquee when Description mode is selected and description is available
     val showDescription = showEsdeContent &&
 //            prefsState.gameImageType == GameImageType.Description &&
             state.gameDescription != null
-    
+
     val marqueeEnabledForContext = if (state.isShowingGameBackground) {
         prefsState.showMarqueeForGame
     } else {
         prefsState.showMarqueeForSystem
     }
-    
+
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
             !showDescription &&
@@ -127,10 +129,20 @@ fun ESDEWallpaperContainer(
             } else {
                 prefsState.systemBackgroundScaleMode
             }
-            
+
+            val imageModifier = if (prefsState.isAndroidGamesSelected()
+                && state.isShowingGameBackground
+            ) {
+                Modifier
+                    .fillMaxSize(0.35f)
+                    .align(Alignment.Center)
+            } else {
+                Modifier.fillMaxSize()
+            }
+
             AnimatedWallpaperImage(
                 imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                modifier = Modifier.fillMaxSize(),
+                modifier = imageModifier,
                 blurLevel = effectiveBlurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
@@ -233,10 +245,10 @@ private fun AnimatedWallpaperImage(
     }
 
     val imageData = remember(imagePath) {
-        if (imagePath.startsWith("file:///android_asset/")) {
-            imagePath
-        } else {
-            File(imagePath)
+        when {
+            imagePath.startsWith("file:///android_asset/") -> imagePath
+            imagePath.startsWith("content://") -> Uri.parse(imagePath)
+            else -> File(imagePath)
         }
     }
 
@@ -281,10 +293,10 @@ private fun BoxScope.AnimatedMarquee(
     onLongClick: (() -> Unit)?
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
-    
+
     val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
     val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
-    
+
     AnimatedVisibility(
         visible = !hideMarquee,
         enter = fadeIn(
@@ -338,10 +350,10 @@ private fun MarqueeImage(
     val imageLoader = LocalESDEImageLoader.current
 
     val imageData = remember(marqueePath) {
-        if (marqueePath.startsWith("file:///android_asset/")) {
-            marqueePath
-        } else {
-            File(marqueePath)
+        when {
+            marqueePath.startsWith("file:///android_asset/") -> marqueePath
+            marqueePath.startsWith("content://") -> Uri.parse(marqueePath)
+            else -> File(marqueePath)
         }
     }
 

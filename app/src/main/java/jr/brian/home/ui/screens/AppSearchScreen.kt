@@ -52,6 +52,7 @@ import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
@@ -174,7 +175,6 @@ private fun HorizontalSearchLayout(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Apps on top with 2 rows, max columns
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -360,6 +360,8 @@ private fun HorizontalAppGridItem(
     onAppLongClick: () -> Unit
 ) {
     val customIconManager = LocalCustomIconManager.current
+    val iconShapeManager = LocalIconShapeManager.current
+    val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
 
     Column(
@@ -384,7 +386,7 @@ private fun HorizontalAppGridItem(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(10.dp)),
+                .clip(iconShape),
             contentAlignment = Alignment.Center
         ) {
             AppIconImage(
@@ -411,6 +413,8 @@ private fun AppGridItem(
     onAppLongClick: () -> Unit
 ) {
     val customIconManager = LocalCustomIconManager.current
+    val iconShapeManager = LocalIconShapeManager.current
+    val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
 
     Column(
@@ -434,7 +438,7 @@ private fun AppGridItem(
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(iconShape),
             contentAlignment = Alignment.Center
         ) {
             AppIconImage(
