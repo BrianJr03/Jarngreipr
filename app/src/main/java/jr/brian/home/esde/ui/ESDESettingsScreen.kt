@@ -271,6 +271,12 @@ fun ESDESettingsScreen(
                                 },
                                 onToggleMarqueeOverlayPage = { pageIndex ->
                                     preferencesManager.toggleMarqueeOverlayPage(pageIndex)
+                                },
+                                onShowMarqueeForSystemChange = { show ->
+                                    preferencesManager.setShowMarqueeForSystem(show)
+                                },
+                                onShowMarqueeForGameChange = { show ->
+                                    preferencesManager.setShowMarqueeForGame(show)
                                 }
                             )
                         }
@@ -361,14 +367,11 @@ fun ESDESettingsScreen(
                                 onGameBlurLevelChange = { blur ->
                                     preferencesManager.setGameBlurLevel(blur)
                                 },
-                                onDimmingLevelChange = { dimming ->
-                                    preferencesManager.setDimmingLevel(dimming)
+                                onSystemBackgroundDimmingChange = { dimming ->
+                                    preferencesManager.setSystemBackgroundDimming(dimming)
                                 },
                                 onGameBackgroundDimmingChange = { dimming ->
                                     preferencesManager.setGameBackgroundDimming(dimming)
-                                },
-                                onSystemBackgroundDimmingChange = { dimming ->
-                                    preferencesManager.setSystemBackgroundDimming(dimming)
                                 },
                                 onExcludeEffectsFromHomeChange = { exclude ->
                                     preferencesManager.setExcludeEffectsFromHome(exclude)

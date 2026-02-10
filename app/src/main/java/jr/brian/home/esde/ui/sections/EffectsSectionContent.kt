@@ -25,9 +25,8 @@ fun EffectsSectionContent(
     onGameBackgroundScaleModeChange: (BackgroundScaleMode) -> Unit,
     onSystemBlurLevelChange: (Int) -> Unit,
     onGameBlurLevelChange: (Int) -> Unit,
-    onDimmingLevelChange: (Int) -> Unit,
-    onGameBackgroundDimmingChange: (Int) -> Unit,
     onSystemBackgroundDimmingChange: (Int) -> Unit,
+    onGameBackgroundDimmingChange: (Int) -> Unit,
     onExcludeEffectsFromHomeChange: (Boolean) -> Unit,
     onGameImageTypeChange: (GameImageType) -> Unit,
     onRandomSystemImageChange: (Boolean) -> Unit,
@@ -83,13 +82,13 @@ fun EffectsSectionContent(
     )
 
     SliderSetting(
-        title = stringResource(R.string.esde_settings_dimming_level),
-        value = prefsState.dimmingLevel.toFloat(),
+        title = stringResource(R.string.esde_settings_system_background_dimming),
+        value = prefsState.systemBackgroundDimming.toFloat(),
         valueRange = 0f..70f,
         steps = 13,
-        valueText = "${prefsState.dimmingLevel}%",
+        valueText = "${prefsState.systemBackgroundDimming}%",
         onValueChange = { dimming ->
-            onDimmingLevelChange(dimming.toInt())
+            onSystemBackgroundDimmingChange(dimming.toInt())
         }
     )
 
@@ -101,17 +100,6 @@ fun EffectsSectionContent(
         valueText = "${prefsState.gameBackgroundDimming}%",
         onValueChange = { dimming ->
             onGameBackgroundDimmingChange(dimming.toInt())
-        }
-    )
-
-    SliderSetting(
-        title = stringResource(R.string.esde_settings_system_background_dimming),
-        value = prefsState.systemBackgroundDimming.toFloat(),
-        valueRange = 0f..70f,
-        steps = 13,
-        valueText = "${prefsState.systemBackgroundDimming}%",
-        onValueChange = { dimming ->
-            onSystemBackgroundDimmingChange(dimming.toInt())
         }
     )
 

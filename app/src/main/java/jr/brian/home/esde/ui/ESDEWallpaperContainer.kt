@@ -87,9 +87,16 @@ fun ESDEWallpaperContainer(
 //            prefsState.gameImageType == GameImageType.Description &&
             state.gameDescription != null
     
+    val marqueeEnabledForContext = if (state.isShowingGameBackground) {
+        prefsState.showMarqueeForGame
+    } else {
+        prefsState.showMarqueeForSystem
+    }
+    
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
-            !showDescription
+            !showDescription &&
+            marqueeEnabledForContext
 
     val logoAlignment = when (state.logoAlignment) {
         LogoAlignment.Top -> Alignment.TopCenter
@@ -136,17 +143,13 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showMarquee && !overlayMode && !hideMarquee) {
-            val isUsingDefaultBackground = state.currentImagePath == null
-            MarqueeImage(
+        if (showMarquee && !overlayMode) {
+            AnimatedMarquee(
                 marqueePath = state.marqueePath,
-                modifier = Modifier
-                    .align(logoAlignment)
-                    .size(state.marqueeWidth.dp, state.marqueeHeight.dp),
-                animate = isUsingDefaultBackground,
-                animationStyle = state.animationStyle,
-                animationDuration = state.animationDuration,
-                animationScale = state.animationScale,
+                hideMarquee = hideMarquee,
+                logoAlignment = logoAlignment,
+                state = state,
+                pagerScrollProgress = pagerScrollProgress,
                 onLongClick = null
             )
         }
@@ -154,48 +157,17 @@ fun ESDEWallpaperContainer(
         content()
 
         if (showMarquee && overlayMode) {
-            val isUsingDefaultBackground = state.currentImagePath == null
-
-            val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
-            val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
-
-            AnimatedVisibility(
-                visible = !hideMarquee,
-                enter = fadeIn(
-                    animationSpec = tween(durationMillis = 400)
-                ) + scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    transformOrigin = TransformOrigin.Center
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(durationMillis = 300)
-                ) + scaleOut(
-                    targetScale = 0.6f,
-                    animationSpec = tween(durationMillis = 300),
-                    transformOrigin = TransformOrigin.Center
-                ),
-                modifier = Modifier.align(logoAlignment)
-            ) {
-                MarqueeImage(
-                    marqueePath = state.marqueePath,
-                    modifier = Modifier
-                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp)
-                        .scale(bubbleScale)
-                        .graphicsLayer { alpha = bubbleAlpha },
-                    animate = isUsingDefaultBackground,
-                    animationStyle = state.animationStyle,
-                    animationDuration = state.animationDuration,
-                    animationScale = state.animationScale,
-                    onLongClick = onMarqueeLongClick
-                )
-            }
+            AnimatedMarquee(
+                marqueePath = state.marqueePath,
+                hideMarquee = hideMarquee,
+                logoAlignment = logoAlignment,
+                state = state,
+                pagerScrollProgress = pagerScrollProgress,
+                onLongClick = onMarqueeLongClick
+            )
         }
 
-        if (showDescription && state.gameDescription != null && !hideMarquee) {
+        if (showDescription /* && state.gameDescription != null */ && !hideMarquee) {
             AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(
@@ -295,6 +267,56 @@ private fun DimmingOverlay(alpha: Float) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = alpha))
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.AnimatedMarquee(
+    marqueePath: String?,
+    hideMarquee: Boolean,
+    logoAlignment: Alignment,
+    state: WallpaperState,
+    pagerScrollProgress: Float,
+    onLongClick: (() -> Unit)?
+) {
+    val isUsingDefaultBackground = state.currentImagePath == null
+    
+    val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
+    val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
+    
+    AnimatedVisibility(
+        visible = !hideMarquee,
+        enter = fadeIn(
+            animationSpec = tween(durationMillis = 400)
+        ) + scaleIn(
+            initialScale = 0.8f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            transformOrigin = TransformOrigin.Center
+        ),
+        exit = fadeOut(
+            animationSpec = tween(durationMillis = 300)
+        ) + scaleOut(
+            targetScale = 0.6f,
+            animationSpec = tween(durationMillis = 300),
+            transformOrigin = TransformOrigin.Center
+        ),
+        modifier = Modifier.align(logoAlignment)
+    ) {
+        MarqueeImage(
+            marqueePath = marqueePath,
+            modifier = Modifier
+                .size(state.marqueeWidth.dp, state.marqueeHeight.dp)
+                .scale(bubbleScale)
+                .graphicsLayer { alpha = bubbleAlpha },
+            animate = isUsingDefaultBackground,
+            animationStyle = state.animationStyle,
+            animationDuration = state.animationDuration,
+            animationScale = state.animationScale,
+            onLongClick = onLongClick
         )
     }
 }

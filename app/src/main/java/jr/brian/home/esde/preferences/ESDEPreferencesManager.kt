@@ -38,6 +38,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_OVERLAY_PAGES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_SYSTEM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_GAME
 import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_DIMMING
@@ -203,6 +205,8 @@ class ESDEPreferencesManager(context: Context) {
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
             marqueeHiddenPages = marqueeHiddenPages,
             marqueeOverlayEnabledPages = marqueeOverlayEnabledPages,
+            showMarqueeForSystem = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, true),
+            showMarqueeForGame = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_GAME, true),
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
@@ -478,5 +482,15 @@ class ESDEPreferencesManager(context: Context) {
     fun setExcludeEffectsFromHome(exclude: Boolean) {
         _state.value = _state.value.copy(excludeEffectsFromHome = exclude)
         prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
+    }
+
+    fun setShowMarqueeForSystem(show: Boolean) {
+        _state.value = _state.value.copy(showMarqueeForSystem = show)
+        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, show) }
+    }
+
+    fun setShowMarqueeForGame(show: Boolean) {
+        _state.value = _state.value.copy(showMarqueeForGame = show)
+        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_GAME, show) }
     }
 }

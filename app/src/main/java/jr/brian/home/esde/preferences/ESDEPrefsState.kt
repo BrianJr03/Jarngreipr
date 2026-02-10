@@ -137,6 +137,8 @@ data class ESDEPrefsState(
     val marqueePressShortcutAppPackage: String? = null,
     val marqueeHiddenPages: Set<Int> = emptySet(),
     val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
+    val showMarqueeForSystem: Boolean = true,
+    val showMarqueeForGame: Boolean = true,
     val gameBackgroundDimming: Int = 20,
     val systemBackgroundDimming: Int = 20,
     val customMediaPath: String? = null,
