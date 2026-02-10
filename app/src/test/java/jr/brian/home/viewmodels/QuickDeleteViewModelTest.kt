@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import jr.brian.home.data.FolderCleanupManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.model.FileExtensionInfo
 import jr.brian.home.model.state.DeleteResult
@@ -38,12 +39,14 @@ class QuickDeleteViewModelTest {
     private lateinit var viewModel: QuickDeleteViewModel
     private lateinit var mockContext: Context
     private lateinit var mockQuickDeleteManager: QuickDeleteManager
+    private lateinit var mockFolderCleanupManager: FolderCleanupManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         mockContext = mockk(relaxed = true)
         mockQuickDeleteManager = mockk(relaxed = true)
+        mockFolderCleanupManager = mockk(relaxed = true)
 
         // Default behavior: return empty flow
         coEvery { mockQuickDeleteManager.folderPaths } returns flowOf(emptySet())
@@ -55,7 +58,7 @@ class QuickDeleteViewModelTest {
     }
 
     private fun createViewModel(): QuickDeleteViewModel {
-        return QuickDeleteViewModel(mockContext, mockQuickDeleteManager)
+        return QuickDeleteViewModel(mockContext, mockQuickDeleteManager, mockFolderCleanupManager)
     }
 
     @Test
@@ -497,7 +500,7 @@ class QuickDeleteViewModelTest {
     @Test
     fun `ViewModel can be instantiated`() {
         // Given/When
-        val vm = QuickDeleteViewModel(mockContext, mockQuickDeleteManager)
+        val vm = QuickDeleteViewModel(mockContext, mockQuickDeleteManager, mockFolderCleanupManager)
 
         // Then
         assertFalse(vm.uiState.value.isScanning)
@@ -528,8 +531,8 @@ class QuickDeleteViewModelTest {
         coEvery { mockManager2.folderPaths } returns flowOf(emptySet())
 
         // When
-        val vm1 = QuickDeleteViewModel(mockContext, mockManager1)
-        val vm2 = QuickDeleteViewModel(mockContext, mockManager2)
+        val vm1 = QuickDeleteViewModel(mockContext, mockManager1, mockFolderCleanupManager)
+        val vm2 = QuickDeleteViewModel(mockContext, mockManager2, mockFolderCleanupManager)
 
         // Then
         assertTrue(vm1 !== vm2) // Different instances

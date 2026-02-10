@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import java.lang.ref.WeakReference
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -68,6 +69,12 @@ class VideoPlayerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         currentInstance = WeakReference(this)
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.apply {
@@ -97,13 +104,6 @@ class VideoPlayerActivity : ComponentActivity() {
                 onDismiss = { finish() }
             )
         }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        finish()
-        @Suppress("DEPRECATION")
-        super.onBackPressed()
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
