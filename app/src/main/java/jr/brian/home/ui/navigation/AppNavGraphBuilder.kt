@@ -74,6 +74,8 @@ fun NavGraphBuilder.launcherScreen(
         var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
         var showDockSettingsSheet by remember { mutableStateOf(false) }
+        
+        val esdeSetupDialogState = rememberDialogState<SetupStep>()
 
         // Track when any sheet is visible to hide marquee overlay
         val isAnySheetVisible = showSettingsSheet || showAppSearchSheet || 
@@ -189,12 +191,25 @@ fun NavGraphBuilder.launcherScreen(
                         showSettingsSheet = false
                         navController.navigate(Routes.ESDE_SETTINGS)
                     },
+                    onRunSetupWizard = {
+                        esdeSetupDialogState.show(SetupStep.Welcome)
+                    },
+                    onNavigateToMarqueePressShortcut = {
+                        showSettingsSheet = false
+                        navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
+                    },
                     onDismiss = {
                         showSettingsSheet = false
                     }
                 )
             }
         }
+        
+        ESDESetupScreen(
+            dialogState = esdeSetupDialogState,
+            onDismiss = {},
+            onSetupComplete = {}
+        )
 
         SlideInVertically(showAppSearchSheet) {
             Box(modifier = Modifier.fillMaxSize()) {

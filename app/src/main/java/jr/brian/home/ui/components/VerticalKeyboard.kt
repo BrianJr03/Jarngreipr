@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,15 +35,20 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.extensions.handleRightNavigation
@@ -65,10 +71,6 @@ fun VerticalKeyboard(
     var isNumericMode by remember { mutableStateOf(false) }
     val letters = ('A'..'Z').toList()
     val numbers = (0..9).toList()
-
-    LaunchedEffect(Unit) {
-        keyboardFocusRequesters[0]?.requestFocus()
-    }
 
     Column(
         modifier = modifier.padding(top = 8.dp),
@@ -316,10 +318,15 @@ private fun KeyboardButton(
     onNavigateRight: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier =
             modifier
+                .offset(y = offsetY)
+                .scale(pressScale)
                 .then(
                     if (focusRequester != null) {
                         Modifier.focusRequester(focusRequester)
@@ -334,14 +341,14 @@ private fun KeyboardButton(
                     isFocused = it.isFocused
                 }
                 .background(
-                    brush = cardGradient(isFocused),
+                    brush = cardGradient(isFocused, isPressed = isPressed),
                     shape = RoundedCornerShape(8.dp),
                 )
                 .border(
-                    width = if (isFocused) 2.dp else 0.dp,
+                    width = if (isFocused || isPressed) 2.dp else 0.dp,
                     brush =
                         borderBrush(
-                            isFocused = isFocused,
+                            isFocused = isFocused || isPressed,
                             colors = listOf(
                                 ThemeAccentColor,
                                 ThemePrimaryColor,
@@ -350,8 +357,22 @@ private fun KeyboardButton(
                         ),
                     shape = RoundedCornerShape(8.dp),
                 )
-                .clickable {
-                    onClick()
+                .pointerInput(onClick, label) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            when {
+                                event.changes.any { it.pressed } && !isPressed -> {
+                                    isPressed = true
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                                event.changes.none { it.pressed } && isPressed -> {
+                                    isPressed = false
+                                    onClick()
+                                }
+                            }
+                        }
+                    }
                 }
                 .focusable()
                 .handleRightNavigation(onNavigateRight),
