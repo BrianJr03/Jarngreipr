@@ -16,11 +16,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -33,6 +36,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -63,6 +67,7 @@ fun ESDEWallpaperContainer(
     pagerScrollProgress: Float = 0f,
     overlayMode: Boolean = true,
     currentPageIndex: Int = 0,
+    dockTopY: Float? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     val wallpaperManager = LocalWallpaperManager.current
@@ -164,7 +169,8 @@ fun ESDEWallpaperContainer(
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = null
+                onLongClick = null,
+                dockTopY = dockTopY
             )
         }
 
@@ -177,7 +183,8 @@ fun ESDEWallpaperContainer(
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = onMarqueeLongClick
+                onLongClick = onMarqueeLongClick,
+                dockTopY = dockTopY
             )
         }
 
@@ -292,47 +299,76 @@ private fun BoxScope.AnimatedMarquee(
     logoAlignment: Alignment,
     state: WallpaperState,
     pagerScrollProgress: Float,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    dockTopY: Float?
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
+    val density = LocalDensity.current
 
     val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
     val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
 
-    AnimatedVisibility(
-        visible = !hideMarquee,
-        enter = fadeIn(
-            animationSpec = tween(durationMillis = 400)
-        ) + scaleIn(
-            initialScale = 0.8f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
+    BoxWithConstraints(modifier = Modifier.align(Alignment.Center)) {
+        val screenHeightPx = with(density) { maxHeight.toPx() }
+        
+        // Calculate vertical offset to center marquee in available space above dock
+        val verticalOffsetDp = if (dockTopY != null) {
+            val availableHeight = dockTopY
+            val centerY = availableHeight / 2f
+            val marqueeTargetY = when (logoAlignment) {
+                Alignment.TopCenter -> availableHeight * 0.25f
+                Alignment.Center -> centerY
+                Alignment.BottomCenter -> availableHeight * 0.75f
+                else -> centerY
+            }
+            with(density) { (marqueeTargetY - screenHeightPx / 2f).toDp() }
+        } else {
+            0.dp
+        }
+        
+        val finalAlignment = if (dockTopY != null) {
+            Alignment.Center  // Use center as base, then apply offset
+        } else {
+            logoAlignment
+        }
+
+        AnimatedVisibility(
+            visible = !hideMarquee,
+            enter = fadeIn(
+                animationSpec = tween(durationMillis = 400)
+            ) + scaleIn(
+                initialScale = 0.8f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+                transformOrigin = TransformOrigin.Center
             ),
-            transformOrigin = TransformOrigin.Center
-        ),
-        exit = fadeOut(
-            animationSpec = tween(durationMillis = 300)
-        ) + scaleOut(
-            targetScale = 0.6f,
-            animationSpec = tween(durationMillis = 300),
-            transformOrigin = TransformOrigin.Center
-        ),
-        modifier = Modifier.align(logoAlignment)
-    ) {
-        MarqueeImage(
-            marqueePath = marqueePath,
+            exit = fadeOut(
+                animationSpec = tween(durationMillis = 300)
+            ) + scaleOut(
+                targetScale = 0.6f,
+                animationSpec = tween(durationMillis = 300),
+                transformOrigin = TransformOrigin.Center
+            ),
             modifier = Modifier
-                .widthIn(max = state.marqueeWidth.dp)
-                .heightIn(max = state.marqueeHeight.dp)
-                .scale(bubbleScale)
-                .graphicsLayer { alpha = bubbleAlpha },
-            animate = isUsingDefaultBackground,
-            animationStyle = state.animationStyle,
-            animationDuration = state.animationDuration,
-            animationScale = state.animationScale,
-            onLongClick = onLongClick
-        )
+                .align(finalAlignment)
+                .offset(y = verticalOffsetDp)
+        ) {
+            MarqueeImage(
+                marqueePath = marqueePath,
+                modifier = Modifier
+                    .sizeIn(maxWidth = state.marqueeWidth.dp, maxHeight = state.marqueeHeight.dp)
+                    .wrapContentSize()
+                    .scale(bubbleScale)
+                    .graphicsLayer { alpha = bubbleAlpha },
+                animate = isUsingDefaultBackground,
+                animationStyle = state.animationStyle,
+                animationDuration = state.animationDuration,
+                animationScale = state.animationScale,
+                onLongClick = onLongClick
+            )
+        }
     }
 }
 

@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,7 +52,8 @@ fun AppDock(
     onAppDoubleClick: (AppInfo) -> Unit = {},
     onAppLongClick: (AppInfo) -> Unit,
     onEmptySlotClick: (Int) -> Unit,
-    onEmptySlotLongClick: (Int) -> Unit
+    onEmptySlotLongClick: (Int) -> Unit,
+    onDockPositioned: ((Float) -> Unit)? = null
 ) {
     val dockManager = LocalDockManager.current
     val dockPackageNames by dockManager.dockApps.collectAsStateWithLifecycle()
@@ -63,7 +66,10 @@ fun AppDock(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .onGloballyPositioned { coordinates ->
+                onDockPositioned?.invoke(coordinates.positionInWindow().y)
+            },
         contentAlignment = Alignment.Center
     ) {
         Box(

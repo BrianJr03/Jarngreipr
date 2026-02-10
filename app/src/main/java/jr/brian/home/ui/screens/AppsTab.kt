@@ -89,7 +89,8 @@ fun AppsTab(
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToDockSettings: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -456,7 +457,8 @@ fun AppsTab(
                 },
                 onEmptySlotLongClick = { position ->
                     dockManager.removeEmptySlot(position)
-                }
+                },
+                onDockPositioned = onDockPositioned
             )
         }
     }

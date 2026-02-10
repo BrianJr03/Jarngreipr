@@ -91,6 +91,7 @@ class MainActivity : ComponentActivity() {
                     var pagerScrollProgress by remember { mutableStateOf(0f) }
                     var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
                     var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
+                    var dockTopY by remember { mutableStateOf<Float?>(null) }
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
                     val isAppDrawerTab =
@@ -127,6 +128,7 @@ class MainActivity : ComponentActivity() {
                         pagerScrollProgress = pagerScrollProgress,
                         overlayMode = overlayMode,
                         currentPageIndex = currentPageIndex,
+                        dockTopY = dockTopY,
                         content = {
                             MainContent(
                                 triggerMarqueePressShortcut = triggerMarqueePressShortcut,
@@ -136,6 +138,7 @@ class MainActivity : ComponentActivity() {
                                 onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
                                 onCurrentPageChanged = { currentPageIndex = it },
                                 onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                onDockPositioned = { y -> dockTopY = y },
                                 hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
                                         (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
                             )

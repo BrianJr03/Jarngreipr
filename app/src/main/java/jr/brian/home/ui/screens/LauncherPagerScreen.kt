@@ -64,6 +64,7 @@ fun LauncherPagerScreen(
     onNavigateToDockSettings: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {},
     hideLauncherUI: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
@@ -222,6 +223,7 @@ fun LauncherPagerScreen(
                                 pagerState = pagerState,
                                 onShowBottomSheet = onShowBottomSheet,
                                 pageIndex = page,
+                                onDockPositioned = onDockPositioned,
                                 onDeletePage = { pagerPageIndex ->
                                     scope.launch {
                                         deleteTab(
@@ -261,6 +263,7 @@ fun LauncherPagerScreen(
                                     pagerState = pagerState,
                                     onShowBottomSheet = onShowBottomSheet,
                                     onSettingsClick = onSettingsClick,
+                                    onDockPositioned = onDockPositioned,
                                     onNavigateToResize = { widgetInfo, pageIdx ->
                                         resizeWidgetInfo = widgetInfo
                                         resizePageIndex = pageIdx
@@ -312,6 +315,7 @@ fun LauncherPagerScreen(
                                     apps = visibleApps,
                                     appsUnfiltered = homeUiState.allAppsUnfiltered,
                                     allApps = homeUiState.allAppsUnfiltered,
+                                    onDockPositioned = onDockPositioned,
                                     onDeletePage = { pagerPageIndex ->
                                         scope.launch {
                                             deleteTab(
