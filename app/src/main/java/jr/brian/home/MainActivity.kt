@@ -209,7 +209,8 @@ class MainActivity : ComponentActivity() {
     ) {
         LaunchedEffect(esdeViewModel) {
             esdeViewModel.videoLaunchEvent.collect { event ->
-                if (!powerViewModel.isPoweredOff.value) {
+                val isGameRunning = esdeViewModel.wallpaperState.value.isGameRunning
+                if (!powerViewModel.isPoweredOff.value && !isGameRunning) {
                     launchVideoPlayer(event)
                 }
             }
