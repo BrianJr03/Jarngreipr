@@ -97,20 +97,29 @@ enum class BackgroundScaleMode {
 }
 
 data class ESDEPrefsState(
+    // Animation settings
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
     val animationScale: Float = 0.9f,
+    
+    // Blur settings
     val blurLevel: Int = 0,
     val systemBlurLevel: Int = 0,
     val gameBlurLevel: Int = 0,
+    
+    // Display settings
     val dimmingLevel: Int = 20,
     val backgroundColor: Int = Color.Black.toArgb(),
+    
+    // Video settings
     val videoEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val videoAudioEnabled: Boolean = false,
     val videoScaleMode: VideoScaleMode = VideoScaleMode.FillScreen,
     val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
+    
+    // ESDE integration
     val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
@@ -122,9 +131,25 @@ data class ESDEPrefsState(
     val persistOnGameLaunch: Boolean = false,
     val customSystemLogosPath: String? = null,
     val customSystemImagesPath: String? = null,
+    val singleSystemImagePath: String? = null,
+    val singleSystemLogoPath: String? = null,
+    val singleGameImagePath: String? = null,
+    val singleGameLogoPath: String? = null,
+    
+    // Marquee settings
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
+    val marqueePressShortcut: Shortcut = Shortcut.NONE,
+    val marqueePressShortcutAppPackage: String? = null,
+    val marqueeHiddenPages: Set<Int> = emptySet(),
+    val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
+    val showMarqueeForSystem: Boolean = true,
+    val showMarqueeForGame: Boolean = true,
+    
+    // Screensaver settings
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.ShowContent,
+    
+    // Music settings
     val musicEnabled: Boolean = false,
     val musicPath: String? = null,
     val musicSystemEnabled: Boolean = true,
@@ -132,16 +157,18 @@ data class ESDEPrefsState(
     val musicScreensaverEnabled: Boolean = true,
     val musicVideoBehavior: MusicVideoBehavior = MusicVideoBehavior.Duck,
     val musicVolume: Int = 100,
+    
+    // App drawer settings
     val appDrawerOpacity: Int = 100,
-    val marqueePressShortcut: Shortcut = Shortcut.NONE,
-    val marqueePressShortcutAppPackage: String? = null,
-    val marqueeHiddenPages: Set<Int> = emptySet(),
-    val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
-    val showMarqueeForSystem: Boolean = true,
-    val showMarqueeForGame: Boolean = true,
+    
+    // Background dimming
     val gameBackgroundDimming: Int = 20,
     val systemBackgroundDimming: Int = 20,
+    
+    // Custom paths
     val customMediaPath: String? = null,
+    
+    // Home screen settings
     val excludeEffectsFromHome: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
@@ -157,6 +184,8 @@ data class ESDEPrefsState(
     fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
         return !marqueeHiddenPages.contains(pageIndex)
     }
+
+    fun isAndroidGamesSelected() = lastSelectedSystem == "androidgames"
     
     /**
      * Check if marquee overlay mode should be enabled on a specific page.

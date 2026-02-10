@@ -119,7 +119,6 @@ fun LauncherPagerScreen(
         snapshotFlow { pagerState.currentPage }
             .collect { page ->
                 onCurrentPageChanged(page)
-                homeTabManager.setHomeTabIndex(page)
             }
     }
 

@@ -211,31 +211,31 @@ fun PoweredOffScreen(
                 )
             }
 
-            AnimatedVisibility(
-                visible = showInfo,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(0.8f)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (isEsdeMode) {
-                        MusicVolumeSlider(
-                            volume = localMusicVolume,
-                            onVolumeChange = { newVolume ->
-                                localMusicVolume = newVolume
-                                onMusicVolumeChange(newVolume.toInt())
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    DualVolumeControls(isVisible = showInfo)
-                }
-            }
+//            AnimatedVisibility(
+//                visible = showInfo,
+//                enter = fadeIn(),
+//                exit = fadeOut(),
+//                modifier = Modifier
+//                    .align(Alignment.Center)
+//                    .fillMaxWidth(0.8f)
+//            ) {
+//                Column(
+//                    horizontalAlignment = Alignment.CenterHorizontally,
+//                    verticalArrangement = Arrangement.spacedBy(16.dp)
+//                ) {
+//                    if (isEsdeMode) {
+//                        MusicVolumeSlider(
+//                            volume = localMusicVolume,
+//                            onVolumeChange = { newVolume ->
+//                                localMusicVolume = newVolume
+//                                onMusicVolumeChange(newVolume.toInt())
+//                            }
+//                        )
+//                        Spacer(modifier = Modifier.height(8.dp))
+//                    }
+//                    DualVolumeControls(isVisible = showInfo)
+//                }
+//            }
         }
     }
 }

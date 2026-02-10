@@ -12,15 +12,15 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.quickDeleteDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "quick_delete_preferences"
+private val Context.esdeCleanupDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "esde_cleanup_preferences"
 )
 
 @Singleton
-class QuickDeleteManager @Inject constructor(
-    @param:ApplicationContext private val context: Context
+class ESDECleanupManager @Inject constructor(
+    @ApplicationContext private val context: Context
 ) {
-    private val dataStore = context.quickDeleteDataStore
+    private val dataStore = context.esdeCleanupDataStore
 
     private object PreferencesKeys {
         val FOLDER_PATHS = stringSetPreferencesKey("folder_paths")
@@ -47,5 +47,4 @@ class QuickDeleteManager @Inject constructor(
             preferences[PreferencesKeys.FOLDER_PATHS] = currentPaths
         }
     }
-
 }

@@ -193,8 +193,6 @@ fun TabsDialog(
                         PageType.APP_DRAWER_TAB -> stringResource(R.string.home_tab_page_type_app_drawer_tab)
                     }
 
-                    // When there's only one page, it's always the home tab (index 0)
-                    // Otherwise, show home badge for the current tab
                     val isHomeTab = if (totalPages == 1) {
                         index == 0
                     } else {
@@ -206,10 +204,7 @@ fun TabsDialog(
                         isSelected = isHomeTab,
                         showDelete = totalPages > 1,
                         onClick = {
-                            // Only set home tab if user explicitly clicks and it's different from current
-                            if (index != currentTabIndex) {
-                                onTabSelected(index)
-                            }
+                            onTabSelected(index)
                             onDismiss()
                         },
                         onDelete = {
