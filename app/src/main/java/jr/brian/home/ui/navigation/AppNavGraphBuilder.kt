@@ -57,6 +57,7 @@ fun NavGraphBuilder.launcherScreen(
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onSheetVisibilityChanged: (Boolean) -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {},
     hideLauncherUI: Boolean = false
 ) {
     composable(Routes.LAUNCHER) {
@@ -135,6 +136,7 @@ fun NavGraphBuilder.launcherScreen(
             },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
             onCurrentPageChanged = onCurrentPageChanged,
+            onDockPositioned = onDockPositioned,
             hideLauncherUI = hideLauncherUI
         )
 

@@ -94,6 +94,7 @@ fun AppsAndWidgetsTab(
     pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {},
     navController: NavHostController? = null
 ) {
     val context = LocalContext.current
@@ -287,7 +288,8 @@ fun AppsAndWidgetsTab(
                 },
                 onEmptySlotLongClick = { position ->
                     dockManager.removeEmptySlot(position)
-                }
+                },
+                onDockPositioned = onDockPositioned
             )
         }
     }

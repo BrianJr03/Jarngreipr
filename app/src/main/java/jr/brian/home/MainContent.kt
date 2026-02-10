@@ -77,6 +77,7 @@ fun MainContent(
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {},
     hideLauncherUI: Boolean = false
 ) {
     val context = LocalContext.current
@@ -246,6 +247,7 @@ fun MainContent(
                     onPagerScrollProgressChanged = onPagerScrollProgressChanged,
                     onCurrentPageChanged = { page -> currentPagerPage = page },
                     onSheetVisibilityChanged = { visible -> isAnyLauncherSheetVisible = visible },
+                    onDockPositioned = onDockPositioned,
                     hideLauncherUI = hideLauncherUI
                 )
 

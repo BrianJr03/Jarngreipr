@@ -108,7 +108,8 @@ fun AppDrawerTab(
     onSettingsClick: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToDockSettings: () -> Unit = {}
+    onNavigateToDockSettings: () -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
     val dockManager = LocalDockManager.current
@@ -314,7 +315,8 @@ fun AppDrawerTab(
                             },
                             onEmptySlotLongClick = { position ->
                                 dockManager.removeEmptySlot(position)
-                            }
+                            },
+                            onDockPositioned = onDockPositioned
                         )
                     }
                 }
