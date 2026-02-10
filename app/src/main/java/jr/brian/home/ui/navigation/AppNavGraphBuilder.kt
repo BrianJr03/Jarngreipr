@@ -54,7 +54,8 @@ fun NavGraphBuilder.launcherScreen(
     powerViewModel: PowerViewModel,
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
-    onSheetVisibilityChanged: (Boolean) -> Unit = {}
+    onSheetVisibilityChanged: (Boolean) -> Unit = {},
+    hideLauncherUI: Boolean = false
 ) {
     composable(Routes.LAUNCHER) {
         val homeTabManager = LocalHomeTabManager.current
@@ -131,7 +132,8 @@ fun NavGraphBuilder.launcherScreen(
                 navController.navigate(Routes.APP_DOCK_SETTINGS)
             },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
-            onCurrentPageChanged = onCurrentPageChanged
+            onCurrentPageChanged = onCurrentPageChanged,
+            hideLauncherUI = hideLauncherUI
         )
 
         SlideInVertically(showQuickDeleteSheet) {

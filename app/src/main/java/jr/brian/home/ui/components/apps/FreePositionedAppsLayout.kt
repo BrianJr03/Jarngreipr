@@ -1,7 +1,6 @@
 package jr.brian.home.ui.components.apps
 
 import android.content.Context
-import android.hardware.display.DisplayManager
 import android.widget.Toast
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
@@ -39,6 +38,7 @@ import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import kotlinx.coroutines.launch
@@ -77,11 +77,7 @@ fun FreePositionedAppsLayout(
     val customIconDialogState = rememberDialogState<AppInfo>()
     val folderDialogState = rememberDialogState<Folder>()
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     val positions = appPositionManager.getPositions(pageIndex)
 

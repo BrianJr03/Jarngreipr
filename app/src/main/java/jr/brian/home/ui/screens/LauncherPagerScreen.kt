@@ -61,7 +61,8 @@ fun LauncherPagerScreen(
     onBackButtonShortcut: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
-    onCurrentPageChanged: (Int) -> Unit = {}
+    onCurrentPageChanged: (Int) -> Unit = {},
+    hideLauncherUI: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
@@ -114,11 +115,11 @@ fun LauncherPagerScreen(
         }
     }
 
-    // Track actual current page for per-tab marquee settings
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }
             .collect { page ->
                 onCurrentPageChanged(page)
+                homeTabManager.setHomeTabIndex(page)
             }
     }
 
@@ -187,15 +188,20 @@ fun LauncherPagerScreen(
                 )
             }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
-            ) { page ->
-                val pageType =
-                    if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
+            AnimatedVisibility(
+                visible = !hideLauncherUI,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 1,
+                ) { page ->
+                    val pageType =
+                        if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
-                when (pageType) {
+                    when (pageType) {
                     PageType.APPS_TAB -> {
                         val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
                         val visibleApps = remember(homeUiState.allApps, hiddenApps) {
@@ -330,6 +336,7 @@ fun LauncherPagerScreen(
                         }
                     }
                 }
+            }
             }
 
             AnimatedVisibility(

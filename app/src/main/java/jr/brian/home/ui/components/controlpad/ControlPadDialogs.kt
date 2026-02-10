@@ -48,6 +48,7 @@ import jr.brian.home.model.PhysicalButton
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.StatusOrange
 import jr.brian.home.ui.theme.StatusYellow
@@ -60,7 +61,7 @@ fun ButtonMappingDialog(
     onButtonSelected: (PhysicalButton) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
@@ -192,7 +193,7 @@ private fun ButtonMappingOption(
 fun GamePadHelpDialog(
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

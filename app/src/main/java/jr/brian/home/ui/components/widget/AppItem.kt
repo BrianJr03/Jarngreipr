@@ -1,7 +1,5 @@
 package jr.brian.home.ui.components.widget
 
-import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -35,6 +33,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -56,11 +55,7 @@ fun AppItem(
     val optionsDialogState = rememberDialogState<Unit>()
     val customIconDialogState = rememberDialogState<Unit>()
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     Column(
         modifier = modifier

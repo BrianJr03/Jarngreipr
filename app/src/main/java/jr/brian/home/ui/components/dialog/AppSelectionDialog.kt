@@ -48,7 +48,7 @@ fun AppSelectionDialog(
     onAppSelected: (AppInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,

@@ -40,7 +40,9 @@ fun MusicSectionContent(
             valueText = "${prefsState.musicVolume}%",
             onValueChange = { volume ->
                 onMusicVolumeChange(volume.toInt())
-            }
+            },
+            enabled = false,
+            description = stringResource(R.string.esde_settings_music_slider_description)
         )
 
         PathSetting(

@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import jr.brian.home.ui.components.dialog.DimmedDialog
 
 @Composable
 fun WhatsNewDialog(
@@ -23,7 +24,7 @@ fun WhatsNewDialog(
     patchNotes: String,
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,

@@ -55,6 +55,7 @@ import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.pagerFriendlyClickable
+import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -65,6 +66,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
@@ -100,6 +102,7 @@ fun AppsAndWidgetsTab(
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val tabAnimationManager = LocalTabAnimationManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
 
@@ -146,9 +149,12 @@ fun AppsAndWidgetsTab(
 
     val gridState = rememberLazyGridState()
 
+    val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
     val isPressedState = remember { mutableStateOf(false) }
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressedState.value && !drawerOptionsDialogState.isVisible)
+    val (pressScale, offsetY) = onPressScaleAndOffset(
+        isTabAnimationEnabled && isPressedState.value && !drawerOptionsDialogState.isVisible
+    )
 
     var isScrolling by remember { mutableStateOf(false) }
 
@@ -184,11 +190,20 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
-            .pagerFriendlyClickable(
-                interactionSource = interactionSource,
-                isPressedState = isPressedState,
-                onDoubleTap = { powerViewModel.togglePower() },
-                onLongPress = { drawerOptionsDialogState.show() }
+            .then(
+                if (isTabAnimationEnabled) {
+                    Modifier.pagerFriendlyClickable(
+                        interactionSource = interactionSource,
+                        isPressedState = isPressedState,
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
+                } else {
+                    Modifier.pagerFriendlyClickableSimple(
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
+                }
             )
     ) {
         if (widgetPickerDialogState.isVisible) {

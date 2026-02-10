@@ -133,7 +133,7 @@ private fun IconPackSelectionDialog(
     onIconPackSelected: (IconPack) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
@@ -251,7 +251,7 @@ private fun DrawableSelectionDialog(
         }
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

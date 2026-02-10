@@ -39,6 +39,7 @@ import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.extensions.pagerFriendlyClickable
+import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.AppsTabContent
@@ -60,9 +61,11 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -94,6 +97,7 @@ fun AppsTab(
     val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
+    val tabAnimationManager = LocalTabAnimationManager.current
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
@@ -111,11 +115,7 @@ fun AppsTab(
 
     BackHandler(enabled = isPoweredOff) {}
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
@@ -132,9 +132,12 @@ fun AppsTab(
     val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
 
+    val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
     val isPressedState = remember { mutableStateOf(false) }
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressedState.value && !drawerOptionsDialogState.isVisible)
+    val (pressScale, offsetY) = onPressScaleAndOffset(
+        isTabAnimationEnabled && isPressedState.value && !drawerOptionsDialogState.isVisible
+    )
 
     val gridState = rememberLazyGridState()
     var isScrolling by remember { mutableStateOf(false) }
@@ -183,7 +186,6 @@ fun AppsTab(
                         preference
                     )
                 },
-                hasExternalDisplay = hasExternalDisplay,
                 app = if (isFreeModeEnabled) appInfo else null,
                 currentIconSize = currentIconSize,
                 isInDock = isInDock,
@@ -332,17 +334,32 @@ fun AppsTab(
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .offset(y = offsetY)
                 .scale(pressScale)
-                .pagerFriendlyClickable(
-                    isFreeModeEnabled, isDragLocked,
-                    interactionSource = interactionSource,
-                    isPressedState = isPressedState,
-                    onDoubleTap = { powerViewModel.togglePower() },
-                    onLongPress = {
-                        if (isFreeModeEnabled && !isDragLocked) {
-                            appDrawerOptionsDialogState.show()
-                        } else {
-                            drawerOptionsDialogState.show()
-                        }
+                .then(
+                    if (isTabAnimationEnabled) {
+                        Modifier.pagerFriendlyClickable(
+                            isFreeModeEnabled, isDragLocked,
+                            interactionSource = interactionSource,
+                            isPressedState = isPressedState,
+                            onDoubleTap = { powerViewModel.togglePower() },
+                            onLongPress = {
+                                if (isFreeModeEnabled && !isDragLocked) {
+                                    appDrawerOptionsDialogState.show()
+                                } else {
+                                    drawerOptionsDialogState.show()
+                                }
+                            }
+                        )
+                    } else {
+                        Modifier.pagerFriendlyClickableSimple(
+                            onDoubleTap = { powerViewModel.togglePower() },
+                            onLongPress = {
+                                if (isFreeModeEnabled && !isDragLocked) {
+                                    appDrawerOptionsDialogState.show()
+                                } else {
+                                    drawerOptionsDialogState.show()
+                                }
+                            }
+                        )
                     }
                 ),
     ) {

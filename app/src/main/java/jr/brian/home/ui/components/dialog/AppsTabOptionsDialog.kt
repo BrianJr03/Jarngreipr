@@ -67,7 +67,7 @@ fun AppsTabOptionsDialog(
     onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
     title: String = stringResource(R.string.app_drawer_options_title)
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

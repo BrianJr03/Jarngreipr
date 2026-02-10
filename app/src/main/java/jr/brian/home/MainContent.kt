@@ -27,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
@@ -74,7 +75,8 @@ fun MainContent(
     onMarqueePressShortcutHandled: () -> Unit = {},
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
-    onPagerScrollProgressChanged: (Float) -> Unit = {}
+    onPagerScrollProgressChanged: (Float) -> Unit = {},
+    hideLauncherUI: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -117,6 +119,9 @@ fun MainContent(
 
     LaunchedEffect(isAnyOverlayVisible) {
         onAnyOverlayVisibleChanged(isAnyOverlayVisible)
+        if (isAnyOverlayVisible) {
+            VideoPlayerActivity.finishIfRunning()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -239,7 +244,8 @@ fun MainContent(
                     powerViewModel = powerViewModel,
                     onPagerScrollProgressChanged = onPagerScrollProgressChanged,
                     onCurrentPageChanged = { page -> currentPagerPage = page },
-                    onSheetVisibilityChanged = { visible -> isAnyLauncherSheetVisible = visible }
+                    onSheetVisibilityChanged = { visible -> isAnyLauncherSheetVisible = visible },
+                    hideLauncherUI = hideLauncherUI
                 )
 
                 appDockSettingsScreen(

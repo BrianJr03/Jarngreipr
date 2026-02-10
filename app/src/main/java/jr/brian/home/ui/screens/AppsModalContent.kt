@@ -1,7 +1,6 @@
 package jr.brian.home.ui.screens
 
 import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -50,6 +49,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -84,11 +84,7 @@ fun AppsModalContent(
         appPositionManager.setDragLock(pageIndex, true)
     }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
@@ -175,7 +171,6 @@ fun AppsModalContent(
                         preference
                     )
                 },
-                hasExternalDisplay = hasExternalDisplay,
                 app = null,
                 currentIconSize = currentIconSize,
                 onIconSizeChange = {},

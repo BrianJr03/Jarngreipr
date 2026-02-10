@@ -1,7 +1,6 @@
 package jr.brian.home.ui.components.dialog
 
 import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -107,13 +107,9 @@ fun FolderContentsDialog(
     var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
     var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

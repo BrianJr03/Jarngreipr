@@ -168,7 +168,7 @@ class ESDEPreferencesManager(context: Context) {
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
             marqueeHiddenPages = marqueeHiddenPages,
             marqueeOverlayEnabledPages = marqueeOverlayEnabledPages,
-            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20),
+            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
             excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false)
         )

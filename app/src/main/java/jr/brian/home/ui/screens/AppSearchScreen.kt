@@ -1,7 +1,6 @@
 package jr.brian.home.ui.screens
 
 import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -54,6 +53,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -218,11 +218,7 @@ private fun AppGrid(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -293,11 +289,7 @@ private fun HorizontalAppGrid(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     LazyHorizontalGrid(
         rows = GridCells.Fixed(2),
