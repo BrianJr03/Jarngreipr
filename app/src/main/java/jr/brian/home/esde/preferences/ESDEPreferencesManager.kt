@@ -14,6 +14,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_STYLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BACKGROUND_COLOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BLUR_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BLUR_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DIMMING_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
@@ -38,6 +40,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_OVERLAY_PAGES
 import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
@@ -48,6 +51,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
@@ -110,6 +115,20 @@ class ESDEPreferencesManager(context: Context) {
             VideoScaleMode.FillScreen
         }
 
+        val systemBackgroundScaleModeName = prefs.getString(KEY_SYSTEM_BACKGROUND_SCALE_MODE, BackgroundScaleMode.Crop.name)
+        val systemBackgroundScaleMode = try {
+            BackgroundScaleMode.valueOf(systemBackgroundScaleModeName ?: BackgroundScaleMode.Crop.name)
+        } catch (_: IllegalArgumentException) {
+            BackgroundScaleMode.Crop
+        }
+
+        val gameBackgroundScaleModeName = prefs.getString(KEY_GAME_BACKGROUND_SCALE_MODE, BackgroundScaleMode.Crop.name)
+        val gameBackgroundScaleMode = try {
+            BackgroundScaleMode.valueOf(gameBackgroundScaleModeName ?: BackgroundScaleMode.Crop.name)
+        } catch (_: IllegalArgumentException) {
+            BackgroundScaleMode.Crop
+        }
+
         val marqueePressShortcutName = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT, Shortcut.NONE.name)
         val marqueePressShortcut = try {
             Shortcut.valueOf(marqueePressShortcutName ?: Shortcut.NONE.name)
@@ -131,17 +150,33 @@ class ESDEPreferencesManager(context: Context) {
             ?.toSet()
             ?: emptySet()
 
+        val legacyBlurLevel = prefs.getInt(KEY_BLUR_LEVEL, 0)
+        val systemBlurLevel = if (prefs.contains(KEY_SYSTEM_BLUR_LEVEL)) {
+            prefs.getInt(KEY_SYSTEM_BLUR_LEVEL, 0)
+        } else {
+            legacyBlurLevel
+        }
+        val gameBlurLevel = if (prefs.contains(KEY_GAME_BLUR_LEVEL)) {
+            prefs.getInt(KEY_GAME_BLUR_LEVEL, 0)
+        } else {
+            legacyBlurLevel
+        }
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
             animationScale = prefs.getInt(KEY_ANIMATION_SCALE, 90).toFloat() / 100f,
-            blurLevel = prefs.getInt(KEY_BLUR_LEVEL, 0),
+            blurLevel = legacyBlurLevel,
+            systemBlurLevel = systemBlurLevel,
+            gameBlurLevel = gameBlurLevel,
             dimmingLevel = prefs.getInt(KEY_DIMMING_LEVEL, 20).coerceAtMost(70),
             backgroundColor = prefs.getInt(KEY_BACKGROUND_COLOR, Color.Black.toArgb()),
             videoEnabled = prefs.getBoolean(KEY_VIDEO_ENABLED, false),
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
             videoAudioEnabled = prefs.getBoolean(KEY_VIDEO_AUDIO_ENABLED, false),
             videoScaleMode = videoScaleMode,
+            systemBackgroundScaleMode = systemBackgroundScaleMode,
+            gameBackgroundScaleMode = gameBackgroundScaleMode,
             esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
             systemImageType = systemImageType,
@@ -169,6 +204,7 @@ class ESDEPreferencesManager(context: Context) {
             marqueeHiddenPages = marqueeHiddenPages,
             marqueeOverlayEnabledPages = marqueeOverlayEnabledPages,
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
+            systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
             excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false)
         )
@@ -193,6 +229,18 @@ class ESDEPreferencesManager(context: Context) {
         val coercedLevel = level.coerceIn(0, 25)
         _state.value = _state.value.copy(blurLevel = coercedLevel)
         prefs.edit { putInt(KEY_BLUR_LEVEL, coercedLevel) }
+    }
+
+    fun setSystemBlurLevel(level: Int) {
+        val coercedLevel = level.coerceIn(0, 25)
+        _state.value = _state.value.copy(systemBlurLevel = coercedLevel)
+        prefs.edit { putInt(KEY_SYSTEM_BLUR_LEVEL, coercedLevel) }
+    }
+
+    fun setGameBlurLevel(level: Int) {
+        val coercedLevel = level.coerceIn(0, 25)
+        _state.value = _state.value.copy(gameBlurLevel = coercedLevel)
+        prefs.edit { putInt(KEY_GAME_BLUR_LEVEL, coercedLevel) }
     }
 
     fun setDimmingLevel(level: Int) {
@@ -224,6 +272,16 @@ class ESDEPreferencesManager(context: Context) {
     fun setVideoScaleMode(mode: VideoScaleMode) {
         _state.value = _state.value.copy(videoScaleMode = mode)
         prefs.edit { putString(KEY_VIDEO_SCALE_MODE, mode.name) }
+    }
+
+    fun setSystemBackgroundScaleMode(mode: BackgroundScaleMode) {
+        _state.value = _state.value.copy(systemBackgroundScaleMode = mode)
+        prefs.edit { putString(KEY_SYSTEM_BACKGROUND_SCALE_MODE, mode.name) }
+    }
+
+    fun setGameBackgroundScaleMode(mode: BackgroundScaleMode) {
+        _state.value = _state.value.copy(gameBackgroundScaleMode = mode)
+        prefs.edit { putString(KEY_GAME_BACKGROUND_SCALE_MODE, mode.name) }
     }
 
     fun setLastSelectedSystem(systemName: String?) {
@@ -400,6 +458,12 @@ class ESDEPreferencesManager(context: Context) {
         val coercedLevel = level.coerceIn(0, 70)
         _state.value = _state.value.copy(gameBackgroundDimming = coercedLevel)
         prefs.edit { putInt(KEY_GAME_BACKGROUND_DIMMING, coercedLevel) }
+    }
+
+    fun setSystemBackgroundDimming(level: Int) {
+        val coercedLevel = level.coerceIn(0, 70)
+        _state.value = _state.value.copy(systemBackgroundDimming = coercedLevel)
+        prefs.edit { putInt(KEY_SYSTEM_BACKGROUND_DIMMING, coercedLevel) }
     }
 
     fun setCustomMediaPath(path: String?) {

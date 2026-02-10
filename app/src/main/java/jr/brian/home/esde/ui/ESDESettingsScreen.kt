@@ -349,11 +349,26 @@ fun ESDESettingsScreen(
                                 onBackgroundColorChange = { color ->
                                     preferencesManager.setBackgroundColor(color)
                                 },
-                                onBlurLevelChange = { blur ->
-                                    preferencesManager.setBlurLevel(blur)
+                                onSystemBackgroundScaleModeChange = { mode ->
+                                    preferencesManager.setSystemBackgroundScaleMode(mode)
+                                },
+                                onGameBackgroundScaleModeChange = { mode ->
+                                    preferencesManager.setGameBackgroundScaleMode(mode)
+                                },
+                                onSystemBlurLevelChange = { blur ->
+                                    preferencesManager.setSystemBlurLevel(blur)
+                                },
+                                onGameBlurLevelChange = { blur ->
+                                    preferencesManager.setGameBlurLevel(blur)
                                 },
                                 onDimmingLevelChange = { dimming ->
                                     preferencesManager.setDimmingLevel(dimming)
+                                },
+                                onGameBackgroundDimmingChange = { dimming ->
+                                    preferencesManager.setGameBackgroundDimming(dimming)
+                                },
+                                onSystemBackgroundDimmingChange = { dimming ->
+                                    preferencesManager.setSystemBackgroundDimming(dimming)
                                 },
                                 onExcludeEffectsFromHomeChange = { exclude ->
                                     preferencesManager.setExcludeEffectsFromHome(exclude)

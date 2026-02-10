@@ -75,6 +75,12 @@ class ESDEViewModel @Inject constructor(
     private var currentGameFilename: String? = null
     
     /**
+     * Tracks whether we're currently viewing a system or a game.
+     * Used to determine which blur level to apply.
+     */
+    private var isViewingGame: Boolean = false
+    
+    /**
      * Tracks whether the launcher screen is currently active.
      * Video playback should only launch when this is true.
      */
@@ -86,14 +92,22 @@ class ESDEViewModel @Inject constructor(
 
         prefs.state
             .onEach { prefsState ->
-                val currentDimming = if (_wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning) {
-                    _wallpaperState.value.dimmingLevel
+                val currentDimming = when {
+                    _wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning -> 
+                        _wallpaperState.value.dimmingLevel
+                    isViewingGame -> 
+                        prefsState.gameBackgroundDimmingFloat
+                    else -> 
+                        prefsState.systemBackgroundDimmingFloat
+                }
+                val currentBlur = if (isViewingGame) {
+                    prefsState.gameBlurLevel.toFloat()
                 } else {
-                    prefsState.dimmingLevelFloat
+                    prefsState.systemBlurLevel.toFloat()
                 }
                 _wallpaperState.value = _wallpaperState.value.copy(
                     dimmingLevel = currentDimming,
-                    blurLevel = prefsState.blurLevel.toFloat(),
+                    blurLevel = currentBlur,
                     animationStyle = prefsState.animationStyle,
                     animationDuration = prefsState.animationDuration,
                     animationScale = prefsState.animationScale,
@@ -133,8 +147,8 @@ class ESDEViewModel @Inject constructor(
 
         return WallpaperState(
             currentImagePath = initialImagePath,
-            dimmingLevel = prefsState.dimmingLevelFloat,
-            blurLevel = prefsState.blurLevel.toFloat(),
+            dimmingLevel = prefsState.systemBackgroundDimmingFloat,
+            blurLevel = prefsState.systemBlurLevel.toFloat(),
             animationStyle = prefsState.animationStyle,
             animationDuration = prefsState.animationDuration,
             animationScale = prefsState.animationScale,
@@ -155,6 +169,7 @@ class ESDEViewModel @Inject constructor(
 
         stopVideo()
         currentSystem = systemName
+        isViewingGame = false
         systemImageCache.remove(systemName)
 
         prefs.setLastSelectedSystem(systemName)
@@ -163,7 +178,9 @@ class ESDEViewModel @Inject constructor(
             isVideoPlaying = false,
             videoPath = null,
             marqueePath = getSystemLogoPath(systemName),
-            gameDescription = null
+            gameDescription = null,
+            blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
+            isShowingGameBackground = false
         )
 
         musicController.onSystemChanged(systemName)
@@ -178,6 +195,7 @@ class ESDEViewModel @Inject constructor(
         currentSystem = null
         currentGameSystem = systemName
         currentGameFilename = gameFilename
+        isViewingGame = true
 
         // Fetch game description from ES-DE's gamelist.xml
         val gameDescription = esdeRootPath?.let { rootPath ->
@@ -189,7 +207,9 @@ class ESDEViewModel @Inject constructor(
             isVideoPlaying = false,
             videoPath = null,
             marqueePath = getGameMarqueePath(systemName, gameFilename),
-            gameDescription = gameDescription
+            gameDescription = gameDescription,
+            blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
+            isShowingGameBackground = true
         )
 
         musicController.onGameSelected(systemName, gameFilename)
@@ -284,11 +304,16 @@ class ESDEViewModel @Inject constructor(
     }
 
     fun handleGameEnded() {
+        val dimmingLevel = if (isViewingGame) {
+            prefs.state.value.gameBackgroundDimmingFloat
+        } else {
+            prefs.state.value.systemBackgroundDimmingFloat
+        }
         _wallpaperState.value = _wallpaperState.value.copy(
             isGameRunning = false,
             isVideoPlaying = false,
             videoPath = null,
-            dimmingLevel = prefs.state.value.dimmingLevelFloat
+            dimmingLevel = dimmingLevel
         )
         musicController.onGameEnded()
     }
@@ -297,9 +322,15 @@ class ESDEViewModel @Inject constructor(
         stopVideo()
         val behavior = prefs.state.value.screensaverBehavior
 
+        val baseDimming = if (isViewingGame) {
+            prefs.state.value.gameBackgroundDimmingFloat
+        } else {
+            prefs.state.value.systemBackgroundDimmingFloat
+        }
+
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.7f
-            ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
+            ScreensaverBehavior.PowerOff -> baseDimming
         }
         
         _wallpaperState.value = _wallpaperState.value.copy(
@@ -310,9 +341,14 @@ class ESDEViewModel @Inject constructor(
     }
 
     fun handleScreensaverEnded() {
+        val dimmingLevel = if (isViewingGame) {
+            prefs.state.value.gameBackgroundDimmingFloat
+        } else {
+            prefs.state.value.systemBackgroundDimmingFloat
+        }
         _wallpaperState.value = _wallpaperState.value.copy(
             isScreensaverActive = false,
-            dimmingLevel = prefs.state.value.dimmingLevelFloat
+            dimmingLevel = dimmingLevel
         )
         musicController.onScreensaverEnded()
     }
@@ -324,16 +360,19 @@ class ESDEViewModel @Inject constructor(
         val behavior = prefs.state.value.screensaverBehavior
         val shouldShowContent = behavior == ScreensaverBehavior.ShowContent
 
+        val baseDimming = prefs.state.value.gameBackgroundDimmingFloat
+
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.7f
-            ScreensaverBehavior.PowerOff -> prefs.state.value.dimmingLevelFloat
+            ScreensaverBehavior.PowerOff -> baseDimming
         }
         
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
             marqueePath = if (shouldShowContent) getGameMarqueePath(systemName, gameFilename) else null,
             dimmingLevel = dimmingLevel,
-            isScreensaverActive = true
+            isScreensaverActive = true,
+            isShowingGameBackground = true
         )
     }
 
