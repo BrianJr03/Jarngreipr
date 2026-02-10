@@ -122,7 +122,7 @@ class VideoPlayerActivity : ComponentActivity() {
     }
 }
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 @Composable
 private fun VideoPlayerScreen(
     videoPath: String,
