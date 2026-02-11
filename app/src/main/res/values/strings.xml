@@ -858,7 +858,11 @@
     <string name="esde_settings_music_screensaver">Screensaver Music</string>
     <string name="esde_settings_music_screensaver_description">Play music during screensaver</string>
     <string name="esde_settings_music_path">Music Folder</string>
-    <string name="esde_settings_music_path_description">Select your music folder (e.g., ~/ES-DE Jarngreipr/music)</string>
+    <string name="esde_settings_music_path_description">Select music folder. Name files like system logos (e.g., n64.mp3, snes.mp3) or use systems/ subfolders</string>
+    <string name="esde_settings_music_use_system_specific">System-Specific Music</string>
+    <string name="esde_settings_music_use_system_specific_description">Play unique music per system. Off = continuous queue of all music</string>
+    <string name="esde_settings_music_loop">Loop Music</string>
+    <string name="esde_settings_music_loop_description">Loop tracks when playlist ends. Off = play once and stop</string>
     <string name="esde_settings_music_video_behavior">Video Behavior</string>
     <string name="esde_settings_music_video_behavior_description">What to do with music when video plays</string>
     <string name="esde_settings_music_video_continue">Continue</string>

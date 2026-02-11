@@ -157,6 +157,8 @@ data class ESDEPrefsState(
     val musicScreensaverEnabled: Boolean = true,
     val musicVideoBehavior: MusicVideoBehavior = MusicVideoBehavior.Duck,
     val musicVolume: Int = 100,
+    val musicUseSystemSpecific: Boolean = true,
+    val musicLoopEnabled: Boolean = true,
     
     // App drawer settings
     val appDrawerOpacity: Int = 100,

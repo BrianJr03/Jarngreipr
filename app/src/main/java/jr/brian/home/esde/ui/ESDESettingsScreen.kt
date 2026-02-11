@@ -326,6 +326,12 @@ fun ESDESettingsScreen(
                                 },
                                 onMusicVideoBehaviorChange = { behavior ->
                                     preferencesManager.setMusicVideoBehavior(behavior)
+                                },
+                                onMusicUseSystemSpecificChange = { useSystemSpecific ->
+                                    preferencesManager.setMusicUseSystemSpecific(useSystemSpecific)
+                                },
+                                onMusicLoopEnabledChange = { loopEnabled ->
+                                    preferencesManager.setMusicLoopEnabled(loopEnabled)
                                 }
                             )
                         }

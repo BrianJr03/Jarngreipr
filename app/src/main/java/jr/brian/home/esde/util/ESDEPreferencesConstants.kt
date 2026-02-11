@@ -42,6 +42,8 @@ object ESDEPreferencesConstants {
     const val KEY_MUSIC_SCREENSAVER_ENABLED = "music_screensaver_enabled"
     const val KEY_MUSIC_VIDEO_BEHAVIOR = "music_video_behavior"
     const val KEY_MUSIC_VOLUME = "music_volume"
+    const val KEY_MUSIC_USE_SYSTEM_SPECIFIC = "music_use_system_specific"
+    const val KEY_MUSIC_LOOP_ENABLED = "music_loop_enabled"
 
     const val KEY_APP_DRAWER_OPACITY = "app_drawer_opacity"
 
