@@ -121,9 +121,15 @@ class MainActivity : ComponentActivity() {
                         onMarqueeLongClick = if (overlayMode) {
                             { triggerMarqueePressShortcut = true }
                         } else null,
-                        onWallpaperDoubleClick = if (wallpaperState.isScreensaverActive) {
-                            { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
-                        } else null,
+                        onWallpaperDoubleClick = when {
+                            wallpaperState.isScreensaverActive -> {
+                                { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
+                            }
+                            wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
+                                { powerViewModel.togglePower() }
+                            }
+                            else -> null
+                        },
                         hideMarquee = shouldHideMarquee || isPoweredOff,
                         pagerScrollProgress = pagerScrollProgress,
                         overlayMode = overlayMode,

@@ -353,8 +353,8 @@ fun ESDESettingsScreen(
                                     preferencesManager.setCustomSystemLogosPath(null)
                                     viewModel.refreshSystemImage()
                                 },
-                                onSelectSingleSystemImage = { 
-                                    singleSystemImagePicker.launch(arrayOf("image/*"))
+                                                                onSelectSingleSystemImage = {
+                                    singleSystemImagePicker.launch(arrayOf("image/*", "video/mp4"))
                                 },
                                 onClearSingleSystemImage = {
                                     preferencesManager.setSingleSystemImagePath(null)
@@ -367,8 +367,8 @@ fun ESDESettingsScreen(
                                     preferencesManager.setSingleSystemLogoPath(null)
                                     viewModel.refreshSystemImage()
                                 },
-                                onSelectSingleGameImage = { 
-                                    singleGameImagePicker.launch(arrayOf("image/*"))
+                                                                onSelectSingleGameImage = {
+                                    singleGameImagePicker.launch(arrayOf("image/*", "video/mp4"))
                                 },
                                 onClearSingleGameImage = {
                                     preferencesManager.setSingleGameImagePath(null)

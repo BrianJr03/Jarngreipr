@@ -406,14 +406,7 @@ class ESDEViewModel @Inject constructor(
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
-        if (systemImageType == SystemImageType.None) {
-            return null
-        }
-
-        if (systemImageCache.containsKey(systemName)) {
-            return systemImageCache[systemName]
-        }
-
+        // Check for single system image first (takes priority over image type)
         val singleImagePath = prefsState.singleSystemImagePath
         if (singleImagePath != null) {
             if (singleImagePath.startsWith("content://")) {
@@ -426,6 +419,14 @@ class ESDEViewModel @Inject constructor(
                     return singleImageFile.absolutePath
                 }
             }
+        }
+
+        if (systemImageType == SystemImageType.None) {
+            return null
+        }
+
+        if (systemImageCache.containsKey(systemName)) {
+            return systemImageCache[systemName]
         }
 
         val customImagesPath = prefsState.customSystemImagesPath
@@ -582,10 +583,7 @@ class ESDEViewModel @Inject constructor(
         val preferredType = prefsState.gameImageType
         val mediaSystemName = getMediaSystemName(systemName)
 
-        if (preferredType == GameImageType.None) {
-            return null
-        }
-
+        // Check for single game image first (takes priority over image type)
         val singleGameImagePath = prefsState.singleGameImagePath
         if (singleGameImagePath != null) {
             if (singleGameImagePath.startsWith("content://")) {
@@ -596,6 +594,10 @@ class ESDEViewModel @Inject constructor(
                     return singleGameImageFile.absolutePath
                 }
             }
+        }
+
+        if (preferredType == GameImageType.None) {
+            return null
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
