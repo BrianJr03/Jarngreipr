@@ -37,6 +37,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_EN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VOLUME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_USE_SYSTEM_SPECIFIC
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_LOOP_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
@@ -209,6 +211,8 @@ class ESDEPreferencesManager(context: Context) {
             musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
             musicVideoBehavior = musicVideoBehavior,
             musicVolume = prefs.getInt(KEY_MUSIC_VOLUME, 100),
+            musicUseSystemSpecific = prefs.getBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, true),
+            musicLoopEnabled = prefs.getBoolean(KEY_MUSIC_LOOP_ENABLED, true),
             appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
             marqueePressShortcut = marqueePressShortcut,
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
@@ -446,6 +450,16 @@ class ESDEPreferencesManager(context: Context) {
         val coercedVolume = volume.coerceIn(0, 100)
         _state.value = _state.value.copy(musicVolume = coercedVolume)
         prefs.edit { putInt(KEY_MUSIC_VOLUME, coercedVolume) }
+    }
+
+    fun setMusicUseSystemSpecific(useSystemSpecific: Boolean) {
+        _state.value = _state.value.copy(musicUseSystemSpecific = useSystemSpecific)
+        prefs.edit { putBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, useSystemSpecific) }
+    }
+
+    fun setMusicLoopEnabled(loopEnabled: Boolean) {
+        _state.value = _state.value.copy(musicLoopEnabled = loopEnabled)
+        prefs.edit { putBoolean(KEY_MUSIC_LOOP_ENABLED, loopEnabled) }
     }
 
     fun setAppDrawerOpacity(opacity: Int) {

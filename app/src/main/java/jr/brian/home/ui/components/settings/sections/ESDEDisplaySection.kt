@@ -203,9 +203,7 @@ fun ESDEDisplaySection(
                 onClick = onRunSetupWizard
             )
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_animation)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_animation)) {
                 AnimationSectionContent(
                     prefsState = prefsState,
                     onAnimationDurationChange = { duration ->
@@ -220,9 +218,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_app_drawer)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_app_drawer)) {
                 AppDrawerSectionContent(
                     prefsState = prefsState,
                     onAppDrawerOpacityChange = { opacity ->
@@ -258,13 +254,17 @@ fun ESDEDisplaySection(
                     },
                     onMusicVideoBehaviorChange = { behavior ->
                         preferencesManager.setMusicVideoBehavior(behavior)
+                    },
+                    onMusicUseSystemSpecificChange = { useSystemSpecific ->
+                        preferencesManager.setMusicUseSystemSpecific(useSystemSpecific)
+                    },
+                    onMusicLoopEnabledChange = { loopEnabled ->
+                        preferencesManager.setMusicLoopEnabled(loopEnabled)
                     }
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_custom_paths)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_custom_paths)) {
                 CustomPathsSectionContent(
                     prefsState = prefsState,
                     onSelectSystemImagesPath = { systemImagesFolderPicker.launch(null) },
@@ -313,9 +313,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_marquee)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_marquee)) {
                 MarqueeSectionContent(
                     prefsState = prefsState,
                     pageTypes = pageTypes,
@@ -348,9 +346,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_power)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_power)) {
                 PowerSectionContent(
                     prefsState = prefsState,
                     onPersistOnGameLaunchChange = { persist ->
@@ -371,9 +367,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_screensaver)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_screensaver)) {
                 ScreensaverSectionContent(
                     prefsState = prefsState,
                     onScreensaverBehaviorChange = { behavior ->
@@ -382,9 +376,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_video)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_video)) {
                 VideoSectionContent(
                     prefsState = prefsState,
                     onVideoAudioEnabledChange = { enabled ->
@@ -402,9 +394,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_effects)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_effects)) {
                 EffectsSectionContent(
                     prefsState = prefsState,
                     onBackgroundColorChange = { color ->
@@ -445,9 +435,7 @@ fun ESDEDisplaySection(
                 )
             }
 
-            CollapsibleSection(
-                title = stringResource(R.string.esde_settings_section_extras)
-            ) {
+            CollapsibleSection(title = stringResource(R.string.esde_settings_section_extras)) {
                 ExtrasSectionContent(
                     hideUIForGameBrowsing = prefsState.hideUIForGameBrowsing,
                     onHideUIForGameBrowsingChange = { hide ->

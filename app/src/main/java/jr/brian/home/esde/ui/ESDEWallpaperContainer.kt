@@ -54,7 +54,7 @@ import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
 import java.io.File
 
-private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
+private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -1,5 +1,6 @@
 package jr.brian.home.esde.viewmodel
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -9,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.music.MusicController
 import jr.brian.home.esde.music.MusicManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
@@ -43,6 +45,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     val prefs: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val cleanupHelper: ESDECleanupHelper,
@@ -70,7 +73,7 @@ class ESDEViewModel @Inject constructor(
     private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()
     val videoLaunchEvent: SharedFlow<VideoLaunchEvent> = _videoLaunchEvent.asSharedFlow()
 
-    val musicController: MusicController = MusicManager(prefs)
+    val musicController: MusicController = MusicManager(context, prefs)
 
     private val videoDelayHandler = Handler(Looper.getMainLooper())
     private var pendingVideoRunnable: Runnable? = null
@@ -187,6 +190,7 @@ class ESDEViewModel @Inject constructor(
             marqueePath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
+            dimmingLevel = prefs.state.value.systemBackgroundDimmingFloat,
             isShowingGameBackground = false
         )
 
@@ -220,6 +224,7 @@ class ESDEViewModel @Inject constructor(
             marqueePath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
+            dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
             isShowingGameBackground = true
         )
 
