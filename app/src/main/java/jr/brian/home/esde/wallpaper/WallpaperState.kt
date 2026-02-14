@@ -10,6 +10,7 @@ data class WallpaperState(
     val marqueePath: String? = null,
     val videoPath: String? = null,
     val isVideoPlaying: Boolean = false,
+    val systemBackgroundVideoPath: String? = null,
     val videoAudioEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val dimmingLevel: Float = 0.2f,

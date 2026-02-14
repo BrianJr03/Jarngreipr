@@ -121,13 +121,16 @@ class MainActivity : ComponentActivity() {
                         onMarqueeLongClick = if (overlayMode) {
                             { triggerMarqueePressShortcut = true }
                         } else null,
+                        onWallpaperClick = null,
                         onWallpaperDoubleClick = when {
                             wallpaperState.isScreensaverActive -> {
                                 { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
                             }
+
                             wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
                                 { powerViewModel.togglePower() }
                             }
+
                             else -> null
                         },
                         hideMarquee = shouldHideMarquee || isPoweredOff,
@@ -255,6 +258,8 @@ class MainActivity : ComponentActivity() {
                 esdeViewModel.handleGameStarted()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
+                } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
+                    powerViewModel.setGamePersistActive(true)
                 }
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
@@ -262,6 +267,7 @@ class MainActivity : ComponentActivity() {
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
                 }
+                powerViewModel.setGamePersistActive(false)
             }
             esdeEventListener.onScreensaverStarted = {
                 VideoPlayerActivity.finishIfRunning()
