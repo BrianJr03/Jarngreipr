@@ -1,6 +1,9 @@
 package jr.brian.home.esde.ui
 
 import android.net.Uri
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -25,6 +28,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,7 +42,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
@@ -56,12 +68,13 @@ import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
-@OptIn(ExperimentalFoundationApi::class)
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ESDEWallpaperContainer(
     state: WallpaperState,
     modifier: Modifier = Modifier,
     onMarqueeLongClick: (() -> Unit)? = null,
+    onWallpaperClick: (() -> Unit)? = null,
     onWallpaperDoubleClick: (() -> Unit)? = null,
     hideMarquee: Boolean = false,
     pagerScrollProgress: Float = 0f,
@@ -108,9 +121,13 @@ fun ESDEWallpaperContainer(
             marqueeEnabledForContext
 
     val logoAlignment = when (state.logoAlignment) {
+        LogoAlignment.TopLeft -> Alignment.TopStart
         LogoAlignment.Top -> Alignment.TopCenter
+        LogoAlignment.TopRight -> Alignment.TopEnd
         LogoAlignment.Center -> Alignment.Center
+        LogoAlignment.BottomLeft -> Alignment.BottomStart
         LogoAlignment.Bottom -> Alignment.BottomCenter
+        LogoAlignment.BottomRight -> Alignment.BottomEnd
     }
 
     Box(
@@ -118,12 +135,12 @@ fun ESDEWallpaperContainer(
             .fillMaxSize()
             .background(backgroundColor)
             .then(
-                if (onWallpaperDoubleClick != null) {
+                if (onWallpaperDoubleClick != null || onWallpaperClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},
-                        onDoubleClick = onWallpaperDoubleClick
+                        onClick = { onWallpaperClick?.invoke() },
+                        onDoubleClick = { onWallpaperDoubleClick?.invoke() }
                     )
                 } else {
                     Modifier
@@ -147,15 +164,25 @@ fun ESDEWallpaperContainer(
                 Modifier.fillMaxSize()
             }
 
-            AnimatedWallpaperImage(
-                imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                modifier = imageModifier,
-                blurLevel = effectiveBlurLevel,
-                animationStyle = state.animationStyle,
-                animationDuration = state.animationDuration,
-                animationScale = state.animationScale,
-                backgroundScaleMode = backgroundScaleMode
-            )
+            // Use video background if available, otherwise use image
+            if (state.systemBackgroundVideoPath != null) {
+                VideoBackground(
+                    videoPath = state.systemBackgroundVideoPath,
+                    modifier = imageModifier,
+                    blurLevel = effectiveBlurLevel,
+                    backgroundScaleMode = backgroundScaleMode
+                )
+            } else {
+                AnimatedWallpaperImage(
+                    imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
+                    modifier = imageModifier,
+                    blurLevel = effectiveBlurLevel,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale,
+                    backgroundScaleMode = backgroundScaleMode
+                )
+            }
 
             if (!state.isScreensaverActive && !state.isGameRunning) {
                 DimmingOverlay(alpha = effectiveDimmingLevel)
@@ -372,7 +399,7 @@ private fun BoxScope.AnimatedMarquee(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MarqueeImage(
     marqueePath: String?,
@@ -426,6 +453,75 @@ private fun MarqueeImage(
                 onLongClick = { onLongClick?.invoke() }
             ),
         contentScale = ContentScale.Fit
+    )
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun VideoBackground(
+    videoPath: String,
+    modifier: Modifier = Modifier,
+    blurLevel: Float = 0f,
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+) {
+    val context = LocalContext.current
+    
+    val videoUri = remember(videoPath) {
+        when {
+            videoPath.startsWith("content://") -> videoPath.toUri()
+            else -> Uri.fromFile(File(videoPath))
+        }
+    }
+
+    val exoPlayer = remember(videoPath) {
+        ExoPlayer.Builder(context).build().apply {
+            try {
+                setMediaItem(MediaItem.fromUri(videoUri))
+                repeatMode = Player.REPEAT_MODE_ALL
+                volume = 0f
+                prepare()
+                playWhenReady = true
+            } catch (e: Exception) {
+                android.util.Log.e("VideoBackground", "Failed to load video: $videoPath", e)
+            }
+        }
+    }
+
+    DisposableEffect(videoPath) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    val blurModifier = if (blurLevel > 0f) {
+        Modifier.blur(blurLevel.dp)
+    } else {
+        Modifier
+    }
+
+    val resizeMode = when (backgroundScaleMode) {
+        BackgroundScaleMode.Crop -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+        BackgroundScaleMode.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = false
+                this.resizeMode = resizeMode
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        update = { playerView ->
+            playerView.resizeMode = resizeMode
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .then(blurModifier)
     )
 }
 

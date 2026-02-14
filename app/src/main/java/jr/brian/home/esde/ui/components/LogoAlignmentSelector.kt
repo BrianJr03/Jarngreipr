@@ -41,6 +41,11 @@ fun LogoAlignmentSelector(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
+    // Group alignments by row for grid layout
+    val topRow = listOf(LogoAlignment.TopLeft, LogoAlignment.Top, LogoAlignment.TopRight)
+    val centerRow = listOf(LogoAlignment.Center)
+    val bottomRow = listOf(LogoAlignment.BottomLeft, LogoAlignment.Bottom, LogoAlignment.BottomRight)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -58,11 +63,46 @@ fun LogoAlignmentSelector(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Top row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            LogoAlignment.entries.forEach { alignment ->
+            topRow.forEach { alignment ->
+                LogoAlignmentChip(
+                    alignment = alignment,
+                    isSelected = alignment == selectedAlignment,
+                    onClick = { onAlignmentSelected(alignment) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Center row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            centerRow.forEach { alignment ->
+                LogoAlignmentChip(
+                    alignment = alignment,
+                    isSelected = alignment == selectedAlignment,
+                    onClick = { onAlignmentSelected(alignment) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Bottom row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            bottomRow.forEach { alignment ->
                 LogoAlignmentChip(
                     alignment = alignment,
                     isSelected = alignment == selectedAlignment,
@@ -84,9 +124,13 @@ private fun LogoAlignmentChip(
     var isFocused by remember { mutableStateOf(false) }
 
     val alignmentName = when (alignment) {
+        LogoAlignment.TopLeft -> stringResource(R.string.esde_settings_logo_alignment_top_left)
         LogoAlignment.Top -> stringResource(R.string.esde_settings_logo_alignment_top)
+        LogoAlignment.TopRight -> stringResource(R.string.esde_settings_logo_alignment_top_right)
         LogoAlignment.Center -> stringResource(R.string.esde_settings_logo_alignment_center)
+        LogoAlignment.BottomLeft -> stringResource(R.string.esde_settings_logo_alignment_bottom_left)
         LogoAlignment.Bottom -> stringResource(R.string.esde_settings_logo_alignment_bottom)
+        LogoAlignment.BottomRight -> stringResource(R.string.esde_settings_logo_alignment_bottom_right)
     }
 
     Box(

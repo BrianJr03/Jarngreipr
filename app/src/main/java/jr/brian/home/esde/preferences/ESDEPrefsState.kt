@@ -46,9 +46,13 @@ enum class GameImageType(val folderName: String?) {
  * Defines the alignment position for the system logo
  */
 enum class LogoAlignment {
+    TopLeft,
     Top,
+    TopRight,
     Center,
-    Bottom
+    BottomLeft,
+    Bottom,
+    BottomRight
 }
 
 /**
