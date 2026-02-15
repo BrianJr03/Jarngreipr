@@ -50,7 +50,9 @@ import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -104,9 +106,11 @@ fun AppsAndWidgetsTab(
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val tabAnimationManager = LocalTabAnimationManager.current
+    val esdePrefsManager = LocalESDEPreferencesManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
-
+    
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -315,6 +319,7 @@ fun AppsAndWidgetsTab(
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
 
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
@@ -332,7 +337,11 @@ fun AppsAndWidgetsTab(
                 viewModel.toggleEditMode(pageIndex)
             },
             isEditModeActive = editModeEnabled,
-            isEmpty = isTabEmpty
+            isEmpty = isTabEmpty,
+            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = if (isEsdeMode) {
+                { esdePrefsManager.toggleMarqueePositionLocked() }
+            } else null
         )
     }
 

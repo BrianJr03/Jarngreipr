@@ -66,7 +66,6 @@ fun NavGraphBuilder.launcherScreen(
         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
 
-        var showSettingsSheet by remember { mutableStateOf(false) }
         var showAppSearchSheet by remember { mutableStateOf(false) }
         var showCustomThemeSheet by remember { mutableStateOf(false) }
         var showQuickDeleteSheet by remember { mutableStateOf(false) }
@@ -74,11 +73,8 @@ fun NavGraphBuilder.launcherScreen(
         var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
         var showDockSettingsSheet by remember { mutableStateOf(false) }
-        
-        val esdeSetupDialogState = rememberDialogState<SetupStep>()
 
-        // Track when any sheet is visible to hide marquee overlay
-        val isAnySheetVisible = showSettingsSheet || showAppSearchSheet || 
+        val isAnySheetVisible = showAppSearchSheet ||
             showCustomThemeSheet || showQuickDeleteSheet || showMonitorSheet || 
             showControlPadSheet || showBackButtonShortcutSheet || showDockSettingsSheet
         
@@ -110,7 +106,7 @@ fun NavGraphBuilder.launcherScreen(
                 if (isBackButtonShortcutEnabled) {
                     when (backButtonShortcut) {
                         BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
-                        BackButtonShortcut.SETTINGS -> showSettingsSheet = true
+                        BackButtonShortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                         BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
                         BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
                         BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
@@ -151,65 +147,6 @@ fun NavGraphBuilder.launcherScreen(
                 )
             }
         }
-
-        SlideInVertically(showSettingsSheet) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                SettingsScreen(
-                    allAppsUnfiltered = uiState.allAppsUnfiltered,
-                    onNavigateToFAQ = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.FAQ)
-                    },
-                    onNavigateToCustomTheme = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.CUSTOM_THEME)
-                    },
-                    onIconPackChanged = {
-                        mainViewModel.loadAllApps(context)
-                    },
-                    onNavigateToBackButtonShortcut = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.BACK_BUTTON_SHORTCUT)
-                    },
-                    onNavigateToMonitor = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.MONITOR)
-                    },
-                    onNavigateToControlPad = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.CONTROL_PAD)
-                    },
-                    onNavigateToCrashLogs = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.CRASH_LOGS)
-                    },
-                    onNavigateToDockSettings = {
-                        showSettingsSheet = false
-                        showDockSettingsSheet = true
-                    },
-                    onNavigateToEsdeSettings = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.ESDE_SETTINGS)
-                    },
-                    onRunSetupWizard = {
-                        esdeSetupDialogState.show(SetupStep.Welcome)
-                    },
-                    onNavigateToMarqueePressShortcut = {
-                        showSettingsSheet = false
-                        navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
-                    },
-                    onDismiss = {
-                        showSettingsSheet = false
-                    }
-                )
-            }
-        }
-        
-        ESDESetupScreen(
-            dialogState = esdeSetupDialogState,
-            onDismiss = {},
-            onSetupComplete = {}
-        )
 
         SlideInVertically(showAppSearchSheet) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -290,6 +227,7 @@ fun NavGraphBuilder.settingsScreen(
     composable(Routes.SETTINGS) {
         var showScreen by remember { mutableStateOf(true) }
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+        val esdeSetupDialogState = rememberDialogState<SetupStep>()
 
         SlideInVertically(showScreen) {
             SettingsScreen(
@@ -333,12 +271,25 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.navigate(Routes.ESDE_SETTINGS)
                 },
+                onRunSetupWizard = {
+                    esdeSetupDialogState.show(SetupStep.Welcome)
+                },
+                onNavigateToMarqueePressShortcut = {
+                    showScreen = false
+                    navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
+                },
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
                 }
             )
         }
+
+        ESDESetupScreen(
+            dialogState = esdeSetupDialogState,
+            onDismiss = {},
+            onSetupComplete = {}
+        )
     }
 }
 

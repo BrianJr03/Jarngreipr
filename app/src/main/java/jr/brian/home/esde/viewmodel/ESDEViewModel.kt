@@ -190,6 +190,8 @@ class ESDEViewModel @Inject constructor(
             marqueePath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
             logoAlignment = prefsState.logoAlignment,
+            logoOffsetX = prefsState.logoOffsetX,
+            logoOffsetY = prefsState.logoOffsetY,
             marqueeWidth = prefsState.marqueeWidth,
             marqueeHeight = prefsState.marqueeHeight,
             screensaverBehavior = prefsState.screensaverBehavior

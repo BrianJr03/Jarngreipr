@@ -52,7 +52,8 @@ enum class LogoAlignment {
     Center,
     BottomLeft,
     Bottom,
-    BottomRight
+    BottomRight,
+    FreePosition
 }
 
 /**
@@ -130,6 +131,8 @@ data class ESDEPrefsState(
     val gameImageType: GameImageType = GameImageType.Screenshots,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
+    val logoOffsetX: Float = 0f,
+    val logoOffsetY: Float = 0f,
     val randomSystemImage: Boolean = false,
     val powerEventsEnabled: Boolean = true,
     val persistOnGameLaunch: Boolean = false,
@@ -146,7 +149,7 @@ data class ESDEPrefsState(
     val marqueePressShortcut: Shortcut = Shortcut.NONE,
     val marqueePressShortcutAppPackage: String? = null,
     val marqueeHiddenPages: Set<Int> = emptySet(),
-    val marqueeOverlayEnabledPages: Set<Int> = emptySet(),
+    val descriptionOverlayEnabledPages: Set<Int> = emptySet(),
     val showMarqueeForSystem: Boolean = true,
     val showMarqueeForGame: Boolean = true,
     
@@ -178,7 +181,10 @@ data class ESDEPrefsState(
     val excludeEffectsFromHome: Boolean = false,
     
     // UI visibility settings
-    val hideUIForGameBrowsing: Boolean = false
+    val hideUIForGameBrowsing: Boolean = false,
+    
+    // Marquee position lock
+    val marqueePositionLocked: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
@@ -196,11 +202,7 @@ data class ESDEPrefsState(
 
     fun isAndroidGamesSelected() = lastSelectedSystem == "androidgames"
     
-    /**
-     * Check if marquee overlay mode should be enabled on a specific page.
-     * Overlay is enabled only if the page IS in the enabled set.
-     */
-    fun isMarqueeOverlayOnPage(pageIndex: Int): Boolean {
-        return marqueeOverlayEnabledPages.contains(pageIndex)
+    fun isDescriptionOverlayOnPage(pageIndex: Int): Boolean {
+        return descriptionOverlayEnabledPages.contains(pageIndex)
     }
 }

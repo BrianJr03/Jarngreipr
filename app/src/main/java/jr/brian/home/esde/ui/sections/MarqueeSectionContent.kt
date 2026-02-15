@@ -33,7 +33,7 @@ fun MarqueeSectionContent(
     onMarqueeSizeReset: () -> Unit,
     onNavigateToMarqueePressShortcut: () -> Unit,
     onToggleMarqueePageVisibility: (Int) -> Unit,
-    onToggleMarqueeOverlayPage: (Int) -> Unit,
+    onToggleDescriptionOverlayPage: (Int) -> Unit,
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
     onShowMarqueeForGameChange: (Boolean) -> Unit
 ) {
@@ -74,9 +74,9 @@ fun MarqueeSectionContent(
     }
 
     ToggleSetting(
-        title = stringResource(R.string.esde_settings_marquee_press_shortcut),
+        title = stringResource(R.string.marquee_press_shortcut_screen_title),
         description = stringResource(
-            R.string.esde_settings_marquee_press_shortcut_description
+            R.string.marquee_press_shortcut_screen_description
         ) + "\n" + stringResource(
             R.string.esde_settings_marquee_press_shortcut_choose
         ) + ": $currentShortcutLabel",
@@ -120,21 +120,19 @@ fun MarqueeSectionContent(
                 for (pageIndex in 0 until pageCount) {
                     val isPageVisible =
                         !prefsState.marqueeHiddenPages.contains(pageIndex)
-                    val isOverlayEnabled =
-                        prefsState.marqueeOverlayEnabledPages.contains(pageIndex)
-                    val isAppDrawerTab = pageTypes.getOrNull(pageIndex) == PageType.APP_DRAWER_TAB
+                    val isDescriptionOverlayEnabled =
+                        prefsState.descriptionOverlayEnabledPages.contains(pageIndex)
 
                     MarqueeTabSettingsOption(
                         pageIndex = pageIndex,
                         isVisible = isPageVisible,
-                        isOverlayEnabled = isOverlayEnabled,
+                        isDescriptionOverlayEnabled = isDescriptionOverlayEnabled,
                         onVisibilityToggle = {
                             onToggleMarqueePageVisibility(pageIndex)
                         },
-                        onOverlayToggle = {
-                            onToggleMarqueeOverlayPage(pageIndex)
-                        },
-                        showOverlayOption = !isAppDrawerTab
+                        onDescriptionOverlayToggle = {
+                            onToggleDescriptionOverlayPage(pageIndex)
+                        }
                     )
                 }
             }

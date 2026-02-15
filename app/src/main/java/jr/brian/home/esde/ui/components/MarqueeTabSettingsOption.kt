@@ -38,13 +38,12 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 fun MarqueeTabSettingsOption(
     pageIndex: Int,
     isVisible: Boolean,
-    isOverlayEnabled: Boolean,
+    isDescriptionOverlayEnabled: Boolean,
     onVisibilityToggle: () -> Unit,
-    onOverlayToggle: () -> Unit,
-    showOverlayOption: Boolean = true
+    onDescriptionOverlayToggle: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isOverlayFocused by remember { mutableStateOf(false) }
+    var isDescriptionOverlayFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -103,17 +102,17 @@ fun MarqueeTabSettingsOption(
             }
         }
 
-        if (isVisible && showOverlayOption) {
+        if (isVisible) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .scale(animatedFocusedScale(isOverlayFocused))
-                    .onFocusChanged { isOverlayFocused = it.isFocused }
+                    .scale(animatedFocusedScale(isDescriptionOverlayFocused))
+                    .onFocusChanged { isDescriptionOverlayFocused = it.isFocused }
                     .background(
-                        color = if (isOverlayFocused) ThemePrimaryColor.copy(alpha = 0.1f)
+                        color = if (isDescriptionOverlayFocused) ThemePrimaryColor.copy(alpha = 0.1f)
                         else Color.DarkGray.copy(alpha = 0.15f)
                     )
-                    .clickable { onOverlayToggle() }
+                    .clickable { onDescriptionOverlayToggle() }
                     .focusable()
                     .padding(start = 28.dp, end = 14.dp, top = 10.dp, bottom = 12.dp)
             ) {
@@ -124,20 +123,20 @@ fun MarqueeTabSettingsOption(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab),
+                            text = stringResource(R.string.esde_settings_description_overlay_on_tab),
                             color = Color.White.copy(alpha = 0.9f),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Normal
                         )
                         Text(
-                            text = stringResource(R.string.esde_settings_marquee_overlay_on_tab_description),
+                            text = stringResource(R.string.esde_settings_description_overlay_on_tab_description),
                             color = Color.Gray.copy(alpha = 0.6f),
                             fontSize = 11.sp
                         )
                     }
                     Switch(
-                        checked = isOverlayEnabled,
-                        onCheckedChange = { onOverlayToggle() },
+                        checked = isDescriptionOverlayEnabled,
+                        onCheckedChange = { onDescriptionOverlayToggle() },
                         modifier = Modifier.scale(0.85f),
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = ThemePrimaryColor,

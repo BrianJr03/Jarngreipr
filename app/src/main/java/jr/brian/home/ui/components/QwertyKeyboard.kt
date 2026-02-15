@@ -37,8 +37,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
@@ -392,9 +391,9 @@ private fun QwertyKeyButton(
     focusRequester: FocusRequester? = null,
     onFocusChanged: () -> Unit = {},
 ) {
+    val haptic = LocalHapticFeedback.current
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
@@ -430,23 +429,12 @@ private fun QwertyKeyButton(
                 ),
                 shape = RoundedCornerShape(6.dp),
             )
-            .pointerInput(onClick, label) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        when {
-                            event.changes.any { it.pressed } && !isPressed -> {
-                                isPressed = true
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            }
-                            event.changes.none { it.pressed } && isPressed -> {
-                                isPressed = false
-                                onClick()
-                            }
-                        }
-                    }
-                }
-            }
+            .pressWithHaptic(
+                onClick, label,
+                haptic = haptic,
+                onPressChange = { isPressed = it },
+                onClick = onClick
+            )
             .focusable()
             .handleUpNavigation(),
         contentAlignment = Alignment.Center,

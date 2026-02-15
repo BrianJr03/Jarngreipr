@@ -19,6 +19,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -71,10 +73,8 @@ fun LauncherPagerScreen(
     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
-    val isGamePersistActive by powerViewModel.isGamePersistActive.collectAsStateWithLifecycle()
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
-    val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
@@ -86,6 +86,7 @@ fun LauncherPagerScreen(
     val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
+    val hapticFeedback = LocalHapticFeedback.current
 
     var showResizeScreen by remember { mutableStateOf(false) }
     var resizeWidgetInfo by remember { mutableStateOf<WidgetInfo?>(null) }
@@ -110,7 +111,6 @@ fun LauncherPagerScreen(
         }
     }
 
-    // Track pager scroll progress for marquee bubble animation
     LaunchedEffect(pagerState) {
         snapshotFlow {
             kotlin.math.abs(pagerState.currentPageOffsetFraction)
@@ -122,6 +122,7 @@ fun LauncherPagerScreen(
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }
             .collect { page ->
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onCurrentPageChanged(page)
             }
     }

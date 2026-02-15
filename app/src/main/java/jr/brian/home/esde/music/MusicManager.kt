@@ -418,8 +418,38 @@ class MusicManager(
         }
     }
 
+    override fun isOtherAudioPlaying(): Boolean {
+        // If we're already playing, no other audio is interrupting us
+        if (musicPlayer?.isPlaying == true) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: false (we are playing)")
+            return false
+        }
+        
+        // If we were paused because another app took audio focus, they're still playing
+        if (wasPausedByAudioFocusLoss) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: true (we lost focus to another app)")
+            return true
+        }
+        
+        // If we have audio focus, we own the audio stream - safe to play
+        if (hasAudioFocus) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: false (we have focus)")
+            return false
+        }
+        
+        // We don't have focus and weren't paused by focus loss - safe to start fresh
+        android.util.Log.d(TAG, "isOtherAudioPlaying: false (no focus conflict)")
+        return false
+    }
+
     private fun startMusic(source: MusicSource) {
         android.util.Log.d(TAG, "Starting music from source: $source")
+
+        // Check if another app is already playing audio (e.g., YouTube Music, Spotify)
+        if (isOtherAudioPlaying()) {
+            android.util.Log.d(TAG, "Other audio is playing - skipping music start to avoid interruption")
+            return
+        }
 
         // Load playlist for this source
         val playlist = loadPlaylist(source)
@@ -470,6 +500,13 @@ class MusicManager(
 
     private fun crossFadeToSource(newSource: MusicSource) {
         android.util.Log.d(TAG, "Cross-fading to source: $newSource")
+
+        // Check if another app is already playing audio (e.g., YouTube Music, Spotify)
+        // Only check if we're not currently playing (i.e., this is a fresh start, not a source change)
+        if (musicPlayer?.isPlaying != true && isOtherAudioPlaying()) {
+            android.util.Log.d(TAG, "Other audio is playing - skipping cross-fade to avoid interruption")
+            return
+        }
 
         // Save reference to old player BEFORE changing musicPlayer
         val oldPlayer = musicPlayer

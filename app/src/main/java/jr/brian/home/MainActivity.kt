@@ -34,10 +34,8 @@ import jr.brian.home.esde.setup.ESDESetupHelper
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
-import jr.brian.home.model.PageType
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
-import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.viewmodels.PowerViewModel
 import java.io.File
 import javax.inject.Inject
@@ -83,7 +81,6 @@ class MainActivity : ComponentActivity() {
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
-                    val pageTypeManager = LocalPageTypeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
@@ -93,12 +90,7 @@ class MainActivity : ComponentActivity() {
                     var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
                     var dockTopY by remember { mutableStateOf<Float?>(null) }
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
-                    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
-                    val isAppDrawerTab =
-                        pageTypes.getOrNull(currentPageIndex) == PageType.APP_DRAWER_TAB
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
-                    val overlayMode =
-                        !isAppDrawerTab && prefsState.isMarqueeOverlayOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
 
                     ObserveESDEViewModel(esdeViewModel)
@@ -118,9 +110,7 @@ class MainActivity : ComponentActivity() {
 
                     ESDEWallpaperContainer(
                         state = wallpaperState,
-                        onMarqueeLongClick = if (overlayMode) {
-                            { triggerMarqueePressShortcut = true }
-                        } else null,
+                        onOpenMarqueeShortcut = { triggerMarqueePressShortcut = true },
                         onWallpaperClick = null,
                         onWallpaperDoubleClick = when {
                             wallpaperState.isScreensaverActive -> {
@@ -135,7 +125,6 @@ class MainActivity : ComponentActivity() {
                         },
                         hideMarquee = shouldHideMarquee || isPoweredOff,
                         pagerScrollProgress = pagerScrollProgress,
-                        overlayMode = overlayMode,
                         currentPageIndex = currentPageIndex,
                         dockTopY = dockTopY,
                         content = {

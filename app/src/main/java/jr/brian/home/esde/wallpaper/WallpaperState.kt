@@ -21,6 +21,8 @@ data class WallpaperState(
     val backgroundColor: Color = Color.Black,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
+    val logoOffsetX: Float = 0f,
+    val logoOffsetY: Float = 0f,
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val isScreensaverActive: Boolean = false,
