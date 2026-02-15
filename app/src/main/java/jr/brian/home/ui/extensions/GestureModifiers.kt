@@ -10,6 +10,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 
 /**
@@ -69,3 +71,35 @@ fun Modifier.pagerFriendlyClickableSimple(
     indication = null,
     interactionSource = remember { MutableInteractionSource() }
 )
+
+/**
+ * A modifier that detects press/release events and triggers haptic feedback on press.
+ * Use this with [onPressScaleAndOffset] for consistent press animations across the app.
+ *
+ * @param keys Optional key(s) to trigger recomposition of the pointer input
+ * @param haptic The haptic feedback instance from LocalHapticFeedback.current
+ * @param onPressChange Callback to update the pressed state (true on press, false on release)
+ * @param onClick Optional callback when the press is released (finger lifted)
+ */
+fun Modifier.pressWithHaptic(
+    vararg keys: Any?,
+    haptic: HapticFeedback,
+    onPressChange: (Boolean) -> Unit,
+    onClick: (() -> Unit)? = null
+): Modifier = this.pointerInput(keys) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            when {
+                event.changes.any { it.pressed } && !event.changes.all { it.previousPressed } -> {
+                    onPressChange(true)
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+                event.changes.none { it.pressed } && event.changes.any { it.previousPressed } -> {
+                    onPressChange(false)
+                    onClick?.invoke()
+                }
+            }
+        }
+    }
+}

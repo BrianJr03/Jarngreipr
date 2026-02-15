@@ -111,6 +111,26 @@ fun LogoAlignmentSelector(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Free Position row
+        LogoAlignmentChip(
+            alignment = LogoAlignment.FreePosition,
+            isSelected = selectedAlignment == LogoAlignment.FreePosition,
+            onClick = { onAlignmentSelected(LogoAlignment.FreePosition) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Show hint when Free Position is selected
+        if (selectedAlignment == LogoAlignment.FreePosition) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.esde_settings_logo_alignment_free_hint),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 12.sp
+            )
+        }
     }
 }
 
@@ -131,6 +151,7 @@ private fun LogoAlignmentChip(
         LogoAlignment.BottomLeft -> stringResource(R.string.esde_settings_logo_alignment_bottom_left)
         LogoAlignment.Bottom -> stringResource(R.string.esde_settings_logo_alignment_bottom)
         LogoAlignment.BottomRight -> stringResource(R.string.esde_settings_logo_alignment_bottom_right)
+        LogoAlignment.FreePosition -> stringResource(R.string.esde_settings_logo_alignment_free)
     }
 
     Box(

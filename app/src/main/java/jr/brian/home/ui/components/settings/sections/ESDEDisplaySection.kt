@@ -330,8 +330,8 @@ fun ESDESettingsContent(
                 onToggleMarqueePageVisibility = { pageIndex ->
                     preferencesManager.toggleMarqueePageVisibility(pageIndex)
                 },
-                onToggleMarqueeOverlayPage = { pageIndex ->
-                    preferencesManager.toggleMarqueeOverlayPage(pageIndex)
+                onToggleDescriptionOverlayPage = { pageIndex ->
+                    preferencesManager.toggleDescriptionOverlayPage(pageIndex)
                 },
                 onShowMarqueeForSystemChange = { show ->
                     preferencesManager.setShowMarqueeForSystem(show)

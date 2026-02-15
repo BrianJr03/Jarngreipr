@@ -20,17 +20,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.settings.AppName
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import kotlin.math.roundToInt
@@ -56,13 +60,18 @@ fun FreePositionedAppItem(
     customIconManager: CustomIconManager? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     var currentOffsetX by remember(offsetX) { mutableStateOf(offsetX) }
     var currentOffsetY by remember(offsetY) { mutableStateOf(offsetY) }
 
     Box(
         modifier = Modifier
             .offset { IntOffset(currentOffsetX.roundToInt(), currentOffsetY.roundToInt()) }
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box {
@@ -105,6 +114,11 @@ fun FreePositionedAppItem(
                             } else {
                                 Modifier
                             }
+                        )
+                        .pressWithHaptic(
+                            onClick, onDoubleClick, onLongClick,
+                            haptic = haptic,
+                            onPressChange = { isPressed = it }
                         )
                         .combinedClickable(
                             onClick = onClick,

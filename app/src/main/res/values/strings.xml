@@ -223,19 +223,19 @@
     <string name="shortcut_no_app">@string/common_no_app_selected</string>
 
     <!-- Marquee Press Shortcut -->
-    <string name="marquee_press_shortcut_screen_title">Marquee Long Press Shortcut</string>
-    <string name="marquee_press_shortcut_screen_description">Select what happens when you long press the marquee</string>
-    <string name="esde_settings_marquee_press_shortcut">Marquee Long Press Shortcut</string>
-    <string name="esde_settings_marquee_press_shortcut_description">Choose an action when the marquee is long pressed</string>
+    <string name="marquee_press_shortcut_screen_title">Marquee Shortcut</string>
+    <string name="marquee_press_shortcut_screen_description">Select what happens when you double tap the marquee</string>
     <string name="esde_settings_marquee_press_shortcut_choose">Choose Shortcut</string>
 
     <!-- Consolidated Marquee Tab Settings -->
     <string name="esde_settings_marquee_tab_settings_title">Marquee Tab Settings</string>
-    <string name="esde_settings_marquee_tab_settings_description">Configure marquee visibility and overlay mode per tab.</string>
+    <string name="esde_settings_marquee_tab_settings_description">Configure marquee visibility and overlay mode per tab</string>
     <string name="esde_settings_marquee_tab_number">Tab %1$d</string>
     <string name="esde_settings_marquee_show_on_tab">Show marquee</string>
     <string name="esde_settings_marquee_overlay_on_tab">Overlay mode</string>
     <string name="esde_settings_marquee_overlay_on_tab_description">Marquee floats over tab content</string>
+    <string name="esde_settings_description_overlay_on_tab">Description overlay</string>
+    <string name="esde_settings_description_overlay_on_tab_description">Show game description as overlay</string>
     
     <!-- Marquee Context Settings -->
     <string name="esde_settings_marquee_show_for_system">Show Marquee for System</string>
@@ -807,6 +807,10 @@
     <string name="esde_settings_logo_alignment_bottom_left">Bottom Left</string>
     <string name="esde_settings_logo_alignment_bottom">@string/common_bottom</string>
     <string name="esde_settings_logo_alignment_bottom_right">Bottom Right</string>
+    <string name="esde_settings_logo_alignment_free">Free Position</string>
+    <string name="esde_settings_logo_alignment_free_hint">Drag the marquee to reposition it</string>
+    <string name="marquee_position_lock">Lock Marquee Position</string>
+    <string name="marquee_position_unlock">Unlock Marquee Position</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
     <string name="esde_settings_logo_size">Logo Size</string>

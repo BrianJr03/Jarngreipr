@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,11 +50,14 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -91,28 +95,40 @@ fun Modifier.focusableSettingCard(
     )
 
 @Composable
-fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        color = ThemePrimaryColor,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 4.dp)
-    )
-}
-
-@Composable
 fun CollapsibleSection(
     title: String,
+    showBorder: Boolean = false,
     initiallyExpanded: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var isExpanded by remember { mutableStateOf(initiallyExpanded) }
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     val rotationAngle by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
         label = "chevron_rotation"
     )
+
+    val border = if (showBorder) Modifier.border(
+        width = if (isFocused || isExpanded) 2.dp else 1.dp,
+        brush = borderBrush(
+            isFocused = true,
+            colors = if (isFocused || isExpanded) {
+                listOf(
+                    ThemePrimaryColor.copy(alpha = 0.8f),
+                    ThemeSecondaryColor.copy(alpha = 0.6f),
+                )
+            } else {
+                listOf(
+                    ThemePrimaryColor.copy(alpha = 0.4f),
+                    ThemeSecondaryColor.copy(alpha = 0.3f),
+                )
+            }
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) else Modifier
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -120,7 +136,8 @@ fun CollapsibleSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
+                .offset(y = pressOffsetY)
+                .scale(pressScale * animatedFocusedScale(isFocused))
                 .background(
                     brush = Brush.linearGradient(
                         colors = if (isFocused || isExpanded) {
@@ -134,25 +151,13 @@ fun CollapsibleSection(
                     ),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .border(
-                    width = if (isFocused || isExpanded) 2.dp else 1.dp,
-                    brush = borderBrush(
-                        isFocused = true,
-                        colors = if (isFocused || isExpanded) {
-                            listOf(
-                                ThemePrimaryColor.copy(alpha = 0.8f),
-                                ThemeSecondaryColor.copy(alpha = 0.6f),
-                            )
-                        } else {
-                            listOf(
-                                ThemePrimaryColor.copy(alpha = 0.4f),
-                                ThemeSecondaryColor.copy(alpha = 0.3f),
-                            )
-                        }
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                )
+                .then(border)
                 .clip(RoundedCornerShape(16.dp))
+                .pressWithHaptic(
+                    { isExpanded = !isExpanded },
+                    haptic = haptic,
+                    onPressChange = { isPressed = it }
+                )
                 .clickable { isExpanded = !isExpanded }
                 .focusable()
                 .onFocusChanged { isFocused = it.isFocused }
@@ -273,11 +278,16 @@ fun ToggleSetting(
     onClick: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
+    val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
+            .offset(y = pressOffsetY)
+            .scale(pressScale * animatedFocusedScale(isFocused))
             .background(
                 brush = Brush.linearGradient(
                     colors = if (isFocused) {
@@ -297,7 +307,12 @@ fun ToggleSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick?.invoke() ?: onCheckedChange(!checked) }
+            .pressWithHaptic(
+                clickAction,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
+            .clickable { clickAction() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp),
@@ -345,11 +360,15 @@ fun PathSetting(
     onClearPath: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(animatedFocusedScale(isFocused))
+            .offset(y = pressOffsetY)
+            .scale(pressScale * animatedFocusedScale(isFocused))
             .background(
                 brush = Brush.linearGradient(
                     colors = if (isFocused) {
@@ -369,6 +388,11 @@ fun PathSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
+            .pressWithHaptic(
+                onSelectPath,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .clickable { onSelectPath() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
@@ -548,7 +572,9 @@ fun MarqueeSizeSetting(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            color = if (width > minWidth) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f),
+                            color = if (width > minWidth) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(
+                                alpha = 0.1f
+                            ),
                             shape = CircleShape
                         )
                 ) {
@@ -575,7 +601,9 @@ fun MarqueeSizeSetting(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            color = if (width < maxWidth) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f),
+                            color = if (width < maxWidth) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(
+                                alpha = 0.1f
+                            ),
                             shape = CircleShape
                         )
                 ) {
@@ -613,7 +641,9 @@ fun MarqueeSizeSetting(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            color = if (height > minHeight) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f),
+                            color = if (height > minHeight) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(
+                                alpha = 0.1f
+                            ),
                             shape = CircleShape
                         )
                 ) {
@@ -640,7 +670,9 @@ fun MarqueeSizeSetting(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            color = if (height < maxHeight) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f),
+                            color = if (height < maxHeight) ThemePrimaryColor.copy(alpha = 0.2f) else Color.Gray.copy(
+                                alpha = 0.1f
+                            ),
                             shape = CircleShape
                         )
                 ) {

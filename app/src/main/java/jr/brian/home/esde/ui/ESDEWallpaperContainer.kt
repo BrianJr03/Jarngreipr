@@ -15,24 +15,30 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -73,12 +79,11 @@ private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/blac
 fun ESDEWallpaperContainer(
     state: WallpaperState,
     modifier: Modifier = Modifier,
-    onMarqueeLongClick: (() -> Unit)? = null,
+    onOpenMarqueeShortcut: (() -> Unit)? = null,
     onWallpaperClick: (() -> Unit)? = null,
     onWallpaperDoubleClick: (() -> Unit)? = null,
     hideMarquee: Boolean = false,
     pagerScrollProgress: Float = 0f,
-    overlayMode: Boolean = true,
     currentPageIndex: Int = 0,
     dockTopY: Float? = null,
     content: @Composable BoxScope.() -> Unit
@@ -104,10 +109,9 @@ fun ESDEWallpaperContainer(
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
 
-    // Show description instead of marquee when Description mode is selected and description is available
-    val showDescription = showEsdeContent &&
-//            prefsState.gameImageType == GameImageType.Description &&
-            state.gameDescription != null
+    // Description overlay is enabled per-page and only as overlay
+    val isDescriptionOverlayEnabled = prefsState.isDescriptionOverlayOnPage(currentPageIndex)
+    val showDescription = showEsdeContent && isDescriptionOverlayEnabled
 
     val marqueeEnabledForContext = if (state.isShowingGameBackground) {
         prefsState.showMarqueeForGame
@@ -115,12 +119,12 @@ fun ESDEWallpaperContainer(
         prefsState.showMarqueeForSystem
     }
 
+    // Marquee can now show alongside description
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
-            !showDescription &&
             marqueeEnabledForContext
 
-    val logoAlignment = when (state.logoAlignment) {
+    val logoAlignment = when (prefsState.logoAlignment) {
         LogoAlignment.TopLeft -> Alignment.TopStart
         LogoAlignment.Top -> Alignment.TopCenter
         LogoAlignment.TopRight -> Alignment.TopEnd
@@ -128,7 +132,12 @@ fun ESDEWallpaperContainer(
         LogoAlignment.BottomLeft -> Alignment.BottomStart
         LogoAlignment.Bottom -> Alignment.BottomCenter
         LogoAlignment.BottomRight -> Alignment.BottomEnd
+        LogoAlignment.FreePosition -> Alignment.Center
     }
+
+    val isFreePosition = prefsState.logoAlignment == LogoAlignment.FreePosition
+    val isMarqueeDraggable = isFreePosition && !prefsState.marqueePositionLocked
+    val useAnimatedMarquee = !prefsState.marqueePositionLocked
 
     Box(
         modifier = modifier
@@ -189,33 +198,44 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showMarquee && !overlayMode) {
+        if (showMarquee && !useAnimatedMarquee) {
             AnimatedMarquee(
                 marqueePath = state.marqueePath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = null,
-                dockTopY = dockTopY
+                openMarqueeShortcut = null,
+                dockTopY = dockTopY,
+                isFreePosition = isFreePosition,
+                isDraggable = isMarqueeDraggable,
+                freeOffsetX = prefsState.logoOffsetX,
+                freeOffsetY = prefsState.logoOffsetY,
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
             )
         }
 
         content()
 
-        if (showMarquee && overlayMode) {
+        if (showMarquee && useAnimatedMarquee) {
             AnimatedMarquee(
                 marqueePath = state.marqueePath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = onMarqueeLongClick,
-                dockTopY = dockTopY
+                openMarqueeShortcut = onOpenMarqueeShortcut,
+                dockTopY = dockTopY,
+                isFreePosition = isFreePosition,
+                isDraggable = isMarqueeDraggable,
+                freeOffsetX = prefsState.logoOffsetX,
+                freeOffsetY = prefsState.logoOffsetY,
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
             )
         }
 
-        if (showDescription /* && state.gameDescription != null */ && !hideMarquee) {
+        val descriptionText = state.gameDescription
+        if (showDescription && !hideMarquee && descriptionText != null) {
             AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(
@@ -235,12 +255,15 @@ fun ESDEWallpaperContainer(
                     animationSpec = tween(durationMillis = 300),
                     transformOrigin = TransformOrigin.Center
                 ),
-                modifier = Modifier.align(logoAlignment)
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 ScrollingDescriptionBox(
-                    description = state.gameDescription,
+                    description = descriptionText,
                     modifier = Modifier
-                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp),
+                        .size(
+                            width = state.marqueeWidth.dp,
+                            height = state.marqueeHeight.dp
+                        ),
                     scrollSpeed = 30f,
                     pauseDurationMs = 3000
                 )
@@ -326,8 +349,13 @@ private fun BoxScope.AnimatedMarquee(
     logoAlignment: Alignment,
     state: WallpaperState,
     pagerScrollProgress: Float,
-    onLongClick: (() -> Unit)?,
-    dockTopY: Float?
+    openMarqueeShortcut: (() -> Unit)?,
+    dockTopY: Float?,
+    isFreePosition: Boolean = false,
+    isDraggable: Boolean = false,
+    freeOffsetX: Float = 0f,
+    freeOffsetY: Float = 0f,
+    onOffsetChange: ((Float, Float) -> Unit)? = null
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -335,29 +363,43 @@ private fun BoxScope.AnimatedMarquee(
     val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
     val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
 
+    var isDragging by remember { mutableStateOf(false) }
+    var dragOffsetX by remember { mutableFloatStateOf(freeOffsetX) }
+    var dragOffsetY by remember { mutableFloatStateOf(freeOffsetY) }
+
+    LaunchedEffect(freeOffsetX, freeOffsetY, isDragging) {
+        if (!isDragging) {
+            dragOffsetX = freeOffsetX
+            dragOffsetY = freeOffsetY
+        }
+    }
+
     BoxWithConstraints(modifier = Modifier.align(Alignment.Center)) {
         val screenHeightPx = with(density) { maxHeight.toPx() }
-        
-        // Calculate vertical offset to center marquee in available space above dock
-        val verticalOffsetDp = if (dockTopY != null) {
-            val availableHeight = dockTopY
-            val centerY = availableHeight / 2f
+        val screenWidthPx = with(density) { maxWidth.toPx() }
+
+        val verticalOffsetDp = if (dockTopY != null && !isFreePosition) {
+            val centerY = dockTopY / 2f
             val marqueeTargetY = when (logoAlignment) {
-                Alignment.TopCenter -> availableHeight * 0.25f
+                Alignment.TopCenter -> dockTopY * 0.25f
                 Alignment.Center -> centerY
-                Alignment.BottomCenter -> availableHeight * 0.75f
+                Alignment.BottomCenter -> dockTopY * 0.75f
                 else -> centerY
             }
             with(density) { (marqueeTargetY - screenHeightPx / 2f).toDp() }
         } else {
             0.dp
         }
-        
-        val finalAlignment = if (dockTopY != null) {
+
+        val finalAlignment = if (dockTopY != null || isFreePosition) {
             Alignment.Center  // Use center as base, then apply offset
         } else {
             logoAlignment
         }
+
+        val freeOffsetXDp = if (isFreePosition) with(density) { dragOffsetX.toDp() } else 0.dp
+        val freeOffsetYDp =
+            if (isFreePosition) with(density) { dragOffsetY.toDp() } else verticalOffsetDp
 
         AnimatedVisibility(
             visible = !hideMarquee,
@@ -380,7 +422,40 @@ private fun BoxScope.AnimatedMarquee(
             ),
             modifier = Modifier
                 .align(finalAlignment)
-                .offset(y = verticalOffsetDp)
+                .offset(
+                    x = freeOffsetXDp,
+                    y = freeOffsetYDp
+                )
+                .then(
+                    if (isDraggable) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                    onOffsetChange?.invoke(dragOffsetX, dragOffsetY)
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    // Constrain to screen bounds
+                                    dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(
+                                        -screenWidthPx / 2f + 50f,
+                                        screenWidthPx / 2f - 50f
+                                    )
+                                    dragOffsetY = (dragOffsetY + dragAmount.y).coerceIn(
+                                        -screenHeightPx / 2f + 50f,
+                                        screenHeightPx / 2f - 50f
+                                    )
+                                }
+                            )
+                        }
+                    } else Modifier
+                )
         ) {
             MarqueeImage(
                 marqueePath = marqueePath,
@@ -393,7 +468,8 @@ private fun BoxScope.AnimatedMarquee(
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
                 animationScale = state.animationScale,
-                onLongClick = onLongClick
+                onClick = if (isFreePosition) openMarqueeShortcut else null,
+                onLongClick = if (!isFreePosition) openMarqueeShortcut else null
             )
         }
     }
@@ -408,6 +484,7 @@ private fun MarqueeImage(
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
     animationScale: Float = 0.9f,
+    onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
     if (marqueePath == null) return
@@ -431,9 +508,15 @@ private fun MarqueeImage(
         animationScale = animationScale
     )
 
+    val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
 
     AsyncImage(
         model = ImageRequest.Builder(context)
@@ -443,13 +526,11 @@ private fun MarqueeImage(
         contentDescription = "System/game logo",
         modifier = modifier
             .run { with(animationState) { animatedGraphicsLayer() } }
-            .scale(pressScale)
-            .offset(y = offsetY)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = {},
-                onDoubleClick = {},
+                onDoubleClick = { onClick?.invoke() },
                 onLongClick = { onLongClick?.invoke() }
             ),
         contentScale = ContentScale.Fit
@@ -465,7 +546,7 @@ private fun VideoBackground(
     backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
 ) {
     val context = LocalContext.current
-    
+
     val videoUri = remember(videoPath) {
         when {
             videoPath.startsWith("content://") -> videoPath.toUri()
