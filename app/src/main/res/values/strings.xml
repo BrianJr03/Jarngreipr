@@ -826,6 +826,10 @@
     <string name="esde_settings_logo_width">Width</string>
     <string name="esde_settings_logo_height">Height</string>
     <string name="esde_settings_logo_size_reset">@string/common_reset</string>
+    <string name="esde_settings_marquee_min_width">Marquee Minimum Width</string>
+    <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait marquee images</string>
+    <string name="esde_settings_android_games_bg_scale">Android Games Background Scale</string>
+    <string name="esde_settings_android_games_bg_scale_description">Size of game artwork for Android Games platform</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>

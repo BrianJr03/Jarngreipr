@@ -67,6 +67,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -230,7 +232,9 @@ class ESDEPreferencesManager(context: Context) {
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
             excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false),
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
-            marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false)
+            marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
+            androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
+            marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f)
         )
     }
 
@@ -568,5 +572,17 @@ class ESDEPreferencesManager(context: Context) {
 
     fun toggleMarqueePositionLocked() {
         setMarqueePositionLocked(!_state.value.marqueePositionLocked)
+    }
+
+    fun setAndroidGamesBackgroundScale(scale: Float) {
+        val coercedScale = scale.coerceIn(0.2f, 1.0f)
+        _state.value = _state.value.copy(androidGamesBackgroundScale = coercedScale)
+        prefs.edit { putFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, coercedScale) }
+    }
+
+    fun setMarqueeMinWidthPercent(percent: Float) {
+        val coercedPercent = percent.coerceIn(0.3f, 1.0f)
+        _state.value = _state.value.copy(marqueeMinWidthPercent = coercedPercent)
+        prefs.edit { putFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, coercedPercent) }
     }
 }

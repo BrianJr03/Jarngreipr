@@ -170,7 +170,11 @@ data class ESDEPrefsState(
     
     val hideUIForGameBrowsing: Boolean = false,
     
-    val marqueePositionLocked: Boolean = false
+    val marqueePositionLocked: Boolean = false,
+    
+    val androidGamesBackgroundScale: Float = 0.5f,
+    
+    val marqueeMinWidthPercent: Float = 0.5f
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

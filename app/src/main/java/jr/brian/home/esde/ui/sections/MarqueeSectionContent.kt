@@ -19,6 +19,7 @@ import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
 import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
+import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.model.PageType
 import jr.brian.home.model.Shortcut
@@ -35,7 +36,8 @@ fun MarqueeSectionContent(
     onToggleMarqueePageVisibility: (Int) -> Unit,
     onToggleDescriptionOverlayPage: (Int) -> Unit,
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
-    onShowMarqueeForGameChange: (Boolean) -> Unit
+    onShowMarqueeForGameChange: (Boolean) -> Unit,
+    onMarqueeMinWidthPercentChange: (Float) -> Unit
 ) {
     val pageCount = pageTypes.size
 
@@ -57,6 +59,18 @@ fun MarqueeSectionContent(
         onWidthChange = onMarqueeWidthChange,
         onHeightChange = onMarqueeHeightChange,
         onReset = onMarqueeSizeReset
+    )
+
+    SliderSetting(
+        title = stringResource(R.string.esde_settings_marquee_min_width),
+        value = prefsState.marqueeMinWidthPercent,
+        valueRange = 0.3f..1.0f,
+        steps = 6,
+        valueText = "${(prefsState.marqueeMinWidthPercent * 100).toInt()}%",
+        onValueChange = { percent ->
+            onMarqueeMinWidthPercentChange(percent)
+        },
+        description = stringResource(R.string.esde_settings_marquee_min_width_description)
     )
 
     val currentShortcutLabel = when (prefsState.marqueePressShortcut) {

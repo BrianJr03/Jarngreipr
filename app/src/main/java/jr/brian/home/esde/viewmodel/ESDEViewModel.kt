@@ -432,6 +432,7 @@ class ESDEViewModel @Inject constructor(
 
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
+            systemBackgroundVideoPath = null,
             marqueePath = if (shouldShowContent) getGameMarqueePath(
                 systemName,
                 gameFilename
