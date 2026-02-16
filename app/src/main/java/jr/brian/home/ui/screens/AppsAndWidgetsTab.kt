@@ -5,9 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +18,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,10 +51,15 @@ import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.extensions.pagerFriendlyClickable
+import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -66,7 +70,9 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
@@ -86,14 +92,20 @@ fun AppsAndWidgetsTab(
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    navController: NavHostController? = null,
+    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onShowBottomSheet: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
-    navController: NavHostController? = null
+    onDockPositioned: (Float) -> Unit = {},
+    onShowAppDrawer: () -> Unit = {},
+    onScrollStateChanged: (
+        isScrolling: Boolean,
+        hasScrollableContent: Boolean
+    ) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
@@ -101,9 +113,12 @@ fun AppsAndWidgetsTab(
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val tabAnimationManager = LocalTabAnimationManager.current
+    val esdePrefsManager = LocalESDEPreferencesManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
 
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -147,11 +162,29 @@ fun AppsAndWidgetsTab(
 
     val gridState = rememberLazyGridState()
 
+    val hasScrollableContent by remember {
+        derivedStateOf {
+            gridState.canScrollForward || gridState.canScrollBackward
+        }
+    }
+
+    val bottomFlingTrigger = rememberBottomFlingTrigger(
+        gridState = gridState,
+        onFlingAtBottom = onShowAppDrawer
+    )
+
+    val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !drawerOptionsDialogState.isVisible)
+    val isPressedState = remember { mutableStateOf(false) }
+    val (pressScale, offsetY) = onPressScaleAndOffset(
+        isTabAnimationEnabled && isPressedState.value && !drawerOptionsDialogState.isVisible
+    )
 
     var isScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isScrolling, hasScrollableContent) {
+        onScrollStateChanged(isScrolling, hasScrollableContent)
+    }
 
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.isScrollInProgress }
@@ -160,7 +193,7 @@ fun AppsAndWidgetsTab(
                 if (scrolling) {
                     isScrolling = true
                 } else {
-                    delay(300) // Wait 300ms after scrolling stops
+                    delay(300)
                     isScrolling = false
                 }
             }
@@ -171,6 +204,7 @@ fun AppsAndWidgetsTab(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .nestedScroll(bottomFlingTrigger)
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -185,15 +219,19 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = {},
-                onDoubleClick = {
-                    powerViewModel.togglePower()
-                },
-                onLongClick = {
-                    drawerOptionsDialogState.show()
+            .then(
+                if (isTabAnimationEnabled) {
+                    Modifier.pagerFriendlyClickable(
+                        interactionSource = interactionSource,
+                        isPressedState = isPressedState,
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
+                } else {
+                    Modifier.pagerFriendlyClickableSimple(
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
                 }
             )
     ) {
@@ -258,7 +296,8 @@ fun AppsAndWidgetsTab(
             AppDock(
                 apps = allApps,
                 onAppClick = { app ->
-                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val displayPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     launchApp(
                         context = context,
                         packageName = app.packageName,
@@ -278,9 +317,11 @@ fun AppsAndWidgetsTab(
                 },
                 onEmptySlotLongClick = { position ->
                     dockManager.removeEmptySlot(position)
-                }
+                },
+                onDockPositioned = onDockPositioned
             )
         }
+
     }
 
     dockAppSelectionDialogState.item?.let { position ->
@@ -304,6 +345,7 @@ fun AppsAndWidgetsTab(
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
 
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
@@ -321,7 +363,11 @@ fun AppsAndWidgetsTab(
                 viewModel.toggleEditMode(pageIndex)
             },
             isEditModeActive = editModeEnabled,
-            isEmpty = isTabEmpty
+            isEmpty = isTabEmpty,
+            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = if (isEsdeMode) {
+                { esdePrefsManager.toggleMarqueePositionLocked() }
+            } else null
         )
     }
 

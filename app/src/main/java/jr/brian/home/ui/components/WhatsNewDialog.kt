@@ -9,13 +9,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import jr.brian.home.R
+import jr.brian.home.ui.components.dialog.DimmedDialog
 
 @Composable
 fun WhatsNewDialog(
@@ -23,7 +25,7 @@ fun WhatsNewDialog(
     patchNotes: String,
     onDismiss: () -> Unit
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
@@ -51,12 +53,12 @@ fun WhatsNewDialog(
                 ) {
                     Column {
                         Text(
-                            text = "What's New",
+                            text = stringResource(R.string.whats_new_title),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Version $versionName",
+                            text = stringResource(R.string.whats_new_version, versionName),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -64,7 +66,7 @@ fun WhatsNewDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.whats_new_close),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -100,7 +102,7 @@ fun WhatsNewDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Got it!")
+                    Text(stringResource(R.string.whats_new_got_it))
                 }
             }
         }

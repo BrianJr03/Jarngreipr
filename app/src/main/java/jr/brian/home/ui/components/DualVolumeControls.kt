@@ -89,6 +89,12 @@ fun DualVolumeControls(
     }
 
     DisposableEffect(context) {
+        val primaryVolumeObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                primaryVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()
+            }
+        }
+        
         val secondaryVolumeObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
                 try {
@@ -104,6 +110,11 @@ fun DualVolumeControls(
 
         try {
             context.contentResolver.registerContentObserver(
+                Settings.System.CONTENT_URI,
+                true,
+                primaryVolumeObserver
+            )
+            context.contentResolver.registerContentObserver(
                 Settings.Global.getUriFor("secondary_screen_volume_level"),
                 false,
                 secondaryVolumeObserver
@@ -114,6 +125,7 @@ fun DualVolumeControls(
 
         onDispose {
             try {
+                context.contentResolver.unregisterContentObserver(primaryVolumeObserver)
                 context.contentResolver.unregisterContentObserver(secondaryVolumeObserver)
             } catch (e: Exception) {
                 Log.e("DualVolumeControls", "Failed to unregister volume observer", e)
@@ -176,7 +188,8 @@ fun VolumeSlider(
     volume: Float,
     maxVolume: Float,
     onVolumeChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null
 ) {
     var tempVolume by remember(volume) { mutableFloatStateOf(volume) }
     
@@ -197,11 +210,15 @@ fun VolumeSlider(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.VolumeDown,
-                contentDescription = stringResource(R.string.volume_down_description),
-                tint = Color.DarkGray
-            )
+            if (leadingIcon != null) {
+                leadingIcon()
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.VolumeDown,
+                    contentDescription = stringResource(R.string.volume_down_description),
+                    tint = Color.DarkGray
+                )
+            }
             
             Spacer(modifier = Modifier.width(8.dp))
             
@@ -215,9 +232,9 @@ fun VolumeSlider(
                 steps = if (maxVolume.toInt() > 1) maxVolume.toInt() - 1 else 0,
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
-                    thumbColor = Color.Gray,
-                    activeTrackColor = Color.Gray,
-                    inactiveTrackColor = Color.DarkGray
+                    thumbColor = Color.DarkGray,
+                    activeTrackColor = Color.DarkGray,
+                    inactiveTrackColor = Color.DarkGray.copy(alpha = 0.5f)
                 )
             )
             

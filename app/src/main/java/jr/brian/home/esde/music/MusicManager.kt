@@ -1,26 +1,22 @@
 package jr.brian.home.esde.music
 
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.MusicVideoBehavior
+import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import java.io.File
 
 /**
- * ═══════════════════════════════════════════════════════════
- * MUSIC MANAGER
- * ═══════════════════════════════════════════════════════════
  * Manages background music playback for ES-DE integration.
- *
- * FEATURES:
- * - State-based music playback (system/game/screensaver)
- * - System-specific music support with fallback to generic
- * - Cross-fade transitions between sources
- * - Video ducking/pausing behavior
- * - Playlist management with shuffle
- * - Lifecycle-aware playback (activity visibility)
- *
+ */
+/*
  * MUSIC FOLDER STRUCTURE:
  * /storage/emulated/0/ES-DE Jarngreipr/music/
  *   ├── song1.mp3 (generic music)
@@ -30,70 +26,99 @@ import java.io.File
  *       │   ├── snes-theme.mp3
  *       │   └── snes-battle.ogg
  *       └── arcade/
- *           └── arcade-music.mp3
- * ═══════════════════════════════════════════════════════════
- */
+ *           └── arcade-music.mp3*/
 class MusicManager(
+    context: Context,
     private val prefsManager: ESDEPreferencesManager
 ) : MusicController {
 
     companion object {
         private const val TAG = "MusicManager"
-
         private const val DEFAULT_MUSIC_PATH = "/storage/emulated/0/ES-DE Jarngreipr/music"
         private val AUDIO_EXTENSIONS = listOf("mp3", "ogg", "flac", "m4a", "wav", "aac")
-
         private const val CROSS_FADE_DURATION = 300L
         private const val DUCK_FADE_DURATION = 300L
-
-        private const val NORMAL_VOLUME = 1.0f
         private const val DUCKED_VOLUME = 0.2f
     }
 
-    // ========== PLAYBACK STATE ==========
+    private fun getNormalVolume(): Float {
+        return prefsManager.state.value.musicVolumeFloat
+    }
 
     private var musicPlayer: MediaPlayer? = null
     private var currentMusicSource: MusicSource? = null
     private var currentPlaylist: List<File> = emptyList()
     private var currentTrackIndex: Int = 0
-    private var currentVolume: Float = NORMAL_VOLUME
-    private var targetVolume: Float = NORMAL_VOLUME
-
-    // Video interaction state
+    private var currentVolume: Float = getNormalVolume()
+    private var targetVolume: Float = getNormalVolume()
     private var isMusicDucked: Boolean = false
     private var wasMusicPausedForVideo: Boolean = false
-
-    // Handler for volume fades and track transitions
     private val handler = Handler(Looper.getMainLooper())
     private var volumeFadeRunnable: Runnable? = null
-
-    // Track the last system state to detect source changes
     private var lastSystemName: String? = null
     private var isInGameBrowsing: Boolean = false
-
-    // Track if music is actually playing (stopped during GamePlaying)
     private var isMusicPlaying: Boolean = false
-
-    // Track if activity is visible (onStart/onStop lifecycle)
     private var isActivityVisible: Boolean = true
-    // Track if music was playing before becoming invisible
     private var wasMusicPlayingBeforeInvisible: Boolean = false
+    private var wasMusicPlayingBeforeGame: Boolean = false
+    private val audioManager: AudioManager =
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var hasAudioFocus: Boolean = false
+    private var wasPausedByAudioFocusLoss: Boolean = false
+
+    private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        android.util.Log.d(TAG, "Audio focus changed: $focusChange")
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                // Permanent loss - another app took audio focus
+                android.util.Log.d(TAG, "Audio focus lost permanently (another app playing)")
+                hasAudioFocus = false
+                if (musicPlayer?.isPlaying == true) {
+                    wasPausedByAudioFocusLoss = true
+                    pauseMusic()
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Temporary loss - pause playback
+                android.util.Log.d(TAG, "Audio focus lost temporarily")
+                if (musicPlayer?.isPlaying == true) {
+                    wasPausedByAudioFocusLoss = true
+                    pauseMusic()
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                // Can duck - lower volume temporarily
+                android.util.Log.d(TAG, "Audio focus - can duck")
+                if (!isMusicDucked && musicPlayer?.isPlaying == true) {
+                    duckMusic()
+                }
+            }
+
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                // Regained focus
+                android.util.Log.d(TAG, "Audio focus gained")
+                hasAudioFocus = true
+                if (wasPausedByAudioFocusLoss && isMusicEnabled()) {
+                    resumeMusic()
+                    wasPausedByAudioFocusLoss = false
+                } else if (isMusicDucked) {
+                    restoreMusicVolume()
+                }
+            }
+        }
+    }
 
     init {
         android.util.Log.d(TAG, "MusicManager initialized")
         android.util.Log.d(TAG, "Base music path: ${getMusicPath()}")
     }
 
-    // ========== PATH MANAGEMENT ==========
-
-    /**
-     * Get the music path from preferences, or use default.
-     */
     private fun getMusicPath(): String {
         return prefsManager.state.value.musicPath ?: DEFAULT_MUSIC_PATH
     }
-
-    // ========== MUSICCONTROLLER INTERFACE IMPLEMENTATION ==========
 
     override fun onSystemChanged(systemName: String?) {
         android.util.Log.d(TAG, "━━━ SYSTEM CHANGED: $systemName ━━━")
@@ -113,7 +138,6 @@ class MusicManager(
             return
         }
 
-        // Check if system music is enabled
         if (!prefsManager.state.value.musicSystemEnabled) {
             android.util.Log.d(TAG, "System music disabled")
             stopMusic()
@@ -122,13 +146,14 @@ class MusicManager(
             return
         }
 
-        val requestedSource = if (!systemName.isNullOrEmpty()) {
+        val useSystemSpecific = prefsManager.state.value.musicUseSystemSpecific
+
+        val requestedSource = if (useSystemSpecific && !systemName.isNullOrEmpty()) {
             MusicSource.System(systemName)
         } else {
             MusicSource.Generic
         }
 
-        // Resolve actual source after fallback
         val actualSource = resolveActualSource(requestedSource)
 
         if (actualSource == null) {
@@ -139,8 +164,10 @@ class MusicManager(
             return
         }
 
-        // Determine if cross-fade needed
-        val needsCrossFade = shouldCrossFade(currentMusicSource, actualSource, lastSystemName, systemName)
+        val needsCrossFade = shouldCrossFade(
+            currentMusicSource,
+            actualSource
+        )
 
         if (needsCrossFade) {
             crossFadeToSource(actualSource)
@@ -170,7 +197,6 @@ class MusicManager(
             return
         }
 
-        // Check if game music is enabled
         if (!prefsManager.state.value.musicGameEnabled) {
             android.util.Log.d(TAG, "Game music disabled")
             stopMusic()
@@ -178,8 +204,13 @@ class MusicManager(
             return
         }
 
-        // Use system-specific music for game browsing (same as system browsing)
-        val requestedSource = MusicSource.System(systemName)
+        val useSystemSpecific = prefsManager.state.value.musicUseSystemSpecific
+
+        val requestedSource = if (useSystemSpecific) {
+            MusicSource.System(systemName)
+        } else {
+            MusicSource.Generic
+        }
         val actualSource = resolveActualSource(requestedSource)
 
         if (actualSource == null) {
@@ -189,7 +220,6 @@ class MusicManager(
             return
         }
 
-        // Don't cross-fade if we're already playing from this source
         val needsCrossFade = currentMusicSource != actualSource
 
         if (needsCrossFade) {
@@ -203,30 +233,33 @@ class MusicManager(
 
     override fun onGameStarted() {
         android.util.Log.d(TAG, "━━━ GAME STARTED ━━━")
-        // Always stop music during gameplay regardless of settings
+        wasMusicPlayingBeforeGame = isMusicPlaying
         stopMusic()
-        isInGameBrowsing = false
     }
 
     override fun onGameEnded() {
         android.util.Log.d(TAG, "━━━ GAME ENDED ━━━")
 
-        // Resume music based on last known state
+        if (!wasMusicPlayingBeforeGame) {
+            wasMusicPlayingBeforeGame = false
+            return
+        }
+
         if (isMusicEnabled() && isActivityVisible) {
             if (isInGameBrowsing && prefsManager.state.value.musicGameEnabled) {
-                // Resume game browsing music
                 lastSystemName?.let { systemName ->
                     val source = resolveActualSource(MusicSource.System(systemName))
                     source?.let { startMusic(it) }
                 }
             } else if (prefsManager.state.value.musicSystemEnabled) {
-                // Resume system browsing music
                 lastSystemName?.let { systemName ->
                     val source = resolveActualSource(MusicSource.System(systemName))
                     source?.let { startMusic(it) }
                 }
             }
         }
+
+        wasMusicPlayingBeforeGame = false
     }
 
     override fun onScreensaverStarted() {
@@ -278,9 +311,11 @@ class MusicManager(
                 // Do nothing - music stays at 100%
                 android.util.Log.d(TAG, "Continuing music at full volume")
             }
+
             MusicVideoBehavior.Duck -> {
                 duckMusic()
             }
+
             MusicVideoBehavior.Pause -> {
                 pauseMusicForVideo()
             }
@@ -356,6 +391,9 @@ class MusicManager(
         currentMusicSource = null
         currentPlaylist = emptyList()
         isMusicPlaying = false
+
+        // Abandon audio focus
+        abandonAudioFocus()
     }
 
     override fun pauseMusic() {
@@ -373,7 +411,7 @@ class MusicManager(
                 android.util.Log.d(TAG, "Resuming music via user control")
                 player.start()
                 // Ensure volume is at normal level
-                fadeVolume(currentVolume, NORMAL_VOLUME, DUCK_FADE_DURATION)
+                fadeVolume(currentVolume, getNormalVolume(), DUCK_FADE_DURATION)
             }
         }
     }
@@ -392,19 +430,47 @@ class MusicManager(
         return try {
             // If player exists and is NOT playing, it's paused
             !player.isPlaying
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             // Player was released
             false
         }
     }
 
-    // ========== PRIVATE PLAYBACK METHODS ==========
+    override fun isOtherAudioPlaying(): Boolean {
+        // If we're already playing, no other audio is interrupting us
+        if (musicPlayer?.isPlaying == true) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: false (we are playing)")
+            return false
+        }
 
-    /**
-     * Start playing music from a new source.
-     */
+        // If we were paused because another app took audio focus, they're still playing
+        if (wasPausedByAudioFocusLoss) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: true (we lost focus to another app)")
+            return true
+        }
+
+        // If we have audio focus, we own the audio stream - safe to play
+        if (hasAudioFocus) {
+            android.util.Log.d(TAG, "isOtherAudioPlaying: false (we have focus)")
+            return false
+        }
+
+        // We don't have focus and weren't paused by focus loss - safe to start fresh
+        android.util.Log.d(TAG, "isOtherAudioPlaying: false (no focus conflict)")
+        return false
+    }
+
     private fun startMusic(source: MusicSource) {
         android.util.Log.d(TAG, "Starting music from source: $source")
+
+        // Check if another app is already playing audio (e.g., YouTube Music, Spotify)
+        if (isOtherAudioPlaying()) {
+            android.util.Log.d(
+                TAG,
+                "Other audio is playing - skipping music start to avoid interruption"
+            )
+            return
+        }
 
         // Load playlist for this source
         val playlist = loadPlaylist(source)
@@ -422,7 +488,7 @@ class MusicManager(
         currentTrackIndex = 0
 
         // Reset volume state for new playback
-        targetVolume = NORMAL_VOLUME
+        targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
 
@@ -431,9 +497,6 @@ class MusicManager(
         isMusicPlaying = true
     }
 
-    /**
-     * Stop all music playback.
-     */
     private fun stopMusic() {
         if (musicPlayer == null) {
             return
@@ -451,18 +514,30 @@ class MusicManager(
             isMusicDucked = false
             wasMusicPausedForVideo = false
             isMusicPlaying = false
-            targetVolume = NORMAL_VOLUME
+            targetVolume = getNormalVolume()
+            abandonAudioFocus()
         }
     }
 
-    /**
-     * Cross-fade from current source to a new source.
-     */
     private fun crossFadeToSource(newSource: MusicSource) {
         android.util.Log.d(TAG, "Cross-fading to source: $newSource")
 
+        // Check if another app is already playing audio (e.g., YouTube Music, Spotify)
+        // Only check if we're not currently playing (i.e., this is a fresh start, not a source change)
+        if (musicPlayer?.isPlaying != true && isOtherAudioPlaying()) {
+            android.util.Log.d(
+                TAG,
+                "Other audio is playing - skipping cross-fade to avoid interruption"
+            )
+            return
+        }
+
         // Save reference to old player BEFORE changing musicPlayer
         val oldPlayer = musicPlayer
+
+        // IMPORTANT: Clear musicPlayer reference so playTrack() doesn't release it
+        // The old player will be faded out and released independently below
+        musicPlayer = null
 
         // Load new playlist
         val newPlaylist = loadPlaylist(newSource)
@@ -479,7 +554,7 @@ class MusicManager(
 
         // Reset volume state for new playback - start from silence
         currentVolume = 0f
-        targetVolume = NORMAL_VOLUME
+        targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
 
@@ -503,7 +578,7 @@ class MusicManager(
                             oldPlayer.setVolume(oldPlayerVolume, oldPlayerVolume)
                             currentStep++
                             handler.postDelayed(this, 50)
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             android.util.Log.d(TAG, "Old player already released")
                         }
                     } else {
@@ -534,11 +609,45 @@ class MusicManager(
         isMusicPlaying = true
     }
 
-    /**
-     * Play a specific audio track.
-     */
+    private fun requestAudioFocus(): Boolean {
+        if (hasAudioFocus) return true
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+
+        audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(audioAttributes)
+            .setOnAudioFocusChangeListener(audioFocusChangeListener, handler)
+            .build()
+
+        val result = audioManager.requestAudioFocus(audioFocusRequest!!)
+        hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        android.util.Log.d(TAG, "Audio focus request result: $hasAudioFocus")
+
+        return hasAudioFocus
+    }
+
+    private fun abandonAudioFocus() {
+        if (!hasAudioFocus) return
+
+        audioFocusRequest?.let {
+            audioManager.abandonAudioFocusRequest(it)
+        }
+
+        hasAudioFocus = false
+        android.util.Log.d(TAG, "Audio focus abandoned")
+    }
+
     private fun playTrack(file: File) {
         android.util.Log.d(TAG, "Playing track: ${file.name}")
+
+        // Request audio focus before playing
+        if (!requestAudioFocus()) {
+            android.util.Log.w(TAG, "Failed to gain audio focus, not playing track")
+            return
+        }
 
         try {
             // Release old player
@@ -555,11 +664,14 @@ class MusicManager(
                 }
                 setOnCompletionListener {
                     android.util.Log.d(TAG, "Track completed, playing next")
-                    playNextTrack()
+                    // IMPORTANT: Post to handler to avoid calling release() from within callback
+                    // Releasing a MediaPlayer from its own callback can cause undefined behavior
+                    handler.post { playNextTrack() }
                 }
                 setOnErrorListener { _, what, extra ->
                     android.util.Log.e(TAG, "MediaPlayer error: what=$what, extra=$extra")
-                    playNextTrack() // Skip to next track on error
+                    // IMPORTANT: Post to handler to avoid calling release() from within callback
+                    handler.post { playNextTrack() }
                     true
                 }
                 prepareAsync()
@@ -567,49 +679,52 @@ class MusicManager(
 
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error playing track: ${file.name}", e)
-            playNextTrack()
+            // Post to handler to avoid potential recursive issues
+            handler.post { playNextTrack() }
         }
     }
 
-    /**
-     * Play the next track in the playlist.
-     */
     private fun playNextTrack() {
         if (currentPlaylist.isEmpty()) {
             android.util.Log.d(TAG, "No playlist loaded")
             return
         }
 
-        // Move to next track (loop back to start if at end)
-        currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.size
-        android.util.Log.d(TAG, "Next track index: $currentTrackIndex / ${currentPlaylist.size}")
+        val loopEnabled = prefsManager.state.value.musicLoopEnabled
+        val nextIndex = currentTrackIndex + 1
 
-        playTrack(currentPlaylist[currentTrackIndex])
+        if (nextIndex >= currentPlaylist.size) {
+            if (loopEnabled) {
+                currentTrackIndex = 0
+                android.util.Log.d(TAG, "Looping back to first track")
+                playTrack(currentPlaylist[currentTrackIndex])
+            } else {
+                android.util.Log.d(TAG, "Playlist finished, not looping")
+                stopMusic()
+            }
+        } else {
+            currentTrackIndex = nextIndex
+            android.util.Log.d(
+                TAG,
+                "Next track index: $currentTrackIndex / ${currentPlaylist.size}"
+            )
+            playTrack(currentPlaylist[currentTrackIndex])
+        }
     }
 
-    // ========== VOLUME CONTROL ==========
-
-    /**
-     * Duck music volume for video playback.
-     */
     private fun duckMusic() {
         android.util.Log.d(TAG, "Ducking music to ${DUCKED_VOLUME * 100}%")
         isMusicDucked = true
         fadeVolume(currentVolume, DUCKED_VOLUME, DUCK_FADE_DURATION)
     }
 
-    /**
-     * Restore music volume after video ends.
-     */
     private fun restoreMusicVolume() {
-        android.util.Log.d(TAG, "Restoring music to ${NORMAL_VOLUME * 100}%")
+        val normalVolume = getNormalVolume()
+        android.util.Log.d(TAG, "Restoring music to ${normalVolume * 100}%")
         isMusicDucked = false
-        fadeVolume(currentVolume, NORMAL_VOLUME, DUCK_FADE_DURATION)
+        fadeVolume(currentVolume, normalVolume, DUCK_FADE_DURATION)
     }
 
-    /**
-     * Pause music for video playback.
-     */
     private fun pauseMusicForVideo() {
         android.util.Log.d(TAG, "Pausing music for video")
         wasMusicPausedForVideo = true
@@ -620,20 +735,32 @@ class MusicManager(
         }
     }
 
-    /**
-     * Resume music after video ends.
-     */
     private fun resumeMusicFromVideo() {
         android.util.Log.d(TAG, "Resuming music after video")
         wasMusicPausedForVideo = false
 
         musicPlayer?.start()
-        fadeVolume(0f, NORMAL_VOLUME, DUCK_FADE_DURATION)
+        fadeVolume(0f, getNormalVolume(), DUCK_FADE_DURATION)
     }
 
-    /**
-     * Smoothly fade volume from one level to another.
-     */
+    override fun setVolume(volume: Float) {
+        val clampedVolume = volume.coerceIn(0f, 1f)
+        android.util.Log.d(TAG, "Setting volume to ${clampedVolume * 100}%")
+
+        // Cancel any existing fade that would override this manual volume setting
+        volumeFadeRunnable?.let { handler.removeCallbacks(it) }
+        volumeFadeRunnable = null
+
+        targetVolume = clampedVolume
+        currentVolume = clampedVolume
+
+        try {
+            musicPlayer?.setVolume(clampedVolume, clampedVolume)
+        } catch (_: IllegalStateException) {
+            android.util.Log.w(TAG, "Could not set volume - player released")
+        }
+    }
+
     private fun fadeVolume(
         fromVolume: Float,
         toVolume: Float,
@@ -653,7 +780,7 @@ class MusicManager(
             if (player.isPlaying || !player.isPlaying) { // Triggers IllegalStateException if released
                 player.setVolume(fromVolume, fromVolume)
             }
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             android.util.Log.w(TAG, "Player already released, canceling fade")
             return
         }
@@ -680,7 +807,7 @@ class MusicManager(
                             onComplete?.invoke()
                         }
                     }
-                } catch (e: IllegalStateException) {
+                } catch (_: IllegalStateException) {
                     // Player was released during fade - this is normal during cross-fades
                     android.util.Log.d(TAG, "Fade canceled: player was released")
                 }
@@ -690,58 +817,97 @@ class MusicManager(
         handler.post(volumeFadeRunnable!!)
     }
 
-    // ========== PLAYLIST MANAGEMENT ==========
 
-    /**
-     * Load all audio files from a music source.
-     * Scans recursively through all subdirectories.
-     */
     private fun loadPlaylist(source: MusicSource): List<File> {
-        val sourcePath = source.getPath(getMusicPath())
+        val baseMusicPath = getMusicPath()
+
+        if (source is MusicSource.System) {
+            val systemName = source.systemName
+            val normalizedSystemName = getMediaSystemName(systemName)
+            val systemNamesToTry = listOf(systemName, normalizedSystemName).distinct()
+
+            for (name in systemNamesToTry) {
+                val flatFiles = findFlatSystemAudioFiles(baseMusicPath, name)
+                if (flatFiles.isNotEmpty()) {
+                    android.util.Log.d(TAG, "Found ${flatFiles.size} flat audio files for $name")
+                    return flatFiles.shuffled()
+                }
+            }
+
+            for (name in systemNamesToTry) {
+                val sourcePath = "$baseMusicPath/systems/$name"
+                val sourceDir = File(sourcePath)
+
+                android.util.Log.d(TAG, "Loading playlist from: $sourcePath")
+
+                if (sourceDir.exists() && sourceDir.isDirectory) {
+                    val audioFiles =
+                        scanAudioFilesRecursively(sourceDir, excludeSystemsFolder = false)
+                    if (audioFiles.isNotEmpty()) {
+                        val sortedFiles = audioFiles.sortedBy { it.absolutePath }
+                        val shuffledFiles = sortedFiles.shuffled()
+                        android.util.Log.d(TAG, "Found ${shuffledFiles.size} audio files in $name")
+                        return shuffledFiles
+                    }
+                }
+            }
+
+            android.util.Log.d(
+                TAG,
+                "System music not found for: $systemName, falling back to generic"
+            )
+            return loadPlaylist(MusicSource.Generic)
+        }
+
+        val sourcePath = source.getPath(baseMusicPath)
         val sourceDir = File(sourcePath)
 
         android.util.Log.d(TAG, "Loading playlist from: $sourcePath")
 
         if (!sourceDir.exists() || !sourceDir.isDirectory) {
             android.util.Log.d(TAG, "Music directory does not exist: $sourcePath")
-
-            // If system-specific folder doesn't exist, try generic as fallback
-            if (source is MusicSource.System) {
-                android.util.Log.d(TAG, "System folder not found, falling back to generic")
-                return loadPlaylist(MusicSource.Generic)
-            }
-
             return emptyList()
         }
 
-        // Find all audio files recursively, excluding "systems" subfolder for generic source
-        val audioFiles = scanAudioFilesRecursively(sourceDir, excludeSystemsFolder = (source is MusicSource.Generic))
+        val audioFiles = scanAudioFilesRecursively(
+            sourceDir,
+            excludeSystemsFolder = true
+        )
 
         if (audioFiles.isEmpty()) {
             android.util.Log.d(TAG, "No audio files found in: $sourcePath")
-
-            // If system-specific folder is empty, try generic as fallback
-            if (source is MusicSource.System) {
-                android.util.Log.d(TAG, "System folder empty, falling back to generic")
-                return loadPlaylist(MusicSource.Generic)
-            }
-
             return emptyList()
         }
 
-        // Sort alphabetically then shuffle
         val sortedFiles = audioFiles.sortedBy { it.absolutePath }
         val shuffledFiles = sortedFiles.shuffled()
 
-        android.util.Log.d(TAG, "Found ${shuffledFiles.size} audio files (shuffled)")
 
         return shuffledFiles
     }
 
-    /**
-     * Recursively scan a directory for audio files.
-     */
-    private fun scanAudioFilesRecursively(directory: File, excludeSystemsFolder: Boolean = false): List<File> {
+    private fun findFlatSystemAudioFiles(basePath: String, systemName: String): List<File> {
+        val baseDir = File(basePath)
+        if (!baseDir.exists() || !baseDir.isDirectory) {
+            return emptyList()
+        }
+
+        val audioFiles = mutableListOf<File>()
+
+        for (ext in AUDIO_EXTENSIONS) {
+            val file = File(baseDir, "$systemName.$ext")
+            if (file.exists() && file.isFile) {
+                audioFiles.add(file)
+            }
+        }
+
+        return audioFiles
+    }
+
+    private fun scanAudioFilesRecursively(
+        directory: File,
+        excludeSystemsFolder: Boolean = false
+    ): List<File> {
         val audioFiles = mutableListOf<File>()
         val filesToProcess = mutableListOf(directory)
 
@@ -753,7 +919,10 @@ class MusicManager(
 
             // Skip "systems" folder if this is generic music scan
             if (excludeSystemsFolder && currentDir.name == "systems" && currentDir.parentFile == directory) {
-                android.util.Log.d(TAG, "Skipping systems folder in generic scan: ${currentDir.absolutePath}")
+                android.util.Log.d(
+                    TAG,
+                    "Skipping systems folder in generic scan: ${currentDir.absolutePath}"
+                )
                 continue
             }
 
@@ -765,6 +934,7 @@ class MusicManager(
                         // Audio file found - add to list
                         audioFiles.add(file)
                     }
+
                     file.isDirectory -> {
                         // Subdirectory found - add to processing queue
                         filesToProcess.add(file)
@@ -776,38 +946,42 @@ class MusicManager(
         return audioFiles
     }
 
-    // ========== STATE LOGIC ==========
-
-    /**
-     * Check if music is globally enabled.
-     */
     private fun isMusicEnabled(): Boolean {
         return prefsManager.state.value.musicEnabled
     }
 
-    /**
-     * Resolve the actual music source after fallback logic.
-     */
     private fun resolveActualSource(requestedSource: MusicSource): MusicSource? {
         val baseMusicPath = getMusicPath()
 
-        // For Generic source, check if it exists
         if (requestedSource is MusicSource.Generic) {
             val sourcePath = requestedSource.getPath(baseMusicPath)
             return if (hasAudioFiles(sourcePath)) requestedSource else null
         }
 
-        // For System source, check if system folder exists with audio files
         if (requestedSource is MusicSource.System) {
-            val sourcePath = requestedSource.getPath(baseMusicPath)
+            val systemName = requestedSource.systemName
+            val normalizedSystemName = getMediaSystemName(systemName)
+            val systemNamesToTry = listOf(systemName, normalizedSystemName).distinct()
 
-            // If system folder has audio files, use it
-            if (hasAudioFiles(sourcePath)) {
-                return requestedSource
+            for (name in systemNamesToTry) {
+                if (findFlatSystemAudioFiles(baseMusicPath, name).isNotEmpty()) {
+                    android.util.Log.d(TAG, "Found flat audio file for system: $name")
+                    return if (name == systemName) requestedSource else MusicSource.System(name)
+                }
             }
 
-            // System folder doesn't exist/is empty - will fall back to Generic
-            android.util.Log.d(TAG, "System folder not found/empty, will use generic fallback")
+            for (name in systemNamesToTry) {
+                val sourcePath = "$baseMusicPath/systems/$name"
+                if (hasAudioFiles(sourcePath)) {
+                    android.util.Log.d(TAG, "Found music folder for system: $name")
+                    return if (name == systemName) requestedSource else MusicSource.System(name)
+                }
+            }
+
+            android.util.Log.d(
+                TAG,
+                "System music not found for: $systemName, will use generic fallback"
+            )
             val genericPath = MusicSource.Generic.getPath(baseMusicPath)
             return if (hasAudioFiles(genericPath)) MusicSource.Generic else null
         }
@@ -815,9 +989,6 @@ class MusicManager(
         return null
     }
 
-    /**
-     * Check if a directory exists and contains audio files (recursively).
-     */
     private fun hasAudioFiles(path: String): Boolean {
         val dir = File(path)
 
@@ -825,40 +996,27 @@ class MusicManager(
             return false
         }
 
-        // Use recursive scan to check for audio files
         val excludeSystems = !path.contains("/systems/")
         val audioFiles = scanAudioFilesRecursively(dir, excludeSystemsFolder = excludeSystems)
 
         return audioFiles.isNotEmpty()
     }
 
-    /**
-     * Determine if a state transition requires cross-fading.
-     */
     private fun shouldCrossFade(
         oldSource: MusicSource?,
-        newSource: MusicSource,
-        oldSystemName: String?,
-        newSystemName: String?
+        newSource: MusicSource
     ): Boolean {
-        // If no old source, we're starting fresh (not a cross-fade)
         if (oldSource == null) {
             return false
         }
 
-        // If sources are different, cross-fade
         if (oldSource != newSource) {
             return true
         }
 
-        // Sources are the same - check if system changed
-        // This handles the case where two different systems fall back to Generic
-        if (oldSystemName != newSystemName) {
-            // System changed but both map to same source - cross-fade for freshness
-            return true
-        }
-
-        // Same source, same system - continue playing
+        // Sources are the same - do NOT cross-fade
+        // This prevents restarting music when switching between systems
+        // that both fall back to the same Generic source
         return false
     }
 }

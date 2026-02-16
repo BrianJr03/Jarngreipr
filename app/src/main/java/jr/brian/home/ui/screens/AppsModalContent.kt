@@ -1,7 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -33,7 +31,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.ui.util.rememberFocusRequesterMap
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -49,7 +47,11 @@ import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -74,7 +76,10 @@ fun AppsModalContent(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
-
+    val esdePrefsManager = LocalESDEPreferencesManager.current
+    val wallpaperManager = LocalWallpaperManager.current
+    
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
@@ -84,11 +89,7 @@ fun AppsModalContent(
         appPositionManager.setDragLock(pageIndex, true)
     }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
@@ -175,7 +176,6 @@ fun AppsModalContent(
                         preference
                     )
                 },
-                hasExternalDisplay = hasExternalDisplay,
                 app = null,
                 currentIconSize = currentIconSize,
                 onIconSizeChange = {},
@@ -223,6 +223,8 @@ fun AppsModalContent(
     }
 
     if (appDrawerOptionsDialogState.isVisible) {
+        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+        
         AppsTabOptionsDialog(
             onDismiss = appDrawerOptionsDialogState::dismiss,
             onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -233,7 +235,11 @@ fun AppsModalContent(
             isDragLocked = isDragLocked,
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
-            }
+            },
+            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = if (isEsdeMode) {
+                { esdePrefsManager.toggleMarqueePositionLocked() }
+            } else null
         )
     }
 

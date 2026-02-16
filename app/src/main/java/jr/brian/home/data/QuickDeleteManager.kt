@@ -18,7 +18,7 @@ private val Context.quickDeleteDataStore: DataStore<Preferences> by preferencesD
 
 @Singleton
 class QuickDeleteManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val dataStore = context.quickDeleteDataStore
 

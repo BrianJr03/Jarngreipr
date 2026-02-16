@@ -114,7 +114,7 @@ fun CustomIconDialog(
         }
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

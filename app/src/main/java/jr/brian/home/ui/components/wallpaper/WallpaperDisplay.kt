@@ -34,6 +34,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.theme.oledBackgroundColor
 
+@UnstableApi
 @Composable
 fun WallpaperDisplay(
     wallpaperUri: String?,
@@ -167,7 +168,7 @@ private fun isUriAccessible(
     }
 }
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 @Composable
 private fun VideoWallpaper(
     uri: String,

@@ -25,6 +25,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import jr.brian.home.model.state.UpdateDialogState
+import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.components.update.DownloadCompleteContent
 import jr.brian.home.ui.components.update.DownloadingContent
 import jr.brian.home.ui.components.update.ErrorContent
@@ -109,7 +110,7 @@ fun UpdateAvailableDialog(
         }
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = {
             if (dialogState != UpdateDialogState.DOWNLOADING) {
                 onDismiss()

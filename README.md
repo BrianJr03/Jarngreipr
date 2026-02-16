@@ -95,6 +95,8 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 - **App Names** - Show/hide app names under icons
 - **Notification Badges** - Display notification counts on app icons
 
+`Note: Notification Badges will only work if you download Jarngreipr from the Play Store.`
+
 ### 🔧 **System Features**
 
 - **Smart Search** - Fast app search across all pages and drawer

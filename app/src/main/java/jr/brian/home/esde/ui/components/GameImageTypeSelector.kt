@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,9 +58,9 @@ fun GameImageTypeSelector(
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
-        
+
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         Text(
             text = stringResource(R.string.esde_settings_game_image_type_description),
             color = Color.Gray,
@@ -67,17 +70,22 @@ fun GameImageTypeSelector(
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GameImageType.entries.forEach { type ->
-                GameImageTypeChip(
-                    type = type,
-                    isSelected = type == selectedType,
-                    onClick = { onTypeSelected(type) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            GameImageType.entries
+                // TODO: Enable description when ready
+                .filterNot { it == GameImageType.Description }
+                .forEach { type ->
+                    GameImageTypeChip(
+                        type = type,
+                        isSelected = type == selectedType,
+                        onClick = { onTypeSelected(type) },
+                        modifier = Modifier.widthIn(min = 80.dp)
+                    )
+                }
         }
     }
 }
@@ -93,11 +101,13 @@ private fun GameImageTypeChip(
 
     val typeName = when (type) {
         GameImageType.None -> stringResource(R.string.esde_settings_game_image_none)
+        GameImageType.All -> stringResource(R.string.esde_settings_game_image_all)
         GameImageType.Screenshots -> stringResource(R.string.esde_settings_game_image_screenshots)
         GameImageType.Fanart -> stringResource(R.string.esde_settings_game_image_fanart)
         GameImageType.TitleScreens -> stringResource(R.string.esde_settings_game_image_titlescreens)
         GameImageType.Covers -> stringResource(R.string.esde_settings_game_image_covers)
         GameImageType.MixImages -> stringResource(R.string.esde_settings_game_image_miximages)
+        GameImageType.Description -> stringResource(R.string.esde_settings_game_image_description)
     }
 
     Box(

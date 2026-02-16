@@ -41,7 +41,10 @@ object ESDEMediaConstants {
     val SYSTEM_MEDIA_ALIASES = mapOf(
         "snes-msu1" to "snes",
         "snesna-msu1" to "snesna",
-        "sfc-msu1" to "sfc"
+        "sfc-msu1" to "sfc",
+        "msu-md" to "genesis",
+        "genesis-msu" to "genesis",
+        "megadrive-msu" to "megadrive"
     )
 
     /**

@@ -96,7 +96,7 @@ fun CreateFolderDialog(
         selectedApps.size == allApps.size && allApps.isNotEmpty()
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

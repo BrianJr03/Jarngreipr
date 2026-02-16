@@ -44,7 +44,7 @@ fun ConfirmationDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    DimmedDialog(onDismissRequest = onDismiss) {
         Column(
             modifier = modifier
                 .fillMaxWidth()

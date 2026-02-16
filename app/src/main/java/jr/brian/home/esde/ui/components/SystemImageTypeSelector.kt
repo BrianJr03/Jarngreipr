@@ -93,6 +93,7 @@ private fun SystemImageTypeChip(
 
     val typeName = when (type) {
         SystemImageType.None -> stringResource(R.string.esde_settings_system_image_none)
+        SystemImageType.All -> stringResource(R.string.esde_settings_system_image_all)
         SystemImageType.Fanart -> stringResource(R.string.esde_settings_system_image_fanart)
         SystemImageType.Screenshots -> stringResource(R.string.esde_settings_system_image_screenshots)
         SystemImageType.TitleScreens -> stringResource(R.string.esde_settings_system_image_titlescreens)

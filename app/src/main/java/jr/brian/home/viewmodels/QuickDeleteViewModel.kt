@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.data.FolderCleanupManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.model.FileExtensionInfo
 import jr.brian.home.model.state.DeleteResult
-import jr.brian.home.model.state.DeleteType
 import jr.brian.home.model.state.QuickDeleteUIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +18,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 @HiltViewModel
 class QuickDeleteViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val quickDeleteManager: QuickDeleteManager
+    @param:ApplicationContext private val context: Context,
+    private val quickDeleteManager: QuickDeleteManager,
+    private val folderCleanupManager: FolderCleanupManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuickDeleteUIState())
@@ -234,16 +234,8 @@ class QuickDeleteViewModel @Inject constructor(
             _uiState.update { it.copy(isScanning = true, scanError = null) }
 
             try {
-                var emptyCount = 0
-
-                paths.forEach { uriString ->
-                    val uri = uriString.toUri()
-                    val documentFile = DocumentFile.fromTreeUri(context, uri)
-
-                    documentFile?.let { root ->
-                        emptyCount += countEmptyFolders(root)
-                    }
-                }
+                val includeSystemInfo = _uiState.value.includeSystemInfoFolders
+                val emptyCount = folderCleanupManager.countEmptyFolders(paths, includeSystemInfo)
 
                 _uiState.update {
                     it.copy(
@@ -269,38 +261,8 @@ class QuickDeleteViewModel @Inject constructor(
         }
     }
 
-    private fun countEmptyFolders(directory: DocumentFile): Int {
-        var count = 0
-        directory.listFiles().forEach { file ->
-            if (file.isDirectory) {
-                if (isDirectoryEmpty(file)) {
-                    count++
-                } else {
-                    count += countEmptyFolders(file)
-                }
-            }
-        }
-        return count
-    }
-
     fun toggleIncludeSystemInfoFolders() {
         _uiState.update { it.copy(includeSystemInfoFolders = !it.includeSystemInfoFolders) }
-    }
-
-    private fun isDirectoryEmpty(directory: DocumentFile): Boolean {
-        val files = directory.listFiles()
-        val includeSystemInfo = _uiState.value.includeSystemInfoFolders
-        
-        if (files.isEmpty()) return true
-        
-        if (includeSystemInfo && files.size == 1) {
-            val singleFile = files[0]
-            if (singleFile.isFile && singleFile.name?.equals("systeminfo.txt", ignoreCase = true) == true) {
-                return true
-            }
-        }
-        
-        return false
     }
 
     fun showEmptyFolderConfirmation() {
@@ -324,29 +286,14 @@ class QuickDeleteViewModel @Inject constructor(
             }
 
             try {
-                var deletedCount = 0
-                var failedCount = 0
-
-                paths.forEach { uriString ->
-                    val uri = uriString.toUri()
-                    val documentFile = DocumentFile.fromTreeUri(context, uri)
-
-                    documentFile?.let { root ->
-                        val result = deleteEmptyFoldersRecursively(root)
-                        deletedCount += result.first
-                        failedCount += result.second
-                    }
-                }
+                val includeSystemInfo = _uiState.value.includeSystemInfoFolders
+                val result = folderCleanupManager.deleteEmptyFolders(paths, includeSystemInfo)
 
                 _uiState.update {
                     it.copy(
                         isDeletingEmptyFolders = false,
                         emptyFolderCount = 0,
-                        deleteResult = if (failedCount == 0) {
-                            DeleteResult.Success(deletedCount, DeleteType.FOLDERS)
-                        } else {
-                            DeleteResult.Failure("Deleted $deletedCount folders, failed to delete $failedCount folders")
-                        }
+                        deleteResult = result
                     )
                 }
             } catch (e: Exception) {
@@ -356,42 +303,6 @@ class QuickDeleteViewModel @Inject constructor(
                         deleteResult = DeleteResult.Failure(e.message ?: "Unknown error occurred")
                     )
                 }
-            }
-        }
-    }
-
-    private fun deleteEmptyFoldersRecursively(directory: DocumentFile): Pair<Int, Int> {
-        var deletedCount = 0
-        var failedCount = 0
-
-        // Process subdirectories first (depth-first)
-        directory.listFiles().forEach { file ->
-            if (file.isDirectory) {
-                val result = deleteEmptyFoldersRecursively(file)
-                deletedCount += result.first
-                failedCount += result.second
-
-                // After processing children, check if this directory is now empty
-                if (isDirectoryEmpty(file)) {
-                    // Delete systeminfo.txt if it's the only file
-                    deleteSystemInfoIfPresent(file)
-                    
-                    if (file.delete()) {
-                        deletedCount++
-                    } else {
-                        failedCount++
-                    }
-                }
-            }
-        }
-
-        return Pair(deletedCount, failedCount)
-    }
-
-    private fun deleteSystemInfoIfPresent(directory: DocumentFile) {
-        directory.listFiles().forEach { file ->
-            if (file.isFile && file.name?.equals("systeminfo.txt", ignoreCase = true) == true) {
-                file.delete()
             }
         }
     }
