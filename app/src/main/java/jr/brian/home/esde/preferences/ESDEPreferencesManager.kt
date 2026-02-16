@@ -249,12 +249,6 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putInt(KEY_ANIMATION_SCALE, (scale * 100).toInt()) }
     }
 
-    fun setBlurLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 25)
-        _state.value = _state.value.copy(blurLevel = coercedLevel)
-        prefs.edit { putInt(KEY_BLUR_LEVEL, coercedLevel) }
-    }
-
     fun setSystemBlurLevel(level: Int) {
         val coercedLevel = level.coerceIn(0, 25)
         _state.value = _state.value.copy(systemBlurLevel = coercedLevel)
@@ -265,12 +259,6 @@ class ESDEPreferencesManager(context: Context) {
         val coercedLevel = level.coerceIn(0, 25)
         _state.value = _state.value.copy(gameBlurLevel = coercedLevel)
         prefs.edit { putInt(KEY_GAME_BLUR_LEVEL, coercedLevel) }
-    }
-
-    fun setDimmingLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 70)
-        _state.value = _state.value.copy(dimmingLevel = coercedLevel)
-        prefs.edit { putInt(KEY_DIMMING_LEVEL, coercedLevel) }
     }
 
     fun setBackgroundColor(color: Int) {
@@ -338,10 +326,6 @@ class ESDEPreferencesManager(context: Context) {
             putFloat(KEY_LOGO_OFFSET_X, x)
             putFloat(KEY_LOGO_OFFSET_Y, y)
         }
-    }
-
-    fun resetLogoOffset() {
-        setLogoOffset(0f, 0f)
     }
 
     fun setRandomSystemImage(random: Boolean) {

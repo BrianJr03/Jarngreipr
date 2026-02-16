@@ -58,9 +58,9 @@ fun GameImageTypeSelector(
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
-        
+
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         Text(
             text = stringResource(R.string.esde_settings_game_image_type_description),
             color = Color.Gray,
@@ -75,14 +75,17 @@ fun GameImageTypeSelector(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GameImageType.entries.forEach { type ->
-                GameImageTypeChip(
-                    type = type,
-                    isSelected = type == selectedType,
-                    onClick = { onTypeSelected(type) },
-                    modifier = Modifier.widthIn(min = 80.dp)
-                )
-            }
+            GameImageType.entries
+                // TODO: Enable description when ready
+                .filterNot { it == GameImageType.Description }
+                .forEach { type ->
+                    GameImageTypeChip(
+                        type = type,
+                        isSelected = type == selectedType,
+                        onClick = { onTypeSelected(type) },
+                        modifier = Modifier.widthIn(min = 80.dp)
+                    )
+                }
         }
     }
 }

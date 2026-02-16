@@ -3,7 +3,6 @@ package jr.brian.home.esde.ui
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -38,25 +37,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -64,17 +62,16 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
-import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.preferences.BackgroundScaleMode
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.wallpaper.WallpaperState
-import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
-import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
@@ -544,7 +541,7 @@ private fun MarqueeImage(
     val imageData = remember(marqueePath) {
         when {
             marqueePath.startsWith("file:///android_asset/") -> marqueePath
-            marqueePath.startsWith("content://") -> Uri.parse(marqueePath)
+            marqueePath.startsWith("content://") -> marqueePath.toUri()
             else -> File(marqueePath)
         }
     }

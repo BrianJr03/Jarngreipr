@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,11 +52,11 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
-    private var esdeViewModelRef: ESDEViewModel? = null
+    private val esdeViewModel: ESDEViewModel by viewModels()
 
     private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            esdeViewModelRef?.onVideoActivityFinished()
+            esdeViewModel.onVideoActivityFinished()
         }
 
     @UnstableApi
@@ -77,7 +78,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
-                    val esdeViewModel: ESDEViewModel = hiltViewModel()
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
@@ -92,8 +92,6 @@ class MainActivity : ComponentActivity() {
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
-
-                    ObserveESDEViewModel(esdeViewModel)
 
                     ObserveVideoLaunchEvents(
                         esdeViewModel = esdeViewModel,
@@ -153,12 +151,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        esdeViewModelRef?.musicController?.onActivityVisible()
+        esdeViewModel.musicController.onActivityVisible()
     }
 
     override fun onStop() {
         super.onStop()
-        esdeViewModelRef?.musicController?.onActivityInvisible()
+        esdeViewModel.musicController.onActivityInvisible()
     }
 
     override fun onDestroy() {
@@ -200,13 +198,6 @@ class MainActivity : ComponentActivity() {
         videoPlayerLauncher.launch(intent)
     }
 
-
-    @Composable
-    private fun ObserveESDEViewModel(esdeViewModel: ESDEViewModel) {
-        LaunchedEffect(esdeViewModel) {
-            esdeViewModelRef = esdeViewModel
-        }
-    }
 
     @Composable
     private fun ObserveVideoLaunchEvents(

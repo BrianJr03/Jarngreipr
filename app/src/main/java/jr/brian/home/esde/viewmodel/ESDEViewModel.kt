@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.data.ESDECleanupManager
 import jr.brian.home.esde.music.MusicController
 import jr.brian.home.esde.music.MusicManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
@@ -42,14 +43,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     val prefs: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val cleanupHelper: ESDECleanupHelper,
-    val cleanupManager: jr.brian.home.data.ESDECleanupManager
+    val cleanupManager: ESDECleanupManager
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
@@ -83,13 +85,13 @@ class ESDEViewModel @Inject constructor(
 
     private val _deleteEmptyFoldersResult = mutableStateOf<DeleteResult?>(null)
     val deleteEmptyFoldersResult: State<DeleteResult?> = _deleteEmptyFoldersResult
-    
+
     /**
      * Tracks whether we're currently viewing a system or a game.
      * Used to determine which blur level to apply.
      */
     private var isViewingGame: Boolean = false
-    
+
     /**
      * Tracks whether the launcher screen is currently active.
      * Video playback should only launch when this is true.
@@ -98,16 +100,21 @@ class ESDEViewModel @Inject constructor(
 
     init {
         Log.d(TAG, "ESDE Media path configured: $mediaPath")
-        Log.d(TAG, "Parent folder (for system_images/system_logos): ${File(mediaPath).parentFile?.absolutePath}")
+        Log.d(
+            TAG,
+            "Parent folder (for system_images/system_logos): ${File(mediaPath).parentFile?.absolutePath}"
+        )
 
         prefs.state
             .onEach { prefsState ->
                 val currentDimming = when {
-                    _wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning -> 
+                    _wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning ->
                         _wallpaperState.value.dimmingLevel
-                    isViewingGame -> 
+
+                    isViewingGame ->
                         prefsState.gameBackgroundDimmingFloat
-                    else -> 
+
+                    else ->
                         prefsState.systemBackgroundDimmingFloat
                 }
                 val currentBlur = if (isViewingGame) {
@@ -137,7 +144,7 @@ class ESDEViewModel @Inject constructor(
         systemImageCache.clear()
 
         val prefsState = prefs.state.value
-        
+
         // Check for single system image/video first (takes priority over everything)
         val singlePath = prefsState.singleSystemImagePath
         if (singlePath != null) {
@@ -154,7 +161,7 @@ class ESDEViewModel @Inject constructor(
             SystemImageType.None -> null
             else -> getSystemImagePath(systemName)
         }
-        
+
         val isVideo = newPath != null && isVideoPath(newPath)
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = if (isVideo) null else newPath,
@@ -173,7 +180,7 @@ class ESDEViewModel @Inject constructor(
             prefsState.systemImageType == SystemImageType.None -> null
             else -> lastSystem?.let { getSystemImagePath(it) }
         }
-        
+
         val isVideo = initialPath != null && isVideoPath(initialPath)
 
         return WallpaperState(
@@ -207,10 +214,10 @@ class ESDEViewModel @Inject constructor(
         systemImageCache.remove(systemName)
 
         prefs.setLastSelectedSystem(systemName)
-        
+
         val systemPath = getSystemImagePath(systemName)
         val isVideo = systemPath != null && isVideoPath(systemPath)
-        
+
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = if (isVideo) null else systemPath,
             systemBackgroundVideoPath = if (isVideo) systemPath else null,
@@ -233,7 +240,7 @@ class ESDEViewModel @Inject constructor(
         if (_wallpaperState.value.isGameRunning) {
             return
         }
-        
+
         cancelPendingVideo()
 
         currentSystem = null
@@ -241,9 +248,12 @@ class ESDEViewModel @Inject constructor(
         currentGameFilename = gameFilename
         isViewingGame = true
 
-        // Fetch game description from ES-DE's gamelist.xml
         val gameDescription = esdeRootPath?.let { rootPath ->
-            GamelistParser.getGameDescription(rootPath, systemName, gameFilename)
+            GamelistParser.getGameDescription(
+                esdeRootPath = rootPath,
+                systemName = systemName,
+                gameFilename = gameFilename
+            )
         }
 
         _wallpaperState.value = _wallpaperState.value.copy(
@@ -272,7 +282,7 @@ class ESDEViewModel @Inject constructor(
             Log.d(TAG, "Not scheduling video - game is currently running")
             return
         }
-        
+
         val videoPath = getGameVideoPath(systemName, gameFilename)
         if (videoPath == null) {
             Log.d(TAG, "No video found for: $systemName / $gameFilename")
@@ -385,7 +395,7 @@ class ESDEViewModel @Inject constructor(
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
         }
-        
+
         _wallpaperState.value = _wallpaperState.value.copy(
             isScreensaverActive = true,
             dimmingLevel = dimmingLevel
@@ -419,10 +429,13 @@ class ESDEViewModel @Inject constructor(
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
         }
-        
+
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
-            marqueePath = if (shouldShowContent) getGameMarqueePath(systemName, gameFilename) else null,
+            marqueePath = if (shouldShowContent) getGameMarqueePath(
+                systemName,
+                gameFilename
+            ) else null,
             dimmingLevel = dimmingLevel,
             isScreensaverActive = true,
             isShowingGameBackground = true
@@ -555,7 +568,7 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
-        
+
         val singleLogoPath = prefsState.singleSystemLogoPath
         if (singleLogoPath != null) {
             if (singleLogoPath.startsWith("content://")) {
@@ -567,7 +580,7 @@ class ESDEViewModel @Inject constructor(
                 }
             }
         }
-        
+
         val customLogosPath = prefsState.customSystemLogosPath
         if (customLogosPath != null) {
             val customLogosDir = File(customLogosPath)
@@ -584,7 +597,7 @@ class ESDEViewModel @Inject constructor(
                 }
             }
         }
-        
+
         // e.g. downloaded_media/system_logos/n64.svg
         val userLogosDir = File(mediaPath, "system_logos")
         if (userLogosDir.exists() && userLogosDir.isDirectory) {
@@ -767,23 +780,22 @@ class ESDEViewModel @Inject constructor(
         // Check by file extension first
         val ext = path.substringAfterLast('.', "").lowercase()
         if (ext in VIDEO_EXTENSIONS) return true
-        
+
         // For content:// URIs, check the MIME type
         if (path.startsWith("content://")) {
             return try {
-                val uri = android.net.Uri.parse(path)
+                val uri = path.toUri()
                 val mimeType = context.contentResolver.getType(uri)
                 mimeType?.startsWith("video/") == true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
-        
+
         return false
     }
 
 
-    
     /**
      * Deletes all empty folders in the selected cleanup folders.
      * Folders containing only systeminfo.txt are considered empty.
@@ -794,7 +806,7 @@ class ESDEViewModel @Inject constructor(
             _deleteEmptyFoldersResult.value = result
         }
     }
-    
+
     /**
      * Clears the delete result state
      */

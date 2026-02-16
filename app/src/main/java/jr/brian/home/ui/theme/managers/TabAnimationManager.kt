@@ -17,7 +17,7 @@ class TabAnimationManager(
 
     private fun loadTabAnimation(): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_TAB_ANIMATION, false) // Default to disabled
+        return prefs.getBoolean(KEY_TAB_ANIMATION, false)
     }
 
     fun setTabAnimation(enabled: Boolean) {

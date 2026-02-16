@@ -1,9 +1,12 @@
 package jr.brian.home.ui.screens
 
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,7 +17,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
@@ -29,13 +36,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.res.stringResource
@@ -45,8 +55,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.DualVolumeControls
 import jr.brian.home.ui.components.VolumeSlider
+import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
@@ -68,6 +85,8 @@ fun PoweredOffScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val powerSettingsManager = LocalPowerSettingsManager.current
     val wakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
+    
+    val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
     var showInfo by remember { mutableStateOf(false) }
     var batteryPercentage by remember { mutableStateOf(0) }
@@ -231,7 +250,92 @@ fun PoweredOffScreen(
                     DualVolumeControls(isVisible = showInfo)
                 }
             }
+
+            // Volume Down Button - Bottom Left
+            VolumeButton(
+                icon = Icons.AutoMirrored.Filled.VolumeDown,
+                contentDescription = stringResource(R.string.volume_down_description),
+                onClick = {
+                    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    val newVolume = (currentVolume - 1).coerceAtLeast(0)
+                    audioManager.setStreamVolume(
+                        AudioManager.STREAM_MUSIC,
+                        newVolume,
+                        AudioManager.FLAG_SHOW_UI
+                    )
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 16.dp)
+            )
+
+            // Volume Up Button - Bottom Right
+            VolumeButton(
+                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                contentDescription = stringResource(R.string.volume_up_description),
+                onClick = {
+                    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    val newVolume = (currentVolume + 1).coerceAtMost(maxVolume)
+                    audioManager.setStreamVolume(
+                        AudioManager.STREAM_MUSIC,
+                        newVolume,
+                        AudioManager.FLAG_SHOW_UI
+                    )
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp)
+            )
         }
+    }
+}
+
+@Composable
+private fun VolumeButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val haptic = LocalHapticFeedback.current
+    var isPressed by remember { mutableStateOf(false) }
+    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+
+    Box(
+        modifier = modifier
+            .size(56.dp)
+            .scale(pressScale)
+            .background(
+                brush = cardGradient(isFocused = false, isPressed = isPressed),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .border(
+                width = if (isPressed) 2.dp else 0.dp,
+                brush = borderBrush(
+                    isFocused = isPressed,
+                    colors = listOf(
+                        ThemeAccentColor,
+                        ThemePrimaryColor,
+                        ThemeSecondaryColor
+                    )
+                ),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .pressWithHaptic(
+                onClick, contentDescription,
+                haptic = haptic,
+                onPressChange = { isPressed = it },
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }
 

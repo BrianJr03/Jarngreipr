@@ -17,11 +17,8 @@ private const val KEY_ICON_SHAPE = "icon_shape"
  * Defines the available icon shape styles for app icons.
  */
 enum class IconShape {
-    /** Rounded corners (default) - 8dp corner radius */
     ROUNDED,
-    /** Square corners - no corner radius */
     SQUARE;
-
     /**
      * Returns the Compose Shape for this icon shape style.
      */

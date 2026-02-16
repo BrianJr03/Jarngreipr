@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.Velocity
  *
  * @param gridState The LazyGridState to check scroll position
  * @param overscrollThreshold Pixels of overscroll needed to trigger (default 80f)
- * @param onFlingAtBottom Called when user overscrolls at the bottom
+ * @param onFlingAtBottom Called when user overscroll at the bottom
  */
 @Composable
 fun rememberBottomFlingTrigger(
@@ -63,7 +63,6 @@ private class BottomFlingNestedScrollConnection(
     }
 
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-        // Reset state after gesture ends (finger lifted)
         accumulatedOverscroll = 0f
         hasTriggeredThisGesture = false
         return Velocity.Zero

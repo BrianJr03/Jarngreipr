@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -57,27 +58,7 @@ fun IconShapeToggleItem(
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = rememberConditionalFocus(!isExpanded)
 
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.8f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
-
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth(),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier =
                 Modifier
@@ -87,20 +68,12 @@ fun IconShapeToggleItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient,
+                        brush = cardGradient(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(
                         width = if (isFocused) 2.dp else 0.dp,
-                        brush =
-                            borderBrush(
-                                isFocused = isFocused,
-                                colors =
-                                    listOf(
-                                        ThemePrimaryColor.copy(alpha = 0.8f),
-                                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                                    ),
-                            ),
+                        brush = borderBrush(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .clip(RoundedCornerShape(16.dp))

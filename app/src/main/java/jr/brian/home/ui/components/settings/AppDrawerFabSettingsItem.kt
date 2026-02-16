@@ -164,7 +164,6 @@ fun AppDrawerFabSettingsItem(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                // Enable/Disable Toggle
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -192,7 +191,6 @@ fun AppDrawerFabSettingsItem(
                     )
                 }
 
-                // Color Selector
                 if (isFabEnabled) {
                     Column(
                         modifier = Modifier
@@ -228,7 +226,6 @@ fun AppDrawerFabSettingsItem(
                         }
                     }
 
-                    // Per-page visibility (only show if more than 1 page)
                     if (pageCount > 1) {
                         Column(
                             modifier = Modifier
@@ -277,7 +274,6 @@ fun AppDrawerFabSettingsItem(
                     }
                 }
 
-                // Done Button
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

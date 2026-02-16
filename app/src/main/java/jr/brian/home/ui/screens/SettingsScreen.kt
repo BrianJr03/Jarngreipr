@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,8 +35,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import jr.brian.home.R
@@ -57,20 +56,19 @@ import jr.brian.home.ui.components.settings.sections.SupportSection
 import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import kotlin.math.roundToInt
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_APPEARANCE
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 import kotlinx.coroutines.launch
-
-private const val SECTION_APPEARANCE = "appearance"
-private const val SECTION_ESDE = "esde"
-private const val SECTION_LAYOUT = "layout"
-private const val SECTION_SYSTEM = "system"
-private const val SECTION_SUPPORT = "support"
-private const val SECTION_EXTRAS = "extras"
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(

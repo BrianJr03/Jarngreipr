@@ -41,7 +41,6 @@ fun LogoAlignmentSelector(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    // Group alignments by row for grid layout
     val topRow = listOf(LogoAlignment.TopLeft, LogoAlignment.Top, LogoAlignment.TopRight)
     val centerRow = listOf(LogoAlignment.Center)
     val bottomRow = listOf(LogoAlignment.BottomLeft, LogoAlignment.Bottom, LogoAlignment.BottomRight)
@@ -63,7 +62,6 @@ fun LogoAlignmentSelector(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Top row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -80,7 +78,6 @@ fun LogoAlignmentSelector(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Center row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -97,7 +94,6 @@ fun LogoAlignmentSelector(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Bottom row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -114,7 +110,6 @@ fun LogoAlignmentSelector(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Free Position row
         LogoAlignmentChip(
             alignment = LogoAlignment.FreePosition,
             isSelected = selectedAlignment == LogoAlignment.FreePosition,
@@ -122,7 +117,6 @@ fun LogoAlignmentSelector(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Show hint when Free Position is selected
         if (selectedAlignment == LogoAlignment.FreePosition) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 /**
  * Manages the App Drawer FAB (Floating Action Button) settings.
@@ -42,7 +43,7 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
     private fun loadFabVisiblePages(): Set<Int> {
         val pagesString = prefs.getString(KEY_FAB_VISIBLE_PAGES, null)
         return if (pagesString.isNullOrEmpty()) {
-            emptySet() // Empty means visible on all pages by default
+            emptySet()
         } else {
             pagesString.split(",").mapNotNull { it.toIntOrNull() }.toSet()
         }
@@ -50,24 +51,23 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
 
     fun setFabColor(color: Color) {
         _fabColor.value = color
-        prefs.edit().putInt(KEY_FAB_COLOR, color.toArgb()).apply()
+        prefs.edit { putInt(KEY_FAB_COLOR, color.toArgb()) }
     }
 
     fun setFabEnabled(enabled: Boolean) {
         _isFabEnabled.value = enabled
-        prefs.edit().putBoolean(KEY_FAB_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_FAB_ENABLED, enabled) }
     }
 
     fun setFabVisiblePages(pages: Set<Int>) {
         _fabVisiblePages.value = pages
         val pagesString = pages.joinToString(",")
-        prefs.edit().putString(KEY_FAB_VISIBLE_PAGES, pagesString).apply()
+        prefs.edit { putString(KEY_FAB_VISIBLE_PAGES, pagesString) }
     }
 
     fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
         val currentPages = _fabVisiblePages.value.toMutableSet()
 
-        // If empty (visible on all), initialize with all pages
         if (currentPages.isEmpty()) {
             for (i in 0 until totalPages) {
                 currentPages.add(i)

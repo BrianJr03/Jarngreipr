@@ -59,17 +59,6 @@ class FolderCleanupManager @Inject constructor(
     }
 
     /**
-     * Deletes empty folders in a single folder path.
-     * @param folderPath URI string pointing to the root folder to scan
-     * @param includeSystemInfo If true, folders containing only systeminfo.txt are considered empty
-     * @return DeleteResult with success/failure information
-     */
-    suspend fun deleteEmptyFoldersInPath(
-        folderPath: String,
-        includeSystemInfo: Boolean = false
-    ): DeleteResult = deleteEmptyFolders(listOf(folderPath), includeSystemInfo)
-
-    /**
      * Counts the number of empty folders in the given folder paths.
      * @param folderPaths List of URI strings pointing to root folders to scan
      * @param includeSystemInfo If true, folders containing only systeminfo.txt are considered empty

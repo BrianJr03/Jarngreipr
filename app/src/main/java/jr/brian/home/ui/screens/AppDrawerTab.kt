@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,19 +49,17 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
-import jr.brian.home.ui.components.dock.AppDock
+import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
-import jr.brian.home.ui.components.apps.AppOptionsMenu
-import jr.brian.home.util.openAppInfo
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
-import jr.brian.home.esde.ui.ESDESetupScreen
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.components.dock.AppDock
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -75,17 +72,17 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.setup.SetupPreferences
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
+import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// Approximate height for the dock item (padding + icon size)
 private val DOCK_ITEM_HEIGHT = 100.dp
 
 @OptIn(
@@ -146,7 +143,6 @@ fun AppDrawerTab(
     val settingsIconFocusRequester = remember { FocusRequester() }
     val menuIconFocusRequester = remember { FocusRequester() }
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
-    val setupPreferences = remember { SetupPreferences(context) }
     val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
     val appVisibilityDialogState = rememberDialogState<Unit>()
@@ -156,17 +152,11 @@ fun AppDrawerTab(
     val isDockEnabled by dockManager.isDockVisible.collectAsStateWithLifecycle()
     val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
 
-    val isDockVisible by remember {
-        derivedStateOf {
-            val isAtTop =
-                scrollState.firstVisibleItemIndex == 0 || scrollState.firstVisibleItemIndex == 1
-            isDockEnabled && isDockVisibleOnPage && isAtTop
-        }
-    }
 
-    // Auto-snap to prevent dead zone
-    // Structure: Item 0 (touch area) + Item 1 (dock) visible together, Item 2 (drawer) below
-    LaunchedEffect(scrollState, viewHeight.intValue) {
+    LaunchedEffect(
+        scrollState,
+        viewHeight.intValue
+    ) {
         if (viewHeight.intValue == 0) return@LaunchedEffect
         val halfHeight = viewHeight.intValue / 2
 
@@ -177,11 +167,9 @@ fun AppDrawerTab(
                 scrollState.isScrollInProgress
             )
         }.collect { (index, offset, isScrolling) ->
-            // Only snap when user stops scrolling (finger lifted)
             if (!isScrolling) {
                 when (index) {
                     0, 1 -> {
-                        // On touch area or dock - check if should snap to drawer
                         if (offset > halfHeight) {
                             scrollState.animateScrollToItem(2) // Snap to drawer
                         } else {
@@ -190,7 +178,6 @@ fun AppDrawerTab(
                     }
 
                     2 -> {
-                        // On drawer - always snap to show it fully
                         scrollState.animateScrollToItem(2)
                     }
                 }
@@ -283,7 +270,6 @@ fun AppDrawerTab(
                 }
             }
 
-            // Item 1: Dock (visible with touch area on home screen)
             item {
                 val isDockEnabledOnPage = isDockEnabled && isDockVisibleOnPage
                 if (isDockEnabledOnPage) {
@@ -323,7 +309,6 @@ fun AppDrawerTab(
                 }
             }
 
-            // Item 2: Drawer content
             item {
                 if (viewHeight.intValue > 0) {
                     val height = with(LocalDensity.current) {
@@ -388,7 +373,7 @@ fun AppDrawerTab(
 
         if (appDrawerOptionsDialogState.isVisible) {
             val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-            
+
             AppsTabOptionsDialog(
                 onDismiss = appDrawerOptionsDialogState::dismiss,
                 onShowAppVisibility = { appVisibilityDialogState.show() },

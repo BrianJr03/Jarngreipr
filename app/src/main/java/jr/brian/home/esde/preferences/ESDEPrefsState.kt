@@ -76,7 +76,7 @@ enum class MusicVideoBehavior(val value: String) {
 
     companion object {
         fun fromValue(value: String): MusicVideoBehavior {
-            return values().find { it.value == value } ?: Continue
+            return MusicVideoBehavior.entries.find { it.value == value } ?: Continue
         }
     }
 }
@@ -102,21 +102,17 @@ enum class BackgroundScaleMode {
 }
 
 data class ESDEPrefsState(
-    // Animation settings
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
     val animationScale: Float = 0.9f,
     
-    // Blur settings
     val blurLevel: Int = 0,
     val systemBlurLevel: Int = 0,
     val gameBlurLevel: Int = 0,
     
-    // Display settings
     val dimmingLevel: Int = 20,
     val backgroundColor: Int = Color.Black.toArgb(),
     
-    // Video settings
     val videoEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val videoAudioEnabled: Boolean = false,
@@ -124,7 +120,6 @@ data class ESDEPrefsState(
     val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     
-    // ESDE integration
     val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
@@ -143,7 +138,6 @@ data class ESDEPrefsState(
     val singleGameImagePath: String? = null,
     val singleGameLogoPath: String? = null,
     
-    // Marquee settings
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val marqueePressShortcut: Shortcut = Shortcut.NONE,
@@ -153,10 +147,8 @@ data class ESDEPrefsState(
     val showMarqueeForSystem: Boolean = true,
     val showMarqueeForGame: Boolean = true,
     
-    // Screensaver settings
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.ShowContent,
     
-    // Music settings
     val musicEnabled: Boolean = false,
     val musicPath: String? = null,
     val musicSystemEnabled: Boolean = true,
@@ -167,23 +159,17 @@ data class ESDEPrefsState(
     val musicUseSystemSpecific: Boolean = true,
     val musicLoopEnabled: Boolean = true,
     
-    // App drawer settings
     val appDrawerOpacity: Int = 100,
     
-    // Background dimming
     val gameBackgroundDimming: Int = 20,
     val systemBackgroundDimming: Int = 20,
     
-    // Custom paths
     val customMediaPath: String? = null,
     
-    // Home screen settings
     val excludeEffectsFromHome: Boolean = false,
     
-    // UI visibility settings
     val hideUIForGameBrowsing: Boolean = false,
     
-    // Marquee position lock
     val marqueePositionLocked: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f

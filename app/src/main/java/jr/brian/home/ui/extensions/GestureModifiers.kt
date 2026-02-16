@@ -74,7 +74,7 @@ fun Modifier.pagerFriendlyClickableSimple(
 
 /**
  * A modifier that detects press/release events and triggers haptic feedback on press.
- * Use this with [onPressScaleAndOffset] for consistent press animations across the app.
+ * Use this with [onPressScaleAndOffset()] for consistent press animations across the app.
  *
  * @param keys Optional key(s) to trigger recomposition of the pointer input
  * @param haptic The haptic feedback instance from LocalHapticFeedback.current
