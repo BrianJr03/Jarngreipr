@@ -22,6 +22,11 @@ on:
         required: false
         type: boolean
         default: false
+      build_hidden:
+        description: 'Also build hidden release APK?'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build-release:
@@ -109,3 +114,16 @@ jobs:
       - name: Cleanup keystore
         if: always()
         run: rm -f ${{ github.workspace }}/keystore.jks
+
+  build-hidden:
+    name: Build Hidden Release APK
+    needs: build-release
+    if: ${{ inputs.build_hidden }}
+    uses: ./.github/workflows/build-hidden-release.yml
+    with:
+      release_tag: ${{ inputs.release_tag }}
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
