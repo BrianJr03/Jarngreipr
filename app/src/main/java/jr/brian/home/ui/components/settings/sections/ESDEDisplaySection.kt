@@ -26,7 +26,6 @@ import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.esde.ui.sections.AnimationSectionContent
-import jr.brian.home.esde.ui.sections.AppDrawerSectionContent
 import jr.brian.home.esde.ui.sections.CustomPathsSectionContent
 import jr.brian.home.esde.ui.sections.EffectsSectionContent
 import jr.brian.home.esde.ui.sections.ExtrasSectionContent
@@ -210,15 +209,6 @@ fun ESDESettingsContent(
                 },
                 onAnimationStyleChange = { style ->
                     preferencesManager.setAnimationStyle(style)
-                }
-            )
-        }
-
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_app_drawer)) {
-            AppDrawerSectionContent(
-                prefsState = prefsState,
-                onAppDrawerOpacityChange = { opacity ->
-                    preferencesManager.setAppDrawerOpacity(opacity)
                 }
             )
         }

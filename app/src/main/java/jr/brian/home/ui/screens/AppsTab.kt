@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -41,8 +40,6 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pagerFriendlyClickable
-import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.apps.AppsTabContent
@@ -54,6 +51,8 @@ import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.dock.AppDock
+import jr.brian.home.ui.extensions.pagerFriendlyClickable
+import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
@@ -152,20 +151,17 @@ fun AppsTab(
     val gridState = rememberLazyGridState()
     var isScrolling by remember { mutableStateOf(false) }
 
-    // Check if content is scrollable
     val hasScrollableContent by remember {
         derivedStateOf {
             gridState.canScrollForward || gridState.canScrollBackward
         }
     }
 
-    // Fling at bottom triggers app drawer
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
     )
 
-    // Report scroll state to parent
     LaunchedEffect(isScrolling, hasScrollableContent) {
         onScrollStateChanged(isScrolling, hasScrollableContent)
     }
@@ -177,7 +173,7 @@ fun AppsTab(
                 if (scrolling) {
                     isScrolling = true
                 } else {
-                    delay(300) // Wait 300ms after scrolling stops
+                    delay(300)
                     isScrolling = false
                 }
             }

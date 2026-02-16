@@ -441,7 +441,7 @@ fun LauncherPagerScreen(
                 ModalBottomSheet(
                     onDismissRequest = { showAppDrawerSheet = false },
                     sheetState = appDrawerSheetState,
-                    containerColor = OledBackgroundColor,
+                    containerColor = OledBackgroundColor.copy(alpha = esdePrefsState.appDrawerOpacityFloat),
                     dragHandle = {
                         Box(
                             modifier = Modifier

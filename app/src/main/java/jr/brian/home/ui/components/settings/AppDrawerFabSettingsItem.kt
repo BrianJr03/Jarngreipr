@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.dock.ColorOption
@@ -65,11 +68,14 @@ fun AppDrawerFabSettingsItem(
 ) {
     val fabManager = LocalAppDrawerFabManager.current
     val pageTypeManager = LocalPageTypeManager.current
+    val esdePrefsManager = LocalESDEPreferencesManager.current
     val isFabEnabled by fabManager.isFabEnabled.collectAsStateWithLifecycle()
     val currentFabColor by fabManager.fabColor.collectAsStateWithLifecycle()
     val fabVisiblePages by fabManager.fabVisiblePages.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val pageCount = pageTypes.size
+    val appDrawerOpacity = esdePrefsState.appDrawerOpacity
 
     var isFocused by remember { mutableStateOf(false) }
 
@@ -164,6 +170,47 @@ fun AppDrawerFabSettingsItem(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            OledCardColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.esde_settings_app_drawer_opacity),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "$appDrawerOpacity%",
+                            color = ThemePrimaryColor,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Slider(
+                        value = appDrawerOpacity.toFloat(),
+                        onValueChange = { esdePrefsManager.setAppDrawerOpacity(it.toInt()) },
+                        valueRange = 0f..100f,
+                        steps = 19,
+                        colors = SliderDefaults.colors(
+                            thumbColor = ThemePrimaryColor,
+                            activeTrackColor = ThemePrimaryColor,
+                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                        )
+                    )
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
