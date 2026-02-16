@@ -20,5 +20,5 @@ data class FeatureManagers @Inject constructor(
     val controlPadManager: ControlPadManager,
     val appDrawerFabManager: AppDrawerFabManager,
     val esdePreferencesManager: ESDEPreferencesManager,
-    @field:ESDEImageLoader val esdeImageLoader: ImageLoader
+    @param:ESDEImageLoader val esdeImageLoader: ImageLoader
 )
