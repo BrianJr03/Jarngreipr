@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
@@ -63,6 +66,8 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.ui.util.rememberHasExternalDisplay
@@ -90,7 +95,9 @@ fun AppsTab(
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
-    onDockPositioned: (Float) -> Unit = {}
+    onDockPositioned: (Float) -> Unit = {},
+    onShowAppDrawer: () -> Unit = {},
+    onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -99,7 +106,9 @@ fun AppsTab(
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val tabAnimationManager = LocalTabAnimationManager.current
-
+    val esdePrefsManager = LocalESDEPreferencesManager.current
+    
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -142,6 +151,24 @@ fun AppsTab(
 
     val gridState = rememberLazyGridState()
     var isScrolling by remember { mutableStateOf(false) }
+
+    // Check if content is scrollable
+    val hasScrollableContent by remember {
+        derivedStateOf {
+            gridState.canScrollForward || gridState.canScrollBackward
+        }
+    }
+
+    // Fling at bottom triggers app drawer
+    val bottomFlingTrigger = rememberBottomFlingTrigger(
+        gridState = gridState,
+        onFlingAtBottom = onShowAppDrawer
+    )
+
+    // Report scroll state to parent
+    LaunchedEffect(isScrolling, hasScrollableContent) {
+        onScrollStateChanged(isScrolling, hasScrollableContent)
+    }
 
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.isScrollInProgress }
@@ -303,6 +330,8 @@ fun AppsTab(
     }
 
     if (appDrawerOptionsDialogState.isVisible) {
+        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+        
         AppsTabOptionsDialog(
             onDismiss = appDrawerOptionsDialogState::dismiss,
             onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -316,7 +345,11 @@ fun AppsTab(
             isDragLocked = isDragLocked,
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
-            }
+            },
+            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = if (isEsdeMode) {
+                { esdePrefsManager.toggleMarqueePositionLocked() }
+            } else null
         )
     }
 
@@ -332,6 +365,7 @@ fun AppsTab(
         modifier =
             Modifier
                 .fillMaxSize()
+                .nestedScroll(bottomFlingTrigger)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .offset(y = offsetY)
                 .scale(pressScale)
@@ -461,7 +495,8 @@ fun AppsTab(
                 onDockPositioned = onDockPositioned
             )
         }
-    }
+
+        }
 
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {

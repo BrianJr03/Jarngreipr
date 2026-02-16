@@ -18,6 +18,7 @@ import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
@@ -100,6 +101,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalControlPadManager provides feature.controlPadManager,
         LocalESDEPreferencesManager provides feature.esdePreferencesManager,
         LocalESDEImageLoader provides feature.esdeImageLoader,
+        LocalAppDrawerFabManager provides feature.appDrawerFabManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,

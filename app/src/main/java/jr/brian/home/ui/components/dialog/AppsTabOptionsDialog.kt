@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +41,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +51,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
@@ -65,7 +69,9 @@ fun AppsTabOptionsDialog(
     onResetPositions: () -> Unit = {},
     isDragLocked: Boolean = false,
     onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
-    title: String = stringResource(R.string.app_drawer_options_title)
+    title: String = stringResource(R.string.app_drawer_options_title),
+    isMarqueePositionLocked: Boolean = false,
+    onToggleMarqueePositionLock: (() -> Unit)? = null
 ) {
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -182,6 +188,22 @@ fun AppsTabOptionsDialog(
                         )
                     }
                 }
+
+                if (onToggleMarqueePositionLock != null) {
+                    GridOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = if (isMarqueePositionLocked) {
+                            stringResource(R.string.marquee_position_unlock)
+                        } else {
+                            stringResource(R.string.marquee_position_lock)
+                        },
+                        icon = if (isMarqueePositionLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                        onClick = {
+                            onDismiss()
+                            onToggleMarqueePositionLock()
+                        }
+                    )
+                }
             }
         }
     }
@@ -195,8 +217,14 @@ private fun GridOptionButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
+
     Box(
         modifier = modifier
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -224,6 +252,11 @@ private fun GridOptionButton(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
+            .pressWithHaptic(
+                onClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .clickable { onClick() }
             .focusable()
             .padding(16.dp),

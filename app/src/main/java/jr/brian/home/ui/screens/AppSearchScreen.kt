@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,12 +34,16 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
@@ -200,7 +204,6 @@ private fun HorizontalSearchLayout(
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = { focusedKeyIndex = it },
-                onNavigateUp = {},
                 onFlipLayout = onFlipLayout,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -363,16 +366,26 @@ private fun HorizontalAppGridItem(
     val iconShapeManager = LocalIconShapeManager.current
     val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
             .width(80.dp)
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = cardGradient(isFocused),
                 shape = RoundedCornerShape(10.dp)
             )
             .clip(RoundedCornerShape(10.dp))
+            .pressWithHaptic(
+                onAppClick, onAppDoubleClick, onAppLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = onAppClick,
                 onDoubleClick = onAppDoubleClick,
@@ -416,15 +429,25 @@ private fun AppGridItem(
     val iconShapeManager = LocalIconShapeManager.current
     val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = cardGradient(isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
+            .pressWithHaptic(
+                onAppClick, onAppDoubleClick, onAppLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = onAppClick,
                 onDoubleClick = onAppDoubleClick,

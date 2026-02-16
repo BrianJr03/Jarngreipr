@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ fun ESDESetupScreen(
     val preferences = remember { SetupPreferences(context) }
     
     var currentStep by remember { mutableStateOf<SetupStep>(SetupStep.Welcome) }
+    val isDialogVisible = dialogState.isVisible
     
     val setupManager = remember {
         SetupWizardManager(
@@ -42,6 +44,13 @@ fun ESDESetupScreen(
                 currentStep = SetupStep.Complete
             }
         )
+    }
+    
+    // Reset to Welcome step whenever dialog is opened
+    LaunchedEffect(isDialogVisible) {
+        if (isDialogVisible) {
+            currentStep = SetupStep.Welcome
+        }
     }
     
     val scriptsFolderPicker = rememberLauncherForActivityResult(
@@ -93,7 +102,7 @@ fun ESDESetupScreen(
         }
     }
     
-    if (dialogState.isVisible) {
+    if (isDialogVisible) {
         SetupWizardDialog(
             currentStep = currentStep,
             onDismiss = {

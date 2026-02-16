@@ -22,6 +22,8 @@ object ESDEPreferencesConstants {
     const val KEY_GAME_IMAGE_TYPE = "game_image_type"
     const val KEY_SHOW_SYSTEM_LOGO = "show_system_logo"
     const val KEY_LOGO_ALIGNMENT = "logo_alignment"
+    const val KEY_LOGO_OFFSET_X = "logo_offset_x"
+    const val KEY_LOGO_OFFSET_Y = "logo_offset_y"
     const val KEY_RANDOM_SYSTEM_IMAGE = "random_system_image"
     const val KEY_POWER_EVENTS_ENABLED = "power_events_enabled"
     const val KEY_PERSIST_ON_GAME_LAUNCH = "persist_on_game_launch"
@@ -42,6 +44,8 @@ object ESDEPreferencesConstants {
     const val KEY_MUSIC_SCREENSAVER_ENABLED = "music_screensaver_enabled"
     const val KEY_MUSIC_VIDEO_BEHAVIOR = "music_video_behavior"
     const val KEY_MUSIC_VOLUME = "music_volume"
+    const val KEY_MUSIC_USE_SYSTEM_SPECIFIC = "music_use_system_specific"
+    const val KEY_MUSIC_LOOP_ENABLED = "music_loop_enabled"
 
     const val KEY_APP_DRAWER_OPACITY = "app_drawer_opacity"
 
@@ -50,7 +54,7 @@ object ESDEPreferencesConstants {
 
     const val KEY_MARQUEE_VISIBLE_PAGES = "marquee_visible_pages"
 
-    const val KEY_MARQUEE_OVERLAY_PAGES = "marquee_overlay_pages"
+    const val KEY_DESCRIPTION_OVERLAY_PAGES = "description_overlay_pages"
     const val KEY_SHOW_MARQUEE_FOR_SYSTEM = "show_marquee_for_system"
     const val KEY_SHOW_MARQUEE_FOR_GAME = "show_marquee_for_game"
 
@@ -59,4 +63,5 @@ object ESDEPreferencesConstants {
     const val KEY_CUSTOM_MEDIA_PATH = "custom_media_path"
     const val KEY_EXCLUDE_EFFECTS_FROM_HOME = "exclude_effects_from_home"
     const val KEY_HIDE_UI_FOR_GAME_BROWSING = "hide_ui_for_game_browsing"
+    const val KEY_MARQUEE_POSITION_LOCKED = "marquee_position_locked"
 }

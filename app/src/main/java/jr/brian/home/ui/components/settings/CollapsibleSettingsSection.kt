@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,10 +40,13 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -58,7 +62,10 @@ fun CollapsibleSettingsSection(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     
     val rotationAngle by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
@@ -81,11 +88,11 @@ fun CollapsibleSettingsSection(
     )
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // Header with chevron
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
+                .offset(y = pressOffsetY)
+                .scale(pressScale * animatedFocusedScale(isFocused))
                 .onFocusChanged { isFocused = it.isFocused }
                 .background(
                     brush = headerGradient,
@@ -110,6 +117,11 @@ fun CollapsibleSettingsSection(
                     shape = RoundedCornerShape(16.dp)
                 )
                 .clip(RoundedCornerShape(16.dp))
+                .pressWithHaptic(
+                    onToggle,
+                    haptic = haptic,
+                    onPressChange = { isPressed = it }
+                )
                 .clickable { onToggle() }
                 .focusable()
                 .padding(16.dp)
@@ -151,7 +163,6 @@ fun CollapsibleSettingsSection(
             }
         }
 
-        // Expandable content
         AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),

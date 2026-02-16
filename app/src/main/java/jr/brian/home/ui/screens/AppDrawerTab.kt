@@ -62,6 +62,7 @@ import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -386,13 +387,19 @@ fun AppDrawerTab(
         )
 
         if (appDrawerOptionsDialogState.isVisible) {
+            val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+            
             AppsTabOptionsDialog(
                 onDismiss = appDrawerOptionsDialogState::dismiss,
                 onShowAppVisibility = { appVisibilityDialogState.show() },
                 onResetPositions = {},
                 isDragLocked = true,
                 onToggleDragLock = { },
-                title = stringResource(R.string.app_drawer_tab_options_title)
+                title = stringResource(R.string.app_drawer_tab_options_title),
+                isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+                onToggleMarqueePositionLock = if (isEsdeMode) {
+                    { esdePrefsManager.toggleMarqueePositionLocked() }
+                } else null
             )
         }
 

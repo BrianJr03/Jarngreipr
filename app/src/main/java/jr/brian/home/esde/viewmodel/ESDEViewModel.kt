@@ -1,5 +1,6 @@
 package jr.brian.home.esde.viewmodel
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -9,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.music.MusicController
 import jr.brian.home.esde.music.MusicManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
@@ -43,6 +45,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     val prefs: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val cleanupHelper: ESDECleanupHelper,
@@ -70,7 +73,7 @@ class ESDEViewModel @Inject constructor(
     private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()
     val videoLaunchEvent: SharedFlow<VideoLaunchEvent> = _videoLaunchEvent.asSharedFlow()
 
-    val musicController: MusicController = MusicManager(prefs)
+    val musicController: MusicController = MusicManager(context, prefs)
 
     private val videoDelayHandler = Handler(Looper.getMainLooper())
     private var pendingVideoRunnable: Runnable? = null
@@ -133,13 +136,29 @@ class ESDEViewModel @Inject constructor(
     fun refreshSystemImage() {
         systemImageCache.clear()
 
-        val systemName = prefs.state.value.lastSelectedSystem ?: return
-        val newImagePath = when (prefs.state.value.systemImageType) {
+        val prefsState = prefs.state.value
+        
+        // Check for single system image/video first (takes priority over everything)
+        val singlePath = prefsState.singleSystemImagePath
+        if (singlePath != null) {
+            val isVideo = isVideoPath(singlePath)
+            _wallpaperState.value = _wallpaperState.value.copy(
+                currentImagePath = if (isVideo) null else singlePath,
+                systemBackgroundVideoPath = if (isVideo) singlePath else null
+            )
+            return
+        }
+
+        val systemName = prefsState.lastSelectedSystem ?: return
+        val newPath = when (prefsState.systemImageType) {
             SystemImageType.None -> null
             else -> getSystemImagePath(systemName)
         }
+        
+        val isVideo = newPath != null && isVideoPath(newPath)
         _wallpaperState.value = _wallpaperState.value.copy(
-            currentImagePath = newImagePath
+            currentImagePath = if (isVideo) null else newPath,
+            systemBackgroundVideoPath = if (isVideo) newPath else null
         )
     }
 
@@ -147,13 +166,19 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         val lastSystem = prefsState.lastSelectedSystem
 
-        val initialImagePath = when (prefsState.systemImageType) {
-            SystemImageType.None -> null
+        // Check for single system image/video first (takes priority)
+        val singlePath = prefsState.singleSystemImagePath
+        val initialPath = when {
+            singlePath != null -> singlePath
+            prefsState.systemImageType == SystemImageType.None -> null
             else -> lastSystem?.let { getSystemImagePath(it) }
         }
+        
+        val isVideo = initialPath != null && isVideoPath(initialPath)
 
         return WallpaperState(
-            currentImagePath = initialImagePath,
+            currentImagePath = if (isVideo) null else initialPath,
+            systemBackgroundVideoPath = if (isVideo) initialPath else null,
             dimmingLevel = prefsState.systemBackgroundDimmingFloat,
             blurLevel = prefsState.systemBlurLevel.toFloat(),
             animationStyle = prefsState.animationStyle,
@@ -165,6 +190,8 @@ class ESDEViewModel @Inject constructor(
             marqueePath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
             logoAlignment = prefsState.logoAlignment,
+            logoOffsetX = prefsState.logoOffsetX,
+            logoOffsetY = prefsState.logoOffsetY,
             marqueeWidth = prefsState.marqueeWidth,
             marqueeHeight = prefsState.marqueeHeight,
             screensaverBehavior = prefsState.screensaverBehavior
@@ -180,13 +207,19 @@ class ESDEViewModel @Inject constructor(
         systemImageCache.remove(systemName)
 
         prefs.setLastSelectedSystem(systemName)
+        
+        val systemPath = getSystemImagePath(systemName)
+        val isVideo = systemPath != null && isVideoPath(systemPath)
+        
         _wallpaperState.value = _wallpaperState.value.copy(
-            currentImagePath = getSystemImagePath(systemName),
+            currentImagePath = if (isVideo) null else systemPath,
+            systemBackgroundVideoPath = if (isVideo) systemPath else null,
             isVideoPlaying = false,
             videoPath = null,
             marqueePath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
+            dimmingLevel = prefs.state.value.systemBackgroundDimmingFloat,
             isShowingGameBackground = false
         )
 
@@ -215,11 +248,13 @@ class ESDEViewModel @Inject constructor(
 
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
+            systemBackgroundVideoPath = null,
             isVideoPlaying = false,
             videoPath = null,
             marqueePath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
+            dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
             isShowingGameBackground = true
         )
 
@@ -401,14 +436,7 @@ class ESDEViewModel @Inject constructor(
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
-        if (systemImageType == SystemImageType.None) {
-            return null
-        }
-
-        if (systemImageCache.containsKey(systemName)) {
-            return systemImageCache[systemName]
-        }
-
+        // Check for single system image first (takes priority over image type)
         val singleImagePath = prefsState.singleSystemImagePath
         if (singleImagePath != null) {
             if (singleImagePath.startsWith("content://")) {
@@ -421,6 +449,14 @@ class ESDEViewModel @Inject constructor(
                     return singleImageFile.absolutePath
                 }
             }
+        }
+
+        if (systemImageType == SystemImageType.None) {
+            return null
+        }
+
+        if (systemImageCache.containsKey(systemName)) {
+            return systemImageCache[systemName]
         }
 
         val customImagesPath = prefsState.customSystemImagesPath
@@ -577,10 +613,7 @@ class ESDEViewModel @Inject constructor(
         val preferredType = prefsState.gameImageType
         val mediaSystemName = getMediaSystemName(systemName)
 
-        if (preferredType == GameImageType.None) {
-            return null
-        }
-
+        // Check for single game image first (takes priority over image type)
         val singleGameImagePath = prefsState.singleGameImagePath
         if (singleGameImagePath != null) {
             if (singleGameImagePath.startsWith("content://")) {
@@ -591,6 +624,10 @@ class ESDEViewModel @Inject constructor(
                     return singleGameImageFile.absolutePath
                 }
             }
+        }
+
+        if (preferredType == GameImageType.None) {
+            return null
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
@@ -724,6 +761,25 @@ class ESDEViewModel @Inject constructor(
     private fun isImageFile(file: File): Boolean {
         val ext = file.extension.lowercase()
         return ext in IMAGE_EXTENSIONS
+    }
+
+    private fun isVideoPath(path: String): Boolean {
+        // Check by file extension first
+        val ext = path.substringAfterLast('.', "").lowercase()
+        if (ext in VIDEO_EXTENSIONS) return true
+        
+        // For content:// URIs, check the MIME type
+        if (path.startsWith("content://")) {
+            return try {
+                val uri = android.net.Uri.parse(path)
+                val mimeType = context.contentResolver.getType(uri)
+                mimeType?.startsWith("video/") == true
+            } catch (e: Exception) {
+                false
+            }
+        }
+        
+        return false
     }
 
 
