@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,10 +56,10 @@ fun QwertyKeyboard(
     searchQuery: String,
     modifier: Modifier = Modifier,
     showQueryText: Boolean = true,
+    showFlipLayoutButton: Boolean = true,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
-    onNavigateUp: () -> Unit = {},
     onFlipLayout: () -> Unit = {},
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
@@ -90,19 +89,24 @@ fun QwertyKeyboard(
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(ThemePrimaryColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                        .clickable { onFlipLayout() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FlipCameraAndroid,
-                        contentDescription = stringResource(R.string.keyboard_label_flip),
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                if (showFlipLayoutButton) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable { onFlipLayout() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FlipCameraAndroid,
+                            contentDescription = stringResource(R.string.keyboard_label_flip),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
@@ -125,7 +129,6 @@ fun QwertyKeyboard(
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = onFocusChanged,
-                onNavigateUp = onNavigateUp,
                 onSwapMode = { isNumericMode = true }
             )
         }
@@ -141,10 +144,8 @@ private fun QwertyAlphabetKeyboard(
     onQueryChange: (String) -> Unit,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit,
-    onNavigateUp: () -> Unit,
     onSwapMode: () -> Unit,
 ) {
-    // Row 1: QWERTYUIOP
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -164,7 +165,6 @@ private fun QwertyAlphabetKeyboard(
         }
     }
 
-    // Row 2: ASDFGHJKL
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -187,12 +187,10 @@ private fun QwertyAlphabetKeyboard(
         Spacer(modifier = Modifier.weight(0.5f))
     }
 
-    // Row 3: ZXCVBNM + Backspace
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        // Swap mode button
         val swapIndex = qwertyRow1.size + qwertyRow2.size + qwertyRow3.size
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_swap),
@@ -206,7 +204,7 @@ private fun QwertyAlphabetKeyboard(
             },
             onFocusChanged = { onFocusChanged(swapIndex) },
         )
-        
+
         qwertyRow3.forEachIndexed { index, letter ->
             val combinedIndex = index + qwertyRow1.size + qwertyRow2.size
             QwertyKeyButton(
@@ -221,8 +219,7 @@ private fun QwertyAlphabetKeyboard(
                 onFocusChanged = { onFocusChanged(combinedIndex) },
             )
         }
-        
-        // Backspace
+
         val backspaceIndex = swapIndex + 1
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_arrow_left),
@@ -238,7 +235,6 @@ private fun QwertyAlphabetKeyboard(
         )
     }
 
-    // Row 4: Space and Clear
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -255,7 +251,7 @@ private fun QwertyAlphabetKeyboard(
             },
             onFocusChanged = { onFocusChanged(spaceIndex) },
         )
-        
+
         val clearIndex = spaceIndex + 1
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_clear),
@@ -339,7 +335,7 @@ private fun QwertyNumericKeyboard(
             },
             onFocusChanged = { onFocusChanged(swapIndex) },
         )
-        
+
         val spaceIndex = 11
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_space),
@@ -352,7 +348,7 @@ private fun QwertyNumericKeyboard(
             },
             onFocusChanged = { onFocusChanged(spaceIndex) },
         )
-        
+
         val backspaceIndex = 12
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_arrow_left),
@@ -366,7 +362,7 @@ private fun QwertyNumericKeyboard(
             },
             onFocusChanged = { onFocusChanged(backspaceIndex) },
         )
-        
+
         val clearIndex = 13
         QwertyKeyButton(
             label = stringResource(R.string.keyboard_label_clear),

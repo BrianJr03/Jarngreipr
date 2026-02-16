@@ -32,8 +32,8 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
-    MixImages("miximages");
-//    Description(null)
+    MixImages("miximages"),
+    Description(null);
 
     companion object {
         /** Returns all types that have actual media folders (excludes None and All) */

@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -205,7 +204,6 @@ private fun HorizontalSearchLayout(
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = { focusedKeyIndex = it },
-                onNavigateUp = {},
                 onFlipLayout = onFlipLayout,
                 modifier = Modifier.fillMaxWidth()
             )

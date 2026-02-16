@@ -414,13 +414,13 @@ class ESDEPreferencesManager(context: Context) {
     }
 
     fun setMarqueeWidth(width: Int) {
-        val coercedWidth = width.coerceIn(100, 600)
+        val coercedWidth = width.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeWidth = coercedWidth)
         prefs.edit { putInt(KEY_MARQUEE_WIDTH, coercedWidth) }
     }
 
     fun setMarqueeHeight(height: Int) {
-        val coercedHeight = height.coerceIn(50, 400)
+        val coercedHeight = height.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeHeight = coercedHeight)
         prefs.edit { putInt(KEY_MARQUEE_HEIGHT, coercedHeight) }
     }

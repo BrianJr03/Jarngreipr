@@ -27,5 +27,8 @@ data class FeatureManagers @Inject constructor(
     
     /** Shared ImageLoader for ESDE with memory and disk caching */
     @ESDEImageLoader
-    val esdeImageLoader: ImageLoader
+    val esdeImageLoader: ImageLoader,
+    
+    /** Manages App Drawer FAB visibility and color settings */
+    val appDrawerFabManager: AppDrawerFabManager
 )

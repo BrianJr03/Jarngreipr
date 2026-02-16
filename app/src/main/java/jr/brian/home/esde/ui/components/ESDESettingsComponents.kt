@@ -469,11 +469,11 @@ fun MarqueeSizeSetting(
     onWidthChange: (Int) -> Unit,
     onHeightChange: (Int) -> Unit,
     onReset: () -> Unit,
-    minWidth: Int = 100,
+    minWidth: Int = 40,
     maxWidth: Int = 600,
-    minHeight: Int = 50,
-    maxHeight: Int = 400,
-    step: Int = 25
+    minHeight: Int = 40,
+    maxHeight: Int = 600,
+    step: Int = 10
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
