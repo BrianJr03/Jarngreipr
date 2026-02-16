@@ -64,4 +64,6 @@ object ESDEPreferencesConstants {
     const val KEY_EXCLUDE_EFFECTS_FROM_HOME = "exclude_effects_from_home"
     const val KEY_HIDE_UI_FOR_GAME_BROWSING = "hide_ui_for_game_browsing"
     const val KEY_MARQUEE_POSITION_LOCKED = "marquee_position_locked"
+    const val KEY_ANDROID_GAMES_BACKGROUND_SCALE = "android_games_background_scale"
+    const val KEY_MARQUEE_MIN_WIDTH_PERCENT = "marquee_min_width_percent"
 }

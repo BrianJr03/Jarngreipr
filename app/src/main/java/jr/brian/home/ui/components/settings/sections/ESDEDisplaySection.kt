@@ -338,6 +338,9 @@ fun ESDESettingsContent(
                 },
                 onShowMarqueeForGameChange = { show ->
                     preferencesManager.setShowMarqueeForGame(show)
+                },
+                onMarqueeMinWidthPercentChange = { percent ->
+                    preferencesManager.setMarqueeMinWidthPercent(percent)
                 }
             )
         }
@@ -427,6 +430,9 @@ fun ESDESettingsContent(
                 onSystemImageTypeChange = { type ->
                     preferencesManager.setSystemImageType(type)
                     viewModel.refreshSystemImage()
+                },
+                onAndroidGamesBackgroundScaleChange = { scale ->
+                    preferencesManager.setAndroidGamesBackgroundScale(scale)
                 }
             )
         }

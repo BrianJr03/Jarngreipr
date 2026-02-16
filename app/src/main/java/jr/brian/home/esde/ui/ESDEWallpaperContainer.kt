@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -167,11 +166,12 @@ fun ESDEWallpaperContainer(
             val useSmallSize = prefsState.isAndroidGamesSelected()
                 && state.isShowingGameBackground
                 && !hasMiximage
+            val androidGamesScale = prefsState.androidGamesBackgroundScale
 
             if (state.systemBackgroundVideoPath != null) {
                 val videoModifier = if (useSmallSize) {
                     Modifier
-                        .fillMaxSize(0.35f)
+                        .fillMaxSize(androidGamesScale)
                         .align(Alignment.Center)
                 } else {
                     Modifier.fillMaxSize()
@@ -184,14 +184,15 @@ fun ESDEWallpaperContainer(
                 )
             } else {
                 AnimatedWallpaperImage(
-                    imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                    useSmallSize = useSmallSize,
-                    blurLevel = effectiveBlurLevel,
-                    animationStyle = state.animationStyle,
-                    animationDuration = state.animationDuration,
-                    animationScale = state.animationScale,
-                    backgroundScaleMode = backgroundScaleMode
-                )
+                imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
+                useSmallSize = useSmallSize,
+                smallSizeScale = androidGamesScale,
+                blurLevel = effectiveBlurLevel,
+                animationStyle = state.animationStyle,
+                animationDuration = state.animationDuration,
+                animationScale = state.animationScale,
+                backgroundScaleMode = backgroundScaleMode
+            )
             }
 
             if (!state.isScreensaverActive && !state.isGameRunning) {
@@ -212,7 +213,8 @@ fun ESDEWallpaperContainer(
                 isDraggable = isMarqueeDraggable,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
-                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
+                minWidthPercent = prefsState.marqueeMinWidthPercent
             )
         }
 
@@ -231,7 +233,8 @@ fun ESDEWallpaperContainer(
                 isDraggable = isMarqueeDraggable,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
-                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
+                minWidthPercent = prefsState.marqueeMinWidthPercent
             )
         }
 
@@ -280,6 +283,7 @@ fun ESDEWallpaperContainer(
 private data class WallpaperAnimationState(
     val imagePath: String,
     val useSmallSize: Boolean,
+    val smallSizeScale: Float,
     val backgroundScaleMode: BackgroundScaleMode
 )
 
@@ -287,6 +291,7 @@ private data class WallpaperAnimationState(
 private fun AnimatedWallpaperImage(
     imagePath: String,
     useSmallSize: Boolean = false,
+    smallSizeScale: Float = 0.5f,
     blurLevel: Float = 0f,
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
@@ -298,7 +303,7 @@ private fun AnimatedWallpaperImage(
         contentAlignment = Alignment.Center
     ) {
         AnimatedContent(
-            targetState = WallpaperAnimationState(imagePath, useSmallSize, backgroundScaleMode),
+            targetState = WallpaperAnimationState(imagePath, useSmallSize, smallSizeScale, backgroundScaleMode),
             transitionSpec = {
                 fadeIn(animationSpec = tween(durationMillis = 400)) togetherWith
                         fadeOut(animationSpec = tween(durationMillis = 400))
@@ -306,7 +311,7 @@ private fun AnimatedWallpaperImage(
             label = "WallpaperTransition"
         ) { state ->
             val imageModifier = if (state.useSmallSize) {
-                Modifier.fillMaxSize(0.35f)
+                Modifier.fillMaxSize(state.smallSizeScale)
             } else {
                 Modifier.fillMaxSize()
             }
@@ -402,7 +407,8 @@ private fun BoxScope.AnimatedMarquee(
     isDraggable: Boolean = false,
     freeOffsetX: Float = 0f,
     freeOffsetY: Float = 0f,
-    onOffsetChange: ((Float, Float) -> Unit)? = null
+    onOffsetChange: ((Float, Float) -> Unit)? = null,
+    minWidthPercent: Float = 0.5f
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -503,11 +509,15 @@ private fun BoxScope.AnimatedMarquee(
                     } else Modifier
                 )
         ) {
+            val minWidth = (state.marqueeWidth * minWidthPercent).dp
             MarqueeImage(
                 marqueePath = marqueePath,
                 modifier = Modifier
-                    .sizeIn(maxWidth = state.marqueeWidth.dp, maxHeight = state.marqueeHeight.dp)
-                    .wrapContentSize()
+                    .sizeIn(
+                        minWidth = minWidth,
+                        maxWidth = state.marqueeWidth.dp, 
+                        maxHeight = state.marqueeHeight.dp
+                    )
                     .scale(bubbleScale)
                     .graphicsLayer { alpha = bubbleAlpha },
                 animate = isUsingDefaultBackground,
