@@ -3,7 +3,9 @@ package jr.brian.home.esde.ui
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -12,6 +14,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -53,6 +56,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -70,6 +74,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
 import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
@@ -109,7 +114,6 @@ fun ESDEWallpaperContainer(
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
 
-    // Description overlay is enabled per-page and only as overlay
     val isDescriptionOverlayEnabled = prefsState.isDescriptionOverlayOnPage(currentPageIndex)
     val showDescription = showEsdeContent && isDescriptionOverlayEnabled
 
@@ -119,7 +123,6 @@ fun ESDEWallpaperContainer(
         prefsState.showMarqueeForSystem
     }
 
-    // Marquee can now show alongside description
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
             marqueeEnabledForContext
@@ -163,28 +166,29 @@ fun ESDEWallpaperContainer(
                 prefsState.systemBackgroundScaleMode
             }
 
-            val imageModifier = if (prefsState.isAndroidGamesSelected()
+            val hasMiximage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
+            val useSmallSize = prefsState.isAndroidGamesSelected()
                 && state.isShowingGameBackground
-            ) {
-                Modifier
-                    .fillMaxSize(0.35f)
-                    .align(Alignment.Center)
-            } else {
-                Modifier.fillMaxSize()
-            }
+                && !hasMiximage
 
-            // Use video background if available, otherwise use image
             if (state.systemBackgroundVideoPath != null) {
+                val videoModifier = if (useSmallSize) {
+                    Modifier
+                        .fillMaxSize(0.35f)
+                        .align(Alignment.Center)
+                } else {
+                    Modifier.fillMaxSize()
+                }
                 VideoBackground(
                     videoPath = state.systemBackgroundVideoPath,
-                    modifier = imageModifier,
+                    modifier = videoModifier,
                     blurLevel = effectiveBlurLevel,
                     backgroundScaleMode = backgroundScaleMode
                 )
             } else {
                 AnimatedWallpaperImage(
                     imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                    modifier = imageModifier,
+                    useSmallSize = useSmallSize,
                     blurLevel = effectiveBlurLevel,
                     animationStyle = state.animationStyle,
                     animationDuration = state.animationDuration,
@@ -276,8 +280,54 @@ fun ESDEWallpaperContainer(
     }
 }
 
+private data class WallpaperAnimationState(
+    val imagePath: String,
+    val useSmallSize: Boolean,
+    val backgroundScaleMode: BackgroundScaleMode
+)
+
 @Composable
 private fun AnimatedWallpaperImage(
+    imagePath: String,
+    useSmallSize: Boolean = false,
+    blurLevel: Float = 0f,
+    animationStyle: AnimationStyle = AnimationStyle.Fade,
+    animationDuration: Int = 300,
+    animationScale: Float = 0.9f,
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        AnimatedContent(
+            targetState = WallpaperAnimationState(imagePath, useSmallSize, backgroundScaleMode),
+            transitionSpec = {
+                fadeIn(animationSpec = tween(durationMillis = 400)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 400))
+            },
+            label = "WallpaperTransition"
+        ) { state ->
+            val imageModifier = if (state.useSmallSize) {
+                Modifier.fillMaxSize(0.35f)
+            } else {
+                Modifier.fillMaxSize()
+            }
+            WallpaperImage(
+                imagePath = state.imagePath,
+                modifier = imageModifier,
+                blurLevel = blurLevel,
+                animationStyle = animationStyle,
+                animationDuration = animationDuration,
+                animationScale = animationScale,
+                backgroundScaleMode = state.backgroundScaleMode
+            )
+        }
+    }
+}
+
+@Composable
+private fun WallpaperImage(
     imagePath: String,
     modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
@@ -306,7 +356,7 @@ private fun AnimatedWallpaperImage(
     val imageData = remember(imagePath) {
         when {
             imagePath.startsWith("file:///android_asset/") -> imagePath
-            imagePath.startsWith("content://") -> Uri.parse(imagePath)
+            imagePath.startsWith("content://") -> imagePath.toUri()
             else -> File(imagePath)
         }
     }
@@ -392,7 +442,7 @@ private fun BoxScope.AnimatedMarquee(
         }
 
         val finalAlignment = if (dockTopY != null || isFreePosition) {
-            Alignment.Center  // Use center as base, then apply offset
+            Alignment.Center
         } else {
             logoAlignment
         }
@@ -442,7 +492,6 @@ private fun BoxScope.AnimatedMarquee(
                                 },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
-                                    // Constrain to screen bounds
                                     dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(
                                         -screenWidthPx / 2f + 50f,
                                         screenWidthPx / 2f - 50f
@@ -605,4 +654,3 @@ private fun VideoBackground(
             .then(blurModifier)
     )
 }
-

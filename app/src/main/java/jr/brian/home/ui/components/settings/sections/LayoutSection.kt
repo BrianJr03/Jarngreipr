@@ -10,12 +10,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.settings.AppDrawerFabSettingsItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.DockSettingsItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.ThorSettingsItem
 import jr.brian.home.ui.components.settings.VisibilitySettingsItem
+import jr.brian.home.util.SettingsScreenUtil.EXPANDED_APP_DRAWER_FAB
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_DOCK
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_GRID
@@ -54,6 +56,13 @@ fun LayoutSection(
             onClick = {
                 expandedItem = null
                 onNavigateToDockSettings()
+            }
+        )
+
+        AppDrawerFabSettingsItem(
+            isExpanded = expandedItem == EXPANDED_APP_DRAWER_FAB,
+            onExpandChanged = {
+                expandedItem = if (it) EXPANDED_APP_DRAWER_FAB else null
             }
         )
 

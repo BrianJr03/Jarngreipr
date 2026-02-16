@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,6 +90,135 @@ fun WidgetCategoryList(
                 widget = widgetWithCategory.widget,
                 repository = repository,
                 onClick = { onWidgetSelected(widgetWithCategory.widget) }
+            )
+        }
+    }
+}
+
+@Composable
+fun HorizontalWidgetList(
+    categories: List<WidgetCategory>,
+    repository: WidgetProviderRepository,
+    onWidgetSelected: (WidgetProviderInfo) -> Unit
+) {
+    val allWidgets = remember(categories) {
+        categories.flatMap { category ->
+            category.widgets.map { widget ->
+                WidgetWithCategory(
+                    widget = widget,
+                    categoryName = category.appName,
+                    categoryIcon = category.appIcon
+                )
+            }
+        }
+    }
+
+    LazyHorizontalGrid(
+        rows = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = allWidgets,
+            key = { "${it.category.packageName}_${it.widget.providerInfo.provider.className}" }
+        ) { widgetWithCategory ->
+            CompactWidgetCard(
+                widget = widgetWithCategory.widget,
+                repository = repository,
+                onClick = { onWidgetSelected(widgetWithCategory.widget) }
+            )
+        }
+    }
+}
+
+@Composable
+fun CompactWidgetCard(
+    widget: WidgetProviderInfo,
+    repository: WidgetProviderRepository,
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .width(180.dp)
+            .fillMaxHeight()
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient(isFocused = isFocused),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = if (isFocused) {
+                    borderBrush(
+                        isFocused = true,
+                        colors = listOf(
+                            ThemePrimaryColor,
+                            ThemeSecondaryColor
+                        )
+                    )
+                } else {
+                    Brush.linearGradient(
+                        colors = listOf(
+                            ThemePrimaryColor.copy(alpha = 0.2f),
+                            ThemeSecondaryColor.copy(alpha = 0.2f)
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onClick() }
+            .focusable()
+            .padding(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                widget.previewImage?.let { preview ->
+                    Image(
+                        bitmap = preview.toBitmap(300, 300).asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                } ?: run {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = widget.label,
+                color = Color.White,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

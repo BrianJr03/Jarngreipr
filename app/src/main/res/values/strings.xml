@@ -692,6 +692,14 @@
     <string name="dock_page_visibility_title">Show Dock on Specific Tabs</string>
     <string name="dock_page_visibility_description">Choose which tabs display the dock</string>
     <string name="dock_page_number">Tab %1$d</string>
+
+    <!-- App Drawer FAB Settings -->
+    <string name="settings_app_drawer_fab_title">App Drawer Button</string>
+    <string name="settings_app_drawer_fab_description">Floating button to open app drawer on scrollable tabs</string>
+    <string name="settings_app_drawer_fab_enable">Show Button</string>
+    <string name="settings_app_drawer_fab_color">Button Color</string>
+    <string name="settings_app_drawer_fab_page_visibility">Show on Specific Tabs</string>
+    <string name="settings_app_drawer_fab_page_visibility_description">Choose which tabs display the button</string>
     
     <!-- Volume Controls -->
     <string name="volume_top_screen">Top Screen Volume</string>
