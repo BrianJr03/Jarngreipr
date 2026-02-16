@@ -56,14 +56,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.DualVolumeControls
 import jr.brian.home.ui.components.VolumeSlider
 import jr.brian.home.ui.extensions.pressWithHaptic
-import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
@@ -251,42 +246,53 @@ fun PoweredOffScreen(
                 }
             }
 
-            // Volume Down Button - Bottom Left
-            VolumeButton(
-                icon = Icons.AutoMirrored.Filled.VolumeDown,
-                contentDescription = stringResource(R.string.volume_down_description),
-                onClick = {
-                    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                    val newVolume = (currentVolume - 1).coerceAtLeast(0)
-                    audioManager.setStreamVolume(
-                        AudioManager.STREAM_MUSIC,
-                        newVolume,
-                        AudioManager.FLAG_SHOW_UI
-                    )
-                },
+            AnimatedVisibility(
+                visible = showInfo,
+                enter = fadeIn(),
+                exit = fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 16.dp)
-            )
+            ) {
+                VolumeButton(
+                    icon = Icons.AutoMirrored.Filled.VolumeDown,
+                    contentDescription = stringResource(R.string.volume_down_description),
+                    onClick = {
+                        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                        val newVolume = (currentVolume - 1).coerceAtLeast(0)
+                        audioManager.setStreamVolume(
+                            AudioManager.STREAM_MUSIC,
+                            newVolume,
+                            AudioManager.FLAG_SHOW_UI
+                        )
+                    }
+                )
+            }
 
             // Volume Up Button - Bottom Right
-            VolumeButton(
-                icon = Icons.AutoMirrored.Filled.VolumeUp,
-                contentDescription = stringResource(R.string.volume_up_description),
-                onClick = {
-                    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                    val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                    val newVolume = (currentVolume + 1).coerceAtMost(maxVolume)
-                    audioManager.setStreamVolume(
-                        AudioManager.STREAM_MUSIC,
-                        newVolume,
-                        AudioManager.FLAG_SHOW_UI
-                    )
-                },
+            AnimatedVisibility(
+                visible = showInfo,
+                enter = fadeIn(),
+                exit = fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 16.dp)
-            )
+            ) {
+                VolumeButton(
+                    icon = Icons.AutoMirrored.Filled.VolumeUp,
+                    contentDescription = stringResource(R.string.volume_up_description),
+                    onClick = {
+                        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                        val newVolume = (currentVolume + 1).coerceAtMost(maxVolume)
+                        audioManager.setStreamVolume(
+                            AudioManager.STREAM_MUSIC,
+                            newVolume,
+                            AudioManager.FLAG_SHOW_UI
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -307,19 +313,12 @@ private fun VolumeButton(
             .size(56.dp)
             .scale(pressScale)
             .background(
-                brush = cardGradient(isFocused = false, isPressed = isPressed),
+                color = Color.DarkGray.copy(alpha = if (isPressed) 0.8f else 0.5f),
                 shape = RoundedCornerShape(6.dp)
             )
             .border(
-                width = if (isPressed) 2.dp else 0.dp,
-                brush = borderBrush(
-                    isFocused = isPressed,
-                    colors = listOf(
-                        ThemeAccentColor,
-                        ThemePrimaryColor,
-                        ThemeSecondaryColor
-                    )
-                ),
+                width = 1.dp,
+                color = Color.DarkGray,
                 shape = RoundedCornerShape(6.dp)
             )
             .pressWithHaptic(
@@ -333,7 +332,7 @@ private fun VolumeButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = Color.White,
+            tint = Color.DarkGray,
             modifier = Modifier.size(28.dp)
         )
     }
