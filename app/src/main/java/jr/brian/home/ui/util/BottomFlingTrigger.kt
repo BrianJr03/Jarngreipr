@@ -45,7 +45,7 @@ private class BottomFlingNestedScrollConnection(
         source: NestedScrollSource
     ): Offset {
         // Only trigger during drag gestures (finger on screen)
-        if (source == NestedScrollSource.Drag) {
+        if (source == NestedScrollSource.UserInput) {
             // available.y < 0 means trying to scroll down with nowhere to go
             if (available.y < 0 && !gridState.canScrollForward) {
                 accumulatedOverscroll += -available.y
