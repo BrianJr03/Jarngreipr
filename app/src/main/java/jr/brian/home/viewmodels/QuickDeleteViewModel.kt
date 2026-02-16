@@ -7,22 +7,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.data.FolderCleanupManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.model.FileExtensionInfo
-import jr.brian.home.model.state.QuickDeleteUIState
 import jr.brian.home.model.state.DeleteResult
+import jr.brian.home.model.state.QuickDeleteUIState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class QuickDeleteViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val quickDeleteManager: QuickDeleteManager
+    @param:ApplicationContext private val context: Context,
+    private val quickDeleteManager: QuickDeleteManager,
+    private val folderCleanupManager: FolderCleanupManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuickDeleteUIState())
@@ -222,6 +223,87 @@ class QuickDeleteViewModel @Inject constructor(
                 fileExtensions = emptyList(),
                 selectedExtensions = emptySet()
             )
+        }
+    }
+
+    fun scanForEmptyFolders() {
+        val paths = _uiState.value.folderPaths
+        if (paths.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(isScanning = true, scanError = null) }
+
+            try {
+                val includeSystemInfo = _uiState.value.includeSystemInfoFolders
+                val emptyCount = folderCleanupManager.countEmptyFolders(paths, includeSystemInfo)
+
+                _uiState.update {
+                    it.copy(
+                        isScanning = false,
+                        emptyFolderCount = emptyCount,
+                        showEmptyFolderConfirmation = emptyCount > 0
+                    )
+                }
+
+                if (emptyCount == 0) {
+                    _uiState.update {
+                        it.copy(scanError = "No empty folders found")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isScanning = false,
+                        scanError = e.message ?: "Unknown error occurred"
+                    )
+                }
+            }
+        }
+    }
+
+    fun toggleIncludeSystemInfoFolders() {
+        _uiState.update { it.copy(includeSystemInfoFolders = !it.includeSystemInfoFolders) }
+    }
+
+    fun showEmptyFolderConfirmation() {
+        scanForEmptyFolders()
+    }
+
+    fun hideEmptyFolderConfirmation() {
+        _uiState.update { it.copy(showEmptyFolderConfirmation = false) }
+    }
+
+    fun deleteEmptySubfolders() {
+        val paths = _uiState.value.folderPaths
+        if (paths.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update {
+                it.copy(
+                    isDeletingEmptyFolders = true,
+                    showEmptyFolderConfirmation = false
+                )
+            }
+
+            try {
+                val includeSystemInfo = _uiState.value.includeSystemInfoFolders
+                val result = folderCleanupManager.deleteEmptyFolders(paths, includeSystemInfo)
+
+                _uiState.update {
+                    it.copy(
+                        isDeletingEmptyFolders = false,
+                        emptyFolderCount = 0,
+                        deleteResult = result
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isDeletingEmptyFolders = false,
+                        deleteResult = DeleteResult.Failure(e.message ?: "Unknown error occurred")
+                    )
+                }
+            }
         }
     }
 }

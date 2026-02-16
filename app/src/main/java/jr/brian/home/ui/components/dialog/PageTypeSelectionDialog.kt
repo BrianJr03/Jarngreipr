@@ -32,9 +32,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.data.PageType
+import jr.brian.home.model.PageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -45,7 +46,7 @@ fun PageTypeSelectionDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
@@ -121,27 +122,13 @@ private fun PageTypeOption(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(

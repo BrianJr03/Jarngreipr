@@ -50,6 +50,8 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.OledCardColor
@@ -91,7 +93,7 @@ fun AppVisibilityDialog(
         apps.count { it.packageName !in hiddenApps }
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
@@ -221,27 +223,13 @@ private fun AppVisibilityItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.5f),
-                OledCardColor.copy(alpha = 0.5f),
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -269,9 +257,7 @@ private fun AppVisibilityItem(
                 packageName = app.packageName,
                 contentDescription = stringResource(R.string.app_icon_description, app.label),
                 customIconManager = customIconManager,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.size(40.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))

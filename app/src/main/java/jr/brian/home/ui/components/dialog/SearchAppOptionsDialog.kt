@@ -56,7 +56,7 @@ fun SearchAppOptionsDialog(
     )
     var focusedIndex by remember { mutableIntStateOf(0) }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,

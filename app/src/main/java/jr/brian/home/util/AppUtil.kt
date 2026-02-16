@@ -33,6 +33,23 @@ fun launchApp(
     }
 }
 
+/**
+ * Launches an app on the opposite display from the current preference.
+ * If current preference is PRIMARY_DISPLAY, launches on CURRENT_DISPLAY and vice versa.
+ */
+fun launchAppOnOppositeDisplay(
+    context: Context,
+    packageName: String,
+    currentPreference: DisplayPreference
+) {
+    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
+        DisplayPreference.CURRENT_DISPLAY
+    } else {
+        DisplayPreference.PRIMARY_DISPLAY
+    }
+    launchApp(context, packageName, oppositePreference)
+}
+
 fun openAppInfo(
     context: Context,
     packageName: String

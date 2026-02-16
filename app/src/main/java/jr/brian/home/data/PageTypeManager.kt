@@ -2,15 +2,10 @@ package jr.brian.home.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import jr.brian.home.model.PageType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-enum class PageType {
-    APPS_TAB,
-    APPS_AND_WIDGETS_TAB,
-    APP_DRAWER_TAB
-}
 
 class PageTypeManager(context: Context) {
     private val prefs: SharedPreferences =

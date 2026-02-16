@@ -3,75 +3,54 @@ package jr.brian.home.ui.components.apps
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInFull
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.GridItem
 import jr.brian.home.model.app.AppInfo
-import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
 fun AppOptionsMenuContent(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
-    onAppInfoClick: () -> Unit,
-    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     hasExternalDisplay: Boolean,
     focusRequesters: List<FocusRequester>,
-    onFocusedIndexChange: (Int) -> Unit,
-    onDismiss: () -> Unit,
     app: AppInfo? = null,
     currentIconSize: Float = 64f,
+    isInDock: Boolean = false,
+    onDismiss: () -> Unit,
+    onAppInfoClick: () -> Unit,
+    onFocusedIndexChange: (Int) -> Unit,
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    onRemoveFromDock: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
@@ -106,17 +85,19 @@ fun AppOptionsMenuContent(
                         index = 0
                     )
                 )
-                add(
-                    GridItem.IconItem(
-                        icon = Icons.Default.VisibilityOff,
-                        label = stringResource(R.string.app_options_hide),
-                        onClick = {
-                            onToggleVisibility()
-                            onDismiss()
-                        },
-                        index = 1
+                if (!isInDock){
+                    add(
+                        GridItem.IconItem(
+                            icon = Icons.Default.VisibilityOff,
+                            label = stringResource(R.string.app_options_hide),
+                            onClick = {
+                                onToggleVisibility()
+                                onDismiss()
+                            },
+                            index = 1
+                        )
                     )
-                )
+                }
                 add(
                     GridItem.IconItem(
                         icon = Icons.Default.Image,
@@ -125,21 +106,39 @@ fun AppOptionsMenuContent(
                         index = 2
                     )
                 )
-
-                if (app != null) {
+                
+                if (isInDock) {
                     add(
                         GridItem.IconItem(
-                            icon = Icons.Default.OpenInFull,
-                            label = stringResource(R.string.app_options_resize),
+                            icon = Icons.Default.RemoveCircleOutline,
+                            label = stringResource(R.string.dock_remove_app),
                             onClick = {
-                                showResizeMode = true
-                                previewIconSize = currentIconSize
+                                onRemoveFromDock()
+                                onDismiss()
                             },
                             index = 3
                         )
                     )
+                }
+
+                if (app != null) {
+                    val resizeIndex = if (isInDock) 4 else 3
+                    if (!isInDock) {
+                        add(
+                            GridItem.IconItem(
+                                icon = Icons.Default.OpenInFull,
+                                label = stringResource(R.string.app_options_resize),
+                                onClick = {
+                                    showResizeMode = true
+                                    previewIconSize = currentIconSize
+                                },
+                                index = resizeIndex
+                            )
+                        )
+                    }
 
                     if (hasExternalDisplay) {
+                        val displayIndexOffset = if (isInDock) 1 else 0
                         add(
                             GridItem.TextItem(
                                 text = stringResource(R.string.app_options_launch_primary_descr),
@@ -148,7 +147,7 @@ fun AppOptionsMenuContent(
                                     onDismiss()
                                 },
                                 isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                                index = 4
+                                index = 4 + displayIndexOffset
                             )
                         )
                         add(
@@ -159,11 +158,12 @@ fun AppOptionsMenuContent(
                                     onDismiss()
                                 },
                                 isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                                index = 5
+                                index = 5 + displayIndexOffset
                             )
                         )
                     }
                 } else if (hasExternalDisplay) {
+                    val displayIndexOffset = if (isInDock) 1 else 0
                     add(
                         GridItem.TextItem(
                             text = stringResource(R.string.app_options_launch_primary_descr),
@@ -172,7 +172,7 @@ fun AppOptionsMenuContent(
                                 onDismiss()
                             },
                             isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                            index = 3
+                            index = 3 + displayIndexOffset
                         )
                     )
                     add(
@@ -183,7 +183,7 @@ fun AppOptionsMenuContent(
                                 onDismiss()
                             },
                             isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                            index = 4
+                            index = 4 + displayIndexOffset
                         )
                     )
                 }
@@ -321,7 +321,7 @@ fun AppOptionsMenuContent(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            AppPreview(
+            AppResizePreview(
                 app = app,
                 previewIconSize = previewIconSize,
                 onPreviewSizeChange = { newSize ->
@@ -338,232 +338,5 @@ fun AppOptionsMenuContent(
                 }
             )
         }
-    }
-}
-
-@Composable
-private fun AppPreview(
-    app: AppInfo?,
-    previewIconSize: Float,
-    onPreviewSizeChange: (Float) -> Unit,
-    onCancel: () -> Unit,
-    onApply: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.app_options_resize_preview),
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .background(
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(16.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            app?.let {
-                Image(
-                    painter = rememberAsyncImagePainter(model = it.icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(previewIconSize.dp)
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    if (previewIconSize > 32f) {
-                        onPreviewSizeChange(previewIconSize - 8f)
-                    }
-                },
-                enabled = previewIconSize > 32f
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Remove,
-                    contentDescription = "Decrease size",
-                    tint = if (previewIconSize > 32f) ThemePrimaryColor else Color.Gray
-                )
-            }
-
-            Text(
-                text = "${previewIconSize.toInt()} dp",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            IconButton(
-                onClick = {
-                    if (previewIconSize < 128f) {
-                        onPreviewSizeChange(previewIconSize + 8f)
-                    }
-                },
-                enabled = previewIconSize < 128f
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Increase size",
-                    tint = if (previewIconSize < 128f) ThemePrimaryColor else Color.Gray
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = onCancel,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Gray.copy(alpha = 0.3f)
-                )
-            ) {
-                Text(stringResource(R.string.app_options_resize_cancel))
-            }
-
-            Button(
-                onClick = onApply,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ThemePrimaryColor
-                )
-            ) {
-                Text(stringResource(R.string.app_options_resize_apply))
-            }
-        }
-    }
-}
-
-@Composable
-private fun IconGridOption(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    focusRequester: FocusRequester,
-    onNavigateLeft: () -> Unit,
-    onNavigateRight: () -> Unit,
-    onNavigateUp: () -> Unit,
-    onNavigateDown: () -> Unit,
-    onFocusChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isFocused by remember { mutableIntStateOf(0) }
-
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable { onClick() }
-            .background(
-                color = when {
-                    isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
-                    else -> Color.White.copy(alpha = 0.1f)
-                },
-                shape = RoundedCornerShape(16.dp)
-            )
-            .border(
-                width = if (isFocused == 1) 2.dp else 0.dp,
-                color = if (isFocused == 1) ThemePrimaryColor else Color.Transparent,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                isFocused = if (it.isFocused) 1 else 0
-                onFocusChanged(it.isFocused)
-            }
-            .handleFullNavigation(
-                onNavigateUp = onNavigateUp,
-                onNavigateDown = onNavigateDown,
-                onNavigateLeft = onNavigateLeft,
-                onNavigateRight = onNavigateRight,
-                onEnterPress = onClick
-            )
-            .focusable(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-            Text(
-                text = label,
-                color = Color.White,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun TextGridOption(
-    text: String,
-    onClick: () -> Unit,
-    isSelected: Boolean,
-    focusRequester: FocusRequester,
-    onNavigateLeft: () -> Unit,
-    onNavigateRight: () -> Unit,
-    onNavigateUp: () -> Unit,
-    onNavigateDown: () -> Unit,
-    onFocusChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isFocused by remember { mutableIntStateOf(0) }
-
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable { onClick() }
-            .background(
-                color = when {
-                    isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
-                    isSelected -> ThemePrimaryColor.copy(alpha = 0.2f)
-                    else -> Color.White.copy(alpha = 0.1f)
-                },
-                shape = RoundedCornerShape(16.dp)
-            )
-            .border(
-                width = if (isFocused == 1) 2.dp else 0.dp,
-                color = if (isFocused == 1) ThemePrimaryColor else Color.Transparent,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                isFocused = if (it.isFocused) 1 else 0
-                onFocusChanged(it.isFocused)
-            }
-            .handleFullNavigation(
-                onNavigateUp = onNavigateUp,
-                onNavigateDown = onNavigateDown,
-                onNavigateLeft = onNavigateLeft,
-                onNavigateRight = onNavigateRight,
-                onEnterPress = onClick
-            )
-            .focusable(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = if (isSelected) ThemePrimaryColor else Color.White,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelLarge
-        )
     }
 }

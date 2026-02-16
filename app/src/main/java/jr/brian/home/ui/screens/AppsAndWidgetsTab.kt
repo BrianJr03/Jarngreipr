@@ -5,102 +5,78 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.navigation.NavHostController
-import jr.brian.home.R
 import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.widget.WidgetInfo
-import jr.brian.home.ui.animations.animatedFocusedScale
+import androidx.compose.ui.platform.LocalContext
 import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.dock.AppDock
+import jr.brian.home.ui.components.appsandwidgets.AppVisibilityDialogForWidgetTab
+import jr.brian.home.ui.components.appsandwidgets.TabContent
 import jr.brian.home.ui.components.dialog.AppsAndWidgetsOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
+import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
-import jr.brian.home.ui.components.header.ScreenHeaderRow
-import jr.brian.home.ui.components.widget.AppItem
-import jr.brian.home.ui.components.widget.FolderGridItem
-import jr.brian.home.ui.components.widget.WidgetItem
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
+import jr.brian.home.ui.extensions.pagerFriendlyClickable
+import jr.brian.home.ui.extensions.pagerFriendlyClickableSimple
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.util.rememberBottomFlingTrigger
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
+import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -116,38 +92,52 @@ fun AppsAndWidgetsTab(
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    navController: NavHostController? = null,
+    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onShowBottomSheet: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRecentApps: () -> Unit = {},
-    navController: NavHostController? = null
+    onNavigateToDockSettings: () -> Unit = {},
+    onDockPositioned: (Float) -> Unit = {},
+    onShowAppDrawer: () -> Unit = {},
+    onScrollStateChanged: (
+        isScrolling: Boolean,
+        hasScrollableContent: Boolean
+    ) -> Unit = { _, _ -> }
 ) {
+    val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val folderManager = LocalFolderManager.current
+    val dockManager = LocalDockManager.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val tabAnimationManager = LocalTabAnimationManager.current
+    val esdePrefsManager = LocalESDEPreferencesManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
 
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
-    val addWidgetIconFocusRequester = remember { FocusRequester() }
-    var showAddOptionsDialog by remember { mutableStateOf(false) }
-    var showAppSelectionDialog by remember { mutableStateOf(false) }
-    var showWidgetPicker by remember { mutableStateOf(false) }
+    val addWidgetIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val addOptionsDialogState = rememberDialogState<Unit>()
+    val appSelectionDialogState = rememberDialogState<Unit>()
+    val widgetPickerDialogState = rememberDialogState<Unit>()
+    val folderOptionsDialogState = rememberDialogState<Unit>()
+    val drawerOptionsDialogState = rememberDialogState<Unit>()
+    val homeTabDialogState = rememberDialogState<Unit>()
+    val createFolderDialogState = rememberDialogState<Unit>()
+    val dockAppSelectionDialogState = rememberDialogState<Int>()
+    val folderContentsDialogState = rememberDialogState<Folder>()
+    val esdeSetupDialogState = rememberDialogState<SetupStep>()
+    val wallpaperManager = LocalWallpaperManager.current
     var swapModeEnabled by remember { mutableStateOf(false) }
     var swapSourceWidgetId by remember { mutableStateOf<Int?>(null) }
-    var showFolderOptionsDialog by remember { mutableStateOf(false) }
-    var showDrawerOptionsDialog by remember { mutableStateOf(false) }
-    var showHomeTabDialog by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var showFolderContentsDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val editModeEnabled = uiState.editModeByPage[pageIndex] ?: false
@@ -161,30 +151,67 @@ fun AppsAndWidgetsTab(
         allApps.filter { it.packageName in visibleApps }
     }
 
+    val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+    val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+
     val powerSettingsManager = LocalPowerSettingsManager.current
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
-    val settingsIconFocusRequester = remember { FocusRequester() }
+    val settingsIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
     val gridState = rememberLazyGridState()
 
+    val hasScrollableContent by remember {
+        derivedStateOf {
+            gridState.canScrollForward || gridState.canScrollBackward
+        }
+    }
+
+    val bottomFlingTrigger = rememberBottomFlingTrigger(
+        gridState = gridState,
+        onFlingAtBottom = onShowAppDrawer
+    )
+
+    val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed && !showDrawerOptionsDialog)
+    val isPressedState = remember { mutableStateOf(false) }
+    val (pressScale, offsetY) = onPressScaleAndOffset(
+        isTabAnimationEnabled && isPressedState.value && !drawerOptionsDialogState.isVisible
+    )
+
+    var isScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isScrolling, hasScrollableContent) {
+        onScrollStateChanged(isScrolling, hasScrollableContent)
+    }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collect { scrolling ->
+                if (scrolling) {
+                    isScrolling = true
+                } else {
+                    delay(300)
+                    isScrolling = false
+                }
+            }
+    }
 
     BackHandler(enabled = isPoweredOff) {}
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .nestedScroll(bottomFlingTrigger)
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
             .then(
-                if (showWidgetPicker ||
-                    showAddOptionsDialog ||
-                    showAppSelectionDialog ||
+                if (widgetPickerDialogState.isVisible ||
+                    addOptionsDialogState.isVisible ||
+                    appSelectionDialogState.isVisible ||
                     swapModeEnabled
                 ) {
                     Modifier.blockAllNavigation()
@@ -192,19 +219,23 @@ fun AppsAndWidgetsTab(
                     Modifier.blockHorizontalNavigation()
                 }
             )
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = {},
-                onDoubleClick = {
-                    powerViewModel.togglePower()
-                },
-                onLongClick = {
-                    showDrawerOptionsDialog = true
+            .then(
+                if (isTabAnimationEnabled) {
+                    Modifier.pagerFriendlyClickable(
+                        interactionSource = interactionSource,
+                        isPressedState = isPressedState,
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
+                } else {
+                    Modifier.pagerFriendlyClickableSimple(
+                        onDoubleTap = { powerViewModel.togglePower() },
+                        onLongPress = { drawerOptionsDialogState.show() }
+                    )
                 }
             )
     ) {
-        if (showWidgetPicker) {
+        if (widgetPickerDialogState.isVisible) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -226,7 +257,7 @@ fun AppsAndWidgetsTab(
                 isPowerButtonVisible = isPowerButtonVisible,
                 onSettingsClick = onSettingsClick,
                 settingsIconFocusRequester = settingsIconFocusRequester,
-                onShowOptionsDialog = { showAddOptionsDialog = true },
+                onShowOptionsDialog = { addOptionsDialogState.show() },
                 addWidgetIconFocusRequester = addWidgetIconFocusRequester,
                 onShowBottomSheet = onShowBottomSheet,
                 onDeletePage = onDeletePage,
@@ -252,24 +283,77 @@ fun AppsAndWidgetsTab(
                     swapModeEnabled = true
                     swapSourceWidgetId = widgetId
                 },
-                onFolderClick = { folder ->
-                    selectedFolder = folder
-                    showFolderContentsDialog = true
-                }
+                onFolderClick = folderContentsDialogState::show
+            )
+        }
+
+        AnimatedVisibility(
+            visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            AppDock(
+                apps = allApps,
+                onAppClick = { app ->
+                    val displayPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = { app ->
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
+                },
+                onAppLongClick = { _ -> },
+                onEmptySlotClick = { position ->
+                    dockAppSelectionDialogState.show(position)
+                },
+                onEmptySlotLongClick = { position ->
+                    dockManager.removeEmptySlot(position)
+                },
+                onDockPositioned = onDockPositioned
+            )
+        }
+
+    }
+
+    dockAppSelectionDialogState.item?.let { position ->
+        if (dockAppSelectionDialogState.isVisible) {
+            val availableApps = allApps.filter { app ->
+                !dockManager.isAppInDock(app.packageName)
+            }
+            DockAppSelectionDialog(
+                apps = availableApps,
+                onAppSelected = { app ->
+                    dockManager.addAppToDock(
+                        position = position,
+                        packageName = app.packageName,
+                    )
+                    dockAppSelectionDialogState.dismiss()
+                },
+                onDismiss = dockAppSelectionDialogState::dismiss
             )
         }
     }
 
-    if (showAddOptionsDialog || showFolderOptionsDialog) {
+    if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
 
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
-                showAddOptionsDialog = false
-                showFolderOptionsDialog = false
+                addOptionsDialogState.dismiss()
+                folderOptionsDialogState.dismiss()
             },
-            onAddWidget = { showWidgetPicker = true },
-            onAddApp = { showAppSelectionDialog = true },
+            onAddWidget = { widgetPickerDialogState.show() },
+            onAddApp = { appSelectionDialogState.show() },
             onSwapSections = {
                 scope.launch {
                     widgetPageAppManager.toggleSectionOrder(pageIndex)
@@ -279,28 +363,32 @@ fun AppsAndWidgetsTab(
                 viewModel.toggleEditMode(pageIndex)
             },
             isEditModeActive = editModeEnabled,
-            isEmpty = isTabEmpty
+            isEmpty = isTabEmpty,
+            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = if (isEsdeMode) {
+                { esdePrefsManager.toggleMarqueePositionLocked() }
+            } else null
         )
     }
 
-    if (showAppSelectionDialog) {
+    if (appSelectionDialogState.isVisible) {
         AppVisibilityDialogForWidgetTab(
             apps = allApps,
             visibleApps = visibleApps,
             pageIndex = pageIndex,
-            onDismiss = { showAppSelectionDialog = false },
+            onDismiss = appSelectionDialogState::dismiss,
             widgetPageAppManager = widgetPageAppManager
         )
     }
 
-    if (showWidgetPicker) {
+    if (widgetPickerDialogState.isVisible) {
         LaunchedEffect(Unit) {
             navController?.navigate(Routes.widgetPicker(pageIndex))
-            showWidgetPicker = false
+            widgetPickerDialogState.dismiss()
         }
     }
 
-    if (showHomeTabDialog) {
+    if (homeTabDialogState.isVisible) {
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
@@ -313,7 +401,7 @@ fun AppsAndWidgetsTab(
             onTabSelected = { index ->
                 homeTabManager.setHomeTabIndex(index)
             },
-            onDismiss = { showHomeTabDialog = false },
+            onDismiss = homeTabDialogState::dismiss,
             onDeletePage = { pageIndex ->
                 onDeletePage(pageIndex)
             },
@@ -326,597 +414,59 @@ fun AppsAndWidgetsTab(
         )
     }
 
-    if (showDrawerOptionsDialog) {
+    if (drawerOptionsDialogState.isVisible) {
         DrawerOptionsDialog(
-            onDismiss = { showDrawerOptionsDialog = false },
+            onDismiss = drawerOptionsDialogState::dismiss,
             onPowerClick = {
                 powerViewModel.togglePower()
             },
             onTabsClick = {
-                showHomeTabDialog = true
+                homeTabDialogState.show()
             },
             onMenuClick = {
-                showAddOptionsDialog = true
+                addOptionsDialogState.show()
             },
             onSettingsClick = onSettingsClick,
             onQuickDeleteClick = onShowBottomSheet,
             onCreateFolderClick = {
-                showCreateFolderDialog = true
+                createFolderDialogState.show()
             },
-            onRecentAppsClick = onNavigateToRecentApps
-        )
-    }
-
-    if (showCreateFolderDialog) {
-        CreateFolderDialog(
-            apps = displayedApps,
-            onDismiss = { showCreateFolderDialog = false },
-            pageIndex = pageIndex,
-            allApps = allApps,
-            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS
-        )
-    }
-
-    if (showFolderContentsDialog && selectedFolder != null) {
-        val folderApps = allApps.filter { it.packageName in selectedFolder!!.appPackageNames }
-        FolderContentsDialog(
-            folderName = selectedFolder!!.name,
-            apps = folderApps,
-            folderId = selectedFolder!!.id,
-            pageIndex = pageIndex,
-            allApps = allApps,
-            tabType = jr.brian.home.data.FolderManager.TAB_TYPE_WIDGETS,
-            onDismiss = {
-                showFolderContentsDialog = false
-                selectedFolder = null
+            onDockSettingsClick = onNavigateToDockSettings,
+            onESDESetupClick = {
+                esdeSetupDialogState.show(SetupStep.Welcome)
             }
         )
     }
-}
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun TabContent(
-    swapModeEnabled: Boolean,
-    editModeEnabled: Boolean,
-    pagerState: PagerState?,
-    isHeaderVisible: Boolean,
-    totalPages: Int,
-    powerViewModel: PowerViewModel,
-    isPowerButtonVisible: Boolean,
-    onSettingsClick: () -> Unit,
-    settingsIconFocusRequester: FocusRequester,
-    onShowOptionsDialog: () -> Unit,
-    addWidgetIconFocusRequester: FocusRequester,
-    onShowBottomSheet: () -> Unit,
-    onDeletePage: (Int) -> Unit,
-    pageIndicatorBorderColor: Color,
-    allApps: List<AppInfo>,
-    onNavigateToSearch: () -> Unit,
-    widgets: List<WidgetInfo>,
-    displayedApps: List<AppInfo>,
-    folders: List<Folder>,
-    gridState: LazyGridState,
-    columns: Int,
-    appsFirst: Boolean,
-    pageIndex: Int,
-    viewModel: WidgetViewModel,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit,
-    swapSourceWidgetId: Int?,
-    onSwapModeDisabled: () -> Unit,
-    onEditModeToggle: () -> Unit,
-    onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        TabHeader(
-            swapModeEnabled = swapModeEnabled,
-            editModeEnabled = editModeEnabled,
-            pagerState = pagerState,
-            isHeaderVisible = isHeaderVisible,
-            totalPages = totalPages,
-            powerViewModel = powerViewModel,
-            isPowerButtonVisible = isPowerButtonVisible,
-            onSettingsClick = onSettingsClick,
-            settingsIconFocusRequester = settingsIconFocusRequester,
-            onShowOptionsDialog = onShowOptionsDialog,
-            addWidgetIconFocusRequester = addWidgetIconFocusRequester,
-            onShowBottomSheet = onShowBottomSheet,
-            onDeletePage = onDeletePage,
-            pageIndicatorBorderColor = pageIndicatorBorderColor,
-            allApps = allApps,
-            onNavigateToSearch = onNavigateToSearch,
-            onSwapModeDisabled = onSwapModeDisabled,
-            onEditModeToggle = onEditModeToggle
-        )
-
-        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty() && folders.isEmpty()
-
-        if (isTabEmpty && !editModeEnabled) {
-            EmptyWidgetsState(
-                onAddClick = onShowOptionsDialog
-            )
-        } else {
-            WidgetsAndAppsGrid(
-                gridState = gridState,
-                columns = columns,
-                appsFirst = appsFirst,
-                displayedApps = displayedApps,
-                folders = folders,
-                allApps = allApps,
-                widgets = widgets,
-                editModeEnabled = editModeEnabled,
-                pageIndex = pageIndex,
-                viewModel = viewModel,
-                onNavigateToResize = onNavigateToResize,
-                swapModeEnabled = swapModeEnabled,
-                swapSourceWidgetId = swapSourceWidgetId,
-                onSwapComplete = onSwapModeDisabled,
-                onSwapModeEnabled = onSwapModeEnabled,
-                onFolderClick = onFolderClick
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun TabHeader(
-    swapModeEnabled: Boolean,
-    editModeEnabled: Boolean,
-    pagerState: PagerState?,
-    isHeaderVisible: Boolean,
-    totalPages: Int,
-    powerViewModel: PowerViewModel,
-    isPowerButtonVisible: Boolean,
-    onSettingsClick: () -> Unit,
-    settingsIconFocusRequester: FocusRequester,
-    onShowOptionsDialog: () -> Unit,
-    addWidgetIconFocusRequester: FocusRequester,
-    onShowBottomSheet: () -> Unit,
-    onDeletePage: (Int) -> Unit,
-    pageIndicatorBorderColor: Color,
-    allApps: List<AppInfo>,
-    onNavigateToSearch: () -> Unit,
-    onSwapModeDisabled: () -> Unit,
-    onEditModeToggle: () -> Unit
-) {
-    when {
-        swapModeEnabled -> {
-            WidgetSwapModeHeaderCard(onClick = onSwapModeDisabled)
-        }
-
-        editModeEnabled && pagerState != null -> {
-            WidgetEditModeHeaderCard(onClick = onEditModeToggle)
-        }
-
-        pagerState != null -> {
-            AnimatedVisibility(
-                visible = isHeaderVisible,
-                enter = slideInVertically(initialOffsetY = { -it }),
-                exit = slideOutVertically(targetOffsetY = { -it })
-            ) {
-                ScreenHeaderRow(
-                    totalPages = totalPages,
-                    pagerState = pagerState,
-                    powerViewModel = powerViewModel,
-                    showPowerButton = isPowerButtonVisible,
-                    leadingIcon = Icons.Default.Settings,
-                    leadingIconContentDescription = stringResource(R.string.keyboard_label_settings),
-                    onLeadingIconClick = onSettingsClick,
-                    leadingIconFocusRequester = settingsIconFocusRequester,
-                    trailingIcon = Icons.Default.Menu,
-                    trailingIconContentDescription = null,
-                    onTrailingIconClick = onShowOptionsDialog,
-                    trailingIconFocusRequester = addWidgetIconFocusRequester,
-                    onNavigateToGrid = {},
-                    onNavigateFromGrid = {
-                        addWidgetIconFocusRequester.requestFocus()
-                    },
-                    onFolderClick = onShowBottomSheet,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                    onDeletePage = onDeletePage,
-                    pageIndicatorBorderColor = pageIndicatorBorderColor,
-                    onNavigateToSearch = onNavigateToSearch
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun WidgetsAndAppsGrid(
-    gridState: LazyGridState,
-    columns: Int,
-    appsFirst: Boolean,
-    displayedApps: List<AppInfo>,
-    folders: List<Folder>,
-    allApps: List<AppInfo>,
-    widgets: List<WidgetInfo>,
-    editModeEnabled: Boolean,
-    pageIndex: Int,
-    viewModel: WidgetViewModel,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit,
-    swapModeEnabled: Boolean,
-    swapSourceWidgetId: Int?,
-    onSwapComplete: () -> Unit,
-    onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit
-) {
-    LazyVerticalGrid(
-        state = gridState,
-        columns = GridCells.Fixed(columns),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Folders always follow after apps - use "apps_folders" as a combined section
-        val sections = if (appsFirst) {
-            listOf("apps" to displayedApps, "folders" to folders, "widgets" to widgets)
-        } else {
-            listOf("widgets" to widgets, "apps" to displayedApps, "folders" to folders)
-        }
-
-        sections.forEach { (sectionType, _) ->
-            when (sectionType) {
-                "apps" -> renderAppItems(
-                    apps = displayedApps,
-                    items = displayedApps,
-                    editModeEnabled = editModeEnabled,
-                    pageIndex = pageIndex
-                )
-
-                "folders" -> renderFolderItems(
-                    folders = folders,
-                    allApps = allApps,
-                    editModeEnabled = editModeEnabled,
-                    onClick = onFolderClick
-                )
-
-                "widgets" -> renderWidgetItems(
-                    widgets = widgets,
-                    items = widgets,
-                    columns = columns,
-                    pageIndex = pageIndex,
-                    viewModel = viewModel,
-                    onNavigateToResize = onNavigateToResize,
-                    swapModeEnabled = swapModeEnabled,
-                    swapSourceWidgetId = swapSourceWidgetId,
-                    onSwapComplete = onSwapComplete,
-                    onSwapModeEnabled = onSwapModeEnabled,
-                    editModeEnabled = editModeEnabled
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun WidgetSwapModeHeaderCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.widget_swap_mode_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
-                )
-                Text(
-                    text = stringResource(R.string.widget_swap_mode_instructions),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-            }
-            TextButton(
-                onClick = onClick,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.White
-                )
-            ) {
-                Text(stringResource(R.string.widget_swap_cancel))
-            }
-        }
-    }
-}
-
-@Composable
-private fun WidgetEditModeHeaderCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = ThemePrimaryColor.copy(alpha = 0.9f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.widget_page_edit_mode_active),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
-                )
-                IconButton(
-                    onClick = onClick,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.widget_page_edit_mode_exit),
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            Text(
-                text = stringResource(R.string.widget_edit_tap_instruction),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.9f),
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun AppVisibilityDialogForWidgetTab(
-    apps: List<AppInfo>,
-    visibleApps: Set<String>,
-    pageIndex: Int,
-    onDismiss: () -> Unit,
-    widgetPageAppManager: jr.brian.home.data.WidgetPageAppManager
-) {
-    val scope = rememberCoroutineScope()
-
-    AppVisibilityDialog(
-        apps = apps,
-        onDismiss = onDismiss,
-        pageIndex = pageIndex,
-        isWidgetTabMode = true,
-        visibleAppsOverride = visibleApps,
-        onToggleAppOverride = { packageName ->
-            scope.launch {
-                if (packageName in visibleApps) {
-                    widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
-                } else {
-                    widgetPageAppManager.addVisibleApp(pageIndex, packageName)
-                }
-            }
-        },
-        onShowAllOverride = {
-            scope.launch {
-                apps.forEach { app ->
-                    if (app.packageName !in visibleApps) {
-                        widgetPageAppManager.addVisibleApp(pageIndex, app.packageName)
-                    }
-                }
-            }
-        },
-        onHideAllOverride = {
-            scope.launch {
-                apps.forEach { app ->
-                    if (app.packageName in visibleApps) {
-                        widgetPageAppManager.removeVisibleApp(pageIndex, app.packageName)
-                    }
-                }
-            }
+    ESDESetupScreen(
+        dialogState = esdeSetupDialogState,
+        onDismiss = { },
+        onSetupComplete = {
+            wallpaperManager.setESDE()
         }
     )
-}
 
-@Composable
-private fun EmptyWidgetsState(
-    onAddClick: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.widgets_tab_no_content_title),
-                color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = stringResource(R.string.widgets_tab_no_content_description),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 32.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val cardGradient = Brush.linearGradient(
-                colors = if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.9f),
-                        ThemeSecondaryColor.copy(alpha = 0.9f)
-                    )
-                } else {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.4f),
-                        ThemeSecondaryColor.copy(alpha = 0.3f)
-                    )
-                }
-            )
-
-            Box(
-                modifier = Modifier
-                    .scale(animatedFocusedScale(isFocused))
-                    .onFocusChanged { isFocused = it.isFocused }
-                    .background(
-                        brush = cardGradient,
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .border(
-                        width = if (isFocused) 3.dp else 2.dp,
-                        brush = if (isFocused) {
-                            borderBrush(
-                                isFocused = true,
-                                colors = listOf(
-                                    ThemePrimaryColor.copy(alpha = 0.8f),
-                                    ThemeSecondaryColor.copy(alpha = 0.6f)
-                                )
-                            )
-                        } else {
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    ThemePrimaryColor.copy(alpha = 0.6f),
-                                    ThemeSecondaryColor.copy(alpha = 0.4f)
-                                )
-                            )
-                        },
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable { onAddClick() }
-                    .focusable()
-                    .padding(horizontal = 48.dp, vertical = 20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.size(12.dp))
-                    Text(
-                        text = stringResource(R.string.widgets_tab_add_button),
-                        color = Color.White,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
+    if (createFolderDialogState.isVisible) {
+        CreateFolderDialog(
+            apps = displayedApps,
+            onDismiss = createFolderDialogState::dismiss,
+            pageIndex = pageIndex,
+            allApps = allApps,
+            tabType = TAB_TYPE_WIDGETS
+        )
     }
-}
 
-private fun LazyGridScope.renderAppItems(
-    apps: List<AppInfo>,
-    items: Any,
-    editModeEnabled: Boolean,
-    pageIndex: Int
-) {
-    if (apps.isEmpty() || editModeEnabled) return
-
-    @Suppress("UNCHECKED_CAST")
-    (items as List<AppInfo>).forEach { app ->
-        item(key = "app_${app.packageName}") {
-            AppItem(
-                app = app,
-                pageIndex = pageIndex
-            )
-        }
-    }
-}
-
-private fun LazyGridScope.renderWidgetItems(
-    widgets: List<WidgetInfo>,
-    items: Any,
-    columns: Int,
-    pageIndex: Int,
-    viewModel: WidgetViewModel,
-    onNavigateToResize: (WidgetInfo, Int) -> Unit,
-    swapModeEnabled: Boolean,
-    swapSourceWidgetId: Int?,
-    onSwapComplete: () -> Unit,
-    onSwapModeEnabled: (Int) -> Unit,
-    editModeEnabled: Boolean
-) {
-    if (widgets.isEmpty()) return
-
-    @Suppress("UNCHECKED_CAST")
-    (items as List<WidgetInfo>).forEachIndexed { index, widget ->
-        item(
-            key = "widget_${widget.widgetId}_${pageIndex}_$index",
-            span = { GridItemSpan(widget.width.coerceIn(1, columns)) }
-        ) {
-            WidgetItem(
-                widgetInfo = widget,
-                viewModel = viewModel,
-                pageIndex = pageIndex,
-                onNavigateToResize = onNavigateToResize,
-                swapModeEnabled = swapModeEnabled,
-                isSwapSource = swapSourceWidgetId == widget.widgetId,
-                onSwapSelect = { selectedWidgetId ->
-                    if (swapSourceWidgetId != null && swapSourceWidgetId != selectedWidgetId) {
-                        viewModel.swapWidgets(
-                            swapSourceWidgetId,
-                            selectedWidgetId,
-                            pageIndex
-                        )
-                        onSwapComplete()
-                    }
-                },
-                onEnableSwapMode = {
-                    onSwapModeEnabled(widget.widgetId)
-                },
-                editModeEnabled = editModeEnabled
-            )
-        }
-    }
-}
-
-private fun LazyGridScope.renderFolderItems(
-    folders: List<Folder>,
-    allApps: List<AppInfo>,
-    editModeEnabled: Boolean,
-    onClick: (Folder) -> Unit
-) {
-    if (folders.isEmpty() || editModeEnabled) return
-
-    folders.forEach { folder ->
-        val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
-        item(key = "folder_${folder.id}") {
-            FolderGridItem(
-                folder = folder,
+    folderContentsDialogState.item?.let { folder ->
+        if (folderContentsDialogState.isVisible) {
+            val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
+            FolderContentsDialog(
+                folderName = folder.name,
                 apps = folderApps,
-                onClick = { onClick(folder) }
+                folderId = folder.id,
+                pageIndex = pageIndex,
+                allApps = allApps,
+                tabType = TAB_TYPE_WIDGETS,
+                onDismiss = folderContentsDialogState::dismiss
             )
         }
     }

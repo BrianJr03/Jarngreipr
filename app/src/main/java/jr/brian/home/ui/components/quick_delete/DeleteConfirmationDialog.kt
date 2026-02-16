@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FolderDelete
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import jr.brian.home.R
+import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
@@ -37,7 +39,7 @@ fun DeleteConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    DimmedDialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,6 +99,80 @@ fun DeleteConfirmationDialog(
                 ActionButton(
                     text = stringResource(R.string.clean_folders_delete_confirm),
                     icon = Icons.Default.Delete,
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    isPrimary = true
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyFolderConfirmationDialog(
+    folderCount: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    DimmedDialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = OledCardColor,
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = ThemeSecondaryColor,
+                modifier = Modifier.padding(8.dp)
+            )
+
+            Text(
+                text = stringResource(R.string.clean_folders_empty_folder_confirm_title),
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(
+                    R.string.clean_folders_empty_folder_confirm_message,
+                    folderCount
+                ),
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ActionButton(
+                    text = stringResource(R.string.clean_folders_delete_cancel),
+                    icon = Icons.Default.Delete,
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    isPrimary = false
+                )
+
+                ActionButton(
+                    text = stringResource(R.string.clean_folders_delete_confirm),
+                    icon = Icons.Default.FolderDelete,
                     onClick = onConfirm,
                     modifier = Modifier.weight(1f),
                     isPrimary = true

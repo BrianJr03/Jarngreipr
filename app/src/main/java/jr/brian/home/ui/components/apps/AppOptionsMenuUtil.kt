@@ -4,23 +4,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.util.rememberAutoFocus
 
 @Composable
 fun rememberAppOptionsMenuFocusRequesters(
     hasResizeOption: Boolean,
-    hasExternalDisplay: Boolean
+    hasExternalDisplay: Boolean,
+    isInDock: Boolean = false
 ): List<FocusRequester> {
-    return remember(hasResizeOption, hasExternalDisplay) {
+    val firstFocusRequester = rememberAutoFocus()
+
+    return remember(
+        firstFocusRequester,
+        hasResizeOption,
+        hasExternalDisplay,
+        isInDock
+    ) {
         buildList {
-            add(FocusRequester())  // Info
-            add(FocusRequester())  // Hide
-            add(FocusRequester())  // Icon
+            add(firstFocusRequester)
+            add(FocusRequester())
+            add(FocusRequester())
+            if (isInDock) {
+                add(FocusRequester())
+            }
             if (hasResizeOption) {
-                add(FocusRequester())  // Resize
+                add(FocusRequester())
             }
             if (hasExternalDisplay) {
-                add(FocusRequester())  // Top Display
-                add(FocusRequester())  // Bottom Display
+                add(FocusRequester())
+                add(FocusRequester())
             }
         }
     }

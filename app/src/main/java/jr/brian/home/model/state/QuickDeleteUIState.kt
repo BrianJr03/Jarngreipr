@@ -8,12 +8,21 @@ data class QuickDeleteUIState(
     val selectedExtensions: Set<String> = emptySet(),
     val isScanning: Boolean = false,
     val isDeleting: Boolean = false,
+    val isDeletingEmptyFolders: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
+    val showEmptyFolderConfirmation: Boolean = false,
+    val emptyFolderCount: Int = 0,
+    val includeSystemInfoFolders: Boolean = false,
     val scanError: String? = null,
     val deleteResult: DeleteResult? = null
 )
 
+enum class DeleteType {
+    FILES,
+    FOLDERS
+}
+
 sealed class DeleteResult {
-    data class Success(val deletedCount: Int) : DeleteResult()
+    data class Success(val deletedCount: Int, val deleteType: DeleteType = DeleteType.FILES) : DeleteResult()
     data class Failure(val message: String) : DeleteResult()
 }

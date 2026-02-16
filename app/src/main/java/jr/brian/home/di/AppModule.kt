@@ -12,6 +12,7 @@ import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
+import jr.brian.home.data.DockManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -20,12 +21,14 @@ import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.SearchLayoutManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.data.WhatsNewManager
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Singleton
 
 @Module
@@ -185,5 +188,29 @@ object AppModule {
         @ApplicationContext context: Context
     ): ControlPadManager {
         return ControlPadManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDockManager(
+        @ApplicationContext context: Context
+    ): DockManager {
+        return DockManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWallpaperManager(
+        @ApplicationContext context: Context
+    ): WallpaperManager {
+        return WallpaperManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchLayoutManager(
+        @ApplicationContext context: Context
+    ): SearchLayoutManager {
+        return SearchLayoutManager(context)
     }
 }

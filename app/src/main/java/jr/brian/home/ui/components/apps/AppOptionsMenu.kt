@@ -4,7 +4,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -16,30 +15,30 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 
 @Composable
 fun AppOptionsMenu(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
+    app: AppInfo? = null,
+    isInDock: Boolean = false,
+    currentIconSize: Float = 64f,
     onDismiss: () -> Unit,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
-    hasExternalDisplay: Boolean = false,
-    app: AppInfo? = null,
-    currentIconSize: Float = 64f,
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
-    onCustomIconClick: () -> Unit = {}
+    onCustomIconClick: () -> Unit = {},
+    onRemoveFromDock: () -> Unit = {}
 ) {
+    val hasExternalDisplay = rememberHasExternalDisplay()
     val focusRequesters = rememberAppOptionsMenuFocusRequesters(
-        app = app,
-        hasExternalDisplay = hasExternalDisplay
+        hasResizeOption = app != null,
+        hasExternalDisplay = hasExternalDisplay,
+        isInDock = isInDock
     )
     var focusedIndex by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        focusRequesters.firstOrNull()?.requestFocus()
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -51,19 +50,21 @@ fun AppOptionsMenu(
         },
         text = {
             AppOptionsMenuContent(
-                appLabel,
-                currentDisplayPreference,
-                onAppInfoClick,
-                onDisplayPreferenceChange,
-                hasExternalDisplay,
-                focusRequesters,
+                appLabel = appLabel,
+                currentDisplayPreference = currentDisplayPreference,
+                hasExternalDisplay = hasExternalDisplay,
+                focusRequesters = focusRequesters,
+                app = app,
+                currentIconSize = currentIconSize,
+                isInDock = isInDock,
+                onDismiss = onDismiss,
+                onAppInfoClick = onAppInfoClick,
                 onFocusedIndexChange = { focusedIndex = it },
-                onDismiss,
-                app,
-                currentIconSize,
-                onIconSizeChange,
-                onToggleVisibility,
-                onCustomIconClick
+                onDisplayPreferenceChange = onDisplayPreferenceChange,
+                onIconSizeChange = onIconSizeChange,
+                onToggleVisibility = onToggleVisibility,
+                onCustomIconClick = onCustomIconClick,
+                onRemoveFromDock = onRemoveFromDock
             )
         },
         confirmButton = {},

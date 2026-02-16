@@ -5,24 +5,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.ui.theme.managers.IconShapeManager
+import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.OledModeManager
+import jr.brian.home.ui.theme.managers.TabAnimationManager
 import jr.brian.home.ui.theme.managers.ThemeManager
-import jr.brian.home.ui.theme.managers.WallpaperManager
 
 @Composable
 fun LauncherTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val themeManager = remember { ThemeManager(context) }
-    val wallpaperManager = remember { WallpaperManager(context) }
     val oledModeManager = remember { OledModeManager(context) }
+    val iconShapeManager = remember { IconShapeManager(context) }
+    val tabAnimationManager = remember { TabAnimationManager(context) }
 
     CompositionLocalProvider(
         LocalThemeManager provides themeManager,
-        LocalWallpaperManager provides wallpaperManager,
-        LocalOledModeManager provides oledModeManager
+        LocalOledModeManager provides oledModeManager,
+        LocalIconShapeManager provides iconShapeManager,
+        LocalTabAnimationManager provides tabAnimationManager
     ) {
         MaterialTheme(
             colorScheme =

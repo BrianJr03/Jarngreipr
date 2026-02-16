@@ -1,7 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
-import android.hardware.display.DisplayManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -14,10 +12,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,24 +34,33 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.QwertyKeyboard
+import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
+import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalIconShapeManager
+import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 
 @Composable
@@ -58,6 +69,10 @@ fun AppSearchScreen(
     onDismiss: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val searchLayoutManager = LocalSearchLayoutManager.current
+    val isHorizontalLayout = searchLayoutManager.isHorizontalLayout
+    val hasCompletedOnboarding = searchLayoutManager.hasCompletedOnboarding
+    var showOnboarding by remember { mutableStateOf(!hasCompletedOnboarding) }
 
     BackHandler(onBack = onDismiss)
 
@@ -71,46 +86,127 @@ fun AppSearchScreen(
         }
     }
 
-    Surface(
-        color = OledBackgroundColor,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            color = OledBackgroundColor,
+            modifier = Modifier.fillMaxSize()
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                AppGrid(
-                    apps = filteredApps,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(.8f)
-                    .fillMaxSize()
-                    .background(OledBackgroundColor)
-            ) {
-                val keyboardFocusRequesters =
-                    remember { SnapshotStateMap<Int, FocusRequester>() }
-                var focusedKeyIndex by remember { mutableIntStateOf(0) }
-
-                OnScreenKeyboard(
+            if (isHorizontalLayout) {
+                HorizontalSearchLayout(
                     searchQuery = searchQuery,
+                    filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    keyboardFocusRequesters = keyboardFocusRequesters,
-                    onFocusChanged = { focusedKeyIndex = it },
-                    onNavigateRight = {},
-                    modifier = Modifier.fillMaxSize()
+                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                )
+            } else {
+                VerticalSearchLayout(
+                    searchQuery = searchQuery,
+                    filteredApps = filteredApps,
+                    onQueryChange = { searchQuery = it },
+                    onFlipLayout = { searchLayoutManager.toggleLayout() }
                 )
             }
+        }
+
+        if (showOnboarding) {
+            SearchOnboardingOverlay(
+                onComplete = {
+                    showOnboarding = false
+                    searchLayoutManager.markOnboardingComplete()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun VerticalSearchLayout(
+    searchQuery: String,
+    filteredApps: List<AppInfo>,
+    onQueryChange: (String) -> Unit,
+    onFlipLayout: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+        ) {
+            AppGrid(
+                apps = filteredApps,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(.8f)
+                .fillMaxSize()
+                .background(OledBackgroundColor)
+        ) {
+            val keyboardFocusRequesters =
+                remember { SnapshotStateMap<Int, FocusRequester>() }
+            var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+            VerticalKeyboard(
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = { focusedKeyIndex = it },
+                onNavigateRight = {},
+                onFlipLayout = onFlipLayout,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun HorizontalSearchLayout(
+    searchQuery: String,
+    filteredApps: List<AppInfo>,
+    onQueryChange: (String) -> Unit,
+    onFlipLayout: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            HorizontalAppGrid(
+                apps = filteredApps,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(OledBackgroundColor)
+        ) {
+            val keyboardFocusRequesters =
+                remember { SnapshotStateMap<Int, FocusRequester>() }
+            var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+            QwertyKeyboard(
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = { focusedKeyIndex = it },
+                onFlipLayout = onFlipLayout,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -125,11 +221,7 @@ private fun AppGrid(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
 
-    val hasExternalDisplay = remember {
-        val displayManager =
-            context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        displayManager.displays.size > 1
-    }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -156,14 +248,11 @@ private fun AppGrid(
                     )
                 },
                 onAppDoubleClick = {
-                    // Launch on opposite display from current preference
-                    val currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    val oppositePreference = if (currentPreference == DisplayPreference.PRIMARY_DISPLAY) {
-                        DisplayPreference.CURRENT_DISPLAY
-                    } else {
-                        DisplayPreference.PRIMARY_DISPLAY
-                    }
-                    launchApp(context, app.packageName, oppositePreference)
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
                 },
                 onAppLongClick = {
                     selectedApp = app
@@ -172,24 +261,158 @@ private fun AppGrid(
         }
     }
 
-    if (selectedApp != null) {
+    selectedApp?.let { app ->
         SearchAppOptionsDialog(
-            app = selectedApp!!,
+            app = app,
             currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                selectedApp!!.packageName
+                app.packageName
             ),
             onDismiss = { selectedApp = null },
             onAppInfoClick = {
-                openAppInfo(context, selectedApp!!.packageName)
+                openAppInfo(context, app.packageName)
             },
             onDisplayPreferenceChange = { preference ->
                 appDisplayPreferenceManager.setAppDisplayPreference(
-                    selectedApp!!.packageName,
+                    app.packageName,
                     preference
                 )
             },
             hasExternalDisplay = hasExternalDisplay
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HorizontalAppGrid(
+    apps: List<AppInfo>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+
+    val hasExternalDisplay = rememberHasExternalDisplay()
+
+    LazyHorizontalGrid(
+        rows = GridCells.Fixed(2),
+        modifier = modifier
+            .background(OledBackgroundColor)
+            .padding(horizontal = 8.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(apps, key = { it.packageName }) { app ->
+            HorizontalAppGridItem(
+                app = app,
+                onAppClick = {
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(
+                        context = context,
+                        packageName = app.packageName,
+                        displayPreference = displayPreference
+                    )
+                },
+                onAppDoubleClick = {
+                    launchAppOnOppositeDisplay(
+                        context = context,
+                        packageName = app.packageName,
+                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    )
+                },
+                onAppLongClick = {
+                    selectedApp = app
+                }
+            )
+        }
+    }
+
+    selectedApp?.let { app ->
+        SearchAppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                app.packageName
+            ),
+            onDismiss = { selectedApp = null },
+            onAppInfoClick = {
+                openAppInfo(context, app.packageName)
+            },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager.setAppDisplayPreference(
+                    app.packageName,
+                    preference
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun HorizontalAppGridItem(
+    app: AppInfo,
+    modifier: Modifier = Modifier,
+    onAppClick: () -> Unit,
+    onAppDoubleClick: () -> Unit = {},
+    onAppLongClick: () -> Unit
+) {
+    val customIconManager = LocalCustomIconManager.current
+    val iconShapeManager = LocalIconShapeManager.current
+    val iconShape = iconShapeManager.iconShape.toComposeShape()
+    var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
+
+    Column(
+        modifier = modifier
+            .width(80.dp)
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                brush = cardGradient(isFocused),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .clip(RoundedCornerShape(10.dp))
+            .pressWithHaptic(
+                onAppClick, onAppDoubleClick, onAppLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
+            .combinedClickable(
+                onClick = onAppClick,
+                onDoubleClick = onAppDoubleClick,
+                onLongClick = onAppLongClick
+            )
+            .focusable()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(iconShape),
+            contentAlignment = Alignment.Center
+        ) {
+            AppIconImage(
+                defaultIcon = app.icon,
+                packageName = app.packageName,
+                contentDescription = stringResource(R.string.app_icon_description, app.label),
+                customIconManager = customIconManager,
+                modifier = Modifier.matchParentSize()
+            )
+        }
+
+        Spacer(Modifier.height(2.dp))
+        app.AppName()
     }
 }
 
@@ -203,17 +426,28 @@ private fun AppGridItem(
     onAppLongClick: () -> Unit
 ) {
     val customIconManager = LocalCustomIconManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
+    val iconShapeManager = LocalIconShapeManager.current
+    val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = cardGradient(isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
+            .pressWithHaptic(
+                onAppClick, onAppDoubleClick, onAppLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = onAppClick,
                 onDoubleClick = onAppDoubleClick,
@@ -227,7 +461,7 @@ private fun AppGridItem(
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(iconShape),
             contentAlignment = Alignment.Center
         ) {
             AppIconImage(

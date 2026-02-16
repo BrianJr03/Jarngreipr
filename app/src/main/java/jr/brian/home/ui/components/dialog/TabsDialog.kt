@@ -52,9 +52,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageType
+import jr.brian.home.model.PageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -87,17 +88,17 @@ fun TabsDialog(
         )
     }
 
-    if (showDeleteConfirmation != null) {
+    showDeleteConfirmation?.let { pageIndex ->
         ConfirmationDialog(
             title = stringResource(R.string.home_tab_delete_page_title),
             message = stringResource(
                 R.string.home_tab_delete_page_message,
-                showDeleteConfirmation!! + 1
+                pageIndex + 1
             ),
             confirmText = stringResource(R.string.home_tab_delete_confirm),
             cancelText = stringResource(R.string.home_tab_delete_cancel),
             onConfirm = {
-                onDeletePage(showDeleteConfirmation!!)
+                onDeletePage(pageIndex)
                 showDeleteConfirmation = null
             },
             onDismiss = {
@@ -106,7 +107,7 @@ fun TabsDialog(
         )
     }
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
@@ -192,8 +193,6 @@ fun TabsDialog(
                         PageType.APP_DRAWER_TAB -> stringResource(R.string.home_tab_page_type_app_drawer_tab)
                     }
 
-                    // When there's only one page, it's always the home tab (index 0)
-                    // Otherwise, show home badge for the current tab
                     val isHomeTab = if (totalPages == 1) {
                         index == 0
                     } else {
@@ -205,10 +204,7 @@ fun TabsDialog(
                         isSelected = isHomeTab,
                         showDelete = totalPages > 1,
                         onClick = {
-                            // Only set home tab if user explicitly clicks and it's different from current
-                            if (index != currentTabIndex) {
-                                onTabSelected(index)
-                            }
+                            onTabSelected(index)
                             onDismiss()
                         },
                         onDelete = {
@@ -243,21 +239,6 @@ private fun TabOption(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         contentAlignment = Alignment.TopStart,
         modifier = Modifier.padding(bottom = 8.dp)
@@ -268,7 +249,7 @@ private fun TabOption(
                 .scale(animatedFocusedScale(isFocused))
                 .onFocusChanged { isFocused = it.isFocused }
                 .background(
-                    brush = cardGradient,
+                    brush = cardGradient(isFocused = isFocused),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .border(
@@ -373,27 +354,13 @@ private fun AddPageButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.9f)
-            )
-        } else {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.4f),
-                ThemeSecondaryColor.copy(alpha = 0.3f)
-            )
-        }
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient,
+                brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
