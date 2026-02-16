@@ -60,6 +60,7 @@
 -keep class dagger.hilt.** { *; }
 -keep class javax.inject.** { *; }
 -keep class * extends dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper { *; }
+-dontwarn jr.brian.home.JarngreiprApplication_GeneratedInjector
 
 # ========== KOTLIN COROUTINES ==========
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}

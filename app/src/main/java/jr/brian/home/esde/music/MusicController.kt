@@ -121,4 +121,17 @@ interface MusicController {
      * Check if music player exists and is paused (not playing, but not released).
      */
     fun isPaused(): Boolean
+
+    /**
+     * Set the music volume.
+     * @param volume Volume level from 0.0 to 1.0
+     */
+    fun setVolume(volume: Float)
+
+    /**
+     * Check if another app is currently playing audio.
+     * Used to avoid interrupting music from apps like YouTube Music, Spotify, etc.
+     * @return true if another audio source is active
+     */
+    fun isOtherAudioPlaying(): Boolean
 }

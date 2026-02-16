@@ -55,7 +55,7 @@ fun AppDrawerOptionsDialog(
     onCreateFolderClick: () -> Unit,
 ) {
 
-    Dialog(
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {

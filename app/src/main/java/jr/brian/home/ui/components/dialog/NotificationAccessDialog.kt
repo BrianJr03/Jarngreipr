@@ -51,8 +51,8 @@ fun NotificationAccessDialog(
     onNeverAskAgain: () -> Unit
 ) {
     val isAndroid13OrHigher = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-    
-    Dialog(
+
+    DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,

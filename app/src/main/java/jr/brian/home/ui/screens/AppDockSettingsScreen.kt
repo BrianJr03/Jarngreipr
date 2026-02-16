@@ -43,11 +43,10 @@ import jr.brian.home.ui.components.dock.DockSizeOption
 import jr.brian.home.ui.components.dock.MaxDockAppsOption
 import jr.brian.home.ui.components.dock.SwappableDockPreview
 import jr.brian.home.ui.components.dock.PageVisibilityOption
-import jr.brian.home.ui.theme.AlmostBlack
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalDockManager
+import jr.brian.home.ui.util.ColorOptions
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -182,17 +181,7 @@ fun AppDockSettingsScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    val colors = listOf(
-                                        ThemePrimaryColor,
-                                        ThemeSecondaryColor,
-                                        Color.White,
-                                        Color.LightGray,
-                                        Color.DarkGray,
-                                        AlmostBlack,
-                                        Color.Black,
-                                        Color.Transparent
-                                    )
-                                    colors.forEach { color ->
+                                    ColorOptions.standardColors().forEach { color ->
                                         ColorOption(
                                             color = color,
                                             isSelected = dockColor == color,

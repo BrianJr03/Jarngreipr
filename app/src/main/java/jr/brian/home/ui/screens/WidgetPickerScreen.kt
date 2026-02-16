@@ -9,10 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,11 +29,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.model.widget.WidgetCategory
 import jr.brian.home.model.widget.WidgetInfo
-import jr.brian.home.ui.components.OnScreenKeyboard
+import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.widgetpicker.EmptyStateView
+import jr.brian.home.ui.components.widgetpicker.HorizontalWidgetList
 import jr.brian.home.ui.components.widgetpicker.LoadingView
-import jr.brian.home.ui.components.widgetpicker.WidgetCategoryList
-import jr.brian.home.ui.components.widgetpicker.WidgetPickerHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -52,10 +49,8 @@ fun WidgetPickerScreen(
     val repository = remember { WidgetProviderRepository(context) }
 
     var widgetCategories by remember { mutableStateOf<List<WidgetCategory>>(emptyList()) }
-    var filteredCategories by remember { mutableStateOf<List<WidgetCategory>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
-    var showKeyboard by remember { mutableStateOf(false) }
 
     val bindWidgetLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -90,15 +85,8 @@ fun WidgetPickerScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        isLoading = true
-        widgetCategories = repository.getWidgetCategories()
-        filteredCategories = widgetCategories
-        isLoading = false
-    }
-
-    LaunchedEffect(searchQuery, widgetCategories) {
-        filteredCategories = if (searchQuery.isBlank()) {
+    val filteredCategories = remember(widgetCategories, searchQuery) {
+        if (searchQuery.isBlank()) {
             widgetCategories
         } else {
             widgetCategories.mapNotNull { category ->
@@ -115,128 +103,110 @@ fun WidgetPickerScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        isLoading = true
+        widgetCategories = repository.getWidgetCategories()
+        isLoading = false
+    }
+
     BackHandler {
         onNavigateBack()
     }
 
-    Box(
+    val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
+    var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(OledBackgroundColor)
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
+        // Widget horizontal list (top section)
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(if (showKeyboard) 1f else 2f)
-                    .fillMaxSize()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    WidgetPickerHeader(
-                        searchQuery = searchQuery,
-                        onNavigateBack = onNavigateBack,
-                        onSearchBarClick = { showKeyboard = !showKeyboard },
-                        showKeyboard = showKeyboard
-                    )
+            when {
+                isLoading -> {
+                    LoadingView()
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                filteredCategories.isEmpty() -> {
+                    EmptyStateView(searchQuery)
+                }
 
-                    when {
-                        isLoading -> {
-                            LoadingView()
-                        }
+                else -> {
+                    HorizontalWidgetList(
+                        categories = filteredCategories,
+                        repository = repository,
+                        onWidgetSelected = { widgetProviderInfo ->
+                            scope.launch {
+                                val appWidgetId = widgetViewModel.allocateAppWidgetId()
+                                if (appWidgetId != -1) {
+                                    val appWidgetManager =
+                                        AppWidgetManager.getInstance(context)
 
-                        filteredCategories.isEmpty() -> {
-                            EmptyStateView(searchQuery)
-                        }
+                                    val canBind = appWidgetManager.bindAppWidgetIdIfAllowed(
+                                        appWidgetId,
+                                        widgetProviderInfo.providerInfo.provider
+                                    )
 
-                        else -> {
-                            WidgetCategoryList(
-                                categories = filteredCategories,
-                                repository = repository,
-                                showKeyboard = showKeyboard,
-                                onWidgetSelected = { widgetProviderInfo ->
-                                    scope.launch {
-                                        val appWidgetId = widgetViewModel.allocateAppWidgetId()
-                                        if (appWidgetId != -1) {
-                                            val appWidgetManager =
-                                                AppWidgetManager.getInstance(context)
+                                    if (canBind) {
+                                        val sizeInfo =
+                                            repository.getWidgetSizeInfo(widgetProviderInfo.providerInfo)
+                                        val widgetInfo = WidgetInfo(
+                                            widgetId = appWidgetId,
+                                            providerInfo = widgetProviderInfo.providerInfo,
+                                            pageIndex = pageIndex,
+                                            width = sizeInfo.targetWidthCells,
+                                            height = sizeInfo.targetHeightCells
+                                        )
 
-                                            val canBind = appWidgetManager.bindAppWidgetIdIfAllowed(
-                                                appWidgetId,
-                                                widgetProviderInfo.providerInfo.provider
-                                            )
-
-                                            if (canBind) {
-                                                val sizeInfo =
-                                                    repository.getWidgetSizeInfo(widgetProviderInfo.providerInfo)
-                                                val widgetInfo = WidgetInfo(
-                                                    widgetId = appWidgetId,
-                                                    providerInfo = widgetProviderInfo.providerInfo,
-                                                    pageIndex = pageIndex,
-                                                    width = sizeInfo.targetWidthCells,
-                                                    height = sizeInfo.targetHeightCells
+                                        widgetViewModel.addWidgetToPage(
+                                            widgetInfo,
+                                            pageIndex
+                                        )
+                                        onWidgetAdded()
+                                        onNavigateBack()
+                                    } else {
+                                        val bindIntent =
+                                            Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
+                                                putExtra(
+                                                    AppWidgetManager.EXTRA_APPWIDGET_ID,
+                                                    appWidgetId
                                                 )
-
-                                                widgetViewModel.addWidgetToPage(
-                                                    widgetInfo,
-                                                    pageIndex
+                                                putExtra(
+                                                    AppWidgetManager.EXTRA_APPWIDGET_PROVIDER,
+                                                    widgetProviderInfo.providerInfo.provider
                                                 )
-                                                onWidgetAdded()
-                                                onNavigateBack()
-                                            } else {
-                                                val bindIntent =
-                                                    Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
-                                                        putExtra(
-                                                            AppWidgetManager.EXTRA_APPWIDGET_ID,
-                                                            appWidgetId
-                                                        )
-                                                        putExtra(
-                                                            AppWidgetManager.EXTRA_APPWIDGET_PROVIDER,
-                                                            widgetProviderInfo.providerInfo.provider
-                                                        )
-                                                    }
-                                                bindWidgetLauncher.launch(bindIntent)
                                             }
-                                        }
+                                        bindWidgetLauncher.launch(bindIntent)
                                     }
                                 }
-                            )
+                            }
                         }
-                    }
-                }
-            }
-
-            if (showKeyboard) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize()
-                        .background(OledBackgroundColor)
-                ) {
-                    val keyboardFocusRequesters =
-                        remember { SnapshotStateMap<Int, FocusRequester>() }
-                    var focusedKeyIndex by remember { mutableIntStateOf(0) }
-
-                    OnScreenKeyboard(
-                        searchQuery = searchQuery,
-                        showQueryText = false,
-                        onQueryChange = { searchQuery = it },
-                        keyboardFocusRequesters = keyboardFocusRequesters,
-                        onFocusChanged = { focusedKeyIndex = it },
-                        onNavigateRight = {},
-                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(OledBackgroundColor)
+        ) {
+            QwertyKeyboard(
+                searchQuery = searchQuery,
+                showFlipLayoutButton = false,
+                onQueryChange = { searchQuery = it },
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = { focusedKeyIndex = it },
+                onFlipLayout = {},
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

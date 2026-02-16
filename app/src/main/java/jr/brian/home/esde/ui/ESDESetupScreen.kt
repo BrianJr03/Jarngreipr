@@ -1,19 +1,19 @@
 package jr.brian.home.esde.ui
 
-import android.Manifest
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import jr.brian.home.esde.scripts.ScriptManager
 import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.esde.setup.SetupStep
@@ -32,6 +32,7 @@ fun ESDESetupScreen(
     val preferences = remember { SetupPreferences(context) }
     
     var currentStep by remember { mutableStateOf<SetupStep>(SetupStep.Welcome) }
+    val isDialogVisible = dialogState.isVisible
     
     val setupManager = remember {
         SetupWizardManager(
@@ -42,6 +43,12 @@ fun ESDESetupScreen(
                 currentStep = SetupStep.Complete
             }
         )
+    }
+    
+    LaunchedEffect(isDialogVisible) {
+        if (isDialogVisible) {
+            currentStep = SetupStep.Welcome
+        }
     }
     
     val scriptsFolderPicker = rememberLauncherForActivityResult(
@@ -84,16 +91,7 @@ fun ESDESetupScreen(
         }
     }
     
-    val legacyPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        if (allGranted) {
-            currentStep = SetupStep.PermissionsGranted
-        }
-    }
-    
-    if (dialogState.isVisible) {
+    if (isDialogVisible) {
         SetupWizardDialog(
             currentStep = currentStep,
             onDismiss = {
@@ -138,7 +136,6 @@ fun ESDESetupScreen(
                 }
             },
             onSkipScripts = {
-                // Check if scripts exist before skipping
                 if (!setupManager.areScriptsInstalled(preferences.scriptsPath)) {
                     currentStep =
                         SetupStep.Warning(WarningType.ScriptsMissing, preferences.scriptsPath)
@@ -147,22 +144,13 @@ fun ESDESetupScreen(
                 }
             },
             onGrantPermission = {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    try {
-                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                        intent.data = Uri.parse("package:${context.packageName}")
-                        permissionLauncher.launch(intent)
-                    } catch (_: Exception) {
-                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        permissionLauncher.launch(intent)
-                    }
-                } else {
-                    legacyPermissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                        )
-                    )
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    intent.data = "package:${context.packageName}".toUri()
+                    permissionLauncher.launch(intent)
+                } catch (_: Exception) {
+                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                    permissionLauncher.launch(intent)
                 }
             },
             onWarningContinue = {

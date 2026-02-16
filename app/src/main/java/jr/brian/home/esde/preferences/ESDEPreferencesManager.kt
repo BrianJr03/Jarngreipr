@@ -14,14 +14,22 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANIMATION_STYLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BACKGROUND_COLOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BLUR_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BLUR_LEVEL
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DIMMING_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_CONTENT_ON_VIDEO
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_X
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_Y
+
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_SYSTEM_IMAGE_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_SYSTEM_LOGO_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_GAME_IMAGE_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SINGLE_GAME_LOGO_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_HEIGHT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_WIDTH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_ENABLED
@@ -30,7 +38,19 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VOLUME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_USE_SYSTEM_SPECIFIC
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_LOOP_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DESCRIPTION_OVERLAY_PAGES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_SYSTEM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_GAME
+import jr.brian.home.model.Shortcut
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
@@ -40,6 +60,15 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -82,7 +111,6 @@ class ESDEPreferencesManager(context: Context) {
         val screensaverBehaviorName = prefs.getString(KEY_SCREENSAVER_BEHAVIOR, ScreensaverBehavior.ShowContent.name)
         val screensaverBehavior = try {
             val behaviorName = screensaverBehaviorName ?: ScreensaverBehavior.ShowContent.name
-            // Migrate old Blackout and DimOverlay to PowerOff
             when (behaviorName) {
                 "Blackout", "DimOverlay" -> ScreensaverBehavior.PowerOff
                 else -> ScreensaverBehavior.valueOf(behaviorName)
@@ -94,39 +122,119 @@ class ESDEPreferencesManager(context: Context) {
         val musicVideoBehaviorName = prefs.getString(KEY_MUSIC_VIDEO_BEHAVIOR, MusicVideoBehavior.Duck.value)
         val musicVideoBehavior = MusicVideoBehavior.fromValue(musicVideoBehaviorName ?: MusicVideoBehavior.Duck.value)
 
+        val videoScaleModeName = prefs.getString(KEY_VIDEO_SCALE_MODE, VideoScaleMode.FillScreen.name)
+        val videoScaleMode = try {
+            VideoScaleMode.valueOf(videoScaleModeName ?: VideoScaleMode.FillScreen.name)
+        } catch (_: IllegalArgumentException) {
+            VideoScaleMode.FillScreen
+        }
+
+        val systemBackgroundScaleModeName = prefs.getString(KEY_SYSTEM_BACKGROUND_SCALE_MODE, BackgroundScaleMode.Crop.name)
+        val systemBackgroundScaleMode = try {
+            BackgroundScaleMode.valueOf(systemBackgroundScaleModeName ?: BackgroundScaleMode.Crop.name)
+        } catch (_: IllegalArgumentException) {
+            BackgroundScaleMode.Crop
+        }
+
+        val gameBackgroundScaleModeName = prefs.getString(KEY_GAME_BACKGROUND_SCALE_MODE, BackgroundScaleMode.Crop.name)
+        val gameBackgroundScaleMode = try {
+            BackgroundScaleMode.valueOf(gameBackgroundScaleModeName ?: BackgroundScaleMode.Crop.name)
+        } catch (_: IllegalArgumentException) {
+            BackgroundScaleMode.Crop
+        }
+
+        val marqueePressShortcutName = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT, Shortcut.NONE.name)
+        val marqueePressShortcut = try {
+            Shortcut.valueOf(marqueePressShortcutName ?: Shortcut.NONE.name)
+        } catch (_: IllegalArgumentException) {
+            Shortcut.NONE
+        }
+
+        val marqueeHiddenPagesString = prefs.getString(KEY_MARQUEE_VISIBLE_PAGES, null)
+        val marqueeHiddenPages = marqueeHiddenPagesString
+            ?.split(",")
+            ?.mapNotNull { it.toIntOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
+        val descriptionOverlayEnabledPagesString = prefs.getString(KEY_DESCRIPTION_OVERLAY_PAGES, null)
+        val descriptionOverlayEnabledPages = descriptionOverlayEnabledPagesString
+            ?.split(",")
+            ?.mapNotNull { it.toIntOrNull() }
+            ?.toSet()
+            ?: emptySet()
+
+        val legacyBlurLevel = prefs.getInt(KEY_BLUR_LEVEL, 0)
+        val systemBlurLevel = if (prefs.contains(KEY_SYSTEM_BLUR_LEVEL)) {
+            prefs.getInt(KEY_SYSTEM_BLUR_LEVEL, 0)
+        } else {
+            legacyBlurLevel
+        }
+        val gameBlurLevel = if (prefs.contains(KEY_GAME_BLUR_LEVEL)) {
+            prefs.getInt(KEY_GAME_BLUR_LEVEL, 0)
+        } else {
+            legacyBlurLevel
+        }
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
             animationScale = prefs.getInt(KEY_ANIMATION_SCALE, 90).toFloat() / 100f,
-            blurLevel = prefs.getInt(KEY_BLUR_LEVEL, 0),
+            blurLevel = legacyBlurLevel,
+            systemBlurLevel = systemBlurLevel,
+            gameBlurLevel = gameBlurLevel,
             dimmingLevel = prefs.getInt(KEY_DIMMING_LEVEL, 20).coerceAtMost(70),
             backgroundColor = prefs.getInt(KEY_BACKGROUND_COLOR, Color.Black.toArgb()),
             videoEnabled = prefs.getBoolean(KEY_VIDEO_ENABLED, false),
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
             videoAudioEnabled = prefs.getBoolean(KEY_VIDEO_AUDIO_ENABLED, false),
+            videoScaleMode = videoScaleMode,
+            systemBackgroundScaleMode = systemBackgroundScaleMode,
+            gameBackgroundScaleMode = gameBackgroundScaleMode,
             esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
             systemImageType = systemImageType,
             gameImageType = gameImageType,
             showSystemLogo = prefs.getBoolean(KEY_SHOW_SYSTEM_LOGO, true),
             logoAlignment = logoAlignment,
+            logoOffsetX = prefs.getFloat(KEY_LOGO_OFFSET_X, 0f),
+            logoOffsetY = prefs.getFloat(KEY_LOGO_OFFSET_Y, 0f),
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
-            hideContentOnVideo = prefs.getBoolean(KEY_HIDE_CONTENT_ON_VIDEO, false),
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
             customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null),
+            singleSystemImagePath = prefs.getString(KEY_SINGLE_SYSTEM_IMAGE_PATH, null),
+            singleSystemLogoPath = prefs.getString(KEY_SINGLE_SYSTEM_LOGO_PATH, null),
+            singleGameImagePath = prefs.getString(KEY_SINGLE_GAME_IMAGE_PATH, null),
+            singleGameLogoPath = prefs.getString(KEY_SINGLE_GAME_LOGO_PATH, null),
             marqueeWidth = prefs.getInt(KEY_MARQUEE_WIDTH, 300),
             marqueeHeight = prefs.getInt(KEY_MARQUEE_HEIGHT, 150),
             screensaverBehavior = screensaverBehavior,
-            // Music settings
             musicEnabled = prefs.getBoolean(KEY_MUSIC_ENABLED, false),
             musicPath = prefs.getString(KEY_MUSIC_PATH, null),
             musicSystemEnabled = prefs.getBoolean(KEY_MUSIC_SYSTEM_ENABLED, true),
             musicGameEnabled = prefs.getBoolean(KEY_MUSIC_GAME_ENABLED, true),
             musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
             musicVideoBehavior = musicVideoBehavior,
-            appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100)
+            musicVolume = prefs.getInt(KEY_MUSIC_VOLUME, 100),
+            musicUseSystemSpecific = prefs.getBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, true),
+            musicLoopEnabled = prefs.getBoolean(KEY_MUSIC_LOOP_ENABLED, true),
+            appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
+            marqueePressShortcut = marqueePressShortcut,
+            marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
+            marqueeHiddenPages = marqueeHiddenPages,
+            descriptionOverlayEnabledPages = descriptionOverlayEnabledPages,
+            showMarqueeForSystem = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, true),
+            showMarqueeForGame = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_GAME, true),
+            gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
+            systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
+            customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
+            excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false),
+            hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
+            marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
+            androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
+            marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f)
         )
     }
 
@@ -145,16 +253,16 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putInt(KEY_ANIMATION_SCALE, (scale * 100).toInt()) }
     }
 
-    fun setBlurLevel(level: Int) {
+    fun setSystemBlurLevel(level: Int) {
         val coercedLevel = level.coerceIn(0, 25)
-        _state.value = _state.value.copy(blurLevel = coercedLevel)
-        prefs.edit { putInt(KEY_BLUR_LEVEL, coercedLevel) }
+        _state.value = _state.value.copy(systemBlurLevel = coercedLevel)
+        prefs.edit { putInt(KEY_SYSTEM_BLUR_LEVEL, coercedLevel) }
     }
 
-    fun setDimmingLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 70)
-        _state.value = _state.value.copy(dimmingLevel = coercedLevel)
-        prefs.edit { putInt(KEY_DIMMING_LEVEL, coercedLevel) }
+    fun setGameBlurLevel(level: Int) {
+        val coercedLevel = level.coerceIn(0, 25)
+        _state.value = _state.value.copy(gameBlurLevel = coercedLevel)
+        prefs.edit { putInt(KEY_GAME_BLUR_LEVEL, coercedLevel) }
     }
 
     fun setBackgroundColor(color: Int) {
@@ -177,6 +285,20 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_VIDEO_AUDIO_ENABLED, enabled) }
     }
 
+    fun setVideoScaleMode(mode: VideoScaleMode) {
+        _state.value = _state.value.copy(videoScaleMode = mode)
+        prefs.edit { putString(KEY_VIDEO_SCALE_MODE, mode.name) }
+    }
+
+    fun setSystemBackgroundScaleMode(mode: BackgroundScaleMode) {
+        _state.value = _state.value.copy(systemBackgroundScaleMode = mode)
+        prefs.edit { putString(KEY_SYSTEM_BACKGROUND_SCALE_MODE, mode.name) }
+    }
+
+    fun setGameBackgroundScaleMode(mode: BackgroundScaleMode) {
+        _state.value = _state.value.copy(gameBackgroundScaleMode = mode)
+        prefs.edit { putString(KEY_GAME_BACKGROUND_SCALE_MODE, mode.name) }
+    }
 
     fun setLastSelectedSystem(systemName: String?) {
         _state.value = _state.value.copy(lastSelectedSystem = systemName)
@@ -197,24 +319,22 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_GAME_IMAGE_TYPE, type.name) }
     }
 
-    fun setShowSystemLogo(show: Boolean) {
-        _state.value = _state.value.copy(showSystemLogo = show)
-        prefs.edit { putBoolean(KEY_SHOW_SYSTEM_LOGO, show) }
-    }
-
     fun setLogoAlignment(alignment: LogoAlignment) {
         _state.value = _state.value.copy(logoAlignment = alignment)
         prefs.edit { putString(KEY_LOGO_ALIGNMENT, alignment.name) }
     }
 
+    fun setLogoOffset(x: Float, y: Float) {
+        _state.value = _state.value.copy(logoOffsetX = x, logoOffsetY = y)
+        prefs.edit {
+            putFloat(KEY_LOGO_OFFSET_X, x)
+            putFloat(KEY_LOGO_OFFSET_Y, y)
+        }
+    }
+
     fun setRandomSystemImage(random: Boolean) {
         _state.value = _state.value.copy(randomSystemImage = random)
         prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
-    }
-
-    fun setHideContentOnVideo(hide: Boolean) {
-        _state.value = _state.value.copy(hideContentOnVideo = hide)
-        prefs.edit { putBoolean(KEY_HIDE_CONTENT_ON_VIDEO, hide) }
     }
 
     fun setPowerEventsEnabled(enabled: Boolean) {
@@ -245,14 +365,50 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
+    fun setSingleSystemImagePath(path: String?) {
+        _state.value = _state.value.copy(singleSystemImagePath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_SYSTEM_IMAGE_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_SYSTEM_IMAGE_PATH) }
+        }
+    }
+
+    fun setSingleSystemLogoPath(path: String?) {
+        _state.value = _state.value.copy(singleSystemLogoPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_SYSTEM_LOGO_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_SYSTEM_LOGO_PATH) }
+        }
+    }
+
+    fun setSingleGameImagePath(path: String?) {
+        _state.value = _state.value.copy(singleGameImagePath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_GAME_IMAGE_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_GAME_IMAGE_PATH) }
+        }
+    }
+
+    fun setSingleGameLogoPath(path: String?) {
+        _state.value = _state.value.copy(singleGameLogoPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_SINGLE_GAME_LOGO_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_SINGLE_GAME_LOGO_PATH) }
+        }
+    }
+
     fun setMarqueeWidth(width: Int) {
-        val coercedWidth = width.coerceIn(100, 600)
+        val coercedWidth = width.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeWidth = coercedWidth)
         prefs.edit { putInt(KEY_MARQUEE_WIDTH, coercedWidth) }
     }
 
     fun setMarqueeHeight(height: Int) {
-        val coercedHeight = height.coerceIn(50, 400)
+        val coercedHeight = height.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeHeight = coercedHeight)
         prefs.edit { putInt(KEY_MARQUEE_HEIGHT, coercedHeight) }
     }
@@ -262,7 +418,6 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_SCREENSAVER_BEHAVIOR, behavior.name) }
     }
 
-    // Music settings
     fun setMusicEnabled(enabled: Boolean) {
         _state.value = _state.value.copy(musicEnabled = enabled)
         prefs.edit { putBoolean(KEY_MUSIC_ENABLED, enabled) }
@@ -297,9 +452,137 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_MUSIC_VIDEO_BEHAVIOR, behavior.value) }
     }
 
+    fun setMusicVolume(volume: Int) {
+        val coercedVolume = volume.coerceIn(0, 100)
+        _state.value = _state.value.copy(musicVolume = coercedVolume)
+        prefs.edit { putInt(KEY_MUSIC_VOLUME, coercedVolume) }
+    }
+
+    fun setMusicUseSystemSpecific(useSystemSpecific: Boolean) {
+        _state.value = _state.value.copy(musicUseSystemSpecific = useSystemSpecific)
+        prefs.edit { putBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, useSystemSpecific) }
+    }
+
+    fun setMusicLoopEnabled(loopEnabled: Boolean) {
+        _state.value = _state.value.copy(musicLoopEnabled = loopEnabled)
+        prefs.edit { putBoolean(KEY_MUSIC_LOOP_ENABLED, loopEnabled) }
+    }
+
     fun setAppDrawerOpacity(opacity: Int) {
         val coercedOpacity = opacity.coerceIn(0, 100)
         _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
         prefs.edit { putInt(KEY_APP_DRAWER_OPACITY, coercedOpacity) }
+    }
+
+    fun setMarqueePressShortcut(shortcut: Shortcut) {
+        _state.value = _state.value.copy(marqueePressShortcut = shortcut)
+        prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT, shortcut.name) }
+    }
+
+    fun setMarqueePressShortcutAppPackage(packageName: String?) {
+        _state.value = _state.value.copy(marqueePressShortcutAppPackage = packageName)
+        if (packageName != null) {
+            prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, packageName) }
+        } else {
+            prefs.edit { remove(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE) }
+        }
+    }
+
+    fun toggleMarqueePageVisibility(pageIndex: Int) {
+        val hiddenPages = _state.value.marqueeHiddenPages
+        val newPages = if (hiddenPages.contains(pageIndex)) {
+            // Currently hidden, remove from set to show
+            hiddenPages - pageIndex
+        } else {
+            // Currently visible, add to set to hide
+            hiddenPages + pageIndex
+        }
+        
+        _state.value = _state.value.copy(marqueeHiddenPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_MARQUEE_VISIBLE_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_MARQUEE_VISIBLE_PAGES, newPages.joinToString(",")) }
+        }
+    }
+
+    fun toggleDescriptionOverlayPage(pageIndex: Int) {
+        val enabledPages = _state.value.descriptionOverlayEnabledPages
+        val newPages = if (enabledPages.contains(pageIndex)) {
+            // Currently enabled, remove from set to disable
+            enabledPages - pageIndex
+        } else {
+            // Currently disabled, add to set to enable
+            enabledPages + pageIndex
+        }
+        
+        _state.value = _state.value.copy(descriptionOverlayEnabledPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_DESCRIPTION_OVERLAY_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_DESCRIPTION_OVERLAY_PAGES, newPages.joinToString(",")) }
+        }
+    }
+
+    fun setGameBackgroundDimming(level: Int) {
+        val coercedLevel = level.coerceIn(0, 70)
+        _state.value = _state.value.copy(gameBackgroundDimming = coercedLevel)
+        prefs.edit { putInt(KEY_GAME_BACKGROUND_DIMMING, coercedLevel) }
+    }
+
+    fun setSystemBackgroundDimming(level: Int) {
+        val coercedLevel = level.coerceIn(0, 70)
+        _state.value = _state.value.copy(systemBackgroundDimming = coercedLevel)
+        prefs.edit { putInt(KEY_SYSTEM_BACKGROUND_DIMMING, coercedLevel) }
+    }
+
+    fun setCustomMediaPath(path: String?) {
+        _state.value = _state.value.copy(customMediaPath = path)
+        if (path != null) {
+            prefs.edit { putString(KEY_CUSTOM_MEDIA_PATH, path) }
+        } else {
+            prefs.edit { remove(KEY_CUSTOM_MEDIA_PATH) }
+        }
+    }
+
+    fun setExcludeEffectsFromHome(exclude: Boolean) {
+        _state.value = _state.value.copy(excludeEffectsFromHome = exclude)
+        prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
+    }
+
+    fun setShowMarqueeForSystem(show: Boolean) {
+        _state.value = _state.value.copy(showMarqueeForSystem = show)
+        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, show) }
+    }
+
+    fun setShowMarqueeForGame(show: Boolean) {
+        _state.value = _state.value.copy(showMarqueeForGame = show)
+        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_GAME, show) }
+    }
+
+    fun setHideUIForGameBrowsing(hide: Boolean) {
+        _state.value = _state.value.copy(hideUIForGameBrowsing = hide)
+        prefs.edit { putBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, hide) }
+    }
+
+    fun setMarqueePositionLocked(locked: Boolean) {
+        _state.value = _state.value.copy(marqueePositionLocked = locked)
+        prefs.edit { putBoolean(KEY_MARQUEE_POSITION_LOCKED, locked) }
+    }
+
+    fun toggleMarqueePositionLocked() {
+        setMarqueePositionLocked(!_state.value.marqueePositionLocked)
+    }
+
+    fun setAndroidGamesBackgroundScale(scale: Float) {
+        val coercedScale = scale.coerceIn(0.2f, 1.0f)
+        _state.value = _state.value.copy(androidGamesBackgroundScale = coercedScale)
+        prefs.edit { putFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, coercedScale) }
+    }
+
+    fun setMarqueeMinWidthPercent(percent: Float) {
+        val coercedPercent = percent.coerceIn(0.3f, 1.0f)
+        _state.value = _state.value.copy(marqueeMinWidthPercent = coercedPercent)
+        prefs.edit { putFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, coercedPercent) }
     }
 }

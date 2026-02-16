@@ -8,6 +8,7 @@ object Routes {
     const val CRASH_LOGS = "crash_logs"
     const val CUSTOM_THEME = "custom_theme"
     const val ESDE_SETTINGS = "esde_settings"
+    const val MARQUEE_PRESS_SHORTCUT = "marquee_press_shortcut"
     const val FAQ = "faq"
     const val LAUNCHER = "launcher"
     const val MONITOR = "monitor"

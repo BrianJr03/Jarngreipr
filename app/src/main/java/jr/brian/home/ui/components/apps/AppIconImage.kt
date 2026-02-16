@@ -3,7 +3,6 @@ package jr.brian.home.ui.components.apps
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,7 +13,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -22,6 +20,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import jr.brian.home.data.CustomIconManager
+import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import java.io.File
 
 @Composable
@@ -32,8 +31,10 @@ fun AppIconImage(
     modifier: Modifier = Modifier,
     customIconManager: CustomIconManager? = null,
     contentScale: ContentScale = ContentScale.Fit,
-    shape: Shape = RoundedCornerShape(8.dp)
+    shape: Shape? = null
 ) {
+    val iconShapeManager = LocalIconShapeManager.current
+    val resolvedShape = shape ?: iconShapeManager.iconShape.toComposeShape()
     val context = LocalContext.current
     val customIconsMap by customIconManager?.customIconsMap?.collectAsStateWithLifecycle(
         initialValue = emptyMap()
@@ -57,7 +58,7 @@ fun AppIconImage(
         modifier = modifier
             .graphicsLayer {
                 clip = true
-                this.shape = shape
+                this.shape = resolvedShape
             },
         contentAlignment = Alignment.Center
     ) {
@@ -68,6 +69,8 @@ fun AppIconImage(
                 model = ImageRequest.Builder(context)
                     .data(File(customIconPath))
                     .crossfade(!isGif)
+                    .memoryCacheKey("${packageName}_custom")
+                    .placeholderMemoryCacheKey("${packageName}_custom")
                     .build(),
                 imageLoader = if (isGif) gifImageLoader else ImageLoader(context),
                 contentDescription = contentDescription,
@@ -79,6 +82,8 @@ fun AppIconImage(
                 model = ImageRequest.Builder(context)
                     .data(defaultIcon)
                     .crossfade(true)
+                    .memoryCacheKey(packageName)
+                    .placeholderMemoryCacheKey(packageName)
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),

@@ -1,5 +1,7 @@
 package jr.brian.home.data
 
+import coil.ImageLoader
+import jr.brian.home.di.ESDEImageLoader
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,12 +16,9 @@ import javax.inject.Singleton
  */
 @Singleton
 data class FeatureManagers @Inject constructor(
-    /** Manages dock configuration and app slots */
     val dockManager: DockManager,
-    
-    /** Manages gamepad/controller button mappings */
     val controlPadManager: ControlPadManager,
-    
-    /** Manages ES-DE wallpaper preferences and settings */
-    val esdePreferencesManager: ESDEPreferencesManager
+    val appDrawerFabManager: AppDrawerFabManager,
+    val esdePreferencesManager: ESDEPreferencesManager,
+    @param:ESDEImageLoader val esdeImageLoader: ImageLoader
 )

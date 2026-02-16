@@ -10,6 +10,7 @@ data class WallpaperState(
     val marqueePath: String? = null,
     val videoPath: String? = null,
     val isVideoPlaying: Boolean = false,
+    val systemBackgroundVideoPath: String? = null,
     val videoAudioEnabled: Boolean = false,
     val videoDelaySeconds: Int = 3,
     val dimmingLevel: Float = 0.2f,
@@ -20,9 +21,13 @@ data class WallpaperState(
     val backgroundColor: Color = Color.Black,
     val showSystemLogo: Boolean = true,
     val logoAlignment: LogoAlignment = LogoAlignment.Center,
-    val hideContentOnVideo: Boolean = false,
+    val logoOffsetX: Float = 0f,
+    val logoOffsetY: Float = 0f,
     val marqueeWidth: Int = 300,
     val marqueeHeight: Int = 150,
     val isScreensaverActive: Boolean = false,
-    val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff
+    val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff,
+    val isGameRunning: Boolean = false,
+    val gameDescription: String? = null,
+    val isShowingGameBackground: Boolean = false
 )

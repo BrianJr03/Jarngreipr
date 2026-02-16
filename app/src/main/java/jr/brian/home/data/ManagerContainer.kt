@@ -18,13 +18,16 @@ import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import javax.inject.Inject
 
 /**
@@ -79,6 +82,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalCustomIconManager provides ui.customIconManager,
         LocalGlobalIconRefreshManager provides ui.globalIconRefreshManager,
         LocalWallpaperManager provides ui.wallpaperManager,
+        LocalSearchLayoutManager provides ui.searchLayoutManager,
         
         // App Management
         LocalAppVisibilityManager provides app.appVisibilityManager,
@@ -96,6 +100,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalDockManager provides feature.dockManager,
         LocalControlPadManager provides feature.controlPadManager,
         LocalESDEPreferencesManager provides feature.esdePreferencesManager,
+        LocalESDEImageLoader provides feature.esdeImageLoader,
+        LocalAppDrawerFabManager provides feature.appDrawerFabManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,
