@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,13 +41,17 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.util.SettingsTag
+
+private val shape = RoundedCornerShape(16.dp)
 
 @Composable
 fun SettingItem(
@@ -58,61 +64,38 @@ fun SettingItem(
     tag: SettingsTag? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
-
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
+    val focusedColors =
+        listOf(ThemePrimaryColor.copy(alpha = 0.8f), ThemeSecondaryColor.copy(alpha = 0.6f))
+    val unfocusedColors = listOf(OledCardLightColor, OledCardColor)
 
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .scale(animatedFocusedScale(isFocused))
-                .then(
-                    if (focusRequester != null) {
-                        Modifier.focusRequester(focusRequester)
-                    } else {
-                        Modifier
-                    },
-                )
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                }
-                .background(
-                    brush = cardGradient,
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .border(
-                    width = if (isFocused) 2.dp else 0.dp,
-                    brush =
-                        borderBrush(
-                            isFocused = isFocused,
-                            colors =
-                                listOf(
-                                    ThemePrimaryColor.copy(alpha = 0.8f),
-                                    ThemeSecondaryColor.copy(alpha = 0.6f),
-                                ),
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .clip(RoundedCornerShape(16.dp))
-                .clickable {
-                    onClick()
-                }
-                .focusable()
-                .padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = pressOffsetY)
+            .scale(pressScale * animatedFocusedScale(isFocused))
+            .then(focusRequester?.let {
+                Modifier.focusRequester(it)
+            } ?: Modifier)
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(
+                Brush.linearGradient(if (isFocused) focusedColors else unfocusedColors),
+                shape
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                brush = borderBrush(isFocused, focusedColors), shape
+            )
+            .clip(shape)
+            .pressWithHaptic(
+                onClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it })
+            .clickable { onClick() }
+            .focusable()
+            .padding(16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -128,9 +111,7 @@ fun SettingItem(
                         .rotate(animatedRotation(isFocused)),
                 tint = Color.White,
             )
-
             Spacer(modifier = Modifier.size(16.dp))
-
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -142,7 +123,6 @@ fun SettingItem(
                         fontSize = if (isFocused) 18.sp else 16.sp,
                         fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
                     )
-                    
                     if (tag != null) {
                         Box(
                             modifier = Modifier
@@ -173,7 +153,6 @@ fun SettingItem(
                     fontSize = 14.sp,
                 )
             }
-            
             if (trailing != null) {
                 Spacer(modifier = Modifier.size(12.dp))
                 trailing()

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -18,15 +19,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.extensions.handleFullNavigation
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -46,10 +51,18 @@ fun AppGridItem(
     onFocusChanged: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
+    ) {
         Box {
             AppIconImage(
                 defaultIcon = app.icon,
@@ -77,6 +90,11 @@ fun AppGridItem(
                             onMenuPress = {
                                 onLongClick()
                             }
+                        )
+                        .pressWithHaptic(
+                            onClick, onDoubleClick, onLongClick,
+                            haptic = haptic,
+                            onPressChange = { isPressed = it }
                         )
                         .combinedClickable(
                             onClick = {

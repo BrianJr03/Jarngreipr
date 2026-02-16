@@ -21,6 +21,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_X
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_Y
 
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_IMAGES_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_SYSTEM_LOGOS_PATH
@@ -37,11 +39,13 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SCREENSAVER_EN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_SYSTEM_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VOLUME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_USE_SYSTEM_SPECIFIC
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_LOOP_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_VISIBLE_PAGES
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_OVERLAY_PAGES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DESCRIPTION_OVERLAY_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_MARQUEE_FOR_GAME
 import jr.brian.home.model.Shortcut
@@ -62,6 +66,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCAL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -150,8 +155,8 @@ class ESDEPreferencesManager(context: Context) {
             ?.toSet()
             ?: emptySet()
 
-        val marqueeOverlayEnabledPagesString = prefs.getString(KEY_MARQUEE_OVERLAY_PAGES, null)
-        val marqueeOverlayEnabledPages = marqueeOverlayEnabledPagesString
+        val descriptionOverlayEnabledPagesString = prefs.getString(KEY_DESCRIPTION_OVERLAY_PAGES, null)
+        val descriptionOverlayEnabledPages = descriptionOverlayEnabledPagesString
             ?.split(",")
             ?.mapNotNull { it.toIntOrNull() }
             ?.toSet()
@@ -190,6 +195,8 @@ class ESDEPreferencesManager(context: Context) {
             gameImageType = gameImageType,
             showSystemLogo = prefs.getBoolean(KEY_SHOW_SYSTEM_LOGO, true),
             logoAlignment = logoAlignment,
+            logoOffsetX = prefs.getFloat(KEY_LOGO_OFFSET_X, 0f),
+            logoOffsetY = prefs.getFloat(KEY_LOGO_OFFSET_Y, 0f),
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
@@ -209,18 +216,21 @@ class ESDEPreferencesManager(context: Context) {
             musicScreensaverEnabled = prefs.getBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, true),
             musicVideoBehavior = musicVideoBehavior,
             musicVolume = prefs.getInt(KEY_MUSIC_VOLUME, 100),
+            musicUseSystemSpecific = prefs.getBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, true),
+            musicLoopEnabled = prefs.getBoolean(KEY_MUSIC_LOOP_ENABLED, true),
             appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
             marqueePressShortcut = marqueePressShortcut,
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
             marqueeHiddenPages = marqueeHiddenPages,
-            marqueeOverlayEnabledPages = marqueeOverlayEnabledPages,
+            descriptionOverlayEnabledPages = descriptionOverlayEnabledPages,
             showMarqueeForSystem = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, true),
             showMarqueeForGame = prefs.getBoolean(KEY_SHOW_MARQUEE_FOR_GAME, true),
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
             excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false),
-            hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false)
+            hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
+            marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false)
         )
     }
 
@@ -322,6 +332,18 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_LOGO_ALIGNMENT, alignment.name) }
     }
 
+    fun setLogoOffset(x: Float, y: Float) {
+        _state.value = _state.value.copy(logoOffsetX = x, logoOffsetY = y)
+        prefs.edit {
+            putFloat(KEY_LOGO_OFFSET_X, x)
+            putFloat(KEY_LOGO_OFFSET_Y, y)
+        }
+    }
+
+    fun resetLogoOffset() {
+        setLogoOffset(0f, 0f)
+    }
+
     fun setRandomSystemImage(random: Boolean) {
         _state.value = _state.value.copy(randomSystemImage = random)
         prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
@@ -392,13 +414,13 @@ class ESDEPreferencesManager(context: Context) {
     }
 
     fun setMarqueeWidth(width: Int) {
-        val coercedWidth = width.coerceIn(100, 600)
+        val coercedWidth = width.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeWidth = coercedWidth)
         prefs.edit { putInt(KEY_MARQUEE_WIDTH, coercedWidth) }
     }
 
     fun setMarqueeHeight(height: Int) {
-        val coercedHeight = height.coerceIn(50, 400)
+        val coercedHeight = height.coerceIn(40, 600)
         _state.value = _state.value.copy(marqueeHeight = coercedHeight)
         prefs.edit { putInt(KEY_MARQUEE_HEIGHT, coercedHeight) }
     }
@@ -448,6 +470,16 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putInt(KEY_MUSIC_VOLUME, coercedVolume) }
     }
 
+    fun setMusicUseSystemSpecific(useSystemSpecific: Boolean) {
+        _state.value = _state.value.copy(musicUseSystemSpecific = useSystemSpecific)
+        prefs.edit { putBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, useSystemSpecific) }
+    }
+
+    fun setMusicLoopEnabled(loopEnabled: Boolean) {
+        _state.value = _state.value.copy(musicLoopEnabled = loopEnabled)
+        prefs.edit { putBoolean(KEY_MUSIC_LOOP_ENABLED, loopEnabled) }
+    }
+
     fun setAppDrawerOpacity(opacity: Int) {
         val coercedOpacity = opacity.coerceIn(0, 100)
         _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
@@ -486,8 +518,8 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
-    fun toggleMarqueeOverlayPage(pageIndex: Int) {
-        val enabledPages = _state.value.marqueeOverlayEnabledPages
+    fun toggleDescriptionOverlayPage(pageIndex: Int) {
+        val enabledPages = _state.value.descriptionOverlayEnabledPages
         val newPages = if (enabledPages.contains(pageIndex)) {
             // Currently enabled, remove from set to disable
             enabledPages - pageIndex
@@ -496,11 +528,11 @@ class ESDEPreferencesManager(context: Context) {
             enabledPages + pageIndex
         }
         
-        _state.value = _state.value.copy(marqueeOverlayEnabledPages = newPages)
+        _state.value = _state.value.copy(descriptionOverlayEnabledPages = newPages)
         if (newPages.isEmpty()) {
-            prefs.edit { remove(KEY_MARQUEE_OVERLAY_PAGES) }
+            prefs.edit { remove(KEY_DESCRIPTION_OVERLAY_PAGES) }
         } else {
-            prefs.edit { putString(KEY_MARQUEE_OVERLAY_PAGES, newPages.joinToString(",")) }
+            prefs.edit { putString(KEY_DESCRIPTION_OVERLAY_PAGES, newPages.joinToString(",")) }
         }
     }
 
@@ -543,5 +575,14 @@ class ESDEPreferencesManager(context: Context) {
     fun setHideUIForGameBrowsing(hide: Boolean) {
         _state.value = _state.value.copy(hideUIForGameBrowsing = hide)
         prefs.edit { putBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, hide) }
+    }
+
+    fun setMarqueePositionLocked(locked: Boolean) {
+        _state.value = _state.value.copy(marqueePositionLocked = locked)
+        prefs.edit { putBoolean(KEY_MARQUEE_POSITION_LOCKED, locked) }
+    }
+
+    fun toggleMarqueePositionLocked() {
+        setMarqueePositionLocked(!_state.value.marqueePositionLocked)
     }
 }

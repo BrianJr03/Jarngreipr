@@ -20,7 +20,9 @@ fun MusicSectionContent(
     onMusicGameEnabledChange: (Boolean) -> Unit,
     onMusicScreensaverEnabledChange: (Boolean) -> Unit,
     onMusicSystemEnabledChange: (Boolean) -> Unit,
-    onMusicVideoBehaviorChange: (MusicVideoBehavior) -> Unit
+    onMusicVideoBehaviorChange: (MusicVideoBehavior) -> Unit,
+    onMusicUseSystemSpecificChange: (Boolean) -> Unit,
+    onMusicLoopEnabledChange: (Boolean) -> Unit
 ) {
     ToggleSetting(
         title = stringResource(R.string.esde_settings_music_enabled),
@@ -52,6 +54,24 @@ fun MusicSectionContent(
             defaultText = stringResource(R.string.esde_settings_path_not_set),
             onSelectPath = onSelectMusicPath,
             onClearPath = onClearMusicPath
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_music_use_system_specific),
+            description = stringResource(R.string.esde_settings_music_use_system_specific_description),
+            checked = prefsState.musicUseSystemSpecific,
+            onCheckedChange = { useSystemSpecific ->
+                onMusicUseSystemSpecificChange(useSystemSpecific)
+            }
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_music_loop),
+            description = stringResource(R.string.esde_settings_music_loop_description),
+            checked = prefsState.musicLoopEnabled,
+            onCheckedChange = { loopEnabled ->
+                onMusicLoopEnabledChange(loopEnabled)
+            }
         )
 
         ToggleSetting(

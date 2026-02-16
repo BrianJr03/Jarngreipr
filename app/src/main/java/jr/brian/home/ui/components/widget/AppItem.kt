@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -17,12 +18,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.NotificationBadge
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
@@ -56,10 +61,20 @@ fun AppItem(
     val customIconDialogState = rememberDialogState<Unit>()
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    
+    var isPressed by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
+            .pressWithHaptic(
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = {
                     val displayPreference = if (hasExternalDisplay) {

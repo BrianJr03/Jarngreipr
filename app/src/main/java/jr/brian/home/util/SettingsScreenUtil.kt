@@ -14,6 +14,7 @@ object SettingsScreenUtil {
     const val EXPANDED_VISIBILITY = "visibility"
     const val EXPANDED_DOCK = "dock"
     const val EXPANDED_ESDE = "esde"
+    const val EXPANDED_APP_DRAWER_FAB = "app_drawer_fab"
 }
 
 enum class SettingsTag(@StringRes val stringRes: Int) {

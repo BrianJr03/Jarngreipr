@@ -1,6 +1,11 @@
 package jr.brian.home.esde.ui
 
 import android.net.Uri
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -9,26 +14,34 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -38,7 +51,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.animation.AnimationStyle
@@ -52,20 +74,21 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
 import java.io.File
 
-private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/default_background.webp"
+private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
-@OptIn(ExperimentalFoundationApi::class)
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ESDEWallpaperContainer(
     state: WallpaperState,
     modifier: Modifier = Modifier,
-    onMarqueeLongClick: (() -> Unit)? = null,
+    onOpenMarqueeShortcut: (() -> Unit)? = null,
+    onWallpaperClick: (() -> Unit)? = null,
     onWallpaperDoubleClick: (() -> Unit)? = null,
     hideMarquee: Boolean = false,
     pagerScrollProgress: Float = 0f,
-    overlayMode: Boolean = true,
     currentPageIndex: Int = 0,
     dockTopY: Float? = null,
     content: @Composable BoxScope.() -> Unit
@@ -91,10 +114,8 @@ fun ESDEWallpaperContainer(
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
 
-    // Show description instead of marquee when Description mode is selected and description is available
-    val showDescription = showEsdeContent &&
-//            prefsState.gameImageType == GameImageType.Description &&
-            state.gameDescription != null
+    val isDescriptionOverlayEnabled = prefsState.isDescriptionOverlayOnPage(currentPageIndex)
+    val showDescription = showEsdeContent && isDescriptionOverlayEnabled
 
     val marqueeEnabledForContext = if (state.isShowingGameBackground) {
         prefsState.showMarqueeForGame
@@ -104,26 +125,34 @@ fun ESDEWallpaperContainer(
 
     val showMarquee = showEsdeContent &&
             state.marqueePath != null &&
-            !showDescription &&
             marqueeEnabledForContext
 
-    val logoAlignment = when (state.logoAlignment) {
+    val logoAlignment = when (prefsState.logoAlignment) {
+        LogoAlignment.TopLeft -> Alignment.TopStart
         LogoAlignment.Top -> Alignment.TopCenter
+        LogoAlignment.TopRight -> Alignment.TopEnd
         LogoAlignment.Center -> Alignment.Center
+        LogoAlignment.BottomLeft -> Alignment.BottomStart
         LogoAlignment.Bottom -> Alignment.BottomCenter
+        LogoAlignment.BottomRight -> Alignment.BottomEnd
+        LogoAlignment.FreePosition -> Alignment.Center
     }
+
+    val isFreePosition = prefsState.logoAlignment == LogoAlignment.FreePosition
+    val isMarqueeDraggable = isFreePosition && !prefsState.marqueePositionLocked
+    val useAnimatedMarquee = !prefsState.marqueePositionLocked
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(backgroundColor)
             .then(
-                if (onWallpaperDoubleClick != null) {
+                if (onWallpaperDoubleClick != null || onWallpaperClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},
-                        onDoubleClick = onWallpaperDoubleClick
+                        onClick = { onWallpaperClick?.invoke() },
+                        onDoubleClick = { onWallpaperDoubleClick?.invoke() }
                     )
                 } else {
                     Modifier
@@ -137,58 +166,80 @@ fun ESDEWallpaperContainer(
                 prefsState.systemBackgroundScaleMode
             }
 
-            val imageModifier = if (prefsState.isAndroidGamesSelected()
+            val hasMiximage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
+            val useSmallSize = prefsState.isAndroidGamesSelected()
                 && state.isShowingGameBackground
-            ) {
-                Modifier
-                    .fillMaxSize(0.35f)
-                    .align(Alignment.Center)
-            } else {
-                Modifier.fillMaxSize()
-            }
+                && !hasMiximage
 
-            AnimatedWallpaperImage(
-                imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                modifier = imageModifier,
-                blurLevel = effectiveBlurLevel,
-                animationStyle = state.animationStyle,
-                animationDuration = state.animationDuration,
-                animationScale = state.animationScale,
-                backgroundScaleMode = backgroundScaleMode
-            )
+            if (state.systemBackgroundVideoPath != null) {
+                val videoModifier = if (useSmallSize) {
+                    Modifier
+                        .fillMaxSize(0.35f)
+                        .align(Alignment.Center)
+                } else {
+                    Modifier.fillMaxSize()
+                }
+                VideoBackground(
+                    videoPath = state.systemBackgroundVideoPath,
+                    modifier = videoModifier,
+                    blurLevel = effectiveBlurLevel,
+                    backgroundScaleMode = backgroundScaleMode
+                )
+            } else {
+                AnimatedWallpaperImage(
+                    imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
+                    useSmallSize = useSmallSize,
+                    blurLevel = effectiveBlurLevel,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale,
+                    backgroundScaleMode = backgroundScaleMode
+                )
+            }
 
             if (!state.isScreensaverActive && !state.isGameRunning) {
                 DimmingOverlay(alpha = effectiveDimmingLevel)
             }
         }
 
-        if (showMarquee && !overlayMode) {
+        if (showMarquee && !useAnimatedMarquee) {
             AnimatedMarquee(
                 marqueePath = state.marqueePath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = null,
-                dockTopY = dockTopY
+                openMarqueeShortcut = null,
+                dockTopY = dockTopY,
+                isFreePosition = isFreePosition,
+                isDraggable = isMarqueeDraggable,
+                freeOffsetX = prefsState.logoOffsetX,
+                freeOffsetY = prefsState.logoOffsetY,
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
             )
         }
 
         content()
 
-        if (showMarquee && overlayMode) {
+        if (showMarquee && useAnimatedMarquee) {
             AnimatedMarquee(
                 marqueePath = state.marqueePath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
-                onLongClick = onMarqueeLongClick,
-                dockTopY = dockTopY
+                openMarqueeShortcut = onOpenMarqueeShortcut,
+                dockTopY = dockTopY,
+                isFreePosition = isFreePosition,
+                isDraggable = isMarqueeDraggable,
+                freeOffsetX = prefsState.logoOffsetX,
+                freeOffsetY = prefsState.logoOffsetY,
+                onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) }
             )
         }
 
-        if (showDescription /* && state.gameDescription != null */ && !hideMarquee) {
+        val descriptionText = state.gameDescription
+        if (showDescription && !hideMarquee && descriptionText != null) {
             AnimatedVisibility(
                 visible = true,
                 enter = fadeIn(
@@ -208,12 +259,15 @@ fun ESDEWallpaperContainer(
                     animationSpec = tween(durationMillis = 300),
                     transformOrigin = TransformOrigin.Center
                 ),
-                modifier = Modifier.align(logoAlignment)
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 ScrollingDescriptionBox(
-                    description = state.gameDescription,
+                    description = descriptionText,
                     modifier = Modifier
-                        .size(state.marqueeWidth.dp, state.marqueeHeight.dp),
+                        .size(
+                            width = state.marqueeWidth.dp,
+                            height = state.marqueeHeight.dp
+                        ),
                     scrollSpeed = 30f,
                     pauseDurationMs = 3000
                 )
@@ -226,8 +280,54 @@ fun ESDEWallpaperContainer(
     }
 }
 
+private data class WallpaperAnimationState(
+    val imagePath: String,
+    val useSmallSize: Boolean,
+    val backgroundScaleMode: BackgroundScaleMode
+)
+
 @Composable
 private fun AnimatedWallpaperImage(
+    imagePath: String,
+    useSmallSize: Boolean = false,
+    blurLevel: Float = 0f,
+    animationStyle: AnimationStyle = AnimationStyle.Fade,
+    animationDuration: Int = 300,
+    animationScale: Float = 0.9f,
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        AnimatedContent(
+            targetState = WallpaperAnimationState(imagePath, useSmallSize, backgroundScaleMode),
+            transitionSpec = {
+                fadeIn(animationSpec = tween(durationMillis = 400)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 400))
+            },
+            label = "WallpaperTransition"
+        ) { state ->
+            val imageModifier = if (state.useSmallSize) {
+                Modifier.fillMaxSize(0.35f)
+            } else {
+                Modifier.fillMaxSize()
+            }
+            WallpaperImage(
+                imagePath = state.imagePath,
+                modifier = imageModifier,
+                blurLevel = blurLevel,
+                animationStyle = animationStyle,
+                animationDuration = animationDuration,
+                animationScale = animationScale,
+                backgroundScaleMode = state.backgroundScaleMode
+            )
+        }
+    }
+}
+
+@Composable
+private fun WallpaperImage(
     imagePath: String,
     modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
@@ -256,7 +356,7 @@ private fun AnimatedWallpaperImage(
     val imageData = remember(imagePath) {
         when {
             imagePath.startsWith("file:///android_asset/") -> imagePath
-            imagePath.startsWith("content://") -> Uri.parse(imagePath)
+            imagePath.startsWith("content://") -> imagePath.toUri()
             else -> File(imagePath)
         }
     }
@@ -299,8 +399,13 @@ private fun BoxScope.AnimatedMarquee(
     logoAlignment: Alignment,
     state: WallpaperState,
     pagerScrollProgress: Float,
-    onLongClick: (() -> Unit)?,
-    dockTopY: Float?
+    openMarqueeShortcut: (() -> Unit)?,
+    dockTopY: Float?,
+    isFreePosition: Boolean = false,
+    isDraggable: Boolean = false,
+    freeOffsetX: Float = 0f,
+    freeOffsetY: Float = 0f,
+    onOffsetChange: ((Float, Float) -> Unit)? = null
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -308,29 +413,43 @@ private fun BoxScope.AnimatedMarquee(
     val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
     val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
 
+    var isDragging by remember { mutableStateOf(false) }
+    var dragOffsetX by remember { mutableFloatStateOf(freeOffsetX) }
+    var dragOffsetY by remember { mutableFloatStateOf(freeOffsetY) }
+
+    LaunchedEffect(freeOffsetX, freeOffsetY, isDragging) {
+        if (!isDragging) {
+            dragOffsetX = freeOffsetX
+            dragOffsetY = freeOffsetY
+        }
+    }
+
     BoxWithConstraints(modifier = Modifier.align(Alignment.Center)) {
         val screenHeightPx = with(density) { maxHeight.toPx() }
-        
-        // Calculate vertical offset to center marquee in available space above dock
-        val verticalOffsetDp = if (dockTopY != null) {
-            val availableHeight = dockTopY
-            val centerY = availableHeight / 2f
+        val screenWidthPx = with(density) { maxWidth.toPx() }
+
+        val verticalOffsetDp = if (dockTopY != null && !isFreePosition) {
+            val centerY = dockTopY / 2f
             val marqueeTargetY = when (logoAlignment) {
-                Alignment.TopCenter -> availableHeight * 0.25f
+                Alignment.TopCenter -> dockTopY * 0.25f
                 Alignment.Center -> centerY
-                Alignment.BottomCenter -> availableHeight * 0.75f
+                Alignment.BottomCenter -> dockTopY * 0.75f
                 else -> centerY
             }
             with(density) { (marqueeTargetY - screenHeightPx / 2f).toDp() }
         } else {
             0.dp
         }
-        
-        val finalAlignment = if (dockTopY != null) {
-            Alignment.Center  // Use center as base, then apply offset
+
+        val finalAlignment = if (dockTopY != null || isFreePosition) {
+            Alignment.Center
         } else {
             logoAlignment
         }
+
+        val freeOffsetXDp = if (isFreePosition) with(density) { dragOffsetX.toDp() } else 0.dp
+        val freeOffsetYDp =
+            if (isFreePosition) with(density) { dragOffsetY.toDp() } else verticalOffsetDp
 
         AnimatedVisibility(
             visible = !hideMarquee,
@@ -353,7 +472,39 @@ private fun BoxScope.AnimatedMarquee(
             ),
             modifier = Modifier
                 .align(finalAlignment)
-                .offset(y = verticalOffsetDp)
+                .offset(
+                    x = freeOffsetXDp,
+                    y = freeOffsetYDp
+                )
+                .then(
+                    if (isDraggable) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                    onOffsetChange?.invoke(dragOffsetX, dragOffsetY)
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(
+                                        -screenWidthPx / 2f + 50f,
+                                        screenWidthPx / 2f - 50f
+                                    )
+                                    dragOffsetY = (dragOffsetY + dragAmount.y).coerceIn(
+                                        -screenHeightPx / 2f + 50f,
+                                        screenHeightPx / 2f - 50f
+                                    )
+                                }
+                            )
+                        }
+                    } else Modifier
+                )
         ) {
             MarqueeImage(
                 marqueePath = marqueePath,
@@ -366,13 +517,14 @@ private fun BoxScope.AnimatedMarquee(
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
                 animationScale = state.animationScale,
-                onLongClick = onLongClick
+                onClick = if (isFreePosition) openMarqueeShortcut else null,
+                onLongClick = if (!isFreePosition) openMarqueeShortcut else null
             )
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MarqueeImage(
     marqueePath: String?,
@@ -381,6 +533,7 @@ private fun MarqueeImage(
     animationStyle: AnimationStyle = AnimationStyle.Fade,
     animationDuration: Int = 300,
     animationScale: Float = 0.9f,
+    onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
     if (marqueePath == null) return
@@ -404,9 +557,15 @@ private fun MarqueeImage(
         animationScale = animationScale
     )
 
+    val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
+
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
 
     AsyncImage(
         model = ImageRequest.Builder(context)
@@ -416,16 +575,82 @@ private fun MarqueeImage(
         contentDescription = "System/game logo",
         modifier = modifier
             .run { with(animationState) { animatedGraphicsLayer() } }
-            .scale(pressScale)
-            .offset(y = offsetY)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = {},
-                onDoubleClick = {},
+                onDoubleClick = { onClick?.invoke() },
                 onLongClick = { onLongClick?.invoke() }
             ),
         contentScale = ContentScale.Fit
     )
 }
 
+@OptIn(UnstableApi::class)
+@Composable
+private fun VideoBackground(
+    videoPath: String,
+    modifier: Modifier = Modifier,
+    blurLevel: Float = 0f,
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+) {
+    val context = LocalContext.current
+
+    val videoUri = remember(videoPath) {
+        when {
+            videoPath.startsWith("content://") -> videoPath.toUri()
+            else -> Uri.fromFile(File(videoPath))
+        }
+    }
+
+    val exoPlayer = remember(videoPath) {
+        ExoPlayer.Builder(context).build().apply {
+            try {
+                setMediaItem(MediaItem.fromUri(videoUri))
+                repeatMode = Player.REPEAT_MODE_ALL
+                volume = 0f
+                prepare()
+                playWhenReady = true
+            } catch (e: Exception) {
+                android.util.Log.e("VideoBackground", "Failed to load video: $videoPath", e)
+            }
+        }
+    }
+
+    DisposableEffect(videoPath) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    val blurModifier = if (blurLevel > 0f) {
+        Modifier.blur(blurLevel.dp)
+    } else {
+        Modifier
+    }
+
+    val resizeMode = when (backgroundScaleMode) {
+        BackgroundScaleMode.Crop -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+        BackgroundScaleMode.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = false
+                this.resizeMode = resizeMode
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        update = { playerView ->
+            playerView.resizeMode = resizeMode
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .then(blurModifier)
+    )
+}

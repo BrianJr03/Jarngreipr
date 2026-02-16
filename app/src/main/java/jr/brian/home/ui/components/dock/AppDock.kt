@@ -20,6 +20,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +29,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +40,8 @@ import jr.brian.home.ui.animations.animatedDockItemAlpha
 import jr.brian.home.ui.animations.animatedDockItemScale
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.dockItemEnterAnimation
+import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -127,13 +131,18 @@ private fun DockAppItem(
     onLongClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
     val enterScale = animatedDockItemScale()
     val enterAlpha = animatedDockItemAlpha()
     val customIconManager = LocalCustomIconManager.current
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = Modifier
             .size(size.containerSize)
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .dockItemEnterAnimation(
                 scale = enterScale,
                 alpha = enterAlpha
@@ -146,6 +155,11 @@ private fun DockAppItem(
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
+            .pressWithHaptic(
+                onClick, onDoubleClick, onLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = onClick,
                 onDoubleClick = onDoubleClick,
@@ -172,12 +186,17 @@ private fun DockEmptySlot(
     onLongClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
     val enterScale = animatedDockItemScale()
     val enterAlpha = animatedDockItemAlpha()
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = Modifier
             .size(size.containerSize)
+            .offset(y = pressOffsetY)
+            .scale(pressScale)
             .dockItemEnterAnimation(
                 scale = enterScale,
                 alpha = enterAlpha
@@ -194,6 +213,11 @@ private fun DockEmptySlot(
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
+            .pressWithHaptic(
+                onClick, onLongClick,
+                haptic = haptic,
+                onPressChange = { isPressed = it }
+            )
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick

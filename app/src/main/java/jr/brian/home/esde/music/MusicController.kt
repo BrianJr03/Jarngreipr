@@ -127,4 +127,11 @@ interface MusicController {
      * @param volume Volume level from 0.0 to 1.0
      */
     fun setVolume(volume: Float)
+
+    /**
+     * Check if another app is currently playing audio.
+     * Used to avoid interrupting music from apps like YouTube Music, Spotify, etc.
+     * @return true if another audio source is active
+     */
+    fun isOtherAudioPlaying(): Boolean
 }
