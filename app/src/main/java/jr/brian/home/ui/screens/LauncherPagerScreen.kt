@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
+import jr.brian.home.data.FabPosition
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
@@ -106,6 +107,7 @@ fun LauncherPagerScreen(
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val widgetUiState by widgetViewModel.uiState.collectAsStateWithLifecycle()
     val fabColor by appDrawerFabManager.fabColor.collectAsStateWithLifecycle()
+    val fabPosition by appDrawerFabManager.fabPosition.collectAsStateWithLifecycle()
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
@@ -420,8 +422,12 @@ fun LauncherPagerScreen(
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 16.dp)
+                    .align(if (fabPosition == FabPosition.LEFT) Alignment.BottomStart else Alignment.BottomEnd)
+                    .padding(
+                        start = if (fabPosition == FabPosition.LEFT) 16.dp else 0.dp,
+                        end = if (fabPosition == FabPosition.RIGHT) 16.dp else 0.dp,
+                        bottom = 16.dp
+                    )
             ) {
                 SmallFloatingActionButton(
                     onClick = { showAppDrawerSheet = true },

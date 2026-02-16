@@ -13,10 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
 
-/**
- * Manages the App Drawer FAB (Floating Action Button) settings.
- * Controls visibility per page and the FAB color.
- */
+enum class FabPosition {
+    LEFT, RIGHT
+}
+
 @Singleton
 class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Context) {
     private val prefs: SharedPreferences =
@@ -30,6 +30,9 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
 
     private val _fabVisiblePages = MutableStateFlow(loadFabVisiblePages())
     val fabVisiblePages: StateFlow<Set<Int>> = _fabVisiblePages.asStateFlow()
+
+    private val _fabPosition = MutableStateFlow(loadFabPosition())
+    val fabPosition: StateFlow<FabPosition> = _fabPosition.asStateFlow()
 
     private fun loadFabColor(): Color {
         val colorInt = prefs.getInt(KEY_FAB_COLOR, AppRed.toArgb())
@@ -49,6 +52,15 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         }
     }
 
+    private fun loadFabPosition(): FabPosition {
+        val positionName = prefs.getString(KEY_FAB_POSITION, FabPosition.LEFT.name)
+        return try {
+            FabPosition.valueOf(positionName ?: FabPosition.LEFT.name)
+        } catch (_: Exception) {
+            FabPosition.LEFT
+        }
+    }
+
     fun setFabColor(color: Color) {
         _fabColor.value = color
         prefs.edit { putInt(KEY_FAB_COLOR, color.toArgb()) }
@@ -63,6 +75,11 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         _fabVisiblePages.value = pages
         val pagesString = pages.joinToString(",")
         prefs.edit { putString(KEY_FAB_VISIBLE_PAGES, pagesString) }
+    }
+
+    fun setFabPosition(position: FabPosition) {
+        _fabPosition.value = position
+        prefs.edit { putString(KEY_FAB_POSITION, position.name) }
     }
 
     fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
@@ -94,5 +111,6 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         private const val KEY_FAB_COLOR = "fab_color"
         private const val KEY_FAB_ENABLED = "fab_enabled"
         private const val KEY_FAB_VISIBLE_PAGES = "fab_visible_pages"
+        private const val KEY_FAB_POSITION = "fab_position"
     }
 }
