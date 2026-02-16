@@ -700,6 +700,9 @@
     <string name="settings_app_drawer_fab_color">Button Color</string>
     <string name="settings_app_drawer_fab_page_visibility">Show on Specific Tabs</string>
     <string name="settings_app_drawer_fab_page_visibility_description">Choose which tabs display the button</string>
+    <string name="settings_app_drawer_fab_position">Button Position</string>
+    <string name="settings_app_drawer_fab_position_left">Left</string>
+    <string name="settings_app_drawer_fab_position_right">Right</string>
     
     <!-- Volume Controls -->
     <string name="volume_top_screen">Top Screen Volume</string>
