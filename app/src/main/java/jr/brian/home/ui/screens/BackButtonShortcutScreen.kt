@@ -8,6 +8,7 @@ import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.model.Shortcut
+import jr.brian.home.model.ShortcutOption
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 
 @Composable
