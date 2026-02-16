@@ -50,6 +50,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.data.FabPosition
 import jr.brian.home.ui.components.dock.ColorOption
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.theme.OledCardColor
@@ -72,6 +73,7 @@ fun AppDrawerFabSettingsItem(
     val isFabEnabled by fabManager.isFabEnabled.collectAsStateWithLifecycle()
     val currentFabColor by fabManager.fabColor.collectAsStateWithLifecycle()
     val fabVisiblePages by fabManager.fabVisiblePages.collectAsStateWithLifecycle()
+    val fabPosition by fabManager.fabPosition.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val pageCount = pageTypes.size
@@ -270,6 +272,77 @@ fun AppDrawerFabSettingsItem(
                                         onSelect = { fabManager.setFabColor(color) }
                                     )
                                 }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                OledCardColor,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_app_drawer_fab_position),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        if (fabPosition == FabPosition.LEFT) ThemePrimaryColor.copy(alpha = 0.3f)
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        width = if (fabPosition == FabPosition.LEFT) 2.dp else 1.dp,
+                                        color = if (fabPosition == FabPosition.LEFT) ThemePrimaryColor else Color.Gray.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { fabManager.setFabPosition(FabPosition.LEFT) }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_app_drawer_fab_position_left),
+                                    color = if (fabPosition == FabPosition.LEFT) ThemePrimaryColor else Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (fabPosition == FabPosition.LEFT) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor.copy(alpha = 0.3f)
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        width = if (fabPosition == FabPosition.RIGHT) 2.dp else 1.dp,
+                                        color = if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor else Color.Gray.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { fabManager.setFabPosition(FabPosition.RIGHT) }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_app_drawer_fab_position_right),
+                                    color = if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor else Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (fabPosition == FabPosition.RIGHT) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
 
