@@ -72,13 +72,13 @@ import androidx.compose.ui.graphics.Color as GraphicsColor
 @androidx.media3.common.util.UnstableApi
 @Composable
 fun MainContent(
+    hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
-    onDockPositioned: (Float) -> Unit = {},
-    hideLauncherUI: Boolean = false
+    onDockPositioned: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

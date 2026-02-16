@@ -17,7 +17,11 @@ object GamelistParser {
      * @param systemName The system name (e.g., "snes", "n64")
      * @param gameFilename The game filename as received from ES-DE events
      */
-    fun getGameDescription(esdeRootPath: String, systemName: String, gameFilename: String): String? {
+    fun getGameDescription(
+        esdeRootPath: String,
+        systemName: String,
+        gameFilename: String
+    ): String? {
         try {
             val esdeRoot = File(esdeRootPath)
             if (!esdeRoot.exists()) {

@@ -16,19 +16,9 @@ import javax.inject.Singleton
  */
 @Singleton
 data class FeatureManagers @Inject constructor(
-    /** Manages dock configuration and app slots */
     val dockManager: DockManager,
-    
-    /** Manages gamepad/controller button mappings */
     val controlPadManager: ControlPadManager,
-    
-    /** Manages ES-DE wallpaper preferences and settings */
+    val appDrawerFabManager: AppDrawerFabManager,
     val esdePreferencesManager: ESDEPreferencesManager,
-    
-    /** Shared ImageLoader for ESDE with memory and disk caching */
-    @ESDEImageLoader
-    val esdeImageLoader: ImageLoader,
-    
-    /** Manages App Drawer FAB visibility and color settings */
-    val appDrawerFabManager: AppDrawerFabManager
+    @field:ESDEImageLoader val esdeImageLoader: ImageLoader
 )

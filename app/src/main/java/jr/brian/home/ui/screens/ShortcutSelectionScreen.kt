@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.model.Shortcut
+import jr.brian.home.model.ShortcutOption
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.dialog.AppSelectionDialog
@@ -49,14 +50,6 @@ import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.util.rememberDialogState
-
-/**
- * Data class representing a shortcut option with its label
- */
-data class ShortcutOption(
-    val shortcut: Shortcut,
-    val label: String
-)
 
 /**
  * Base composable for shortcut selection screens.

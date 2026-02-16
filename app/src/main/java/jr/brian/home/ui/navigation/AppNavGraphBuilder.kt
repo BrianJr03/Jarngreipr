@@ -50,6 +50,7 @@ import jr.brian.home.viewmodels.WidgetViewModel
 @UnstableApi
 fun NavGraphBuilder.launcherScreen(
     context: Context,
+    hideLauncherUI: Boolean = false,
     navController: NavHostController,
     mainViewModel: MainViewModel,
     widgetViewModel: WidgetViewModel,
@@ -57,8 +58,7 @@ fun NavGraphBuilder.launcherScreen(
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onSheetVisibilityChanged: (Boolean) -> Unit = {},
-    onDockPositioned: (Float) -> Unit = {},
-    hideLauncherUI: Boolean = false
+    onDockPositioned: (Float) -> Unit = {}
 ) {
     composable(Routes.LAUNCHER) {
         val homeTabManager = LocalHomeTabManager.current

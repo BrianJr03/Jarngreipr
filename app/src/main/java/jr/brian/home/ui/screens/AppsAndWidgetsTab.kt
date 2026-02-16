@@ -92,17 +92,20 @@ fun AppsAndWidgetsTab(
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
+    navController: NavHostController? = null,
+    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onShowBottomSheet: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNavigateToResize: (WidgetInfo, Int) -> Unit = { _, _ -> },
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemeSecondaryColor,
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
-    navController: NavHostController? = null,
     onShowAppDrawer: () -> Unit = {},
-    onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
+    onScrollStateChanged: (
+        isScrolling: Boolean,
+        hasScrollableContent: Boolean
+    ) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
@@ -114,7 +117,7 @@ fun AppsAndWidgetsTab(
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val columns = gridSettingsManager.columnCount
     val scope = rememberCoroutineScope()
-    
+
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -159,14 +162,12 @@ fun AppsAndWidgetsTab(
 
     val gridState = rememberLazyGridState()
 
-    // Check if content is scrollable
     val hasScrollableContent by remember {
         derivedStateOf {
             gridState.canScrollForward || gridState.canScrollBackward
         }
     }
 
-    // Fling at bottom triggers app drawer
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
@@ -181,7 +182,6 @@ fun AppsAndWidgetsTab(
 
     var isScrolling by remember { mutableStateOf(false) }
 
-    // Report scroll state to parent
     LaunchedEffect(isScrolling, hasScrollableContent) {
         onScrollStateChanged(isScrolling, hasScrollableContent)
     }
@@ -193,7 +193,7 @@ fun AppsAndWidgetsTab(
                 if (scrolling) {
                     isScrolling = true
                 } else {
-                    delay(300) // Wait 300ms after scrolling stops
+                    delay(300)
                     isScrolling = false
                 }
             }
@@ -296,7 +296,8 @@ fun AppsAndWidgetsTab(
             AppDock(
                 apps = allApps,
                 onAppClick = { app ->
-                    val displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                    val displayPreference =
+                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                     launchApp(
                         context = context,
                         packageName = app.packageName,
@@ -321,7 +322,7 @@ fun AppsAndWidgetsTab(
             )
         }
 
-        }
+    }
 
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {

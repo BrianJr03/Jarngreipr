@@ -1,6 +1,5 @@
 package jr.brian.home.ui.screens
 
-import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -33,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -52,6 +50,7 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
