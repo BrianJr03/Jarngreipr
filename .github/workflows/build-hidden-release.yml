@@ -7,6 +7,21 @@ on:
         description: 'Release tag to upload APK to (e.g., v1.7.3)'
         required: true
         type: string
+  workflow_call:
+    inputs:
+      release_tag:
+        description: 'Release tag to upload APK to (e.g., v1.7.3)'
+        required: true
+        type: string
+    secrets:
+      KEYSTORE_BASE64:
+        required: true
+      KEYSTORE_PASSWORD:
+        required: true
+      KEY_ALIAS:
+        required: true
+      KEY_PASSWORD:
+        required: true
 
 jobs:
   build-hidden-release:
