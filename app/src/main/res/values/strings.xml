@@ -846,8 +846,8 @@
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>
     <string name="esde_settings_reset_to_system_wallpaper">Reset to System Wallpaper</string>
     <string name="esde_settings_reset_to_system_wallpaper_description">Clear ES-DE display and show your system wallpaper</string>
-    <string name="esde_settings_select_wallpaper_toggle">Wallpaper Toggle Shortcut</string>
-    <string name="esde_settings_select_wallpaper_toggle_description">Show a button in the header to quickly switch between ES-DE and system wallpaper</string>
+    <string name="esde_settings_select_wallpaper_toggle">Show Wallpaper Shortcut In Header</string>
+    <string name="esde_settings_select_wallpaper_toggle_description">Quickly switch between ES-DE and system wallpaper</string>
     <string name="header_wallpaper_toggle">Toggle wallpaper</string>
     <string name="esde_settings_section_power">Power Events</string>
     <string name="esde_settings_power_events">Control Power on Game Events</string>
