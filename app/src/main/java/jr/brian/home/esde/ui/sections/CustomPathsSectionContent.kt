@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.ESDEPrefsState
+import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.esde.ui.components.PathSetting
 
 @Composable
@@ -30,7 +31,8 @@ fun CustomPathsSectionContent(
         currentPath = prefsState.customSystemImagesPath,
         defaultText = stringResource(R.string.esde_settings_path_not_set),
         onSelectPath = onSelectSystemImagesPath,
-        onClearPath = onClearSystemImagesPath
+        onClearPath = onClearSystemImagesPath,
+        fallbackPath = SetupPreferences.DEFAULT_MEDIA_PATH + "/system_images"
     )
 
     PathSetting(
@@ -48,7 +50,8 @@ fun CustomPathsSectionContent(
         currentPath = prefsState.customSystemLogosPath,
         defaultText = stringResource(R.string.esde_settings_path_not_set),
         onSelectPath = onSelectSystemLogosPath,
-        onClearPath = onClearSystemLogosPath
+        onClearPath = onClearSystemLogosPath,
+        fallbackPath = SetupPreferences.DEFAULT_MEDIA_PATH + "/system_logos"
     )
 
     PathSetting(
@@ -84,6 +87,7 @@ fun CustomPathsSectionContent(
         currentPath = prefsState.customMediaPath,
         defaultText = stringResource(R.string.esde_settings_path_not_set),
         onSelectPath = onSelectMediaPath,
-        onClearPath = onClearMediaPath
+        onClearPath = onClearMediaPath,
+        fallbackPath = SetupPreferences.DEFAULT_MEDIA_PATH
     )
 }

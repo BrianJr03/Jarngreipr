@@ -16,6 +16,7 @@ import jr.brian.home.esde.music.MusicController
 import jr.brian.home.esde.music.MusicManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.GameImageType
+import jr.brian.home.esde.preferences.OverlayMediaType
 import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.setup.SetupPreferences
@@ -711,18 +712,41 @@ class ESDEViewModel @Inject constructor(
 
         val nameOnly = File(gameFilename).nameWithoutExtension
 
+        // Get the selected overlay media type from preferences
+        val overlayMediaType = prefsState.overlayMediaType
+        val primaryFolder = overlayMediaType.folderName
+
+        // Helper to check file existence for a given folder path
+        fun checkFile(path: String): String? {
+            val f = File(mediaPath, path)
+            return if (f.exists()) f.absolutePath else null
+        }
+
+        // Try the primary selected media folder first
         for (name in listOf(systemName, mediaSystemName).distinct()) {
             for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                val file = File(mediaPath, "$name/$FOLDER_MARQUEES/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
+                checkFile("$name/$primaryFolder/$nameOnly.$ext")?.let { return it }
+                // Also check for .scummvm suffix (for ScummVM games)
+                checkFile("$name/$primaryFolder/$nameOnly.scummvm.$ext")?.let { return it }
             }
         }
 
+        // If not found and using non-default folder, fall back to marquees
+        if (overlayMediaType != OverlayMediaType.Marquees) {
+            for (name in listOf(systemName, mediaSystemName).distinct()) {
+                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.$ext")?.let { return it }
+                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.scummvm.$ext")?.let { return it }
+                }
+            }
+        }
+
+        // Fall back to wheel directories
         for (dir in MARQUEE_FALLBACK_DIRS) {
             for (name in listOf(systemName, mediaSystemName).distinct()) {
                 for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                    val file = File(mediaPath, "$name/$dir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
+                    checkFile("$name/$dir/$nameOnly.$ext")?.let { return it }
+                    checkFile("$name/$dir/$nameOnly.scummvm.$ext")?.let { return it }
                 }
             }
         }

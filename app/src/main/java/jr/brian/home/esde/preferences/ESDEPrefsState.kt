@@ -101,6 +101,24 @@ enum class BackgroundScaleMode {
     Fit
 }
 
+/**
+ * Defines the media type to use for the overlay (marquee/logo) display
+ */
+enum class OverlayMediaType(val folderName: String, val displayName: String) {
+    Marquees("marquees", "Marquees"),
+    ThreeDBoxes("3dboxes", "3D Boxes"),
+    Covers("covers", "Covers"),
+    Screenshots("screenshots", "Screenshots"),
+    Fanart("fanart", "Fanart"),
+    MixImages("miximages", "Miximages");
+
+    companion object {
+        fun fromValue(value: String): OverlayMediaType {
+            return entries.find { it.name == value } ?: Marquees
+        }
+    }
+}
+
 data class ESDEPrefsState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
@@ -174,7 +192,10 @@ data class ESDEPrefsState(
     
     val androidGamesBackgroundScale: Float = 0.5f,
     
-    val marqueeMinWidthPercent: Float = 0.5f
+    val marqueeMinWidthPercent: Float = 0.5f,
+    
+    val overlayMediaType: OverlayMediaType = OverlayMediaType.Marquees,
+    val logoOnlyMode: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

@@ -31,7 +31,8 @@ fun EffectsSectionContent(
     onGameImageTypeChange: (GameImageType) -> Unit,
     onRandomSystemImageChange: (Boolean) -> Unit,
     onSystemImageTypeChange: (SystemImageType) -> Unit,
-    onAndroidGamesBackgroundScaleChange: (Float) -> Unit
+    onAndroidGamesBackgroundScaleChange: (Float) -> Unit,
+    onLogoOnlyModeChange: (Boolean) -> Unit
 ) {
     BackgroundColorSelector(
         selectedColor = Color(prefsState.backgroundColor),
@@ -145,6 +146,15 @@ fun EffectsSectionContent(
         selectedType = prefsState.systemImageType,
         onTypeSelected = { type ->
             onSystemImageTypeChange(type)
+        }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_only_mode),
+        description = stringResource(R.string.esde_settings_logo_only_mode_description),
+        checked = prefsState.logoOnlyMode,
+        onCheckedChange = { enabled ->
+            onLogoOnlyModeChange(enabled)
         }
     )
 }
