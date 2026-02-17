@@ -76,6 +76,10 @@ class WallpaperManager(
         setWallpaper(WALLPAPER_ESDE, WallpaperType.ESDE)
     }
 
+    fun setDefault() {
+        setWallpaper(null, WallpaperType.NONE)
+    }
+
     fun clearWallpaper() {
         try {
             val wallpaperDir = java.io.File(context.filesDir, "wallpapers")

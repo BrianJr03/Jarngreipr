@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -237,7 +238,7 @@ fun AppsModalContent(
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             },
             isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-            onToggleMarqueePositionLock = if (isEsdeMode) {
+            onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
                 { esdePrefsManager.toggleMarqueePositionLocked() }
             } else null
         )

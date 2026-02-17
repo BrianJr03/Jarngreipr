@@ -52,6 +52,7 @@ import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -365,7 +366,7 @@ fun AppsAndWidgetsTab(
             isEditModeActive = editModeEnabled,
             isEmpty = isTabEmpty,
             isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-            onToggleMarqueePositionLock = if (isEsdeMode) {
+            onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
                 { esdePrefsManager.toggleMarqueePositionLocked() }
             } else null
         )

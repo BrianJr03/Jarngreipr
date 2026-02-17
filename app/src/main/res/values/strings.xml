@@ -222,26 +222,26 @@
     <string name="shortcut_selected_app">@string/common_selected_app</string>
     <string name="shortcut_no_app">@string/common_no_app_selected</string>
 
-    <!-- Marquee Press Shortcut -->
-    <string name="marquee_press_shortcut_screen_title">Marquee Shortcut</string>
-    <string name="marquee_press_shortcut_screen_description">Select what happens when you double tap the marquee</string>
+    <!-- Logo Press Shortcut -->
+    <string name="marquee_press_shortcut_screen_title">Logo Shortcut</string>
+    <string name="marquee_press_shortcut_screen_description">Select what happens when you double tap the logo</string>
     <string name="esde_settings_marquee_press_shortcut_choose">Choose Shortcut</string>
 
-    <!-- Consolidated Marquee Tab Settings -->
-    <string name="esde_settings_marquee_tab_settings_title">Marquee Tab Settings</string>
-    <string name="esde_settings_marquee_tab_settings_description">Configure marquee visibility and overlay mode per tab</string>
+    <!-- Consolidated Logo Tab Settings -->
+    <string name="esde_settings_marquee_tab_settings_title">Logo Tab Settings</string>
+    <string name="esde_settings_marquee_tab_settings_description">Configure logo visibility and overlay mode per tab</string>
     <string name="esde_settings_marquee_tab_number">Tab %1$d</string>
-    <string name="esde_settings_marquee_show_on_tab">Show marquee</string>
+    <string name="esde_settings_marquee_show_on_tab">Show logo</string>
     <string name="esde_settings_marquee_overlay_on_tab">Overlay mode</string>
-    <string name="esde_settings_marquee_overlay_on_tab_description">Marquee floats over tab content</string>
+    <string name="esde_settings_marquee_overlay_on_tab_description">Logo floats over tab content</string>
     <string name="esde_settings_description_overlay_on_tab">Description overlay</string>
     <string name="esde_settings_description_overlay_on_tab_description">Show game description as overlay. Not supported yet.</string>
     
-    <!-- Marquee Context Settings -->
-    <string name="esde_settings_marquee_show_for_system">Show Marquee for System</string>
-    <string name="esde_settings_marquee_show_for_system_description">Display the marquee when browsing game systems</string>
-    <string name="esde_settings_marquee_show_for_game">Show Marquee for Game</string>
-    <string name="esde_settings_marquee_show_for_game_description">Display the marquee when browsing games within a system</string>
+    <!-- Logo Context Settings -->
+    <string name="esde_settings_marquee_show_for_system">Show Logo for System</string>
+    <string name="esde_settings_marquee_show_for_system_description">Display the logo when browsing game systems</string>
+    <string name="esde_settings_marquee_show_for_game">Show Logo for Game</string>
+    <string name="esde_settings_marquee_show_for_game_description">Display the logo when browsing games within a system</string>
 
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
@@ -810,35 +810,35 @@
     <string name="esde_settings_game_image_miximages">Mix</string>
     <string name="esde_settings_game_image_description">Description</string>
     <string name="esde_settings_overlay_media_type">Overlay Media Type</string>
-    <string name="esde_settings_overlay_media_type_description">Choose which media type to show for the game marquee/logo overlay</string>
-    <string name="esde_settings_overlay_marquees">Marquees</string>
+    <string name="esde_settings_overlay_media_type_description">Choose which media type to show for the game logo overlay</string>
+    <string name="esde_settings_overlay_marquees">Logos</string>
     <string name="esde_settings_overlay_3dboxes">3D Boxes</string>
     <string name="esde_settings_overlay_covers">Covers</string>
     <string name="esde_settings_overlay_screenshots">@string/common_screenshots</string>
     <string name="esde_settings_overlay_fanart">@string/common_fanart</string>
     <string name="esde_settings_overlay_miximages">Mix</string>
-    <string name="esde_settings_section_marquee">Marquee</string>
-    <string name="esde_settings_logo_alignment">Logo Alignment</string>
-    <string name="esde_settings_logo_alignment_top_left">Top Left</string>
-    <string name="esde_settings_logo_alignment_top">@string/common_top</string>
-    <string name="esde_settings_logo_alignment_top_right">Top Right</string>
-    <string name="esde_settings_logo_alignment_center">@string/common_center</string>
-    <string name="esde_settings_logo_alignment_bottom_left">Bottom Left</string>
-    <string name="esde_settings_logo_alignment_bottom">@string/common_bottom</string>
-    <string name="esde_settings_logo_alignment_bottom_right">Bottom Right</string>
-    <string name="esde_settings_logo_alignment_free">Free Position</string>
-    <string name="esde_settings_logo_alignment_free_hint">Drag the marquee to reposition it</string>
-    <string name="marquee_position_lock">Lock Marquee Position</string>
-    <string name="marquee_position_unlock">Unlock Marquee Position</string>
+    <string name="esde_settings_section_marquee">Logo</string>
+    <string name="esde_settings_marquee_alignment">Logo Alignment</string>
+    <string name="esde_settings_marquee_alignment_top_left">Top Left</string>
+    <string name="esde_settings_marquee_alignment_top">@string/common_top</string>
+    <string name="esde_settings_marquee_alignment_top_right">Top Right</string>
+    <string name="esde_settings_marquee_alignment_center">@string/common_center</string>
+    <string name="esde_settings_marquee_alignment_bottom_left">Bottom Left</string>
+    <string name="esde_settings_marquee_alignment_bottom">@string/common_bottom</string>
+    <string name="esde_settings_marquee_alignment_bottom_right">Bottom Right</string>
+    <string name="esde_settings_marquee_alignment_free">Free Position</string>
+    <string name="esde_settings_marquee_alignment_free_hint">Drag the logo to reposition it</string>
+    <string name="marquee_position_lock">Lock Logo Position</string>
+    <string name="marquee_position_unlock">Unlock Logo Position</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
-    <string name="esde_settings_logo_size">Logo Size</string>
-    <string name="esde_settings_logo_size_description">Adjust the system logo dimensions</string>
-    <string name="esde_settings_logo_width">Width</string>
-    <string name="esde_settings_logo_height">Height</string>
-    <string name="esde_settings_logo_size_reset">@string/common_reset</string>
-    <string name="esde_settings_marquee_min_width">Marquee Minimum Width</string>
-    <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait marquee images</string>
+    <string name="esde_settings_marquee_size">Logo Size</string>
+    <string name="esde_settings_marquee_size_description">Adjust the logo dimensions</string>
+    <string name="esde_settings_marquee_width">Width</string>
+    <string name="esde_settings_marquee_height">Height</string>
+    <string name="esde_settings_marquee_size_reset">@string/common_reset</string>
+    <string name="esde_settings_marquee_min_width">Logo Minimum Width</string>
+    <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait logo images</string>
     <string name="esde_settings_android_games_bg_scale">Android Games Background Scale</string>
     <string name="esde_settings_android_games_bg_scale_description">Size of game artwork for Android Games platform</string>
     <string name="esde_settings_section_setup">Setup</string>
@@ -846,12 +846,15 @@
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>
     <string name="esde_settings_reset_to_system_wallpaper">Reset to System Wallpaper</string>
     <string name="esde_settings_reset_to_system_wallpaper_description">Clear ES-DE display and show your system wallpaper</string>
+    <string name="esde_settings_select_wallpaper_toggle">Wallpaper Toggle Shortcut</string>
+    <string name="esde_settings_select_wallpaper_toggle_description">Show a button in the header to quickly switch between ES-DE and system wallpaper</string>
+    <string name="header_wallpaper_toggle">Toggle wallpaper</string>
     <string name="esde_settings_section_power">Power Events</string>
     <string name="esde_settings_power_events">Control Power on Game Events</string>
     <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string>
     <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
-    <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and marquee visible when a game is launched</string>
-    <string name="esde_settings_logo_brightness">Logo Brightness</string>
+    <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and logo visible when a game is launched</string>
+    <string name="esde_settings_marquee_brightness">Logo Brightness</string>
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
     <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
@@ -926,8 +929,8 @@
     <string name="esde_settings_cancel_button">Cancel</string>
 
     <!-- What\'s New Dialog -->
-    <string name="esde_settings_logo_only_mode">Logo Only Mode</string>
-    <string name="esde_settings_logo_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
+    <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
+    <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
 
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>

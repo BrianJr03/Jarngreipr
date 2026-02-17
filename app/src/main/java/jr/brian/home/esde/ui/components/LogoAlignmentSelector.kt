@@ -54,7 +54,7 @@ fun LogoAlignmentSelector(
             .padding(16.dp)
     ) {
         Text(
-            text = stringResource(R.string.esde_settings_logo_alignment),
+            text = stringResource(R.string.esde_settings_marquee_alignment),
             color = Color.White,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
@@ -120,7 +120,7 @@ fun LogoAlignmentSelector(
         if (selectedAlignment == LogoAlignment.FreePosition) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.esde_settings_logo_alignment_free_hint),
+                text = stringResource(R.string.esde_settings_marquee_alignment_free_hint),
                 color = Color.White.copy(alpha = 0.7f),
                 fontSize = 12.sp
             )
@@ -138,14 +138,14 @@ private fun LogoAlignmentChip(
     var isFocused by remember { mutableStateOf(false) }
 
     val alignmentName = when (alignment) {
-        LogoAlignment.TopLeft -> stringResource(R.string.esde_settings_logo_alignment_top_left)
-        LogoAlignment.Top -> stringResource(R.string.esde_settings_logo_alignment_top)
-        LogoAlignment.TopRight -> stringResource(R.string.esde_settings_logo_alignment_top_right)
-        LogoAlignment.Center -> stringResource(R.string.esde_settings_logo_alignment_center)
-        LogoAlignment.BottomLeft -> stringResource(R.string.esde_settings_logo_alignment_bottom_left)
-        LogoAlignment.Bottom -> stringResource(R.string.esde_settings_logo_alignment_bottom)
-        LogoAlignment.BottomRight -> stringResource(R.string.esde_settings_logo_alignment_bottom_right)
-        LogoAlignment.FreePosition -> stringResource(R.string.esde_settings_logo_alignment_free)
+        LogoAlignment.TopLeft -> stringResource(R.string.esde_settings_marquee_alignment_top_left)
+        LogoAlignment.Top -> stringResource(R.string.esde_settings_marquee_alignment_top)
+        LogoAlignment.TopRight -> stringResource(R.string.esde_settings_marquee_alignment_top_right)
+        LogoAlignment.Center -> stringResource(R.string.esde_settings_marquee_alignment_center)
+        LogoAlignment.BottomLeft -> stringResource(R.string.esde_settings_marquee_alignment_bottom_left)
+        LogoAlignment.Bottom -> stringResource(R.string.esde_settings_marquee_alignment_bottom)
+        LogoAlignment.BottomRight -> stringResource(R.string.esde_settings_marquee_alignment_bottom_right)
+        LogoAlignment.FreePosition -> stringResource(R.string.esde_settings_marquee_alignment_free)
     }
 
     Box(

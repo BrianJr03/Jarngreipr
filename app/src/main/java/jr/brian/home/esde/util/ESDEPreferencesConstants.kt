@@ -68,4 +68,5 @@ object ESDEPreferencesConstants {
     const val KEY_ANDROID_GAMES_BACKGROUND_SCALE = "android_games_background_scale"
     const val KEY_MARQUEE_MIN_WIDTH_PERCENT = "marquee_min_width_percent"
     const val KEY_OVERLAY_MEDIA_TYPE = "overlay_media_type"
+    const val KEY_SELECT_BUTTON_WALLPAPER_TOGGLE = "select_button_wallpaper_toggle"
 }

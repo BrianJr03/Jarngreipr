@@ -38,7 +38,6 @@ import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
-import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import kotlinx.coroutines.launch
 
 /**
@@ -54,7 +53,6 @@ fun ESDESettingsContent(
     val viewModel: ESDEViewModel = hiltViewModel()
     val preferencesManager = LocalESDEPreferencesManager.current
     val pageTypeManager = LocalPageTypeManager.current
-    val wallpaperManager = LocalWallpaperManager.current
     val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val cleanupFolderPaths by viewModel.cleanupManager.folderPaths.collectAsStateWithLifecycle(initialValue = emptySet())
@@ -201,12 +199,11 @@ fun ESDESettingsContent(
         )
 
         ToggleSetting(
-            title = stringResource(R.string.esde_settings_reset_to_system_wallpaper),
-            description = stringResource(R.string.esde_settings_reset_to_system_wallpaper_description),
-            checked = false,
-            showToggle = false,
-            onClick = {
-                wallpaperManager.setTransparent()
+            title = stringResource(R.string.esde_settings_select_wallpaper_toggle),
+            description = stringResource(R.string.esde_settings_select_wallpaper_toggle_description),
+            checked = prefsState.selectButtonWallpaperToggle,
+            onCheckedChange = { enabled ->
+                preferencesManager.setSelectButtonWallpaperToggle(enabled)
             }
         )
 
@@ -346,6 +343,9 @@ fun ESDESettingsContent(
                 },
                 onOverlayMediaTypeChange = { type ->
                     preferencesManager.setOverlayMediaType(type)
+                },
+                onMarqueeOnlyModeChange = { enabled ->
+                    preferencesManager.setLogoOnlyMode(enabled)
                 }
             )
         }
@@ -438,9 +438,6 @@ fun ESDESettingsContent(
                 },
                 onAndroidGamesBackgroundScaleChange = { scale ->
                     preferencesManager.setAndroidGamesBackgroundScale(scale)
-                },
-                onLogoOnlyModeChange = { enabled ->
-                    preferencesManager.setLogoOnlyMode(enabled)
                 }
             )
         }

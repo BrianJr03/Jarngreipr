@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.onPressScaleAndOffset
@@ -74,6 +76,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
 
 @Composable
@@ -95,6 +98,9 @@ fun DrawerOptionsDialog(
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
+    val esdePreferencesManager = LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
     val mediaPickerLauncher = MediaPickerLauncher(
         onResult = {
@@ -207,6 +213,21 @@ fun DrawerOptionsDialog(
                                 onDismiss()
                             }
                         )
+
+                        if (showWallpaperToggle) {
+                            QuickAccessIconButton(
+                                icon = Icons.Default.SwapHoriz,
+                                contentDescription = stringResource(R.string.header_wallpaper_toggle),
+                                onClick = {
+                                    when (wallpaperManager.getWallpaperType()) {
+                                        WallpaperType.ESDE -> wallpaperManager.setTransparent()
+                                        WallpaperType.TRANSPARENT -> wallpaperManager.setESDE()
+                                        else -> wallpaperManager.setESDE()
+                                    }
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         if (isPowerButtonVisible) {
                             QuickAccessIconButton(
