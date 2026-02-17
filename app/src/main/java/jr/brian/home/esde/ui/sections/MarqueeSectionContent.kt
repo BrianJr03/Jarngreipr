@@ -16,9 +16,11 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.preferences.OverlayMediaType
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
 import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
+import jr.brian.home.esde.ui.components.OverlayMediaTypeSelector
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.model.PageType
@@ -37,7 +39,8 @@ fun MarqueeSectionContent(
     onToggleDescriptionOverlayPage: (Int) -> Unit,
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
     onShowMarqueeForGameChange: (Boolean) -> Unit,
-    onMarqueeMinWidthPercentChange: (Float) -> Unit
+    onMarqueeMinWidthPercentChange: (Float) -> Unit,
+    onOverlayMediaTypeChange: (OverlayMediaType) -> Unit
 ) {
     val pageCount = pageTypes.size
 
@@ -45,6 +48,13 @@ fun MarqueeSectionContent(
         selectedAlignment = prefsState.logoAlignment,
         onAlignmentSelected = { alignment ->
             onLogoAlignmentChange(alignment)
+        }
+    )
+
+    OverlayMediaTypeSelector(
+        selectedType = prefsState.overlayMediaType,
+        onTypeSelected = { type ->
+            onOverlayMediaTypeChange(type)
         }
     )
 

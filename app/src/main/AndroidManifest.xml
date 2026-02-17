@@ -36,6 +36,7 @@
             <action android:name="android.appwidget.action.APPWIDGET_PICK" />
         </intent>
         <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="eu.es_de.frontend" />
     </queries>
     <application
         android:name=".JarngreiprApplication"

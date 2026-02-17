@@ -357,7 +357,8 @@ fun PathSetting(
     currentPath: String?,
     defaultText: String,
     onSelectPath: () -> Unit,
-    onClearPath: () -> Unit
+    onClearPath: () -> Unit,
+    fallbackPath: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
@@ -440,9 +441,20 @@ fun PathSetting(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Determine display text and color:
+        // - If custom path is set: show it in primary color
+        // - If no custom path but fallback exists: show fallback in gray (indicates default)
+        // - Otherwise: show defaultText in gray
+        val displayPath = currentPath ?: fallbackPath ?: defaultText
+        val pathColor = when {
+            currentPath != null -> ThemePrimaryColor
+            fallbackPath != null -> Color.Gray.copy(alpha = 0.8f)
+            else -> Color.Gray
+        }
+
         Text(
-            text = currentPath ?: defaultText,
-            color = if (currentPath != null) ThemePrimaryColor else Color.Gray,
+            text = displayPath,
+            color = pathColor,
             fontSize = 12.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
