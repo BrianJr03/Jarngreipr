@@ -23,6 +23,9 @@ on:
       KEY_PASSWORD:
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   build-hidden-release:
     name: Build Hidden Release APK
