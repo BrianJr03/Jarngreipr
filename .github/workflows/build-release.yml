@@ -28,6 +28,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: write
+
 jobs:
   build-release:
     name: Build Release APK
