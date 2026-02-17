@@ -195,7 +195,8 @@ data class ESDEPrefsState(
     val marqueeMinWidthPercent: Float = 0.5f,
     
     val overlayMediaType: OverlayMediaType = OverlayMediaType.Marquees,
-    val logoOnlyMode: Boolean = false
+    val logoOnlyMode: Boolean = false,
+    val selectButtonWallpaperToggle: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
@@ -215,5 +216,9 @@ data class ESDEPrefsState(
     
     fun isDescriptionOverlayOnPage(pageIndex: Int): Boolean {
         return descriptionOverlayEnabledPages.contains(pageIndex)
+    }
+
+    fun isLogoFreePosEnabled() : Boolean {
+        return logoAlignment == LogoAlignment.FreePosition
     }
 }

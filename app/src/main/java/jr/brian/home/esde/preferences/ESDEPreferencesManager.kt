@@ -71,6 +71,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -241,7 +242,8 @@ class ESDEPreferencesManager(context: Context) {
             androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
             marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f),
             overlayMediaType = overlayMediaType,
-            logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false)
+            logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
+            selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false)
         )
     }
 
@@ -601,5 +603,10 @@ class ESDEPreferencesManager(context: Context) {
     fun setLogoOnlyMode(enabled: Boolean) {
         _state.value = _state.value.copy(logoOnlyMode = enabled)
         prefs.edit { putBoolean(KEY_LOGO_ONLY_MODE, enabled) }
+    }
+
+    fun setSelectButtonWallpaperToggle(enabled: Boolean) {
+        _state.value = _state.value.copy(selectButtonWallpaperToggle = enabled)
+        prefs.edit { putBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, enabled) }
     }
 }

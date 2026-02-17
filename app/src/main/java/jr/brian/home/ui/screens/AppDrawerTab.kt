@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.LogoAlignment
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
@@ -382,7 +383,7 @@ fun AppDrawerTab(
                 onToggleDragLock = { },
                 title = stringResource(R.string.app_drawer_tab_options_title),
                 isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-                onToggleMarqueePositionLock = if (isEsdeMode) {
+                onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
                     { esdePrefsManager.toggleMarqueePositionLocked() }
                 } else null
             )

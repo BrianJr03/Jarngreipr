@@ -40,9 +40,19 @@ fun MarqueeSectionContent(
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
     onShowMarqueeForGameChange: (Boolean) -> Unit,
     onMarqueeMinWidthPercentChange: (Float) -> Unit,
-    onOverlayMediaTypeChange: (OverlayMediaType) -> Unit
+    onOverlayMediaTypeChange: (OverlayMediaType) -> Unit,
+    onMarqueeOnlyModeChange: (Boolean) -> Unit = {}
 ) {
     val pageCount = pageTypes.size
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_marquee_only_mode),
+        description = stringResource(R.string.esde_settings_marquee_only_mode_description),
+        checked = prefsState.logoOnlyMode,
+        onCheckedChange = { enabled ->
+            onMarqueeOnlyModeChange(enabled)
+        }
+    )
 
     LogoAlignmentSelector(
         selectedAlignment = prefsState.logoAlignment,
@@ -59,13 +69,13 @@ fun MarqueeSectionContent(
     )
 
     MarqueeSizeSetting(
-        title = stringResource(R.string.esde_settings_logo_size),
-        description = stringResource(R.string.esde_settings_logo_size_description),
+        title = stringResource(R.string.esde_settings_marquee_size),
+        description = stringResource(R.string.esde_settings_marquee_size_description),
         width = prefsState.marqueeWidth,
         height = prefsState.marqueeHeight,
-        widthLabel = stringResource(R.string.esde_settings_logo_width),
-        heightLabel = stringResource(R.string.esde_settings_logo_height),
-        resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
+        widthLabel = stringResource(R.string.esde_settings_marquee_width),
+        heightLabel = stringResource(R.string.esde_settings_marquee_height),
+        resetLabel = stringResource(R.string.esde_settings_marquee_size_reset),
         onWidthChange = onMarqueeWidthChange,
         onHeightChange = onMarqueeHeightChange,
         onReset = onMarqueeSizeReset
