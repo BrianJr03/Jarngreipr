@@ -126,7 +126,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: Jarngreipr-${{ steps.version.outputs.version_name }}-early
+          name: jarngreipr-${{ steps.version.outputs.version_name }}
           path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
           retention-days: 90
 
