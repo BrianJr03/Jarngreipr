@@ -68,6 +68,18 @@ android {
             )
         }
     }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.all {
+            val flavorName = variant.flavorName
+            val versionName = variant.versionName
+            val buildType = variant.buildType.name
+            if (buildType == "release") {
+                outputFileName = "jarngreipr.${versionName}.apk"
+            }
+        }
+    }
 }
 
 dependencies {
