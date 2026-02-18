@@ -120,7 +120,7 @@ jobs:
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hidden-release-apk
+          name: jarngreipr-${{ steps.version.outputs.version_name }}h
           path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
 
       - name: Cleanup keystore
