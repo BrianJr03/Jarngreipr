@@ -38,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,8 @@ import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.esde.preferences.ESDEPreferencesManager
+import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -561,7 +564,6 @@ fun MarqueeSizeSetting(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Width control
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -696,6 +698,23 @@ fun MarqueeSizeSetting(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Syncs the logo position lock state based on whether Free Position mode is enabled.
+ * When Free Position is disabled, the position is forced to locked.
+ */
+@Composable
+fun SyncLogoPositionLock(
+    esdePrefsState: ESDEPrefsState,
+    esdePrefsManager: ESDEPreferencesManager
+) {
+    val isLogoFreePosEnabled = esdePrefsState.isLogoFreePosEnabled()
+    LaunchedEffect(isLogoFreePosEnabled) {
+        if (!isLogoFreePosEnabled) {
+            esdePrefsManager.setLogoPositionLocked(true)
         }
     }
 }

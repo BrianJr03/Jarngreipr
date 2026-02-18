@@ -333,10 +333,10 @@ fun ESDESettingsContent(
                     preferencesManager.toggleDescriptionOverlayPage(pageIndex)
                 },
                 onShowMarqueeForSystemChange = { show ->
-                    preferencesManager.setShowMarqueeForSystem(show)
+                    preferencesManager.setShowLogoForSystem(show)
                 },
                 onShowMarqueeForGameChange = { show ->
-                    preferencesManager.setShowMarqueeForGame(show)
+                    preferencesManager.setShowLogoForGame(show)
                 },
                 onMarqueeMinWidthPercentChange = { percent ->
                     preferencesManager.setMarqueeMinWidthPercent(percent)

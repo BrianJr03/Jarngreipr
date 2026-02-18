@@ -559,12 +559,12 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
     }
 
-    fun setShowMarqueeForSystem(show: Boolean) {
+    fun setShowLogoForSystem(show: Boolean) {
         _state.value = _state.value.copy(showMarqueeForSystem = show)
         prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, show) }
     }
 
-    fun setShowMarqueeForGame(show: Boolean) {
+    fun setShowLogoForGame(show: Boolean) {
         _state.value = _state.value.copy(showMarqueeForGame = show)
         prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_GAME, show) }
     }
@@ -574,13 +574,13 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, hide) }
     }
 
-    fun setMarqueePositionLocked(locked: Boolean) {
+    fun setLogoPositionLocked(locked: Boolean) {
         _state.value = _state.value.copy(marqueePositionLocked = locked)
         prefs.edit { putBoolean(KEY_MARQUEE_POSITION_LOCKED, locked) }
     }
 
-    fun toggleMarqueePositionLocked() {
-        setMarqueePositionLocked(!_state.value.marqueePositionLocked)
+    fun toggleLogoPositionLocked() {
+        setLogoPositionLocked(!_state.value.marqueePositionLocked)
     }
 
     fun setAndroidGamesBackgroundScale(scale: Float) {

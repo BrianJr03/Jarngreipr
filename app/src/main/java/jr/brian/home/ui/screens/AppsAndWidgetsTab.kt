@@ -52,7 +52,7 @@ import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -120,6 +120,7 @@ fun AppsAndWidgetsTab(
     val scope = rememberCoroutineScope()
 
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -365,9 +366,9 @@ fun AppsAndWidgetsTab(
             },
             isEditModeActive = editModeEnabled,
             isEmpty = isTabEmpty,
-            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
             onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                { esdePrefsManager.toggleMarqueePositionLocked() }
+                { esdePrefsManager.toggleLogoPositionLocked() }
             } else null
         )
     }
