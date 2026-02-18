@@ -146,7 +146,6 @@ class ESDEViewModel @Inject constructor(
 
         val prefsState = prefs.state.value
 
-        // Check for single system image/video first (takes priority over everything)
         val singlePath = prefsState.singleSystemImagePath
         if (singlePath != null) {
             val isVideo = isVideoPath(singlePath)
@@ -174,7 +173,6 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         val lastSystem = prefsState.lastSelectedSystem
 
-        // Check for single system image/video first (takes priority)
         val singlePath = prefsState.singleSystemImagePath
         val initialPath = when {
             singlePath != null -> singlePath
@@ -271,14 +269,12 @@ class ESDEViewModel @Inject constructor(
 
         musicController.onGameSelected(systemName, gameFilename)
 
-        // Only schedule video if enabled
         if (prefs.state.value.videoEnabled) {
             scheduleVideoPlayback(systemName, gameFilename)
         }
     }
 
     private fun scheduleVideoPlayback(systemName: String, gameFilename: String) {
-        // Don't schedule video if a game is currently running
         if (_wallpaperState.value.isGameRunning) {
             Log.d(TAG, "Not scheduling video - game is currently running")
             return
@@ -343,7 +339,6 @@ class ESDEViewModel @Inject constructor(
     fun setLauncherActive(active: Boolean) {
         isLauncherActive = active
         if (!active) {
-            // Cancel any pending video when leaving the launcher
             cancelPendingVideo()
         }
     }
@@ -448,10 +443,8 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         val systemImageType = prefsState.systemImageType
         val useRandom = prefsState.randomSystemImage
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
-        // Check for single system image first (takes priority over image type)
         val singleImagePath = prefsState.singleSystemImagePath
         if (singleImagePath != null) {
             if (singleImagePath.startsWith("content://")) {
@@ -568,7 +561,6 @@ class ESDEViewModel @Inject constructor(
 
     private fun getSystemLogoPath(systemName: String): String? {
         val prefsState = prefs.state.value
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
         val singleLogoPath = prefsState.singleSystemLogoPath
