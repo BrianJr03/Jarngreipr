@@ -69,4 +69,5 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_MIN_WIDTH_PERCENT = "marquee_min_width_percent"
     const val KEY_OVERLAY_MEDIA_TYPE = "overlay_media_type"
     const val KEY_SELECT_BUTTON_WALLPAPER_TOGGLE = "select_button_wallpaper_toggle"
+    const val KEY_WALLPAPER_TOGGLE_TARGET = "wallpaper_toggle_target"
 }

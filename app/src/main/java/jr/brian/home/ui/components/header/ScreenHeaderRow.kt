@@ -47,6 +47,7 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.PowerViewModel
 
@@ -274,10 +275,30 @@ fun ScreenHeaderRow(
 
             if (showWallpaperToggle) {
                 val wallpaperToggleAction = {
-                    when (wallpaperManager.getWallpaperType()) {
-                        WallpaperType.ESDE -> wallpaperManager.setTransparent()
-                        WallpaperType.TRANSPARENT -> wallpaperManager.setESDE()
-                        else -> wallpaperManager.setESDE()
+                    val currentType = wallpaperManager.getWallpaperType()
+                    val target = esdePrefsState.wallpaperToggleTarget
+                    if (currentType == WallpaperType.ESDE) {
+                        when (target) {
+                            WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
+                            WallpaperToggleTarget.SavedImage -> {
+                                val uri = wallpaperManager.savedImageUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.IMAGE)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.SavedGif -> {
+                                val uri = wallpaperManager.savedGifUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.GIF)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.SavedVideo -> {
+                                val uri = wallpaperManager.savedVideoUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.VIDEO)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
+                        }
+                    } else {
+                        wallpaperManager.setESDE()
                     }
                 }
 
