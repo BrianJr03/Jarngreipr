@@ -136,8 +136,9 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           RELEASE_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
+          PATCH_NOTES=$(cat app/src/main/res/raw/patch_notes.md)
 
-          DESC=$(printf "The build you got early is now live for everyone.\n\n[View Release](%s)" "$RELEASE_URL")
+          DESC=$(printf "The build you got early is now live for everyone.\n\n%s\n\n[View Release](%s)" "$PATCH_NOTES" "$RELEASE_URL")
 
           PAYLOAD=$(jq -n \
             --arg title "🚀 Járngreipr v${VERSION} is now public!" \

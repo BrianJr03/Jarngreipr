@@ -138,11 +138,11 @@ jobs:
           VERSION: ${{ steps.version.outputs.version_name }}
           RUN_ID: ${{ github.run_id }}
           REPO: ${{ github.repository }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          PATCH_NOTES=$(cat app/src/main/res/raw/patch_notes.md)
 
-          DESC=$(printf "A new build is ready for early access supporters!\n\n**What's new:**\n%s\n\n**[⬇️ Download APKs](%s)** (normal + hidden)\n\n*Public release drops in 3 days.*" "$COMMIT_MSG" "$ARTIFACT_URL")
+          DESC=$(printf "A new build is ready for early access supporters!\n\n%s\n\n**[⬇️ Download APKs](%s)** (normal + hidden)\n\n*Public release drops in 3 days.*" "$PATCH_NOTES" "$ARTIFACT_URL")
 
           PAYLOAD=$(jq -n \
             --arg content "<@&${SUPPORTER_ROLE_ID}>" \
