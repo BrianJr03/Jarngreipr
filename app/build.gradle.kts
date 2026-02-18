@@ -20,6 +20,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    flavorDimensions += "mode"
+    productFlavors {
+        create("standard") {
+            dimension = "mode"
+        }
+        create("hidden") {
+            dimension = "mode"
+            versionNameSuffix = "h"
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
