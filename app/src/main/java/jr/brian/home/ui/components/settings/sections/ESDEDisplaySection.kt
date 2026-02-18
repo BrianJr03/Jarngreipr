@@ -265,6 +265,9 @@ fun ESDESettingsContent(
                 },
                 onMusicLoopEnabledChange = { loopEnabled ->
                     preferencesManager.setMusicLoopEnabled(loopEnabled)
+                },
+                onMusicIgnoreAudioFocusChange = { ignore ->
+                    preferencesManager.setMusicIgnoreAudioFocus(ignore)
                 }
             )
         }
@@ -457,10 +460,6 @@ fun ESDESettingsContent(
                 hideUIForGameBrowsing = prefsState.hideUIForGameBrowsing,
                 onHideUIForGameBrowsingChange = { hide ->
                     preferencesManager.setHideUIForGameBrowsing(hide)
-                },
-                musicIgnoreAudioFocus = prefsState.musicIgnoreAudioFocus,
-                onMusicIgnoreAudioFocusChange = { ignore ->
-                    preferencesManager.setMusicIgnoreAudioFocus(ignore)
                 },
                 folderPaths = cleanupFolderPaths.toList(),
                 onAddFolder = {

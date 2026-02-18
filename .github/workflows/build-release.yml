@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - dev  # Early access build on push to dev
+    paths-ignore:
+      - 'README.md'
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       create_release:
