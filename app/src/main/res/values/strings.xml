@@ -144,6 +144,14 @@
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
     <string name="settings_buy_me_coffee_description">☕ is always appreciated</string>
 
+    <string name="settings_kofi_title">Support on Ko-fi</string>
+    <string name="settings_kofi_url">https://ko-fi.com/jarngreipr</string>
+    <string name="settings_kofi_description">☕ Get early builds &amp; support the project</string>
+
+    <string name="settings_discord_title">Join the Discord</string>
+    <string name="settings_discord_url">https://discord.gg/B9hrMVYfwU</string>
+    <string name="settings_discord_description">💬 Chat, feedback &amp; community</string>
+
     <string name="settings_app_visibility_title">App Visibility</string>
     <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
     <string name="settings_app_visibility_icon_description">App visibility icon</string>
