@@ -2,13 +2,11 @@ package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -31,9 +29,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.extensions.handleFullNavigation
-import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
@@ -50,15 +47,11 @@ fun IconGridOption(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableIntStateOf(0) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .background(
                 color = when {
                     isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
@@ -83,12 +76,7 @@ fun IconGridOption(
                 onNavigateRight = onNavigateRight,
                 onEnterPress = onClick
             )
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable(),
         contentAlignment = Alignment.Center
     ) {

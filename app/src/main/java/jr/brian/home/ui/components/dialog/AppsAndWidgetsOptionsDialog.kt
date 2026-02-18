@@ -2,7 +2,6 @@ package jr.brian.home.ui.components.dialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,8 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
@@ -208,14 +205,10 @@ private fun GridOptionButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -243,12 +236,7 @@ private fun GridOptionButton(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable()
             .padding(16.dp),
         contentAlignment = Alignment.Center

@@ -3,27 +3,20 @@ package jr.brian.home.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -36,9 +29,7 @@ fun IconBox(
     onClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit
 ) {
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     val backgroundColor by animateColorAsState(
         targetValue = if (isFocused) ThemeAccentColor.copy(alpha = 0.3f) else Color.Black.copy(
@@ -54,8 +45,6 @@ fun IconBox(
 
     Box(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .then(
                 if (focusRequester != null) {
                     Modifier.focusRequester(focusRequester)
@@ -81,13 +70,7 @@ fun IconBox(
             )
             .then(
                 if (onClick != null) {
-                    Modifier
-                        .pressWithHaptic(
-                            onClick,
-                            haptic = haptic,
-                            onPressChange = { isPressed = it }
-                        )
-                        .clickable { onClick() }
+                    Modifier.clickWithHaptic(haptic) { onClick() }
                 } else {
                     Modifier
                 }

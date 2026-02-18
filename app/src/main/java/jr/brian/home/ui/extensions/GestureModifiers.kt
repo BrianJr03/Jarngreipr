@@ -1,14 +1,17 @@
 package jr.brian.home.ui.extensions
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -76,6 +79,10 @@ fun Modifier.pagerFriendlyClickableSimple(
  * A modifier that detects press/release events and triggers haptic feedback on press.
  * Use this with [onPressScaleAndOffset()] for consistent press animations across the app.
  *
+ * NOTE: This uses raw pointer events and will intercept touches during scrolling.
+ * Only use in non-scrollable containers (e.g., dock, keyboard).
+ * For scrollable lists, use [clickWithHaptic] or [combinedClickWithHaptic] instead.
+ *
  * @param keys Optional key(s) to trigger recomposition of the pointer input
  * @param haptic The haptic feedback instance from LocalHapticFeedback.current
  * @param onPressChange Callback to update the pressed state (true on press, false on release)
@@ -102,4 +109,79 @@ fun Modifier.pressWithHaptic(
             }
         }
     }
+}
+
+/**
+ * A scroll-safe clickable modifier that triggers haptic feedback on press (touch down).
+ * Unlike [pressWithHaptic], this uses the standard [clickable] which respects
+ * scroll gestures and won't fire during scrolling.
+ *
+ * Haptic fires immediately on press via [MutableInteractionSource], which is scroll-aware —
+ * in scrollable containers, press is only recognized after touch slop is exceeded.
+ *
+ * Use this in scrollable containers (LazyColumn, LazyGrid, verticalScroll, etc.).
+ *
+ * @param haptic The haptic feedback instance from LocalHapticFeedback.current
+ * @param onClick Callback when the item is clicked
+ */
+fun Modifier.clickWithHaptic(
+    haptic: HapticFeedback,
+    onClick: () -> Unit
+): Modifier = composed {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Press) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+    }
+
+    clickable(
+        interactionSource = interactionSource,
+        indication = null,
+        onClick = onClick
+    )
+}
+
+/**
+ * A scroll-safe combined clickable modifier that triggers haptic feedback on press (touch down).
+ * Unlike [pressWithHaptic], this uses the standard [combinedClickable] which respects
+ * scroll gestures and won't fire during scrolling.
+ *
+ * Haptic fires immediately on press via [MutableInteractionSource], which is scroll-aware —
+ * in scrollable containers, press is only recognized after touch slop is exceeded.
+ *
+ * Use this in scrollable containers (LazyColumn, LazyGrid, verticalScroll, etc.).
+ *
+ * @param haptic The haptic feedback instance from LocalHapticFeedback.current
+ * @param onClick Callback when the item is clicked
+ * @param onDoubleClick Optional callback when the item is double-clicked
+ * @param onLongClick Optional callback when the item is long-clicked
+ */
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.combinedClickWithHaptic(
+    haptic: HapticFeedback,
+    onClick: () -> Unit,
+    onDoubleClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
+): Modifier = composed {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Press) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+    }
+
+    combinedClickable(
+        interactionSource = interactionSource,
+        indication = null,
+        onClick = onClick,
+        onDoubleClick = onDoubleClick,
+        onLongClick = onLongClick
+    )
 }

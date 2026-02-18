@@ -24,6 +24,7 @@ fun rememberAppOptionsMenuFocusRequesters(
             add(firstFocusRequester)
             add(FocusRequester())
             add(FocusRequester())
+            add(FocusRequester())
             if (isInDock) {
                 add(FocusRequester())
             }
