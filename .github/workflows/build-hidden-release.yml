@@ -91,7 +91,7 @@ jobs:
         id: rename
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
-          APK_NAME="jarngreipr.${VERSION_NAME}h.apk"
+          APK_NAME="jarngreipr-${VERSION_NAME}h.apk"
           mv app/build/outputs/apk/hidden/release/app-hidden-release.apk app/build/outputs/apk/hidden/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
@@ -108,7 +108,7 @@ jobs:
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jarngreipr.${{ steps.version.outputs.version_name }}h
+          name: jarngreipr-${{ steps.version.outputs.version_name }}h
           path: app/build/outputs/apk/hidden/release/${{ steps.rename.outputs.apk_name }}
 
       - name: Cleanup keystore
