@@ -225,8 +225,6 @@ fun AppsModalContent(
     }
 
     if (appDrawerOptionsDialogState.isVisible) {
-        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-
         AppsTabOptionsDialog(
             onDismiss = appDrawerOptionsDialogState::dismiss,
             onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -238,10 +236,8 @@ fun AppsModalContent(
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             },
-            isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
-            onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                { esdePrefsManager.toggleLogoPositionLocked() }
-            } else null
+            isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() }
         )
     }
 

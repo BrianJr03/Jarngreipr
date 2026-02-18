@@ -163,21 +163,12 @@ jobs:
                -d "$PAYLOAD" \
                "${DISCORD_WEBHOOK_URL}"
 
-      - name: Save release metadata
+      - name: Tag early access build
         if: github.event_name == 'push'
         run: |
-          echo "${{ github.sha }}" > release_sha.txt
-          echo "${{ steps.version.outputs.version_name }}" > release_version.txt
-
-      - name: Upload release metadata
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-metadata
-          path: |
-            release_sha.txt
-            release_version.txt
-          retention-days: 5
+          TAG="early/v${{ steps.version.outputs.version_name }}"
+          git tag "$TAG" "${{ github.sha }}"
+          git push origin "$TAG"
 
       - name: Cleanup keystore
         if: always()
