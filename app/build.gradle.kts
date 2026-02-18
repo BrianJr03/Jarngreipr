@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -71,12 +73,9 @@ android {
 
     applicationVariants.all {
         val variant = this
-        variant.outputs.all {
-            val flavorName = variant.flavorName
-            val versionName = variant.versionName
-            val buildType = variant.buildType.name
-            if (buildType == "release") {
-                outputFileName = "jarngreipr.${versionName}.apk"
+        outputs.all {
+            if (this is ApkVariantOutputImpl) {
+                outputFileName = "jarngreipr.${variant.versionName}.apk"
             }
         }
     }
