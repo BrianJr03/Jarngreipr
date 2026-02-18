@@ -347,8 +347,6 @@ fun AppsAndWidgetsTab(
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
-        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
                 addOptionsDialogState.dismiss()
@@ -366,10 +364,8 @@ fun AppsAndWidgetsTab(
             },
             isEditModeActive = editModeEnabled,
             isEmpty = isTabEmpty,
-            isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
-            onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                { esdePrefsManager.toggleLogoPositionLocked() }
-            } else null
+            isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() }
         )
     }
 
