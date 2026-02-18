@@ -1,5 +1,10 @@
 package jr.brian.home.ui.components.settings.sections
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.runtime.Composable
@@ -8,7 +13,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
@@ -29,7 +37,9 @@ fun AppearanceSection(
     onNavigateToEsdeSettings: () -> Unit = {}
 ) {
     var expandedItem by remember { mutableStateOf<String?>(null) }
-    
+    val preferencesManager = LocalESDEPreferencesManager.current
+    val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
+
     CollapsibleSettingsSection(
         title = stringResource(id = R.string.settings_section_appearance),
         icon = Icons.Default.Palette,
@@ -74,5 +84,27 @@ fun AppearanceSection(
             },
             onESDESetupClick = onNavigateToEsdeSettings
         )
+
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_select_wallpaper_toggle),
+            description = stringResource(R.string.esde_settings_select_wallpaper_toggle_description),
+            checked = prefsState.selectButtonWallpaperToggle,
+            onCheckedChange = { enabled ->
+                preferencesManager.setSelectButtonWallpaperToggle(enabled)
+            }
+        )
+
+        AnimatedVisibility(
+            visible = prefsState.selectButtonWallpaperToggle,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            WallpaperToggleTargetSelector(
+                selectedTarget = prefsState.wallpaperToggleTarget,
+                onTargetSelected = { target ->
+                    preferencesManager.setWallpaperToggleTarget(target)
+                }
+            )
+        }
     }
 }
