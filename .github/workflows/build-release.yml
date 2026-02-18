@@ -89,7 +89,7 @@ jobs:
         id: rename
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
-          APK_NAME="jarngreipr-${VERSION_NAME}.apk"
+          APK_NAME="jarngreipr.${VERSION_NAME}.apk"
           mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
@@ -130,7 +130,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: jarngreipr-${{ steps.version.outputs.version_name }}
+          name: jarngreipr.${{ steps.version.outputs.version_name }}
           path: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
           retention-days: 90
 
