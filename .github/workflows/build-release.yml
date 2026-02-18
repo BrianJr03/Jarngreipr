@@ -142,17 +142,23 @@ jobs:
         run: |
           ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
+          PAYLOAD=$(jq -n \
+            --arg content "<@&${SUPPORTER_ROLE_ID}>" \
+            --arg title "🧤 Járngreipr Early Build — v${VERSION}" \
+            --arg desc "A new build is ready for early access supporters!\n\n**What's new:**\n${COMMIT_MSG}\n\n**[⬇️ Download APKs](${ARTIFACT_URL})** (normal + hidden)\n\n*Public release drops in 3 days.*" \
+            '{
+              content: $content,
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 7419530,
+                footer: { text: "Járngreipr Early Access" }
+              }]
+            }')
+
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{
-                 \"content\": \"<@&${SUPPORTER_ROLE_ID}>\",
-                 \"embeds\": [{
-                   \"title\": \"🧤 Járngreipr Early Build — v${VERSION}\",
-                   \"description\": \"A new build is ready for early access supporters!\n\n**What's new:**\n${COMMIT_MSG}\n\n**[⬇️ Download APKs](${ARTIFACT_URL})** (normal + hidden)\n\n*Public release drops in 3 days.*\",
-                   \"color\": 7419530,
-                   \"footer\": { \"text\": \"Járngreipr Early Access\" }
-                 }]
-               }" \
+               -d "$PAYLOAD" \
                "${DISCORD_WEBHOOK_URL}"
 
       - name: Save release metadata
