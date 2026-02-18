@@ -154,6 +154,11 @@ class MainActivity : ComponentActivity() {
         esdeViewModel.musicController.onActivityVisible()
     }
 
+    override fun onResume() {
+        super.onResume()
+        esdeViewModel.musicController.onActivityResumed()
+    }
+
     override fun onStop() {
         super.onStop()
         esdeViewModel.musicController.onActivityInvisible()
