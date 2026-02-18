@@ -68,31 +68,19 @@ jobs:
           echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "Extracted version: ${VERSION_NAME}"
 
-      - name: Modify version name to add 'h' suffix
-        run: |
-          sed -i 's/versionName = "\([^"]*\)"/versionName = "\1h"/' app/build.gradle.kts
-          echo "Modified build.gradle.kts:"
-          grep 'versionName' app/build.gradle.kts
-
-      - name: Add excludeFromRecents to MainActivity
-        run: |
-          sed -i 's/android:name=".MainActivity"/android:name=".MainActivity"\n            android:excludeFromRecents="true"/' app/src/main/AndroidManifest.xml
-          echo "Modified AndroidManifest.xml MainActivity:"
-          grep -A 5 'name=".MainActivity"' app/src/main/AndroidManifest.xml
-
       - name: Decode Keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
 
-      - name: Build signed release APK
+      - name: Build signed hidden release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleHiddenRelease \
             -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
@@ -104,7 +92,7 @@ jobs:
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
           APK_NAME="jarngreipr-${VERSION_NAME}h.apk"
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/${APK_NAME}
+          mv app/build/outputs/apk/hidden/release/app-hidden-release.apk app/build/outputs/apk/hidden/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
 
@@ -113,7 +101,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/hidden/release/${{ steps.rename.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -121,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jarngreipr-${{ steps.version.outputs.version_name }}h
-          path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          path: app/build/outputs/apk/hidden/release/${{ steps.rename.outputs.apk_name }}
 
       - name: Cleanup keystore
         if: always()
