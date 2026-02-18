@@ -68,13 +68,13 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
 
-      - name: Build signed release APK
+      - name: Build signed standard release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleStandardRelease \
             -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
@@ -86,7 +86,7 @@ jobs:
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
           APK_NAME="jarngreipr-${VERSION_NAME}.apk"
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/${APK_NAME}
+          mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
 
@@ -100,7 +100,7 @@ jobs:
           name: ${{ inputs.release_name || inputs.release_tag }}
           prerelease: ${{ inputs.prerelease }}
           body_path: app/src/main/res/raw/patch_notes.md
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -109,7 +109,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -118,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          path: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
 
       # --- Early access flow (push to dev) ---
 
@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jarngreipr-${{ steps.version.outputs.version_name }}
-          path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          path: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
           retention-days: 90
 
       - name: Post to Discord early-builds

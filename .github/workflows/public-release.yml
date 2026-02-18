@@ -106,14 +106,14 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
 
-      - name: Build signed release APK
+      - name: Build signed standard release APK
         if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleStandardRelease \
             -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
@@ -126,7 +126,7 @@ jobs:
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
           APK_NAME="jarngreipr-${VERSION_NAME}.apk"
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/${APK_NAME}
+          mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
 
@@ -146,7 +146,7 @@ jobs:
 
             ---
             *Want builds 3 days early? [Support on Ko-fi](https://ko-fi.com/brianjr03)*
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
           draft: false
           prerelease: false
         env:
