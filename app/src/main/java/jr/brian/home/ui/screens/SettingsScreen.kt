@@ -1,27 +1,36 @@
 package jr.brian.home.ui.screens
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Coffee
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -32,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -56,6 +66,8 @@ import jr.brian.home.ui.components.settings.sections.LayoutSection
 import jr.brian.home.ui.components.settings.sections.SupportSection
 import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.util.rememberDialogState
@@ -256,28 +268,69 @@ private fun SettingsContent(
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "coffee") {
-                val url = stringResource(R.string.settings_buy_me_coffee_url)
-                SettingItem(
-                    title = stringResource(id = R.string.settings_buy_me_coffee_title),
-                    description = stringResource(id = R.string.settings_buy_me_coffee_description),
-                    icon = Icons.Default.Coffee,
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-                    },
-                )
-            }
+            item(key = "support_links") {
+                val coffeeUrl = stringResource(R.string.settings_buy_me_coffee_url)
+                val kofiUrl = stringResource(R.string.settings_kofi_url)
+                val discordUrl = stringResource(R.string.settings_discord_url)
 
-            item(key = "kofi") {
-                val url = stringResource(R.string.settings_kofi_url)
-                SettingItem(
-                    title = stringResource(id = R.string.settings_kofi_title),
-                    description = stringResource(id = R.string.settings_kofi_description),
-                    icon = Icons.Default.Favorite,
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-                    },
-                )
+                val assetManager = context.assets
+                val coffeeBitmap = remember {
+                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-buy-me-a-coffee-96.png"))
+                        ?.asImageBitmap()
+                }
+                val kofiBitmap = remember {
+                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-ko-fi-96.png"))
+                        ?.asImageBitmap()
+                }
+                val discordBitmap = remember {
+                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-discord-96.png"))
+                        ?.asImageBitmap()
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    val items = listOf(
+                        Triple(coffeeBitmap, stringResource(R.string.settings_buy_me_coffee_title), coffeeUrl),
+                        Triple(kofiBitmap, stringResource(R.string.settings_kofi_title), kofiUrl),
+                        Triple(discordBitmap, stringResource(R.string.settings_discord_title), discordUrl),
+                    )
+                    items.forEach { (bitmap, title, url) ->
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        listOf(OledCardLightColor, OledCardColor)
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                }
+                                .padding(vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap,
+                                    contentDescription = title,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = title,
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                }
             }
 
             item(key = SECTION_APPEARANCE) {

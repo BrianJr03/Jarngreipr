@@ -1,4 +1,9 @@
 ### What's New
+**Ko-fi and Discord**
+- You can now support the project on Ko-fi!
+- You can also join the community on Discord!
+  - Find the links in Settings!
+
 **Overlay Media Type Selector**
 - Choose which media to display for game logos: Marquees, 3D Boxes, Covers, Screenshots, Fanart, or MixImages
 - Falls back to marquees if selected type isn't available
@@ -18,4 +23,4 @@
 - Logo position auto-locks when not using Free Position alignment
 - Renamed "Marquee" labels to "Logo" throughout settings
 
-1.7.4
+1.7.5

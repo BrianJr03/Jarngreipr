@@ -350,6 +350,12 @@ Your support helps maintain and improve the launcher with new features, bug fixe
 - **Icon Pack Creators** - For beautiful icon packs that work seamlessly
 - **Community Contributors** - For feedback, bug reports, and feature ideas
 - **You** - For using Járngreipr! 🧤
+- Ko-fi icon by Icons8
+  - https://icons8.com/icon/mP1WMboAU3cv/ko-fi
+- Discord icon by Icons8
+  - https://icons8.com/icon/Lvq129LtPFaK/discord
+- Buy Me a Coffee icon by Icons8
+  - https://icons8.com/icon/1LzgW8zTryyM/buy-me-a-coffee
 
 ---
 
