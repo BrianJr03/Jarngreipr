@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -81,6 +81,7 @@ fun AppsModalContent(
     val wallpaperManager = LocalWallpaperManager.current
     
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val folders by folderManager.getFolders(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
@@ -225,7 +226,7 @@ fun AppsModalContent(
 
     if (appDrawerOptionsDialogState.isVisible) {
         val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-        
+
         AppsTabOptionsDialog(
             onDismiss = appDrawerOptionsDialogState::dismiss,
             onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -237,9 +238,9 @@ fun AppsModalContent(
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             },
-            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+            isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
             onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                { esdePrefsManager.toggleMarqueePositionLocked() }
+                { esdePrefsManager.toggleLogoPositionLocked() }
             } else null
         )
     }

@@ -50,7 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
@@ -188,6 +188,7 @@ fun AppDrawerTab(
 
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val drawerOpacity = esdePrefsState.appDrawerOpacityFloat
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -382,9 +383,9 @@ fun AppDrawerTab(
                 isDragLocked = true,
                 onToggleDragLock = { },
                 title = stringResource(R.string.app_drawer_tab_options_title),
-                isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
+                isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
                 onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                    { esdePrefsManager.toggleMarqueePositionLocked() }
+                    { esdePrefsManager.toggleLogoPositionLocked() }
                 } else null
             )
         }
