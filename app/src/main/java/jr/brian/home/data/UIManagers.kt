@@ -40,5 +40,7 @@ data class UIManagers @Inject constructor(
     val wallpaperManager: WallpaperManager,
     
     /** Manages search screen layout preferences (horizontal/vertical) */
-    val searchLayoutManager: SearchLayoutManager
+    val searchLayoutManager: SearchLayoutManager,
+
+    val customAppNameManager: CustomAppNameManager
 )

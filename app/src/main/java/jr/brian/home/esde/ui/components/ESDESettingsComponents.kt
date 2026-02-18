@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,8 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
@@ -102,8 +100,6 @@ fun CollapsibleSection(
     val haptic = LocalHapticFeedback.current
     var isExpanded by remember { mutableStateOf(initiallyExpanded) }
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     val rotationAngle by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
         label = "chevron_rotation"
@@ -134,8 +130,7 @@ fun CollapsibleSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(y = pressOffsetY)
-                .scale(pressScale * animatedFocusedScale(isFocused))
+                .scale(animatedFocusedScale(isFocused))
                 .background(
                     brush = Brush.linearGradient(
                         colors = if (isFocused || isExpanded) {
@@ -151,12 +146,7 @@ fun CollapsibleSection(
                 )
                 .then(border)
                 .clip(RoundedCornerShape(16.dp))
-                .pressWithHaptic(
-                    { isExpanded = !isExpanded },
-                    haptic = haptic,
-                    onPressChange = { isPressed = it }
-                )
-                .clickable { isExpanded = !isExpanded }
+                .clickWithHaptic(haptic) { isExpanded = !isExpanded }
                 .focusable()
                 .onFocusChanged { isFocused = it.isFocused }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -276,16 +266,13 @@ fun ToggleSetting(
     onClick: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .offset(y = pressOffsetY)
-            .scale(pressScale * animatedFocusedScale(isFocused))
+            .scale(animatedFocusedScale(isFocused))
             .background(
                 brush = Brush.linearGradient(
                     colors = if (isFocused) {
@@ -305,12 +292,7 @@ fun ToggleSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                clickAction,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { clickAction() }
+            .clickWithHaptic(haptic) { clickAction() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp),
@@ -359,15 +341,12 @@ fun PathSetting(
     fallbackPath: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .offset(y = pressOffsetY)
-            .scale(pressScale * animatedFocusedScale(isFocused))
+            .scale(animatedFocusedScale(isFocused))
             .background(
                 brush = Brush.linearGradient(
                     colors = if (isFocused) {
@@ -387,12 +366,7 @@ fun PathSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onSelectPath,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onSelectPath() }
+            .clickWithHaptic(haptic) { onSelectPath() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp)

@@ -106,6 +106,7 @@ fun FolderContentsDialog(
     var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
     var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
     var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
@@ -358,6 +359,10 @@ fun FolderContentsDialog(
             onCustomIconClick = {
                 appForCustomIcon = app
                 selectedAppForOptions = null
+            },
+            onRenameClick = {
+                appForRename = app
+                selectedAppForOptions = null
             }
         )
     }
@@ -368,6 +373,14 @@ fun FolderContentsDialog(
             appLabel = app.label,
             onDismiss = { appForCustomIcon = null },
             onIconChanged = { }
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
         )
     }
 }

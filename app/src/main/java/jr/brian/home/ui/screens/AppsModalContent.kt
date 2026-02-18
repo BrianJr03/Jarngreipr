@@ -42,6 +42,7 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.widget.AppGridLayout
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
@@ -78,7 +79,6 @@ fun AppsModalContent(
     val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
     val esdePrefsManager = LocalESDEPreferencesManager.current
-    val wallpaperManager = LocalWallpaperManager.current
     
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
@@ -95,6 +95,7 @@ fun AppsModalContent(
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
+    val renameDialogState = rememberDialogState<AppInfo>()
     val folderContentsDialogState = rememberDialogState<Folder>()
     val drawerOptionsDialogState = rememberDialogState<Unit>()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
@@ -191,6 +192,10 @@ fun AppsModalContent(
                 onCustomIconClick = {
                     customIconDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
+                },
+                onRenameClick = {
+                    renameDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
                 }
             )
         }
@@ -202,6 +207,16 @@ fun AppsModalContent(
                 packageName = appInfo.packageName,
                 appLabel = appInfo.label,
                 onDismiss = customIconDialogState::dismiss
+            )
+        }
+    }
+
+    renameDialogState.item?.let { appInfo ->
+        if (renameDialogState.isVisible) {
+            RenameAppDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = renameDialogState::dismiss
             )
         }
     }
