@@ -850,11 +850,6 @@
     <string name="esde_settings_select_wallpaper_toggle_description">Quickly switch between ES-DE and your chosen wallpaper target</string>
     <string name="esde_settings_wallpaper_toggle_target">Switch To</string>
     <string name="esde_settings_wallpaper_toggle_target_description">Choose what to toggle to when pressing the wallpaper shortcut</string>
-    <string name="wallpaper_toggle_target_system">System</string>
-    <string name="wallpaper_toggle_target_image">Image</string>
-    <string name="wallpaper_toggle_target_gif">GIF</string>
-    <string name="wallpaper_toggle_target_video">Video</string>
-    <string name="wallpaper_toggle_target_default">Default</string>
     <string name="wallpaper_saved_image">Saved Image</string>
     <string name="wallpaper_saved_image_description">Image used for quick wallpaper switching</string>
     <string name="wallpaper_saved_gif">Saved GIF</string>
