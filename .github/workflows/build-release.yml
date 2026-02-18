@@ -134,25 +134,26 @@ jobs:
         if: github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPPORTER_ROLE_ID: ${{ secrets.SUPPORTER_ROLE_ID }}
           VERSION: ${{ steps.version.outputs.version_name }}
           RUN_ID: ${{ github.run_id }}
           REPO: ${{ github.repository }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          ARTIFACT_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+          ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{
-                 \"content\": \"<@&\${{ secrets.SUPPORTER_ROLE_ID }}>\",
+                 \"content\": \"<@&${SUPPORTER_ROLE_ID}>\",
                  \"embeds\": [{
-                   \"title\": \"🧤 Járngreipr Early Build — v$VERSION\",
-                   \"description\": \"A new build is ready for early access supporters!\n\n**What's new:**\n$COMMIT_MSG\n\n**[⬇️ Download APKs]($ARTIFACT_URL)** (normal + hidden)\n\n*Public release drops in 3 days.*\",
+                   \"title\": \"🧤 Járngreipr Early Build — v${VERSION}\",
+                   \"description\": \"A new build is ready for early access supporters!\n\n**What's new:**\n${COMMIT_MSG}\n\n**[⬇️ Download APKs](${ARTIFACT_URL})** (normal + hidden)\n\n*Public release drops in 3 days.*\",
                    \"color\": 7419530,
                    \"footer\": { \"text\": \"Járngreipr Early Access\" }
                  }]
                }" \
-               "$DISCORD_WEBHOOK_URL"
+               "${DISCORD_WEBHOOK_URL}"
 
       - name: Save release metadata
         if: github.event_name == 'push'
