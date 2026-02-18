@@ -4,15 +4,27 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag to upload APK to (e.g., v1.7.3)'
-        required: true
+        description: 'Release tag to upload APK to (leave empty to skip release upload)'
+        required: false
         type: string
+        default: ''
+      ref:
+        description: 'Git ref to checkout (leave empty for default branch)'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     inputs:
       release_tag:
-        description: 'Release tag to upload APK to (e.g., v1.7.3)'
-        required: true
+        description: 'Release tag to upload APK to (leave empty to skip release upload)'
+        required: false
         type: string
+        default: ''
+      ref:
+        description: 'Git ref to checkout (leave empty for default branch)'
+        required: false
+        type: string
+        default: ''
     secrets:
       KEYSTORE_BASE64:
         required: true
@@ -34,6 +46,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -95,6 +109,7 @@ jobs:
           echo "Renamed APK to: ${APK_NAME}"
 
       - name: Upload APK to Release
+        if: inputs.release_tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
@@ -102,7 +117,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload APK as artifact (backup)
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: hidden-release-apk
