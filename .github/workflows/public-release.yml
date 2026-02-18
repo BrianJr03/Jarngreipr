@@ -135,19 +135,24 @@ jobs:
           VERSION: ${{ steps.version.outputs.version_name }}
           REPO: ${{ github.repository }}
         run: |
-          RELEASE_URL="https://github.com/$REPO/releases/tag/v$VERSION"
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
+
+          PAYLOAD=$(jq -n \
+            --arg title "🚀 Járngreipr v${VERSION} is now public!" \
+            --arg desc "The build you got early is now live for everyone.\n\n[View Release](${RELEASE_URL})" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5763719,
+                footer: { text: "Járngreipr Public Release" }
+              }]
+            }')
 
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{
-                 \"embeds\": [{
-                   \"title\": \"🚀 Járngreipr v$VERSION is now public!\",
-                   \"description\": \"The build you got early is now live for everyone.\n\n[View Release]($RELEASE_URL)\",
-                   \"color\": 5763719,
-                   \"footer\": { \"text\": \"Járngreipr Public Release\" }
-                 }]
-               }" \
-               "$DISCORD_WEBHOOK_URL"
+               -d "$PAYLOAD" \
+               "${DISCORD_WEBHOOK_URL}"
 
       - name: Cleanup keystore
         if: always()
