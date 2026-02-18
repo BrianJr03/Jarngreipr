@@ -37,6 +37,7 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.SearchAppOptionsMenuContent
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.components.apps.rememberSearchAppOptionsFocusRequesters
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -49,6 +50,7 @@ fun SearchAppOptionsDialog(
     onDismiss: () -> Unit,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
+    onRenameClick: () -> Unit = {},
     hasExternalDisplay: Boolean = false
 ) {
     val focusRequesters = rememberSearchAppOptionsFocusRequesters(
@@ -104,7 +106,7 @@ fun SearchAppOptionsDialog(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = app.label,
+                            text = app.displayName(),
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 16.sp
                         )
@@ -129,6 +131,7 @@ fun SearchAppOptionsDialog(
                     currentDisplayPreference = currentDisplayPreference,
                     onAppInfoClick = onAppInfoClick,
                     onDisplayPreferenceChange = onDisplayPreferenceChange,
+                    onRenameClick = onRenameClick,
                     hasExternalDisplay = hasExternalDisplay,
                     focusRequesters = focusRequesters,
                     onFocusedIndexChange = { focusedIndex = it },

@@ -171,13 +171,16 @@ fun AppNameToggleItem(
 }
 
 @Composable
-fun AppInfo.AppName() {
+fun AppInfo.displayName(): String {
     val customAppNameManager = LocalCustomAppNameManager.current
     val customNames by customAppNameManager.customNames.collectAsStateWithLifecycle()
-    val displayName = customNames[packageName] ?: label
+    return customNames[packageName] ?: label
+}
 
+@Composable
+fun AppInfo.AppName() {
     Text(
-        text = displayName,
+        text = displayName(),
         color = Color.White,
         textAlign = TextAlign.Center,
         maxLines = 1,
