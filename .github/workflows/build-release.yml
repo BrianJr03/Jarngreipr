@@ -1,6 +1,9 @@
 name: Build Release
 
 on:
+  push:
+    branches:
+      - dev  # Early access build on push to dev
   workflow_dispatch:
     inputs:
       create_release:
@@ -87,8 +90,10 @@ jobs:
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
 
+      # --- Manual release flow (workflow_dispatch) ---
+
       - name: Create Release and Upload APK
-        if: ${{ inputs.create_release }}
+        if: github.event_name == 'workflow_dispatch' && inputs.create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
@@ -100,7 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to Existing Release
-        if: ${{ !inputs.create_release }}
+        if: github.event_name == 'workflow_dispatch' && !inputs.create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
@@ -109,10 +114,61 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK as artifact (backup)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+
+      # --- Early access flow (push to dev) ---
+
+      - name: Upload early access APK artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarngreipr-${{ steps.version.outputs.version_name }}-early
+          path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          retention-days: 90
+
+      - name: Post to Discord early-builds
+        if: github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          VERSION: ${{ steps.version.outputs.version_name }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          ARTIFACT_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{
+                 \"content\": \"<@&\${{ secrets.SUPPORTER_ROLE_ID }}>\",
+                 \"embeds\": [{
+                   \"title\": \"🧤 Járngreipr Early Build — v$VERSION\",
+                   \"description\": \"A new build is ready for early access supporters!\n\n**What's new:**\n$COMMIT_MSG\n\n**[⬇️ Download APKs]($ARTIFACT_URL)** (normal + hidden)\n\n*Public release drops in 3 days.*\",
+                   \"color\": 7419530,
+                   \"footer\": { \"text\": \"Járngreipr Early Access\" }
+                 }]
+               }" \
+               "$DISCORD_WEBHOOK_URL"
+
+      - name: Save release metadata
+        if: github.event_name == 'push'
+        run: |
+          echo "${{ github.sha }}" > release_sha.txt
+          echo "${{ steps.version.outputs.version_name }}" > release_version.txt
+
+      - name: Upload release metadata
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          path: |
+            release_sha.txt
+            release_version.txt
+          retention-days: 5
 
       - name: Cleanup keystore
         if: always()
@@ -121,10 +177,10 @@ jobs:
   build-hidden:
     name: Build Hidden Release APK
     needs: build-release
-    if: ${{ inputs.build_hidden }}
+    if: (github.event_name == 'workflow_dispatch' && inputs.build_hidden) || github.event_name == 'push'
     uses: ./.github/workflows/build-hidden-release.yml
     with:
-      release_tag: ${{ inputs.release_tag }}
+      release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || '' }}
     secrets:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
