@@ -19,8 +19,6 @@ import jr.brian.home.ui.components.quick_delete.FolderPathItem
 fun ExtrasSectionContent(
     hideUIForGameBrowsing: Boolean,
     onHideUIForGameBrowsingChange: (Boolean) -> Unit,
-    musicIgnoreAudioFocus: Boolean,
-    onMusicIgnoreAudioFocusChange: (Boolean) -> Unit,
     folderPaths: List<String>,
     onAddFolder: () -> Unit,
     onRemoveFolder: (String) -> Unit,
@@ -34,13 +32,6 @@ fun ExtrasSectionContent(
             description = stringResource(R.string.esde_settings_hide_ui_for_game_browsing_description),
             checked = hideUIForGameBrowsing,
             onCheckedChange = onHideUIForGameBrowsingChange
-        )
-
-        ToggleSetting(
-            title = stringResource(R.string.esde_settings_music_ignore_audio_focus),
-            description = stringResource(R.string.esde_settings_music_ignore_audio_focus_description),
-            checked = musicIgnoreAudioFocus,
-            onCheckedChange = onMusicIgnoreAudioFocusChange
         )
 
         ToggleSetting(
