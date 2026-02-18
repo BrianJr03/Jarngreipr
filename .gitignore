@@ -16,4 +16,5 @@ local.properties
 .idea
 /app/release
 .kotlin
-/app/src/hidden/
+/app/standard/release
+/app/hidden/release

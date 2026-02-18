@@ -49,6 +49,7 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -200,7 +201,7 @@ fun AppsTab(
             val isInDock = dockManager.isAppInDock(appInfo.packageName)
 
             AppOptionsMenu(
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                     appInfo.packageName
                 ),
@@ -260,7 +261,7 @@ fun AppsTab(
         if (customIconDialogState.isVisible) {
             CustomIconDialog(
                 packageName = appInfo.packageName,
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 onDismiss = customIconDialogState::dismiss
             )
         }

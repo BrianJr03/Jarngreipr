@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -66,6 +68,15 @@ android {
                 "META-INF/LICENSE.md",
                 "META-INF/LICENSE-notice.md"
             )
+        }
+    }
+
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            if (this is ApkVariantOutputImpl) {
+                outputFileName = "jarngreipr-${variant.versionName}.apk"
+            }
         }
     }
 }

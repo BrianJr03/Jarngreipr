@@ -69,7 +69,13 @@ class MusicManager(
     private var wasPausedByAudioFocusLoss: Boolean = false
 
     private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
-        android.util.Log.d(TAG, "Audio focus changed: $focusChange")
+        // If ignoring audio focus, skip all focus change handling
+        if (prefsManager.state.value.musicIgnoreAudioFocus) {
+            Log.d(TAG, "Audio focus change ignored (setting enabled): $focusChange")
+            return@OnAudioFocusChangeListener
+        }
+
+        Log.d(TAG, "Audio focus changed: $focusChange")
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
                 // Permanent loss - another app took audio focus
@@ -460,9 +466,14 @@ class MusicManager(
     }
 
     override fun isOtherAudioPlaying(): Boolean {
+        // If ignoring audio focus, always return false to allow playback
+        if (prefsManager.state.value.musicIgnoreAudioFocus) {
+            return false
+        }
+
         // If we're already playing, no other audio is interrupting us
         if (musicPlayer?.isPlaying == true) {
-            android.util.Log.d(TAG, "isOtherAudioPlaying: false (we are playing)")
+            Log.d(TAG, "isOtherAudioPlaying: false (we are playing)")
             return false
         }
 
@@ -659,6 +670,13 @@ class MusicManager(
     }
 
     private fun requestAudioFocus(): Boolean {
+        // If ignoring audio focus, skip the system request and just return true
+        if (prefsManager.state.value.musicIgnoreAudioFocus) {
+            Log.d(TAG, "Audio focus ignored by setting")
+            hasAudioFocus = false // We don't have system focus, but we're choosing to ignore it
+            return true
+        }
+
         if (hasAudioFocus) return true
 
         val audioAttributes = AudioAttributes.Builder()

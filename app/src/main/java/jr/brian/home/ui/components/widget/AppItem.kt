@@ -25,6 +25,7 @@ import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.settings.AppName
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -146,7 +147,7 @@ fun AppItem(
     if (customIconDialogState.isVisible) {
         CustomIconDialog(
             packageName = app.packageName,
-            appLabel = app.label,
+            appLabel = app.displayName(),
             onDismiss = customIconDialogState::dismiss,
             onIconChanged = {  }
         )
