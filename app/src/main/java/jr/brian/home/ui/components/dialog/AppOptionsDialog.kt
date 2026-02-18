@@ -44,6 +44,7 @@ fun AppOptionsDialog(
     showResizeOption: Boolean = false,
     onHideApp: () -> Unit = {},
     onCustomIconClick: () -> Unit = {},
+    onRenameClick: () -> Unit = {},
     isInDock: Boolean = false,
     onRemoveFromDock: () -> Unit = {}
 ) {
@@ -107,6 +108,7 @@ fun AppOptionsDialog(
                 onIconSizeChange = onIconSizeChange,
                 onToggleVisibility = onHideApp,
                 onCustomIconClick = onCustomIconClick,
+                onRenameClick = onRenameClick,
                 isInDock = isInDock,
                 onRemoveFromDock = onRemoveFromDock
             )

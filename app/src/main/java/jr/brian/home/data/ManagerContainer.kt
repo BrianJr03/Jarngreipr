@@ -22,6 +22,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
@@ -83,6 +84,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalGlobalIconRefreshManager provides ui.globalIconRefreshManager,
         LocalWallpaperManager provides ui.wallpaperManager,
         LocalSearchLayoutManager provides ui.searchLayoutManager,
+        LocalCustomAppNameManager provides ui.customAppNameManager,
         
         // App Management
         LocalAppVisibilityManager provides app.appVisibilityManager,

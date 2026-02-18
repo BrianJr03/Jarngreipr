@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInFull
@@ -50,6 +51,7 @@ fun AppOptionsMenuContent(
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
     onCustomIconClick: () -> Unit = {},
+    onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
@@ -106,6 +108,15 @@ fun AppOptionsMenuContent(
                         index = 2
                     )
                 )
+
+                add(
+                    GridItem.IconItem(
+                        icon = Icons.Default.Edit,
+                        label = stringResource(R.string.app_options_rename),
+                        onClick = onRenameClick,
+                        index = 3
+                    )
+                )
                 
                 if (isInDock) {
                     add(
@@ -116,13 +127,13 @@ fun AppOptionsMenuContent(
                                 onRemoveFromDock()
                                 onDismiss()
                             },
-                            index = 3
+                            index = 4
                         )
                     )
                 }
 
                 if (app != null) {
-                    val resizeIndex = if (isInDock) 4 else 3
+                    val resizeIndex = if (isInDock) 5 else 4
                     if (!isInDock) {
                         add(
                             GridItem.IconItem(
@@ -138,7 +149,7 @@ fun AppOptionsMenuContent(
                     }
 
                     if (hasExternalDisplay) {
-                        val displayIndexOffset = if (isInDock) 1 else 0
+                        val displayIndexOffset = if (isInDock) 2 else 1
                         add(
                             GridItem.TextItem(
                                 text = stringResource(R.string.app_options_launch_primary_descr),
@@ -163,7 +174,7 @@ fun AppOptionsMenuContent(
                         )
                     }
                 } else if (hasExternalDisplay) {
-                    val displayIndexOffset = if (isInDock) 1 else 0
+                    val displayIndexOffset = if (isInDock) 2 else 1
                     add(
                         GridItem.TextItem(
                             text = stringResource(R.string.app_options_launch_primary_descr),

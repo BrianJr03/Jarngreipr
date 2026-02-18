@@ -16,8 +16,19 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = 1
-        versionName = "1.7.5"
+        versionName = "1.7.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "mode"
+    productFlavors {
+        create("standard") {
+            dimension = "mode"
+        }
+        create("hidden") {
+            dimension = "mode"
+            versionNameSuffix = "h"
+        }
     }
 
     buildTypes {

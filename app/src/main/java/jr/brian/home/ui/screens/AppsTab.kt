@@ -48,6 +48,7 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
+import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -130,6 +131,7 @@ fun AppsTab(
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
+    val renameDialogState = rememberDialogState<AppInfo>()
     val folderContentsDialogState = rememberDialogState<Folder>()
     val drawerOptionsDialogState = rememberDialogState<Unit>()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
@@ -245,6 +247,10 @@ fun AppsTab(
                 onCustomIconClick = {
                     customIconDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
+                },
+                onRenameClick = {
+                    renameDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
                 }
             )
         }
@@ -256,6 +262,16 @@ fun AppsTab(
                 packageName = appInfo.packageName,
                 appLabel = appInfo.label,
                 onDismiss = customIconDialogState::dismiss
+            )
+        }
+    }
+
+    renameDialogState.item?.let { appInfo ->
+        if (renameDialogState.isVisible) {
+            RenameAppDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = renameDialogState::dismiss
             )
         }
     }
