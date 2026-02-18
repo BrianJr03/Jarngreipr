@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedRotation
@@ -48,6 +49,7 @@ import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 
 @Composable
 fun AppNameToggleItem(
@@ -170,8 +172,12 @@ fun AppNameToggleItem(
 
 @Composable
 fun AppInfo.AppName() {
+    val customAppNameManager = LocalCustomAppNameManager.current
+    val customNames by customAppNameManager.customNames.collectAsStateWithLifecycle()
+    val displayName = customNames[packageName] ?: label
+
     Text(
-        text = label,
+        text = displayName,
         color = Color.White,
         textAlign = TextAlign.Center,
         maxLines = 1,

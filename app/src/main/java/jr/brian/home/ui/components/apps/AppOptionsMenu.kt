@@ -30,6 +30,7 @@ fun AppOptionsMenu(
     onIconSizeChange: (Float) -> Unit = {},
     onToggleVisibility: () -> Unit = {},
     onCustomIconClick: () -> Unit = {},
+    onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}
 ) {
     val hasExternalDisplay = rememberHasExternalDisplay()
@@ -64,6 +65,7 @@ fun AppOptionsMenu(
                 onIconSizeChange = onIconSizeChange,
                 onToggleVisibility = onToggleVisibility,
                 onCustomIconClick = onCustomIconClick,
+                onRenameClick = onRenameClick,
                 onRemoveFromDock = onRemoveFromDock
             )
         },

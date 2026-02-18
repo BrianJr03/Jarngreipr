@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -65,10 +63,9 @@ import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -472,14 +469,10 @@ fun DrawerOptionButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -507,12 +500,7 @@ fun DrawerOptionButton(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable()
             .padding(12.dp),
         contentAlignment = Alignment.Center
@@ -547,9 +535,7 @@ private fun QuickAccessIconButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     val gradient = Brush.linearGradient(
         colors = if (isFocused) {
@@ -568,8 +554,6 @@ private fun QuickAccessIconButton(
     Box(
         modifier = Modifier
             .size(64.dp)
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -586,12 +570,7 @@ private fun QuickAccessIconButton(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
@@ -611,14 +590,10 @@ private fun WallpaperGridButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -646,12 +621,7 @@ private fun WallpaperGridButton(
                 shape = RoundedCornerShape(10.dp)
             )
             .clip(RoundedCornerShape(10.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable()
             .padding(vertical = 10.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center

@@ -75,6 +75,7 @@ fun FreePositionedAppsLayout(
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
+    val renameDialogState = rememberDialogState<AppInfo>()
     val folderDialogState = rememberDialogState<Folder>()
 
     val hasExternalDisplay = rememberHasExternalDisplay()
@@ -299,6 +300,7 @@ fun FreePositionedAppsLayout(
     FreePositionedDialogsManager(
         appOptionsDialogState = appOptionsDialogState,
         customIconDialogState = customIconDialogState,
+        renameDialogState = renameDialogState,
         folderDialogState = folderDialogState,
         pageIndex = pageIndex,
         allApps = allApps,

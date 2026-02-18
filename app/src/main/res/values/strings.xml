@@ -75,6 +75,10 @@
     <string name="app_options_resize_preview">Icon Preview</string>
     <string name="app_options_resize_cancel">@string/common_cancel</string>
     <string name="app_options_resize_apply">Apply</string>
+    <string name="app_options_rename">Rename</string>
+    <string name="app_options_rename_hint">Display name</string>
+    <string name="app_options_rename_save">Save</string>
+    <string name="app_options_rename_reset">Reset</string>
 
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Customize app colors</string>

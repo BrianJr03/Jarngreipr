@@ -21,6 +21,7 @@ import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.CustomAppNameManager
 import jr.brian.home.data.SearchLayoutManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
@@ -212,5 +213,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): SearchLayoutManager {
         return SearchLayoutManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomAppNameManager(
+        @ApplicationContext context: Context
+    ): CustomAppNameManager {
+        return CustomAppNameManager(context)
     }
 }
