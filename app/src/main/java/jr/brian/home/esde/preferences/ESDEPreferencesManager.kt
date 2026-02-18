@@ -42,6 +42,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VIDEO_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_VOLUME
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_USE_SYSTEM_SPECIFIC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_LOOP_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MUSIC_IGNORE_AUDIO_FOCUS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_APP_DRAWER_OPACITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE
@@ -230,6 +231,7 @@ class ESDEPreferencesManager(context: Context) {
             musicVolume = prefs.getInt(KEY_MUSIC_VOLUME, 100),
             musicUseSystemSpecific = prefs.getBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, true),
             musicLoopEnabled = prefs.getBoolean(KEY_MUSIC_LOOP_ENABLED, true),
+            musicIgnoreAudioFocus = prefs.getBoolean(KEY_MUSIC_IGNORE_AUDIO_FOCUS, false),
             appDrawerOpacity = prefs.getInt(KEY_APP_DRAWER_OPACITY, 100),
             marqueePressShortcut = marqueePressShortcut,
             marqueePressShortcutAppPackage = prefs.getString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, null),
@@ -480,6 +482,11 @@ class ESDEPreferencesManager(context: Context) {
     fun setMusicLoopEnabled(loopEnabled: Boolean) {
         _state.value = _state.value.copy(musicLoopEnabled = loopEnabled)
         prefs.edit { putBoolean(KEY_MUSIC_LOOP_ENABLED, loopEnabled) }
+    }
+
+    fun setMusicIgnoreAudioFocus(ignoreAudioFocus: Boolean) {
+        _state.value = _state.value.copy(musicIgnoreAudioFocus = ignoreAudioFocus)
+        prefs.edit { putBoolean(KEY_MUSIC_IGNORE_AUDIO_FOCUS, ignoreAudioFocus) }
     }
 
     fun setAppDrawerOpacity(opacity: Int) {

@@ -158,6 +158,7 @@ data class ESDEPrefsState(
     val musicVolume: Int = 100,
     val musicUseSystemSpecific: Boolean = true,
     val musicLoopEnabled: Boolean = true,
+    val musicIgnoreAudioFocus: Boolean = false,
     
     val appDrawerOpacity: Int = 100,
     

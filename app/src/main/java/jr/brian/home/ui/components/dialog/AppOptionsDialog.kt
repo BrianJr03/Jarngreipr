@@ -28,6 +28,7 @@ import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenuContent
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.components.apps.rememberAppOptionsMenuFocusRequesters
 import jr.brian.home.ui.theme.OledCardColor
 
@@ -68,7 +69,7 @@ fun AppOptionsDialog(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
-                        text = app.label,
+                        text = app.displayName(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.6f)
                     )

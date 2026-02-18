@@ -3,7 +3,9 @@ name: Build Release
 on:
   push:
     branches:
-      - dev  # Early access build on push to dev
+      - dev  # Early access build on push to dev — only when versionName changes
+    paths:
+      - 'app/build.gradle.kts'
   workflow_dispatch:
     inputs:
       create_release:
@@ -35,8 +37,42 @@ permissions:
   contents: write
 
 jobs:
+  version-check:
+    name: Check versionName Change
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to compare versionName
+
+      - name: Check if versionName changed
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger — skipping version check."
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          CURRENT=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          PREVIOUS=$(git show HEAD~1:app/build.gradle.kts 2>/dev/null | grep 'versionName' | head -1 | sed 's/.*"\(.*\)".*/\1/' || echo "")
+          echo "Current versionName:  $CURRENT"
+          echo "Previous versionName: $PREVIOUS"
+          if [ "$CURRENT" = "$PREVIOUS" ]; then
+            echo "versionName unchanged ($CURRENT) — skipping build."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "versionName bumped: $PREVIOUS → $CURRENT"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
   build-release:
     name: Build Release APK
+    needs: version-check
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -176,8 +212,8 @@ jobs:
 
   build-hidden:
     name: Build Hidden Release APK
-    needs: build-release
-    if: (github.event_name == 'workflow_dispatch' && inputs.build_hidden) || github.event_name == 'push'
+    needs: [version-check, build-release]
+    if: needs.version-check.outputs.changed == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.build_hidden) || github.event_name == 'push')
     uses: ./.github/workflows/build-hidden-release.yml
     with:
       release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || '' }}

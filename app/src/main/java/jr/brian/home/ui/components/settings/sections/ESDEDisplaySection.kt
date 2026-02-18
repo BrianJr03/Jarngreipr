@@ -265,6 +265,9 @@ fun ESDESettingsContent(
                 },
                 onMusicLoopEnabledChange = { loopEnabled ->
                     preferencesManager.setMusicLoopEnabled(loopEnabled)
+                },
+                onMusicIgnoreAudioFocusChange = { ignore ->
+                    preferencesManager.setMusicIgnoreAudioFocus(ignore)
                 }
             )
         }
