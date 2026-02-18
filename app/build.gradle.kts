@@ -75,7 +75,7 @@ android {
         val variant = this
         outputs.all {
             if (this is ApkVariantOutputImpl) {
-                outputFileName = "jarngreipr.${variant.versionName}.apk"
+                outputFileName = "jarngreipr-${variant.versionName}.apk"
             }
         }
     }
