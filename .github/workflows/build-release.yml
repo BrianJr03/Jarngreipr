@@ -142,10 +142,12 @@ jobs:
         run: |
           ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
+          DESC=$(printf "A new build is ready for early access supporters!\n\n**What's new:**\n%s\n\n**[⬇️ Download APKs](%s)** (normal + hidden)\n\n*Public release drops in 3 days.*" "$COMMIT_MSG" "$ARTIFACT_URL")
+
           PAYLOAD=$(jq -n \
             --arg content "<@&${SUPPORTER_ROLE_ID}>" \
             --arg title "🧤 Járngreipr Early Build — v${VERSION}" \
-            --arg desc "A new build is ready for early access supporters!\n\n**What's new:**\n${COMMIT_MSG}\n\n**[⬇️ Download APKs](${ARTIFACT_URL})** (normal + hidden)\n\n*Public release drops in 3 days.*" \
+            --arg desc "$DESC" \
             '{
               content: $content,
               embeds: [{

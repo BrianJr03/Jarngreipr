@@ -137,9 +137,11 @@ jobs:
         run: |
           RELEASE_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
 
+          DESC=$(printf "The build you got early is now live for everyone.\n\n[View Release](%s)" "$RELEASE_URL")
+
           PAYLOAD=$(jq -n \
             --arg title "🚀 Járngreipr v${VERSION} is now public!" \
-            --arg desc "The build you got early is now live for everyone.\n\n[View Release](${RELEASE_URL})" \
+            --arg desc "$DESC" \
             '{
               embeds: [{
                 title: $title,
