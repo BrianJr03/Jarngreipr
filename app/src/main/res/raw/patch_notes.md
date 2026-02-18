@@ -1,42 +1,21 @@
 ### What's New
+**Overlay Media Type Selector**
+- Choose which media to display for game logos: Marquees, 3D Boxes, Covers, Screenshots, Fanart, or MixImages
+- Falls back to marquees if selected type isn't available
 
-**Important Updates**
-- If you're using ES-DE mode, you can now drag a marquee to any position on the screen.
-  - In Marquee settings, chose Free Position as the logo alignment and long press a tab to unlock it's position!
-- You can now swipe up from any tab to open the app drawer!
-  - If your tab is scrollable, you can also go to Settings -> Layout -> App Drawer Button to toggle a FAB button per tab that will open the app drawer.
+**Logo Only Mode**
+- Show only the game/system logo with a transparent background, letting your system wallpaper show through
 
-**Video Playback**
-- Fixed video playback issues
-- Added new video player activity with scale mode selector (Fill Screen/Fit Video)
-- Added proper video lifecycle management
-- Improved video launch event handling
-- Better integration with power states
+**Wallpaper Toggle Shortcut**
+- Quick-switch button in the header to toggle between ES-DE and a chosen wallpaper target
+- Targets: System Wallpaper, Saved Image, Saved GIF, Saved Video, or Default
 
-**ES-DE Improvements**
-- Addressed photo loading delays when switching between games
-- Enhanced ES-DE settings screen with collapsible sections
-- Added marquee press shortcut functionality
-- Added marquee page visibility and overlay mode controls
-- Added separate marquee visibility toggles for system and game
-- Improved wallpaper container performance with memory-optimized ImageLoader
-- Added custom media path support
-- Added single image/logo path options for system and game
-- Added empty folder cleanup tool with systeminfo.txt handling
-- Fixed issues [#113](https://github.com/BrianJr03/Jarngreipr/issues/113) and [#114](https://github.com/BrianJr03/Jarngreipr/issues/114)
-- Added "All" and randomization options for image types
-- Added option to exclude effects from home screen
-- Added expanded logo alignment options (Top Left, Top Right, Bottom Left, Bottom Right, Free Position)
-- Added free-position marquee with drag-to-reposition support
-- Added marquee position lock toggle
-- Added marquee minimum width control for narrow/portrait images
-- Added Android Games background scale control
+**Saved Wallpapers**
+- Save an image, GIF, and video for quick reuse from the wallpaper selector and toggle shortcut
 
-**Bug Fixes**
-- Fixed MediaPlayer release timing issues
-- Improved error handling in music playback
-- Better handling of edge cases in folder cleanup
-- Fixed various dialog dimming inconsistencies
-- Improved video player lifecycle handling
+**ES-DE Settings Enhancements**
+- Path settings now show default paths instead of "Not set"
+- Logo position auto-locks when not using Free Position alignment
+- Renamed "Marquee" labels to "Logo" throughout settings
 
-1.7.3
+1.7.4

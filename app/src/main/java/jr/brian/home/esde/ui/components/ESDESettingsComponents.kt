@@ -38,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,14 +62,11 @@ import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.esde.preferences.ESDEPreferencesManager
+import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
-/**
- * Applies the standard ESDE settings card styling with focus-aware gradient background and border.
- * This includes scale animation, linear gradient background (focused vs unfocused colors),
- * and a border that appears when focused.
- */
 @Composable
 fun Modifier.focusableSettingCard(
     isFocused: Boolean,
@@ -357,7 +355,8 @@ fun PathSetting(
     currentPath: String?,
     defaultText: String,
     onSelectPath: () -> Unit,
-    onClearPath: () -> Unit
+    onClearPath: () -> Unit,
+    fallbackPath: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
@@ -440,9 +439,16 @@ fun PathSetting(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        val displayPath = currentPath ?: fallbackPath ?: defaultText
+        val pathColor = when {
+            currentPath != null -> ThemePrimaryColor
+            fallbackPath != null -> Color.Gray.copy(alpha = 0.8f)
+            else -> Color.Gray
+        }
+
         Text(
-            text = currentPath ?: defaultText,
-            color = if (currentPath != null) ThemePrimaryColor else Color.Gray,
+            text = displayPath,
+            color = pathColor,
             fontSize = 12.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -549,7 +555,6 @@ fun MarqueeSizeSetting(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Width control
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -684,6 +689,19 @@ fun MarqueeSizeSetting(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SyncLogoPositionLock(
+    esdePrefsState: ESDEPrefsState,
+    esdePrefsManager: ESDEPreferencesManager
+) {
+    val isLogoFreePosEnabled = esdePrefsState.isLogoFreePosEnabled()
+    LaunchedEffect(isLogoFreePosEnabled) {
+        if (!isLogoFreePosEnabled) {
+            esdePrefsManager.setLogoPositionLocked(true)
         }
     }
 }

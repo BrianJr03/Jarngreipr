@@ -21,6 +21,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ONLY_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_X
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_OFFSET_Y
 
@@ -69,6 +70,9 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BRO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_WALLPAPER_TOGGLE_TARGET
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -121,6 +125,12 @@ class ESDEPreferencesManager(context: Context) {
 
         val musicVideoBehaviorName = prefs.getString(KEY_MUSIC_VIDEO_BEHAVIOR, MusicVideoBehavior.Duck.value)
         val musicVideoBehavior = MusicVideoBehavior.fromValue(musicVideoBehaviorName ?: MusicVideoBehavior.Duck.value)
+
+        val overlayMediaTypeName = prefs.getString(KEY_OVERLAY_MEDIA_TYPE, OverlayMediaType.Marquees.name)
+        val overlayMediaType = OverlayMediaType.fromValue(overlayMediaTypeName ?: OverlayMediaType.Marquees.name)
+
+        val wallpaperToggleTargetName = prefs.getString(KEY_WALLPAPER_TOGGLE_TARGET, WallpaperToggleTarget.SystemWallpaper.name)
+        val wallpaperToggleTarget = WallpaperToggleTarget.fromName(wallpaperToggleTargetName ?: WallpaperToggleTarget.SystemWallpaper.name)
 
         val videoScaleModeName = prefs.getString(KEY_VIDEO_SCALE_MODE, VideoScaleMode.FillScreen.name)
         val videoScaleMode = try {
@@ -234,7 +244,11 @@ class ESDEPreferencesManager(context: Context) {
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
             marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
             androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
-            marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f)
+            marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f),
+            overlayMediaType = overlayMediaType,
+            logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
+            selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
+            wallpaperToggleTarget = wallpaperToggleTarget
         )
     }
 
@@ -491,10 +505,8 @@ class ESDEPreferencesManager(context: Context) {
     fun toggleMarqueePageVisibility(pageIndex: Int) {
         val hiddenPages = _state.value.marqueeHiddenPages
         val newPages = if (hiddenPages.contains(pageIndex)) {
-            // Currently hidden, remove from set to show
             hiddenPages - pageIndex
         } else {
-            // Currently visible, add to set to hide
             hiddenPages + pageIndex
         }
         
@@ -509,10 +521,8 @@ class ESDEPreferencesManager(context: Context) {
     fun toggleDescriptionOverlayPage(pageIndex: Int) {
         val enabledPages = _state.value.descriptionOverlayEnabledPages
         val newPages = if (enabledPages.contains(pageIndex)) {
-            // Currently enabled, remove from set to disable
             enabledPages - pageIndex
         } else {
-            // Currently disabled, add to set to enable
             enabledPages + pageIndex
         }
         
@@ -550,12 +560,12 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
     }
 
-    fun setShowMarqueeForSystem(show: Boolean) {
+    fun setShowLogoForSystem(show: Boolean) {
         _state.value = _state.value.copy(showMarqueeForSystem = show)
         prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, show) }
     }
 
-    fun setShowMarqueeForGame(show: Boolean) {
+    fun setShowLogoForGame(show: Boolean) {
         _state.value = _state.value.copy(showMarqueeForGame = show)
         prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_GAME, show) }
     }
@@ -565,13 +575,13 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, hide) }
     }
 
-    fun setMarqueePositionLocked(locked: Boolean) {
+    fun setLogoPositionLocked(locked: Boolean) {
         _state.value = _state.value.copy(marqueePositionLocked = locked)
         prefs.edit { putBoolean(KEY_MARQUEE_POSITION_LOCKED, locked) }
     }
 
-    fun toggleMarqueePositionLocked() {
-        setMarqueePositionLocked(!_state.value.marqueePositionLocked)
+    fun toggleLogoPositionLocked() {
+        setLogoPositionLocked(!_state.value.marqueePositionLocked)
     }
 
     fun setAndroidGamesBackgroundScale(scale: Float) {
@@ -584,5 +594,25 @@ class ESDEPreferencesManager(context: Context) {
         val coercedPercent = percent.coerceIn(0.3f, 1.0f)
         _state.value = _state.value.copy(marqueeMinWidthPercent = coercedPercent)
         prefs.edit { putFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, coercedPercent) }
+    }
+
+    fun setOverlayMediaType(type: OverlayMediaType) {
+        _state.value = _state.value.copy(overlayMediaType = type)
+        prefs.edit { putString(KEY_OVERLAY_MEDIA_TYPE, type.name) }
+    }
+
+    fun setLogoOnlyMode(enabled: Boolean) {
+        _state.value = _state.value.copy(logoOnlyMode = enabled)
+        prefs.edit { putBoolean(KEY_LOGO_ONLY_MODE, enabled) }
+    }
+
+    fun setSelectButtonWallpaperToggle(enabled: Boolean) {
+        _state.value = _state.value.copy(selectButtonWallpaperToggle = enabled)
+        prefs.edit { putBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, enabled) }
+    }
+
+    fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
+        _state.value = _state.value.copy(wallpaperToggleTarget = target)
+        prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
     }
 }

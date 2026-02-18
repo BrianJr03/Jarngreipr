@@ -4,23 +4,49 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
@@ -36,14 +62,12 @@ import jr.brian.home.esde.ui.sections.ScreensaverSectionContent
 import jr.brian.home.esde.ui.sections.VideoSectionContent
 import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import kotlinx.coroutines.launch
 
-/**
- * Shared ESDE settings content used by both ESDEDisplaySection and ESDESettingsScreen.
- * Contains all file pickers, state management, dialogs, and section content.
- */
 @Composable
 fun ESDESettingsContent(
     onRunSetupWizard: () -> Unit = {},
@@ -198,6 +222,28 @@ fun ESDESettingsContent(
             onClick = onRunSetupWizard
         )
 
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_select_wallpaper_toggle),
+            description = stringResource(R.string.esde_settings_select_wallpaper_toggle_description),
+            checked = prefsState.selectButtonWallpaperToggle,
+            onCheckedChange = { enabled ->
+                preferencesManager.setSelectButtonWallpaperToggle(enabled)
+            }
+        )
+
+        AnimatedVisibility(
+            visible = prefsState.selectButtonWallpaperToggle,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            WallpaperToggleTargetSelector(
+                selectedTarget = prefsState.wallpaperToggleTarget,
+                onTargetSelected = { target ->
+                    preferencesManager.setWallpaperToggleTarget(target)
+                }
+            )
+        }
+
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_animation)) {
             AnimationSectionContent(
                 prefsState = prefsState,
@@ -324,13 +370,19 @@ fun ESDESettingsContent(
                     preferencesManager.toggleDescriptionOverlayPage(pageIndex)
                 },
                 onShowMarqueeForSystemChange = { show ->
-                    preferencesManager.setShowMarqueeForSystem(show)
+                    preferencesManager.setShowLogoForSystem(show)
                 },
                 onShowMarqueeForGameChange = { show ->
-                    preferencesManager.setShowMarqueeForGame(show)
+                    preferencesManager.setShowLogoForGame(show)
                 },
                 onMarqueeMinWidthPercentChange = { percent ->
                     preferencesManager.setMarqueeMinWidthPercent(percent)
+                },
+                onOverlayMediaTypeChange = { type ->
+                    preferencesManager.setOverlayMediaType(type)
+                },
+                onMarqueeOnlyModeChange = { enabled ->
+                    preferencesManager.setLogoOnlyMode(enabled)
                 }
             )
         }
@@ -466,6 +518,91 @@ fun ESDEDisplaySection(
         ESDESettingsContent(
             onRunSetupWizard = onRunSetupWizard,
             onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut
+        )
+    }
+}
+
+@Composable
+private fun WallpaperToggleTargetSelector(
+    selectedTarget: WallpaperToggleTarget,
+    onTargetSelected: (WallpaperToggleTarget) -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                color = Color.White.copy(alpha = 0.05f),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .padding(16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.esde_settings_wallpaper_toggle_target),
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            WallpaperToggleTarget.entries.forEach { target ->
+                WallpaperToggleTargetChip(
+                    target = target,
+                    isSelected = target == selectedTarget,
+                    onClick = { onTargetSelected(target) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WallpaperToggleTargetChip(
+    target: WallpaperToggleTarget,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .height(40.dp)
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                color = when {
+                    isSelected -> ThemePrimaryColor.copy(alpha = 0.7f)
+                    isFocused -> ThemePrimaryColor.copy(alpha = 0.3f)
+                    else -> Color.White.copy(alpha = 0.1f)
+                },
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = if (isSelected || isFocused) 1.dp else 0.dp,
+                color = if (isSelected) ThemePrimaryColor else Color.White.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = target.displayName,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
