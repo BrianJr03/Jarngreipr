@@ -81,6 +81,15 @@ interface MusicController {
     fun onActivityVisible()
 
     /**
+     * Called when activity resumes (onResume).
+     *
+     * Handles recovery from permanent audio focus loss (e.g., after Spotify
+     * played via a widget/notification without leaving the app). Re-requests
+     * audio focus and resumes music if it was interrupted by another app.
+     */
+    fun onActivityResumed()
+
+    /**
      * Called when activity becomes invisible (onStop, device sleep).
      *
      * Music will pause and track that it should resume when visible again.

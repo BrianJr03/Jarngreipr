@@ -8,6 +8,7 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.MusicVideoBehavior
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
@@ -333,29 +334,51 @@ class MusicManager(
     }
 
     override fun onActivityVisible() {
-        android.util.Log.d(TAG, "━━━ ACTIVITY VISIBLE ━━━")
+        Log.d(TAG, "━━━ ACTIVITY VISIBLE ━━━")
         isActivityVisible = true
 
         // Check if music is enabled before resuming
         val musicEnabled = prefsManager.state.value.musicEnabled
         if (!musicEnabled) {
-            android.util.Log.d(TAG, "Music disabled - not resuming")
+            Log.d(TAG, "Music disabled - not resuming")
             wasMusicPlayingBeforeInvisible = false
+            wasPausedByAudioFocusLoss = false
             return
         }
 
         // Resume music if it was playing before visibility was lost
         if (wasMusicPlayingBeforeInvisible) {
-            android.util.Log.d(TAG, "Resuming music (was playing before invisible)")
+            Log.d(TAG, "Resuming music (was playing before invisible)")
+            wasMusicPlayingBeforeInvisible = false
+            wasPausedByAudioFocusLoss = false
 
             // Restart the music source that was playing
             if (currentMusicSource != null) {
-                android.util.Log.d(TAG, "Restarting music from source: $currentMusicSource")
+                Log.d(TAG, "Restarting music from source: $currentMusicSource")
                 startMusic(currentMusicSource!!)
             } else {
-                android.util.Log.d(TAG, "No music source to resume")
+                Log.d(TAG, "No music source to resume")
                 isMusicPlaying = false
             }
+        } else if (wasPausedByAudioFocusLoss) {
+            // Music was interrupted by another app (e.g., Spotify) while activity was visible
+            // Now that the user has returned, try to reclaim audio focus and resume
+            Log.d(TAG, "Resuming music after audio focus loss (activity now visible)")
+            tryResumeAfterAudioFocusLoss()
+        }
+    }
+
+    override fun onActivityResumed() {
+        Log.d(TAG, "━━━ ACTIVITY RESUMED ━━━")
+
+        if (!isActivityVisible) return
+        if (!isMusicEnabled()) return
+
+        // If music was paused because another app took audio focus (e.g., Spotify via widget),
+        // try to reclaim focus and resume now that the user has interacted with our app again
+        if (wasPausedByAudioFocusLoss) {
+            Log.d(TAG, "Attempting to resume music after audio focus loss (onResume)")
+            tryResumeAfterAudioFocusLoss()
         }
     }
 
@@ -458,6 +481,32 @@ class MusicManager(
         // We don't have focus and weren't paused by focus loss - safe to start fresh
         android.util.Log.d(TAG, "isOtherAudioPlaying: false (no focus conflict)")
         return false
+    }
+
+    private fun tryResumeAfterAudioFocusLoss() {
+        wasPausedByAudioFocusLoss = false
+
+        val player = musicPlayer
+        if (player != null) {
+            // Player still exists — try to re-request focus and resume
+            if (requestAudioFocus()) {
+                Log.d(TAG, "Re-acquired audio focus, resuming playback")
+                try {
+                    player.start()
+                    isMusicPlaying = true
+                    fadeVolume(0f, getNormalVolume(), DUCK_FADE_DURATION)
+                } catch (e: IllegalStateException) {
+                    Log.w(TAG, "Player in bad state, restarting from source")
+                    currentMusicSource?.let { startMusic(it) }
+                }
+            } else {
+                Log.d(TAG, "Could not re-acquire audio focus")
+            }
+        } else if (currentMusicSource != null) {
+            // Player was released — restart from scratch
+            Log.d(TAG, "Player released, restarting music from source: $currentMusicSource")
+            startMusic(currentMusicSource!!)
+        }
     }
 
     private fun startMusic(source: MusicSource) {
