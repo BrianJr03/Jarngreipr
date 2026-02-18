@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -261,6 +262,18 @@ private fun SettingsContent(
                     title = stringResource(id = R.string.settings_buy_me_coffee_title),
                     description = stringResource(id = R.string.settings_buy_me_coffee_description),
                     icon = Icons.Default.Coffee,
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                    },
+                )
+            }
+
+            item(key = "kofi") {
+                val url = stringResource(R.string.settings_kofi_url)
+                SettingItem(
+                    title = stringResource(id = R.string.settings_kofi_title),
+                    description = stringResource(id = R.string.settings_kofi_description),
+                    icon = Icons.Default.Favorite,
                     onClick = {
                         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                     },
