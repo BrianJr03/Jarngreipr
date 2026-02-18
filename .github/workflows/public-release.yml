@@ -131,7 +131,7 @@ jobs:
       - name: Notify Discord of public release
         if: steps.check.outputs.should_release == 'true'
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PUBLIC_WEBHOOK_URL }}
           VERSION: ${{ steps.version.outputs.version_name }}
           REPO: ${{ github.repository }}
         run: |
