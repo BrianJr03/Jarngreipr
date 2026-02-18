@@ -4,11 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -221,28 +216,6 @@ fun ESDESettingsContent(
             showToggle = false,
             onClick = onRunSetupWizard
         )
-
-        ToggleSetting(
-            title = stringResource(R.string.esde_settings_select_wallpaper_toggle),
-            description = stringResource(R.string.esde_settings_select_wallpaper_toggle_description),
-            checked = prefsState.selectButtonWallpaperToggle,
-            onCheckedChange = { enabled ->
-                preferencesManager.setSelectButtonWallpaperToggle(enabled)
-            }
-        )
-
-        AnimatedVisibility(
-            visible = prefsState.selectButtonWallpaperToggle,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            WallpaperToggleTargetSelector(
-                selectedTarget = prefsState.wallpaperToggleTarget,
-                onTargetSelected = { target ->
-                    preferencesManager.setWallpaperToggleTarget(target)
-                }
-            )
-        }
 
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_animation)) {
             AnimationSectionContent(
@@ -523,7 +496,7 @@ fun ESDEDisplaySection(
 }
 
 @Composable
-private fun WallpaperToggleTargetSelector(
+internal fun WallpaperToggleTargetSelector(
     selectedTarget: WallpaperToggleTarget,
     onTargetSelected: (WallpaperToggleTarget) -> Unit
 ) {
@@ -567,7 +540,7 @@ private fun WallpaperToggleTargetSelector(
 }
 
 @Composable
-private fun WallpaperToggleTargetChip(
+internal fun WallpaperToggleTargetChip(
     target: WallpaperToggleTarget,
     isSelected: Boolean,
     onClick: () -> Unit,
