@@ -66,6 +66,7 @@ import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -444,7 +445,7 @@ fun AppDrawerTab(
     dockAppOptionsDialogState.item?.let { appInfo ->
         if (dockAppOptionsDialogState.isVisible) {
             AppOptionsMenu(
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                     appInfo.packageName
                 ),

@@ -69,6 +69,7 @@ import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.AppName
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -370,7 +371,7 @@ fun FolderContentsDialog(
     appForCustomIcon?.let { app ->
         CustomIconDialog(
             packageName = app.packageName,
-            appLabel = app.label,
+            appLabel = app.displayName(),
             onDismiss = { appForCustomIcon = null },
             onIconChanged = { }
         )

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,6 +45,7 @@ fun SearchAppOptionsMenuContent(
     currentDisplayPreference: DisplayPreference,
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
+    onRenameClick: () -> Unit = {},
     hasExternalDisplay: Boolean,
     focusRequesters: List<FocusRequester>,
     onFocusedIndexChange: (Int) -> Unit,
@@ -62,6 +64,15 @@ fun SearchAppOptionsMenuContent(
             )
         )
 
+        add(
+            GridItem.IconItem(
+                icon = Icons.Default.Edit,
+                label = stringResource(R.string.app_options_rename),
+                onClick = onRenameClick,
+                index = 1
+            )
+        )
+
         if (hasExternalDisplay) {
             add(
                 GridItem.TextItem(
@@ -71,7 +82,7 @@ fun SearchAppOptionsMenuContent(
                         onDismiss()
                     },
                     isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                    index = 1
+                    index = 2
                 )
             )
             add(
@@ -82,7 +93,7 @@ fun SearchAppOptionsMenuContent(
                         onDismiss()
                     },
                     isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                    index = 2
+                    index = 3
                 )
             )
         }
@@ -289,7 +300,7 @@ fun rememberSearchAppOptionsFocusRequesters(
     hasExternalDisplay: Boolean
 ): List<FocusRequester> {
     return remember(hasExternalDisplay) {
-        val count = if (hasExternalDisplay) 3 else 1
+        val count = if (hasExternalDisplay) 4 else 2
         List(count) { FocusRequester() }
     }
 }

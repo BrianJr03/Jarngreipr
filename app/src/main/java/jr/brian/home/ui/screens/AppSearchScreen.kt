@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +47,7 @@ import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
+import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
 import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
@@ -53,6 +55,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
@@ -69,15 +72,19 @@ fun AppSearchScreen(
     val isHorizontalLayout = searchLayoutManager.isHorizontalLayout
     val hasCompletedOnboarding = searchLayoutManager.hasCompletedOnboarding
     var showOnboarding by remember { mutableStateOf(!hasCompletedOnboarding) }
+    val customAppNameManager = LocalCustomAppNameManager.current
+    val customNames by customAppNameManager.customNames.collectAsStateWithLifecycle()
 
     BackHandler(onBack = onDismiss)
 
-    val filteredApps = remember(allApps, searchQuery) {
+    val filteredApps = remember(allApps, searchQuery, customNames) {
         if (searchQuery.isBlank()) {
             allApps
         } else {
             allApps.filter { app ->
-                app.label.contains(searchQuery, ignoreCase = true)
+                val customName = customNames[app.packageName]
+                app.label.contains(searchQuery, ignoreCase = true) ||
+                    customName?.contains(searchQuery, ignoreCase = true) == true
             }
         }
     }
@@ -216,6 +223,7 @@ private fun AppGrid(
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
@@ -273,7 +281,19 @@ private fun AppGrid(
                     preference
                 )
             },
+            onRenameClick = {
+                appForRename = app
+                selectedApp = null
+            },
             hasExternalDisplay = hasExternalDisplay
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
         )
     }
 }
@@ -287,6 +307,7 @@ private fun HorizontalAppGrid(
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
@@ -344,7 +365,19 @@ private fun HorizontalAppGrid(
                     preference
                 )
             },
+            onRenameClick = {
+                appForRename = app
+                selectedApp = null
+            },
             hasExternalDisplay = hasExternalDisplay
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
         )
     }
 }

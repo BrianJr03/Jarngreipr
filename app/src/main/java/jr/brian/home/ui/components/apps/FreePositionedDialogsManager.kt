@@ -11,6 +11,7 @@ import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.util.DialogState
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +91,7 @@ fun FreePositionedDialogsManager(
         if (customIconDialogState.isVisible) {
             CustomIconDialog(
                 packageName = appInfo.packageName,
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 onDismiss = customIconDialogState::dismiss
             )
         }

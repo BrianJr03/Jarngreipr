@@ -458,6 +458,10 @@ fun ESDESettingsContent(
                 onHideUIForGameBrowsingChange = { hide ->
                     preferencesManager.setHideUIForGameBrowsing(hide)
                 },
+                musicIgnoreAudioFocus = prefsState.musicIgnoreAudioFocus,
+                onMusicIgnoreAudioFocusChange = { ignore ->
+                    preferencesManager.setMusicIgnoreAudioFocus(ignore)
+                },
                 folderPaths = cleanupFolderPaths.toList(),
                 onAddFolder = {
                     cleanupFolderPicker.launch(null)
