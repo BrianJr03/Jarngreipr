@@ -374,8 +374,6 @@ fun AppDrawerTab(
         )
 
         if (appDrawerOptionsDialogState.isVisible) {
-            val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-
             AppsTabOptionsDialog(
                 onDismiss = appDrawerOptionsDialogState::dismiss,
                 onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -383,10 +381,8 @@ fun AppDrawerTab(
                 isDragLocked = true,
                 onToggleDragLock = { },
                 title = stringResource(R.string.app_drawer_tab_options_title),
-                isLogoPositionLocked = if (esdePrefsState.isLogoFreePosEnabled()) esdePrefsState.marqueePositionLocked else true,
-                onToggleMarqueePositionLock = if (isEsdeMode && esdePrefsState.isLogoFreePosEnabled()) {
-                    { esdePrefsManager.toggleLogoPositionLocked() }
-                } else null
+                isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+                onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() }
             )
         }
 
