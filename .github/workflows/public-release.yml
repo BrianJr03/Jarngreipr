@@ -19,6 +19,7 @@ jobs:
       should_release: ${{ steps.check.outputs.should_release }}
       commit_sha: ${{ steps.check.outputs.commit_sha }}
       version_name: ${{ steps.version.outputs.version_name }}
+      release_exists: ${{ steps.release_check.outputs.exists }}
 
     steps:
       - name: Checkout code
@@ -74,15 +75,30 @@ jobs:
           echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "Extracted version: ${VERSION_NAME}"
 
-      - name: Decode Keystore
+      - name: Check if release already exists
         if: steps.check.outputs.should_release == 'true'
+        id: release_check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version_name }}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing release for $TAG, proceeding."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Decode Keystore
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
 
       - name: Build signed release APK
-        if: steps.check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -96,7 +112,7 @@ jobs:
             --stacktrace
 
       - name: Rename APK
-        if: steps.check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         id: rename
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
@@ -107,7 +123,7 @@ jobs:
 
       # Creates a public GitHub Release with the APK attached
       - name: Create public GitHub Release
-        if: steps.check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version_name }}
@@ -129,7 +145,7 @@ jobs:
 
       # Let Discord know the build is now public
       - name: Notify Discord of public release
-        if: steps.check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PUBLIC_WEBHOOK_URL }}
           VERSION: ${{ steps.version.outputs.version_name }}
@@ -165,7 +181,7 @@ jobs:
   build-hidden:
     name: Build Hidden Release APK
     needs: check-and-release
-    if: needs.check-and-release.outputs.should_release == 'true'
+    if: needs.check-and-release.outputs.should_release == 'true' && needs.check-and-release.outputs.release_exists != 'true'
     uses: ./.github/workflows/build-hidden-release.yml
     with:
       release_tag: v${{ needs.check-and-release.outputs.version_name }}
