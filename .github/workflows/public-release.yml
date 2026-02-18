@@ -27,28 +27,37 @@ jobs:
         with:
           fetch-depth: 0  # Full history so we can check commit dates
 
-      # Find commits on dev from exactly 3 days ago
+      # Find early access tags from exactly 3 days ago
       - name: Check for a release due today
         id: check
         run: |
           THREE_DAYS_AGO=$(date -d '3 days ago' +'%Y-%m-%d')
-          echo "Looking for commits from $THREE_DAYS_AGO..."
+          echo "Looking for early access tags from $THREE_DAYS_AGO..."
 
-          # Get the latest commit SHA from 3 days ago on dev
-          COMMIT=$(git log origin/dev --after="${THREE_DAYS_AGO}T00:00:00" \
-                                      --before="${THREE_DAYS_AGO}T23:59:59" \
-                                      --format="%H" | head -1)
+          # Find early/* tags created 3 days ago
+          FOUND_TAG=""
+          FOUND_COMMIT=""
+          for TAG in $(git tag -l 'early/*'); do
+            TAG_DATE=$(git log -1 --format='%ai' "$TAG" | cut -d' ' -f1)
+            if [ "$TAG_DATE" = "$THREE_DAYS_AGO" ]; then
+              FOUND_TAG="$TAG"
+              FOUND_COMMIT=$(git rev-list -n 1 "$TAG")
+              echo "Found matching tag: $TAG (commit $FOUND_COMMIT, date $TAG_DATE)"
+              break
+            fi
+          done
 
-          if [ -z "$COMMIT" ]; then
-            echo "No release due today."
+          if [ -z "$FOUND_TAG" ]; then
+            echo "No early access tag from $THREE_DAYS_AGO found."
             echo "should_release=false" >> $GITHUB_OUTPUT
           else
-            echo "Release due for commit $COMMIT"
+            echo "Release due for tag $FOUND_TAG"
             echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "commit_sha=$COMMIT" >> $GITHUB_OUTPUT
+            echo "commit_sha=$FOUND_COMMIT" >> $GITHUB_OUTPUT
+            echo "early_tag=$FOUND_TAG" >> $GITHUB_OUTPUT
           fi
 
-      - name: Checkout the 3-day-old commit
+      - name: Checkout the early access commit
         if: steps.check.outputs.should_release == 'true'
         run: git checkout ${{ steps.check.outputs.commit_sha }}
 
@@ -172,6 +181,11 @@ jobs:
                -X POST \
                -d "$PAYLOAD" \
                "${DISCORD_WEBHOOK_URL}"
+
+      - name: Cleanup early access tag
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        run: |
+          git push origin --delete "${{ steps.check.outputs.early_tag }}" || true
 
       - name: Cleanup keystore
         if: always()
