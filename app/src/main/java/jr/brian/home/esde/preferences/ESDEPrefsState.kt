@@ -73,10 +73,10 @@ enum class BackgroundScaleMode {
 }
 
 enum class WallpaperToggleTarget(val displayName: String) {
-    SystemWallpaper("System Wallpaper"),
-    SavedImage("Saved Image"),
-    SavedGif("Saved GIF"),
-    SavedVideo("Saved Video"),
+    SystemWallpaper("Wallpaper"),
+    SavedImage("Image"),
+    SavedGif("GIF"),
+    SavedVideo("Video"),
     Default("Default");
 
     companion object {
