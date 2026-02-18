@@ -67,11 +67,6 @@ import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
-/**
- * Applies the standard ESDE settings card styling with focus-aware gradient background and border.
- * This includes scale animation, linear gradient background (focused vs unfocused colors),
- * and a border that appears when focused.
- */
 @Composable
 fun Modifier.focusableSettingCard(
     isFocused: Boolean,
@@ -444,10 +439,6 @@ fun PathSetting(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Determine display text and color:
-        // - If custom path is set: show it in primary color
-        // - If no custom path but fallback exists: show fallback in gray (indicates default)
-        // - Otherwise: show defaultText in gray
         val displayPath = currentPath ?: fallbackPath ?: defaultText
         val pathColor = when {
             currentPath != null -> ThemePrimaryColor
@@ -702,10 +693,6 @@ fun MarqueeSizeSetting(
     }
 }
 
-/**
- * Syncs the logo position lock state based on whether Free Position mode is enabled.
- * When Free Position is disabled, the position is forced to locked.
- */
 @Composable
 fun SyncLogoPositionLock(
     esdePrefsState: ESDEPrefsState,

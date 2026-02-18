@@ -6,21 +6,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import java.io.File
 
 private const val PREFS_NAME = "launcher_prefs"
 private const val KEY_WALLPAPER = "selected_wallpaper"
 private const val KEY_WALLPAPER_TYPE = "wallpaper_type"
+private const val KEY_SAVED_IMAGE_URI = "saved_image_uri"
+private const val KEY_SAVED_GIF_URI = "saved_gif_uri"
+private const val KEY_SAVED_VIDEO_URI = "saved_video_uri"
 const val WALLPAPER_TRANSPARENT = "TRANSPARENT"
 const val WALLPAPER_ESDE = "ESDE"
 
 class WallpaperManager(
     private val context: Context,
 ) {
+    private val prefs get() = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    var savedImageUri by mutableStateOf(prefs.getString(KEY_SAVED_IMAGE_URI, null))
+        private set
+
+    var savedGifUri by mutableStateOf(prefs.getString(KEY_SAVED_GIF_URI, null))
+        private set
+
+    var savedVideoUri by mutableStateOf(prefs.getString(KEY_SAVED_VIDEO_URI, null))
+        private set
+
     var currentWallpaper by mutableStateOf(loadWallpaper())
         private set
 
     private fun loadWallpaper(): WallpaperInfo {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val uri = prefs.getString(KEY_WALLPAPER, null)
         val typeString = prefs.getString(KEY_WALLPAPER_TYPE, WallpaperType.NONE.name)
         val type = try {
@@ -29,11 +43,8 @@ class WallpaperManager(
             WallpaperType.NONE
         }
 
-        // Check URI accessibility for image/video types (skip for TRANSPARENT/ESDE/NONE)
         if (uri != null && type != WallpaperType.NONE && type != WallpaperType.TRANSPARENT && type != WallpaperType.ESDE) {
             if (!isUriAccessible(uri)) {
-                // Don't call clearWallpaper() here to avoid circular initialization
-                // Just clear the prefs and return default
                 prefs.edit {
                     remove(KEY_WALLPAPER)
                     remove(KEY_WALLPAPER_TYPE)
@@ -56,7 +67,6 @@ class WallpaperManager(
 
     fun setWallpaper(uri: String?, type: WallpaperType) {
         currentWallpaper = WallpaperInfo(uri, type)
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit {
             if (uri != null) {
                 putString(KEY_WALLPAPER, uri)
@@ -80,15 +90,55 @@ class WallpaperManager(
         setWallpaper(null, WallpaperType.NONE)
     }
 
+    fun updateSavedImageUri(uri: String?) {
+        savedImageUri = uri
+        prefs.edit {
+            if (uri != null) putString(KEY_SAVED_IMAGE_URI, uri) else remove(KEY_SAVED_IMAGE_URI)
+        }
+    }
+
+    fun updateSavedGifUri(uri: String?) {
+        savedGifUri = uri
+        prefs.edit {
+            if (uri != null) putString(KEY_SAVED_GIF_URI, uri) else remove(KEY_SAVED_GIF_URI)
+        }
+    }
+
+    fun updateSavedVideoUri(uri: String?) {
+        savedVideoUri = uri
+        prefs.edit {
+            if (uri != null) putString(KEY_SAVED_VIDEO_URI, uri) else remove(KEY_SAVED_VIDEO_URI)
+        }
+    }
+
+    fun getSavedUriForType(type: WallpaperType): String? {
+        return when (type) {
+            WallpaperType.IMAGE -> savedImageUri
+            WallpaperType.GIF -> savedGifUri
+            WallpaperType.VIDEO -> savedVideoUri
+            else -> null
+        }
+    }
+
     fun clearWallpaper() {
         try {
-            val wallpaperDir = java.io.File(context.filesDir, "wallpapers")
+            val wallpaperDir = File(context.filesDir, "wallpapers")
             if (wallpaperDir.exists()) {
                 wallpaperDir.listFiles()?.forEach { it.delete() }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        prefs.edit {
+            remove(KEY_SAVED_IMAGE_URI)
+            remove(KEY_SAVED_GIF_URI)
+            remove(KEY_SAVED_VIDEO_URI)
+        }
+        savedImageUri = null
+        savedGifUri = null
+        savedVideoUri = null
+
         setWallpaper(null, WallpaperType.NONE)
     }
 

@@ -77,6 +77,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.util.MediaPickerLauncher
 
 @Composable
@@ -219,10 +220,30 @@ fun DrawerOptionsDialog(
                                 icon = Icons.Default.SwapHoriz,
                                 contentDescription = stringResource(R.string.header_wallpaper_toggle),
                                 onClick = {
-                                    when (wallpaperManager.getWallpaperType()) {
-                                        WallpaperType.ESDE -> wallpaperManager.setTransparent()
-                                        WallpaperType.TRANSPARENT -> wallpaperManager.setESDE()
-                                        else -> wallpaperManager.setESDE()
+                                    val currentType = wallpaperManager.getWallpaperType()
+                                    val target = esdePrefsState.wallpaperToggleTarget
+                                    if (currentType == WallpaperType.ESDE) {
+                                        when (target) {
+                                            WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
+                                            WallpaperToggleTarget.SavedImage -> {
+                                                val uri = wallpaperManager.savedImageUri
+                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.IMAGE)
+                                                else wallpaperManager.setTransparent()
+                                            }
+                                            WallpaperToggleTarget.SavedGif -> {
+                                                val uri = wallpaperManager.savedGifUri
+                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.GIF)
+                                                else wallpaperManager.setTransparent()
+                                            }
+                                            WallpaperToggleTarget.SavedVideo -> {
+                                                val uri = wallpaperManager.savedVideoUri
+                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.VIDEO)
+                                                else wallpaperManager.setTransparent()
+                                            }
+                                            WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
+                                        }
+                                    } else {
+                                        wallpaperManager.setESDE()
                                     }
                                     onDismiss()
                                 }
@@ -379,7 +400,14 @@ private fun WallpaperOptionsSection(
                     modifier = Modifier.weight(1f),
                     title = stringResource(R.string.wallpaper_grid_image),
                     onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/*"))
+                        val savedUri = wallpaperManager.savedImageUri
+                        if (savedUri != null) {
+                            wallpaperManager.setWallpaper(savedUri, WallpaperType.IMAGE)
+                            onBack()
+                            onDismiss()
+                        } else {
+                            mediaPickerLauncher.launch(arrayOf("image/*"))
+                        }
                     }
                 )
             }
@@ -392,7 +420,14 @@ private fun WallpaperOptionsSection(
                     modifier = Modifier.weight(1f),
                     title = stringResource(R.string.wallpaper_grid_gif),
                     onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/gif"))
+                        val savedUri = wallpaperManager.savedGifUri
+                        if (savedUri != null) {
+                            wallpaperManager.setWallpaper(savedUri, WallpaperType.GIF)
+                            onBack()
+                            onDismiss()
+                        } else {
+                            mediaPickerLauncher.launch(arrayOf("image/gif"))
+                        }
                     }
                 )
 
@@ -400,7 +435,14 @@ private fun WallpaperOptionsSection(
                     modifier = Modifier.weight(1f),
                     title = stringResource(R.string.wallpaper_grid_video),
                     onClick = {
-                        mediaPickerLauncher.launch(arrayOf("video/*"))
+                        val savedUri = wallpaperManager.savedVideoUri
+                        if (savedUri != null) {
+                            wallpaperManager.setWallpaper(savedUri, WallpaperType.VIDEO)
+                            onBack()
+                            onDismiss()
+                        } else {
+                            mediaPickerLauncher.launch(arrayOf("video/*"))
+                        }
                     }
                 )
 

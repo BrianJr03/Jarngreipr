@@ -72,6 +72,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_WALLPAPER_TOGGLE_TARGET
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 
 class ESDEPreferencesManager(context: Context) {
@@ -127,6 +128,9 @@ class ESDEPreferencesManager(context: Context) {
 
         val overlayMediaTypeName = prefs.getString(KEY_OVERLAY_MEDIA_TYPE, OverlayMediaType.Marquees.name)
         val overlayMediaType = OverlayMediaType.fromValue(overlayMediaTypeName ?: OverlayMediaType.Marquees.name)
+
+        val wallpaperToggleTargetName = prefs.getString(KEY_WALLPAPER_TOGGLE_TARGET, WallpaperToggleTarget.SystemWallpaper.name)
+        val wallpaperToggleTarget = WallpaperToggleTarget.fromName(wallpaperToggleTargetName ?: WallpaperToggleTarget.SystemWallpaper.name)
 
         val videoScaleModeName = prefs.getString(KEY_VIDEO_SCALE_MODE, VideoScaleMode.FillScreen.name)
         val videoScaleMode = try {
@@ -243,7 +247,8 @@ class ESDEPreferencesManager(context: Context) {
             marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f),
             overlayMediaType = overlayMediaType,
             logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
-            selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false)
+            selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
+            wallpaperToggleTarget = wallpaperToggleTarget
         )
     }
 
@@ -500,10 +505,8 @@ class ESDEPreferencesManager(context: Context) {
     fun toggleMarqueePageVisibility(pageIndex: Int) {
         val hiddenPages = _state.value.marqueeHiddenPages
         val newPages = if (hiddenPages.contains(pageIndex)) {
-            // Currently hidden, remove from set to show
             hiddenPages - pageIndex
         } else {
-            // Currently visible, add to set to hide
             hiddenPages + pageIndex
         }
         
@@ -518,10 +521,8 @@ class ESDEPreferencesManager(context: Context) {
     fun toggleDescriptionOverlayPage(pageIndex: Int) {
         val enabledPages = _state.value.descriptionOverlayEnabledPages
         val newPages = if (enabledPages.contains(pageIndex)) {
-            // Currently enabled, remove from set to disable
             enabledPages - pageIndex
         } else {
-            // Currently disabled, add to set to enable
             enabledPages + pageIndex
         }
         
@@ -608,5 +609,10 @@ class ESDEPreferencesManager(context: Context) {
     fun setSelectButtonWallpaperToggle(enabled: Boolean) {
         _state.value = _state.value.copy(selectButtonWallpaperToggle = enabled)
         prefs.edit { putBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, enabled) }
+    }
+
+    fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
+        _state.value = _state.value.copy(wallpaperToggleTarget = target)
+        prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
     }
 }

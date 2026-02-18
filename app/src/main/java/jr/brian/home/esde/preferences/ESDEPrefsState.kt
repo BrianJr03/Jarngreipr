@@ -5,9 +5,6 @@ import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.animation.AnimationStyle
 import jr.brian.home.model.Shortcut
 
-/**
- * Defines the preferred media type for system background images
- */
 enum class SystemImageType(val folderName: String?) {
     None(null),
     All(null),
@@ -16,15 +13,11 @@ enum class SystemImageType(val folderName: String?) {
     TitleScreens("titlescreens");
 
     companion object {
-        /** Returns all types that have actual media folders (excludes None and All) */
         fun randomizableTypes(): List<SystemImageType> =
             entries.filter { it.folderName != null }
     }
 }
 
-/**
- * Defines the preferred media type for game background images
- */
 enum class GameImageType(val folderName: String?) {
     None(null),
     All(null),
@@ -36,15 +29,11 @@ enum class GameImageType(val folderName: String?) {
     Description(null);
 
     companion object {
-        /** Returns all types that have actual media folders (excludes None and All) */
         fun randomizableTypes(): List<GameImageType> =
             entries.filter { it.folderName != null }
     }
 }
 
-/**
- * Defines the alignment position for the system logo
- */
 enum class LogoAlignment {
     TopLeft,
     Top,
@@ -56,19 +45,11 @@ enum class LogoAlignment {
     FreePosition
 }
 
-/**
- * Defines the behavior of the companion screen when ES-DE screensaver is active
- */
 enum class ScreensaverBehavior {
-    /** Show companion content with screensaver game artwork */
     ShowContent,
-    /** Power off screen - shows clock and battery info */
     PowerOff
 }
 
-/**
- * Defines the behavior of music when a video starts playing
- */
 enum class MusicVideoBehavior(val value: String) {
     Continue("continue"),
     Duck("duck"),
@@ -81,29 +62,30 @@ enum class MusicVideoBehavior(val value: String) {
     }
 }
 
-/**
- * Defines how videos are scaled to fit the screen
- */
 enum class VideoScaleMode {
-    /** Fill the screen, cropping edges if necessary */
     FillScreen,
-    /** Fit the entire video, showing black bars on unused areas */
     FitVideo
 }
 
-/**
- * Defines how background images are scaled to fit the screen
- */
 enum class BackgroundScaleMode {
-    /** Crop to fill the screen (zoomed effect) */
     Crop,
-    /** Fit the entire image, showing background color in unused areas */
     Fit
 }
 
-/**
- * Defines the media type to use for the overlay (marquee/logo) display
- */
+enum class WallpaperToggleTarget(val displayName: String) {
+    SystemWallpaper("System Wallpaper"),
+    SavedImage("Saved Image"),
+    SavedGif("Saved GIF"),
+    SavedVideo("Saved Video"),
+    Default("Default");
+
+    companion object {
+        fun fromName(name: String): WallpaperToggleTarget {
+            return entries.find { it.name == name } ?: SystemWallpaper
+        }
+    }
+}
+
 enum class OverlayMediaType(val folderName: String, val displayName: String) {
     Marquees("marquees", "Marquees"),
     ThreeDBoxes("3dboxes", "3D Boxes"),
@@ -196,7 +178,8 @@ data class ESDEPrefsState(
     
     val overlayMediaType: OverlayMediaType = OverlayMediaType.Marquees,
     val logoOnlyMode: Boolean = false,
-    val selectButtonWallpaperToggle: Boolean = false
+    val selectButtonWallpaperToggle: Boolean = false,
+    val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
@@ -204,10 +187,6 @@ data class ESDEPrefsState(
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     val systemBackgroundDimmingFloat: Float get() = systemBackgroundDimming / 100f
     
-    /**
-     * Check if marquee should be visible on a specific page.
-     * Page is visible if NOT in the hidden set.
-     */
     fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
         return !marqueeHiddenPages.contains(pageIndex)
     }
