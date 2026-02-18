@@ -9,4 +9,7 @@
 - Fixed touch inputs registering as presses while scrolling in settings, search, and dialogs
 - Scrollable lists now use scroll-safe haptic feedback
 
+**Background Music**
+- Fixed issue where system browsing music didn't restart after returning to app when music was played from another source
+
 1.7.6
