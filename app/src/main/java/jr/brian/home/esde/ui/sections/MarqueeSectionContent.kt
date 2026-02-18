@@ -16,9 +16,11 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.preferences.OverlayMediaType
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
 import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
+import jr.brian.home.esde.ui.components.OverlayMediaTypeSelector
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.model.PageType
@@ -37,9 +39,20 @@ fun MarqueeSectionContent(
     onToggleDescriptionOverlayPage: (Int) -> Unit,
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
     onShowMarqueeForGameChange: (Boolean) -> Unit,
-    onMarqueeMinWidthPercentChange: (Float) -> Unit
+    onMarqueeMinWidthPercentChange: (Float) -> Unit,
+    onOverlayMediaTypeChange: (OverlayMediaType) -> Unit,
+    onMarqueeOnlyModeChange: (Boolean) -> Unit = {}
 ) {
     val pageCount = pageTypes.size
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_marquee_only_mode),
+        description = stringResource(R.string.esde_settings_marquee_only_mode_description),
+        checked = prefsState.logoOnlyMode,
+        onCheckedChange = { enabled ->
+            onMarqueeOnlyModeChange(enabled)
+        }
+    )
 
     LogoAlignmentSelector(
         selectedAlignment = prefsState.logoAlignment,
@@ -48,14 +61,21 @@ fun MarqueeSectionContent(
         }
     )
 
+    OverlayMediaTypeSelector(
+        selectedType = prefsState.overlayMediaType,
+        onTypeSelected = { type ->
+            onOverlayMediaTypeChange(type)
+        }
+    )
+
     MarqueeSizeSetting(
-        title = stringResource(R.string.esde_settings_logo_size),
-        description = stringResource(R.string.esde_settings_logo_size_description),
+        title = stringResource(R.string.esde_settings_marquee_size),
+        description = stringResource(R.string.esde_settings_marquee_size_description),
         width = prefsState.marqueeWidth,
         height = prefsState.marqueeHeight,
-        widthLabel = stringResource(R.string.esde_settings_logo_width),
-        heightLabel = stringResource(R.string.esde_settings_logo_height),
-        resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
+        widthLabel = stringResource(R.string.esde_settings_marquee_width),
+        heightLabel = stringResource(R.string.esde_settings_marquee_height),
+        resetLabel = stringResource(R.string.esde_settings_marquee_size_reset),
         onWidthChange = onMarqueeWidthChange,
         onHeightChange = onMarqueeHeightChange,
         onReset = onMarqueeSizeReset

@@ -103,12 +103,14 @@ fun ESDEWallpaperContainer(
     val effectiveDimmingLevel =
         if (excludeEffectsFromHome && isOnHomePage) 0f else state.dimmingLevel
 
-    val backgroundColor = if (wallpaperType == WallpaperType.TRANSPARENT) {
-        Color.Transparent
-    } else {
-        state.backgroundColor
+    val logoOnlyMode = prefsState.logoOnlyMode
+    val backgroundColor = when {
+        wallpaperType == WallpaperType.TRANSPARENT -> Color.Transparent
+        logoOnlyMode -> Color.Transparent
+        else -> state.backgroundColor
     }
     val showEsdeContent = wallpaperType == WallpaperType.ESDE
+    val showEsdeBackground = showEsdeContent && !logoOnlyMode
 
     val isDescriptionOverlayEnabled = prefsState.isDescriptionOverlayOnPage(currentPageIndex)
     val showDescription = showEsdeContent && isDescriptionOverlayEnabled
@@ -155,7 +157,7 @@ fun ESDEWallpaperContainer(
                 }
             )
     ) {
-        if (showEsdeContent) {
+        if (showEsdeBackground) {
             val backgroundScaleMode = if (state.isShowingGameBackground) {
                 prefsState.gameBackgroundScaleMode
             } else {
@@ -195,7 +197,7 @@ fun ESDEWallpaperContainer(
             )
             }
 
-            if (!state.isScreensaverActive && !state.isGameRunning) {
+            if (!state.isScreensaverActive && !state.isGameRunning && !logoOnlyMode) {
                 DimmingOverlay(alpha = effectiveDimmingLevel)
             }
         }
@@ -274,7 +276,7 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showEsdeContent && (state.isGameRunning || state.isScreensaverActive)) {
+        if (showEsdeBackground && (state.isGameRunning || state.isScreensaverActive)) {
             DimmingOverlay(alpha = effectiveDimmingLevel)
         }
     }

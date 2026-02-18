@@ -21,6 +21,7 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_IMAGE_TYPE = "system_image_type"
     const val KEY_GAME_IMAGE_TYPE = "game_image_type"
     const val KEY_SHOW_SYSTEM_LOGO = "show_system_logo"
+    const val KEY_LOGO_ONLY_MODE = "logo_only_mode"
     const val KEY_LOGO_ALIGNMENT = "logo_alignment"
     const val KEY_LOGO_OFFSET_X = "logo_offset_x"
     const val KEY_LOGO_OFFSET_Y = "logo_offset_y"
@@ -66,4 +67,7 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_POSITION_LOCKED = "marquee_position_locked"
     const val KEY_ANDROID_GAMES_BACKGROUND_SCALE = "android_games_background_scale"
     const val KEY_MARQUEE_MIN_WIDTH_PERCENT = "marquee_min_width_percent"
+    const val KEY_OVERLAY_MEDIA_TYPE = "overlay_media_type"
+    const val KEY_SELECT_BUTTON_WALLPAPER_TOGGLE = "select_button_wallpaper_toggle"
+    const val KEY_WALLPAPER_TOGGLE_TARGET = "wallpaper_toggle_target"
 }

@@ -16,6 +16,7 @@ import jr.brian.home.esde.music.MusicController
 import jr.brian.home.esde.music.MusicManager
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.GameImageType
+import jr.brian.home.esde.preferences.OverlayMediaType
 import jr.brian.home.esde.preferences.ScreensaverBehavior
 import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.setup.SetupPreferences
@@ -145,7 +146,6 @@ class ESDEViewModel @Inject constructor(
 
         val prefsState = prefs.state.value
 
-        // Check for single system image/video first (takes priority over everything)
         val singlePath = prefsState.singleSystemImagePath
         if (singlePath != null) {
             val isVideo = isVideoPath(singlePath)
@@ -173,7 +173,6 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         val lastSystem = prefsState.lastSelectedSystem
 
-        // Check for single system image/video first (takes priority)
         val singlePath = prefsState.singleSystemImagePath
         val initialPath = when {
             singlePath != null -> singlePath
@@ -270,14 +269,12 @@ class ESDEViewModel @Inject constructor(
 
         musicController.onGameSelected(systemName, gameFilename)
 
-        // Only schedule video if enabled
         if (prefs.state.value.videoEnabled) {
             scheduleVideoPlayback(systemName, gameFilename)
         }
     }
 
     private fun scheduleVideoPlayback(systemName: String, gameFilename: String) {
-        // Don't schedule video if a game is currently running
         if (_wallpaperState.value.isGameRunning) {
             Log.d(TAG, "Not scheduling video - game is currently running")
             return
@@ -342,7 +339,6 @@ class ESDEViewModel @Inject constructor(
     fun setLauncherActive(active: Boolean) {
         isLauncherActive = active
         if (!active) {
-            // Cancel any pending video when leaving the launcher
             cancelPendingVideo()
         }
     }
@@ -447,10 +443,8 @@ class ESDEViewModel @Inject constructor(
         val prefsState = prefs.state.value
         val systemImageType = prefsState.systemImageType
         val useRandom = prefsState.randomSystemImage
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
-        // Check for single system image first (takes priority over image type)
         val singleImagePath = prefsState.singleSystemImagePath
         if (singleImagePath != null) {
             if (singleImagePath.startsWith("content://")) {
@@ -567,7 +561,6 @@ class ESDEViewModel @Inject constructor(
 
     private fun getSystemLogoPath(systemName: String): String? {
         val prefsState = prefs.state.value
-        // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val mediaSystemName = getMediaSystemName(systemName)
 
         val singleLogoPath = prefsState.singleSystemLogoPath
@@ -711,18 +704,41 @@ class ESDEViewModel @Inject constructor(
 
         val nameOnly = File(gameFilename).nameWithoutExtension
 
+        // Get the selected overlay media type from preferences
+        val overlayMediaType = prefsState.overlayMediaType
+        val primaryFolder = overlayMediaType.folderName
+
+        // Helper to check file existence for a given folder path
+        fun checkFile(path: String): String? {
+            val f = File(mediaPath, path)
+            return if (f.exists()) f.absolutePath else null
+        }
+
+        // Try the primary selected media folder first
         for (name in listOf(systemName, mediaSystemName).distinct()) {
             for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                val file = File(mediaPath, "$name/$FOLDER_MARQUEES/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
+                checkFile("$name/$primaryFolder/$nameOnly.$ext")?.let { return it }
+                // Also check for .scummvm suffix (for ScummVM games)
+                checkFile("$name/$primaryFolder/$nameOnly.scummvm.$ext")?.let { return it }
             }
         }
 
+        // If not found and using non-default folder, fall back to marquees
+        if (overlayMediaType != OverlayMediaType.Marquees) {
+            for (name in listOf(systemName, mediaSystemName).distinct()) {
+                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.$ext")?.let { return it }
+                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.scummvm.$ext")?.let { return it }
+                }
+            }
+        }
+
+        // Fall back to wheel directories
         for (dir in MARQUEE_FALLBACK_DIRS) {
             for (name in listOf(systemName, mediaSystemName).distinct()) {
                 for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                    val file = File(mediaPath, "$name/$dir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
+                    checkFile("$name/$dir/$nameOnly.$ext")?.let { return it }
+                    checkFile("$name/$dir/$nameOnly.scummvm.$ext")?.let { return it }
                 }
             }
         }

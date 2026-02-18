@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -70,7 +69,7 @@ fun AppsAndWidgetsOptionsDialog(
     onToggleEditMode: () -> Unit,
     isEditModeActive: Boolean = false,
     isEmpty: Boolean = false,
-    isMarqueePositionLocked: Boolean = false,
+    isLogoPositionLocked: Boolean = false,
     onToggleMarqueePositionLock: (() -> Unit)? = null
 ) {
     DimmedDialog(
@@ -184,12 +183,12 @@ fun AppsAndWidgetsOptionsDialog(
                 if (onToggleMarqueePositionLock != null) {
                     GridOptionButton(
                         modifier = Modifier.fillMaxWidth(),
-                        title = if (isMarqueePositionLocked) {
+                        title = if (isLogoPositionLocked) {
                             stringResource(R.string.marquee_position_unlock)
                         } else {
                             stringResource(R.string.marquee_position_lock)
                         },
-                        icon = if (isMarqueePositionLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                        icon = if (isLogoPositionLocked) Icons.Default.LockOpen else Icons.Default.Lock,
                         onClick = {
                             onDismiss()
                             onToggleMarqueePositionLock()

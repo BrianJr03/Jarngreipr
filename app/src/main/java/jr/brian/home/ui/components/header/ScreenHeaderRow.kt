@@ -10,6 +10,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SdStorage
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,10 +39,15 @@ import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.PowerViewModel
 
@@ -70,13 +76,19 @@ fun ScreenHeaderRow(
     pageIndicatorBorderColor: Color = ThemePrimaryColor,
     onNavigateToSearch: () -> Unit = {}
 ) {
-    val powerSettingsManager = jr.brian.home.ui.theme.managers.LocalPowerSettingsManager.current
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val esdePreferencesManager = LocalESDEPreferencesManager.current
+    val wallpaperManager = LocalWallpaperManager.current
+    val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     val showFolder by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
     var isLeadingFocused by remember { mutableStateOf(false) }
     var isFolderFocused by remember { mutableStateOf(false) }
+    var isWallpaperToggleFocused by remember { mutableStateOf(false) }
     var isPowerFocused by remember { mutableStateOf(false) }
     var isTrailingFocused by remember { mutableStateOf(false) }
     val folderIconFocusRequester = remember { FocusRequester() }
+    val wallpaperToggleFocusRequester = remember { FocusRequester() }
     val powerIconFocusRequester = remember { FocusRequester() }
     val homeTabDialogState = rememberDialogState<Unit>()
     val homeTabManager = LocalHomeTabManager.current
@@ -261,12 +273,74 @@ fun ScreenHeaderRow(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            if (showWallpaperToggle) {
+                val wallpaperToggleAction = {
+                    val currentType = wallpaperManager.getWallpaperType()
+                    val target = esdePrefsState.wallpaperToggleTarget
+                    if (currentType == WallpaperType.ESDE) {
+                        when (target) {
+                            WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
+                            WallpaperToggleTarget.SavedImage -> {
+                                val uri = wallpaperManager.savedImageUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.IMAGE)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.SavedGif -> {
+                                val uri = wallpaperManager.savedGifUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.GIF)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.SavedVideo -> {
+                                val uri = wallpaperManager.savedVideoUri
+                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.VIDEO)
+                                else wallpaperManager.setTransparent()
+                            }
+                            WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
+                        }
+                    } else {
+                        wallpaperManager.setESDE()
+                    }
+                }
+
+                IconBox(
+                    isFocused = isWallpaperToggleFocused,
+                    modifier = Modifier.handleFullNavigation(
+                        onNavigateLeft = onNavigateFromGrid,
+                        onNavigateRight = {
+                            if (showPowerButton) {
+                                powerIconFocusRequester.requestFocus()
+                            } else {
+                                trailingIconFocusRequester?.requestFocus()
+                            }
+                        },
+                        onNavigateDown = onNavigateToGrid,
+                        onEnterPress = wallpaperToggleAction
+                    ),
+                    focusRequester = wallpaperToggleFocusRequester,
+                    onFocusChanged = { isWallpaperToggleFocused = it },
+                    onClick = wallpaperToggleAction
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = stringResource(R.string.header_wallpaper_toggle),
+                        tint = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .rotate(animatedRotation(isWallpaperToggleFocused))
+                    )
+                }
+
+                Spacer(modifier = Modifier.size(16.dp))
+            }
+
             if (showPowerButton && powerViewModel != null) {
                 IconBox(
                     isFocused = isPowerFocused,
                     modifier = Modifier.handleFullNavigation(
                         onNavigateLeft = {
-                            if (showFolder) {
+                            if (showWallpaperToggle) {
+                                wallpaperToggleFocusRequester.requestFocus()
+                            } else if (showFolder) {
                                 folderIconFocusRequester.requestFocus()
                             } else {
                                 onNavigateFromGrid()
@@ -307,6 +381,8 @@ fun ScreenHeaderRow(
                             onNavigateLeft = {
                                 if (showPowerButton) {
                                     powerIconFocusRequester.requestFocus()
+                                } else if (showWallpaperToggle) {
+                                    wallpaperToggleFocusRequester.requestFocus()
                                 } else {
                                     onNavigateFromGrid()
                                 }
