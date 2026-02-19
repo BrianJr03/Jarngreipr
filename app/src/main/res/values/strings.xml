@@ -876,6 +876,7 @@
     <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
     <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and logo visible when a game is launched</string>
     <string name="esde_settings_persist_background_brightness">Background Brightness</string>
+    <string name="esde_settings_persist_logo_brightness">Logo Brightness</string>
     <string name="esde_settings_marquee_brightness">Logo Brightness</string>
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
