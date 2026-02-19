@@ -421,6 +421,7 @@ private fun BoxScope.AnimatedLogo(
 
     val bubbleScale = 1f - (pagerScrollProgress * 0.3f)
     val bubbleAlpha = 1f - (pagerScrollProgress * 0.4f)
+    val effectiveLogoAlpha = bubbleAlpha * state.logoBrightness
 
     var isDragging by remember { mutableStateOf(false) }
     var dragOffsetX by remember { mutableFloatStateOf(freeOffsetX) }
@@ -521,11 +522,11 @@ private fun BoxScope.AnimatedLogo(
                 modifier = Modifier
                     .sizeIn(
                         minWidth = minWidth,
-                        maxWidth = state.marqueeWidth.dp, 
+                        maxWidth = state.marqueeWidth.dp,
                         maxHeight = state.marqueeHeight.dp
                     )
                     .scale(bubbleScale)
-                    .graphicsLayer { alpha = bubbleAlpha },
+                    .graphicsLayer { alpha = effectiveLogoAlpha },
                 animate = isUsingDefaultBackground,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,

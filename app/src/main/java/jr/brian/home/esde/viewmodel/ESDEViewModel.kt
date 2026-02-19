@@ -349,9 +349,11 @@ class ESDEViewModel @Inject constructor(
         currentGameFilename = null
         musicController.onGameStarted()
         if (prefs.state.value.persistOnGameLaunch) {
+            val backgroundDimming = 1f - prefs.state.value.persistBackgroundBrightnessFloat
             _wallpaperState.value = _wallpaperState.value.copy(
                 isGameRunning = true,
-                dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat
+                dimmingLevel = backgroundDimming,
+                logoBrightness = prefs.state.value.persistLogoBrightnessFloat
             )
         } else {
             _wallpaperState.value = _wallpaperState.value.copy(
@@ -372,7 +374,8 @@ class ESDEViewModel @Inject constructor(
             isGameRunning = false,
             isVideoPlaying = false,
             videoPath = null,
-            dimmingLevel = dimmingLevel
+            dimmingLevel = dimmingLevel,
+            logoBrightness = 1f
         )
         musicController.onGameEnded()
     }

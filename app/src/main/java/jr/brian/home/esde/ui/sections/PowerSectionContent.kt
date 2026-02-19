@@ -1,8 +1,11 @@
 package jr.brian.home.esde.ui.sections
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.esde.ui.components.SliderSetting
@@ -13,6 +16,8 @@ fun PowerSectionContent(
     prefsState: ESDEPrefsState,
     onPersistOnGameLaunchChange: (Boolean) -> Unit,
     onGameBackgroundDimmingChange: (Int) -> Unit,
+    onPersistBackgroundBrightnessChange: (Int) -> Unit,
+    onPersistLogoBrightnessChange: (Int) -> Unit,
     onPowerEventsEnabledChange: (Boolean) -> Unit
 ) {
     ToggleSetting(
@@ -25,16 +30,42 @@ fun PowerSectionContent(
     )
 
     AnimatedVisibility(prefsState.persistOnGameLaunch) {
-        SliderSetting(
-            title = stringResource(R.string.esde_settings_game_background_dimming),
-            value = prefsState.gameBackgroundDimming.toFloat(),
-            valueRange = 0f..70f,
-            steps = 13,
-            valueText = "${prefsState.gameBackgroundDimming}%",
-            onValueChange = { dimming ->
-                onGameBackgroundDimmingChange(dimming.toInt())
-            }
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SliderSetting(
+                title = stringResource(R.string.esde_settings_game_background_dimming),
+                value = prefsState.gameBackgroundDimming.toFloat(),
+                valueRange = 0f..70f,
+                steps = 13,
+                valueText = "${prefsState.gameBackgroundDimming}%",
+                onValueChange = { dimming ->
+                    onGameBackgroundDimmingChange(dimming.toInt())
+                }
+            )
+
+            SliderSetting(
+                title = stringResource(R.string.esde_settings_persist_background_brightness),
+                value = prefsState.persistBackgroundBrightness.toFloat(),
+                valueRange = 30f..100f,
+                steps = 13,
+                valueText = "${prefsState.persistBackgroundBrightness}%",
+                onValueChange = { brightness ->
+                    onPersistBackgroundBrightnessChange(brightness.toInt())
+                }
+            )
+
+            SliderSetting(
+                title = stringResource(R.string.esde_settings_persist_logo_brightness),
+                value = prefsState.persistLogoBrightness.toFloat(),
+                valueRange = 30f..100f,
+                steps = 13,
+                valueText = "${prefsState.persistLogoBrightness}%",
+                onValueChange = { brightness ->
+                    onPersistLogoBrightnessChange(brightness.toInt())
+                }
+            )
+        }
     }
 
     ToggleSetting(

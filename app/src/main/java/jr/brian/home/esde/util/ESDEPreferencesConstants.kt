@@ -28,6 +28,8 @@ object ESDEPreferencesConstants {
     const val KEY_RANDOM_SYSTEM_IMAGE = "random_system_image"
     const val KEY_POWER_EVENTS_ENABLED = "power_events_enabled"
     const val KEY_PERSIST_ON_GAME_LAUNCH = "persist_on_game_launch"
+    const val KEY_PERSIST_BACKGROUND_BRIGHTNESS = "persist_background_brightness"
+    const val KEY_PERSIST_LOGO_BRIGHTNESS = "persist_logo_brightness"
     const val KEY_CUSTOM_SYSTEM_LOGOS_PATH = "custom_system_logos_path"
     const val KEY_CUSTOM_SYSTEM_IMAGES_PATH = "custom_system_images_path"
     const val KEY_SINGLE_SYSTEM_IMAGE_PATH = "single_system_image_path"

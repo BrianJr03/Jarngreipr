@@ -131,6 +131,8 @@ data class ESDEPrefsState(
     val randomSystemImage: Boolean = false,
     val powerEventsEnabled: Boolean = true,
     val persistOnGameLaunch: Boolean = false,
+    val persistBackgroundBrightness: Int = 80,
+    val persistLogoBrightness: Int = 100,
     val customSystemLogosPath: String? = null,
     val customSystemImagesPath: String? = null,
     val singleSystemImagePath: String? = null,
@@ -187,6 +189,8 @@ data class ESDEPrefsState(
     val musicVolumeFloat: Float get() = musicVolume / 100f
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     val systemBackgroundDimmingFloat: Float get() = systemBackgroundDimming / 100f
+    val persistBackgroundBrightnessFloat: Float get() = persistBackgroundBrightness / 100f
+    val persistLogoBrightnessFloat: Float get() = persistLogoBrightness / 100f
     
     fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
         return !marqueeHiddenPages.contains(pageIndex)
