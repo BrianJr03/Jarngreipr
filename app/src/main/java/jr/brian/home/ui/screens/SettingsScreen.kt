@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import androidx.core.net.toUri
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.UpdateAvailableDialog
+import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.components.dialog.NotificationAccessDialog
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
@@ -72,6 +74,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
+import jr.brian.home.util.PatchNotesUtil
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_APPEARANCE
@@ -106,6 +109,7 @@ fun SettingsScreen(
     
     val updateDialogState = rememberDialogState<UpdateInfo>()
     val notificationAccessDialogState = rememberDialogState<Unit>()
+    val whatsNewDialogState = rememberDialogState<Unit>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
     
     val currentVersionName = remember {
@@ -147,6 +151,7 @@ fun SettingsScreen(
                     onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
+                    onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -207,6 +212,23 @@ fun SettingsScreen(
                     }
                 )
             }
+
+            if (whatsNewDialogState.isVisible) {
+                var patchNotes by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(Unit) {
+                    patchNotes = PatchNotesUtil.fetchPatchNotesWithFallback(
+                        context = context,
+                        currentVersionName = currentVersionName,
+                    )
+                }
+                patchNotes?.let { notes ->
+                    WhatsNewDialog(
+                        versionName = currentVersionName,
+                        patchNotes = notes,
+                        onDismiss = whatsNewDialogState::dismiss
+                    )
+                }
+            }
         }
     }
 }
@@ -228,6 +250,7 @@ private fun SettingsContent(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     isCheckingForUpdates: Boolean = false,
     onNotificationBadgeClick: () -> Unit = {},
+    onWhatsNewClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
@@ -388,7 +411,8 @@ private fun SettingsContent(
             item(key = SECTION_EXTRAS) {
                 ExtrasSection(
                     isExpanded = expandedSection == SECTION_EXTRAS,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_EXTRAS) null else SECTION_EXTRAS }
+                    onToggle = { expandedSection = if (expandedSection == SECTION_EXTRAS) null else SECTION_EXTRAS },
+                    onWhatsNewClick = onWhatsNewClick
                 )
             }
         }

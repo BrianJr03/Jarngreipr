@@ -15,9 +15,8 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 fun PowerSectionContent(
     prefsState: ESDEPrefsState,
     onPersistOnGameLaunchChange: (Boolean) -> Unit,
-    onGameBackgroundDimmingChange: (Int) -> Unit,
-    onPersistBackgroundBrightnessChange: (Int) -> Unit,
     onPersistLogoBrightnessChange: (Int) -> Unit,
+    onPersistBackgroundBrightnessChange: (Int) -> Unit,
     onPowerEventsEnabledChange: (Boolean) -> Unit
 ) {
     ToggleSetting(
@@ -34,13 +33,13 @@ fun PowerSectionContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SliderSetting(
-                title = stringResource(R.string.esde_settings_game_background_dimming),
-                value = prefsState.gameBackgroundDimming.toFloat(),
-                valueRange = 0f..70f,
+                title = stringResource(R.string.esde_settings_persist_logo_brightness),
+                value = prefsState.persistLogoBrightness.toFloat(),
+                valueRange = 30f..100f,
                 steps = 13,
-                valueText = "${prefsState.gameBackgroundDimming}%",
-                onValueChange = { dimming ->
-                    onGameBackgroundDimmingChange(dimming.toInt())
+                valueText = "${prefsState.persistLogoBrightness}%",
+                onValueChange = { brightness ->
+                    onPersistLogoBrightnessChange(brightness.toInt())
                 }
             )
 
@@ -48,21 +47,10 @@ fun PowerSectionContent(
                 title = stringResource(R.string.esde_settings_persist_background_brightness),
                 value = prefsState.persistBackgroundBrightness.toFloat(),
                 valueRange = 30f..100f,
-                steps = 10,
+                steps = 13,
                 valueText = "${prefsState.persistBackgroundBrightness}%",
                 onValueChange = { brightness ->
                     onPersistBackgroundBrightnessChange(brightness.toInt())
-                }
-            )
-
-            SliderSetting(
-                title = stringResource(R.string.esde_settings_persist_logo_brightness),
-                value = prefsState.persistLogoBrightness.toFloat(),
-                valueRange = 30f..100f,
-                steps = 10,
-                valueText = "${prefsState.persistLogoBrightness}%",
-                onValueChange = { brightness ->
-                    onPersistLogoBrightnessChange(brightness.toInt())
                 }
             )
         }

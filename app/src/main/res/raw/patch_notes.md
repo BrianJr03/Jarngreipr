@@ -1,15 +1,7 @@
-### What's New
+**Persist Display on Game Launch**
+- Added Logo Brightness slider (30–100%)
+- Added Background Brightness slider (30–100%)
 
-**Screensaver Music Toggle**
-- Fixed screensaver music not stopping when toggled off
+**See What's New in Settings -> Extras**
 
-**Icon Pack Refresh**
-- Fixed icon packs requiring app restart to apply
-
-**Logo Position Lock**
-- Fixed logo moving with app drawer on center and top positions when locked
-
-**Display Options Fix**
-- Fixed display preference options not showing in app menu
-
-1.7.7
+1.8

@@ -372,14 +372,11 @@ fun ESDESettingsContent(
                         preferencesManager.setPowerEventsEnabled(false)
                     }
                 },
-                onGameBackgroundDimmingChange = { dimming ->
-                    preferencesManager.setGameBackgroundDimming(dimming)
+                onPersistLogoBrightnessChange = { brightness ->
+                    preferencesManager.setPersistLogoBrightness(brightness)
                 },
                 onPersistBackgroundBrightnessChange = { brightness ->
                     preferencesManager.setPersistBackgroundBrightness(brightness)
-                },
-                onPersistLogoBrightnessChange = { brightness ->
-                    preferencesManager.setPersistLogoBrightness(brightness)
                 },
                 onPowerEventsEnabledChange = { enabled ->
                     preferencesManager.setPowerEventsEnabled(enabled)
