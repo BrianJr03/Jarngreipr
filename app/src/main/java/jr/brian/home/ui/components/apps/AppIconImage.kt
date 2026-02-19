@@ -20,6 +20,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import jr.brian.home.data.CustomIconManager
+import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import java.io.File
 
@@ -36,21 +37,23 @@ fun AppIconImage(
     val iconShapeManager = LocalIconShapeManager.current
     val resolvedShape = shape ?: iconShapeManager.iconShape.toComposeShape()
     val context = LocalContext.current
+    val iconPackManager = LocalIconPackManager.current
     val customIconsMap by customIconManager?.customIconsMap?.collectAsStateWithLifecycle(
         initialValue = emptyMap()
     )
         ?: remember { mutableStateOf(emptyMap()) }
+    val selectedIconPack by iconPackManager.selectedIconPack.collectAsStateWithLifecycle(
+        initialValue = null
+    )
 
     val customIconPath = customIconsMap[packageName]
+
+    val iconCacheKey = "${packageName}_${selectedIconPack ?: "default"}"
 
     val gifImageLoader = remember {
         ImageLoader.Builder(context)
             .components {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    add(ImageDecoderDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
+                add(ImageDecoderDecoder.Factory())
             }.build()
     }
 
@@ -82,8 +85,8 @@ fun AppIconImage(
                 model = ImageRequest.Builder(context)
                     .data(defaultIcon)
                     .crossfade(true)
-                    .memoryCacheKey(packageName)
-                    .placeholderMemoryCacheKey(packageName)
+                    .memoryCacheKey(iconCacheKey)
+                    .placeholderMemoryCacheKey(iconCacheKey)
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),

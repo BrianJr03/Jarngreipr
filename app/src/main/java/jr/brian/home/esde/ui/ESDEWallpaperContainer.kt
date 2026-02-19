@@ -121,8 +121,8 @@ fun ESDEWallpaperContainer(
         prefsState.showMarqueeForSystem
     }
 
-    val showMarquee = showEsdeContent &&
-            state.marqueePath != null &&
+    val showLogo = showEsdeContent &&
+            state.logoPath != null &&
             marqueeEnabledForContext
 
     val logoAlignment = when (prefsState.logoAlignment) {
@@ -138,7 +138,7 @@ fun ESDEWallpaperContainer(
 
     val isFreePosition = prefsState.logoAlignment == LogoAlignment.FreePosition
     val isMarqueeDraggable = isFreePosition && !prefsState.marqueePositionLocked
-    val useAnimatedMarquee = !prefsState.marqueePositionLocked
+    val useAnimatedLogo = !prefsState.marqueePositionLocked
 
     Box(
         modifier = modifier
@@ -202,9 +202,9 @@ fun ESDEWallpaperContainer(
             }
         }
 
-        if (showMarquee && !useAnimatedMarquee) {
-            AnimatedMarquee(
-                marqueePath = state.marqueePath,
+        if (showLogo && !useAnimatedLogo) {
+            AnimatedLogo(
+                logoPath = state.logoPath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
@@ -213,6 +213,8 @@ fun ESDEWallpaperContainer(
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
+
+                isPositionLocked = prefsState.marqueePositionLocked,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
@@ -222,9 +224,9 @@ fun ESDEWallpaperContainer(
 
         content()
 
-        if (showMarquee && useAnimatedMarquee) {
-            AnimatedMarquee(
-                marqueePath = state.marqueePath,
+        if (showLogo && useAnimatedLogo) {
+            AnimatedLogo(
+                logoPath = state.logoPath,
                 hideMarquee = hideMarquee,
                 logoAlignment = logoAlignment,
                 state = state,
@@ -233,6 +235,7 @@ fun ESDEWallpaperContainer(
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
+                isPositionLocked = prefsState.marqueePositionLocked,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
@@ -397,8 +400,8 @@ private fun DimmingOverlay(alpha: Float) {
 }
 
 @Composable
-private fun BoxScope.AnimatedMarquee(
-    marqueePath: String?,
+private fun BoxScope.AnimatedLogo(
+    logoPath: String?,
     hideMarquee: Boolean,
     logoAlignment: Alignment,
     state: WallpaperState,
@@ -407,6 +410,7 @@ private fun BoxScope.AnimatedMarquee(
     dockTopY: Float?,
     isFreePosition: Boolean = false,
     isDraggable: Boolean = false,
+    isPositionLocked: Boolean = false,
     freeOffsetX: Float = 0f,
     freeOffsetY: Float = 0f,
     onOffsetChange: ((Float, Float) -> Unit)? = null,
@@ -433,7 +437,7 @@ private fun BoxScope.AnimatedMarquee(
         val screenHeightPx = with(density) { maxHeight.toPx() }
         val screenWidthPx = with(density) { maxWidth.toPx() }
 
-        val verticalOffsetDp = if (dockTopY != null && !isFreePosition) {
+        val verticalOffsetDp = if (dockTopY != null && !isFreePosition && !isPositionLocked) {
             val centerY = dockTopY / 2f
             val marqueeTargetY = when (logoAlignment) {
                 Alignment.TopCenter -> dockTopY * 0.25f
@@ -446,7 +450,7 @@ private fun BoxScope.AnimatedMarquee(
             0.dp
         }
 
-        val finalAlignment = if (dockTopY != null || isFreePosition) {
+        val finalAlignment = if ((dockTopY != null && !isPositionLocked) || isFreePosition) {
             Alignment.Center
         } else {
             logoAlignment
@@ -513,7 +517,7 @@ private fun BoxScope.AnimatedMarquee(
         ) {
             val minWidth = (state.marqueeWidth * minWidthPercent).dp
             MarqueeImage(
-                marqueePath = marqueePath,
+                marqueePath = logoPath,
                 modifier = Modifier
                     .sizeIn(
                         minWidth = minWidth,

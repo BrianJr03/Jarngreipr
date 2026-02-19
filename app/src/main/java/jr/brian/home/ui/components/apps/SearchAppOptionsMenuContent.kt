@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
@@ -39,6 +40,7 @@ import jr.brian.home.model.GridItem
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.util.rememberAutoFocus
 
 @Composable
 fun SearchAppOptionsMenuContent(
@@ -47,124 +49,101 @@ fun SearchAppOptionsMenuContent(
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onRenameClick: () -> Unit = {},
     hasExternalDisplay: Boolean,
-    focusRequesters: List<FocusRequester>,
-    onFocusedIndexChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val gridItems = buildList {
-        add(
-            GridItem.IconItem(
-                icon = Icons.Default.Info,
-                label = stringResource(R.string.app_options_info),
-                onClick = {
-                    onAppInfoClick()
-                    onDismiss()
-                },
-                index = 0
-            )
-        )
-
-        add(
-            GridItem.IconItem(
-                icon = Icons.Default.Edit,
-                label = stringResource(R.string.app_options_rename),
-                onClick = onRenameClick,
-                index = 1
-            )
-        )
-
+    val items: List<GridItem> = buildList {
+        add(GridItem.IconItem(
+            icon = Icons.Default.Info,
+            label = stringResource(R.string.app_options_info),
+            onClick = { onAppInfoClick(); onDismiss() }
+        ))
+        add(GridItem.IconItem(
+            icon = Icons.Default.Edit,
+            label = stringResource(R.string.app_options_rename),
+            onClick = onRenameClick
+        ))
         if (hasExternalDisplay) {
-            add(
-                GridItem.TextItem(
-                    text = stringResource(R.string.app_options_launch_primary_descr),
-                    onClick = {
-                        onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
-                        onDismiss()
-                    },
-                    isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
-                    index = 2
-                )
-            )
-            add(
-                GridItem.TextItem(
-                    text = stringResource(R.string.app_options_launch_external_descr),
-                    onClick = {
-                        onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
-                        onDismiss()
-                    },
-                    isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
-                    index = 3
-                )
-            )
+            add(GridItem.TextItem(
+                text = stringResource(R.string.app_options_launch_primary_descr),
+                isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                onClick = {
+                    onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
+                    onDismiss()
+                }
+            ))
+            add(GridItem.TextItem(
+                text = stringResource(R.string.app_options_launch_external_descr),
+                isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+                onClick = {
+                    onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
+                    onDismiss()
+                }
+            ))
         }
     }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            gridItems.take(3).forEach { item ->
-                Box(modifier = Modifier.weight(1f)) {
-                    when (item) {
-                        is GridItem.IconItem -> SearchIconGridOption(
-                            icon = item.icon,
-                            label = item.label,
-                            onClick = item.onClick,
-                            focusRequester = focusRequesters[item.index],
-                            onNavigateLeft = {
-                                if (item.index > 0) {
-                                    focusRequesters[item.index - 1].requestFocus()
-                                    onFocusedIndexChange(item.index - 1)
-                                }
-                            },
-                            onNavigateRight = {
-                                if (item.index < 2 && gridItems.size > item.index + 1) {
-                                    focusRequesters[item.index + 1].requestFocus()
-                                    onFocusedIndexChange(item.index + 1)
-                                }
-                            },
-                            onNavigateUp = {
-                                // Stay on top row
-                            },
-                            onNavigateDown = {
-                                // No bottom row navigation needed
-                            },
-                            onFocusChanged = { focused ->
-                                if (focused) onFocusedIndexChange(item.index)
-                            }
-                        )
+    val firstFocusRequester = rememberAutoFocus()
+    val focusRequesters = remember(items.size, firstFocusRequester) {
+        List(items.size) { i -> if (i == 0) firstFocusRequester else FocusRequester() }
+    }
 
-                        is GridItem.TextItem -> SearchTextGridOption(
-                            text = item.text,
-                            onClick = item.onClick,
-                            isSelected = item.isSelected,
-                            focusRequester = focusRequesters[item.index],
-                            onNavigateLeft = {
-                                if (item.index > 0) {
-                                    focusRequesters[item.index - 1].requestFocus()
-                                    onFocusedIndexChange(item.index - 1)
-                                }
-                            },
-                            onNavigateRight = {
-                                if (item.index < gridItems.size - 1) {
-                                    focusRequesters[item.index + 1].requestFocus()
-                                    onFocusedIndexChange(item.index + 1)
-                                }
-                            },
-                            onNavigateUp = {
-                                // Stay on top row
-                            },
-                            onNavigateDown = {
-                                // No bottom row navigation needed
-                            },
-                            onFocusChanged = { focused ->
-                                if (focused) onFocusedIndexChange(item.index)
-                            }
-                        )
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(3).forEachIndexed { rowIdx, rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEachIndexed { colIdx, item ->
+                    val listIdx = rowIdx * 3 + colIdx
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (item) {
+                            is GridItem.IconItem -> SearchIconGridOption(
+                                icon = item.icon,
+                                label = item.label,
+                                onClick = item.onClick,
+                                focusRequester = focusRequesters[listIdx],
+                                onNavigateLeft = {
+                                    if (colIdx > 0) focusRequesters[listIdx - 1].requestFocus()
+                                },
+                                onNavigateRight = {
+                                    if (colIdx < rowItems.size - 1) focusRequesters[listIdx + 1].requestFocus()
+                                },
+                                onNavigateUp = {
+                                    val upIdx = listIdx - 3
+                                    if (upIdx >= 0) focusRequesters[upIdx].requestFocus()
+                                },
+                                onNavigateDown = {
+                                    val downIdx = listIdx + 3
+                                    if (downIdx < items.size) focusRequesters[downIdx].requestFocus()
+                                },
+                                onFocusChanged = {}
+                            )
+                            is GridItem.TextItem -> SearchTextGridOption(
+                                text = item.text,
+                                onClick = item.onClick,
+                                isSelected = item.isSelected,
+                                focusRequester = focusRequesters[listIdx],
+                                onNavigateLeft = {
+                                    if (colIdx > 0) focusRequesters[listIdx - 1].requestFocus()
+                                },
+                                onNavigateRight = {
+                                    if (colIdx < rowItems.size - 1) focusRequesters[listIdx + 1].requestFocus()
+                                },
+                                onNavigateUp = {
+                                    val upIdx = listIdx - 3
+                                    if (upIdx >= 0) focusRequesters[upIdx].requestFocus()
+                                },
+                                onNavigateDown = {
+                                    val downIdx = listIdx + 3
+                                    if (downIdx < items.size) focusRequesters[downIdx].requestFocus()
+                                },
+                                onFocusChanged = {}
+                            )
+                        }
                     }
+                }
+                repeat(3 - rowItems.size) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -292,15 +271,5 @@ private fun SearchTextGridOption(
             fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
-    }
-}
-
-@Composable
-fun rememberSearchAppOptionsFocusRequesters(
-    hasExternalDisplay: Boolean
-): List<FocusRequester> {
-    return remember(hasExternalDisplay) {
-        val count = if (hasExternalDisplay) 4 else 2
-        List(count) { FocusRequester() }
     }
 }

@@ -193,7 +193,7 @@ class ESDEViewModel @Inject constructor(
             backgroundColor = Color(prefsState.backgroundColor),
             videoAudioEnabled = prefsState.videoAudioEnabled,
             videoDelaySeconds = prefsState.videoDelaySeconds,
-            marqueePath = lastSystem?.let { getSystemLogoPath(it) },
+            logoPath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
             logoAlignment = prefsState.logoAlignment,
             logoOffsetX = prefsState.logoOffsetX,
@@ -222,7 +222,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = if (isVideo) systemPath else null,
             isVideoPlaying = false,
             videoPath = null,
-            marqueePath = getSystemLogoPath(systemName),
+            logoPath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.systemBackgroundDimmingFloat,
@@ -260,7 +260,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = null,
             isVideoPlaying = false,
             videoPath = null,
-            marqueePath = getGameMarqueePath(systemName, gameFilename),
+            logoPath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
@@ -357,7 +357,7 @@ class ESDEViewModel @Inject constructor(
             _wallpaperState.value = _wallpaperState.value.copy(
                 isGameRunning = true,
                 dimmingLevel = 0.7f,
-                marqueePath = null
+                logoPath = null
             )
         }
     }
@@ -429,7 +429,7 @@ class ESDEViewModel @Inject constructor(
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
             systemBackgroundVideoPath = null,
-            marqueePath = if (shouldShowContent) getGameMarqueePath(
+            logoPath = if (shouldShowContent) getGameMarqueePath(
                 systemName,
                 gameFilename
             ) else null,
