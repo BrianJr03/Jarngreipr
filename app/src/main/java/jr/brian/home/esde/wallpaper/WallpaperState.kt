@@ -7,7 +7,7 @@ import jr.brian.home.esde.preferences.ScreensaverBehavior
 
 data class WallpaperState(
     val currentImagePath: String? = null,
-    val marqueePath: String? = null,
+    val logoPath: String? = null,
     val videoPath: String? = null,
     val isVideoPlaying: Boolean = false,
     val systemBackgroundVideoPath: String? = null,

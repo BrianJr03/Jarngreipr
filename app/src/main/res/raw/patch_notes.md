@@ -1,15 +1,15 @@
 ### What's New
 
-**Rename Apps**
-- Long-press any app to rename it with a custom display name
-- Works everywhere: app drawer, widget pages, folders, and free position mode
-- Reset to original name anytime
+**Screensaver Music Toggle**
+- Fixed screensaver music not stopping when toggled off
 
-**Scroll Fix**
-- Fixed touch inputs registering as presses while scrolling in settings, search, and dialogs
-- Scrollable lists now use scroll-safe haptic feedback
+**Icon Pack Refresh**
+- Fixed icon packs requiring app restart to apply
 
-**Background Music**
-- Fixed issue where system browsing music didn't restart after returning to app when music was played from another source
+**Logo Position Lock**
+- Fixed logo moving with app drawer on center and top positions when locked
 
-1.7.6
+**Display Options Fix**
+- Fixed display preference options not showing in app menu
+
+1.7.7
