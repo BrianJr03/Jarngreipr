@@ -54,6 +54,8 @@ import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_LOGO_BRIGHTNESS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_BACKGROUND_BRIGHTNESS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
@@ -213,6 +215,8 @@ class ESDEPreferencesManager(context: Context) {
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
+            persistBackgroundBrightness = prefs.getInt(KEY_PERSIST_BACKGROUND_BRIGHTNESS, 80),
+            persistLogoBrightness = prefs.getInt(KEY_PERSIST_LOGO_BRIGHTNESS, 100),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
             customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null),
             singleSystemImagePath = prefs.getString(KEY_SINGLE_SYSTEM_IMAGE_PATH, null),
@@ -361,6 +365,18 @@ class ESDEPreferencesManager(context: Context) {
     fun setPersistOnGameLaunch(persist: Boolean) {
         _state.value = _state.value.copy(persistOnGameLaunch = persist)
         prefs.edit { putBoolean(KEY_PERSIST_ON_GAME_LAUNCH, persist) }
+    }
+
+    fun setPersistBackgroundBrightness(brightness: Int) {
+        val coercedBrightness = brightness.coerceIn(30, 100)
+        _state.value = _state.value.copy(persistBackgroundBrightness = coercedBrightness)
+        prefs.edit { putInt(KEY_PERSIST_BACKGROUND_BRIGHTNESS, coercedBrightness) }
+    }
+
+    fun setPersistLogoBrightness(brightness: Int) {
+        val coercedBrightness = brightness.coerceIn(30, 100)
+        _state.value = _state.value.copy(persistLogoBrightness = coercedBrightness)
+        prefs.edit { putInt(KEY_PERSIST_LOGO_BRIGHTNESS, coercedBrightness) }
     }
 
     fun setCustomSystemLogosPath(path: String?) {
