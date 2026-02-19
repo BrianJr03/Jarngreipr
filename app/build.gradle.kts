@@ -18,7 +18,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = 1
-        versionName = "1.7.6"
+        versionName = "1.7.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -75,7 +75,11 @@ android {
         val variant = this
         outputs.all {
             if (this is ApkVariantOutputImpl) {
-                outputFileName = "jarngreipr-${variant.versionName}.apk"
+                outputFileName = if (variant.buildType.name == "release") {
+                    "app-${variant.flavorName}-release.apk"
+                } else {
+                    "jarngreipr-${variant.versionName}.apk"
+                }
             }
         }
     }

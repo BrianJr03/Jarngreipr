@@ -15,10 +15,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,7 +25,6 @@ import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenuContent
 import jr.brian.home.ui.components.settings.displayName
-import jr.brian.home.ui.components.apps.rememberAppOptionsMenuFocusRequesters
 import jr.brian.home.ui.theme.OledCardColor
 
 @Composable
@@ -88,21 +83,12 @@ fun AppOptionsDialog(
             }
         },
         text = {
-            val focusRequesters = rememberAppOptionsMenuFocusRequesters(
-                hasResizeOption = showResizeOption,
-                hasExternalDisplay = hasExternalDisplay,
-                isInDock = isInDock
-            )
-            var focusedIndex by remember { mutableIntStateOf(0) }
-
             AppOptionsMenuContent(
                 appLabel = "",
                 currentDisplayPreference = currentDisplayPreference,
                 onAppInfoClick = onAppInfoClick,
                 onDisplayPreferenceChange = onDisplayPreferenceChange,
                 hasExternalDisplay = hasExternalDisplay,
-                focusRequesters = focusRequesters,
-                onFocusedIndexChange = { focusedIndex = it },
                 onDismiss = onDismiss,
                 app = if (showResizeOption) app else null,
                 currentIconSize = currentIconSize,
@@ -113,7 +99,6 @@ fun AppOptionsDialog(
                 isInDock = isInDock,
                 onRemoveFromDock = onRemoveFromDock
             )
-
         },
         confirmButton = {}
     )
