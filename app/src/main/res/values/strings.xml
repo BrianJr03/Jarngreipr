@@ -121,6 +121,9 @@
     <string name="settings_show_app_names_title">Show App Names</string>
     <string name="settings_show_app_names_description">Display names below app icons</string>
 
+    <string name="settings_app_label_font_size_title">App Label Font Size</string>
+    <string name="settings_app_label_font_size_description">Adjust the font size of app name labels</string>
+
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
 
@@ -786,6 +789,9 @@
     <string name="esde_settings_system_background_dimming">System Background Dimming</string>
     <string name="esde_settings_exclude_effects_from_home">Exclude Home Tab</string>
     <string name="esde_settings_exclude_effects_from_home_description">Keep the home tab background clear without blur or dimming effects</string>
+    <string name="esde_settings_effects_excluded_pages_title">Exclude Effects by Tab</string>
+    <string name="esde_settings_effects_excluded_pages_description">Disable blur and dimming effects on specific tabs</string>
+    <string name="esde_settings_effects_excluded_tab_description">Skip blur and dimming</string>
     <string name="esde_settings_background_color">Background Color</string>
     <string name="esde_settings_off">Off</string>
     <string name="esde_settings_video_enabled">Video Playback</string>
@@ -988,6 +994,10 @@
     <string name="esde_system_apps_show">Show</string>
     <string name="esde_system_apps_hide">Hide</string>
     <string name="esde_system_apps_auto_launch">Auto-launch on game start</string>
+
+    <!-- Powered Off Screen Brightness -->
+    <string name="settings_powered_off_brightness_title">Sleep Screen Brightness</string>
+    <string name="settings_powered_off_brightness_description">Adjust the brightness of UI elements on the sleep screen</string>
 
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>

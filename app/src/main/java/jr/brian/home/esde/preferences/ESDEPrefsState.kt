@@ -168,7 +168,7 @@ data class ESDEPrefsState(
     
     val customMediaPath: String? = null,
     
-    val excludeEffectsFromHome: Boolean = false,
+    val effectsExcludedPages: Set<Int> = emptySet(),
     
     val hideUIForGameBrowsing: Boolean = false,
     
@@ -197,6 +197,10 @@ data class ESDEPrefsState(
     
     fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
         return !marqueeHiddenPages.contains(pageIndex)
+    }
+
+    fun isEffectsExcludedOnPage(pageIndex: Int): Boolean {
+        return effectsExcludedPages.contains(pageIndex)
     }
 
     fun isAndroidGamesSelected() = lastSelectedSystem == "androidgames"

@@ -41,6 +41,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
+import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.components.settings.BackButton
 import jr.brian.home.ui.extensions.combinedClickWithHaptic
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -178,13 +179,6 @@ private fun AppGridItem(
 
         Spacer(Modifier.height(4.dp))
 
-        Text(
-            text = app.label,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontSize = 12.sp
-        )
+        app.AppName()
     }
 }

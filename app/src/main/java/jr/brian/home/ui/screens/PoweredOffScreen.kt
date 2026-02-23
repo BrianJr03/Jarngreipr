@@ -80,6 +80,10 @@ fun PoweredOffScreen(
     val interactionSource = remember { MutableInteractionSource() }
     val powerSettingsManager = LocalPowerSettingsManager.current
     val wakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
+    val poweredOffBrightness by powerSettingsManager.poweredOffBrightness.collectAsStateWithLifecycle()
+    val uiColor = remember(poweredOffBrightness) {
+        Color.White.copy(alpha = poweredOffBrightness / 100f)
+    }
     
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -175,13 +179,13 @@ fun PoweredOffScreen(
                         Icon(
                             imageVector = Icons.Default.BatteryChargingFull,
                             contentDescription = "Charging",
-                            tint = Color.DarkGray,
+                            tint = uiColor,
                             modifier = Modifier.padding(end = 4.dp)
                         )
                     }
                     Text(
                         text = "$batteryPercentage%",
-                        color = Color.DarkGray,
+                        color = uiColor,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -198,7 +202,7 @@ fun PoweredOffScreen(
             ) {
                 Text(
                     text = stringResource(R.string.monitor_fps_label, fps),
-                    color = Color.DarkGray,
+                    color = uiColor,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -214,7 +218,7 @@ fun PoweredOffScreen(
             ) {
                 Text(
                     text = currentTime,
-                    color = Color.DarkGray,
+                    color = uiColor,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -242,7 +246,7 @@ fun PoweredOffScreen(
 //                        )
 //                        Spacer(modifier = Modifier.height(8.dp))
 //                    }
-                    DualVolumeControls(isVisible = showInfo)
+                    DualVolumeControls(isVisible = showInfo, tintColor = uiColor)
                 }
             }
 
@@ -257,6 +261,7 @@ fun PoweredOffScreen(
                 VolumeButton(
                     icon = Icons.AutoMirrored.Filled.VolumeDown,
                     contentDescription = stringResource(R.string.volume_down_description),
+                    tintColor = uiColor,
                     onClick = {
                         val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         val newVolume = (currentVolume - 1).coerceAtLeast(0)
@@ -281,6 +286,7 @@ fun PoweredOffScreen(
                 VolumeButton(
                     icon = Icons.AutoMirrored.Filled.VolumeUp,
                     contentDescription = stringResource(R.string.volume_up_description),
+                    tintColor = uiColor,
                     onClick = {
                         val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
@@ -302,7 +308,8 @@ private fun VolumeButton(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tintColor: Color = Color.DarkGray
 ) {
     val haptic = LocalHapticFeedback.current
     var isPressed by remember { mutableStateOf(false) }
@@ -313,12 +320,12 @@ private fun VolumeButton(
             .size(56.dp)
             .scale(pressScale)
             .background(
-                color = Color.DarkGray.copy(alpha = if (isPressed) 0.8f else 0.5f),
+                color = tintColor.copy(alpha = tintColor.alpha * if (isPressed) 0.6f else 0.3f),
                 shape = RoundedCornerShape(6.dp)
             )
             .border(
                 width = 1.dp,
-                color = Color.DarkGray,
+                color = tintColor.copy(alpha = tintColor.alpha * 0.7f),
                 shape = RoundedCornerShape(6.dp)
             )
             .pressWithHaptic(
@@ -332,7 +339,7 @@ private fun VolumeButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = Color.DarkGray,
+            tint = tintColor,
             modifier = Modifier.size(28.dp)
         )
     }
@@ -342,7 +349,8 @@ private fun VolumeButton(
 private fun MusicVolumeSlider(
     volume: Float,
     onVolumeChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tintColor: Color = Color.DarkGray
 ) {
     VolumeSlider(
         label = stringResource(R.string.esde_settings_music_volume),
@@ -354,8 +362,9 @@ private fun MusicVolumeSlider(
             Icon(
                 imageVector = Icons.Default.MusicNote,
                 contentDescription = null,
-                tint = Color.DarkGray
+                tint = tintColor
             )
-        }
+        },
+        tintColor = tintColor
     )
 }

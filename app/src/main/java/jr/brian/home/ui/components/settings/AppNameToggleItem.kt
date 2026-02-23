@@ -179,9 +179,11 @@ fun AppInfo.displayName(): String {
 
 @Composable
 fun AppInfo.AppName() {
+    val appVisibilityManager = LocalAppVisibilityManager.current
     Text(
         text = displayName(),
         color = Color.White,
+        fontSize = appVisibilityManager.appLabelFontSize.sp,
         textAlign = TextAlign.Center,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
