@@ -30,9 +30,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +61,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.esde.setup.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
@@ -74,8 +75,8 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
-import jr.brian.home.esde.preferences.WallpaperToggleTarget
 import jr.brian.home.util.MediaPickerLauncher
+import jr.brian.home.util.launchApp
 
 @Composable
 fun DrawerOptionsDialog(
@@ -87,7 +88,8 @@ fun DrawerOptionsDialog(
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
     onDockSettingsClick: () -> Unit,
-    onESDESetupClick: () -> Unit = {}
+    onESDESetupClick: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -98,6 +100,7 @@ fun DrawerOptionsDialog(
     val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val lastSelectedSystem = esdePrefsState.lastSelectedSystem
     val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
     val mediaPickerLauncher = MediaPickerLauncher(
@@ -224,19 +227,31 @@ fun DrawerOptionsDialog(
                                             WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
                                             WallpaperToggleTarget.SavedImage -> {
                                                 val uri = wallpaperManager.savedImageUri
-                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.IMAGE)
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.IMAGE
+                                                )
                                                 else wallpaperManager.setTransparent()
                                             }
+
                                             WallpaperToggleTarget.SavedGif -> {
                                                 val uri = wallpaperManager.savedGifUri
-                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.GIF)
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.GIF
+                                                )
                                                 else wallpaperManager.setTransparent()
                                             }
+
                                             WallpaperToggleTarget.SavedVideo -> {
                                                 val uri = wallpaperManager.savedVideoUri
-                                                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.VIDEO)
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.VIDEO
+                                                )
                                                 else wallpaperManager.setTransparent()
                                             }
+
                                             WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
                                         }
                                     } else {
@@ -339,6 +354,40 @@ fun DrawerOptionsDialog(
                     }
                 }
 
+                if (
+                    !isWallpaperExpanded
+                    && wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                    && lastSelectedSystem != null
+                ) {
+                    val packageName = esdePrefsState.systemAppMap[lastSelectedSystem]
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (packageName != null) {
+                            DrawerOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.drawer_options_launch_system_app),
+                                onClick = {
+                                    launchApp(context, packageName)
+                                    onDismiss()
+                                }
+                            )
+                        }
+
+                        DrawerOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.drawer_options_configure_system_app),
+                            onClick = {
+                                onNavigateToSystemApps()
+                                onDismiss()
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -465,7 +514,7 @@ private fun WallpaperOptionsSection(
 fun DrawerOptionButton(
     modifier: Modifier = Modifier,
     title: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -509,13 +558,15 @@ fun DrawerOptionButton(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            icon?.let {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             Text(
                 text = title,
                 color = Color.White,

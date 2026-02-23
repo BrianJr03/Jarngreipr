@@ -83,6 +83,7 @@ fun LauncherPagerScreen(
     onNavigateToSearch: () -> Unit = {},
     onBackButtonShortcut: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
@@ -282,6 +283,7 @@ fun LauncherPagerScreen(
                                     allApps = homeUiState.allAppsUnfiltered,
                                     onNavigateToSearch = onNavigateToSearch,
                                     onNavigateToDockSettings = onNavigateToDockSettings,
+                                    onNavigateToSystemApps = onNavigateToSystemApps,
                                     onShowAppDrawer = { showAppDrawerSheet = true },
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
@@ -333,6 +335,7 @@ fun LauncherPagerScreen(
                                         pageIndicatorBorderColor = ThemeSecondaryColor,
                                         onNavigateToSearch = onNavigateToSearch,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
+                                        onNavigateToSystemApps = onNavigateToSystemApps,
                                         navController = navController,
                                         onShowAppDrawer = { showAppDrawerSheet = true },
                                         onScrollStateChanged = { isScrolling, hasScrollableContent ->
@@ -389,6 +392,7 @@ fun LauncherPagerScreen(
                                         isLoading = homeUiState.isLoading,
                                         pageIndex = page,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
+                                        onNavigateToSystemApps = onNavigateToSystemApps,
                                     )
                                 }
                             }

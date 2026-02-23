@@ -26,6 +26,7 @@ import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.esde.ui.ESDESettingsScreen
 import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.ui.SystemAppsScreen
 import jr.brian.home.esde.setup.SetupStep
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.screens.FAQScreen
@@ -131,6 +132,9 @@ fun NavGraphBuilder.launcherScreen(
             },
             onNavigateToDockSettings = {
                 navController.navigate(Routes.APP_DOCK_SETTINGS)
+            },
+            onNavigateToSystemApps = {
+                navController.navigate(Routes.ESDE_SYSTEM_APPS)
             },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
             onCurrentPageChanged = onCurrentPageChanged,
@@ -277,6 +281,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToMarqueePressShortcut = {
                     showScreen = false
                     navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
+                },
+                onNavigateToSystemApps = {
+                    showScreen = false
+                    navController.navigate(Routes.ESDE_SYSTEM_APPS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -531,6 +539,10 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 onNavigateToMarqueePressShortcut = {
                     showScreen = false
                     navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
+                },
+                onNavigateToSystemApps = {
+                    showScreen = false
+                    navController.navigate(Routes.ESDE_SYSTEM_APPS)
                 }
             )
         }
@@ -561,6 +573,26 @@ fun NavGraphBuilder.marqueePressShortcutScreen(
                     }
                 )
             }
+        }
+    }
+}
+
+fun NavGraphBuilder.esdeSystemAppsScreen(
+    navController: NavHostController,
+    mainViewModel: MainViewModel
+) {
+    composable(Routes.ESDE_SYSTEM_APPS) {
+        var showScreen by remember { mutableStateOf(true) }
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        SlideInVertically(showScreen) {
+            SystemAppsScreen(
+                allApps = uiState.allAppsUnfiltered,
+                onNavigateBack = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

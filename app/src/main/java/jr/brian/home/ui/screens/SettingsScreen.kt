@@ -101,6 +101,7 @@ fun SettingsScreen(
     onNavigateToEsdeSettings: () -> Unit = {},
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -150,6 +151,7 @@ fun SettingsScreen(
                     onRunSetupWizard = onRunSetupWizard,
                     onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                     isCheckingForUpdates = isCheckingForUpdates,
+                    onNavigateToSystemApps = onNavigateToSystemApps,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onCheckForUpdates = {
@@ -252,6 +254,7 @@ private fun SettingsContent(
     onNotificationBadgeClick: () -> Unit = {},
     onWhatsNewClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -371,7 +374,8 @@ private fun SettingsContent(
                     isExpanded = expandedSection == SECTION_ESDE,
                     onToggle = { expandedSection = if (expandedSection == SECTION_ESDE) null else SECTION_ESDE },
                     onRunSetupWizard = onRunSetupWizard,
-                    onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut
+                    onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
+                    onNavigateToSystemApps = onNavigateToSystemApps
                 )
             }
 

@@ -36,12 +36,14 @@ import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.wallpaper.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
@@ -59,11 +61,6 @@ class ESDEViewModel @Inject constructor(
     private val mediaPath: String
         get() = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
 
-    /**
-     * Get ES-DE root folder path by navigating up from scripts path.
-     * Scripts path is typically: /storage/emulated/0/ES-DE/scripts
-     * ES-DE root would be: /storage/emulated/0/ES-DE
-     */
     private val esdeRootPath: String?
         get() {
             val scriptsPath = setupPreferences.scriptsPath
@@ -76,27 +73,22 @@ class ESDEViewModel @Inject constructor(
     private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()
     val videoLaunchEvent: SharedFlow<VideoLaunchEvent> = _videoLaunchEvent.asSharedFlow()
 
+    private val _scanComplete = MutableSharedFlow<Unit>()
+    val scanComplete: SharedFlow<Unit> = _scanComplete.asSharedFlow()
+
     val musicController: MusicController = MusicManager(context, prefs)
 
     private val videoDelayHandler = Handler(Looper.getMainLooper())
     private var pendingVideoRunnable: Runnable? = null
-    private var currentSystem: String? = null
+    var currentSystem: String? = null
+        private set
     private var currentGameSystem: String? = null
     private var currentGameFilename: String? = null
 
     private val _deleteEmptyFoldersResult = mutableStateOf<DeleteResult?>(null)
     val deleteEmptyFoldersResult: State<DeleteResult?> = _deleteEmptyFoldersResult
 
-    /**
-     * Tracks whether we're currently viewing a system or a game.
-     * Used to determine which blur level to apply.
-     */
     private var isViewingGame: Boolean = false
-
-    /**
-     * Tracks whether the launcher screen is currently active.
-     * Video playback should only launch when this is true.
-     */
     private var isLauncherActive: Boolean = true
 
     init {
@@ -816,10 +808,6 @@ class ESDEViewModel @Inject constructor(
     }
 
 
-    /**
-     * Deletes all empty folders in the selected cleanup folders.
-     * Folders containing only systeminfo.txt are considered empty.
-     */
     fun deleteEmptyESDEFolders() {
         viewModelScope.launch {
             val result = cleanupHelper.deleteEmptyESDEFolders()
@@ -827,11 +815,45 @@ class ESDEViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Clears the delete result state
-     */
     fun clearDeleteResult() {
         _deleteEmptyFoldersResult.value = null
+    }
+
+    fun scanRomsFolders() {
+        val romsPaths = prefs.state.value.romsPaths
+        if (romsPaths.isEmpty()) return
+        viewModelScope.launch {
+            val subDirs = withContext(Dispatchers.IO) {
+                romsPaths.flatMap { path ->
+                    File(path).listFiles()?.filter { it.isDirectory }?.map { it.name }
+                        ?: emptyList()
+                }.distinct()
+            }
+            val existing = prefs.state.value.systemAppMap.toMutableMap()
+            subDirs.forEach { folderName ->
+                if (!existing.containsKey(folderName)) {
+                    existing[folderName] = null
+                }
+            }
+            prefs.setSystemAppMap(existing)
+            _scanComplete.emit(Unit)
+        }
+    }
+
+    fun setSystemApp(systemFolderName: String, packageName: String?) {
+        val updated = prefs.state.value.systemAppMap.toMutableMap()
+        updated[systemFolderName] = packageName
+        prefs.setSystemAppMap(updated)
+    }
+
+    fun removeSystemEntry(systemFolderName: String) {
+        val updated = prefs.state.value.systemAppMap.toMutableMap()
+        updated.remove(systemFolderName)
+        prefs.setSystemAppMap(updated)
+        // Also clean up auto-launch if it was enabled
+        if (prefs.isSystemAutoLaunchEnabled(systemFolderName)) {
+            prefs.toggleSystemAutoLaunch(systemFolderName)
+        }
     }
 
     override fun onCleared() {
