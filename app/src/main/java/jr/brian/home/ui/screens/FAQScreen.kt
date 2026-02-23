@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,8 +29,8 @@ import jr.brian.home.R
 import jr.brian.home.model.FAQItem
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -102,17 +101,13 @@ private fun FAQCard(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        OledCardLightColor,
-                        OledCardColor
-                    )
-                ),
+                brush = subtleCardGradient(isFocused = false),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
+                brush = borderBrush(
+                    isFocused = true,
                     colors = listOf(
                         ThemePrimaryColor.copy(alpha = 0.3f),
                         ThemeSecondaryColor.copy(alpha = 0.3f)

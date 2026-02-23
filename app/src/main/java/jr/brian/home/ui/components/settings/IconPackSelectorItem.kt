@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,8 +38,6 @@ import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.util.rememberConditionalFocus
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
@@ -187,12 +184,7 @@ fun IconPackSelectorItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(
-                                        OledCardLightColor,
-                                        OledCardColor,
-                                    )
-                                ),
+                                brush = subtleCardGradient(false),
                                 shape = RoundedCornerShape(12.dp),
                             )
                             .padding(16.dp),
@@ -218,20 +210,6 @@ private fun IconPackOption(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
-
     val borderColor = when {
         isSelected -> Color.White
         isFocused -> Color.LightGray.copy(alpha = 0.8f)
@@ -248,7 +226,7 @@ private fun IconPackOption(
                 isFocused = it.isFocused
             }
             .background(
-                brush = gradient,
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(12.dp),
             )
             .border(

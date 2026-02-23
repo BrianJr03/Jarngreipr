@@ -36,7 +36,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,10 +45,9 @@ import jr.brian.home.R
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -70,22 +68,6 @@ fun GridColumnSelectorItem(
         gridSettingsManager.initializeDefaultRows(totalAppsCount)
     }
 
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.8f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
-
     Column(
         modifier =
             Modifier
@@ -105,7 +87,7 @@ fun GridColumnSelectorItem(
                             isFocused = it.isFocused
                         }
                         .background(
-                            brush = cardGradient,
+                            brush = subtleCardGradient(isFocused),
                             shape = RoundedCornerShape(16.dp),
                         )
                         .border(

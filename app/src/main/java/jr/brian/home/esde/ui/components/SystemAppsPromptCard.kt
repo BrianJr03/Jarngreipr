@@ -9,8 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,17 +26,13 @@ internal fun PromptCard(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.Gray.copy(alpha = 0.15f),
-                        Color.DarkGray.copy(alpha = 0.1f)
-                    )
-                ),
+                brush = subtleCardGradient(isFocused = false),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
+                brush = borderBrush(
+                    isFocused = true,
                     colors = listOf(
                         Color.Gray.copy(alpha = 0.5f),
                         Color.Gray.copy(alpha = 0.3f)

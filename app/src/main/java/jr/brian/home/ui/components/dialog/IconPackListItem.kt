@@ -34,10 +34,7 @@ import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.model.IconPack
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.colors.subtleCardGradient
 
 @Composable
 fun IconPackListItem(
@@ -52,30 +49,12 @@ fun IconPackListItem(
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f),
-                        )
-                    } else {
-                        listOf(
-                            OledCardLightColor,
-                            OledCardColor,
-                        )
-                    }
-                ),
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(12.dp),
             )
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
-                brush = borderBrush(
-                    isFocused = isFocused,
-                    colors = listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                ),
+                brush = borderBrush(isFocused),
                 shape = RoundedCornerShape(12.dp),
             )
             .clickable { onClick() }

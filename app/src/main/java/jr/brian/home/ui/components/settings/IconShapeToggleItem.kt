@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.managers.IconShape
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.util.rememberConditionalFocus
@@ -63,7 +63,7 @@ fun IconShapeToggleItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient(isFocused),
+                        brush = subtleCardGradient(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(

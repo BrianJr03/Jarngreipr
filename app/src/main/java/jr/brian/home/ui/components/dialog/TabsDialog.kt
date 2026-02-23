@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,8 +57,6 @@ import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun TabsDialog(
@@ -122,12 +119,7 @@ fun TabsDialog(
                 .fillMaxWidth(0.9f)
                 .border(
                     width = 1.dp,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.5f),
-                            ThemeSecondaryColor.copy(alpha = 0.3f)
-                        )
-                    ),
+                    brush = borderBrush(isFocused = true),
                     shape = RoundedCornerShape(24.dp)
                 )
         ) {
@@ -254,22 +246,7 @@ private fun TabOption(
                 )
                 .border(
                     width = if (isFocused) 3.dp else 2.dp,
-                    brush = if (isFocused) {
-                        borderBrush(
-                            isFocused = true,
-                            colors = listOf(
-                                ThemePrimaryColor.copy(alpha = 0.8f),
-                                ThemeSecondaryColor.copy(alpha = 0.6f)
-                            )
-                        )
-                    } else {
-                        Brush.linearGradient(
-                            colors = listOf(
-                                ThemePrimaryColor.copy(alpha = 0.6f),
-                                ThemeSecondaryColor.copy(alpha = 0.4f)
-                            )
-                        )
-                    },
+                    brush = borderBrush(isFocused = isFocused),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .clip(RoundedCornerShape(16.dp))
@@ -321,12 +298,7 @@ private fun TabOption(
                     .scale(animatedFocusedScale(isFocused))
                     .size(28.dp)
                     .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                ThemeAccentColor,
-                                ThemeAccentColor.copy(alpha = 0.8f)
-                            )
-                        ),
+                        color = ThemeAccentColor,
                         shape = CircleShape
                     )
                     .border(
@@ -365,22 +337,7 @@ private fun AddPageButton(
             )
             .border(
                 width = if (isFocused) 3.dp else 2.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
