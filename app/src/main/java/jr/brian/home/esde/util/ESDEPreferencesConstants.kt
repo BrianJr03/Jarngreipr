@@ -16,7 +16,6 @@ object ESDEPreferencesConstants {
     const val KEY_VIDEO_SCALE_MODE = "video_scale_mode"
     const val KEY_SYSTEM_BACKGROUND_SCALE_MODE = "system_background_scale_mode"
     const val KEY_GAME_BACKGROUND_SCALE_MODE = "game_background_scale_mode"
-    const val KEY_ESDE_ENABLED = "esde_enabled"
     const val KEY_LAST_SELECTED_SYSTEM = "last_selected_system"
     const val KEY_SYSTEM_IMAGE_TYPE = "system_image_type"
     const val KEY_GAME_IMAGE_TYPE = "game_image_type"
@@ -73,4 +72,9 @@ object ESDEPreferencesConstants {
     const val KEY_OVERLAY_MEDIA_TYPE = "overlay_media_type"
     const val KEY_SELECT_BUTTON_WALLPAPER_TOGGLE = "select_button_wallpaper_toggle"
     const val KEY_WALLPAPER_TOGGLE_TARGET = "wallpaper_toggle_target"
+
+    const val KEY_ROMS_PATH = "roms_path"
+    const val KEY_ROMS_PATHS = "roms_paths"
+    const val KEY_SYSTEM_APP_MAP = "system_app_map"
+    const val KEY_SYSTEM_AUTO_LAUNCH = "system_auto_launch"
 }

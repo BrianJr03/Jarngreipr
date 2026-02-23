@@ -97,6 +97,7 @@ fun AppsTab(
     allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
     onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
@@ -323,7 +324,8 @@ fun AppsTab(
             onDockSettingsClick = onNavigateToDockSettings,
             onESDESetupClick = {
                 esdeSetupDialogState.show(SetupStep.Welcome)
-            }
+            },
+            onNavigateToSystemApps = onNavigateToSystemApps
         )
     }
 

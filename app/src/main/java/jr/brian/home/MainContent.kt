@@ -45,6 +45,7 @@ import jr.brian.home.ui.navigation.controlPadScreen
 import jr.brian.home.ui.navigation.crashLogsScreen
 import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.esdeSettingsScreen
+import jr.brian.home.ui.navigation.esdeSystemAppsScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
@@ -296,6 +297,11 @@ fun MainContent(
                 )
 
                 marqueePressShortcutScreen(
+                    navController = navController,
+                    mainViewModel = mainViewModel
+                )
+
+                esdeSystemAppsScreen(
                     navController = navController,
                     mainViewModel = mainViewModel
                 )

@@ -120,7 +120,6 @@ data class ESDEPrefsState(
     val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     
-    val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
     val gameImageType: GameImageType = GameImageType.Screenshots,
@@ -182,7 +181,11 @@ data class ESDEPrefsState(
     val overlayMediaType: OverlayMediaType = OverlayMediaType.Marquees,
     val logoOnlyMode: Boolean = false,
     val selectButtonWallpaperToggle: Boolean = false,
-    val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper
+    val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper,
+
+    val romsPaths: List<String> = emptyList(),
+    val systemAppMap: Map<String, String?> = emptyMap(),
+    val systemAutoLaunchSet: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

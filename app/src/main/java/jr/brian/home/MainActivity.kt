@@ -37,6 +37,7 @@ import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import java.io.File
 import javax.inject.Inject
@@ -238,13 +239,18 @@ class MainActivity : ComponentActivity() {
                 esdeViewModel.updateForGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(true)
             }
-            esdeEventListener.onGameStarted = { _, _, _ ->
+            esdeEventListener.onGameStarted = { _, _, systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.handleGameStarted()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
                 } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
                     powerViewModel.setGamePersistActive(true)
+                }
+                if (esdePreferencesManager.isSystemAutoLaunchEnabled(systemName)) {
+                    esdePreferencesManager.getSystemAppForSystem(systemName)?.let { pkg ->
+                        launchApp(this@MainActivity, pkg)
+                    }
                 }
             }
             esdeEventListener.onGameEnded = { _, _, _ ->

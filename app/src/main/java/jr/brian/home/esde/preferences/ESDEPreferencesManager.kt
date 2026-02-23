@@ -17,7 +17,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DIMMING_LEVEL
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
@@ -76,7 +75,13 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_WALLPAPER_TOGGLE_TARGET
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATHS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_APP_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_AUTO_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ESDEPreferencesManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
@@ -189,6 +194,54 @@ class ESDEPreferencesManager(context: Context) {
             legacyBlurLevel
         }
 
+        val romsPathsJson = prefs.getString(KEY_ROMS_PATHS, null)
+        val romsPaths: List<String> = if (!romsPathsJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(romsPathsJson)
+                (0 until arr.length()).map { arr.getString(it) }
+            } catch (_: Exception) {
+                emptyList()
+            }
+        } else {
+            val legacyPath = prefs.getString(KEY_ROMS_PATH, null)
+            if (legacyPath != null) {
+                val migrated = listOf(legacyPath)
+                prefs.edit {
+                    putString(KEY_ROMS_PATHS, JSONArray(migrated).toString())
+                    remove(KEY_ROMS_PATH)
+                }
+                migrated
+            } else {
+                emptyList()
+            }
+        }
+
+        val systemAppMapJson = prefs.getString(KEY_SYSTEM_APP_MAP, null)
+        val systemAppMap: Map<String, String?> = if (!systemAppMapJson.isNullOrEmpty()) {
+            try {
+                val json = JSONObject(systemAppMapJson)
+                val result = mutableMapOf<String, String?>()
+                json.keys().forEach { key -> result[key] = if (json.isNull(key)) null else json.getString(key) }
+                result
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+
+        val autoLaunchJson = prefs.getString(KEY_SYSTEM_AUTO_LAUNCH, null)
+        val systemAutoLaunchSet: Set<String> = if (!autoLaunchJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(autoLaunchJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -204,7 +257,6 @@ class ESDEPreferencesManager(context: Context) {
             videoScaleMode = videoScaleMode,
             systemBackgroundScaleMode = systemBackgroundScaleMode,
             gameBackgroundScaleMode = gameBackgroundScaleMode,
-            esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
             systemImageType = systemImageType,
             gameImageType = gameImageType,
@@ -254,7 +306,10 @@ class ESDEPreferencesManager(context: Context) {
             overlayMediaType = overlayMediaType,
             logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
             selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
-            wallpaperToggleTarget = wallpaperToggleTarget
+            wallpaperToggleTarget = wallpaperToggleTarget,
+            romsPaths = romsPaths,
+            systemAppMap = systemAppMap,
+            systemAutoLaunchSet = systemAutoLaunchSet
         )
     }
 
@@ -637,5 +692,59 @@ class ESDEPreferencesManager(context: Context) {
     fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
         _state.value = _state.value.copy(wallpaperToggleTarget = target)
         prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
+    }
+
+    fun addRomsPath(path: String) {
+        val current = _state.value.romsPaths
+        if (current.contains(path)) return
+        val updated = current + path
+        _state.value = _state.value.copy(romsPaths = updated)
+        prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
+    }
+
+    fun removeRomsPath(path: String) {
+        val updated = _state.value.romsPaths - path
+        _state.value = _state.value.copy(romsPaths = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_ROMS_PATHS) }
+        } else {
+            prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
+        }
+    }
+
+    fun setSystemAppMap(map: Map<String, String?>) {
+        _state.value = _state.value.copy(systemAppMap = map)
+        if (map.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_APP_MAP) }
+        } else {
+            val json = JSONObject()
+            map.forEach { (key, value) ->
+                if (value != null) json.put(key, value) else json.put(key, JSONObject.NULL)
+            }
+            prefs.edit { putString(KEY_SYSTEM_APP_MAP, json.toString()) }
+        }
+    }
+
+    fun getSystemAppForSystem(systemName: String): String? {
+        return state.value.systemAppMap[systemName]
+    }
+
+    fun toggleSystemAutoLaunch(systemFolderName: String) {
+        val current = _state.value.systemAutoLaunchSet
+        val updated = if (current.contains(systemFolderName)) {
+            current - systemFolderName
+        } else {
+            current + systemFolderName
+        }
+        _state.value = _state.value.copy(systemAutoLaunchSet = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_AUTO_LAUNCH) }
+        } else {
+            prefs.edit { putString(KEY_SYSTEM_AUTO_LAUNCH, JSONArray(updated.toList()).toString()) }
+        }
+    }
+
+    fun isSystemAutoLaunchEnabled(systemName: String): Boolean {
+        return state.value.systemAutoLaunchSet.contains(systemName)
     }
 }

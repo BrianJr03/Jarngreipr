@@ -37,7 +37,8 @@ fun ESDESettingsScreen(
     viewModel: ESDEViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onRunSetupWizard: () -> Unit,
-    onNavigateToMarqueePressShortcut: () -> Unit = {}
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -91,7 +92,8 @@ fun ESDESettingsScreen(
                 ) {
                     ESDESettingsContent(
                         onRunSetupWizard = onRunSetupWizard,
-                        onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut
+                        onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
+                        onNavigateToSystemApps = onNavigateToSystemApps
                     )
                 }
             }
