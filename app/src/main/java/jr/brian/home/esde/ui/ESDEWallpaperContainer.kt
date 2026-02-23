@@ -68,7 +68,6 @@ import jr.brian.home.esde.ui.components.ScrollingDescriptionBox
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.wallpaper.WallpaperState
-import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
@@ -92,16 +91,13 @@ fun ESDEWallpaperContainer(
     val wallpaperManager = LocalWallpaperManager.current
     val wallpaperType = wallpaperManager.getWallpaperType()
 
-    val homeTabManager = LocalHomeTabManager.current
     val preferencesManager = LocalESDEPreferencesManager.current
-    val homeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
 
-    val isOnHomePage = currentPageIndex == homeTabIndex
-    val excludeEffectsFromHome = prefsState.excludeEffectsFromHome
-    val effectiveBlurLevel = if (excludeEffectsFromHome && isOnHomePage) 0f else state.blurLevel
+    val isEffectsExcludedOnPage = prefsState.isEffectsExcludedOnPage(currentPageIndex)
+    val effectiveBlurLevel = if (isEffectsExcludedOnPage) 0f else state.blurLevel
     val effectiveDimmingLevel =
-        if (excludeEffectsFromHome && isOnHomePage) 0f else state.dimmingLevel
+        if (isEffectsExcludedOnPage) 0f else state.dimmingLevel
 
     val logoOnlyMode = prefsState.logoOnlyMode
     val backgroundColor = when {

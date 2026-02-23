@@ -435,6 +435,7 @@ fun ESDESettingsContent(
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_effects)) {
             EffectsSectionContent(
                 prefsState = prefsState,
+                pageTypes = pageTypes,
                 onBackgroundColorChange = { color ->
                     preferencesManager.setBackgroundColor(color)
                 },
@@ -456,8 +457,8 @@ fun ESDESettingsContent(
                 onGameBackgroundDimmingChange = { dimming ->
                     preferencesManager.setGameBackgroundDimming(dimming)
                 },
-                onExcludeEffectsFromHomeChange = { exclude ->
-                    preferencesManager.setExcludeEffectsFromHome(exclude)
+                onToggleEffectsExcludedPage = { pageIndex ->
+                    preferencesManager.toggleEffectsExcludedPage(pageIndex)
                 },
                 onGameImageTypeChange = { type ->
                     preferencesManager.setGameImageType(type)

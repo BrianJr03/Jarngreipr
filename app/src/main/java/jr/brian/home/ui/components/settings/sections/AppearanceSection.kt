@@ -19,8 +19,10 @@ import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
+import jr.brian.home.ui.components.settings.AppLabelFontSizeSliderItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
+import jr.brian.home.ui.components.settings.PoweredOffBrightnessSliderItem
 import jr.brian.home.ui.components.settings.TabAnimationToggleItem
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
@@ -75,6 +77,13 @@ fun AppearanceSection(
 
         TabAnimationToggleItem(
             isExpanded = false
+        )
+
+        AppLabelFontSizeSliderItem(
+            isExpanded = false
+        )
+
+        PoweredOffBrightnessSliderItem(
         )
 
         WallpaperSelectorItem(

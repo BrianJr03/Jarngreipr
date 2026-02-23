@@ -68,6 +68,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_SC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EFFECTS_EXCLUDED_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
@@ -242,6 +243,25 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        // Migrate legacy excludeEffectsFromHome boolean to per-page set
+        val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
+        val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
+            effectsExcludedPagesString
+                .split(",")
+                .mapNotNull { it.toIntOrNull() }
+                .toSet()
+        } else if (prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false)) {
+            // Migrate: old boolean was true, so mark home tab (index 0) as excluded
+            val migrated = setOf(0)
+            prefs.edit {
+                putString(KEY_EFFECTS_EXCLUDED_PAGES, migrated.joinToString(","))
+                remove(KEY_EXCLUDE_EFFECTS_FROM_HOME)
+            }
+            migrated
+        } else {
+            emptySet()
+        }
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -298,7 +318,7 @@ class ESDEPreferencesManager(context: Context) {
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
-            excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false),
+            effectsExcludedPages = effectsExcludedPages,
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
             marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
             androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
@@ -633,9 +653,20 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
-    fun setExcludeEffectsFromHome(exclude: Boolean) {
-        _state.value = _state.value.copy(excludeEffectsFromHome = exclude)
-        prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
+    fun toggleEffectsExcludedPage(pageIndex: Int) {
+        val excludedPages = _state.value.effectsExcludedPages
+        val newPages = if (excludedPages.contains(pageIndex)) {
+            excludedPages - pageIndex
+        } else {
+            excludedPages + pageIndex
+        }
+
+        _state.value = _state.value.copy(effectsExcludedPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_EFFECTS_EXCLUDED_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_EFFECTS_EXCLUDED_PAGES, newPages.joinToString(",")) }
+        }
     }
 
     fun setShowLogoForSystem(show: Boolean) {
