@@ -44,16 +44,12 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 
 @Composable
-fun AppLabelFontSizeSliderItem(
-    isExpanded: Boolean = false
-) {
+fun AppLabelFontSizeSliderItem() {
     val appVisibilityManager = LocalAppVisibilityManager.current
     val currentSize = appVisibilityManager.appLabelFontSize
     var isFocused by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()

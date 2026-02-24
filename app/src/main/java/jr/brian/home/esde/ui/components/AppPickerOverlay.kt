@@ -74,12 +74,8 @@ internal fun AppPickerOverlay(
             .fillMaxSize()
             .background(OledBackgroundColor)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f)) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     modifier = Modifier
