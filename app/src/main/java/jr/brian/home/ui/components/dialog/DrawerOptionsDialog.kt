@@ -74,6 +74,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.util.launchApp
 
 @Composable
@@ -370,7 +371,16 @@ fun DrawerOptionsDialog(
                                 modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.drawer_options_launch_system_app),
                                 onClick = {
-                                    launchApp(context, packageName)
+                                    val displayPref = if (esdePrefsState.systemTopScreenSet.contains(lastSelectedSystem)) {
+                                        DisplayPreference.PRIMARY_DISPLAY
+                                    } else {
+                                        DisplayPreference.CURRENT_DISPLAY
+                                    }
+                                    launchApp(
+                                        context = context,
+                                        packageName = packageName,
+                                        displayPreference = displayPref
+                                    )
                                     onDismiss()
                                 }
                             )

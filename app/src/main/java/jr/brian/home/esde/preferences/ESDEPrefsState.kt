@@ -86,6 +86,19 @@ enum class WallpaperToggleTarget(val displayName: String) {
     }
 }
 
+enum class SystemLaunchTrigger(val displayName: String) {
+    NoAction("No Action"),
+    GameStart("Game Start"),
+    GameSelect("Game Select"),
+    SystemSelect("System Select");
+
+    companion object {
+        fun fromName(name: String): SystemLaunchTrigger {
+            return entries.find { it.name == name } ?: NoAction
+        }
+    }
+}
+
 enum class OverlayMediaType(val folderName: String, val displayName: String) {
     Marquees("marquees", "Marquees"),
     ThreeDBoxes("3dboxes", "3D Boxes"),
@@ -185,7 +198,8 @@ data class ESDEPrefsState(
 
     val romsPaths: List<String> = emptyList(),
     val systemAppMap: Map<String, String?> = emptyMap(),
-    val systemAutoLaunchSet: Set<String> = emptySet()
+    val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
+    val systemTopScreenSet: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

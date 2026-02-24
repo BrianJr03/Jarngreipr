@@ -985,6 +985,10 @@
     <string name="esde_system_apps_no_app_assigned">No app assigned</string>
     <string name="esde_system_apps_change">Change</string>
     <string name="esde_system_apps_remove">Remove system entry</string>
+    <string name="esde_system_apps_remove_confirm_title">Remove %1$s?</string>
+    <string name="esde_system_apps_remove_confirm_message">This will remove the system entry and its settings.</string>
+    <string name="esde_system_apps_remove_confirm_yes">Remove</string>
+    <string name="esde_system_apps_remove_confirm_no">Cancel</string>
     <string name="esde_system_apps_select_app">Select app for %1$s</string>
     <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
     <string name="esde_settings_section_system_apps">System Apps</string>
@@ -993,7 +997,12 @@
     <string name="esde_system_apps_search">Search Systems</string>
     <string name="esde_system_apps_show">Show</string>
     <string name="esde_system_apps_hide">Hide</string>
-    <string name="esde_system_apps_auto_launch">Auto-launch on game start</string>
+    <string name="esde_system_apps_launch_trigger">Launch trigger</string>
+    <string name="esde_system_apps_trigger_no_action">No Action</string>
+    <string name="esde_system_apps_trigger_game_start">Game Start</string>
+    <string name="esde_system_apps_trigger_game_select">Game Select</string>
+    <string name="esde_system_apps_trigger_system_select">System Select</string>
+    <string name="esde_system_apps_bottom_screen">Use bottom screen</string>
 
     <!-- Powered Off Screen Brightness -->
     <string name="settings_powered_off_brightness_title">Sleep Screen Brightness</string>

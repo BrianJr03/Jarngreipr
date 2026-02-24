@@ -112,7 +112,7 @@ internal fun RomsPathCard(
                     initialValue = 0f,
                     targetValue = 360f,
                     animationSpec = infiniteRepeatable(
-                        animation = tween(800, easing = LinearEasing),
+                        animation = tween(1500, easing = LinearEasing),
                         repeatMode = RepeatMode.Restart
                     ),
                     label = "refresh_rotation"

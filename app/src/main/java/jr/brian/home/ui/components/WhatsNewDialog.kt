@@ -1,7 +1,9 @@
 package jr.brian.home.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -9,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -18,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.components.dialog.DimmedDialog
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
 fun WhatsNewDialog(
@@ -36,10 +41,15 @@ fun WhatsNewDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+                .fillMaxHeight(0.8f)
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(24.dp)
+                ),
+            shape = RoundedCornerShape(24.dp),
+            color = OledCardColor,
+            tonalElevation = 0.dp
         ) {
             Column(
                 modifier = Modifier
@@ -55,26 +65,27 @@ fun WhatsNewDialog(
                         Text(
                             text = stringResource(R.string.whats_new_title),
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                         Text(
                             text = stringResource(R.string.whats_new_version, versionName),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.White.copy(alpha = 0.6f)
                         )
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.whats_new_close),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.White
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                HorizontalDivider()
+                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -100,7 +111,12 @@ fun WhatsNewDialog(
 
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemePrimaryColor,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(stringResource(R.string.whats_new_got_it))
                 }
@@ -153,6 +169,7 @@ private fun MarkdownHeader1(line: String) {
         text = line.removePrefix("# "),
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.Bold,
+        color = Color.White,
         modifier = Modifier.padding(vertical = 16.dp)
     )
 }
@@ -163,6 +180,7 @@ private fun MarkdownHeader2(line: String) {
         text = line.removePrefix("## "),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
+        color = Color.White,
         modifier = Modifier.padding(vertical = 12.dp)
     )
 }
@@ -173,6 +191,7 @@ private fun MarkdownHeader3(line: String) {
         text = line.removePrefix("### "),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
+        color = Color.White,
         modifier = Modifier.padding(vertical = 8.dp)
     )
 }
@@ -185,11 +204,12 @@ private fun MarkdownBulletPoint(line: String) {
         Text(
             text = "• ",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary
+            color = ThemePrimaryColor
         )
         Text(
             text = line.trim().removePrefix("- ").removePrefix("* "),
             style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.85f),
             lineHeight = 24.sp
         )
     }
@@ -207,14 +227,14 @@ private fun MarkdownBlockquote(line: String) {
             modifier = Modifier
                 .width(4.dp)
                 .height(24.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+            color = ThemePrimaryColor.copy(alpha = 0.6f),
             shape = MaterialTheme.shapes.extraSmall
         ) {}
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = quoteText,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color.White.copy(alpha = 0.6f),
             lineHeight = 24.sp,
             fontStyle = FontStyle.Italic
         )
@@ -227,7 +247,7 @@ private fun MarkdownCodeBlock(codeLines: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = Color.White.copy(alpha = 0.08f),
         shape = MaterialTheme.shapes.small
     ) {
         Text(
@@ -235,6 +255,7 @@ private fun MarkdownCodeBlock(codeLines: List<String>) {
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = FontFamily.Monospace
             ),
+            color = Color.White.copy(alpha = 0.85f),
             modifier = Modifier.padding(12.dp)
         )
     }
@@ -246,6 +267,7 @@ private fun MarkdownBoldText(line: String) {
         text = line.replace("**", ""),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = if (line.trim().startsWith("**")) FontWeight.Bold else FontWeight.Normal,
+        color = Color.White,
         modifier = Modifier.padding(vertical = 4.dp)
     )
 }
@@ -260,6 +282,7 @@ private fun MarkdownRegularText(line: String) {
     Text(
         text = line,
         style = MaterialTheme.typography.bodyLarge,
+        color = Color.White.copy(alpha = 0.85f),
         lineHeight = 24.sp,
         modifier = Modifier.padding(vertical = 4.dp)
     )

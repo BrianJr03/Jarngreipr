@@ -47,6 +47,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
+import jr.brian.home.esde.preferences.SystemLaunchTrigger
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
@@ -850,10 +851,8 @@ class ESDEViewModel @Inject constructor(
         val updated = prefs.state.value.systemAppMap.toMutableMap()
         updated.remove(systemFolderName)
         prefs.setSystemAppMap(updated)
-        // Also clean up auto-launch if it was enabled
-        if (prefs.isSystemAutoLaunchEnabled(systemFolderName)) {
-            prefs.toggleSystemAutoLaunch(systemFolderName)
-        }
+        // Also clean up launch trigger if it was set
+        prefs.setSystemLaunchTrigger(systemFolderName, SystemLaunchTrigger.NoAction)
     }
 
     override fun onCleared() {
