@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -19,12 +20,14 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +51,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import jr.brian.home.R
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.util.ApkVariant
 import jr.brian.home.util.UpdateDownloader
 import jr.brian.home.util.UpdateInfo
@@ -83,14 +88,15 @@ fun InfoContent(
                 Icon(
                     imageVector = Icons.Default.SystemUpdate,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = ThemePrimaryColor,
                     modifier = Modifier.size(32.dp)
                 )
                 Column {
                     Text(
                         text = stringResource(R.string.update_available_title),
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                     Text(
                         text = stringResource(
@@ -99,7 +105,7 @@ fun InfoContent(
                             updateInfo.latestVersion
                         ),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -113,14 +119,14 @@ fun InfoContent(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = stringResource(R.string.update_scroll_down_description),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        HorizontalDivider()
+        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -128,7 +134,8 @@ fun InfoContent(
             Text(
                 text = stringResource(R.string.update_choose_variant),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -136,7 +143,7 @@ fun InfoContent(
             Text(
                 text = stringResource(R.string.update_variant_hidden_description),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -167,7 +174,7 @@ fun InfoContent(
                     UpdateDownloader.formatBytes(selectedVariant.size)
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.6f)
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -176,19 +183,21 @@ fun InfoContent(
             Text(
                 text = stringResource(R.string.update_whats_new),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = MaterialTheme.shapes.medium
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = updateInfo.releaseNotes,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.85f),
                     lineHeight = 22.sp,
                     modifier = Modifier.padding(12.dp)
                 )
@@ -203,14 +212,18 @@ fun InfoContent(
         ) {
             OutlinedButton(
                 onClick = onRemindLater,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ThemePrimaryColor),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_later))
             }
 
             OutlinedButton(
                 onClick = onSkipVersion,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ThemePrimaryColor),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_skip))
             }
@@ -233,7 +246,7 @@ fun DownloadingContent(
         Icon(
             imageVector = Icons.Default.Download,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = ThemePrimaryColor,
             modifier = Modifier.size(48.dp)
         )
 
@@ -242,7 +255,8 @@ fun DownloadingContent(
         Text(
             text = stringResource(R.string.update_downloading_title),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.White
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -250,7 +264,7 @@ fun DownloadingContent(
         Text(
             text = stringResource(R.string.update_downloading_message),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
@@ -262,7 +276,7 @@ fun DownloadingContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    trackColor = Color.White.copy(alpha = 0.1f),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -278,13 +292,13 @@ fun DownloadingContent(
                         UpdateDownloader.formatBytes(totalBytes)
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.6f)
                 )
                 Text(
                     text = stringResource(R.string.update_progress_percent, progress),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = ThemePrimaryColor
                 )
             }
         } else {
@@ -292,7 +306,7 @@ fun DownloadingContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    trackColor = Color.White.copy(alpha = 0.1f),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -300,7 +314,7 @@ fun DownloadingContent(
             Text(
                 text = UpdateDownloader.formatBytes(downloadedBytes),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White.copy(alpha = 0.6f)
             )
         }
 
@@ -322,7 +336,7 @@ fun DownloadCompleteContent(
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = ThemePrimaryColor,
             modifier = Modifier.size(64.dp)
         )
 
@@ -331,7 +345,8 @@ fun DownloadCompleteContent(
         Text(
             text = stringResource(R.string.update_complete_title),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.White
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -339,7 +354,7 @@ fun DownloadCompleteContent(
         Text(
             text = stringResource(R.string.update_complete_message),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
@@ -351,14 +366,21 @@ fun DownloadCompleteContent(
         ) {
             OutlinedButton(
                 onClick = onDismiss,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ThemePrimaryColor),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_later))
             }
 
             Button(
                 onClick = onInstall,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ThemePrimaryColor,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_install))
             }
@@ -382,7 +404,7 @@ fun ErrorContent(
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
+            tint = Color.Red,
             modifier = Modifier.size(64.dp)
         )
 
@@ -391,7 +413,8 @@ fun ErrorContent(
         Text(
             text = stringResource(R.string.update_failed_title),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.White
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -399,7 +422,7 @@ fun ErrorContent(
         Text(
             text = errorMessage,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
@@ -411,14 +434,21 @@ fun ErrorContent(
         ) {
             Button(
                 onClick = onRetry,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ThemePrimaryColor,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_retry))
             }
 
             OutlinedButton(
                 onClick = onOpenBrowser,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ThemePrimaryColor),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_download_browser))
             }
@@ -427,7 +457,10 @@ fun ErrorContent(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.update_button_cancel))
+                Text(
+                    text = stringResource(R.string.update_button_cancel),
+                    color = Color.White.copy(alpha = 0.6f)
+                )
             }
         }
     }
@@ -462,7 +495,7 @@ fun PermissionRequiredContent(
         Icon(
             imageVector = if (hasPermission) Icons.Default.CheckCircle else Icons.Default.SystemUpdate,
             contentDescription = null,
-            tint = if (hasPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
+            tint = ThemePrimaryColor,
             modifier = Modifier.size(64.dp)
         )
 
@@ -475,7 +508,8 @@ fun PermissionRequiredContent(
                 stringResource(R.string.update_permission_title)
             },
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.White
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -487,7 +521,7 @@ fun PermissionRequiredContent(
                 stringResource(R.string.update_permission_message)
             },
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
@@ -500,7 +534,12 @@ fun PermissionRequiredContent(
             if (hasPermission) {
                 Button(
                     onClick = onStartDownload,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemePrimaryColor,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Download,
@@ -513,7 +552,12 @@ fun PermissionRequiredContent(
             } else {
                 Button(
                     onClick = onGrantPermission,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemePrimaryColor,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(stringResource(R.string.update_button_open_settings))
                 }
@@ -521,7 +565,9 @@ fun PermissionRequiredContent(
 
             OutlinedButton(
                 onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ThemePrimaryColor),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(stringResource(R.string.update_button_cancel))
             }

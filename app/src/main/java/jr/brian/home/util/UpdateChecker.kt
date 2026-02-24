@@ -98,32 +98,29 @@ object UpdateChecker {
     }
 
     /**
-     * Parse all APK variants from the GitHub API response
+     * Parse all APK variants from the GitHub API response.
+     *
+     * Searches the full response for APK download URLs rather than extracting the
+     * assets JSON array first, since the array extraction regex can break on
+     * bracket characters inside string values (e.g. "github-actions[bot]").
      */
     private fun parseApkVariants(response: String): List<ApkVariant> {
         val variants = mutableListOf<ApkVariant>()
 
-        // Extract the assets array
-        val assetsMatch = Regex("\"assets\":\\s*\\[(.*?)\\]", RegexOption.DOT_MATCHES_ALL).find(response)
-        val assetsJson = assetsMatch?.groupValues?.get(1) ?: return emptyList()
+        // Find all APK download URLs in the full response
+        val urlPattern = Regex("\"browser_download_url\":\\s*\"([^\"]+\\.apk)\"")
+        val urlMatches = urlPattern.findAll(response).toList()
 
-        // Find all APK assets - match each asset object
-        val assetPattern = Regex(
-            "\\{[^{}]*?\"name\":\\s*\"([^\"]+\\.apk)\"[^{}]*?\"size\":\\s*(\\d+)[^{}]*?\"browser_download_url\":\\s*\"([^\"]+)\"[^{}]*?\\}",
-            RegexOption.DOT_MATCHES_ALL
-        )
+        for (urlMatch in urlMatches) {
+            val downloadUrl = urlMatch.groupValues[1]
+            val fileName = downloadUrl.substringAfterLast("/")
 
-        // Also try alternate order pattern
-        val altAssetPattern = Regex(
-            "\\{[^{}]*?\"browser_download_url\":\\s*\"([^\"]+\\.apk)\"[^{}]*?\"name\":\\s*\"([^\"]+)\"[^{}]*?\"size\":\\s*(\\d+)[^{}]*?\\}",
-            RegexOption.DOT_MATCHES_ALL
-        )
-
-        // Try primary pattern
-        assetPattern.findAll(assetsJson).forEach { match ->
-            val fileName = match.groupValues[1]
-            val size = match.groupValues[2].toLongOrNull() ?: 0L
-            val downloadUrl = match.groupValues[3]
+            // Search backwards from this URL match to find the associated "size" field
+            // within a reasonable window (the asset object is typically ~1500 chars)
+            val searchStart = maxOf(0, urlMatch.range.first - 1500)
+            val searchRegion = response.substring(searchStart, urlMatch.range.first)
+            val sizeMatch = Regex("\"size\":\\s*(\\d+)").findAll(searchRegion).lastOrNull()
+            val size = sizeMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
 
             variants.add(
                 ApkVariant(
@@ -133,42 +130,6 @@ object UpdateChecker {
                     variantType = VariantType.fromFileName(fileName)
                 )
             )
-        }
-
-        // If no matches, try alternate pattern
-        if (variants.isEmpty()) {
-            altAssetPattern.findAll(assetsJson).forEach { match ->
-                val downloadUrl = match.groupValues[1]
-                val fileName = match.groupValues[2]
-                val size = match.groupValues[3].toLongOrNull() ?: 0L
-
-                variants.add(
-                    ApkVariant(
-                        fileName = fileName,
-                        downloadUrl = downloadUrl,
-                        size = size,
-                        variantType = VariantType.fromFileName(fileName)
-                    )
-                )
-            }
-        }
-
-        // If still no matches, try a simpler fallback
-        if (variants.isEmpty()) {
-            val simplePattern = Regex("\"browser_download_url\":\\s*\"([^\"]+\\.apk)\"")
-            simplePattern.findAll(assetsJson).forEach { match ->
-                val downloadUrl = match.groupValues[1]
-                val fileName = downloadUrl.substringAfterLast("/")
-
-                variants.add(
-                    ApkVariant(
-                        fileName = fileName,
-                        downloadUrl = downloadUrl,
-                        size = 0L,
-                        variantType = VariantType.fromFileName(fileName)
-                    )
-                )
-            }
         }
 
         // Sort: Standard first, then Thor variant

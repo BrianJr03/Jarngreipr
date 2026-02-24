@@ -86,6 +86,19 @@ enum class WallpaperToggleTarget(val displayName: String) {
     }
 }
 
+enum class SystemLaunchTrigger(val displayName: String) {
+    NoAction("No Action"),
+    GameStart("Game Start"),
+    GameSelect("Game Select"),
+    SystemSelect("System Select");
+
+    companion object {
+        fun fromName(name: String): SystemLaunchTrigger {
+            return entries.find { it.name == name } ?: NoAction
+        }
+    }
+}
+
 enum class OverlayMediaType(val folderName: String, val displayName: String) {
     Marquees("marquees", "Marquees"),
     ThreeDBoxes("3dboxes", "3D Boxes"),
@@ -120,7 +133,6 @@ data class ESDEPrefsState(
     val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     
-    val esdeEnabled: Boolean = false,
     val lastSelectedSystem: String? = null,
     val systemImageType: SystemImageType = SystemImageType.Fanart,
     val gameImageType: GameImageType = GameImageType.Screenshots,
@@ -131,6 +143,8 @@ data class ESDEPrefsState(
     val randomSystemImage: Boolean = false,
     val powerEventsEnabled: Boolean = true,
     val persistOnGameLaunch: Boolean = false,
+    val persistBackgroundBrightness: Int = 80,
+    val persistLogoBrightness: Int = 100,
     val customSystemLogosPath: String? = null,
     val customSystemImagesPath: String? = null,
     val singleSystemImagePath: String? = null,
@@ -167,7 +181,7 @@ data class ESDEPrefsState(
     
     val customMediaPath: String? = null,
     
-    val excludeEffectsFromHome: Boolean = false,
+    val effectsExcludedPages: Set<Int> = emptySet(),
     
     val hideUIForGameBrowsing: Boolean = false,
     
@@ -180,16 +194,27 @@ data class ESDEPrefsState(
     val overlayMediaType: OverlayMediaType = OverlayMediaType.Marquees,
     val logoOnlyMode: Boolean = false,
     val selectButtonWallpaperToggle: Boolean = false,
-    val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper
+    val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper,
+
+    val romsPaths: List<String> = emptyList(),
+    val systemAppMap: Map<String, String?> = emptyMap(),
+    val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
+    val systemTopScreenSet: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
     val musicVolumeFloat: Float get() = musicVolume / 100f
     val gameBackgroundDimmingFloat: Float get() = gameBackgroundDimming / 100f
     val systemBackgroundDimmingFloat: Float get() = systemBackgroundDimming / 100f
+    val persistBackgroundBrightnessFloat: Float get() = persistBackgroundBrightness / 100f
+    val persistLogoBrightnessFloat: Float get() = persistLogoBrightness / 100f
     
     fun isMarqueeVisibleOnPage(pageIndex: Int): Boolean {
         return !marqueeHiddenPages.contains(pageIndex)
+    }
+
+    fun isEffectsExcludedOnPage(pageIndex: Int): Boolean {
+        return effectsExcludedPages.contains(pageIndex)
     }
 
     fun isAndroidGamesSelected() = lastSelectedSystem == "androidgames"

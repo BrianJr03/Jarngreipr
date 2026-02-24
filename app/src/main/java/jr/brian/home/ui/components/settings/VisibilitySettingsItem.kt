@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -52,8 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
@@ -85,22 +83,6 @@ fun VisibilitySettingsItem(
         }
     }
 
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.8f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
-
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -113,7 +95,7 @@ fun VisibilitySettingsItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient,
+                        brush = subtleCardGradient(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(
@@ -243,22 +225,6 @@ private fun VisibilityToggleOption(
     var isFocused by remember { mutableStateOf(false) }
     val localFocusRequester = remember { FocusRequester() }
 
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.6f),
-                        ThemeSecondaryColor.copy(alpha = 0.6f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor.copy(alpha = 0.7f),
-                        OledCardColor.copy(alpha = 0.7f),
-                    )
-                },
-        )
-
     Box(
         modifier =
             Modifier
@@ -268,7 +234,7 @@ private fun VisibilityToggleOption(
                     isFocused = it.isFocused
                 }
                 .background(
-                    brush = cardGradient,
+                    brush = subtleCardGradient(isFocused),
                     shape = RoundedCornerShape(12.dp),
                 )
                 .border(

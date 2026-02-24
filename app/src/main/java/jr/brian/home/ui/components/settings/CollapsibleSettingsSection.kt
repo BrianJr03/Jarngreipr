@@ -35,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -45,8 +44,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -68,19 +66,7 @@ fun CollapsibleSettingsSection(
         label = "chevron_rotation"
     )
 
-    val headerGradient = Brush.linearGradient(
-        colors = if (isFocused || isExpanded) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.6f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
+    val headerGradient = subtleCardGradient(isFocused || isExpanded)
 
     Column(modifier = modifier.fillMaxWidth()) {
         Box(

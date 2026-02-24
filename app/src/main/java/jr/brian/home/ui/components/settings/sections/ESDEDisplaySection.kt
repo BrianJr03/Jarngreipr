@@ -66,7 +66,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ESDESettingsContent(
     onRunSetupWizard: () -> Unit = {},
-    onNavigateToMarqueePressShortcut: () -> Unit = {}
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val viewModel: ESDEViewModel = hiltViewModel()
@@ -372,8 +373,11 @@ fun ESDESettingsContent(
                         preferencesManager.setPowerEventsEnabled(false)
                     }
                 },
-                onGameBackgroundDimmingChange = { dimming ->
-                    preferencesManager.setGameBackgroundDimming(dimming)
+                onPersistLogoBrightnessChange = { brightness ->
+                    preferencesManager.setPersistLogoBrightness(brightness)
+                },
+                onPersistBackgroundBrightnessChange = { brightness ->
+                    preferencesManager.setPersistBackgroundBrightness(brightness)
                 },
                 onPowerEventsEnabledChange = { enabled ->
                     preferencesManager.setPowerEventsEnabled(enabled)
@@ -391,6 +395,23 @@ fun ESDESettingsContent(
                     preferencesManager.setScreensaverBehavior(behavior)
                 }
             )
+        }
+
+        CollapsibleSection(title = stringResource(R.string.esde_settings_section_system_apps)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.esde_settings_system_apps_info),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.esde_settings_configure_system_apps),
+                    description = "",
+                    checked = false,
+                    showToggle = false,
+                    onClick = onNavigateToSystemApps
+                )
+            }
         }
 
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_video)) {
@@ -414,6 +435,7 @@ fun ESDESettingsContent(
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_effects)) {
             EffectsSectionContent(
                 prefsState = prefsState,
+                pageTypes = pageTypes,
                 onBackgroundColorChange = { color ->
                     preferencesManager.setBackgroundColor(color)
                 },
@@ -435,8 +457,8 @@ fun ESDESettingsContent(
                 onGameBackgroundDimmingChange = { dimming ->
                     preferencesManager.setGameBackgroundDimming(dimming)
                 },
-                onExcludeEffectsFromHomeChange = { exclude ->
-                    preferencesManager.setExcludeEffectsFromHome(exclude)
+                onToggleEffectsExcludedPage = { pageIndex ->
+                    preferencesManager.toggleEffectsExcludedPage(pageIndex)
                 },
                 onGameImageTypeChange = { type ->
                     preferencesManager.setGameImageType(type)
@@ -475,6 +497,8 @@ fun ESDESettingsContent(
                 }
             )
         }
+
+
     }
 }
 
@@ -483,7 +507,8 @@ fun ESDEDisplaySection(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onRunSetupWizard: () -> Unit = {},
-    onNavigateToMarqueePressShortcut: () -> Unit = {}
+    onNavigateToMarqueePressShortcut: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
         title = stringResource(R.string.esde_settings_title),
@@ -493,7 +518,8 @@ fun ESDEDisplaySection(
     ) {
         ESDESettingsContent(
             onRunSetupWizard = onRunSetupWizard,
-            onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut
+            onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
+            onNavigateToSystemApps = onNavigateToSystemApps
         )
     }
 }

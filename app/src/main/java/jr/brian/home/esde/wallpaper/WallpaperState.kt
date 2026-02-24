@@ -28,6 +28,7 @@ data class WallpaperState(
     val isScreensaverActive: Boolean = false,
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.PowerOff,
     val isGameRunning: Boolean = false,
+    val logoBrightness: Float = 1f,
     val gameDescription: String? = null,
     val isShowingGameBackground: Boolean = false
 )

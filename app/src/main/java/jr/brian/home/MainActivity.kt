@@ -37,6 +37,9 @@ import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodel.ESDEViewModel
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.esde.preferences.SystemLaunchTrigger
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import java.io.File
 import javax.inject.Inject
@@ -228,17 +231,36 @@ class MainActivity : ComponentActivity() {
         onGameBrowsingUIVisibilityChanged: (Boolean) -> Unit
     ) {
         LaunchedEffect(Unit) {
+            fun launchSystemAppIfTriggered(systemName: String, trigger: SystemLaunchTrigger) {
+                if (esdePreferencesManager.getSystemLaunchTrigger(systemName) == trigger) {
+                    esdePreferencesManager.getSystemAppForSystem(systemName)?.let { pkg ->
+                        val displayPref = if (!esdePreferencesManager.isSystemBottomScreen(systemName)) {
+                            DisplayPreference.PRIMARY_DISPLAY
+                        } else {
+                            DisplayPreference.CURRENT_DISPLAY
+                        }
+                        launchApp(
+                            context = this@MainActivity,
+                            packageName = pkg,
+                            displayPreference = displayPref
+                        )
+                    }
+                }
+            }
+
             esdeEventListener.onSystemSelected = { systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.updateForSystem(systemName)
                 onGameBrowsingUIVisibilityChanged(false)
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.SystemSelect)
             }
             esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.updateForGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(true)
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
             }
-            esdeEventListener.onGameStarted = { _, _, _ ->
+            esdeEventListener.onGameStarted = { _, _, systemName ->
                 VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.handleGameStarted()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
@@ -246,6 +268,7 @@ class MainActivity : ComponentActivity() {
                 } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
                     powerViewModel.setGamePersistActive(true)
                 }
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameStart)
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
                 esdeViewModel.handleGameEnded()

@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +44,7 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.dialog.AppSelectionDialog
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.util.rememberDialogState
 
@@ -174,20 +171,6 @@ internal fun ShortcutOptionItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.6f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor
-            )
-        }
-    )
-
     val borderColor = when {
         isSelected -> Color.White
         isFocused -> Color.LightGray.copy(alpha = 0.8f)
@@ -204,7 +187,7 @@ internal fun ShortcutOptionItem(
                 isFocused = it.isFocused
             }
             .background(
-                brush = gradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(
@@ -234,20 +217,6 @@ internal fun ShortcutAppSelectionItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.6f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor
-            )
-        }
-    )
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -256,7 +225,7 @@ internal fun ShortcutAppSelectionItem(
                 isFocused = it.isFocused
             }
             .background(
-                brush = gradient,
+                brush = subtleCardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .border(

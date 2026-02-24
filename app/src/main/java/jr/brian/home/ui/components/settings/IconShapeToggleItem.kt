@@ -30,7 +30,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,11 +38,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.managers.IconShape
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.util.rememberConditionalFocus
@@ -68,7 +63,7 @@ fun IconShapeToggleItem(
                         isFocused = it.isFocused
                     }
                     .background(
-                        brush = cardGradient(isFocused),
+                        brush = subtleCardGradient(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(

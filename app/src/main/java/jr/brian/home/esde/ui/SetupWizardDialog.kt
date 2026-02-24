@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
@@ -399,29 +398,25 @@ private fun SetupButton(
         cardGradient(isFocused = isFocused)
     }
 
-    val borderBrush = if (isFocused) {
-        borderBrush(
-            isFocused = true,
-            colors = listOf(
+    val borderBrush = borderBrush(
+        isFocused = true,
+        colors = if (isFocused) {
+            listOf(
                 ThemePrimaryColor.copy(alpha = 0.8f),
                 ThemeSecondaryColor.copy(alpha = 0.6f)
             )
-        )
-    } else {
-        Brush.linearGradient(
-            colors = if (isPrimary) {
-                listOf(
-                    ThemePrimaryColor.copy(alpha = 0.6f),
-                    ThemeSecondaryColor.copy(alpha = 0.4f)
-                )
-            } else {
-                listOf(
-                    ThemePrimaryColor.copy(alpha = 0.3f),
-                    ThemeSecondaryColor.copy(alpha = 0.2f)
-                )
-            }
-        )
-    }
+        } else if (isPrimary) {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.6f),
+                ThemeSecondaryColor.copy(alpha = 0.4f)
+            )
+        } else {
+            listOf(
+                ThemePrimaryColor.copy(alpha = 0.3f),
+                ThemeSecondaryColor.copy(alpha = 0.2f)
+            )
+        }
+    )
 
     Box(
         modifier = modifier

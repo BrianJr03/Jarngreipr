@@ -17,7 +17,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BLUR_LEVEL
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_DIMMING_LEVEL
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ESDE_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LAST_SELECTED_SYSTEM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_ALIGNMENT
@@ -54,6 +53,8 @@ import jr.brian.home.model.Shortcut
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_DIMMING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_ON_GAME_LAUNCH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_LOGO_BRIGHTNESS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_BACKGROUND_BRIGHTNESS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
@@ -67,6 +68,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_SC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM_HOME
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EFFECTS_EXCLUDED_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
@@ -74,7 +76,15 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_WALLPAPER_TOGGLE_TARGET
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATHS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_APP_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_AUTO_LAUNCH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAUNCH_TRIGGER_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ESDEPreferencesManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
@@ -187,6 +197,107 @@ class ESDEPreferencesManager(context: Context) {
             legacyBlurLevel
         }
 
+        val romsPathsJson = prefs.getString(KEY_ROMS_PATHS, null)
+        val romsPaths: List<String> = if (!romsPathsJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(romsPathsJson)
+                (0 until arr.length()).map { arr.getString(it) }
+            } catch (_: Exception) {
+                emptyList()
+            }
+        } else {
+            val legacyPath = prefs.getString(KEY_ROMS_PATH, null)
+            if (legacyPath != null) {
+                val migrated = listOf(legacyPath)
+                prefs.edit {
+                    putString(KEY_ROMS_PATHS, JSONArray(migrated).toString())
+                    remove(KEY_ROMS_PATH)
+                }
+                migrated
+            } else {
+                emptyList()
+            }
+        }
+
+        val systemAppMapJson = prefs.getString(KEY_SYSTEM_APP_MAP, null)
+        val systemAppMap: Map<String, String?> = if (!systemAppMapJson.isNullOrEmpty()) {
+            try {
+                val json = JSONObject(systemAppMapJson)
+                val result = mutableMapOf<String, String?>()
+                json.keys().forEach { key -> result[key] = if (json.isNull(key)) null else json.getString(key) }
+                result
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+
+        val triggerMapJson = prefs.getString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, null)
+        val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = if (!triggerMapJson.isNullOrEmpty()) {
+            try {
+                val json = JSONObject(triggerMapJson)
+                val result = mutableMapOf<String, SystemLaunchTrigger>()
+                json.keys().forEach { key -> result[key] = SystemLaunchTrigger.fromName(json.getString(key)) }
+                result
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } else {
+            // Migrate legacy auto-launch set to trigger map
+            val autoLaunchJson = prefs.getString(KEY_SYSTEM_AUTO_LAUNCH, null)
+            if (!autoLaunchJson.isNullOrEmpty()) {
+                try {
+                    val arr = JSONArray(autoLaunchJson)
+                    val migrated = mutableMapOf<String, SystemLaunchTrigger>()
+                    (0 until arr.length()).forEach { migrated[arr.getString(it)] = SystemLaunchTrigger.GameStart }
+                    // Persist migration
+                    val json = JSONObject()
+                    migrated.forEach { (key, value) -> json.put(key, value.name) }
+                    prefs.edit {
+                        putString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, json.toString())
+                        remove(KEY_SYSTEM_AUTO_LAUNCH)
+                    }
+                    migrated
+                } catch (_: Exception) {
+                    emptyMap()
+                }
+            } else {
+                emptyMap()
+            }
+        }
+
+        val topScreenJson = prefs.getString(KEY_SYSTEM_TOP_SCREEN, null)
+        val systemTopScreenSet: Set<String> = if (!topScreenJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(topScreenJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
+        // Migrate legacy excludeEffectsFromHome boolean to per-page set
+        val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
+        val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
+            effectsExcludedPagesString
+                .split(",")
+                .mapNotNull { it.toIntOrNull() }
+                .toSet()
+        } else if (prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false)) {
+            // Migrate: old boolean was true, so mark home tab (index 0) as excluded
+            val migrated = setOf(0)
+            prefs.edit {
+                putString(KEY_EFFECTS_EXCLUDED_PAGES, migrated.joinToString(","))
+                remove(KEY_EXCLUDE_EFFECTS_FROM_HOME)
+            }
+            migrated
+        } else {
+            emptySet()
+        }
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -202,7 +313,6 @@ class ESDEPreferencesManager(context: Context) {
             videoScaleMode = videoScaleMode,
             systemBackgroundScaleMode = systemBackgroundScaleMode,
             gameBackgroundScaleMode = gameBackgroundScaleMode,
-            esdeEnabled = prefs.getBoolean(KEY_ESDE_ENABLED, false),
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
             systemImageType = systemImageType,
             gameImageType = gameImageType,
@@ -213,6 +323,8 @@ class ESDEPreferencesManager(context: Context) {
             randomSystemImage = prefs.getBoolean(KEY_RANDOM_SYSTEM_IMAGE, false),
             powerEventsEnabled = prefs.getBoolean(KEY_POWER_EVENTS_ENABLED, true),
             persistOnGameLaunch = prefs.getBoolean(KEY_PERSIST_ON_GAME_LAUNCH, false),
+            persistBackgroundBrightness = prefs.getInt(KEY_PERSIST_BACKGROUND_BRIGHTNESS, 80),
+            persistLogoBrightness = prefs.getInt(KEY_PERSIST_LOGO_BRIGHTNESS, 100),
             customSystemLogosPath = prefs.getString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, null),
             customSystemImagesPath = prefs.getString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, null),
             singleSystemImagePath = prefs.getString(KEY_SINGLE_SYSTEM_IMAGE_PATH, null),
@@ -242,7 +354,7 @@ class ESDEPreferencesManager(context: Context) {
             gameBackgroundDimming = prefs.getInt(KEY_GAME_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             systemBackgroundDimming = prefs.getInt(KEY_SYSTEM_BACKGROUND_DIMMING, 20).coerceAtMost(70),
             customMediaPath = prefs.getString(KEY_CUSTOM_MEDIA_PATH, null),
-            excludeEffectsFromHome = prefs.getBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, false),
+            effectsExcludedPages = effectsExcludedPages,
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
             marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
             androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
@@ -250,7 +362,11 @@ class ESDEPreferencesManager(context: Context) {
             overlayMediaType = overlayMediaType,
             logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
             selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
-            wallpaperToggleTarget = wallpaperToggleTarget
+            wallpaperToggleTarget = wallpaperToggleTarget,
+            romsPaths = romsPaths,
+            systemAppMap = systemAppMap,
+            systemLaunchTriggerMap = systemLaunchTriggerMap,
+            systemTopScreenSet = systemTopScreenSet
         )
     }
 
@@ -361,6 +477,18 @@ class ESDEPreferencesManager(context: Context) {
     fun setPersistOnGameLaunch(persist: Boolean) {
         _state.value = _state.value.copy(persistOnGameLaunch = persist)
         prefs.edit { putBoolean(KEY_PERSIST_ON_GAME_LAUNCH, persist) }
+    }
+
+    fun setPersistBackgroundBrightness(brightness: Int) {
+        val coercedBrightness = brightness.coerceIn(30, 100)
+        _state.value = _state.value.copy(persistBackgroundBrightness = coercedBrightness)
+        prefs.edit { putInt(KEY_PERSIST_BACKGROUND_BRIGHTNESS, coercedBrightness) }
+    }
+
+    fun setPersistLogoBrightness(brightness: Int) {
+        val coercedBrightness = brightness.coerceIn(30, 100)
+        _state.value = _state.value.copy(persistLogoBrightness = coercedBrightness)
+        prefs.edit { putInt(KEY_PERSIST_LOGO_BRIGHTNESS, coercedBrightness) }
     }
 
     fun setCustomSystemLogosPath(path: String?) {
@@ -562,9 +690,20 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
-    fun setExcludeEffectsFromHome(exclude: Boolean) {
-        _state.value = _state.value.copy(excludeEffectsFromHome = exclude)
-        prefs.edit { putBoolean(KEY_EXCLUDE_EFFECTS_FROM_HOME, exclude) }
+    fun toggleEffectsExcludedPage(pageIndex: Int) {
+        val excludedPages = _state.value.effectsExcludedPages
+        val newPages = if (excludedPages.contains(pageIndex)) {
+            excludedPages - pageIndex
+        } else {
+            excludedPages + pageIndex
+        }
+
+        _state.value = _state.value.copy(effectsExcludedPages = newPages)
+        if (newPages.isEmpty()) {
+            prefs.edit { remove(KEY_EFFECTS_EXCLUDED_PAGES) }
+        } else {
+            prefs.edit { putString(KEY_EFFECTS_EXCLUDED_PAGES, newPages.joinToString(",")) }
+        }
     }
 
     fun setShowLogoForSystem(show: Boolean) {
@@ -621,5 +760,80 @@ class ESDEPreferencesManager(context: Context) {
     fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
         _state.value = _state.value.copy(wallpaperToggleTarget = target)
         prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
+    }
+
+    fun addRomsPath(path: String) {
+        val current = _state.value.romsPaths
+        if (current.contains(path)) return
+        val updated = current + path
+        _state.value = _state.value.copy(romsPaths = updated)
+        prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
+    }
+
+    fun removeRomsPath(path: String) {
+        val updated = _state.value.romsPaths - path
+        _state.value = _state.value.copy(romsPaths = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_ROMS_PATHS) }
+        } else {
+            prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
+        }
+    }
+
+    fun setSystemAppMap(map: Map<String, String?>) {
+        _state.value = _state.value.copy(systemAppMap = map)
+        if (map.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_APP_MAP) }
+        } else {
+            val json = JSONObject()
+            map.forEach { (key, value) ->
+                if (value != null) json.put(key, value) else json.put(key, JSONObject.NULL)
+            }
+            prefs.edit { putString(KEY_SYSTEM_APP_MAP, json.toString()) }
+        }
+    }
+
+    fun getSystemAppForSystem(systemName: String): String? {
+        return state.value.systemAppMap[systemName]
+    }
+
+    fun setSystemLaunchTrigger(systemFolderName: String, trigger: SystemLaunchTrigger) {
+        val current = _state.value.systemLaunchTriggerMap.toMutableMap()
+        if (trigger == SystemLaunchTrigger.NoAction) {
+            current.remove(systemFolderName)
+        } else {
+            current[systemFolderName] = trigger
+        }
+        _state.value = _state.value.copy(systemLaunchTriggerMap = current)
+        if (current.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_LAUNCH_TRIGGER_MAP) }
+        } else {
+            val json = JSONObject()
+            current.forEach { (key, value) -> json.put(key, value.name) }
+            prefs.edit { putString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, json.toString()) }
+        }
+    }
+
+    fun getSystemLaunchTrigger(systemName: String): SystemLaunchTrigger {
+        return state.value.systemLaunchTriggerMap[systemName] ?: SystemLaunchTrigger.NoAction
+    }
+
+    fun toggleSystemTopScreen(systemFolderName: String) {
+        val current = _state.value.systemTopScreenSet
+        val updated = if (current.contains(systemFolderName)) {
+            current - systemFolderName
+        } else {
+            current + systemFolderName
+        }
+        _state.value = _state.value.copy(systemTopScreenSet = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_TOP_SCREEN) }
+        } else {
+            prefs.edit { putString(KEY_SYSTEM_TOP_SCREEN, JSONArray(updated.toList()).toString()) }
+        }
+    }
+
+    fun isSystemBottomScreen(systemName: String): Boolean {
+        return !state.value.systemTopScreenSet.contains(systemName)
     }
 }
