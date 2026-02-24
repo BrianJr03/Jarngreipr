@@ -1,25 +1,38 @@
 package jr.brian.home.esde.ui.sections
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.preferences.BackgroundScaleMode
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.esde.preferences.GameImageType
 import jr.brian.home.esde.preferences.SystemImageType
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
+import jr.brian.home.esde.ui.components.EffectsExcludedPageOption
 import jr.brian.home.esde.ui.components.GameBackgroundScaleModeSelector
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.esde.ui.components.SystemBackgroundScaleModeSelector
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.SystemImageTypeSelector
 import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.model.PageType
 
 @Composable
 fun EffectsSectionContent(
     prefsState: ESDEPrefsState,
+    pageTypes: List<PageType>,
     onBackgroundColorChange: (Int) -> Unit,
     onSystemBackgroundScaleModeChange: (BackgroundScaleMode) -> Unit,
     onGameBackgroundScaleModeChange: (BackgroundScaleMode) -> Unit,
@@ -27,7 +40,7 @@ fun EffectsSectionContent(
     onGameBlurLevelChange: (Int) -> Unit,
     onSystemBackgroundDimmingChange: (Int) -> Unit,
     onGameBackgroundDimmingChange: (Int) -> Unit,
-    onExcludeEffectsFromHomeChange: (Boolean) -> Unit,
+    onToggleEffectsExcludedPage: (Int) -> Unit,
     onGameImageTypeChange: (GameImageType) -> Unit,
     onRandomSystemImageChange: (Boolean) -> Unit,
     onSystemImageTypeChange: (SystemImageType) -> Unit,
@@ -116,14 +129,35 @@ fun EffectsSectionContent(
         }
     )
 
-    ToggleSetting(
-        title = stringResource(R.string.esde_settings_exclude_effects_from_home),
-        description = stringResource(R.string.esde_settings_exclude_effects_from_home_description),
-        checked = prefsState.excludeEffectsFromHome,
-        onCheckedChange = { exclude ->
-            onExcludeEffectsFromHomeChange(exclude)
+    if (pageTypes.size > 1) {
+        Column {
+            Text(
+                text = stringResource(R.string.esde_settings_effects_excluded_pages_title),
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = stringResource(R.string.esde_settings_effects_excluded_pages_description),
+                color = Color.Gray.copy(alpha = 0.7f),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                for (pageIndex in pageTypes.indices) {
+                    val isExcluded = prefsState.isEffectsExcludedOnPage(pageIndex)
+                    EffectsExcludedPageOption(
+                        pageIndex = pageIndex,
+                        isExcluded = isExcluded,
+                        onToggle = { onToggleEffectsExcludedPage(pageIndex) }
+                    )
+                }
+            }
         }
-    )
+    }
 
     GameImageTypeSelector(
         selectedType = prefsState.gameImageType,

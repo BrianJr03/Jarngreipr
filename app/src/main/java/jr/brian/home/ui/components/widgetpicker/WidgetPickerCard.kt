@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
@@ -54,7 +53,6 @@ import jr.brian.home.model.widget.WidgetWithCategory
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun WidgetCategoryList(
@@ -152,22 +150,7 @@ fun CompactWidgetCard(
             )
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor,
-                            ThemeSecondaryColor
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.2f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused),
                 shape = RoundedCornerShape(10.dp)
             )
             .clip(RoundedCornerShape(10.dp))
@@ -242,22 +225,7 @@ fun WidgetPreviewCard(
             )
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor,
-                            ThemeSecondaryColor
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.2f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))

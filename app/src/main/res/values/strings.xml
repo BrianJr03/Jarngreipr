@@ -32,6 +32,8 @@
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">@string/common_close</string>
     <string name="drawer_options_back">@string/common_back</string>
+    <string name="drawer_options_launch_system_app">Launch System App</string>
+    <string name="drawer_options_configure_system_app">Configure System App</string>
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
@@ -118,6 +120,9 @@
 
     <string name="settings_show_app_names_title">Show App Names</string>
     <string name="settings_show_app_names_description">Display names below app icons</string>
+
+    <string name="settings_app_label_font_size_title">App Label Font Size</string>
+    <string name="settings_app_label_font_size_description">Adjust the font size of app name labels</string>
 
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
@@ -294,6 +299,8 @@
     <string name="settings_section_layout">Layout</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
+    <string name="settings_whats_new_title">What\'s New</string>
+    <string name="settings_whats_new_description">See what changed in this version</string>
 
     <!-- App Grid Item -->
     <string name="app_icon_description">App icon for %1$s</string>
@@ -782,6 +789,9 @@
     <string name="esde_settings_system_background_dimming">System Background Dimming</string>
     <string name="esde_settings_exclude_effects_from_home">Exclude Home Tab</string>
     <string name="esde_settings_exclude_effects_from_home_description">Keep the home tab background clear without blur or dimming effects</string>
+    <string name="esde_settings_effects_excluded_pages_title">Exclude Effects by Tab</string>
+    <string name="esde_settings_effects_excluded_pages_description">Disable blur and dimming effects on specific tabs</string>
+    <string name="esde_settings_effects_excluded_tab_description">Skip blur and dimming</string>
     <string name="esde_settings_background_color">Background Color</string>
     <string name="esde_settings_off">Off</string>
     <string name="esde_settings_video_enabled">Video Playback</string>
@@ -875,6 +885,8 @@
     <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string>
     <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
     <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and logo visible when a game is launched</string>
+    <string name="esde_settings_persist_background_brightness">Background Brightness</string>
+    <string name="esde_settings_persist_logo_brightness">Logo Brightness</string>
     <string name="esde_settings_marquee_brightness">Logo Brightness</string>
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
@@ -953,7 +965,48 @@
 
     <!-- What\'s New Dialog -->
     <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
+
+    <!-- System Apps Screen -->
+    <string name="esde_system_apps_title">System Apps</string>
+    <string name="esde_system_apps_info_title">Quick Access Setup</string>
+    <string name="esde_system_apps_info_content">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
+    <string name="esde_system_apps_roms_folder_title">ROMs Folder</string>
+    <string name="esde_system_apps_roms_folder_description">Select your ESDE ROMs directory</string>
+    <string name="esde_system_apps_roms_folders_title">ROMs Folders</string>
+    <string name="esde_system_apps_roms_folders_description">Add your ESDE ROMs directories</string>
+    <string name="esde_system_apps_select_roms_folder">Select ROMs folder</string>
+    <string name="esde_system_apps_add_roms_folder">Add ROMs folder</string>
+    <string name="esde_system_apps_remove_roms_folder">Remove ROMs folder</string>
+    <string name="esde_system_apps_no_folders">No folders added</string>
+    <string name="esde_system_apps_refresh_system_list">Refresh system list</string>
+    <string name="esde_system_apps_not_set">Not set</string>
+    <string name="esde_system_apps_no_systems_match">No systems match "%1$s"</string>
+    <string name="esde_system_apps_prompt_message">Please add a ROMs folder to start linking system folders to Android apps.</string>
+    <string name="esde_system_apps_no_app_assigned">No app assigned</string>
+    <string name="esde_system_apps_change">Change</string>
+    <string name="esde_system_apps_remove">Remove system entry</string>
+    <string name="esde_system_apps_remove_confirm_title">Remove %1$s?</string>
+    <string name="esde_system_apps_remove_confirm_message">This will remove the system entry and its settings.</string>
+    <string name="esde_system_apps_remove_confirm_yes">Remove</string>
+    <string name="esde_system_apps_remove_confirm_no">Cancel</string>
+    <string name="esde_system_apps_select_app">Select app for %1$s</string>
     <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
+    <string name="esde_settings_section_system_apps">System Apps</string>
+    <string name="esde_settings_system_apps_info">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
+    <string name="esde_settings_configure_system_apps">Configure System Apps</string>
+    <string name="esde_system_apps_search">Search Systems</string>
+    <string name="esde_system_apps_show">Show</string>
+    <string name="esde_system_apps_hide">Hide</string>
+    <string name="esde_system_apps_launch_trigger">Launch trigger</string>
+    <string name="esde_system_apps_trigger_no_action">No Action</string>
+    <string name="esde_system_apps_trigger_game_start">Game Start</string>
+    <string name="esde_system_apps_trigger_game_select">Game Select</string>
+    <string name="esde_system_apps_trigger_system_select">System Select</string>
+    <string name="esde_system_apps_bottom_screen">Use bottom screen</string>
+
+    <!-- Powered Off Screen Brightness -->
+    <string name="settings_powered_off_brightness_title">Sleep Screen Brightness</string>
+    <string name="settings_powered_off_brightness_description">Adjust the brightness of UI elements on the sleep screen</string>
 
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>

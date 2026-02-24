@@ -55,7 +55,8 @@ import jr.brian.home.R
 @Composable
 fun DualVolumeControls(
     modifier: Modifier = Modifier,
-    isVisible: Boolean = true
+    isVisible: Boolean = true,
+    tintColor: Color = Color.DarkGray
 ) {
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
@@ -153,7 +154,8 @@ fun DualVolumeControls(
                 } catch (e: Exception) {
                     Log.e("DualVolumeControls", "Failed to set primary volume", e)
                 }
-            }
+            },
+            tintColor = tintColor
         )
 
 //        TODO: Ask AYN for the correct way to control the bottom screen's volume
@@ -189,7 +191,8 @@ fun VolumeSlider(
     maxVolume: Float,
     onVolumeChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
-    leadingIcon: @Composable (() -> Unit)? = null
+    leadingIcon: @Composable (() -> Unit)? = null,
+    tintColor: Color = Color.DarkGray
 ) {
     var tempVolume by remember(volume) { mutableFloatStateOf(volume) }
     
@@ -199,7 +202,7 @@ fun VolumeSlider(
     ) {
         Text(
             text = label,
-            color = Color.DarkGray,
+            color = tintColor,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
@@ -216,7 +219,7 @@ fun VolumeSlider(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.VolumeDown,
                     contentDescription = stringResource(R.string.volume_down_description),
-                    tint = Color.DarkGray
+                    tint = tintColor
                 )
             }
             
@@ -232,9 +235,9 @@ fun VolumeSlider(
                 steps = if (maxVolume.toInt() > 1) maxVolume.toInt() - 1 else 0,
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
-                    thumbColor = Color.DarkGray,
-                    activeTrackColor = Color.DarkGray,
-                    inactiveTrackColor = Color.DarkGray.copy(alpha = 0.5f)
+                    thumbColor = tintColor,
+                    activeTrackColor = tintColor,
+                    inactiveTrackColor = tintColor.copy(alpha = tintColor.alpha * 0.3f)
                 )
             )
             
@@ -243,14 +246,14 @@ fun VolumeSlider(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                 contentDescription = stringResource(R.string.volume_up_description),
-                tint = Color.DarkGray
+                tint = tintColor
             )
             
             Spacer(modifier = Modifier.width(8.dp))
             
             Text(
                 text = "${tempVolume.toInt()}",
-                color = Color.DarkGray,
+                color = tintColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.width(30.dp)

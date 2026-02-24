@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,7 +65,7 @@ import jr.brian.home.ui.theme.StatusOrange
 import jr.brian.home.ui.theme.StatusRed
 import jr.brian.home.ui.theme.StatusYellow
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+
 import jr.brian.home.util.shizuku.ShizukuInputManager
 
 @Composable
@@ -94,22 +93,7 @@ fun GamePadCard(
             )
             .border(
                 width = if (isSelected || isPressed) 3.dp else 2.dp,
-                brush = if (isSelected || isPressed) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isSelected || isPressed),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
@@ -181,22 +165,7 @@ fun GamePadActionButton(
             )
             .border(
                 width = if (isFocused || isHighlighted) 3.dp else 2.dp,
-                brush = if (isFocused || isHighlighted) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused || isHighlighted),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))

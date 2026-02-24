@@ -48,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -58,8 +57,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.esde.preferences.ESDEPreferencesManager
 import jr.brian.home.esde.preferences.ESDEPrefsState
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -72,16 +70,7 @@ fun Modifier.focusableSettingCard(
 ): Modifier = this
     .scale(animatedFocusedScale(isFocused))
     .background(
-        brush = Brush.linearGradient(
-            colors = if (isFocused) {
-                listOf(
-                    ThemePrimaryColor.copy(alpha = 0.3f),
-                    ThemeSecondaryColor.copy(alpha = 0.2f)
-                )
-            } else {
-                listOf(OledCardLightColor, OledCardColor)
-            }
-        ),
+        brush = subtleCardGradient(isFocused),
         shape = RoundedCornerShape(cornerRadius)
     )
     .border(
@@ -132,16 +121,7 @@ fun CollapsibleSection(
                 .fillMaxWidth()
                 .scale(animatedFocusedScale(isFocused))
                 .background(
-                    brush = Brush.linearGradient(
-                        colors = if (isFocused || isExpanded) {
-                            listOf(
-                                ThemePrimaryColor.copy(alpha = 0.8f),
-                                ThemeSecondaryColor.copy(alpha = 0.6f)
-                            )
-                        } else {
-                            listOf(OledCardLightColor, OledCardColor)
-                        }
-                    ),
+                    brush = subtleCardGradient(isFocused || isExpanded),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .then(border)
@@ -274,16 +254,7 @@ fun ToggleSetting(
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .background(
-                brush = Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    } else {
-                        listOf(OledCardLightColor, OledCardColor)
-                    }
-                ),
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -348,16 +319,7 @@ fun PathSetting(
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .background(
-                brush = Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    } else {
-                        listOf(OledCardLightColor, OledCardColor)
-                    }
-                ),
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -511,12 +473,7 @@ fun MarqueeSizeSetting(
                 modifier = Modifier
                     .size((width / 3).dp, (height / 3).dp)
                     .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                ThemePrimaryColor.copy(alpha = 0.5f),
-                                ThemeSecondaryColor.copy(alpha = 0.3f)
-                            )
-                        ),
+                        brush = subtleCardGradient(isFocused = true),
                         shape = RoundedCornerShape(4.dp)
                     )
                     .border(

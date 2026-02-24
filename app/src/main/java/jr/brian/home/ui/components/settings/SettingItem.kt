@@ -28,7 +28,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -40,12 +39,9 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.extensions.clickWithHaptic
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.util.SettingsTag
 
 private val shape = RoundedCornerShape(16.dp)
@@ -62,9 +58,6 @@ fun SettingItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val focusedColors =
-        listOf(ThemePrimaryColor.copy(alpha = 0.8f), ThemeSecondaryColor.copy(alpha = 0.6f))
-    val unfocusedColors = listOf(OledCardLightColor, OledCardColor)
 
     Box(
         modifier = Modifier
@@ -75,12 +68,12 @@ fun SettingItem(
             } ?: Modifier)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                Brush.linearGradient(if (isFocused) focusedColors else unfocusedColors),
+                subtleCardGradient(isFocused),
                 shape
             )
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
-                brush = borderBrush(isFocused, focusedColors), shape
+                brush = borderBrush(isFocused), shape
             )
             .clip(shape)
             .clickWithHaptic(haptic) { onClick() }

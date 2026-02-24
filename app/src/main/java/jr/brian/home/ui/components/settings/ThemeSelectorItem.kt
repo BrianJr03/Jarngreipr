@@ -55,11 +55,10 @@ import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.util.rememberConditionalFocus
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.managers.LocalThemeManager
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -84,21 +83,7 @@ fun ThemeSelectorItem(
         }
     }
 
-    val cardGradient =
-        Brush.linearGradient(
-            colors =
-                if (isFocused) {
-                    listOf(
-                        ThemePrimaryColor.copy(alpha = 0.8f),
-                        ThemeSecondaryColor.copy(alpha = 0.8f),
-                    )
-                } else {
-                    listOf(
-                        OledCardLightColor,
-                        OledCardColor,
-                    )
-                },
-        )
+    val cardGradient = subtleCardGradient(isFocused)
 
     Column(modifier = Modifier.fillMaxWidth()) {
         AnimatedVisibility(

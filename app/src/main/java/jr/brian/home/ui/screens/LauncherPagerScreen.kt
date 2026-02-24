@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -83,6 +85,7 @@ fun LauncherPagerScreen(
     onNavigateToSearch: () -> Unit = {},
     onBackButtonShortcut: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
@@ -229,16 +232,20 @@ fun LauncherPagerScreen(
                 )
             }
 
-            AnimatedVisibility(
-                visible = !hideLauncherUI && !isPoweredOff,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    beyondViewportPageCount = 1,
-                ) { page ->
+            val pagerVisible = !hideLauncherUI && !isPoweredOff
+            val pagerAlpha by animateFloatAsState(
+                targetValue = if (pagerVisible) 1f else 0f,
+                label = "pagerAlpha"
+            )
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = pagerAlpha },
+                beyondViewportPageCount = 1,
+                userScrollEnabled = pagerVisible,
+            ) { page ->
                     val pageType =
                         if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
@@ -282,6 +289,7 @@ fun LauncherPagerScreen(
                                     allApps = homeUiState.allAppsUnfiltered,
                                     onNavigateToSearch = onNavigateToSearch,
                                     onNavigateToDockSettings = onNavigateToDockSettings,
+                                    onNavigateToSystemApps = onNavigateToSystemApps,
                                     onShowAppDrawer = { showAppDrawerSheet = true },
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
@@ -333,6 +341,7 @@ fun LauncherPagerScreen(
                                         pageIndicatorBorderColor = ThemeSecondaryColor,
                                         onNavigateToSearch = onNavigateToSearch,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
+                                        onNavigateToSystemApps = onNavigateToSystemApps,
                                         navController = navController,
                                         onShowAppDrawer = { showAppDrawerSheet = true },
                                         onScrollStateChanged = { isScrolling, hasScrollableContent ->
@@ -389,13 +398,13 @@ fun LauncherPagerScreen(
                                         isLoading = homeUiState.isLoading,
                                         pageIndex = page,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
+                                        onNavigateToSystemApps = onNavigateToSystemApps,
                                     )
                                 }
                             }
                         }
                     }
                 }
-            }
 
             AnimatedVisibility(
                 visible = isPoweredOff,

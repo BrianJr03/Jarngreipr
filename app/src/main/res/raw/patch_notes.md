@@ -1,15 +1,22 @@
-### What's New
+**New: System Apps**
+- Link ESDE system folders to Android apps for quick access
+- Manage multiple ROMs folder paths
+- Choose when to launch system apps (Game Start, Game Select, System Select, or No Action)
+- Chose which screen to launch a system app
 
-**Screensaver Music Toggle**
-- Fixed screensaver music not stopping when toggled off
+**Persist Display on Game Launch**
+- Added Logo Brightness slider (30–100%)
+- Added Background Brightness slider (30–100%)
 
-**Icon Pack Refresh**
-- Fixed icon packs requiring app restart to apply
+**New Features**
+- App label font size slider
+- Exclude blur/dimming effects per tab
 
-**Logo Position Lock**
-- Fixed logo moving with app drawer on center and top positions when locked
+**UI Improvements**
+- Dark theme refinements for Update and What's New dialogs
 
-**Display Options Fix**
-- Fixed display preference options not showing in app menu
+**Bug Fixes & Improvements**
+- Fixed issue where user couldn't select version to upgrade to in Update Available dialog
+- Fixed pager jumping to wrong tab on wake from powered-off screen
 
-1.7.7
+1.8

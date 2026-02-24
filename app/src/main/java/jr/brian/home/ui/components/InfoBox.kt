@@ -18,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -30,12 +32,7 @@ fun InfoBox(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = when {
-        isPrimary -> Brush.linearGradient(
-            colors = listOf(
-                ThemePrimaryColor.copy(alpha = 0.15f),
-                ThemeSecondaryColor.copy(alpha = 0.15f)
-            )
-        )
+        isPrimary -> subtleCardGradient(true)
 
         isWarning -> Brush.linearGradient(
             colors = listOf(
@@ -52,13 +49,8 @@ fun InfoBox(
         )
     }
 
-    val borderBrush = when {
-        isPrimary -> Brush.linearGradient(
-            colors = listOf(
-                ThemePrimaryColor.copy(alpha = 0.5f),
-                ThemeSecondaryColor.copy(alpha = 0.5f)
-            )
-        )
+    val infoBorderBrush = when {
+        isPrimary -> borderBrush(true)
 
         isWarning -> Brush.linearGradient(
             colors = listOf(
@@ -90,7 +82,7 @@ fun InfoBox(
             )
             .border(
                 width = 2.dp,
-                brush = borderBrush,
+                brush = infoBorderBrush,
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(20.dp)
