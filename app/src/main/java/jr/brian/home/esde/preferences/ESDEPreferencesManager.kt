@@ -80,6 +80,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATHS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_APP_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_AUTO_LAUNCH
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAUNCH_TRIGGER_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -231,10 +233,44 @@ class ESDEPreferencesManager(context: Context) {
             emptyMap()
         }
 
-        val autoLaunchJson = prefs.getString(KEY_SYSTEM_AUTO_LAUNCH, null)
-        val systemAutoLaunchSet: Set<String> = if (!autoLaunchJson.isNullOrEmpty()) {
+        val triggerMapJson = prefs.getString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, null)
+        val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = if (!triggerMapJson.isNullOrEmpty()) {
             try {
-                val arr = JSONArray(autoLaunchJson)
+                val json = JSONObject(triggerMapJson)
+                val result = mutableMapOf<String, SystemLaunchTrigger>()
+                json.keys().forEach { key -> result[key] = SystemLaunchTrigger.fromName(json.getString(key)) }
+                result
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } else {
+            // Migrate legacy auto-launch set to trigger map
+            val autoLaunchJson = prefs.getString(KEY_SYSTEM_AUTO_LAUNCH, null)
+            if (!autoLaunchJson.isNullOrEmpty()) {
+                try {
+                    val arr = JSONArray(autoLaunchJson)
+                    val migrated = mutableMapOf<String, SystemLaunchTrigger>()
+                    (0 until arr.length()).forEach { migrated[arr.getString(it)] = SystemLaunchTrigger.GameStart }
+                    // Persist migration
+                    val json = JSONObject()
+                    migrated.forEach { (key, value) -> json.put(key, value.name) }
+                    prefs.edit {
+                        putString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, json.toString())
+                        remove(KEY_SYSTEM_AUTO_LAUNCH)
+                    }
+                    migrated
+                } catch (_: Exception) {
+                    emptyMap()
+                }
+            } else {
+                emptyMap()
+            }
+        }
+
+        val topScreenJson = prefs.getString(KEY_SYSTEM_TOP_SCREEN, null)
+        val systemTopScreenSet: Set<String> = if (!topScreenJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(topScreenJson)
                 (0 until arr.length()).map { arr.getString(it) }.toSet()
             } catch (_: Exception) {
                 emptySet()
@@ -329,7 +365,8 @@ class ESDEPreferencesManager(context: Context) {
             wallpaperToggleTarget = wallpaperToggleTarget,
             romsPaths = romsPaths,
             systemAppMap = systemAppMap,
-            systemAutoLaunchSet = systemAutoLaunchSet
+            systemLaunchTriggerMap = systemLaunchTriggerMap,
+            systemTopScreenSet = systemTopScreenSet
         )
     }
 
@@ -760,22 +797,43 @@ class ESDEPreferencesManager(context: Context) {
         return state.value.systemAppMap[systemName]
     }
 
-    fun toggleSystemAutoLaunch(systemFolderName: String) {
-        val current = _state.value.systemAutoLaunchSet
+    fun setSystemLaunchTrigger(systemFolderName: String, trigger: SystemLaunchTrigger) {
+        val current = _state.value.systemLaunchTriggerMap.toMutableMap()
+        if (trigger == SystemLaunchTrigger.NoAction) {
+            current.remove(systemFolderName)
+        } else {
+            current[systemFolderName] = trigger
+        }
+        _state.value = _state.value.copy(systemLaunchTriggerMap = current)
+        if (current.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_LAUNCH_TRIGGER_MAP) }
+        } else {
+            val json = JSONObject()
+            current.forEach { (key, value) -> json.put(key, value.name) }
+            prefs.edit { putString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, json.toString()) }
+        }
+    }
+
+    fun getSystemLaunchTrigger(systemName: String): SystemLaunchTrigger {
+        return state.value.systemLaunchTriggerMap[systemName] ?: SystemLaunchTrigger.NoAction
+    }
+
+    fun toggleSystemTopScreen(systemFolderName: String) {
+        val current = _state.value.systemTopScreenSet
         val updated = if (current.contains(systemFolderName)) {
             current - systemFolderName
         } else {
             current + systemFolderName
         }
-        _state.value = _state.value.copy(systemAutoLaunchSet = updated)
+        _state.value = _state.value.copy(systemTopScreenSet = updated)
         if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_SYSTEM_AUTO_LAUNCH) }
+            prefs.edit { remove(KEY_SYSTEM_TOP_SCREEN) }
         } else {
-            prefs.edit { putString(KEY_SYSTEM_AUTO_LAUNCH, JSONArray(updated.toList()).toString()) }
+            prefs.edit { putString(KEY_SYSTEM_TOP_SCREEN, JSONArray(updated.toList()).toString()) }
         }
     }
 
-    fun isSystemAutoLaunchEnabled(systemName: String): Boolean {
-        return state.value.systemAutoLaunchSet.contains(systemName)
+    fun isSystemBottomScreen(systemName: String): Boolean {
+        return !state.value.systemTopScreenSet.contains(systemName)
     }
 }

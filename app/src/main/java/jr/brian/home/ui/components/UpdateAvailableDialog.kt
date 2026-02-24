@@ -5,10 +5,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import jr.brian.home.model.state.UpdateDialogState
@@ -33,6 +33,8 @@ import jr.brian.home.ui.components.update.InfoContent
 import jr.brian.home.ui.components.update.PermissionRequiredContent
 import jr.brian.home.util.ApkVariant
 import jr.brian.home.util.DownloadState
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.util.UpdateDownloader
 import jr.brian.home.util.UpdateInfo
 import kotlinx.coroutines.launch
@@ -126,10 +128,15 @@ fun UpdateAvailableDialog(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .heightIn(max = 600.dp)
-                .padding(vertical = 16.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+                .padding(vertical = 16.dp)
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(24.dp)
+                ),
+            shape = RoundedCornerShape(24.dp),
+            color = OledCardColor,
+            tonalElevation = 0.dp
         ) {
             AnimatedContent(
                 targetState = dialogState,

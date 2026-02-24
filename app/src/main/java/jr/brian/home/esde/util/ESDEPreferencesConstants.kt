@@ -78,4 +78,6 @@ object ESDEPreferencesConstants {
     const val KEY_ROMS_PATHS = "roms_paths"
     const val KEY_SYSTEM_APP_MAP = "system_app_map"
     const val KEY_SYSTEM_AUTO_LAUNCH = "system_auto_launch"
+    const val KEY_SYSTEM_LAUNCH_TRIGGER_MAP = "system_launch_trigger_map"
+    const val KEY_SYSTEM_TOP_SCREEN = "system_top_screen"
 }
