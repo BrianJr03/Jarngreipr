@@ -50,9 +50,7 @@ fun PoweredOffBrightnessSliderItem() {
     val currentBrightness by powerSettingsManager.poweredOffBrightness.collectAsStateWithLifecycle()
     var isFocused by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()

@@ -67,24 +67,11 @@ fun AppearanceSection(
             onIconPackChanged = onIconPackChanged
         )
 
-        IconShapeToggleItem(
-            isExpanded = false
-        )
-
-        OledModeToggleItem(
-            isExpanded = false
-        )
-
-        TabAnimationToggleItem(
-            isExpanded = false
-        )
-
-        AppLabelFontSizeSliderItem(
-            isExpanded = false
-        )
-
-        PoweredOffBrightnessSliderItem(
-        )
+        IconShapeToggleItem(isExpanded = false)
+        OledModeToggleItem(isExpanded = false)
+        TabAnimationToggleItem(isExpanded = false)
+        AppLabelFontSizeSliderItem()
+        PoweredOffBrightnessSliderItem()
 
         WallpaperSelectorItem(
             isExpanded = expandedItem == EXPANDED_WALLPAPER,
