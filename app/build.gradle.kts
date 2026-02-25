@@ -18,7 +18,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = 1
-        versionName = "1.8"
+        versionName = "1.8.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -123,6 +123,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // Konfetti
+    implementation(libs.konfetti.compose)
 
     // Shizuku
     implementation(libs.shizuku.api)

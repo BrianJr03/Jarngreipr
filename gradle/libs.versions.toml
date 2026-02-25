@@ -24,8 +24,10 @@ media3 = "1.5.0"
 documentfile = "1.0.1"
 room = "2.6.1"
 shizuku = "13.1.5"
+konfettiCompose = "2.0.4"
 
 [libraries]
+konfetti-compose = { module = "nl.dionsegijn:konfetti-compose", version.ref = "konfettiCompose" }
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
