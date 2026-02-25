@@ -14,11 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
-import jr.brian.home.esde.scripts.ScriptManager
-import jr.brian.home.esde.setup.SetupPreferences
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.esde.setup.SetupWizardManager
-import jr.brian.home.esde.setup.WarningType
+import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.model.SetupStep
+import jr.brian.home.esde.data.SetupWizardManager
+import jr.brian.home.esde.model.WarningType
 import jr.brian.home.ui.util.DialogState
 import java.io.File
 

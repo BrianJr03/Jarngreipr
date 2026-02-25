@@ -1,4 +1,4 @@
-package jr.brian.home.esde.setup
+package jr.brian.home.esde.model
 
 data class SetupResult(
     val success: Boolean,

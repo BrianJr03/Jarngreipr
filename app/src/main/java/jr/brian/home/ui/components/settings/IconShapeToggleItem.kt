@@ -100,20 +100,12 @@ fun IconShapeToggleItem(
 
                     Spacer(modifier = Modifier.size(16.dp))
 
-                    Column {
-                        Text(
-                            text = stringResource(id = R.string.settings_icon_shape_title),
-                            color = Color.White,
-                            fontSize = if (isFocused) 18.sp else 16.sp,
-                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(id = R.string.settings_icon_shape_description),
-                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
-                            fontSize = 14.sp,
-                        )
-                    }
+                    Text(
+                        text = stringResource(id = R.string.settings_icon_shape_title),
+                        color = Color.White,
+                        fontSize = if (isFocused) 18.sp else 16.sp,
+                        fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                    )
                 }
 
                 Text(

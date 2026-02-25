@@ -1,11 +1,12 @@
-package jr.brian.home.esde.setup
+package jr.brian.home.esde.data
 
 import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
-import jr.brian.home.esde.scripts.ScriptManager
+import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.model.SetupResult
 import java.io.File
 
 object ESDESetupHelper {

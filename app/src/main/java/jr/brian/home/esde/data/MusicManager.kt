@@ -1,4 +1,4 @@
-package jr.brian.home.esde.music
+package jr.brian.home.esde.data
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -8,8 +8,9 @@ import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
-import jr.brian.home.esde.preferences.MusicVideoBehavior
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.model.MusicVideoBehavior
+import jr.brian.home.esde.model.MusicSource
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import java.io.File
 
