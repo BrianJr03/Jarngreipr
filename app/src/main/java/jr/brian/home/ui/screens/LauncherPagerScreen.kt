@@ -47,8 +47,8 @@ import jr.brian.home.data.FabPosition
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay

@@ -11,6 +11,7 @@ object Routes {
     const val ESDE_SYSTEM_APPS = "esde_system_apps"
     const val MARQUEE_PRESS_SHORTCUT = "marquee_press_shortcut"
     const val FAQ = "faq"
+    const val KONFETTI_EDITOR = "konfetti_editor"
     const val LAUNCHER = "launcher"
     const val MONITOR = "monitor"
     const val RECENT_APPS = "recent_apps"

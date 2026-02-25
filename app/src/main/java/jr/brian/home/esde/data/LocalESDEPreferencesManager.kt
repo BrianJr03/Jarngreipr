@@ -1,4 +1,4 @@
-package jr.brian.home.esde.preferences
+package jr.brian.home.esde.data
 
 import androidx.compose.runtime.staticCompositionLocalOf
 

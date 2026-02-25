@@ -16,11 +16,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import jr.brian.home.esde.events.ESDEEventListener
-import jr.brian.home.esde.events.ESDEEventListenerImpl
-import jr.brian.home.esde.events.ESDEEventManager
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
-import jr.brian.home.esde.setup.SetupPreferences
+import jr.brian.home.esde.data.ESDEEventListener
+import jr.brian.home.esde.data.ESDEEventListenerImpl
+import jr.brian.home.esde.data.ESDEEventManager
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.SetupPreferences
 import javax.inject.Qualifier
 import javax.inject.Singleton
 

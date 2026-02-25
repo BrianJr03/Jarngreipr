@@ -1,8 +1,8 @@
-package jr.brian.home.esde.preferences
+package jr.brian.home.esde.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.model.Shortcut
 
 enum class SystemImageType(val folderName: String?) {

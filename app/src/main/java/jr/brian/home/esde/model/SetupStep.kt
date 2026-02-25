@@ -1,4 +1,4 @@
-package jr.brian.home.esde.setup
+package jr.brian.home.esde.model
 
 sealed class SetupStep {
     object Welcome : SetupStep()

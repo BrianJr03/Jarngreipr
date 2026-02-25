@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.model.AnimationStyle
 import kotlinx.coroutines.launch
 
 /**

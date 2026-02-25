@@ -1,6 +1,11 @@
 package jr.brian.home.esde.ui
 
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -31,7 +36,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import jr.brian.home.esde.preferences.VideoScaleMode
+import jr.brian.home.esde.model.VideoScaleMode
 import java.io.File
 
 /**
@@ -47,11 +52,16 @@ import java.io.File
  * - EXTRA_AUDIO_ENABLED: Boolean - Whether to enable audio (default: false)
  */
 class VideoPlayerActivity : ComponentActivity() {
+    private var playerRef: ExoPlayer? = null
+    private val foregroundPollHandler = Handler(Looper.getMainLooper())
+    private var isMonitoringForeground = false
 
     companion object {
         const val EXTRA_VIDEO_PATH = "extra_video_path"
         const val EXTRA_AUDIO_ENABLED = "extra_audio_enabled"
         const val EXTRA_SCALE_MODE = "extra_scale_mode"
+        private const val ESDE_PACKAGE = "eu.es_de.frontend"
+        private const val FOREGROUND_POLL_INTERVAL = 2000L
         
         private var currentInstance: WeakReference<VideoPlayerActivity>? = null
         
@@ -102,9 +112,12 @@ class VideoPlayerActivity : ComponentActivity() {
                 videoPath = videoPath,
                 audioEnabled = audioEnabled,
                 scaleMode = scaleMode,
+                onPlayerReady = { playerRef = it },
                 onDismiss = { finish() }
             )
         }
+
+        startForegroundMonitoring()
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
@@ -115,11 +128,87 @@ class VideoPlayerActivity : ComponentActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            // Let volume keys pass through normally
+            KeyEvent.KEYCODE_VOLUME_UP,
+            KeyEvent.KEYCODE_VOLUME_DOWN,
+            KeyEvent.KEYCODE_VOLUME_MUTE -> return super.onKeyDown(keyCode, event)
+
+            // A button toggles pause/play
+            KeyEvent.KEYCODE_BUTTON_A -> {
+                playerRef?.let { player ->
+                    player.playWhenReady = !player.playWhenReady
+                }
+                return true
+            }
+        }
+        // B button and any other key dismisses the video
+        finish()
+        return true
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        stopForegroundMonitoring()
+        playerRef = null
         if (currentInstance?.get() == this) {
             currentInstance = null
         }
+    }
+
+    private fun startForegroundMonitoring() {
+        if (isMonitoringForeground) return
+        isMonitoringForeground = true
+        pollForegroundApp()
+    }
+
+    private fun stopForegroundMonitoring() {
+        isMonitoringForeground = false
+        foregroundPollHandler.removeCallbacksAndMessages(null)
+    }
+
+    private fun pollForegroundApp() {
+        if (!isMonitoringForeground) return
+
+        if (!isESDEInForeground()) {
+            finish()
+            return
+        }
+
+        foregroundPollHandler.postDelayed({ pollForegroundApp() }, FOREGROUND_POLL_INTERVAL)
+    }
+
+    /**
+     * Uses UsageStatsManager to check if ES-DE is currently in the foreground.
+     * Falls back to true (don't dismiss) if permission is not granted.
+     */
+    private fun isESDEInForeground(): Boolean {
+        val usageStatsManager =
+            getSystemService(USAGE_STATS_SERVICE) as? UsageStatsManager ?: return true
+
+        val endTime = System.currentTimeMillis()
+        val startTime = endTime - 5000 // Check last 5 seconds
+
+        val usageEvents = try {
+            usageStatsManager.queryEvents(startTime, endTime)
+        } catch (_: SecurityException) {
+            return true // No permission, don't dismiss
+        }
+
+        var lastForegroundPackage: String? = null
+        val event = UsageEvents.Event()
+        while (usageEvents.hasNextEvent()) {
+            usageEvents.getNextEvent(event)
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                lastForegroundPackage = event.packageName
+            }
+        }
+
+        // If no recent foreground event, assume ES-DE is still active
+        return lastForegroundPackage == null ||
+                lastForegroundPackage == ESDE_PACKAGE ||
+                lastForegroundPackage == packageName
     }
 }
 
@@ -129,6 +218,7 @@ private fun VideoPlayerScreen(
     videoPath: String,
     audioEnabled: Boolean,
     scaleMode: VideoScaleMode,
+    onPlayerReady: (ExoPlayer) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -149,6 +239,10 @@ private fun VideoPlayerScreen(
                 // Video failed to load, dismiss
             }
         }
+    }
+
+    LaunchedEffect(exoPlayer) {
+        onPlayerReady(exoPlayer)
     }
 
     LaunchedEffect(audioEnabled) {
