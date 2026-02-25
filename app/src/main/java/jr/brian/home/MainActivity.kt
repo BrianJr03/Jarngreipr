@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -326,10 +327,13 @@ class MainActivity : ComponentActivity() {
     private fun GameKonfettiOverlay(esdeViewModel: ESDEViewModel) {
         val context = LocalContext.current
         val gameKonfettiManager = LocalGameKonfettiManager.current
-        val themeColors = listOf(
-            ThemePrimaryColor.toArgb(),
-            ThemeSecondaryColor.toArgb(),
-            ThemeAccentColor.toArgb()
+
+        val primaryArgb = ThemePrimaryColor.toArgb()
+        val secondaryArgb = ThemeSecondaryColor.toArgb()
+        val accentArgb = ThemeAccentColor.toArgb()
+
+        val currentThemeColors by rememberUpdatedState(
+            listOf(primaryArgb, secondaryArgb, accentArgb)
         )
 
         var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
@@ -342,6 +346,7 @@ class MainActivity : ComponentActivity() {
                 if (event.trigger != config.trigger) return@collect
 
                 val gameFilename = event.gameFilename
+                val themeColors = currentThemeColors
 
                 if (config.isLetterBurst) {
                     // Trigger Letter Burst animation
