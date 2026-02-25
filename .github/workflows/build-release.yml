@@ -57,6 +57,15 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
             exit 0
           fi
+
+          # Allow skipping version check via commit message flag
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qi '\[skip-version-check\]'; then
+            echo "Found [skip-version-check] in commit message — forcing build."
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           CURRENT=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           PREVIOUS=$(git show HEAD~1:app/build.gradle.kts 2>/dev/null | grep 'versionName' | head -1 | sed 's/.*"\(.*\)".*/\1/' || echo "")
           echo "Current versionName:  $CURRENT"
