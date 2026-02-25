@@ -40,8 +40,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.WallpaperToggleTarget
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.WallpaperToggleTarget
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
@@ -56,7 +56,7 @@ import jr.brian.home.esde.ui.sections.PowerSectionContent
 import jr.brian.home.esde.ui.sections.ScreensaverSectionContent
 import jr.brian.home.esde.ui.sections.VideoSectionContent
 import jr.brian.home.esde.util.getPathFromUri
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -67,7 +67,8 @@ import kotlinx.coroutines.launch
 fun ESDESettingsContent(
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
-    onNavigateToSystemApps: () -> Unit = {}
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToKonfettiEditor: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val viewModel: ESDEViewModel = hiltViewModel()
@@ -322,6 +323,23 @@ fun ESDESettingsContent(
             )
         }
 
+        CollapsibleSection(title = stringResource(R.string.esde_settings_section_konfetti)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.esde_settings_konfetti_info),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.esde_settings_open_konfetti_editor),
+                    description = "",
+                    checked = false,
+                    showToggle = false,
+                    onClick = onNavigateToKonfettiEditor
+                )
+            }
+        }
+
         CollapsibleSection(title = stringResource(R.string.esde_settings_section_marquee)) {
             MarqueeSectionContent(
                 prefsState = prefsState,
@@ -497,8 +515,6 @@ fun ESDESettingsContent(
                 }
             )
         }
-
-
     }
 }
 
@@ -508,7 +524,8 @@ fun ESDEDisplaySection(
     onToggle: () -> Unit,
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
-    onNavigateToSystemApps: () -> Unit = {}
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToKonfettiEditor: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
         title = stringResource(R.string.esde_settings_title),
@@ -519,7 +536,8 @@ fun ESDEDisplaySection(
         ESDESettingsContent(
             onRunSetupWizard = onRunSetupWizard,
             onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
-            onNavigateToSystemApps = onNavigateToSystemApps
+            onNavigateToSystemApps = onNavigateToSystemApps,
+            onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
         )
     }
 }

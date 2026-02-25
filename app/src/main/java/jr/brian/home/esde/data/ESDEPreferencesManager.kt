@@ -1,10 +1,21 @@
-package jr.brian.home.esde.preferences
+package jr.brian.home.esde.data
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import jr.brian.home.esde.animation.AnimationStyle
+import jr.brian.home.esde.model.AnimationStyle
+import jr.brian.home.esde.model.BackgroundScaleMode
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.GameImageType
+import jr.brian.home.esde.model.LogoAlignment
+import jr.brian.home.esde.model.MusicVideoBehavior
+import jr.brian.home.esde.model.OverlayMediaType
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.model.SystemImageType
+import jr.brian.home.esde.model.SystemLaunchTrigger
+import jr.brian.home.esde.model.VideoScaleMode
+import jr.brian.home.esde.model.WallpaperToggleTarget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

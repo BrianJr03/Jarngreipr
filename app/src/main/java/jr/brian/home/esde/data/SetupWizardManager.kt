@@ -1,4 +1,4 @@
-package jr.brian.home.esde.setup
+package jr.brian.home.esde.data
 
 import android.Manifest
 import android.content.Context
@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Environment
 import androidx.core.content.ContextCompat
 import java.io.File
+import jr.brian.home.esde.model.SetupStep
 
 class SetupWizardManager(
     private val context: Context,

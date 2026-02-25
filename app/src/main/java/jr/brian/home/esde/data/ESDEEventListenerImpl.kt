@@ -1,4 +1,4 @@
-package jr.brian.home.esde.events
+package jr.brian.home.esde.data
 
 class ESDEEventListenerImpl : ESDEEventListener {
     var onSystemSelected: ((systemName: String) -> Unit)? = null

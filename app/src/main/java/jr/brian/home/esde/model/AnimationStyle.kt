@@ -1,4 +1,4 @@
-package jr.brian.home.esde.animation
+package jr.brian.home.esde.model
 
 enum class AnimationStyle {
     None,

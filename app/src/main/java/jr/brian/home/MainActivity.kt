@@ -25,24 +25,39 @@ import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
-import jr.brian.home.esde.events.ESDEEventListenerImpl
-import jr.brian.home.esde.events.ESDEEventManager
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.ScreensaverBehavior
-import jr.brian.home.esde.scripts.ScriptManager
-import jr.brian.home.esde.setup.ESDESetupHelper
+import jr.brian.home.esde.data.ESDEEventListenerImpl
+import jr.brian.home.esde.data.ESDEEventManager
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.data.ESDESetupHelper
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.ui.VideoPlayerActivity
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.esde.preferences.SystemLaunchTrigger
+import jr.brian.home.esde.model.SystemLaunchTrigger
+import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
+import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
+import jr.brian.home.ui.components.konfetti.LetterFormationBurst
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.PartySystem
 import java.io.File
 import javax.inject.Inject
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -143,6 +158,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     )
+
+                    GameKonfettiOverlay(esdeViewModel = esdeViewModel)
                 }
             }
         }
@@ -260,9 +277,9 @@ class MainActivity : ComponentActivity() {
                 onGameBrowsingUIVisibilityChanged(true)
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
             }
-            esdeEventListener.onGameStarted = { _, _, systemName ->
+            esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
                 VideoPlayerActivity.finishIfRunning()
-                esdeViewModel.handleGameStarted()
+                esdeViewModel.handleGameStarted(gameFilename)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
                 } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
@@ -271,6 +288,7 @@ class MainActivity : ComponentActivity() {
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameStart)
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
+                VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.handleGameEnded()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
@@ -287,6 +305,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             esdeEventListener.onScreensaverEnded = { _ ->
+                VideoPlayerActivity.finishIfRunning()
                 onScreensaverUIVisibilityChanged(false)
                 esdeViewModel.handleScreensaverEnded()
                 onGameBrowsingUIVisibilityChanged(false)
@@ -296,10 +315,98 @@ class MainActivity : ComponentActivity() {
             }
             esdeEventListener.onScreensaverGameSelected =
                 { gameFilename, _, systemName ->
+                    VideoPlayerActivity.finishIfRunning()
                     esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
-                    // Don't hide UI during screensaver
                     onGameBrowsingUIVisibilityChanged(false)
                 }
         }
     }
+
+    @Composable
+    private fun GameKonfettiOverlay(esdeViewModel: ESDEViewModel) {
+        val context = LocalContext.current
+        val gameKonfettiManager = LocalGameKonfettiManager.current
+        val themeColors = listOf(
+            ThemePrimaryColor.toArgb(),
+            ThemeSecondaryColor.toArgb(),
+            ThemeAccentColor.toArgb()
+        )
+
+        var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
+        var letterBurstEvent by remember { mutableStateOf<LetterBurstState?>(null) }
+
+        LaunchedEffect(esdeViewModel) {
+            esdeViewModel.gameKonfettiEvent.collect { event ->
+                val config = gameKonfettiManager.config
+                if (!config.enabled) return@collect
+                if (event.trigger != config.trigger) return@collect
+
+                val gameFilename = event.gameFilename
+
+                if (config.isLetterBurst) {
+                    // Trigger Letter Burst animation
+                    val char = gameKonfettiManager.resolveLetterBurstChar(gameFilename)
+                    letterBurstEvent = LetterBurstState(
+                        char = char,
+                        colors = themeColors,
+                        burstPreset = gameKonfettiManager.letterBurstExplodePreset(),
+                        formationMs = config.letterBurstFormationMs,
+                        holdMs = config.letterBurstHoldMs,
+                        particleCount = config.letterBurstParticleCount
+                    )
+                } else {
+                    val charShape = if (gameKonfettiManager.config.useCharShape) {
+                        val firstChar = gameFilename
+                            .substringAfterLast("/")
+                            .substringBeforeLast(".")
+                            .firstOrNull()
+                            ?.uppercaseChar() ?: 'G'
+                        KonfettiShapeFactory.createCharShape(context, firstChar)
+                    } else null
+
+                    konfettiParties = gameKonfettiManager.buildParties(themeColors, charShape)
+                }
+            }
+        }
+
+        // Standard Konfetti overlay
+        konfettiParties?.let { parties ->
+            KonfettiView(
+                modifier = Modifier.fillMaxSize(),
+                parties = parties,
+                updateListener = object : OnParticleSystemUpdateListener {
+                    override fun onParticleSystemEnded(
+                        system: PartySystem,
+                        activeSystems: Int
+                    ) {
+                        if (activeSystems == 0) {
+                            konfettiParties = null
+                        }
+                    }
+                }
+            )
+        }
+
+        // Letter Burst overlay
+        letterBurstEvent?.let { state ->
+            LetterFormationBurst(
+                char = state.char,
+                colors = state.colors,
+                burstPreset = state.burstPreset,
+                formationDurationMs = state.formationMs,
+                holdDurationMs = state.holdMs,
+                particleCount = state.particleCount,
+                onComplete = { letterBurstEvent = null }
+            )
+        }
+    }
+
+    private data class LetterBurstState(
+        val char: Char,
+        val colors: List<Int>,
+        val burstPreset: KonfettiPreset,
+        val formationMs: Int,
+        val holdMs: Long,
+        val particleCount: Int
+    )
 }

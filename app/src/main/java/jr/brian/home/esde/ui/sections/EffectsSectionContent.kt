@@ -15,10 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.BackgroundScaleMode
-import jr.brian.home.esde.preferences.ESDEPrefsState
-import jr.brian.home.esde.preferences.GameImageType
-import jr.brian.home.esde.preferences.SystemImageType
+import jr.brian.home.esde.model.BackgroundScaleMode
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.GameImageType
+import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.ui.components.BackgroundColorSelector
 import jr.brian.home.esde.ui.components.EffectsExcludedPageOption
 import jr.brian.home.esde.ui.components.GameBackgroundScaleModeSelector
