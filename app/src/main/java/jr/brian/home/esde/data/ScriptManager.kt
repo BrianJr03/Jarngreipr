@@ -1,4 +1,4 @@
-package jr.brian.home.esde.scripts
+package jr.brian.home.esde.data
 
 import android.util.Log
 import jr.brian.home.esde.util.ESDEEventConstants.LOGS_PATH

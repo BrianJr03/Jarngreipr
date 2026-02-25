@@ -1,4 +1,4 @@
-package jr.brian.home.esde.music
+package jr.brian.home.esde.data
 
 /**
  * Defines the contract for music playback control in ES-DE.

@@ -100,6 +100,7 @@ fun SettingsScreen(
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToKonfettiEditor: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -150,6 +151,7 @@ fun SettingsScreen(
                     onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                     isCheckingForUpdates = isCheckingForUpdates,
                     onNavigateToSystemApps = onNavigateToSystemApps,
+                    onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onCheckForUpdates = {
@@ -253,6 +255,7 @@ private fun SettingsContent(
     onWhatsNewClick: () -> Unit = {},
     onCheckForUpdates: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToKonfettiEditor: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -371,7 +374,8 @@ private fun SettingsContent(
                     onToggle = { expandedSection = if (expandedSection == SECTION_ESDE) null else SECTION_ESDE },
                     onRunSetupWizard = onRunSetupWizard,
                     onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
-                    onNavigateToSystemApps = onNavigateToSystemApps
+                    onNavigateToSystemApps = onNavigateToSystemApps,
+                    onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
                 )
             }
 
@@ -386,6 +390,14 @@ private fun SettingsContent(
                 )
             }
 
+            item(key = SECTION_SUPPORT) {
+                SupportSection(
+                    isExpanded = expandedSection == SECTION_SUPPORT,
+                    onToggle = { expandedSection = if (expandedSection == SECTION_SUPPORT) null else SECTION_SUPPORT },
+                    onNavigateToFAQ = onNavigateToFAQ
+                )
+            }
+
             item(key = SECTION_SYSTEM) {
                 SystemSection(
                     isExpanded = expandedSection == SECTION_SYSTEM,
@@ -397,14 +409,6 @@ private fun SettingsContent(
                     onNavigateToMonitor = onNavigateToMonitor,
                     onNavigateToVolumeControls = onNavigateToVolumeControls,
                     onNotificationBadgeClick = onNotificationBadgeClick
-                )
-            }
-
-            item(key = SECTION_SUPPORT) {
-                SupportSection(
-                    isExpanded = expandedSection == SECTION_SUPPORT,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_SUPPORT) null else SECTION_SUPPORT },
-                    onNavigateToFAQ = onNavigateToFAQ
                 )
             }
 

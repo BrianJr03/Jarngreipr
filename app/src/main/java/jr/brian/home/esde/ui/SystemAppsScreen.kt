@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.SystemLaunchTrigger
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.components.AppPickerOverlay
 import jr.brian.home.esde.ui.components.InfoCard
 import jr.brian.home.esde.ui.components.KeyboardToggleButton
@@ -55,7 +55,7 @@ import jr.brian.home.esde.ui.components.PromptCard
 import jr.brian.home.esde.ui.components.RomsPathCard
 import jr.brian.home.esde.ui.components.SystemAppCard
 import jr.brian.home.esde.util.getPathFromUri
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.settings.ScreenHeader

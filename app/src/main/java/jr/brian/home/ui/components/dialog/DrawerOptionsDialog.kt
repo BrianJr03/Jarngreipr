@@ -59,9 +59,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.WallpaperToggleTarget
-import jr.brian.home.esde.setup.SetupPreferences
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient

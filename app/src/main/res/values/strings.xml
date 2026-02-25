@@ -111,10 +111,9 @@
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
 
     <string name="settings_tab_animation_title">Tab Animation</string>
-    <string name="settings_tab_animation_description">Long press animation on tabs. When disabled, uses standard long press without animation</string>
+    <string name="settings_tab_animation_description">Long press animation on tabs</string>
 
     <string name="settings_icon_shape_title">Icon Shape</string>
-    <string name="settings_icon_shape_description">Choose between rounded or square icons</string>
     <string name="settings_icon_shape_rounded">Rounded</string>
     <string name="settings_icon_shape_square">Square</string>
 
@@ -1006,7 +1005,6 @@
 
     <!-- Powered Off Screen Brightness -->
     <string name="settings_powered_off_brightness_title">Sleep Screen Brightness</string>
-    <string name="settings_powered_off_brightness_description">Adjust the brightness of UI elements on the sleep screen</string>
 
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>
@@ -1018,4 +1016,32 @@
     <string name="konfetti_collapse">Collapse</string>
     <string name="konfetti_expand">Expand</string>
     <string name="konfetti_selected">Selected</string>
+
+    <!-- Konfetti Editor Screen -->
+    <string name="konfetti_editor_title">Konfetti Editor</string>
+    <string name="konfetti_editor_enable">Enable Game Konfetti</string>
+    <string name="konfetti_editor_enable_description">Show Konfetti animation for games</string>
+    <string name="konfetti_editor_trigger_title">Trigger</string>
+    <string name="konfetti_editor_trigger_description">Choose when the Konfetti animation plays</string>
+    <string name="konfetti_editor_mode_title">Animation Mode</string>
+    <string name="konfetti_editor_mode_preset">Preset</string>
+    <string name="konfetti_editor_mode_custom">Custom</string>
+    <string name="konfetti_editor_custom_params">Custom Parameters</string>
+    <string name="konfetti_editor_speed">Speed</string>
+    <string name="konfetti_editor_max_speed">Max Speed</string>
+    <string name="konfetti_editor_damping">Damping</string>
+    <string name="konfetti_editor_angle">Angle</string>
+    <string name="konfetti_editor_spread">Spread</string>
+    <string name="konfetti_editor_time_to_live">Duration</string>
+    <string name="konfetti_editor_emitter_duration">Emitter Duration</string>
+    <string name="konfetti_editor_emitter_rate">Particles Per Second</string>
+    <string name="konfetti_editor_shape_title">Konfetti Shape</string>
+    <string name="konfetti_editor_use_char">Use Game Letter</string>
+    <string name="konfetti_editor_use_char_description">Display the first character of the game title as individual Konfetti</string>
+    <string name="konfetti_editor_preview">Preview</string>
+
+    <!-- ESDE Konfetti Section -->
+    <string name="esde_settings_section_konfetti">Konfetti</string>
+    <string name="esde_settings_konfetti_info">Create custom Konfetti animations that play when a game is selected or started</string>
+    <string name="esde_settings_open_konfetti_editor">Open Konfetti Editor</string>
 </resources>

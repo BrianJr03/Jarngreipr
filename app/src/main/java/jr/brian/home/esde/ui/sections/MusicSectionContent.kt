@@ -3,8 +3,8 @@ package jr.brian.home.esde.ui.sections
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.ESDEPrefsState
-import jr.brian.home.esde.preferences.MusicVideoBehavior
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.ui.components.MusicVideoBehaviorSelector
 import jr.brian.home.esde.ui.components.PathSetting
 import jr.brian.home.esde.ui.components.SliderSetting

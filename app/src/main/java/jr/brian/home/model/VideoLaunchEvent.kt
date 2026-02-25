@@ -1,6 +1,6 @@
 package jr.brian.home.model
 
-import jr.brian.home.esde.preferences.VideoScaleMode
+import jr.brian.home.esde.model.VideoScaleMode
 
 data class VideoLaunchEvent(
     val videoPath: String,

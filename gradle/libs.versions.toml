@@ -24,7 +24,7 @@ media3 = "1.5.0"
 documentfile = "1.0.1"
 room = "2.6.1"
 shizuku = "13.1.5"
-konfettiCompose = "2.0.4"
+konfettiCompose = "2.0.5"
 
 [libraries]
 konfetti-compose = { module = "nl.dionsegijn:konfetti-compose", version.ref = "konfettiCompose" }

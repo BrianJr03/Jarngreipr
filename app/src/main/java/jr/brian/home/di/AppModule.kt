@@ -13,6 +13,7 @@ import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.DockManager
+import jr.brian.home.data.GameKonfettiManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -146,6 +147,14 @@ object AppModule {
         @ApplicationContext context: Context
     ): WhatsNewManager {
         return WhatsNewManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameKonfettiManager(
+        @ApplicationContext context: Context
+    ): GameKonfettiManager {
+        return GameKonfettiManager(context)
     }
 
     @Provides

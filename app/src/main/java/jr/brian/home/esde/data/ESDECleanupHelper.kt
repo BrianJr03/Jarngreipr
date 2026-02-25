@@ -1,4 +1,4 @@
-package jr.brian.home.esde.util
+package jr.brian.home.esde.data
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
