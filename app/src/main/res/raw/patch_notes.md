@@ -1,14 +1,5 @@
 **New**
-<<<<<<< HEAD
-- New "Letter Burst" Konfetti animation: colorful particles fly in and form the first letter of your game, 
-hold the shape briefly, then explode outward. Select it from the Konfetti Editor presets and customize the character, burst style, speed, and more.
-
-**Improvements**
-- Video player now responds to controller input: A button to pause/play, any other button to dismiss
-- Video player auto-dismisses when ES-DE loses foreground (e.g., game launches on another screen)
-=======
-- New "Letter Burst" Konfetti animation: colorful particles fly in and 
-form the first letter of your game, hold the shape briefly, then explode outward.
+- New "Letter Burst" Konfetti animation: colorful particles fly in and form the first letter of your game, hold the shape briefly, then explode outward. Select it from the Konfetti Editor presets and customize the character, burst style, speed, and more.
 - Konfetti celebration animation when the What's New dialog appears
 - System Apps: link ES-DE system folders to Android apps for quick access, manage multiple ROMs folder paths, and choose when and where to launch system apps
 - App label font size slider
@@ -25,6 +16,5 @@ form the first letter of your game, hold the shape briefly, then explode outward
 - Fixed Konfetti "Use Game Letter" using the file path instead of the game name
 - Fixed issue where user couldn't select version to upgrade to in Update Available dialog
 - Fixed pager jumping to wrong tab on wake from powered-off screen
->>>>>>> 2a6d86a (v1.8)
 
 1.8
