@@ -1,8 +1,5 @@
-**New Features**
-- Added None option for What's New Konfetti to disable the animation
-
 **Improvements**
-- Cleaner settings layout with simplified descriptions for Icon Shape, Sleep Brightness, and Tab Animation options
-- Reordered settings sections for better navigation
+- Video player now responds to controller input: A button to pause/play, any other button to dismiss
+- Video player auto-dismisses when ES-DE loses foreground (e.g., game launches on another screen)
 
-1.8.3
+1.8

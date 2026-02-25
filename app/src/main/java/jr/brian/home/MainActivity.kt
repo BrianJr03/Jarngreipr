@@ -286,6 +286,7 @@ class MainActivity : ComponentActivity() {
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameStart)
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
+                VideoPlayerActivity.finishIfRunning()
                 esdeViewModel.handleGameEnded()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
@@ -302,6 +303,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             esdeEventListener.onScreensaverEnded = { _ ->
+                VideoPlayerActivity.finishIfRunning()
                 onScreensaverUIVisibilityChanged(false)
                 esdeViewModel.handleScreensaverEnded()
                 onGameBrowsingUIVisibilityChanged(false)
@@ -311,6 +313,7 @@ class MainActivity : ComponentActivity() {
             }
             esdeEventListener.onScreensaverGameSelected =
                 { gameFilename, _, systemName ->
+                    VideoPlayerActivity.finishIfRunning()
                     esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
                     onGameBrowsingUIVisibilityChanged(false)
                 }
