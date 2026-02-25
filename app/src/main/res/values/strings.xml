@@ -1012,4 +1012,10 @@
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_close">Close</string>
     <string name="whats_new_got_it">Got it!</string>
+
+    <!-- Konfetti Animation Chooser -->
+    <string name="konfetti_section_title">Konfetti Animation</string>
+    <string name="konfetti_collapse">Collapse</string>
+    <string name="konfetti_expand">Expand</string>
+    <string name="konfetti_selected">Selected</string>
 </resources>
