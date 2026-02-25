@@ -101,15 +101,10 @@ class ESDEViewModel @Inject constructor(
 
         prefs.state
             .onEach { prefsState ->
-                val currentDimming = when {
-                    _wallpaperState.value.isScreensaverActive || _wallpaperState.value.isGameRunning ->
-                        _wallpaperState.value.dimmingLevel
-
-                    isViewingGame ->
-                        prefsState.gameBackgroundDimmingFloat
-
-                    else ->
-                        prefsState.systemBackgroundDimmingFloat
+                val currentDimming = if (isViewingGame) {
+                    prefsState.gameBackgroundDimmingFloat
+                } else {
+                    prefsState.systemBackgroundDimmingFloat
                 }
                 val currentBlur = if (isViewingGame) {
                     prefsState.gameBlurLevel.toFloat()
