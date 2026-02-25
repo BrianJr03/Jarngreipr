@@ -11,6 +11,7 @@ import nl.dionsegijn.konfetti.core.Position
 import nl.dionsegijn.konfetti.core.Rotation
 import nl.dionsegijn.konfetti.core.Spread
 import nl.dionsegijn.konfetti.core.emitter.Emitter
+import nl.dionsegijn.konfetti.core.models.Shape
 import nl.dionsegijn.konfetti.core.models.Size
 import java.util.concurrent.TimeUnit
 
@@ -19,14 +20,16 @@ import java.util.concurrent.TimeUnit
  * Each preset returns a list of [Party] configurations that define the confetti behavior.
  */
 enum class KonfettiPreset(val displayName: String) {
+    NONE("None"),
     FESTIVE("Festive"),
     EXPLODE("Explode"),
     PARADE("Parade"),
-    RAIN("Rain");
+    RAIN("Rain"),
+    LETTER_BURST("Letter Burst");
 
     companion object {
         fun fromName(name: String): KonfettiPreset {
-            return entries.find { it.name == name } ?: PARADE
+            return entries.find { it.name == name } ?: EXPLODE
         }
     }
 }
@@ -43,12 +46,26 @@ object KonfettiPresets {
             ThemeSecondaryColor.toArgb(),
             ThemeAccentColor.toArgb()
         )
-        return when (preset) {
-            KonfettiPreset.FESTIVE -> festive(themeColors)
-            KonfettiPreset.EXPLODE -> explode(themeColors)
-            KonfettiPreset.PARADE -> parade(themeColors)
-            KonfettiPreset.RAIN -> rain(themeColors)
+        return getPartiesFromColors(preset, themeColors)
+    }
+
+    fun getPartiesFromColors(
+        preset: KonfettiPreset,
+        colors: List<Int>,
+        charShape: Shape.DrawableShape? = null
+    ): List<Party> {
+        val parties = when (preset) {
+            KonfettiPreset.NONE -> return emptyList()
+            KonfettiPreset.FESTIVE -> festive(colors)
+            KonfettiPreset.EXPLODE -> explode(colors)
+            KonfettiPreset.PARADE -> parade(colors)
+            KonfettiPreset.RAIN -> rain(colors)
+            // LETTER_BURST uses the LetterFormationBurst composable directly,
+            // not the standard Party system. Return empty here.
+            KonfettiPreset.LETTER_BURST -> return emptyList()
         }
+        if (charShape == null) return parties
+        return parties.map { it.copy(shapes = listOf(charShape)) }
     }
 
     private fun baseRain(colors: List<Int>) = Party(

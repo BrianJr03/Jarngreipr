@@ -42,8 +42,8 @@ class WhatsNewManager(context: Context) {
     }
 
     private fun loadKonfettiPreset(): KonfettiPreset {
-        val name = prefs.getString(KEY_KONFETTI_PRESET, KonfettiPreset.PARADE.name)
-            ?: KonfettiPreset.PARADE.name
+        val name = prefs.getString(KEY_KONFETTI_PRESET, KonfettiPreset.EXPLODE.name)
+            ?: KonfettiPreset.EXPLODE.name
         return KonfettiPreset.fromName(name)
     }
 

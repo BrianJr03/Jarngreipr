@@ -15,7 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem

@@ -1,4 +1,4 @@
-package jr.brian.home.esde.music
+package jr.brian.home.esde.model
 
 /**
  * Represents the source of music to play.

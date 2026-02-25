@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import jr.brian.home.R
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.state.DeleteResult
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.sections.ESDESettingsContent
@@ -38,7 +38,8 @@ fun ESDESettingsScreen(
     onNavigateBack: () -> Unit,
     onRunSetupWizard: () -> Unit,
     onNavigateToMarqueePressShortcut: () -> Unit = {},
-    onNavigateToSystemApps: () -> Unit = {}
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToKonfettiEditor: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -93,7 +94,8 @@ fun ESDESettingsScreen(
                     ESDESettingsContent(
                         onRunSetupWizard = onRunSetupWizard,
                         onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
-                        onNavigateToSystemApps = onNavigateToSystemApps
+                        onNavigateToSystemApps = onNavigateToSystemApps,
+                        onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
                     )
                 }
             }

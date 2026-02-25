@@ -27,7 +27,7 @@ import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.esde.ui.ESDESettingsScreen
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.ui.SystemAppsScreen
-import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.screens.FAQScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
@@ -36,6 +36,7 @@ import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.screens.GamePadScreen
+import jr.brian.home.ui.screens.KonfettiEditorScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -285,6 +286,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToSystemApps = {
                     showScreen = false
                     navController.navigate(Routes.ESDE_SYSTEM_APPS)
+                },
+                onNavigateToKonfettiEditor = {
+                    showScreen = false
+                    navController.navigate(Routes.KONFETTI_EDITOR)
                 },
                 onDismiss = {
                     showScreen = false
@@ -543,6 +548,10 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 onNavigateToSystemApps = {
                     showScreen = false
                     navController.navigate(Routes.ESDE_SYSTEM_APPS)
+                },
+                onNavigateToKonfettiEditor = {
+                    showScreen = false
+                    navController.navigate(Routes.KONFETTI_EDITOR)
                 }
             )
         }
@@ -589,6 +598,23 @@ fun NavGraphBuilder.esdeSystemAppsScreen(
             SystemAppsScreen(
                 allApps = uiState.allAppsUnfiltered,
                 onNavigateBack = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.konfettiEditorScreen(
+    navController: NavHostController
+) {
+    composable(Routes.KONFETTI_EDITOR) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            KonfettiEditorScreen(
+                onDismiss = {
                     showScreen = false
                     navController.popBackStack()
                 }

@@ -1,4 +1,4 @@
-package jr.brian.home.esde.events
+package jr.brian.home.esde.data
 
 interface ESDEEventListener {
     fun onSystemSelected(systemName: String)

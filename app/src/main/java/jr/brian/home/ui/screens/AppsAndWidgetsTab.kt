@@ -50,11 +50,10 @@ import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.SetupStep
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation

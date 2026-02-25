@@ -14,9 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.ESDEPrefsState
-import jr.brian.home.esde.preferences.LogoAlignment
-import jr.brian.home.esde.preferences.OverlayMediaType
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.LogoAlignment
+import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
 import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
