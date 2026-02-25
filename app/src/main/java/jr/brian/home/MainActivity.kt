@@ -46,6 +46,8 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
+import jr.brian.home.ui.components.konfetti.LetterFormationBurst
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -331,6 +333,7 @@ class MainActivity : ComponentActivity() {
         )
 
         var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
+        var letterBurstEvent by remember { mutableStateOf<LetterBurstState?>(null) }
 
         LaunchedEffect(esdeViewModel) {
             esdeViewModel.gameKonfettiEvent.collect { event ->
@@ -340,18 +343,33 @@ class MainActivity : ComponentActivity() {
 
                 val gameFilename = event.gameFilename
 
-                val charShape = if (gameKonfettiManager.config.useCharShape) {
-                    val firstChar = gameFilename
-                        .substringBeforeLast(".")
-                        .firstOrNull()
-                        ?.uppercaseChar() ?: 'G'
-                    KonfettiShapeFactory.createCharShape(context, firstChar)
-                } else null
+                if (config.isLetterBurst) {
+                    // Trigger Letter Burst animation
+                    val char = gameKonfettiManager.resolveLetterBurstChar(gameFilename)
+                    letterBurstEvent = LetterBurstState(
+                        char = char,
+                        colors = themeColors,
+                        burstPreset = gameKonfettiManager.letterBurstExplodePreset(),
+                        formationMs = config.letterBurstFormationMs,
+                        holdMs = config.letterBurstHoldMs,
+                        particleCount = config.letterBurstParticleCount
+                    )
+                } else {
+                    val charShape = if (gameKonfettiManager.config.useCharShape) {
+                        val firstChar = gameFilename
+                            .substringAfterLast("/")
+                            .substringBeforeLast(".")
+                            .firstOrNull()
+                            ?.uppercaseChar() ?: 'G'
+                        KonfettiShapeFactory.createCharShape(context, firstChar)
+                    } else null
 
-                konfettiParties = gameKonfettiManager.buildParties(themeColors, charShape)
+                    konfettiParties = gameKonfettiManager.buildParties(themeColors, charShape)
+                }
             }
         }
 
+        // Standard Konfetti overlay
         konfettiParties?.let { parties ->
             KonfettiView(
                 modifier = Modifier.fillMaxSize(),
@@ -368,5 +386,27 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
+
+        // Letter Burst overlay
+        letterBurstEvent?.let { state ->
+            LetterFormationBurst(
+                char = state.char,
+                colors = state.colors,
+                burstPreset = state.burstPreset,
+                formationDurationMs = state.formationMs,
+                holdDurationMs = state.holdMs,
+                particleCount = state.particleCount,
+                onComplete = { letterBurstEvent = null }
+            )
+        }
     }
+
+    private data class LetterBurstState(
+        val char: Char,
+        val colors: List<Int>,
+        val burstPreset: KonfettiPreset,
+        val formationMs: Int,
+        val holdMs: Long,
+        val particleCount: Int
+    )
 }

@@ -1040,6 +1040,16 @@
     <string name="konfetti_editor_use_char_description">Display the first character of the game title as individual Konfetti</string>
     <string name="konfetti_editor_preview">Preview</string>
 
+    <!-- Letter Burst Settings -->
+    <string name="konfetti_editor_letter_burst_title">Letter Burst Settings</string>
+    <string name="konfetti_editor_letter_burst_char">Formation Character</string>
+    <string name="konfetti_editor_letter_burst_char_description">Letter or number that particles form before bursting. Leave empty to use the game\'s first letter.</string>
+    <string name="konfetti_editor_letter_burst_explode_preset">Burst Style</string>
+    <string name="konfetti_editor_letter_burst_explode_description">Which animation plays after the letter forms</string>
+    <string name="konfetti_editor_letter_burst_formation_speed">Formation Speed</string>
+    <string name="konfetti_editor_letter_burst_hold">Hold Duration</string>
+    <string name="konfetti_editor_letter_burst_particles">Particle Count</string>
+
     <!-- ESDE Konfetti Section -->
     <string name="esde_settings_section_konfetti">Konfetti</string>
     <string name="esde_settings_konfetti_info">Create custom Konfetti animations that play when a game is selected or started</string>

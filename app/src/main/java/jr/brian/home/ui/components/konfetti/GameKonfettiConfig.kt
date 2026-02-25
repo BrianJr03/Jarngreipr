@@ -22,5 +22,15 @@ data class GameKonfettiConfig(
     val spread: Int = 120,
     val timeToLive: Long = 3000L,
     val emitterDurationMs: Long = 2000L,
-    val emitterAmountPerSecond: Int = 30
-)
+    val emitterAmountPerSecond: Int = 30,
+    // Letter Burst settings
+    val letterBurstChar: String = "",
+    val letterBurstExplodePreset: String = KonfettiPreset.EXPLODE.name,
+    val letterBurstFormationMs: Int = 1200,
+    val letterBurstHoldMs: Long = 400L,
+    val letterBurstParticleCount: Int = 100
+) {
+    /** Returns true when the selected preset is LETTER_BURST. */
+    val isLetterBurst: Boolean
+        get() = usePreset && selectedPreset == KonfettiPreset.LETTER_BURST.name
+}

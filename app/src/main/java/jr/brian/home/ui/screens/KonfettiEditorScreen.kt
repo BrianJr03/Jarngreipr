@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -52,6 +54,7 @@ import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
 import jr.brian.home.ui.components.konfetti.KonfettiTrigger
+import jr.brian.home.ui.components.konfetti.LetterFormationBurst
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -77,9 +80,11 @@ fun KonfettiEditorScreen(
     var modeExpanded by remember { mutableStateOf(false) }
     var shapeExpanded by remember { mutableStateOf(false) }
     var customExpanded by remember { mutableStateOf(false) }
+    var letterBurstExpanded by remember { mutableStateOf(false) }
 
     var previewTrigger by remember { mutableIntStateOf(0) }
     var isPreviewPlaying by remember { mutableStateOf(false) }
+    var isLetterBurstPreview by remember { mutableStateOf(false) }
 
     val themeColors = listOf(
         ThemePrimaryColor.toArgb(),
@@ -175,10 +180,17 @@ fun KonfettiEditorScreen(
                         PreviewCard(
                             isPlaying = isPreviewPlaying,
                             previewTrigger = previewTrigger,
+                            isLetterBurst = config.isLetterBurst,
+                            letterBurstConfig = config,
+                            themeColors = themeColors,
                             parties = { previewParties() },
-                            onPreviewEnd = { isPreviewPlaying = false },
+                            onPreviewEnd = {
+                                isPreviewPlaying = false
+                                isLetterBurstPreview = false
+                            },
                             onPreviewClick = {
                                 previewTrigger++
+                                isLetterBurstPreview = config.isLetterBurst
                                 isPreviewPlaying = true
                             }
                         )
@@ -313,6 +325,145 @@ fun KonfettiEditorScreen(
                         }
                     }
 
+                    // Letter Burst settings (visible when LETTER_BURST preset is selected)
+                    if (config.isLetterBurst) {
+                        item {
+                            CollapsibleSettingsSection(
+                                title = stringResource(R.string.konfetti_editor_letter_burst_title),
+                                icon = Icons.Default.TextFields,
+                                isExpanded = letterBurstExpanded,
+                                onToggle = { letterBurstExpanded = !letterBurstExpanded }
+                            ) {
+                                // Character input
+                                Text(
+                                    text = stringResource(R.string.konfetti_editor_letter_burst_char),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.konfetti_editor_letter_burst_char_description),
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 13.sp,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                OutlinedTextField(
+                                    value = config.letterBurstChar,
+                                    onValueChange = { newVal ->
+                                        // Allow only a single uppercase letter or digit
+                                        val filtered = newVal
+                                            .uppercase()
+                                            .filter { it.isLetterOrDigit() }
+                                            .take(1)
+                                        save(config.copy(letterBurstChar = filtered))
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = {
+                                        Text(
+                                            "Auto (game's first letter)",
+                                            color = Color.White.copy(alpha = 0.3f)
+                                        )
+                                    },
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = ThemePrimaryColor,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                                        cursorColor = ThemePrimaryColor
+                                    )
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Burst style selector
+                                Text(
+                                    text = stringResource(R.string.konfetti_editor_letter_burst_explode_preset),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.konfetti_editor_letter_burst_explode_description),
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 13.sp,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                // Show standard presets (excluding NONE and LETTER_BURST) as burst options
+                                val burstOptions = KonfettiPreset.entries.filter {
+                                    it != KonfettiPreset.NONE && it != KonfettiPreset.LETTER_BURST
+                                }
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    burstOptions.forEach { preset ->
+                                        val isSelected = preset.name == config.letterBurstExplodePreset
+                                        Button(
+                                            onClick = {
+                                                save(config.copy(letterBurstExplodePreset = preset.name))
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isSelected) {
+                                                    ThemePrimaryColor.copy(alpha = 0.3f)
+                                                } else {
+                                                    Color.White.copy(alpha = 0.05f)
+                                                },
+                                                contentColor = if (isSelected) Color.White else Color.White.copy(
+                                                    alpha = 0.7f
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text(
+                                                text = preset.displayName,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Formation speed slider
+                                LabeledSlider(
+                                    label = stringResource(R.string.konfetti_editor_letter_burst_formation_speed),
+                                    value = config.letterBurstFormationMs.toFloat(),
+                                    range = 400f..3000f,
+                                    onValueChange = {
+                                        save(config.copy(letterBurstFormationMs = it.roundToInt()))
+                                    },
+                                    showAsInt = true,
+                                    suffix = "ms"
+                                )
+
+                                // Hold duration slider
+                                LabeledSlider(
+                                    label = stringResource(R.string.konfetti_editor_letter_burst_hold),
+                                    value = config.letterBurstHoldMs.toFloat(),
+                                    range = 100f..2000f,
+                                    onValueChange = {
+                                        save(config.copy(letterBurstHoldMs = it.toLong()))
+                                    },
+                                    showAsInt = true,
+                                    suffix = "ms"
+                                )
+
+                                // Particle count slider
+                                LabeledSlider(
+                                    label = stringResource(R.string.konfetti_editor_letter_burst_particles),
+                                    value = config.letterBurstParticleCount.toFloat(),
+                                    range = 30f..200f,
+                                    onValueChange = {
+                                        save(config.copy(letterBurstParticleCount = it.roundToInt()))
+                                    },
+                                    showAsInt = true
+                                )
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
             }
@@ -320,18 +471,35 @@ fun KonfettiEditorScreen(
             // Full-screen preview overlay
             if (isPreviewPlaying) {
                 key(previewTrigger) {
-                    KonfettiView(
-                        modifier = Modifier.fillMaxSize(),
-                        parties = previewParties(),
-                        updateListener = object : OnParticleSystemUpdateListener {
-                            override fun onParticleSystemEnded(
-                                system: PartySystem,
-                                activeSystems: Int
-                            ) {
-                                if (activeSystems == 0) isPreviewPlaying = false
+                    if (isLetterBurstPreview) {
+                        val previewChar = config.letterBurstChar
+                            .firstOrNull()?.uppercaseChar() ?: 'A'
+                        LetterFormationBurst(
+                            char = previewChar,
+                            colors = themeColors,
+                            burstPreset = KonfettiPreset.fromName(config.letterBurstExplodePreset),
+                            formationDurationMs = config.letterBurstFormationMs,
+                            holdDurationMs = config.letterBurstHoldMs,
+                            particleCount = config.letterBurstParticleCount,
+                            onComplete = {
+                                isPreviewPlaying = false
+                                isLetterBurstPreview = false
                             }
-                        }
-                    )
+                        )
+                    } else {
+                        KonfettiView(
+                            modifier = Modifier.fillMaxSize(),
+                            parties = previewParties(),
+                            updateListener = object : OnParticleSystemUpdateListener {
+                                override fun onParticleSystemEnded(
+                                    system: PartySystem,
+                                    activeSystems: Int
+                                ) {
+                                    if (activeSystems == 0) isPreviewPlaying = false
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -387,6 +555,9 @@ private fun EnableToggleRow(
 private fun PreviewCard(
     isPlaying: Boolean,
     previewTrigger: Int,
+    isLetterBurst: Boolean = false,
+    letterBurstConfig: GameKonfettiConfig? = null,
+    themeColors: List<Int> = emptyList(),
     parties: () -> List<Party>,
     onPreviewEnd: () -> Unit,
     onPreviewClick: () -> Unit
@@ -405,18 +576,32 @@ private fun PreviewCard(
     ) {
         if (isPlaying) {
             key(previewTrigger) {
-                KonfettiView(
-                    modifier = Modifier.fillMaxSize(),
-                    parties = parties(),
-                    updateListener = object : OnParticleSystemUpdateListener {
-                        override fun onParticleSystemEnded(
-                            system: PartySystem,
-                            activeSystems: Int
-                        ) {
-                            if (activeSystems == 0) onPreviewEnd()
+                if (isLetterBurst && letterBurstConfig != null) {
+                    val previewChar = letterBurstConfig.letterBurstChar
+                        .firstOrNull()?.uppercaseChar() ?: 'A'
+                    LetterFormationBurst(
+                        char = previewChar,
+                        colors = themeColors,
+                        burstPreset = KonfettiPreset.fromName(letterBurstConfig.letterBurstExplodePreset),
+                        formationDurationMs = letterBurstConfig.letterBurstFormationMs,
+                        holdDurationMs = letterBurstConfig.letterBurstHoldMs,
+                        particleCount = letterBurstConfig.letterBurstParticleCount,
+                        onComplete = onPreviewEnd
+                    )
+                } else {
+                    KonfettiView(
+                        modifier = Modifier.fillMaxSize(),
+                        parties = parties(),
+                        updateListener = object : OnParticleSystemUpdateListener {
+                            override fun onParticleSystemEnded(
+                                system: PartySystem,
+                                activeSystems: Int
+                            ) {
+                                if (activeSystems == 0) onPreviewEnd()
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
 
