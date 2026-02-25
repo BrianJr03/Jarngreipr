@@ -24,7 +24,8 @@ enum class KonfettiPreset(val displayName: String) {
     FESTIVE("Festive"),
     EXPLODE("Explode"),
     PARADE("Parade"),
-    RAIN("Rain");
+    RAIN("Rain"),
+    LETTER_BURST("Letter Burst");
 
     companion object {
         fun fromName(name: String): KonfettiPreset {
@@ -59,6 +60,9 @@ object KonfettiPresets {
             KonfettiPreset.EXPLODE -> explode(colors)
             KonfettiPreset.PARADE -> parade(colors)
             KonfettiPreset.RAIN -> rain(colors)
+            // LETTER_BURST uses the LetterFormationBurst composable directly,
+            // not the standard Party system. Return empty here.
+            KonfettiPreset.LETTER_BURST -> return emptyList()
         }
         if (charShape == null) return parties
         return parties.map { it.copy(shapes = listOf(charShape)) }

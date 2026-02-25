@@ -39,9 +39,41 @@ class GameKonfettiManager(context: Context) {
         val cfg = config
         if (cfg.usePreset) {
             val preset = KonfettiPreset.fromName(cfg.selectedPreset)
+            // LETTER_BURST is handled via LetterFormationBurst composable, not Party list
+            if (preset == KonfettiPreset.LETTER_BURST) return emptyList()
             return KonfettiPresets.getPartiesFromColors(preset, colors, charShape)
         }
         return buildCustomParties(cfg, colors, charShape)
+    }
+
+    /**
+     * Resolves the character to use for Letter Burst mode.
+     * Falls back to the configured letterBurstChar, then the game filename's first char,
+     * then 'A'.
+     */
+    fun resolveLetterBurstChar(gameFilename: String? = null): Char {
+        val cfg = config
+        // If user set a specific char in editor, use it (uppercase letters/digits only)
+        if (cfg.letterBurstChar.isNotEmpty()) {
+            val ch = cfg.letterBurstChar.first().uppercaseChar()
+            if (ch.isLetterOrDigit()) return ch
+        }
+        // Otherwise use the game's first alphanumeric character (strip path and extension)
+        if (gameFilename != null) {
+            val nameOnly = gameFilename
+                .substringAfterLast("/")
+                .substringBeforeLast(".")
+            val firstChar = nameOnly.firstOrNull { it.isLetterOrDigit() }
+            if (firstChar != null) return firstChar.uppercaseChar()
+        }
+        return 'A'
+    }
+
+    /**
+     * Returns the burst preset to use after the letter formation.
+     */
+    fun letterBurstExplodePreset(): KonfettiPreset {
+        return KonfettiPreset.fromName(config.letterBurstExplodePreset)
     }
 
     private fun buildCustomParties(
