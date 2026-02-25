@@ -1,4 +1,4 @@
-package jr.brian.home.esde.viewmodel
+package jr.brian.home.esde.viewmodels
 
 import android.content.Context
 import android.os.Handler
@@ -12,15 +12,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.data.ESDECleanupManager
-import jr.brian.home.esde.music.MusicController
-import jr.brian.home.esde.music.MusicManager
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
-import jr.brian.home.esde.preferences.GameImageType
-import jr.brian.home.esde.preferences.OverlayMediaType
-import jr.brian.home.esde.preferences.ScreensaverBehavior
-import jr.brian.home.esde.preferences.SystemImageType
-import jr.brian.home.esde.setup.SetupPreferences
-import jr.brian.home.esde.util.ESDECleanupHelper
+import jr.brian.home.esde.data.MusicController
+import jr.brian.home.esde.data.MusicManager
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.model.GameImageType
+import jr.brian.home.esde.model.OverlayMediaType
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.model.SystemImageType
+import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.data.ESDECleanupHelper
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_VIDEOS
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_WHEEL_3D
@@ -33,7 +33,7 @@ import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
-import jr.brian.home.esde.wallpaper.WallpaperState
+import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +47,10 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import androidx.core.net.toUri
-import jr.brian.home.esde.preferences.SystemLaunchTrigger
+import jr.brian.home.esde.model.SystemLaunchTrigger
+import jr.brian.home.esde.model.GameKonfettiEvent
+import jr.brian.home.ui.components.konfetti.KonfettiTrigger
+
 
 @HiltViewModel
 class ESDEViewModel @Inject constructor(
@@ -76,6 +79,9 @@ class ESDEViewModel @Inject constructor(
 
     private val _scanComplete = MutableSharedFlow<Unit>()
     val scanComplete: SharedFlow<Unit> = _scanComplete.asSharedFlow()
+
+    private val _gameKonfettiEvent = MutableSharedFlow<GameKonfettiEvent>()
+    val gameKonfettiEvent: SharedFlow<GameKonfettiEvent> = _gameKonfettiEvent.asSharedFlow()
 
     val musicController: MusicController = MusicManager(context, prefs)
 
@@ -257,6 +263,12 @@ class ESDEViewModel @Inject constructor(
 
         musicController.onGameSelected(systemName, gameFilename)
 
+        viewModelScope.launch {
+            _gameKonfettiEvent.emit(
+                GameKonfettiEvent(gameFilename, KonfettiTrigger.GAME_SELECT)
+            )
+        }
+
         if (prefs.state.value.videoEnabled) {
             scheduleVideoPlayback(systemName, gameFilename)
         }
@@ -331,7 +343,14 @@ class ESDEViewModel @Inject constructor(
         }
     }
 
-    fun handleGameStarted() {
+    fun handleGameStarted(gameFilename: String? = null) {
+        if (gameFilename != null) {
+            viewModelScope.launch {
+                _gameKonfettiEvent.emit(
+                    GameKonfettiEvent(gameFilename, KonfettiTrigger.GAME_START)
+                )
+            }
+        }
         stopVideo()
         currentGameSystem = null
         currentGameFilename = null

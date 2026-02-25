@@ -1,9 +1,9 @@
-package jr.brian.home.esde.wallpaper
+package jr.brian.home.esde.model
 
 import androidx.compose.ui.graphics.Color
-import jr.brian.home.esde.animation.AnimationStyle
-import jr.brian.home.esde.preferences.LogoAlignment
-import jr.brian.home.esde.preferences.ScreensaverBehavior
+import jr.brian.home.esde.model.AnimationStyle
+import jr.brian.home.esde.model.LogoAlignment
+import jr.brian.home.esde.model.ScreensaverBehavior
 
 data class WallpaperState(
     val currentImagePath: String? = null,

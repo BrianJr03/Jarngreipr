@@ -1,4 +1,4 @@
-package jr.brian.home.esde.setup
+package jr.brian.home.esde.data
 
 import android.content.Context
 import android.content.SharedPreferences

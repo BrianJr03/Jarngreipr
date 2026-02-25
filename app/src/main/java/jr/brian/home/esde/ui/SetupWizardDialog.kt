@@ -39,11 +39,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.esde.setup.WarningType
+import jr.brian.home.esde.model.SetupStep
+import jr.brian.home.esde.model.WarningType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient

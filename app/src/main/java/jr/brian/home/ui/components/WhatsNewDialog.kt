@@ -63,7 +63,7 @@ fun WhatsNewDialog(
     val selectedPreset = whatsNewManager.selectedKonfettiPreset
 
     var konfettiTrigger by remember { mutableIntStateOf(0) }
-    var isKonfettiPlaying by remember { mutableStateOf(true) }
+    var isKonfettiPlaying by remember { mutableStateOf(selectedPreset != KonfettiPreset.NONE) }
 
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -148,8 +148,12 @@ fun WhatsNewDialog(
                                 selectedPreset = selectedPreset,
                                 onPresetSelected = { preset ->
                                     whatsNewManager.setKonfettiPreset(preset)
-                                    konfettiTrigger++
-                                    isKonfettiPlaying = true
+                                    if (preset == KonfettiPreset.NONE) {
+                                        isKonfettiPlaying = false
+                                    } else {
+                                        konfettiTrigger++
+                                        isKonfettiPlaying = true
+                                    }
                                 }
                             )
                         }
@@ -399,7 +403,7 @@ private fun KonfettiPresetOption(
                 ) {
                     Text(
                         text = stringResource(R.string.konfetti_selected),
-                        color = ThemePrimaryColor,
+                        color = Color.White,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)

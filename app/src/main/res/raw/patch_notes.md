@@ -1,7 +1,8 @@
 **New Features**
-- Added Konfetti celebration animation when the What's New dialog appears.v
+- Added None option for What's New Konfetti to disable the animation
 
-**Bug Fixes & Improvements**
-- Fixed in-game dimming not responding to slider changes
+**Improvements**
+- Cleaner settings layout with simplified descriptions for Icon Shape, Sleep Brightness, and Tab Animation options
+- Reordered settings sections for better navigation
 
-1.8.2
+1.8.3

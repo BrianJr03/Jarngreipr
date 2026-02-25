@@ -91,20 +91,12 @@ fun PoweredOffBrightnessSliderItem() {
 
                     Spacer(modifier = Modifier.size(16.dp))
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.settings_powered_off_brightness_title),
-                            color = Color.White,
-                            fontSize = if (isFocused) 18.sp else 16.sp,
-                            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.settings_powered_off_brightness_description),
-                            color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
-                            fontSize = 14.sp,
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.settings_powered_off_brightness_title),
+                        color = Color.White,
+                        fontSize = if (isFocused) 18.sp else 16.sp,
+                        fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
+                    )
 
                     Text(
                         text = "$currentBrightness%",
