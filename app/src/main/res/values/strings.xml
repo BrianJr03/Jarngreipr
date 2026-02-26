@@ -1071,6 +1071,11 @@
     <string name="floaty_mode_powered_off_effect_description">Use floating overlay positions on the powered off screen</string>
     <string name="floaty_mode_apps_modal_effect_title">Apps Drawer Floaty Effect</string>
     <string name="floaty_mode_apps_modal_effect_description">Use floating app layout in the app drawer</string>
+    <string name="floaty_mode_apps_modal_count_title">Apps Drawer Floaty App Count</string>
+    <string name="floaty_mode_apps_modal_count_description">Choose how many apps appear while floaty app drawer effect is enabled</string>
+    <string name="floaty_mode_apps_modal_count_all">All</string>
+    <string name="floaty_mode_app_drawer_bubble_pop_title">App Drawer Bubble Pop</string>
+    <string name="floaty_mode_app_drawer_bubble_pop_description">Tap bubbles to pop them with haptics; all bubbles return after clearing</string>
     <string name="floaty_mode_tabs_title">Floaty Tabs</string>
     <string name="floaty_mode_tabs_description">Choose which tabs use floaty mode</string>
     <string name="floaty_mode_reset_title">Reset Floaty Mode</string>

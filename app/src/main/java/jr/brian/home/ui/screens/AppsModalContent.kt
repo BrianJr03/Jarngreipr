@@ -160,6 +160,28 @@ fun AppsModalContent(
     }
     val isModalFloatyEnabled =
         floatyModeManager.isFloatyModeActive && floatyModeManager.isAppsModalFloatyEffectEnabled
+    val modalFloatyCount = floatyModeManager.appDrawerFloatyAppCount
+    val isBubblePopEnabled = isModalFloatyEnabled && floatyModeManager.isAppDrawerBubblePopEnabled
+    val limitedApps = if (isModalFloatyEnabled && modalFloatyCount > 0) {
+        apps.take(modalFloatyCount)
+    } else {
+        apps
+    }
+    var poppedPackages by remember(pageIndex) { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(limitedApps, isBubblePopEnabled, pageIndex) {
+        poppedPackages = if (!isBubblePopEnabled) {
+            emptySet()
+        } else {
+            poppedPackages.filter { packageName ->
+                limitedApps.any { it.packageName == packageName }
+            }.toSet()
+        }
+    }
+    val displayedApps = if (isBubblePopEnabled) {
+        limitedApps.filter { it.packageName !in poppedPackages }
+    } else {
+        limitedApps
+    }
 
     appOptionsDialogState.item?.let { appInfo ->
         if (appOptionsDialogState.isVisible) {
@@ -295,7 +317,7 @@ fun AppsModalContent(
             )
         } else {
             AppsContentLayout(
-                apps = apps,
+                apps = displayedApps,
                 appsUnfiltered = appsUnfiltered,
                 appPositionManager = appPositionManager,
                 forceFloatyMode = forceFloatyMode || isModalFloatyEnabled,
@@ -308,6 +330,18 @@ fun AppsModalContent(
                 onAppFocusChanged = { savedAppIndex = it },
                 onAppOpened = onAppOpened,
                 onAppLongClick = appOptionsDialogState::show,
+                bubblePopEnabled = isBubblePopEnabled,
+                onBubblePop = { appInfo ->
+                    if (!isBubblePopEnabled || appInfo.packageName in poppedPackages) return@AppsContentLayout
+                    val updated = poppedPackages + appInfo.packageName
+                    poppedPackages = updated
+                    if (limitedApps.isNotEmpty() && updated.size >= limitedApps.size) {
+                        scope.launch {
+                            delay(220)
+                            poppedPackages = emptySet()
+                        }
+                    }
+                },
                 folders = folders,
                 onFolderClick = folderContentsDialogState::show,
                 isHeaderVisible = isHeaderVisible,
@@ -348,6 +382,8 @@ private fun AppsContentLayout(
     onAppFocusChanged: (Int) -> Unit,
     onAppOpened: () -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
+    bubblePopEnabled: Boolean,
+    onBubblePop: (AppInfo) -> Unit,
     folders: List<Folder>,
     onFolderClick: (Folder) -> Unit,
     isHeaderVisible: Boolean,
@@ -380,7 +416,9 @@ private fun AppsContentLayout(
             pageIndex = pageIndex,
             isDragLocked = isDragLocked,
             forceFloatyMode = true,
-            allApps = appsUnfiltered
+            allApps = appsUnfiltered,
+            bubblePopEnabled = bubblePopEnabled,
+            onBubblePop = onBubblePop
         )
     } else {
         ModalAppSelectionContent(
