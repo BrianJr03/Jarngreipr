@@ -371,7 +371,7 @@ private fun SettingsContent(
     
     fun toggleSection(section: String) {
         expandedSection = if (expandedSection == section) null else section
-        if (floatyModeManager.isFloatyModeActive) {
+        if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
             // Force-destroy current animation, then start a fresh explode burst.
             headerKonfettiParties = null
             headerKonfettiKey++
@@ -470,7 +470,7 @@ private fun SettingsContent(
                     onNavigateToSystemApps = onNavigateToSystemApps,
                     onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
                     onSectionHeaderTap = {
-                        if (floatyModeManager.isFloatyModeActive) {
+                        if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
                             // Force-destroy current animation, then start a fresh explode burst.
                             headerKonfettiParties = null
                             headerKonfettiKey++

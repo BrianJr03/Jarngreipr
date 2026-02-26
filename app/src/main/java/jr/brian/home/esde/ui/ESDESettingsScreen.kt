@@ -111,7 +111,7 @@ fun ESDESettingsScreen(
                         onNavigateToSystemApps = onNavigateToSystemApps,
                         onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
                         onSectionHeaderTap = {
-                            if (floatyModeManager.isFloatyModeActive) {
+                            if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
                                 // Force-destroy current animation, then start a fresh explode burst.
                                 headerKonfettiParties = null
                                 headerKonfettiKey++
