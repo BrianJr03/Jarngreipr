@@ -2,10 +2,17 @@ package jr.brian.home.ui.screens
 
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -35,22 +42,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.model.ComicPopMessage
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
@@ -58,8 +70,9 @@ import jr.brian.home.ui.components.dialog.NotificationAccessDialog
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
 import jr.brian.home.ui.components.dialog.setNotificationAccessDeclined
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
+import jr.brian.home.ui.components.konfetti.KonfettiPresets
 import jr.brian.home.ui.components.settings.ScreenHeader
-import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.components.settings.sections.AppearanceSection
 import jr.brian.home.ui.components.settings.sections.ESDEDisplaySection
 import jr.brian.home.ui.components.settings.sections.ExtrasSection
@@ -69,7 +82,9 @@ import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.DeviceModel
 import jr.brian.home.util.PatchNotesUtil
@@ -82,7 +97,11 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.core.Party
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 @Composable
 fun SettingsScreen(
@@ -111,12 +130,20 @@ fun SettingsScreen(
     val notificationAccessDialogState = rememberDialogState<Unit>()
     val whatsNewDialogState = rememberDialogState<Unit>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
+    var comicPopMessage by remember { mutableStateOf<ComicPopMessage?>(null) }
+    var comicPopContainer by remember { mutableStateOf(IntSize.Zero) }
     
     val currentVersionName = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
         } catch (_: Exception) {
             ""
+        }
+    }
+    LaunchedEffect(comicPopMessage) {
+        if (comicPopMessage != null) {
+            delay(650)
+            comicPopMessage = null
         }
     }
     
@@ -128,11 +155,18 @@ fun SettingsScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .systemBarsPadding(),
+                    .systemBarsPadding()
+                    .onSizeChanged { comicPopContainer = it },
         ) {
             Column {
                 ScreenHeader(
                     showVersion = true,
+                    onVersionTapCountdown = { remaining ->
+                        comicPopMessage = createVersionTapComicPopMessage(
+                            remaining = remaining,
+                            container = comicPopContainer
+                        )
+                    },
                     onBackClick = onDismiss
                 )
                 SettingsContent(
@@ -197,6 +231,36 @@ fun SettingsScreen(
                     )
                 }
             }
+            AnimatedVisibility(
+                visible = comicPopMessage != null,
+                enter = scaleIn(initialScale = 0.35f) + fadeIn(),
+                exit = scaleOut(targetScale = 1.8f) + fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                comicPopMessage?.let { pop ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text = pop.text,
+                            color = Color.White,
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier
+                                .offset { IntOffset(pop.x, pop.y) }
+                                .rotate(pop.rotation)
+                                .background(
+                                    color = ThemePrimaryColor,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .border(
+                                    width = 3.dp,
+                                    color = ThemeSecondaryColor,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
             
             if (notificationAccessDialogState.isVisible) {
                 NotificationAccessDialog(
@@ -234,6 +298,21 @@ fun SettingsScreen(
         }
     }
 }
+private fun createVersionTapComicPopMessage(
+    remaining: Int,
+    container: IntSize
+): ComicPopMessage {
+    val width = container.width.takeIf { it > 0 } ?: 1080
+    val height = container.height.takeIf { it > 0 } ?: 1920
+    val x = Random.nextInt((width * 0.08f).toInt(), (width * 0.78f).toInt().coerceAtLeast(1))
+    val y = Random.nextInt((height * 0.12f).toInt(), (height * 0.72f).toInt().coerceAtLeast(1))
+    return ComicPopMessage(
+        text = if (remaining == 0) "float \uD83D\uDC10" else "$remaining",
+        x = x,
+        y = y,
+        rotation = Random.nextInt(-24, 25).toFloat()
+    )
+}
 
 @Composable
 private fun SettingsContent(
@@ -260,14 +339,18 @@ private fun SettingsContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val floatyModeManager = LocalFloatyModeManager.current
+    val explodeParties = KonfettiPresets.getParties(KonfettiPreset.EXPLODE)
     var expandedSection by remember { mutableStateOf<String?>(null) }
+    var headerKonfettiKey by remember { mutableIntStateOf(0) }
+    var headerKonfettiParties by remember { mutableStateOf<List<Party>?>(null) }
     val listState = rememberLazyListState()
     val density = LocalDensity.current
     var containerHeight by remember { mutableStateOf(0) }
     val thumbHeight = 80.dp
     val thumbHeightPx = with(density) { thumbHeight.toPx() }
 
-    val isThorDevice = remember { android.os.Build.MODEL == DeviceModel.THOR }
+    val isThorDevice = remember { Build.MODEL == DeviceModel.THOR }
 
     val scrollProgress by remember {
         derivedStateOf {
@@ -284,6 +367,16 @@ private fun SettingsContent(
 
     BackHandler {
         if (expandedSection != null) expandedSection = null else onDismiss()
+    }
+    
+    fun toggleSection(section: String) {
+        expandedSection = if (expandedSection == section) null else section
+        if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
+            // Force-destroy current animation, then start a fresh explode burst.
+            headerKonfettiParties = null
+            headerKonfettiKey++
+            headerKonfettiParties = explodeParties
+        }
     }
 
     Box(
@@ -361,7 +454,7 @@ private fun SettingsContent(
             item(key = SECTION_APPEARANCE) {
                 AppearanceSection(
                     isExpanded = expandedSection == SECTION_APPEARANCE,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_APPEARANCE) null else SECTION_APPEARANCE },
+                    onToggle = { toggleSection(SECTION_APPEARANCE) },
                     onNavigateToCustomTheme = onNavigateToCustomTheme,
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToEsdeSettings = onNavigateToEsdeSettings
@@ -371,18 +464,26 @@ private fun SettingsContent(
             item(key = SECTION_ESDE) {
                 ESDEDisplaySection(
                     isExpanded = expandedSection == SECTION_ESDE,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_ESDE) null else SECTION_ESDE },
+                    onToggle = { toggleSection(SECTION_ESDE) },
                     onRunSetupWizard = onRunSetupWizard,
                     onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                     onNavigateToSystemApps = onNavigateToSystemApps,
-                    onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
+                    onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+                    onSectionHeaderTap = {
+                        if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
+                            // Force-destroy current animation, then start a fresh explode burst.
+                            headerKonfettiParties = null
+                            headerKonfettiKey++
+                            headerKonfettiParties = explodeParties
+                        }
+                    }
                 )
             }
 
             item(key = SECTION_LAYOUT) {
                 LayoutSection(
                     isExpanded = expandedSection == SECTION_LAYOUT,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_LAYOUT) null else SECTION_LAYOUT },
+                    onToggle = { toggleSection(SECTION_LAYOUT) },
                     isThorDevice = isThorDevice,
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
@@ -393,7 +494,7 @@ private fun SettingsContent(
             item(key = SECTION_SUPPORT) {
                 SupportSection(
                     isExpanded = expandedSection == SECTION_SUPPORT,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_SUPPORT) null else SECTION_SUPPORT },
+                    onToggle = { toggleSection(SECTION_SUPPORT) },
                     onNavigateToFAQ = onNavigateToFAQ
                 )
             }
@@ -401,7 +502,7 @@ private fun SettingsContent(
             item(key = SECTION_SYSTEM) {
                 SystemSection(
                     isExpanded = expandedSection == SECTION_SYSTEM,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_SYSTEM) null else SECTION_SYSTEM },
+                    onToggle = { toggleSection(SECTION_SYSTEM) },
                     isCheckingForUpdates = isCheckingForUpdates,
                     onCheckForUpdates = onCheckForUpdates,
                     onNavigateToCrashLogs = onNavigateToCrashLogs,
@@ -415,7 +516,7 @@ private fun SettingsContent(
             item(key = SECTION_EXTRAS) {
                 ExtrasSection(
                     isExpanded = expandedSection == SECTION_EXTRAS,
-                    onToggle = { expandedSection = if (expandedSection == SECTION_EXTRAS) null else SECTION_EXTRAS },
+                    onToggle = { toggleSection(SECTION_EXTRAS) },
                     onWhatsNewClick = onWhatsNewClick
                 )
             }
@@ -446,6 +547,15 @@ private fun SettingsContent(
                     .clip(RoundedCornerShape(2.dp))
                     .background(ThemePrimaryColor)
             )
+        }
+        
+        headerKonfettiParties?.let { parties ->
+            key(headerKonfettiKey) {
+                KonfettiView(
+                    modifier = Modifier.fillMaxSize(),
+                    parties = parties
+                )
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PERSIST_BACKGROUND_B
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_FLOATY_APP_COUNT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SHOW_SYSTEM_LOGO
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_IMAGE_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
@@ -345,6 +346,7 @@ class ESDEPreferencesManager(context: Context) {
             marqueeWidth = prefs.getInt(KEY_MARQUEE_WIDTH, 300),
             marqueeHeight = prefs.getInt(KEY_MARQUEE_HEIGHT, 150),
             screensaverBehavior = screensaverBehavior,
+            screensaverFloatyAppCount = prefs.getInt(KEY_SCREENSAVER_FLOATY_APP_COUNT, 7).coerceIn(0, 100),
             musicEnabled = prefs.getBoolean(KEY_MUSIC_ENABLED, false),
             musicPath = prefs.getString(KEY_MUSIC_PATH, null),
             musicSystemEnabled = prefs.getBoolean(KEY_MUSIC_SYSTEM_ENABLED, true),
@@ -571,6 +573,12 @@ class ESDEPreferencesManager(context: Context) {
     fun setScreensaverBehavior(behavior: ScreensaverBehavior) {
         _state.value = _state.value.copy(screensaverBehavior = behavior)
         prefs.edit { putString(KEY_SCREENSAVER_BEHAVIOR, behavior.name) }
+    }
+    
+    fun setScreensaverFloatyAppCount(count: Int) {
+        val coercedCount = count.coerceIn(0, 100)
+        _state.value = _state.value.copy(screensaverFloatyAppCount = coercedCount)
+        prefs.edit { putInt(KEY_SCREENSAVER_FLOATY_APP_COUNT, coercedCount) }
     }
 
     fun setMusicEnabled(enabled: Boolean) {

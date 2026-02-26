@@ -16,7 +16,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +35,12 @@ import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.state.DeleteResult
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.sections.ESDESettingsContent
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
+import jr.brian.home.ui.components.konfetti.KonfettiPresets
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.core.Party
 
 @Composable
 fun ESDESettingsScreen(
@@ -42,6 +52,10 @@ fun ESDESettingsScreen(
     onNavigateToKonfettiEditor: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val floatyModeManager = LocalFloatyModeManager.current
+    val explodeParties = KonfettiPresets.getParties(KonfettiPreset.EXPLODE)
+    var headerKonfettiKey by remember { mutableIntStateOf(0) }
+    var headerKonfettiParties by remember { mutableStateOf<List<Party>?>(null) }
 
     BackHandler(onBack = onNavigateBack)
 
@@ -95,7 +109,23 @@ fun ESDESettingsScreen(
                         onRunSetupWizard = onRunSetupWizard,
                         onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                         onNavigateToSystemApps = onNavigateToSystemApps,
-                        onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
+                        onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+                        onSectionHeaderTap = {
+                            if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
+                                // Force-destroy current animation, then start a fresh explode burst.
+                                headerKonfettiParties = null
+                                headerKonfettiKey++
+                                headerKonfettiParties = explodeParties
+                            }
+                        }
+                    )
+                }
+            }
+            headerKonfettiParties?.let { parties ->
+                key(headerKonfettiKey) {
+                    KonfettiView(
+                        modifier = Modifier.fillMaxSize(),
+                        parties = parties
                     )
                 }
             }

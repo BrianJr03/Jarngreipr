@@ -13,6 +13,8 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -338,6 +340,8 @@ class MainActivity : ComponentActivity() {
 
         var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
         var letterBurstEvent by remember { mutableStateOf<LetterBurstState?>(null) }
+        // Incremented on each event to force-restart the animation via key()
+        var animationKey by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(esdeViewModel) {
             esdeViewModel.gameKonfettiEvent.collect { event ->
@@ -347,6 +351,11 @@ class MainActivity : ComponentActivity() {
 
                 val gameFilename = event.gameFilename
                 val themeColors = currentThemeColors
+
+                // Cancel any running animation and restart
+                konfettiParties = null
+                letterBurstEvent = null
+                animationKey++
 
                 if (config.isLetterBurst) {
                     // Trigger Letter Burst animation
@@ -374,35 +383,39 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Standard Konfetti overlay
+        // Standard Konfetti overlay — key forces tear-down and fresh start on each event
         konfettiParties?.let { parties ->
-            KonfettiView(
-                modifier = Modifier.fillMaxSize(),
-                parties = parties,
-                updateListener = object : OnParticleSystemUpdateListener {
-                    override fun onParticleSystemEnded(
-                        system: PartySystem,
-                        activeSystems: Int
-                    ) {
-                        if (activeSystems == 0) {
-                            konfettiParties = null
+            key(animationKey) {
+                KonfettiView(
+                    modifier = Modifier.fillMaxSize(),
+                    parties = parties,
+                    updateListener = object : OnParticleSystemUpdateListener {
+                        override fun onParticleSystemEnded(
+                            system: PartySystem,
+                            activeSystems: Int
+                        ) {
+                            if (activeSystems == 0) {
+                                konfettiParties = null
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
 
-        // Letter Burst overlay
+        // Letter Burst overlay — key forces tear-down and fresh start on each event
         letterBurstEvent?.let { state ->
-            LetterFormationBurst(
-                char = state.char,
-                colors = state.colors,
-                burstPreset = state.burstPreset,
-                formationDurationMs = state.formationMs,
-                holdDurationMs = state.holdMs,
-                particleCount = state.particleCount,
-                onComplete = { letterBurstEvent = null }
-            )
+            key(animationKey) {
+                LetterFormationBurst(
+                    char = state.char,
+                    colors = state.colors,
+                    burstPreset = state.burstPreset,
+                    formationDurationMs = state.formationMs,
+                    holdDurationMs = state.holdMs,
+                    particleCount = state.particleCount,
+                    onComplete = { letterBurstEvent = null }
+                )
+            }
         }
     }
 
