@@ -8,6 +8,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalControlPadManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -106,6 +107,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalESDEImageLoader provides feature.esdeImageLoader,
         LocalAppDrawerFabManager provides feature.appDrawerFabManager,
         LocalGameKonfettiManager provides feature.gameKonfettiManager,
+        LocalFloatyModeManager provides feature.floatyModeManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,

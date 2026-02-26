@@ -21,5 +21,6 @@ data class FeatureManagers @Inject constructor(
     val appDrawerFabManager: AppDrawerFabManager,
     val esdePreferencesManager: ESDEPreferencesManager,
     val gameKonfettiManager: GameKonfettiManager,
+    val floatyModeManager: FloatyModeManager,
     @param:ESDEImageLoader val esdeImageLoader: ImageLoader
 )

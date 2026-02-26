@@ -2,7 +2,6 @@ package jr.brian.home.esde.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.model.Shortcut
 
 enum class SystemImageType(val folderName: String?) {
@@ -47,7 +46,8 @@ enum class LogoAlignment {
 
 enum class ScreensaverBehavior {
     ShowContent,
-    PowerOff
+    PowerOff,
+    Floaty
 }
 
 enum class MusicVideoBehavior(val value: String) {
@@ -162,6 +162,7 @@ data class ESDEPrefsState(
     val showMarqueeForGame: Boolean = true,
     
     val screensaverBehavior: ScreensaverBehavior = ScreensaverBehavior.ShowContent,
+    val screensaverFloatyAppCount: Int = 7,
     
     val musicEnabled: Boolean = false,
     val musicPath: String? = null,
