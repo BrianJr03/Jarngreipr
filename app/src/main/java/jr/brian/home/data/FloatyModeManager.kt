@@ -36,19 +36,19 @@ class FloatyModeManager(context: Context) {
     
     /** Whether section-header taps should trigger konfetti burst. */
     var isSectionTapKonfettiEnabled by mutableStateOf(
-        prefs.getBoolean(KEY_SECTION_TAP_KONFETTI_ENABLED, true)
+        prefs.getBoolean(KEY_SECTION_TAP_KONFETTI_ENABLED, false)
     )
         private set
     
     /** Whether Powered Off screen should use floaty info effect. */
     var isPoweredOffFloatyEffectEnabled by mutableStateOf(
-        prefs.getBoolean(KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED, true)
+        prefs.getBoolean(KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED, false)
     )
         private set
     
     /** Whether Apps modal should use floaty layout effect. */
     var isAppsModalFloatyEffectEnabled by mutableStateOf(
-        prefs.getBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, true)
+        prefs.getBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, false)
     )
         private set
     
@@ -136,17 +136,17 @@ class FloatyModeManager(context: Context) {
         isFloatyModeActive = false
         isUnlocked = false
         enabledTabs = emptySet()
-        isSectionTapKonfettiEnabled = true
-        isPoweredOffFloatyEffectEnabled = true
-        isAppsModalFloatyEffectEnabled = true
+        isSectionTapKonfettiEnabled = false
+        isPoweredOffFloatyEffectEnabled = false
+        isAppsModalFloatyEffectEnabled = false
         appDrawerFloatyAppCount = 0
         isAppDrawerBubblePopEnabled = false
         prefs.edit {
             putBoolean(KEY_FLOATY_MODE, false)
                 .putBoolean(KEY_UNLOCKED, false)
-                .putBoolean(KEY_SECTION_TAP_KONFETTI_ENABLED, true)
-                .putBoolean(KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED, true)
-                .putBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, true)
+                .putBoolean(KEY_SECTION_TAP_KONFETTI_ENABLED, false)
+                .putBoolean(KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED, false)
+                .putBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, false)
                 .putInt(KEY_APP_DRAWER_FLOATY_APP_COUNT, 0)
                 .putBoolean(KEY_APP_DRAWER_BUBBLE_POP_ENABLED, false)
                 .remove(KEY_ENABLED_TABS)
