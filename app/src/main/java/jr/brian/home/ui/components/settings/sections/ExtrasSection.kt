@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.dock.PageVisibilityOption
@@ -81,6 +82,29 @@ fun ExtrasSection(
                     description = stringResource(R.string.floaty_mode_apps_modal_effect_description),
                     checked = floatyModeManager.isAppsModalFloatyEffectEnabled,
                     onCheckedChange = { floatyModeManager.updateAppsModalFloatyEffectEnabled(it) }
+                )
+                if (floatyModeManager.isAppsModalFloatyEffectEnabled) {
+                    SliderSetting(
+                        title = stringResource(R.string.floaty_mode_apps_modal_count_title),
+                        value = floatyModeManager.appDrawerFloatyAppCount.toFloat(),
+                        valueRange = 0f..100f,
+                        steps = 99,
+                        valueText = if (floatyModeManager.appDrawerFloatyAppCount == 0) {
+                            stringResource(R.string.floaty_mode_apps_modal_count_all)
+                        } else {
+                            floatyModeManager.appDrawerFloatyAppCount.toString()
+                        },
+                        onValueChange = {
+                            floatyModeManager.updateAppDrawerFloatyAppCount(it.toInt())
+                        },
+                        description = stringResource(R.string.floaty_mode_apps_modal_count_description)
+                    )
+                }
+                ToggleSetting(
+                    title = stringResource(R.string.floaty_mode_app_drawer_bubble_pop_title),
+                    description = stringResource(R.string.floaty_mode_app_drawer_bubble_pop_description),
+                    checked = floatyModeManager.isAppDrawerBubblePopEnabled,
+                    onCheckedChange = { floatyModeManager.updateAppDrawerBubblePopEnabled(it) }
                 )
                 
                 if (floatyModeManager.isFloatyModeActive && pageCount > 0) {
