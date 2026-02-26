@@ -1065,6 +1065,8 @@
     <string name="floaty_mode_already_unlocked">You\'ve already unlocked floaty mode!</string>
     <string name="floaty_mode_toggle_title">Floaty Mode</string>
     <string name="floaty_mode_toggle_description">Apps float around with physics-based bouncing</string>
+    <string name="floaty_mode_tabs_title">Floaty Tabs</string>
+    <string name="floaty_mode_tabs_description">Choose which tabs use floaty mode</string>
     <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
     <string name="floaty_mode_reset_description">Turn off and lock it again until version is tapped 7 times</string>
     <string name="floaty_mode_reset_done">Floaty mode reset. Tap version 7 times to unlock again.</string>

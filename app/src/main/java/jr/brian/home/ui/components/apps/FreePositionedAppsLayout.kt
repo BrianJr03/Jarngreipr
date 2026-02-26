@@ -102,7 +102,7 @@ fun FreePositionedAppsLayout(
     var currentContentHeight by remember(pageIndex) { mutableFloatStateOf(0f) }
     val (isFloaty, floatingEngine) = rememberInitializedFloatyEngine(
         forceFloatyMode = forceFloatyMode,
-        isFloatyModeActive = floatyModeManager.isFloatyModeActive,
+        isFloatyModeActive = floatyModeManager.isFloatyEnabledOnTab(pageIndex),
         pageIndex = pageIndex,
         apps = apps,
         folders = folders,
