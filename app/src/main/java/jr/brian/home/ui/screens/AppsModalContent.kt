@@ -1,14 +1,28 @@
 package jr.brian.home.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,8 +41,10 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
@@ -39,6 +55,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
+import jr.brian.home.ui.components.apps.FloatyObstacleSpec
 import jr.brian.home.ui.components.apps.FreePositionedAppsLayout
 import jr.brian.home.ui.components.dialog.AppDrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
@@ -63,6 +80,7 @@ import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -75,6 +93,8 @@ fun AppsModalContent(
     pageIndex: Int,
     isHeaderVisible: Boolean,
     forceFloatyMode: Boolean = false,
+    onGameInProgressChanged: (Boolean) -> Unit = {},
+    onCloseRequested: () -> Unit = {},
     onAppOpened: () -> Unit
 ) {
     val context = LocalContext.current
@@ -84,7 +104,7 @@ fun AppsModalContent(
     val folderManager = LocalFolderManager.current
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val floatyModeManager = LocalFloatyModeManager.current
-    
+
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val folders by folderManager.getFolders(pageIndex)
@@ -108,7 +128,6 @@ fun AppsModalContent(
     val createFolderDialogState = rememberDialogState<Unit>()
 
     val appFocusRequesters = rememberFocusRequesterMap()
-    var savedAppIndex by remember { mutableIntStateOf(0) }
 
     val scope = rememberCoroutineScope()
     val gridState = rememberLazyGridState()
@@ -168,13 +187,48 @@ fun AppsModalContent(
         apps
     }
     var poppedPackages by remember(pageIndex) { mutableStateOf<Set<String>>(emptySet()) }
+    val maxGameLevel = 3
+    var currentGameLevel by remember(pageIndex, isBubblePopEnabled) { mutableIntStateOf(1) }
+    var countdownSeconds by remember(pageIndex, isBubblePopEnabled) { mutableIntStateOf(0) }
+    var isCountdownRunning by remember(pageIndex, isBubblePopEnabled) { mutableStateOf(false) }
+    var showWinner by remember(pageIndex, isBubblePopEnabled) { mutableStateOf(false) }
+    var showTimeUp by remember(pageIndex, isBubblePopEnabled) { mutableStateOf(false) }
+    var isGameInProgress by remember(pageIndex, isBubblePopEnabled) { mutableStateOf(false) }
+    LaunchedEffect(isCountdownRunning, currentGameLevel, limitedApps.size, isBubblePopEnabled) {
+        if (!isBubblePopEnabled || !isCountdownRunning || limitedApps.isEmpty()) return@LaunchedEffect
+        if (countdownSeconds <= 0) {
+            countdownSeconds =
+                (limitedApps.size * levelTimeMultiplier(currentGameLevel)).roundToInt()
+                    .coerceAtLeast(1)
+        }
+        while (isCountdownRunning && countdownSeconds > 0) {
+            delay(1000)
+            countdownSeconds -= 1
+        }
+        if (isCountdownRunning) {
+            isCountdownRunning = false
+            showTimeUp = true
+            isGameInProgress = false
+            poppedPackages = emptySet()
+        }
+    }
     LaunchedEffect(limitedApps, isBubblePopEnabled, pageIndex) {
-        poppedPackages = if (!isBubblePopEnabled) {
-            emptySet()
+        if (!isBubblePopEnabled) {
+            poppedPackages = emptySet()
+            currentGameLevel = 1
+            countdownSeconds = 0
+            isCountdownRunning = false
+            showWinner = false
+            showTimeUp = false
+            isGameInProgress = false
         } else {
-            poppedPackages.filter { packageName ->
+            poppedPackages = poppedPackages.filter { packageName ->
                 limitedApps.any { it.packageName == packageName }
             }.toSet()
+            if (limitedApps.isEmpty()) {
+                isCountdownRunning = false
+                countdownSeconds = 0
+            }
         }
     }
     val displayedApps = if (isBubblePopEnabled) {
@@ -182,6 +236,14 @@ fun AppsModalContent(
     } else {
         limitedApps
     }
+    val gameTopBarObstacleSpec = FloatyObstacleSpec(
+        width = 0.dp,
+        height = 56.dp,
+        topPadding = 8.dp,
+        endPadding = 0.dp,
+        fullWidth = true,
+        horizontalPadding = 8.dp
+    )
 
     appOptionsDialogState.item?.let { appInfo ->
         if (appOptionsDialogState.isVisible) {
@@ -327,18 +389,36 @@ fun AppsModalContent(
                 isDragLocked = isDragLocked,
                 columns = gridSettingsManager.columnCount,
                 appFocusRequesters = appFocusRequesters,
-                onAppFocusChanged = { savedAppIndex = it },
+                onAppFocusChanged = {},
                 onAppOpened = onAppOpened,
                 onAppLongClick = appOptionsDialogState::show,
                 bubblePopEnabled = isBubblePopEnabled,
+                floatyObstacleSpec = if (isCountdownRunning) gameTopBarObstacleSpec else null,
                 onBubblePop = { appInfo ->
                     if (!isBubblePopEnabled || appInfo.packageName in poppedPackages) return@AppsContentLayout
+                    if (showWinner || showTimeUp) return@AppsContentLayout
+                    if (!isCountdownRunning) {
+                        countdownSeconds =
+                            (limitedApps.size * levelTimeMultiplier(currentGameLevel)).roundToInt()
+                                .coerceAtLeast(1)
+                        isCountdownRunning = true
+                        showTimeUp = false
+                        isGameInProgress = true
+                    }
                     val updated = poppedPackages + appInfo.packageName
                     poppedPackages = updated
                     if (limitedApps.isNotEmpty() && updated.size >= limitedApps.size) {
-                        scope.launch {
-                            delay(220)
-                            poppedPackages = emptySet()
+                        isCountdownRunning = false
+                        countdownSeconds = 0
+                        if (currentGameLevel >= maxGameLevel) {
+                            showWinner = true
+                            isGameInProgress = false
+                        } else {
+                            currentGameLevel += 1
+                            scope.launch {
+                                delay(220)
+                                poppedPackages = emptySet()
+                            }
                         }
                     }
                 },
@@ -349,6 +429,30 @@ fun AppsModalContent(
                 nestedScrollConnection = nestedScrollConnection
             )
         }
+        FloatyGameOverlay(
+            enabled = isBubblePopEnabled,
+            showWinner = showWinner,
+            showTimeUp = showTimeUp,
+            onRestart = {
+                currentGameLevel = 1
+                countdownSeconds = 0
+                isCountdownRunning = false
+                showWinner = false
+                showTimeUp = false
+                isGameInProgress = false
+                poppedPackages = emptySet()
+            }
+        )
+        AnimatedVisibility(isBubblePopEnabled && isCountdownRunning) {
+            GameTopBar(
+                level = currentGameLevel,
+                secondsRemaining = countdownSeconds,
+                onClose = onCloseRequested
+            )
+        }
+    }
+    LaunchedEffect(isBubblePopEnabled, isGameInProgress, showWinner, showTimeUp) {
+        onGameInProgressChanged(isBubblePopEnabled && isGameInProgress && !showWinner && !showTimeUp)
     }
 
     folderContentsDialogState.item?.let { folder ->
@@ -366,6 +470,84 @@ fun AppsModalContent(
         }
     }
 }
+
+@Composable
+private fun GameTopBar(
+    level: Int,
+    secondsRemaining: Int,
+    onClose: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.align(Alignment.TopEnd),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "L$level: ${secondsRemaining}s",
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close App Drawer",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FloatyGameOverlay(
+    enabled: Boolean,
+    showWinner: Boolean,
+    showTimeUp: Boolean,
+    onRestart: () -> Unit
+) {
+    if (!enabled) return
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        if (showWinner || showTimeUp) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = if (showWinner) "Winner!" else "Time's up!",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Button(onClick = onRestart) {
+                    Text("Restart")
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppsContentLayout(
@@ -383,6 +565,7 @@ private fun AppsContentLayout(
     onAppOpened: () -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
     bubblePopEnabled: Boolean,
+    floatyObstacleSpec: FloatyObstacleSpec?,
     onBubblePop: (AppInfo) -> Unit,
     folders: List<Folder>,
     onFolderClick: (Folder) -> Unit,
@@ -418,6 +601,7 @@ private fun AppsContentLayout(
             forceFloatyMode = true,
             allApps = appsUnfiltered,
             bubblePopEnabled = bubblePopEnabled,
+            floatyObstacleSpec = floatyObstacleSpec,
             onBubblePop = onBubblePop
         )
     } else {
@@ -462,6 +646,12 @@ private fun AppsContentLayout(
             nestedScrollConnection = nestedScrollConnection
         )
     }
+}
+
+private fun levelTimeMultiplier(level: Int): Float = when (level) {
+    1 -> 1f
+    2 -> 0.7f
+    else -> 0.45f
 }
 
 

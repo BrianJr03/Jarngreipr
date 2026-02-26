@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -68,6 +70,7 @@ import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @UnstableApi
@@ -119,10 +122,36 @@ fun LauncherPagerScreen(
     var resizePageIndex by remember { mutableIntStateOf(0) }
     var showResizeScreen by remember { mutableStateOf(false) }
     var showAppDrawerSheet by remember { mutableStateOf(false) }
+    var isAppDrawerGameInProgress by remember { mutableStateOf(false) }
     var currentTabIsScrolling by remember { mutableStateOf(false) }
     var resizeWidgetInfo by remember { mutableStateOf<WidgetInfo?>(null) }
     var currentTabHasScrollableContent by remember { mutableStateOf(false) }
-    val appDrawerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val appDrawerSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { targetValue ->
+            !(isAppDrawerGameInProgress && targetValue == SheetValue.Hidden)
+        }
+    )
+    val closeAppDrawerSheet: () -> Unit = {
+        isAppDrawerGameInProgress = false
+        showAppDrawerSheet = false
+        scope.launch { runCatching { appDrawerSheetState.hide() } }
+    }
+    // Safety-net: whenever the sheet actually reaches Hidden (by any means),
+    // guarantee the compose tree removes it and resets game state.
+    LaunchedEffect(appDrawerSheetState) {
+        var wasSheetExpanded = false
+        snapshotFlow { appDrawerSheetState.currentValue }
+            .collect { value ->
+                if (value != SheetValue.Hidden) {
+                    wasSheetExpanded = true
+                }
+                if (value == SheetValue.Hidden && wasSheetExpanded) {
+                    isAppDrawerGameInProgress = false
+                    showAppDrawerSheet = false
+                }
+            }
+    }
 
     val totalPages = pageTypes.size
 
@@ -145,7 +174,7 @@ fun LauncherPagerScreen(
 
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            kotlin.math.abs(pagerState.currentPageOffsetFraction)
+            abs(pagerState.currentPageOffsetFraction)
         }.collect { offsetFraction ->
             onPagerScrollProgressChanged(offsetFraction)
         }
@@ -191,6 +220,9 @@ fun LauncherPagerScreen(
     ) {
         onBackButtonShortcut()
     }
+    
+    // While the game is active in the app drawer, consume system back/gesture.
+    BackHandler(enabled = showAppDrawerSheet && isAppDrawerGameInProgress) {}
 
     val widgetToResize = resizeWidgetInfo
     if (showResizeScreen && widgetToResize != null) {
@@ -454,8 +486,11 @@ fun LauncherPagerScreen(
             if (showAppDrawerSheet) {
                 val currentPage = pagerState.currentPage
                 ModalBottomSheet(
-                    onDismissRequest = { showAppDrawerSheet = false },
+                    onDismissRequest = { closeAppDrawerSheet() },
                     sheetState = appDrawerSheetState,
+                    properties = ModalBottomSheetProperties(
+                        shouldDismissOnBackPress = !isAppDrawerGameInProgress
+                    ),
                     containerColor = OledBackgroundColor.copy(alpha = esdePrefsState.appDrawerOpacityFloat),
                     dragHandle = {
                         Box(
@@ -483,9 +518,9 @@ fun LauncherPagerScreen(
                         allApps = homeUiState.allAppsUnfiltered,
                         pageIndex = currentPage,
                         isHeaderVisible = isHeaderVisible,
-                        onAppOpened = {
-                            showAppDrawerSheet = false
-                        }
+                        onGameInProgressChanged = { isAppDrawerGameInProgress = it },
+                        onCloseRequested = closeAppDrawerSheet,
+                        onAppOpened = closeAppDrawerSheet
                     )
                 }
             }
