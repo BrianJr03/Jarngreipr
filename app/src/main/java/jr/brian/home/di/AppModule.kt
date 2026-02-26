@@ -13,6 +13,7 @@ import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.DockManager
+import jr.brian.home.data.FloatyModeManager
 import jr.brian.home.data.GameKonfettiManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
@@ -155,6 +156,14 @@ object AppModule {
         @ApplicationContext context: Context
     ): GameKonfettiManager {
         return GameKonfettiManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFloatyModeManager(
+        @ApplicationContext context: Context
+    ): FloatyModeManager {
+        return FloatyModeManager(context)
     }
 
     @Provides

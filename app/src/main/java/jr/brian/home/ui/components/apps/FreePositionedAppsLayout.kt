@@ -1,7 +1,7 @@
 package jr.brian.home.ui.components.apps
 
-import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,25 +23,27 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.floaty.FloatingAppInit
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @Composable
@@ -52,6 +55,7 @@ fun FreePositionedAppsLayout(
     modifier: Modifier = Modifier,
     pageIndex: Int = 0,
     isDragLocked: Boolean = false,
+    forceFloatyMode: Boolean = false,
     allApps: List<AppInfo> = apps
 ) {
     val context = LocalContext.current
@@ -62,6 +66,7 @@ fun FreePositionedAppsLayout(
     val appVisibilityManager = LocalAppVisibilityManager.current
     val customIconManager = LocalCustomIconManager.current
     val folderManager = LocalFolderManager.current
+    val floatyModeManager = LocalFloatyModeManager.current
 
     val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
     val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
@@ -94,12 +99,25 @@ fun FreePositionedAppsLayout(
         PositionCalculator(density, borderPadding)
     }
 
+    var currentContentHeight by remember(pageIndex) { mutableFloatStateOf(0f) }
+    val (isFloaty, floatingEngine) = rememberInitializedFloatyEngine(
+        forceFloatyMode = forceFloatyMode,
+        isFloatyModeActive = floatyModeManager.isFloatyModeActive,
+        pageIndex = pageIndex,
+        apps = apps,
+        folders = folders,
+        positions = positions,
+        containerSize = containerSize,
+        currentContentHeight = currentContentHeight,
+        density = density
+    )
+
     LaunchedEffect(Unit) {
         if (focusRequesters.isNotEmpty()) {
             focusRequesters[0].requestFocus()
         }
     }
-
+    
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -115,41 +133,43 @@ fun FreePositionedAppsLayout(
             containerSize = containerSize,
             density = density,
             positionCalculator = positionCalculator
-        )
+        ).also { currentContentHeight = it }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(with(density) { contentHeight.toDp() })
         ) {
-            // Alignment guides and distance measurements overlay
-            AlignmentOverlay(alignmentState = alignmentState)
-
-            // Apps can exist both in folders and outside, so show all apps
-            val filteredApps = apps
+            if (!isFloaty) {
+                AlignmentOverlay(alignmentState = alignmentState)
+            }
 
             folders.forEachIndexed { _, folder ->
                 val folderApps = allApps.filter { it.packageName in folder.appPackageNames }
                 val position = folder.position
+                val floatingState = if (isFloaty) floatingEngine.positions[folder.id] else null
+                val displayX = floatingState?.x ?: position.x
+                val displayY = floatingState?.y ?: position.y
 
                 FolderItem(
                     apps = folderApps,
                     folderName = folder.name,
                     keyboardVisible = keyboardVisible,
                     focusRequester = FocusRequester(),
-                    offsetX = position.x,
-                    offsetY = position.y,
+                    offsetX = displayX,
+                    offsetY = displayY,
                     iconSize = position.iconSize,
                     isFocusable = false,
                     customIconManager = customIconManager,
                     onOffsetChanged = { x, y ->
+                        if (isFloaty) return@FolderItem
                         val dragResult = dragDropHandler.processDragForFolder(
                             dragX = x,
                             dragY = y,
                             iconSize = position.iconSize,
                             containerSize = containerSize,
                             contentHeight = contentHeight,
-                            apps = filteredApps,
+                            apps = apps,
                             positions = positions,
                             folders = folders,
                             draggingFolderId = folder.id
@@ -181,23 +201,23 @@ fun FreePositionedAppsLayout(
                         folderDialogState.show(folder)
                     },
                     onLongClick = {},
-                    isDraggingEnabled = !isDragLocked
+                    isDraggingEnabled = !isDragLocked && !isFloaty
                 )
             }
 
             // Pre-calculate all existing positioned items (apps with saved positions + folders)
             val existingPositionedItems = positionCalculator.getExistingPositionedItems(
-                apps = filteredApps,
+                apps = apps,
                 positions = positions,
                 folders = folders
             )
 
-            filteredApps.forEachIndexed { index, app ->
+            apps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
                 val currentIconSize = position?.iconSize ?: 64f
                 val iconSizePx = with(density) { currentIconSize.dp.toPx() }
-                
-                val (initialX, initialY) = if (position != null) {
+
+                val (savedX, savedY) = if (position != null) {
                     Pair(position.x, position.y)
                 } else {
                     // Calculate default position in grid, avoiding existing items
@@ -208,7 +228,7 @@ fun FreePositionedAppsLayout(
                         containerWidth = containerSize.width.toFloat(),
                         contentHeight = contentHeight
                     )
-                    
+
                     // Save the position so subsequent new apps also avoid this spot
                     appPositionManager.savePosition(
                         pageIndex,
@@ -219,20 +239,29 @@ fun FreePositionedAppsLayout(
                             iconSize = currentIconSize
                         )
                     )
-                    
+
                     nonOverlapping
                 }
+
+                val floatingState = if (isFloaty) {
+                    floatingEngine.positions[app.packageName]
+                } else null
+
+                val displayX = floatingState?.x ?: savedX
+                val displayY = floatingState?.y ?: savedY
 
                 FreePositionedAppItem(
                     app = app,
                     keyboardVisible = keyboardVisible,
                     focusRequester = focusRequesters[index],
-                    offsetX = initialX,
-                    offsetY = initialY,
+                    offsetX = displayX,
+                    offsetY = displayY,
                     iconSize = currentIconSize,
                     isFocusable = false,
                     customIconManager = customIconManager,
                     onOffsetChanged = { x, y ->
+                        if (isFloaty) return@FreePositionedAppItem // ignore drag in floaty mode
+
                         val currentIconSize =
                             appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
                                 ?: 64f
@@ -244,7 +273,7 @@ fun FreePositionedAppsLayout(
                             iconSize = currentIconSize,
                             containerSize = containerSize,
                             contentHeight = contentHeight,
-                            apps = filteredApps,
+                            apps = apps,
                             positions = positions,
                             folders = folders,
                             excludePackageName = app.packageName
@@ -274,7 +303,9 @@ fun FreePositionedAppsLayout(
                         launchAppOnOppositeDisplay(
                             context = context,
                             packageName = app.packageName,
-                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                app.packageName
+                            )
                         )
                     },
                     onLongClick = {
@@ -291,7 +322,7 @@ fun FreePositionedAppsLayout(
                     onFocusChanged = {
                         focusedIndex = index
                     },
-                    isDraggingEnabled = !isDragLocked
+                    isDraggingEnabled = !isDragLocked && !isFloaty
                 )
             }
         }
@@ -314,4 +345,63 @@ fun FreePositionedAppsLayout(
             widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
         }
     )
+}
+
+@Composable
+private fun rememberInitializedFloatyEngine(
+    forceFloatyMode: Boolean,
+    isFloatyModeActive: Boolean,
+    pageIndex: Int,
+    apps: List<AppInfo>,
+    folders: List<Folder>,
+    positions: Map<String, AppPosition>,
+    containerSize: IntSize,
+    currentContentHeight: Float,
+    density: Density
+): Pair<Boolean, FloatingAppsEngine> {
+    val isFloaty = forceFloatyMode || isFloatyModeActive
+    val floatingEngine = remember(pageIndex) { FloatingAppsEngine() }
+
+    LaunchedEffect(isFloaty, apps.size, folders.size, containerSize, currentContentHeight, pageIndex) {
+        if (!isFloaty || containerSize == IntSize.Zero || currentContentHeight <= 0f) return@LaunchedEffect
+        val appInits = apps.map { app ->
+            val pos = positions[app.packageName]
+            val iconSize = pos?.iconSize ?: 64f
+            val iconSizePx = with(density) { iconSize.dp.toPx() }
+            FloatingAppInit(
+                id = app.packageName,
+                x = pos?.x ?: 0f,
+                y = pos?.y ?: 0f,
+                width = iconSizePx
+            )
+        }
+        val folderInits = folders.map { folder ->
+            val iconSizePx = with(density) { folder.position.iconSize.dp.toPx() }
+            FloatingAppInit(
+                id = folder.id,
+                x = folder.position.x,
+                y = folder.position.y,
+                width = iconSizePx
+            )
+        }
+        floatingEngine.initialize(
+            apps = appInits + folderInits,
+            width = containerSize.width.toFloat(),
+            height = currentContentHeight // full scrollable content area
+        )
+    }
+    LaunchedEffect(isFloaty, pageIndex) {
+        if (!isFloaty) return@LaunchedEffect
+        var lastNanos = 0L
+        while (isActive) {
+            withInfiniteAnimationFrameNanos { frameNanos ->
+                if (lastNanos != 0L) {
+                    val dt = (frameNanos - lastNanos) / 1_000_000_000f // seconds
+                    floatingEngine.tick(dt.coerceAtMost(0.05f)) // cap to avoid jumps
+                }
+                lastNanos = frameNanos
+            }
+        }
+    }
+    return isFloaty to floatingEngine
 }

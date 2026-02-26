@@ -68,7 +68,8 @@ fun ESDESettingsContent(
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
-    onNavigateToKonfettiEditor: () -> Unit = {}
+    onNavigateToKonfettiEditor: () -> Unit = {},
+    onSectionHeaderTap: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val viewModel: ESDEViewModel = hiltViewModel()
@@ -219,7 +220,10 @@ fun ESDESettingsContent(
             onClick = onRunSetupWizard
         )
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_animation)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_animation),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             AnimationSectionContent(
                 prefsState = prefsState,
                 onAnimationDurationChange = { duration ->
@@ -235,7 +239,8 @@ fun ESDESettingsContent(
         }
 
         CollapsibleSection(
-            title = stringResource(R.string.esde_settings_section_music)
+            title = stringResource(R.string.esde_settings_section_music),
+            onHeaderTap = onSectionHeaderTap
         ) {
             MusicSectionContent(
                 prefsState = prefsState,
@@ -274,7 +279,10 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_custom_paths)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_custom_paths),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             CustomPathsSectionContent(
                 prefsState = prefsState,
                 onSelectSystemImagesPath = { systemImagesFolderPicker.launch(null) },
@@ -323,7 +331,10 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_konfetti)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_konfetti),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(R.string.esde_settings_konfetti_info),
@@ -340,7 +351,10 @@ fun ESDESettingsContent(
             }
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_marquee)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_marquee),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             MarqueeSectionContent(
                 prefsState = prefsState,
                 pageTypes = pageTypes,
@@ -382,7 +396,10 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_power)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_power),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             PowerSectionContent(
                 prefsState = prefsState,
                 onPersistOnGameLaunchChange = { persist ->
@@ -406,16 +423,25 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_screensaver)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_screensaver),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             ScreensaverSectionContent(
                 prefsState = prefsState,
+                onScreensaverAppCountChange = { count ->
+                    preferencesManager.setScreensaverFloatyAppCount(count)
+                },
                 onScreensaverBehaviorChange = { behavior ->
                     preferencesManager.setScreensaverBehavior(behavior)
                 }
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_system_apps)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_system_apps),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(R.string.esde_settings_system_apps_info),
@@ -432,7 +458,10 @@ fun ESDESettingsContent(
             }
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_video)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_video),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             VideoSectionContent(
                 prefsState = prefsState,
                 onVideoAudioEnabledChange = { enabled ->
@@ -450,7 +479,10 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_effects)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_effects),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             EffectsSectionContent(
                 prefsState = prefsState,
                 pageTypes = pageTypes,
@@ -495,7 +527,10 @@ fun ESDESettingsContent(
             )
         }
 
-        CollapsibleSection(title = stringResource(R.string.esde_settings_section_extras)) {
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_extras),
+            onHeaderTap = onSectionHeaderTap
+        ) {
             ExtrasSectionContent(
                 hideUIForGameBrowsing = prefsState.hideUIForGameBrowsing,
                 onHideUIForGameBrowsingChange = { hide ->
@@ -525,7 +560,8 @@ fun ESDEDisplaySection(
     onRunSetupWizard: () -> Unit = {},
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
-    onNavigateToKonfettiEditor: () -> Unit = {}
+    onNavigateToKonfettiEditor: () -> Unit = {},
+    onSectionHeaderTap: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
         title = stringResource(R.string.esde_settings_title),
@@ -537,7 +573,8 @@ fun ESDEDisplaySection(
             onRunSetupWizard = onRunSetupWizard,
             onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
             onNavigateToSystemApps = onNavigateToSystemApps,
-            onNavigateToKonfettiEditor = onNavigateToKonfettiEditor
+            onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+            onSectionHeaderTap = onSectionHeaderTap
         )
     }
 }

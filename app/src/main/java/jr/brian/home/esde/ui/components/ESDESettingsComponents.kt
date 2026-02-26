@@ -50,7 +50,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -65,7 +67,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 @Composable
 fun Modifier.focusableSettingCard(
     isFocused: Boolean,
-    cornerRadius: androidx.compose.ui.unit.Dp = 16.dp
+    cornerRadius: Dp = 16.dp
 ): Modifier = this
     .scale(animatedFocusedScale(isFocused))
     .background(
@@ -83,6 +85,7 @@ fun CollapsibleSection(
     title: String,
     showBorder: Boolean = false,
     initiallyExpanded: Boolean = false,
+    onHeaderTap: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -125,7 +128,10 @@ fun CollapsibleSection(
                 )
                 .then(border)
                 .clip(RoundedCornerShape(16.dp))
-                .clickWithHaptic(haptic) { isExpanded = !isExpanded }
+                .clickWithHaptic(haptic) {
+                    onHeaderTap?.invoke()
+                    isExpanded = !isExpanded
+                }
                 .focusable()
                 .onFocusChanged { isFocused = it.isFocused }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -529,7 +535,7 @@ fun MarqueeSizeSetting(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
 
                 IconButton(
@@ -598,7 +604,7 @@ fun MarqueeSizeSetting(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
 
                 IconButton(
