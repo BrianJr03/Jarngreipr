@@ -104,7 +104,8 @@ fun PoweredOffScreen(
     var currentTime by remember { mutableStateOf("") }
     var localMusicVolume by remember(musicVolume) { mutableFloatStateOf(musicVolume.toFloat()) }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
-    val isFloatyMode = floatyModeManager.isFloatyModeActive
+    val isFloatyMode =
+        floatyModeManager.isFloatyModeActive && floatyModeManager.isPoweredOffFloatyEffectEnabled
     val floatingEngine = remember { FloatingAppsEngine() }
 
     val fps = rememberFpsMonitor().value

@@ -1065,6 +1065,12 @@
     <string name="floaty_mode_already_unlocked">You\'ve already unlocked floaty mode!</string>
     <string name="floaty_mode_toggle_title">Floaty Mode</string>
     <string name="floaty_mode_toggle_description">Apps float around with physics-based bouncing</string>
+    <string name="floaty_mode_section_konfetti_title">Section Tap Konfetti</string>
+    <string name="floaty_mode_section_konfetti_description">Play explosion effect when sections are tapped in Settings screens</string>
+    <string name="floaty_mode_powered_off_effect_title">Powered Off Floaty Effect</string>
+    <string name="floaty_mode_powered_off_effect_description">Use floating overlay positions on the powered off screen</string>
+    <string name="floaty_mode_apps_modal_effect_title">Apps Drawer Floaty Effect</string>
+    <string name="floaty_mode_apps_modal_effect_description">Use floating app layout in the app drawer</string>
     <string name="floaty_mode_tabs_title">Floaty Tabs</string>
     <string name="floaty_mode_tabs_description">Choose which tabs use floaty mode</string>
     <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
