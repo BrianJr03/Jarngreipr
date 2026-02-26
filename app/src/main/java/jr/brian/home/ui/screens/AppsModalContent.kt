@@ -158,6 +158,8 @@ fun AppsModalContent(
             }
         }
     }
+    val isModalFloatyEnabled =
+        floatyModeManager.isFloatyModeActive && floatyModeManager.isAppsModalFloatyEffectEnabled
 
     appOptionsDialogState.item?.let { appInfo ->
         if (appOptionsDialogState.isVisible) {
@@ -296,8 +298,7 @@ fun AppsModalContent(
                 apps = apps,
                 appsUnfiltered = appsUnfiltered,
                 appPositionManager = appPositionManager,
-                forceFloatyMode = forceFloatyMode,
-                isFloatyModeActive = floatyModeManager.isFloatyModeActive,
+                forceFloatyMode = forceFloatyMode || isModalFloatyEnabled,
                 hasExternalDisplay = hasExternalDisplay,
                 appDisplayPreferenceManager = appDisplayPreferenceManager,
                 pageIndex = pageIndex,
@@ -338,7 +339,6 @@ private fun AppsContentLayout(
     appsUnfiltered: List<AppInfo>,
     appPositionManager: AppPositionManager,
     forceFloatyMode: Boolean,
-    isFloatyModeActive: Boolean,
     hasExternalDisplay: Boolean,
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
     pageIndex: Int,
@@ -356,7 +356,7 @@ private fun AppsContentLayout(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    if (forceFloatyMode || isFloatyModeActive) {
+    if (forceFloatyMode) {
         FreePositionedAppsLayout(
             apps = apps,
             appPositionManager = appPositionManager,
@@ -379,7 +379,7 @@ private fun AppsContentLayout(
                 .padding(horizontal = 20.dp),
             pageIndex = pageIndex,
             isDragLocked = isDragLocked,
-            forceFloatyMode = forceFloatyMode,
+            forceFloatyMode = true,
             allApps = appsUnfiltered
         )
     } else {

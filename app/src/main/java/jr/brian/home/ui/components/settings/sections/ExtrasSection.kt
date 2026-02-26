@@ -64,6 +64,24 @@ fun ExtrasSection(
                     checked = floatyModeManager.isFloatyModeActive,
                     onCheckedChange = { floatyModeManager.setFloatyMode(it) }
                 )
+                ToggleSetting(
+                    title = stringResource(R.string.floaty_mode_section_konfetti_title),
+                    description = stringResource(R.string.floaty_mode_section_konfetti_description),
+                    checked = floatyModeManager.isSectionTapKonfettiEnabled,
+                    onCheckedChange = { floatyModeManager.updateSectionTapKonfettiEffectEnabled(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.floaty_mode_powered_off_effect_title),
+                    description = stringResource(R.string.floaty_mode_powered_off_effect_description),
+                    checked = floatyModeManager.isPoweredOffFloatyEffectEnabled,
+                    onCheckedChange = { floatyModeManager.updatePoweredOffFloatyEffectEnabled(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.floaty_mode_apps_modal_effect_title),
+                    description = stringResource(R.string.floaty_mode_apps_modal_effect_description),
+                    checked = floatyModeManager.isAppsModalFloatyEffectEnabled,
+                    onCheckedChange = { floatyModeManager.updateAppsModalFloatyEffectEnabled(it) }
+                )
                 
                 if (floatyModeManager.isFloatyModeActive && pageCount > 0) {
                     Text(
