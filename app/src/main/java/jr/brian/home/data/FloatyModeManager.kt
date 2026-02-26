@@ -51,6 +51,18 @@ class FloatyModeManager(context: Context) {
         prefs.getBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, true)
     )
         private set
+    
+    /** Max app count to show in floaty app drawer mode; 0 means all. */
+    var appDrawerFloatyAppCount by mutableStateOf(
+        prefs.getInt(KEY_APP_DRAWER_FLOATY_APP_COUNT, 0).coerceIn(0, 100)
+    )
+        private set
+    
+    /** Whether Apps modal floaty items pop when tapped. */
+    var isAppDrawerBubblePopEnabled by mutableStateOf(
+        prefs.getBoolean(KEY_APP_DRAWER_BUBBLE_POP_ENABLED, false)
+    )
+        private set
 
     /** Call once when the user taps the version 7 times. */
     fun unlock() {
@@ -108,6 +120,17 @@ class FloatyModeManager(context: Context) {
         prefs.edit { putBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, enabled) }
     }
     
+    fun updateAppDrawerFloatyAppCount(count: Int) {
+        val coerced = count.coerceIn(0, 100)
+        appDrawerFloatyAppCount = coerced
+        prefs.edit { putInt(KEY_APP_DRAWER_FLOATY_APP_COUNT, coerced) }
+    }
+    
+    fun updateAppDrawerBubblePopEnabled(enabled: Boolean) {
+        isAppDrawerBubblePopEnabled = enabled
+        prefs.edit { putBoolean(KEY_APP_DRAWER_BUBBLE_POP_ENABLED, enabled) }
+    }
+    
     /** Resets the easter egg state; user must tap version 7x again. */
     fun reset() {
         isFloatyModeActive = false
@@ -116,12 +139,16 @@ class FloatyModeManager(context: Context) {
         isSectionTapKonfettiEnabled = true
         isPoweredOffFloatyEffectEnabled = true
         isAppsModalFloatyEffectEnabled = true
+        appDrawerFloatyAppCount = 0
+        isAppDrawerBubblePopEnabled = false
         prefs.edit {
             putBoolean(KEY_FLOATY_MODE, false)
                 .putBoolean(KEY_UNLOCKED, false)
                 .putBoolean(KEY_SECTION_TAP_KONFETTI_ENABLED, true)
                 .putBoolean(KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED, true)
                 .putBoolean(KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED, true)
+                .putInt(KEY_APP_DRAWER_FLOATY_APP_COUNT, 0)
+                .putBoolean(KEY_APP_DRAWER_BUBBLE_POP_ENABLED, false)
                 .remove(KEY_ENABLED_TABS)
         }
     }
@@ -148,5 +175,7 @@ class FloatyModeManager(context: Context) {
         private const val KEY_SECTION_TAP_KONFETTI_ENABLED = "section_tap_konfetti_enabled"
         private const val KEY_POWERED_OFF_FLOATY_EFFECT_ENABLED = "powered_off_floaty_effect_enabled"
         private const val KEY_APPS_MODAL_FLOATY_EFFECT_ENABLED = "apps_modal_floaty_effect_enabled"
+        private const val KEY_APP_DRAWER_FLOATY_APP_COUNT = "app_drawer_floaty_app_count"
+        private const val KEY_APP_DRAWER_BUBBLE_POP_ENABLED = "app_drawer_bubble_pop_enabled"
     }
 }
