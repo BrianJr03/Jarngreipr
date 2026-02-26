@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +34,10 @@ import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.floaty.BubbleBurst
 import jr.brian.home.model.floaty.FloatingAppInit
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
+import jr.brian.home.ui.components.konfetti.KonfettiPresets
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -43,7 +47,10 @@ import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchAppOnOppositeDisplay
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.core.Position
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -56,7 +63,9 @@ fun FreePositionedAppsLayout(
     pageIndex: Int = 0,
     isDragLocked: Boolean = false,
     forceFloatyMode: Boolean = false,
-    allApps: List<AppInfo> = apps
+    allApps: List<AppInfo> = apps,
+    bubblePopEnabled: Boolean = false,
+    onBubblePop: (AppInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -100,6 +109,9 @@ fun FreePositionedAppsLayout(
     }
 
     var currentContentHeight by remember(pageIndex) { mutableFloatStateOf(0f) }
+    var bubbleBurstKey by remember { mutableIntStateOf(0) }
+    var bubbleBursts by remember { mutableStateOf<List<BubbleBurst>>(emptyList()) }
+    val explodeTemplate = KonfettiPresets.getParties(KonfettiPreset.EXPLODE)
     val (isFloaty, floatingEngine) = rememberInitializedFloatyEngine(
         forceFloatyMode = forceFloatyMode,
         isFloatyModeActive = floatyModeManager.isFloatyEnabledOnTab(pageIndex),
@@ -250,17 +262,18 @@ fun FreePositionedAppsLayout(
                 val displayX = floatingState?.x ?: savedX
                 val displayY = floatingState?.y ?: savedY
 
-                FreePositionedAppItem(
-                    app = app,
-                    keyboardVisible = keyboardVisible,
-                    focusRequester = focusRequesters[index],
-                    offsetX = displayX,
-                    offsetY = displayY,
-                    iconSize = currentIconSize,
-                    isFocusable = false,
-                    customIconManager = customIconManager,
-                    onOffsetChanged = { x, y ->
-                        if (isFloaty) return@FreePositionedAppItem // ignore drag in floaty mode
+                key(app.packageName) {
+                    FreePositionedAppItem(
+                        app = app,
+                        keyboardVisible = keyboardVisible,
+                        focusRequester = focusRequesters[index],
+                        offsetX = displayX,
+                        offsetY = displayY,
+                        iconSize = currentIconSize,
+                        isFocusable = false,
+                        customIconManager = customIconManager,
+                        onOffsetChanged = { x, y ->
+                            if (isFloaty) return@FreePositionedAppItem // ignore drag in floaty mode
 
                         val currentIconSize =
                             appPositionManager.getPosition(pageIndex, app.packageName)?.iconSize
@@ -281,49 +294,78 @@ fun FreePositionedAppsLayout(
 
                         alignmentState = dragResult.alignmentState
 
-                        appPositionManager.savePosition(
-                            pageIndex,
-                            AppPosition(
+                            appPositionManager.savePosition(
+                                pageIndex,
+                                AppPosition(
+                                    packageName = app.packageName,
+                                    x = dragResult.finalX,
+                                    y = dragResult.finalY,
+                                    iconSize = currentIconSize
+                                )
+                            )
+                        },
+                        onDragStart = {
+                            draggingAppIndex = index
+                        },
+                        onDragEnd = {
+                            draggingAppIndex = -1
+                            alignmentState = AlignmentState()
+                        },
+                        onClick = { onAppClick(app) },
+                        onDoubleClick = {
+                            launchAppOnOppositeDisplay(
+                                context = context,
                                 packageName = app.packageName,
-                                x = dragResult.finalX,
-                                y = dragResult.finalY,
-                                iconSize = currentIconSize
+                                currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                    app.packageName
+                                )
                             )
-                        )
-                    },
-                    onDragStart = {
-                        draggingAppIndex = index
-                    },
-                    onDragEnd = {
-                        draggingAppIndex = -1
-                        alignmentState = AlignmentState()
-                    },
-                    onClick = { onAppClick(app) },
-                    onDoubleClick = {
-                        launchAppOnOppositeDisplay(
-                            context = context,
-                            packageName = app.packageName,
-                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                                app.packageName
+                        },
+                        onLongClick = {
+                            if (isDragLocked) {
+                                appOptionsDialogState.show(app)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    longPressToastMsg,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        onFocusChanged = {
+                            focusedIndex = index
+                        },
+                        isDraggingEnabled = !isDragLocked && !isFloaty,
+                        bubblePopEnabled = bubblePopEnabled && isFloaty,
+                        onBubblePopTap = { tapX, tapY ->
+                            if (containerSize.width <= 0 || contentHeight <= 0f) return@FreePositionedAppItem
+                            val relX = (tapX / containerSize.width.toFloat()).coerceIn(0f, 1f).toDouble()
+                            val relY = (tapY / contentHeight).coerceIn(0f, 1f).toDouble()
+                            val parties = explodeTemplate.map { party ->
+                                party.copy(position = Position.Relative(relX, relY))
+                            }
+                            val burstId = bubbleBurstKey + 1
+                            bubbleBurstKey = burstId
+                            bubbleBursts = bubbleBursts + BubbleBurst(
+                                id = burstId,
+                                parties = parties
                             )
-                        )
-                    },
-                    onLongClick = {
-                        if (isDragLocked) {
-                            appOptionsDialogState.show(app)
-                        } else {
-                            Toast.makeText(
-                                context,
-                                longPressToastMsg,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                    onFocusChanged = {
-                        focusedIndex = index
-                    },
-                    isDraggingEnabled = !isDragLocked && !isFloaty
-                )
+                            scope.launch {
+                                delay(700)
+                                bubbleBursts = bubbleBursts.filterNot { it.id == burstId }
+                            }
+                        },
+                        onBubblePopComplete = { onBubblePop(app) }
+                    )
+                }
+            }
+            bubbleBursts.forEach { burst ->
+                key(burst.id) {
+                    KonfettiView(
+                        modifier = Modifier.fillMaxSize(),
+                        parties = burst.parties
+                    )
+                }
             }
         }
     }
@@ -364,14 +406,30 @@ private fun rememberInitializedFloatyEngine(
 
     LaunchedEffect(isFloaty, apps.size, folders.size, containerSize, currentContentHeight, pageIndex) {
         if (!isFloaty || containerSize == IntSize.Zero || currentContentHeight <= 0f) return@LaunchedEffect
-        val appInits = apps.map { app ->
+        val appInits = apps.mapIndexed { index, app ->
             val pos = positions[app.packageName]
             val iconSize = pos?.iconSize ?: 64f
             val iconSizePx = with(density) { iconSize.dp.toPx() }
+            val fallbackSpacing = with(density) { 16.dp.toPx() }
+            val fallbackHorizontalPadding = with(density) { 20.dp.toPx() }
+            val containerWidth = containerSize.width.toFloat()
+            val safeHeight = currentContentHeight
+            val columns = (
+                (containerWidth - (fallbackHorizontalPadding * 2f) + fallbackSpacing) /
+                    (iconSizePx + fallbackSpacing)
+                ).toInt().coerceAtLeast(1)
+            val column = index % columns
+            val row = index / columns
+            val fallbackX = (
+                fallbackHorizontalPadding + (column * (iconSizePx + fallbackSpacing))
+                ).coerceIn(0f, (containerWidth - iconSizePx).coerceAtLeast(0f))
+            val fallbackY = (
+                fallbackSpacing + (row * (iconSizePx + fallbackSpacing))
+                ).coerceIn(0f, (safeHeight - iconSizePx).coerceAtLeast(0f))
             FloatingAppInit(
                 id = app.packageName,
-                x = pos?.x ?: 0f,
-                y = pos?.y ?: 0f,
+                x = pos?.x ?: fallbackX,
+                y = pos?.y ?: fallbackY,
                 width = iconSizePx
             )
         }

@@ -105,10 +105,10 @@ private fun handleFloatyUnlockTap(
         ).show()
         return tapCount
     }
+    val countdownValue = (TAPS_TO_UNLOCK - tapCount).coerceIn(1, TAPS_TO_UNLOCK)
+    onVersionTapCountdown(countdownValue)
     val updatedTapCount = tapCount + 1
-    val remaining = TAPS_TO_UNLOCK - updatedTapCount
-    onVersionTapCountdown(remaining.coerceAtLeast(0))
-    if (remaining > 0) return updatedTapCount
+    if (updatedTapCount < TAPS_TO_UNLOCK) return updatedTapCount
     floatyModeManager.unlock()
     Toast.makeText(
         context,
