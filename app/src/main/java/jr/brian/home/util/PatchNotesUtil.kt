@@ -4,6 +4,7 @@ import android.content.Context
 import jr.brian.home.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.URL
 
 object PatchNotesUtil {
@@ -49,13 +50,10 @@ object PatchNotesUtil {
             try {
                 val url = "https://api.github.com/repos/$owner/$repo/releases/latest"
                 val response = URL(url).readText()
-                val bodyMatch = Regex("\"body\":\\s*\"(.*?)\"").find(response)
-                val githubNotes = bodyMatch?.groupValues?.get(1)
-                    ?.replace("\\n", "\n")
-                    ?.replace("\\r", "")
-                if (!githubNotes.isNullOrBlank()) {
-                    githubNotes
-                } else {
+                val githubNotes = JSONObject(response)
+                    .optString("body")
+                    .trim()
+                githubNotes.ifBlank {
                     localNotes
                 }
             } catch (_: Exception) {

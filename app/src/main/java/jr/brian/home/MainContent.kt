@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,10 +24,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.Shortcut
@@ -55,7 +58,9 @@ import jr.brian.home.ui.navigation.recentAppsScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.volumeControlsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
+import jr.brian.home.ui.screens.AppsModalContent
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
@@ -71,7 +76,7 @@ import jr.brian.home.viewmodels.WidgetViewModel
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
-@androidx.media3.common.util.UnstableApi
+@UnstableApi
 @Composable
 fun MainContent(
     hideLauncherUI: Boolean = false,
@@ -94,7 +99,11 @@ fun MainContent(
     val appUpdateManager = LocalAppUpdateManager.current
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+    val wallpaperState by esdeViewModel.wallpaperState
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
@@ -371,6 +380,40 @@ fun MainContent(
                     notificationAccessDialogState.dismiss()
                 }
             )
+        }
+        val shouldShowFloatyScreensaver = wallpaperState.isScreensaverActive &&
+                esdePrefsState.screensaverBehavior == ScreensaverBehavior.Floaty
+        if (shouldShowFloatyScreensaver) {
+            val hiddenApps = hiddenAppsByPage[currentPagerPage] ?: emptySet()
+            val visibleApps = remember(uiState.allApps, hiddenApps) {
+                uiState.allApps.filter { app -> app.packageName !in hiddenApps }
+            }
+            val limitedApps = remember(visibleApps, esdePrefsState.screensaverFloatyAppCount) {
+                val maxApps = esdePrefsState.screensaverFloatyAppCount
+                if (maxApps == 0) visibleApps else visibleApps.take(maxApps)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(GraphicsColor.Black)
+            ) {
+                AppsModalContent(
+                    modifier = Modifier.fillMaxSize(),
+                    apps = limitedApps,
+                    appsUnfiltered = uiState.allAppsUnfiltered,
+                    isLoading = uiState.isLoading,
+                    allApps = uiState.allAppsUnfiltered,
+                    pageIndex = currentPagerPage,
+                    isHeaderVisible = false,
+                    forceFloatyMode = true,
+                    onAppOpened = {}
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(GraphicsColor.Black.copy(alpha = 0.3f))
+                )
+            }
         }
     }
 }

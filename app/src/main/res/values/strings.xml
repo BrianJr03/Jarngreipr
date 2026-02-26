@@ -914,6 +914,10 @@
     <string name="esde_settings_screensaver_show_companion_description">Display screensaver game artwork</string>
     <string name="esde_settings_screensaver_power_off">Power Off</string>
     <string name="esde_settings_screensaver_power_off_description">Show clock and battery info</string>
+    <string name="esde_settings_screensaver_floaty">Floating Apps</string>
+    <string name="esde_settings_screensaver_app_count">Floaty App Count</string>
+    <string name="esde_settings_screensaver_app_count_description">How many apps to show while screensaver is active (All = no limit)</string>
+    <string name="esde_settings_screensaver_app_count_all">All</string>
 
     <!-- ESDE Music Settings -->
     <string name="esde_settings_section_music">Background Music</string>
@@ -1054,4 +1058,14 @@
     <string name="esde_settings_section_konfetti">Konfetti</string>
     <string name="esde_settings_konfetti_info">Create custom Konfetti animations that play when a game is selected or started</string>
     <string name="esde_settings_open_konfetti_editor">Open Konfetti Editor</string>
+
+    <!-- Floaty Mode Easter Egg -->
+    <string name="floaty_mode_steps_away">You are %1$d steps away from becoming floaty</string>
+    <string name="floaty_mode_unlocked">You are now floaty! Head to Extras to toggle it on.</string>
+    <string name="floaty_mode_already_unlocked">You\'ve already unlocked floaty mode!</string>
+    <string name="floaty_mode_toggle_title">Floaty Mode</string>
+    <string name="floaty_mode_toggle_description">Apps float around with physics-based bouncing</string>
+    <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
+    <string name="floaty_mode_reset_description">Turn off and lock it again until version is tapped 7 times</string>
+    <string name="floaty_mode_reset_done">Floaty mode reset. Tap version 7 times to unlock again.</string>
 </resources>

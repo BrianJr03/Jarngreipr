@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import android.media.AudioManager
+import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,29 +46,37 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.WakeMethod
+import jr.brian.home.model.floaty.FloatingAppInit
 import jr.brian.home.ui.animations.onPressScaleAndOffset
+import jr.brian.home.ui.components.apps.FloatingAppsEngine
 import jr.brian.home.ui.components.DualVolumeControls
 import jr.brian.home.ui.components.VolumeSlider
 import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.rememberAutoFocus
 import jr.brian.home.util.getSimpleBatteryInfo
 import jr.brian.home.util.rememberFpsMonitor
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun PoweredOffScreen(
@@ -79,6 +89,7 @@ fun PoweredOffScreen(
     val focusRequester = rememberAutoFocus()
     val interactionSource = remember { MutableInteractionSource() }
     val powerSettingsManager = LocalPowerSettingsManager.current
+    val floatyModeManager = LocalFloatyModeManager.current
     val wakeMethod by powerSettingsManager.wakeMethod.collectAsStateWithLifecycle()
     val poweredOffBrightness by powerSettingsManager.poweredOffBrightness.collectAsStateWithLifecycle()
     val uiColor = remember(poweredOffBrightness) {
@@ -92,6 +103,9 @@ fun PoweredOffScreen(
     var isCharging by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf("") }
     var localMusicVolume by remember(musicVolume) { mutableFloatStateOf(musicVolume.toFloat()) }
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
+    val isFloatyMode = floatyModeManager.isFloatyModeActive
+    val floatingEngine = remember { FloatingAppsEngine() }
 
     val fps = rememberFpsMonitor().value
 
@@ -118,6 +132,12 @@ fun PoweredOffScreen(
             showInfo = false
         }
     }
+    PoweredOffFloatyEngineEffects(
+        floatingEngine = floatingEngine,
+        showInfo = showInfo,
+        isFloatyMode = isFloatyMode,
+        containerSize = containerSize
+    )
 
     CompositionLocalProvider(
         LocalViewConfiguration provides customViewConfiguration
@@ -126,6 +146,7 @@ fun PoweredOffScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .onSizeChanged { containerSize = it }
                 .focusRequester(focusRequester)
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown) {
@@ -168,9 +189,15 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 16.dp, top = 8.dp)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["battery"]?.let {
+                        Modifier.offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                    } ?: Modifier
+                } else {
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 16.dp, top = 8.dp)
+                }
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -196,9 +223,15 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(end = 16.dp, top = 8.dp)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["fps"]?.let {
+                        Modifier.offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                    } ?: Modifier
+                } else {
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(end = 16.dp, top = 8.dp)
+                }
             ) {
                 Text(
                     text = stringResource(R.string.monitor_fps_label, fps),
@@ -212,9 +245,15 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 16.dp, top = 8.dp)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["time"]?.let {
+                        Modifier.offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                    } ?: Modifier
+                } else {
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 16.dp, top = 8.dp)
+                }
             ) {
                 Text(
                     text = currentTime,
@@ -228,9 +267,17 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(0.8f)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["center"]?.let {
+                        Modifier
+                            .offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                            .fillMaxWidth(0.8f)
+                    } ?: Modifier.fillMaxWidth(0.8f)
+                } else {
+                    Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(0.8f)
+                }
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -254,9 +301,15 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 16.dp)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["volDown"]?.let {
+                        Modifier.offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                    } ?: Modifier
+                } else {
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 16.dp)
+                }
             ) {
                 VolumeButton(
                     icon = Icons.AutoMirrored.Filled.VolumeDown,
@@ -279,9 +332,15 @@ fun PoweredOffScreen(
                 visible = showInfo,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp)
+                modifier = if (isFloatyMode) {
+                    floatingEngine.positions["volUp"]?.let {
+                        Modifier.offset { IntOffset(it.x.roundToInt(), it.y.roundToInt()) }
+                    } ?: Modifier
+                } else {
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                }
             ) {
                 VolumeButton(
                     icon = Icons.AutoMirrored.Filled.VolumeUp,
@@ -298,6 +357,51 @@ fun PoweredOffScreen(
                         )
                     }
                 )
+            }
+        }
+    }
+}
+@Composable
+private fun PoweredOffFloatyEngineEffects(
+    floatingEngine: FloatingAppsEngine,
+    showInfo: Boolean,
+    isFloatyMode: Boolean,
+    containerSize: IntSize
+) {
+    LaunchedEffect(showInfo, isFloatyMode, containerSize) {
+        if (!showInfo || !isFloatyMode || containerSize == IntSize.Zero) return@LaunchedEffect
+        val width = containerSize.width.toFloat()
+        val height = containerSize.height.toFloat()
+        val centerWidth = width * 0.8f
+        floatingEngine.initialize(
+            apps = listOf(
+                FloatingAppInit(id = "battery", x = 16f, y = 8f, width = 180f, height = 56f),
+                FloatingAppInit(id = "fps", x = (width - 220f) / 2f, y = 8f, width = 220f, height = 56f),
+                FloatingAppInit(id = "time", x = (width - 180f - 16f).coerceAtLeast(0f), y = 8f, width = 180f, height = 56f),
+                FloatingAppInit(
+                    id = "center",
+                    x = ((width - centerWidth) / 2f).coerceAtLeast(0f),
+                    y = ((height - 120f) / 2f).coerceAtLeast(0f),
+                    width = centerWidth.coerceAtLeast(220f),
+                    height = 120f
+                ),
+                FloatingAppInit(id = "volDown", x = 16f, y = (height - 72f).coerceAtLeast(0f), width = 56f, height = 56f),
+                FloatingAppInit(id = "volUp", x = (width - 72f).coerceAtLeast(0f), y = (height - 72f).coerceAtLeast(0f), width = 56f, height = 56f)
+            ),
+            width = width,
+            height = height
+        )
+    }
+    LaunchedEffect(showInfo, isFloatyMode) {
+        if (!showInfo || !isFloatyMode) return@LaunchedEffect
+        var lastNanos = 0L
+        while (isActive) {
+            withInfiniteAnimationFrameNanos { frameNanos ->
+                if (lastNanos != 0L) {
+                    val dt = (frameNanos - lastNanos) / 1_000_000_000f
+                    floatingEngine.tick(dt.coerceAtMost(0.05f))
+                }
+                lastNanos = frameNanos
             }
         }
     }

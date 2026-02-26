@@ -38,6 +38,7 @@ object ESDEPreferencesConstants {
     const val KEY_MARQUEE_WIDTH = "marquee_width"
     const val KEY_MARQUEE_HEIGHT = "marquee_height"
     const val KEY_SCREENSAVER_BEHAVIOR = "screensaver_behavior"
+    const val KEY_SCREENSAVER_FLOATY_APP_COUNT = "screensaver_floaty_app_count"
 
     const val KEY_MUSIC_ENABLED = "music_enabled"
     const val KEY_MUSIC_PATH = "music_path"

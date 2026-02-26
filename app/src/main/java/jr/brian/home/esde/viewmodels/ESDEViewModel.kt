@@ -400,6 +400,7 @@ class ESDEViewModel @Inject constructor(
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
+            ScreensaverBehavior.Floaty -> 0.7f
         }
 
         _wallpaperState.value = _wallpaperState.value.copy(
@@ -427,13 +428,14 @@ class ESDEViewModel @Inject constructor(
         gameFilename: String
     ) {
         val behavior = prefs.state.value.screensaverBehavior
-        val shouldShowContent = behavior == ScreensaverBehavior.ShowContent
+        val shouldShowContent = behavior != ScreensaverBehavior.PowerOff
 
         val baseDimming = prefs.state.value.gameBackgroundDimmingFloat
 
         val dimmingLevel = when (behavior) {
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
+            ScreensaverBehavior.Floaty -> 0.7f
         }
 
         _wallpaperState.value = _wallpaperState.value.copy(
