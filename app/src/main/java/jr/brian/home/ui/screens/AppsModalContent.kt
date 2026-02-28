@@ -651,7 +651,7 @@ private fun AppsContentLayout(
 private fun levelTimeMultiplier(level: Int): Float = when (level) {
     1 -> 1f
     2 -> 0.7f
-    else -> 0.45f
+    else -> 0.5f
 }
 
 
