@@ -1,8 +1,11 @@
 package jr.brian.home
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.content.res.Configuration
+import android.hardware.display.DisplayManager
 import android.os.Bundle
+import android.view.Display
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,15 +13,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -26,41 +35,37 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.esde.data.LocalESDEPreferencesManager
-import jr.brian.home.esde.model.ScreensaverBehavior
-import jr.brian.home.esde.data.ScriptManager
 import jr.brian.home.esde.data.ESDESetupHelper
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.VideoLaunchEvent
-import jr.brian.home.ui.theme.LauncherTheme
-import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.esde.model.SystemLaunchTrigger
+import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
+import jr.brian.home.ui.components.konfetti.LetterFormationBurst
+import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
-import jr.brian.home.ui.components.konfetti.KonfettiPreset
-import jr.brian.home.ui.components.konfetti.LetterFormationBurst
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
 import nl.dionsegijn.konfetti.core.PartySystem
 import java.io.File
 import javax.inject.Inject
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -105,8 +110,8 @@ class MainActivity : ComponentActivity() {
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
-                    var currentPageIndex by remember { mutableStateOf(0) }
-                    var pagerScrollProgress by remember { mutableStateOf(0f) }
+                    var currentPageIndex by remember { mutableIntStateOf(0) }
+                    var pagerScrollProgress by remember { mutableFloatStateOf(0f) }
                     var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
                     var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
                     var dockTopY by remember { mutableStateOf<Float?>(null) }
@@ -135,11 +140,9 @@ class MainActivity : ComponentActivity() {
                             wallpaperState.isScreensaverActive -> {
                                 { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
                             }
-
                             wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
                                 { powerViewModel.togglePower() }
                             }
-
                             else -> null
                         },
                         hideMarquee = shouldHideMarquee || isPoweredOff,
@@ -180,6 +183,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         esdeViewModel.musicController.onActivityResumed()
+        esdeViewModel.onVideoActivityFinished()
     }
 
     override fun onStop() {
@@ -192,6 +196,29 @@ class MainActivity : ComponentActivity() {
         esdeEventManager.stopWatching()
     }
 
+    @UnstableApi
+    private fun launchVideoPlayer(event: VideoLaunchEvent) {
+        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
+            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
+            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
+        }
+
+        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
+        val externalDisplay = displayManager.displays.firstOrNull {
+            it.displayId != Display.DEFAULT_DISPLAY
+        }
+
+        if (externalDisplay != null) {
+            val options = ActivityOptions.makeBasic().apply {
+                launchDisplayId = externalDisplay.displayId
+            }.toBundle()
+            startActivity(intent, options)
+        } else {
+            videoPlayerLauncher.launch(intent)
+        }
+    }
+
     private fun checkAndCreateScripts() {
         if (!ESDESetupHelper.hasStoragePermission(this)) {
             ESDESetupHelper.requestStoragePermission(this)
@@ -202,31 +229,14 @@ class MainActivity : ComponentActivity() {
         if (!ScriptManager.areScriptsValid(scriptsDir)) {
             val setupResult = ESDESetupHelper.initializeESDEIntegration(this)
             if (setupResult.success) {
-                Toast.makeText(
-                    this,
-                    "ES-DE scripts created successfully!",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, "ES-DE scripts created successfully!", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(
-                    this,
-                    setupResult.message,
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, setupResult.message, Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun launchVideoPlayer(event: VideoLaunchEvent) {
-        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
-            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
-            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
-        }
-        videoPlayerLauncher.launch(intent)
-    }
-
-
+    @OptIn(UnstableApi::class)
     @Composable
     private fun ObserveVideoLaunchEvents(
         esdeViewModel: ESDEViewModel,
@@ -242,6 +252,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     @Composable
     private fun SetupESDEEventListeners(
         esdeViewModel: ESDEViewModel,
@@ -316,12 +327,11 @@ class MainActivity : ComponentActivity() {
                     powerViewModel.powerOn()
                 }
             }
-            esdeEventListener.onScreensaverGameSelected =
-                { gameFilename, _, systemName ->
-                    VideoPlayerActivity.finishIfRunning()
-                    esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
-                    onGameBrowsingUIVisibilityChanged(false)
-                }
+            esdeEventListener.onScreensaverGameSelected = { gameFilename, _, systemName ->
+                VideoPlayerActivity.finishIfRunning()
+                esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                onGameBrowsingUIVisibilityChanged(false)
+            }
         }
     }
 
@@ -340,7 +350,6 @@ class MainActivity : ComponentActivity() {
 
         var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
         var letterBurstEvent by remember { mutableStateOf<LetterBurstState?>(null) }
-        // Incremented on each event to force-restart the animation via key()
         var animationKey by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(esdeViewModel) {
@@ -352,13 +361,11 @@ class MainActivity : ComponentActivity() {
                 val gameFilename = event.gameFilename
                 val themeColors = currentThemeColors
 
-                // Cancel any running animation and restart
                 konfettiParties = null
                 letterBurstEvent = null
                 animationKey++
 
                 if (config.isLetterBurst) {
-                    // Trigger Letter Burst animation
                     val char = gameKonfettiManager.resolveLetterBurstChar(gameFilename)
                     letterBurstEvent = LetterBurstState(
                         char = char,
@@ -383,7 +390,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Standard Konfetti overlay — key forces tear-down and fresh start on each event
         konfettiParties?.let { parties ->
             key(animationKey) {
                 KonfettiView(
@@ -394,16 +400,13 @@ class MainActivity : ComponentActivity() {
                             system: PartySystem,
                             activeSystems: Int
                         ) {
-                            if (activeSystems == 0) {
-                                konfettiParties = null
-                            }
+                            if (activeSystems == 0) konfettiParties = null
                         }
                     }
                 )
             }
         }
 
-        // Letter Burst overlay — key forces tear-down and fresh start on each event
         letterBurstEvent?.let { state ->
             key(animationKey) {
                 LetterFormationBurst(
