@@ -797,7 +797,9 @@
     <string name="esde_settings_video_enabled_description">Play game videos when browsing</string>
     <string name="esde_settings_video_delay">Video Delay</string>
     <string name="esde_settings_video_audio">Video Audio</string>
+    <string name="esde_settings_video_control_overlay">Video Controls Overlay</string>
     <string name="esde_settings_video_audio_description">Enable audio during video playback</string>
+    <string name="esde_settings_video_control_overlay_description">Show play/pause button when tapping a video. If disabled, video exits.</string>
     <string name="esde_settings_video_scale_mode">Video Scaling</string>
     <string name="esde_settings_video_scale_mode_description">How videos fit on the display</string>
     <string name="esde_settings_video_scale_fill">Fill Screen</string>
