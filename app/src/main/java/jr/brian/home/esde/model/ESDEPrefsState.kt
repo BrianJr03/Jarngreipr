@@ -130,6 +130,7 @@ data class ESDEPrefsState(
     val videoDelaySeconds: Int = 3,
     val videoAudioEnabled: Boolean = false,
     val videoScaleMode: VideoScaleMode = VideoScaleMode.FillScreen,
+    val videoOverlayEnabled: Boolean = true,
     val systemBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     val gameBackgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
     

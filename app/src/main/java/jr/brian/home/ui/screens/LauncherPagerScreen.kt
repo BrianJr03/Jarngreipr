@@ -459,7 +459,7 @@ fun LauncherPagerScreen(
                 appDrawerFabManager.isFabVisibleOnPage(pagerState.currentPage)
             AnimatedVisibility(
                 visible = !hideLauncherUI && !isPoweredOff && !showAppDrawerSheet
-                        && isFabVisibleOnCurrentPage && currentTabHasScrollableContent && !currentTabIsScrolling,
+                        && isFabVisibleOnCurrentPage /*&& currentTabHasScrollableContent && !currentTabIsScrolling*/,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier

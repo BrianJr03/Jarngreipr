@@ -202,6 +202,7 @@ class MainActivity : ComponentActivity() {
             putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
             putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
             putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
+            putExtra(VideoPlayerActivity.EXTRA_OVERLAY_ENABLED, event.overlayEnabled)
         }
 
         val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager

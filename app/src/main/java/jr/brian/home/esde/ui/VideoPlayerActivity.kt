@@ -37,6 +37,7 @@ class VideoPlayerActivity : ComponentActivity() {
         const val EXTRA_VIDEO_PATH = "video_path"
         const val EXTRA_AUDIO_ENABLED = "audio_enabled"
         const val EXTRA_SCALE_MODE = "scale_mode"
+        const val EXTRA_OVERLAY_ENABLED = "overlay_enabled"
 
         private var currentInstance: WeakReference<VideoPlayerActivity>? = null
 
@@ -54,6 +55,7 @@ class VideoPlayerActivity : ComponentActivity() {
         val audioEnabled = intent.getBooleanExtra(EXTRA_AUDIO_ENABLED, false)
         val scaleModeName = intent.getStringExtra(EXTRA_SCALE_MODE) ?: VideoScaleMode.FitVideo.name
         val scaleMode = VideoScaleMode.valueOf(scaleModeName)
+        val overlayEnabled = intent.getBooleanExtra(EXTRA_OVERLAY_ENABLED, true)
 
         if (videoPath == null || !File(videoPath).exists()) {
             finish()
@@ -81,9 +83,6 @@ class VideoPlayerActivity : ComponentActivity() {
 
         val density = resources.displayMetrics.density
 
-        // -----------------------------------------------------------------------
-        // PlayerView
-        // -----------------------------------------------------------------------
         val playerView = PlayerView(this).apply {
             player = exoPlayer
             useController = false
@@ -98,9 +97,6 @@ class VideoPlayerActivity : ComponentActivity() {
             setBackgroundColor(Color.BLACK)
         }
 
-        // -----------------------------------------------------------------------
-        // Centre play/pause overlay
-        // -----------------------------------------------------------------------
         val overlaySize = (72 * density).toInt()
         val overlayPadding = (16 * density).toInt()
 
@@ -116,9 +112,6 @@ class VideoPlayerActivity : ComponentActivity() {
             layoutParams = FrameLayout.LayoutParams(overlaySize, overlaySize, Gravity.CENTER)
         }
 
-        // -----------------------------------------------------------------------
-        // Close button — top right
-        // -----------------------------------------------------------------------
         val closeSize = (48 * density).toInt()
         val closeMargin = (16 * density).toInt()
         val closePadding = (10 * density).toInt()
@@ -143,18 +136,14 @@ class VideoPlayerActivity : ComponentActivity() {
             setOnClickListener { finish() }
         }
 
-        // -----------------------------------------------------------------------
-        // Shared hide runnable — fades out both overlay and close button together
-        // -----------------------------------------------------------------------
         hideOverlayRunnable = Runnable {
             overlayIcon.animate().alpha(0f).setDuration(300).start()
             closeButton.animate().alpha(0f).setDuration(300).start()
         }
 
-        // -----------------------------------------------------------------------
-        // Helper to flash both overlays
-        // -----------------------------------------------------------------------
         fun showOverlays(playWhenReady: Boolean) {
+            if (!overlayEnabled) return
+
             overlayIcon.setImageResource(
                 if (playWhenReady) android.R.drawable.ic_media_play
                 else android.R.drawable.ic_media_pause
@@ -173,23 +162,23 @@ class VideoPlayerActivity : ComponentActivity() {
             }.start()
         }
 
-        // -----------------------------------------------------------------------
-        // Tap to toggle play/pause
-        // -----------------------------------------------------------------------
         playerView.setOnClickListener {
             exoPlayer?.let { player ->
-                player.playWhenReady = !player.playWhenReady
-                showOverlays(player.playWhenReady)
+                if (overlayEnabled) {
+                    player.playWhenReady = !player.playWhenReady
+                    showOverlays(player.playWhenReady)
+                } else {
+                    finishIfRunning()
+                }
             }
         }
 
-        // -----------------------------------------------------------------------
-        // Root layout
-        // -----------------------------------------------------------------------
         val rootLayout = FrameLayout(this).apply {
             addView(playerView)
-            addView(overlayIcon)
-            addView(closeButton)
+            if (overlayEnabled) {
+                addView(overlayIcon)
+                addView(closeButton)
+            }
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT

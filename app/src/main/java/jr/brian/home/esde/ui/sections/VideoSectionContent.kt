@@ -13,16 +13,35 @@ import jr.brian.home.esde.ui.components.VideoScaleModeSelector
 fun VideoSectionContent(
     prefsState: ESDEPrefsState,
     onVideoAudioEnabledChange: (Boolean) -> Unit,
+    onVideoOverlayEnabledChange: (Boolean) -> Unit,
     onVideoScaleModeChange: (VideoScaleMode) -> Unit,
     onVideoDelayChange: (Int) -> Unit,
     onVideoEnabledChange: (Boolean) -> Unit
 ) {
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_video_enabled),
+        description = stringResource(R.string.esde_settings_video_enabled_description),
+        checked = prefsState.videoEnabled,
+        onCheckedChange = { enabled ->
+            onVideoEnabledChange(enabled)
+        }
+    )
+
     ToggleSetting(
         title = stringResource(R.string.esde_settings_video_audio),
         description = stringResource(R.string.esde_settings_video_audio_description),
         checked = prefsState.videoAudioEnabled,
         onCheckedChange = { enabled ->
             onVideoAudioEnabledChange(enabled)
+        }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_video_control_overlay),
+        description = stringResource(R.string.esde_settings_video_control_overlay_description),
+        checked = prefsState.videoOverlayEnabled,
+        onCheckedChange = { enabled ->
+            onVideoOverlayEnabledChange(enabled)
         }
     )
 
@@ -41,15 +60,6 @@ fun VideoSectionContent(
         valueText = "${prefsState.videoDelaySeconds}s",
         onValueChange = { delay ->
             onVideoDelayChange(delay.toInt())
-        }
-    )
-
-    ToggleSetting(
-        title = stringResource(R.string.esde_settings_video_enabled),
-        description = stringResource(R.string.esde_settings_video_enabled_description),
-        checked = prefsState.videoEnabled,
-        onCheckedChange = { enabled ->
-            onVideoEnabledChange(enabled)
         }
     )
 }

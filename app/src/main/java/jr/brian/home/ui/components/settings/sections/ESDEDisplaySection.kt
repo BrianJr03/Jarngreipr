@@ -475,6 +475,10 @@ fun ESDESettingsContent(
                 },
                 onVideoEnabledChange = { enabled ->
                     preferencesManager.setVideoEnabled(enabled)
+                },
+                onVideoOverlayEnabledChange = { enabled ->
+                    preferencesManager.setVideoOverlayEnabled(enabled)
+
                 }
             )
         }
