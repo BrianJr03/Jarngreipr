@@ -66,7 +66,6 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.util.launchApp
-import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.ping.PingUtil
 import jr.brian.ping.PingUtil.hasPingPermissions
@@ -155,7 +154,7 @@ class MainActivity : ComponentActivity() {
                     
                     LaunchedEffect(Unit) {
                         if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
-                            themeManager.shareAllCustomThemes()
+                            themeManager.shareCurrentTheme()
                         }
                     }
 

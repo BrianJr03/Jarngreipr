@@ -88,7 +88,7 @@ fun ReceivedThemesScreen(
     LaunchedEffect(themeManager.isPingAutoStart) {
         if (themeManager.isPingAutoStart && !isPinging) {
             if (context.hasPingPermissions()) {
-                themeManager.shareAllCustomThemes()
+                themeManager.shareCurrentTheme()
                 isPinging = true
             }
         } else if (!themeManager.isPingAutoStart && isPinging) {
@@ -142,7 +142,7 @@ fun ReceivedThemesScreen(
                                 if (isPinging) {
                                     themeManager.stopSharing()
                                 } else {
-                                    themeManager.shareAllCustomThemes()
+                                    themeManager.shareCurrentTheme()
                                 }
                                 isPinging = !isPinging
                             }
@@ -319,7 +319,7 @@ private fun ReceivedThemeCard(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = theme.customName ?: stringResource(R.string.theme_custom),
+            text = "",
             color = Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,

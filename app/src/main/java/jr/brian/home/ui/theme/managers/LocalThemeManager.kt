@@ -11,6 +11,7 @@ import androidx.core.content.edit
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
 import jr.brian.ping.PingService
+import jr.brian.ping.PingUtil.hasPingPermissions
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_THEME = "selected_theme"
@@ -107,6 +108,7 @@ class ThemeManager(private val context: Context) {
         currentTheme = theme
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit { putString(KEY_THEME, theme.id) }
+        if (isPingAutoStart && context.hasPingPermissions()) shareCurrentTheme()
     }
 
     fun addCustomTheme(theme: ColorTheme) {
@@ -128,16 +130,7 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    fun shareCustomTheme(theme: ColorTheme) {
-        if (!theme.isCustom) return
-        val intent = PingService.buildIntent(
-            context = context,
-            profile = PingThemeUtil.buildProfile(theme, pingDisplayName.ifBlank { android.os.Build.MODEL })
-        )
-        context.startForegroundService(intent)
-    }
-
-    fun shareAllCustomThemes() {
+    fun shareCurrentTheme() {
         val profile = PingThemeUtil.buildProfile(
             currentTheme,
             pingDisplayName.ifBlank { android.os.Build.MODEL }
