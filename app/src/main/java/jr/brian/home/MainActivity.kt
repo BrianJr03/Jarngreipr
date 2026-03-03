@@ -1,12 +1,16 @@
 package jr.brian.home
 
+import android.Manifest
 import android.app.ActivityOptions
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Bundle
 import android.view.Display
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -110,6 +114,14 @@ class MainActivity : ComponentActivity() {
             requestBatteryOptimizationExemption(this@MainActivity)
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            }
+        }
+
         esdeEventManager.startWatching()
         esdeEventManager.startPolling()
         checkAndCreateScripts()
@@ -122,7 +134,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            LauncherTheme(pingBroadcastManager = pingBroadcastManager) {
+            LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
                     val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
@@ -150,7 +162,6 @@ class MainActivity : ComponentActivity() {
                     DisposableEffect(Unit) {
                         onDispose {
                             themeManager.stopSharing()
-                            themeManager.cleanup()
                         }
                     }
 

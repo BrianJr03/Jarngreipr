@@ -8,10 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
-import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
-import jr.brian.ping.PingProfile
 import jr.brian.ping.PingService
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
@@ -22,10 +20,7 @@ private const val KEY_PING_DISPLAY_NAME = "ping_display_name"
 private const val CUSTOM_THEME_SEPARATOR = "|||"
 private const val CUSTOM_THEME_FIELD_SEPARATOR = ":::"
 
-class ThemeManager(
-    private val context: Context,
-    private val pingBroadcastManager: PingBroadcastManager
-) {
+class ThemeManager(private val context: Context) {
     private val customThemes = mutableStateOf(loadCustomThemes())
 
     var currentTheme by mutableStateOf(loadTheme())
@@ -40,23 +35,10 @@ class ThemeManager(
     var pingDisplayName by mutableStateOf(loadPingDisplayName())
         private set
 
-    private val pingListener: (String, PingProfile) -> Unit = { _, remoteProfile ->
-        if (PingThemeUtil.isThemeProfile(remoteProfile.customData)) {
-            PingThemeUtil.parseThemes(remoteProfile.customData).forEach { addCustomTheme(it) }
-        }
-    }
-
-    init {
-        pingBroadcastManager.addListener(pingListener)
-    }
-
     private fun loadTheme(): ColorTheme {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val themeId =
-            prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id)
-                ?: ColorTheme.PINK_VIOLET.id
+        val themeId = prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id) ?: ColorTheme.PINK_VIOLET.id
 
-        // Check if it's a custom theme
         if (themeId.startsWith(ColorTheme.CUSTOM_THEME_PREFIX)) {
             val customThemesList = loadCustomThemes()
             return customThemesList.find { it.id == themeId } ?: ColorTheme.PINK_VIOLET
@@ -102,13 +84,13 @@ class ThemeManager(
 
     private fun loadPingDisplayName(): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_PING_DISPLAY_NAME, android.os.Build.MODEL) ?: android.os.Build.MODEL
+        return prefs.getString(KEY_PING_DISPLAY_NAME, "") ?: ""
     }
 
     fun updatePingDisplayName(name: String) {
-        pingDisplayName = name.ifBlank { android.os.Build.MODEL }
+        pingDisplayName = name
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit { putString(KEY_PING_DISPLAY_NAME, pingDisplayName) }
+        prefs.edit { putString(KEY_PING_DISPLAY_NAME, name) }
     }
 
     private fun saveCustomThemes() {
@@ -140,7 +122,6 @@ class ThemeManager(
             customThemes.value = customThemes.value.filter { it.id != theme.id }
             saveCustomThemes()
 
-            // If the deleted theme was selected, switch to default
             if (currentTheme.id == theme.id) {
                 setTheme(ColorTheme.PINK_VIOLET)
             }
@@ -151,23 +132,22 @@ class ThemeManager(
         if (!theme.isCustom) return
         val intent = PingService.buildIntent(
             context = context,
-            profile = PingThemeUtil.buildProfile(theme, pingDisplayName)
+            profile = PingThemeUtil.buildProfile(theme, pingDisplayName.ifBlank { android.os.Build.MODEL })
         )
         context.startForegroundService(intent)
     }
 
     fun shareAllCustomThemes() {
-        val profile = PingThemeUtil.buildProfile(customThemes.value.filter { it.isCustom }, pingDisplayName)
+        val profile = PingThemeUtil.buildProfile(
+            currentTheme,
+            pingDisplayName.ifBlank { android.os.Build.MODEL }
+        )
         val intent = PingService.buildIntent(context, profile)
         context.startForegroundService(intent)
     }
 
     fun stopSharing() {
         context.stopService(Intent(context, PingService::class.java))
-    }
-
-    fun cleanup() {
-        pingBroadcastManager.removeListener(pingListener)
     }
 }
 

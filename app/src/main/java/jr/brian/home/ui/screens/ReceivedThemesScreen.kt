@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -50,12 +51,14 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.settings.PingAutoStartToggleItem
@@ -77,13 +80,11 @@ fun ReceivedThemesScreen(
     val themeManager = LocalThemeManager.current
     val context = LocalContext.current
 
-    // Initialize from auto-start preference so button reflects actual service state
     var isPinging by remember { mutableStateOf(themeManager.isPingAutoStart) }
     var showNameKeyboard by remember { mutableStateOf(false) }
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
     var focusedKeyIndex by remember { mutableIntStateOf(0) }
 
-    // Sync service state whenever auto-start preference changes from the toggle
     LaunchedEffect(themeManager.isPingAutoStart) {
         if (themeManager.isPingAutoStart && !isPinging) {
             if (context.hasPingPermissions()) {
@@ -117,7 +118,7 @@ fun ReceivedThemesScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Received Themes",
+                        text = stringResource(R.string.received_themes_title),
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -127,7 +128,7 @@ fun ReceivedThemesScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Tap a theme to apply it",
+                        text = stringResource(R.string.received_themes_subtitle),
                         color = ThemeSecondaryColor,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
@@ -148,7 +149,8 @@ fun ReceivedThemesScreen(
                         }
                     ) {
                         Text(
-                            text = if (isPinging) "Stop" else "Ping",
+                            text = if (isPinging) stringResource(R.string.received_themes_stop)
+                                   else stringResource(R.string.received_themes_ping),
                             color = if (isPinging) Color.Red.copy(alpha = 0.8f) else Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
@@ -171,17 +173,31 @@ fun ReceivedThemesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = themeManager.pingDisplayName,
-                            color = Color.White,
+                            text = themeManager.pingDisplayName.ifBlank { Build.MODEL },
+                            color = if (themeManager.pingDisplayName.isBlank()) Color.Gray
+                                    else Color.White,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit name",
+                            contentDescription = stringResource(R.string.received_themes_edit_name_description),
                             tint = Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = themeManager.pingDisplayName.isBlank(),
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.received_themes_name_default_hint, Build.MODEL),
+                            color = Color.Gray,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
                         )
                     }
 
@@ -221,7 +237,7 @@ fun ReceivedThemesScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.",
+                            text = stringResource(R.string.received_themes_empty),
                             color = Color.White.copy(alpha = 0.5f),
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
@@ -256,7 +272,10 @@ fun ReceivedThemesScreen(
                                     items(themes) { theme ->
                                         ReceivedThemeCard(
                                             theme = theme,
-                                            onClick = { themeManager.setTheme(theme) }
+                                            onClick = {
+                                                themeManager.addCustomTheme(theme)
+                                                themeManager.setTheme(theme)
+                                            }
                                         )
                                     }
                                 }
@@ -300,7 +319,7 @@ private fun ReceivedThemeCard(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = theme.customName ?: "Unnamed",
+            text = theme.customName ?: stringResource(R.string.theme_custom),
             color = Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,

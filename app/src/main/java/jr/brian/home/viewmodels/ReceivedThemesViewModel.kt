@@ -1,46 +1,84 @@
 package jr.brian.home.viewmodels
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jr.brian.home.data.PingBroadcastManager
-import jr.brian.home.ui.theme.ColorTheme
-import jr.brian.home.util.PingThemeUtil
-import jr.brian.ping.PingProfile
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.R
+import jr.brian.home.data.ReceivedThemesRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class ReceivedThemesViewModel @Inject constructor(
-    private val pingBroadcastManager: PingBroadcastManager
+    private val repository: ReceivedThemesRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _receivedThemes = MutableStateFlow<Map<String, List<ColorTheme>>>(emptyMap())
-    val receivedThemes = _receivedThemes.asStateFlow()
-
-    private val pingListener: (String, PingProfile) -> Unit = { _, remoteProfile ->
-        if (PingThemeUtil.isThemeProfile(remoteProfile.customData)) {
-            val newThemes = PingThemeUtil.parseThemes(remoteProfile.customData)
-            val senderName = remoteProfile.displayName.ifBlank { remoteProfile.userId }
-            if (newThemes.isNotEmpty()) {
-                _receivedThemes.update { currentMap ->
-                    val existing = currentMap[senderName].orEmpty()
-                    val merged = existing + newThemes.filter { new ->
-                        existing.none { it.id == new.id }
-                    }
-                    currentMap + (senderName to merged)
-                }
-            }
-        }
-    }
+    val receivedThemes = repository.receivedThemes.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyMap()
+    )
 
     init {
-        pingBroadcastManager.addListener(pingListener)
+        createNotificationChannel()
+        observeForNotifications()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        pingBroadcastManager.removeListener(pingListener)
+    private fun observeForNotifications() {
+        var previousMap = repository.receivedThemes.value
+        repository.receivedThemes.onEach { currentMap ->
+            currentMap.forEach { (sender, themes) ->
+                val previousCount = previousMap[sender]?.size ?: 0
+                val addedCount = themes.size - previousCount
+                if (addedCount > 0) {
+                    sendThemeNotification(sender, addedCount)
+                }
+            }
+            previousMap = currentMap
+        }.launchIn(viewModelScope)
+    }
+
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Received Themes",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Notifies when custom themes are received via Ping"
+        }
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
+    }
+
+    private fun sendThemeNotification(senderName: String, count: Int) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+        val text = if (count == 1) context.getString(R.string.received_themes_notification_single, senderName)
+                   else context.getString(R.string.received_themes_notification_multiple, count, senderName)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(context.getString(R.string.received_themes_notification_title))
+            .setContentText(text)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    companion object {
+        private const val CHANNEL_ID = "ping_received_themes"
     }
 }
