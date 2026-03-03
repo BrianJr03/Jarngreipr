@@ -62,7 +62,7 @@ fun AppearanceSection(
         )
 
         SettingsTextButton(
-            text = "Received Themes",
+            text = stringResource(R.string.theme_sharing_title),
             onClick = onNavigateToThemeShare
         )
 

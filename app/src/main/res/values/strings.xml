@@ -85,21 +85,30 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Customize app colors</string>
 
-    <!-- Received Themes Screen -->
-    <string name="received_themes_title">Received Themes</string>
-    <string name="received_themes_subtitle">Tap a theme to apply it</string>
-    <string name="received_themes_ping">Start active Ping</string>
-    <string name="received_themes_stop">Stop active Ping</string>
-    <string name="received_themes_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
-    <string name="received_themes_edit_name_description">Edit name</string>
-    <string name="received_themes_name_default_hint">Default name will be used (%1$s)</string>
-    <string name="received_themes_notification_title">Themes Received</string>
-    <string name="received_themes_notification_single">1 theme from %1$s</string>
-    <string name="received_themes_notification_multiple">%1$d themes from %2$s</string>
+    <!-- Theme Share Info Dialog -->
+    <string name="theme_share_info_dialog_title">Theme Sharing</string>
+    <string name="theme_share_info_dialog_bullet_1">• Broadcasts your active theme to nearby devices over Bluetooth</string>
+    <string name="theme_share_info_dialog_bullet_2">• Both devices must have sharing active at the same time</string>
+    <string name="theme_share_info_dialog_bullet_3">• Set a display name so others know who sent a theme</string>
+    <string name="theme_share_info_dialog_bullet_4">• Tap a received theme to apply and save it</string>
+    <string name="theme_share_info_dialog_bullet_5">• Disable battery optimization for reliable background use</string>
+    <string name="theme_share_info_dialog_faq_hint">You can revisit this in FAQ</string>
+    <string name="theme_share_info_dialog_got_it">Got it</string>
+    <!-- Theme Sharing Screen -->
+    <string name="theme_sharing_title">Theme Sharing</string>
+    <string name="theme_sharing_subtitle">Tap a theme to apply it</string>
+    <string name="theme_sharing_ping">Start Theme Sharing</string>
+    <string name="theme_sharing_stop">Stop Theme Sharing</string>
+    <string name="theme_sharing_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
+    <string name="theme_sharing_edit_name_description">Edit name</string>
+    <string name="theme_sharing_name_default_hint">Default name will be used (%1$s)</string>
+    <string name="theme_sharing_notification_title">Themes Received</string>
+    <string name="theme_sharing_notification_single">1 theme from %1$s</string>
+    <string name="theme_sharing_notification_multiple">%1$d themes from %2$s</string>
     <!-- Ping Service Notification -->
     <string name="ping_notification_title">Theme Sharing is active</string>
     <!-- Ping Auto-Start Toggle -->
-    <string name="ping_auto_start_title">Ping Auto-Start</string>
+    <string name="ping_auto_start_title">Theme Sharing Auto-Start</string>
     <string name="ping_auto_start_description">Broadcast custom themes automatically on launch</string>
 
     <!-- Color Theme Names -->
@@ -341,6 +350,8 @@
     <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
+    <string name="faq_theme_sharing_question">How does Theme Sharing work?</string>
+    <string name="faq_theme_sharing_answer">Theme Sharing broadcasts your active theme to nearby devices over Bluetooth Low Energy (BLE). Both devices must have the app open with sharing active at the same time.\n\nSet a display name so others can identify your themes. When a theme is received, it appears in the Theme Sharing screen — tap it to apply and save it.\n\nFor reliable background sharing, disable battery optimization for this app in your device settings.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>

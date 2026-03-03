@@ -1,7 +1,9 @@
 package jr.brian.home.ui.screens
 
+import android.content.Context
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.core.content.edit
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -31,7 +33,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.ui.components.dialog.ThemeShareInfoDialog
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.settings.PingAutoStartToggleItem
@@ -68,6 +70,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.ThemeShareViewModel
 import jr.brian.ping.PingUtil.hasPingPermissions
 
@@ -80,10 +83,19 @@ fun ThemeShareScreen(
     val themeManager = LocalThemeManager.current
     val context = LocalContext.current
 
+    val infoDialogState = rememberDialogState<Unit>()
+
     var isPinging by remember { mutableStateOf(themeManager.isPingAutoStart) }
     var showNameKeyboard by remember { mutableStateOf(false) }
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
     var focusedKeyIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("theme_share_info_seen", false)) {
+            infoDialogState.show()
+        }
+    }
 
     LaunchedEffect(themeManager.isPingAutoStart) {
         if (themeManager.isPingAutoStart && !isPinging) {
@@ -97,20 +109,31 @@ fun ThemeShareScreen(
         }
     }
 
+    if (infoDialogState.isVisible) {
+        ThemeShareInfoDialog(
+            onDismiss = {
+                val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
+                prefs.edit { putBoolean("theme_share_info_seen", true) }
+                infoDialogState.dismiss()
+            }
+        )
+    }
+
     BackHandler(onBack = onNavigateBack)
 
     Scaffold(
         containerColor = OledBackgroundColor
     ) { innerPadding ->
-        Box(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .systemBarsPadding()
+                .systemBarsPadding(),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            Column {
-                ScreenHeader(onBackClick = onNavigateBack)
+            item { ScreenHeader(onBackClick = onNavigateBack) }
 
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -118,7 +141,7 @@ fun ThemeShareScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(R.string.received_themes_title),
+                        text = stringResource(R.string.theme_sharing_title),
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -128,16 +151,21 @@ fun ThemeShareScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = stringResource(R.string.received_themes_subtitle),
-                        color = ThemeSecondaryColor,
+                        text = stringResource(R.string.theme_sharing_subtitle),
+                        color = Color.White,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    IconButton(
-                        onClick = {
+                    Text(
+                        text = if (isPinging) stringResource(R.string.theme_sharing_stop)
+                        else stringResource(R.string.theme_sharing_ping),
+                        color = if (isPinging) Color.Red.copy(alpha = 0.8f) else Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
                             if (context.hasPingPermissions()) {
                                 if (isPinging) {
                                     themeManager.stopSharing()
@@ -147,18 +175,11 @@ fun ThemeShareScreen(
                                 isPinging = !isPinging
                             }
                         }
-                    ) {
-                        Text(
-                            text = if (isPinging) stringResource(R.string.received_themes_stop)
-                                   else stringResource(R.string.received_themes_ping),
-                            color = if (isPinging) Color.Red.copy(alpha = 0.8f) else Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    )
                 }
+            }
 
-                // Name input
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -175,14 +196,14 @@ fun ThemeShareScreen(
                         Text(
                             text = themeManager.pingDisplayName.ifBlank { Build.MODEL },
                             color = if (themeManager.pingDisplayName.isBlank()) Color.Gray
-                                    else Color.White,
+                            else Color.White,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.received_themes_edit_name_description),
+                            contentDescription = stringResource(R.string.theme_sharing_edit_name_description),
                             tint = Color.White.copy(alpha = 0.5f),
                             modifier = Modifier.size(16.dp)
                         )
@@ -194,7 +215,10 @@ fun ThemeShareScreen(
                         exit = shrinkVertically() + fadeOut()
                     ) {
                         Text(
-                            text = stringResource(R.string.received_themes_name_default_hint, Build.MODEL),
+                            text = stringResource(
+                                R.string.theme_sharing_name_default_hint,
+                                Build.MODEL
+                            ),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(start = 12.dp, top = 4.dp)
@@ -220,7 +244,9 @@ fun ThemeShareScreen(
                         }
                     }
                 }
+            }
 
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -228,57 +254,53 @@ fun ThemeShareScreen(
                 ) {
                     PingAutoStartToggleItem()
                 }
+            }
 
-                if (receivedThemes.isEmpty()) {
+            if (receivedThemes.isEmpty()) {
+                item {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 32.dp),
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp, vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(R.string.received_themes_empty),
+                            text = stringResource(R.string.theme_sharing_empty),
                             color = Color.White.copy(alpha = 0.5f),
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        receivedThemes.forEach { (displayName, themes) ->
-                            item {
-                                Text(
-                                    text = displayName,
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 24.dp, top = 8.dp, bottom = 4.dp)
-                                )
-                            }
-                            item {
-                                LazyRow(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    contentPadding = PaddingValues(horizontal = 24.dp)
-                                ) {
-                                    items(themes) { theme ->
-                                        ReceivedThemeCard(
-                                            theme = theme,
-                                            onClick = {
-                                                themeManager.addCustomTheme(theme)
-                                                themeManager.setTheme(theme)
-                                            }
-                                        )
+                }
+            } else {
+                receivedThemes.forEach { (displayName, themes) ->
+                    item {
+                        Text(
+                            text = displayName,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp, top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+                    item {
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp)
+                        ) {
+                            items(themes) { theme ->
+                                ReceivedThemeCard(
+                                    theme = theme,
+                                    onClick = {
+                                        themeManager.addCustomTheme(theme)
+                                        themeManager.setTheme(theme)
                                     }
-                                }
+                                )
                             }
                         }
                     }

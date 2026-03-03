@@ -67,7 +67,6 @@ android {
             )
         }
     }
-
 }
 
 androidComponents {
