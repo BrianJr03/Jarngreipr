@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import jr.brian.home.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,7 +92,7 @@ fun PingAutoStartToggleItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Bluetooth,
-                        contentDescription = "Ping Auto-Start",
+                        contentDescription = stringResource(R.string.ping_auto_start_title),
                         modifier = Modifier
                             .size(32.dp)
                             .rotate(animatedRotation(isFocused)),
@@ -101,14 +103,14 @@ fun PingAutoStartToggleItem(
 
                     Column {
                         Text(
-                            text = "Ping Auto-Start",
+                            text = stringResource(R.string.ping_auto_start_title),
                             color = Color.White,
                             fontSize = if (isFocused) 18.sp else 16.sp,
                             fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Broadcast custom themes automatically on launch",
+                            text = stringResource(R.string.ping_auto_start_description),
                             color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
                             fontSize = 14.sp,
                         )
@@ -116,7 +118,8 @@ fun PingAutoStartToggleItem(
                 }
 
                 Text(
-                    text = if (isEnabled) "ON" else "OFF",
+                    text = if (isEnabled) stringResource(R.string.settings_toggle_on)
+                           else stringResource(R.string.settings_toggle_off),
                     color = if (isEnabled) Color.Green else Color.Gray,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,

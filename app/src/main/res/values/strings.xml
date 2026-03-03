@@ -85,6 +85,21 @@
     <string name="settings_color_theme_title">Color Theme</string>
     <string name="settings_color_theme_description">Customize app colors</string>
 
+    <!-- Received Themes Screen -->
+    <string name="received_themes_title">Received Themes</string>
+    <string name="received_themes_subtitle">Tap a theme to apply it</string>
+    <string name="received_themes_ping">Ping</string>
+    <string name="received_themes_stop">Stop</string>
+    <string name="received_themes_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
+    <string name="received_themes_edit_name_description">Edit name</string>
+    <string name="received_themes_name_default_hint">Default name will be used (%1$s)</string>
+    <string name="received_themes_notification_title">Themes Received</string>
+    <string name="received_themes_notification_single">1 theme from %1$s</string>
+    <string name="received_themes_notification_multiple">%1$d themes from %2$s</string>
+    <!-- Ping Auto-Start Toggle -->
+    <string name="ping_auto_start_title">Ping Auto-Start</string>
+    <string name="ping_auto_start_description">Broadcast custom themes automatically on launch</string>
+
     <!-- Color Theme Names -->
     <string name="theme_pink_violet">Pink &amp; Violet</string>
     <string name="theme_blue_yellow">Blue &amp; Yellow</string>
