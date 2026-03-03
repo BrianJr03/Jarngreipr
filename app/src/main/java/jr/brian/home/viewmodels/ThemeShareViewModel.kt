@@ -13,7 +13,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.R
-import jr.brian.home.data.ReceivedThemesRepository
+import jr.brian.home.data.ThemeShareRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class ReceivedThemesViewModel @Inject constructor(
-    private val repository: ReceivedThemesRepository,
+class ThemeShareViewModel @Inject constructor(
+    private val repository: ThemeShareRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 

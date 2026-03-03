@@ -10,7 +10,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ReceivedThemesRepository @Inject constructor(
+class ThemeShareRepository @Inject constructor(
     pingBroadcastManager: PingBroadcastManager
 ) {
     private val _receivedThemes = MutableStateFlow<Map<String, List<ColorTheme>>>(emptyMap())

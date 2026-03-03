@@ -36,7 +36,7 @@ fun AppearanceSection(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
-    onNavigateToReceivedThemes: () -> Unit,
+    onNavigateToThemeShare: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToEsdeSettings: () -> Unit = {}
 ) {
@@ -63,7 +63,7 @@ fun AppearanceSection(
 
         SettingsTextButton(
             text = "Received Themes",
-            onClick = onNavigateToReceivedThemes
+            onClick = onNavigateToThemeShare
         )
 
         IconPackSelectorItem(

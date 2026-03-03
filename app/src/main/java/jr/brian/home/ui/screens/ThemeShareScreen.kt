@@ -68,13 +68,13 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalThemeManager
-import jr.brian.home.viewmodels.ReceivedThemesViewModel
+import jr.brian.home.viewmodels.ThemeShareViewModel
 import jr.brian.ping.PingUtil.hasPingPermissions
 
 @Composable
-fun ReceivedThemesScreen(
+fun ThemeShareScreen(
     onNavigateBack: () -> Unit,
-    viewModel: ReceivedThemesViewModel = hiltViewModel()
+    viewModel: ThemeShareViewModel = hiltViewModel()
 ) {
     val receivedThemes by viewModel.receivedThemes.collectAsStateWithLifecycle()
     val themeManager = LocalThemeManager.current

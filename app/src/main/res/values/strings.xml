@@ -96,6 +96,8 @@
     <string name="received_themes_notification_title">Themes Received</string>
     <string name="received_themes_notification_single">1 theme from %1$s</string>
     <string name="received_themes_notification_multiple">%1$d themes from %2$s</string>
+    <!-- Ping Service Notification -->
+    <string name="ping_notification_title">Theme Sharing is active</string>
     <!-- Ping Auto-Start Toggle -->
     <string name="ping_auto_start_title">Ping Auto-Start</string>
     <string name="ping_auto_start_description">Broadcast custom themes automatically on launch</string>
