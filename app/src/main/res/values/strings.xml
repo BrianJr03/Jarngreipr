@@ -88,8 +88,8 @@
     <!-- Received Themes Screen -->
     <string name="received_themes_title">Received Themes</string>
     <string name="received_themes_subtitle">Tap a theme to apply it</string>
-    <string name="received_themes_ping">Ping</string>
-    <string name="received_themes_stop">Stop</string>
+    <string name="received_themes_ping">Start active Ping</string>
+    <string name="received_themes_stop">Stop active Ping</string>
     <string name="received_themes_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
     <string name="received_themes_edit_name_description">Edit name</string>
     <string name="received_themes_name_default_hint">Default name will be used (%1$s)</string>
