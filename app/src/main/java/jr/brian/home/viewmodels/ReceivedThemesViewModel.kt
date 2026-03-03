@@ -4,9 +4,8 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.ui.theme.ColorTheme
+import jr.brian.home.util.PingThemeUtil
 import jr.brian.ping.PingProfile
-import jr.brian.ping.asBoolean
-import jr.brian.ping.asString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,30 +20,16 @@ class ReceivedThemesViewModel @Inject constructor(
     val receivedThemes = _receivedThemes.asStateFlow()
 
     private val pingListener: (String, PingProfile) -> Unit = { _, remoteProfile ->
-        if (remoteProfile.displayName == "ColorTheme") {
-            val id = remoteProfile.customData["id"]?.asString()
-            val name = remoteProfile.customData["name"]?.asString()
-            val primaryColorHex = remoteProfile.customData["primaryColor"]?.asString()
-            val secondaryColorHex = remoteProfile.customData["secondaryColor"]?.asString()
-            val isSolid = remoteProfile.customData["isSolid"]?.asBoolean()
-
-            if (id != null && name != null && primaryColorHex != null && secondaryColorHex != null && isSolid != null) {
-                val newTheme = ColorTheme.fromCustomData(
-                    id = id,
-                    name = name,
-                    primaryColorHex = primaryColorHex,
-                    secondaryColorHex = secondaryColorHex,
-                    isSolid = isSolid
-                )
-                
-                val displayName = remoteProfile.displayName ?: "Unknown User"
+        if (PingThemeUtil.isThemeProfile(remoteProfile.customData)) {
+            val newThemes = PingThemeUtil.parseThemes(remoteProfile.customData)
+            val senderName = remoteProfile.displayName.ifBlank { remoteProfile.userId }
+            if (newThemes.isNotEmpty()) {
                 _receivedThemes.update { currentMap ->
-                    val userThemes = currentMap[displayName].orEmpty()
-                    if (userThemes.any { it.id == newTheme.id }) {
-                        currentMap
-                    } else {
-                        currentMap + (displayName to (userThemes + newTheme))
+                    val existing = currentMap[senderName].orEmpty()
+                    val merged = existing + newThemes.filter { new ->
+                        existing.none { it.id == new.id }
                     }
+                    currentMap + (senderName to merged)
                 }
             }
         }
