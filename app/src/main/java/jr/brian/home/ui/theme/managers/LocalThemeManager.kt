@@ -1,6 +1,7 @@
 package jr.brian.home.ui.theme.managers
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,7 +9,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
+import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.ui.theme.ColorTheme
+import jr.brian.ping.PingProfile
+import jr.brian.ping.PingService
+import jr.brian.ping.asBoolean
+import jr.brian.ping.asString
+import jr.brian.ping.toPingValue
 
 private const val PREFS_NAME = "gaming_launcher_prefs"
 private const val KEY_THEME = "selected_theme"
@@ -18,6 +25,7 @@ private const val CUSTOM_THEME_FIELD_SEPARATOR = ":::"
 
 class ThemeManager(
     private val context: Context,
+    private val pingBroadcastManager: PingBroadcastManager
 ) {
     private val customThemes = mutableStateOf(loadCustomThemes())
 
@@ -26,6 +34,31 @@ class ThemeManager(
 
     val allThemes: List<ColorTheme>
         get() = ColorTheme.presetThemes + customThemes.value
+
+    private val pingListener: (String, PingProfile) -> Unit = { _, remoteProfile ->
+        if (remoteProfile.displayName == "ColorTheme") {
+            val id = remoteProfile.customData["id"]?.asString()
+            val name = remoteProfile.customData["name"]?.asString()
+            val primaryColorHex = remoteProfile.customData["primaryColor"]?.asString()
+            val secondaryColorHex = remoteProfile.customData["secondaryColor"]?.asString()
+            val isSolid = remoteProfile.customData["isSolid"]?.asBoolean()
+
+            if (id != null && name != null && primaryColorHex != null && secondaryColorHex != null && isSolid != null) {
+                val newTheme = ColorTheme.fromCustomData(
+                    id = id,
+                    name = name,
+                    primaryColorHex = primaryColorHex,
+                    secondaryColorHex = secondaryColorHex,
+                    isSolid = isSolid
+                )
+                addCustomTheme(newTheme)
+            }
+        }
+    }
+
+    init {
+        pingBroadcastManager.addListener(pingListener)
+    }
 
     private fun loadTheme(): ColorTheme {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -84,7 +117,8 @@ class ThemeManager(
 
     fun addCustomTheme(theme: ColorTheme) {
         if (theme.isCustom) {
-            customThemes.value = customThemes.value + theme
+            if (customThemes.value.any { it.id == theme.id }) return
+            customThemes.value += theme
             saveCustomThemes()
         }
     }
@@ -99,6 +133,39 @@ class ThemeManager(
                 setTheme(ColorTheme.PINK_VIOLET)
             }
         }
+    }
+
+    fun shareCustomTheme(theme: ColorTheme) {
+        if (!theme.isCustom) return
+
+        val primaryColorHex = String.format("#%08X", theme.primaryColor.toArgb())
+        val secondaryColorHex = String.format("#%08X", theme.secondaryColor.toArgb())
+
+        val profile = PingProfile(
+            displayName = "Samsung",
+            customData = mapOf(
+                "id" to theme.id.toPingValue(),
+                "name" to (theme.customName ?: "").toPingValue(),
+                "primaryColor" to primaryColorHex.toPingValue(),
+                "secondaryColor" to secondaryColorHex.toPingValue(),
+                "isSolid" to theme.isSolid.toPingValue()
+            )
+        )
+
+        val intent = PingService.buildIntent(context, profile)
+        context.startForegroundService(intent)
+    }
+
+    fun shareAllCustomThemes() {
+        customThemes.value.forEach { shareCustomTheme(it) }
+    }
+
+    fun stopSharing() {
+        context.stopService(Intent(context, PingService::class.java))
+    }
+
+    fun cleanup() {
+        pingBroadcastManager.removeListener(pingListener)
     }
 }
 

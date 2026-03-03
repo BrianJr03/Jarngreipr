@@ -23,6 +23,7 @@ import jr.brian.home.ui.components.settings.AppLabelFontSizeSliderItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.PoweredOffBrightnessSliderItem
+import jr.brian.home.ui.components.settings.SettingsTextButton
 import jr.brian.home.ui.components.settings.TabAnimationToggleItem
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
@@ -35,6 +36,7 @@ fun AppearanceSection(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
+    onNavigateToReceivedThemes: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToEsdeSettings: () -> Unit = {}
 ) {
@@ -57,6 +59,11 @@ fun AppearanceSection(
                 expandedItem = null
                 onNavigateToCustomTheme()
             }
+        )
+
+        SettingsTextButton(
+            text = "Received Themes",
+            onClick = onNavigateToReceivedThemes
         )
 
         IconPackSelectorItem(
