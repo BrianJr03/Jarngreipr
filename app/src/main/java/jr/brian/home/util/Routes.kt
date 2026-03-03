@@ -15,6 +15,7 @@ object Routes {
     const val LAUNCHER = "launcher"
     const val MONITOR = "monitor"
     const val RECENT_APPS = "recent_apps"
+    const val RECEIVED_THEMES = "received_themes"
     const val SETTINGS = "settings"
     const val VOLUME_CONTROLS = "volume_controls"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"

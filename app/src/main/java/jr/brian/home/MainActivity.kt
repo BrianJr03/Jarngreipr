@@ -38,6 +38,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
@@ -58,8 +59,12 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.util.launchApp
+import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.ping.PingUtil
+import jr.brian.ping.PingUtil.hasPingPermissions
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -78,17 +83,30 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
+    @Inject
+    lateinit var pingBroadcastManager: PingBroadcastManager
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             esdeViewModel.onVideoActivityFinished()
         }
+    
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
 
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        with(PingUtil) {
+            if (!hasPingPermissions()) {
+                requestPingPermissions(permissionLauncher)
+            }
+        }
 
         esdeEventManager.startWatching()
         esdeEventManager.startPolling()
@@ -102,11 +120,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            LauncherTheme {
+            LauncherTheme(pingBroadcastManager = pingBroadcastManager) {
                 managers.ManagerCompositionLocalProvider {
+                    val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
+                    val themeManager = LocalThemeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
@@ -118,6 +138,12 @@ class MainActivity : ComponentActivity() {
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
+                    
+                    LaunchedEffect(Unit) {
+                        if (context.hasPingPermissions()) {
+                            themeManager.shareAllCustomThemes()
+                        }
+                    }
 
                     ObserveVideoLaunchEvents(
                         esdeViewModel = esdeViewModel,

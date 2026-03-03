@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
@@ -226,10 +227,10 @@ fun NavGraphBuilder.launcherScreen(
 
 fun NavGraphBuilder.settingsScreen(
     navController: NavHostController,
-    context: Context,
     mainViewModel: MainViewModel
 ) {
     composable(Routes.SETTINGS) {
+        val context = LocalContext.current
         var showScreen by remember { mutableStateOf(true) }
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
         val esdeSetupDialogState = rememberDialogState<SetupStep>()
@@ -294,6 +295,10 @@ fun NavGraphBuilder.settingsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
+                },
+                onNavigateToReceivedThemes = {
+                    showScreen = false
+                    navController.navigate(Routes.RECEIVED_THEMES)
                 }
             )
         }
