@@ -296,9 +296,9 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.popBackStack()
                 },
-                onNavigateToReceivedThemes = {
+                onNavigateToThemeShare = {
                     showScreen = false
-                    navController.navigate(Routes.RECEIVED_THEMES)
+                    navController.navigate(Routes.THEME_SHARE)
                 }
             )
         }

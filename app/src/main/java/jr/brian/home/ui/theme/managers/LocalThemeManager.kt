@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
+import jr.brian.home.R
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
 import jr.brian.ping.PingService
@@ -131,6 +132,7 @@ class ThemeManager(private val context: Context) {
     }
 
     fun shareCurrentTheme() {
+        PingService.notificationTitle = context.getString(R.string.ping_notification_title)
         val profile = PingThemeUtil.buildProfile(
             currentTheme,
             pingDisplayName.ifBlank { android.os.Build.MODEL }
