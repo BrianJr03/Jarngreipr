@@ -23,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ThemeShareViewModel @Inject constructor(
     private val repository: ThemeShareRepository,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val receivedThemes = repository.receivedThemes.stateIn(
@@ -67,11 +67,11 @@ class ThemeShareViewModel @Inject constructor(
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
         ) return
-        val text = if (count == 1) context.getString(R.string.received_themes_notification_single, senderName)
-                   else context.getString(R.string.received_themes_notification_multiple, count, senderName)
+        val text = if (count == 1) context.getString(R.string.theme_sharing_notification_single, senderName)
+                   else context.getString(R.string.theme_sharing_notification_multiple, count, senderName)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(context.getString(R.string.received_themes_notification_title))
+            .setContentTitle(context.getString(R.string.theme_sharing_notification_title))
             .setContentText(text)
             .setAutoCancel(true)
             .build()
