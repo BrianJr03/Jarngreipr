@@ -16,6 +16,7 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -106,6 +107,7 @@ class MainActivity : ComponentActivity() {
             if (!hasPingPermissions()) {
                 requestPingPermissions(permissionLauncher)
             }
+            requestBatteryOptimizationExemption(this@MainActivity)
         }
 
         esdeEventManager.startWatching()
@@ -140,8 +142,15 @@ class MainActivity : ComponentActivity() {
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
                     
                     LaunchedEffect(Unit) {
-                        if (context.hasPingPermissions()) {
+                        if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
                             themeManager.shareAllCustomThemes()
+                        }
+                    }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            themeManager.stopSharing()
+                            themeManager.cleanup()
                         }
                     }
 
