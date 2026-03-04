@@ -2,8 +2,11 @@ package jr.brian.home.ui.screens
 
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.core.content.edit
+import coil.compose.AsyncImage
+import java.io.File
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -29,8 +33,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -52,6 +59,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,17 +70,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.ui.components.dialog.ThemeShareInfoDialog
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.settings.PingAutoStartToggleItem
 import jr.brian.home.ui.components.settings.ScreenHeader
+import jr.brian.home.ui.components.settings.WallpaperNearbyAutoStartToggleItem
+import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.viewmodels.ThemeShareViewModel
-import jr.brian.ping.PingUtil.hasPingPermissions
+import jr.brian.ping.PingPermissions.hasPingPermissions
+import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
 
 @Composable
 fun ThemeShareScreen(
@@ -80,7 +94,12 @@ fun ThemeShareScreen(
     viewModel: ThemeShareViewModel = hiltViewModel()
 ) {
     val receivedThemes by viewModel.receivedThemes.collectAsStateWithLifecycle()
+    val receivedWallpapers by viewModel.receivedWallpapers.collectAsStateWithLifecycle()
     val themeManager = LocalThemeManager.current
+    val wallpaperManager = LocalWallpaperManager.current
+    val discoveredEndpoints by themeManager.nearbyDiscoveredEndpoints.collectAsStateWithLifecycle()
+    val connectedEndpoints by themeManager.connectedEndpoints.collectAsStateWithLifecycle()
+    val isDiscoveringWallpaper = themeManager.isWallpaperNearbyRunning
     val context = LocalContext.current
 
     val infoDialogState = rememberDialogState<Unit>()
@@ -109,10 +128,27 @@ fun ThemeShareScreen(
         }
     }
 
+    LaunchedEffect(themeManager.isWallpaperNearbyAutoStart) {
+        if (themeManager.isWallpaperNearbyAutoStart && !isDiscoveringWallpaper) {
+            if (context.hasNearbyPermissions()) {
+                themeManager.startWallpaperNearby()
+            }
+        } else if (!themeManager.isWallpaperNearbyAutoStart && isDiscoveringWallpaper) {
+            themeManager.stopWallpaperNearby()
+        }
+    }
+
+    LaunchedEffect(themeManager) {
+        themeManager.receivedWallpaper.collect { bitmap ->
+            viewModel.saveReceivedWallpaper(bitmap)
+        }
+    }
+
     if (infoDialogState.isVisible) {
         ThemeShareInfoDialog(
             onDismiss = {
-                val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
+                val prefs =
+                    context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
                 prefs.edit { putBoolean("theme_share_info_seen", true) }
                 infoDialogState.dismiss()
             }
@@ -256,6 +292,188 @@ fun ThemeShareScreen(
                 }
             }
 
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp)
+                ) {
+                    WallpaperNearbyAutoStartToggleItem()
+                }
+            }
+
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp)
+                        .background(OledCardColor, RoundedCornerShape(8.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.nearby_wallpaper_subtitle),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp
+                    )
+
+                    val currentUri = themeManager.getCurrentWallpaperUri()
+                    if (currentUri != null) {
+                        val isEsde = themeManager.isEsdeModeActive()
+                        Text(
+                            text = if (isEsde)
+                                stringResource(R.string.nearby_wallpaper_current_esde)
+                            else
+                                stringResource(R.string.nearby_wallpaper_current_path),
+                            color = Color.White,
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.nearby_wallpaper_no_wallpaper),
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    Text(
+                        text = if (isDiscoveringWallpaper)
+                            stringResource(R.string.nearby_wallpaper_stop)
+                        else
+                            stringResource(R.string.nearby_wallpaper_start),
+                        color = if (isDiscoveringWallpaper) Color.Red.copy(alpha = 0.8f) else Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
+                            if (isDiscoveringWallpaper) themeManager.stopWallpaperNearby()
+                            else themeManager.startWallpaperNearby()
+                        }
+                    )
+                }
+            }
+
+            if (isDiscoveringWallpaper) {
+                if (discoveredEndpoints.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.nearby_wallpaper_scanning),
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp, top = 4.dp, bottom = 4.dp)
+                        )
+                    }
+                } else {
+                    discoveredEndpoints.forEach { (endpointId, deviceName) ->
+                        item {
+                            val isConnected = endpointId in connectedEndpoints
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 2.dp)
+                                    .background(OledCardColor, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = deviceName,
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                    )
+                                    Text(
+                                        text = if (isConnected) "● Connected" else "○ Discovered",
+                                        color = if (isConnected) Color.Green else Color.Gray,
+                                        fontSize = 11.sp,
+                                    )
+                                }
+                                val hasWallpaper = themeManager.getCurrentWallpaperUri() != null
+                                Text(
+                                    text = stringResource(R.string.nearby_wallpaper_send),
+                                    color = if (hasWallpaper && isConnected) ThemeSecondaryColor else Color.Gray,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable(enabled = hasWallpaper && isConnected) {
+                                        themeManager.sendWallpaperTo(endpointId)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (receivedWallpapers.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.nearby_wallpaper_received_title),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, top = 12.dp, bottom = 4.dp)
+                    )
+                }
+
+                receivedWallpapers.forEach { (key, uriString) ->
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 4.dp)
+                                .background(OledCardColor, RoundedCornerShape(8.dp))
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            AsyncImage(
+                                model = uriString,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(alpha = 0.05f))
+                            )
+                            Text(
+                                text = stringResource(R.string.nearby_wallpaper_apply),
+                                color = ThemeSecondaryColor,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        wallpaperManager.setWallpaper(uriString, WallpaperType.IMAGE)
+                                        wallpaperManager.updateSavedImageUri(uriString)
+                                        Toast.makeText(context, "Applied Wallpaper", Toast.LENGTH_SHORT).show()
+                                    }
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(Color.Red, CircleShape)
+                                    .border(2.dp, Color.White, CircleShape)
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        onClick = { viewModel.deleteReceivedWallpaper(key) },
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.nearby_wallpaper_delete_description),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             if (receivedThemes.isEmpty()) {
                 item {
                     Box(
@@ -299,6 +517,10 @@ fun ThemeShareScreen(
                                     onClick = {
                                         themeManager.addCustomTheme(theme)
                                         themeManager.setTheme(theme)
+                                        Toast.makeText(context, "Applied Theme", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onDelete = {
+                                        viewModel.deleteSharedTheme(displayName, theme.id)
                                     }
                                 )
                             }
@@ -313,9 +535,14 @@ fun ThemeShareScreen(
 @Composable
 private fun ReceivedThemeCard(
     theme: ColorTheme,
-    onClick: () -> Unit
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    var isPressed by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     val gradient = if (theme.isSolid) {
         Brush.linearGradient(listOf(theme.primaryColor, theme.primaryColor))
@@ -323,30 +550,60 @@ private fun ReceivedThemeCard(
         Brush.linearGradient(listOf(theme.primaryColor, theme.secondaryColor))
     }
 
-    Box(
-        modifier = Modifier
-            .width(120.dp)
-            .height(80.dp)
-            .scale(animatedFocusedScale(isFocused))
-            .background(brush = gradient, shape = RoundedCornerShape(12.dp))
-            .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                color = if (isFocused) Color.White else Color.White.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(12.dp)
+    Box(contentAlignment = Alignment.TopEnd) {
+        Box(
+            modifier = modifier
+                .offset(y = pressOffsetY)
+                .scale(pressScale)
+                .pressWithHaptic(
+                    onClick,
+                    haptic = haptic,
+                    onPressChange = { isPressed = it }
+                )
+                .width(120.dp)
+                .height(80.dp)
+                .scale(animatedFocusedScale(isFocused))
+                .background(brush = gradient, shape = RoundedCornerShape(12.dp))
+                .border(
+                    width = if (isFocused) 2.dp else 1.dp,
+                    color = if (isFocused) Color.White else Color.White.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clip(RoundedCornerShape(12.dp))
+                .focusable()
+                .onFocusChanged { isFocused = it.isFocused },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "",
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "",
-            color = Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
+        }
+
+        Box(
+            modifier = Modifier
+                .offset(x = 8.dp, y = (-8).dp)
+                .size(24.dp)
+                .background(color = Color.Red, shape = CircleShape)
+                .border(width = 2.dp, color = Color.White, shape = CircleShape)
+                .clip(CircleShape)
+                .clickable(
+                    onClick = onDelete,
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(R.string.custom_theme_delete),
+                tint = Color.White,
+                modifier = Modifier.size(14.dp)
+            )
+        }
     }
 }
