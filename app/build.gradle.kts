@@ -128,6 +128,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Color Picker
+    implementation(libs.colorpicker.compose)
+
     // Konfetti
     implementation(libs.konfetti.compose)
 
@@ -137,6 +140,7 @@ dependencies {
 
     // Ping
     implementation(libs.ping)
+    implementation(libs.ping.nearby)
 
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)

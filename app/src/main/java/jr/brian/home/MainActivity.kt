@@ -67,8 +67,10 @@ import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
-import jr.brian.ping.PingUtil
-import jr.brian.ping.PingUtil.hasPingPermissions
+import jr.brian.ping.PingPermissions
+import jr.brian.ping.PingPermissions.hasPingPermissions
+import jr.brian.pingnearby.PingNearbyPermissions
+import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -106,19 +108,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        with(PingUtil) {
+        with(PingPermissions) {
             if (!hasPingPermissions()) {
                 requestPingPermissions(permissionLauncher)
             }
             requestBatteryOptimizationExemption(this@MainActivity)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
             ) {
                 permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
             }
+
+        with(PingNearbyPermissions) {
+            if (!hasNearbyPermissions()) requestNearbyPermissions(permissionLauncher)
         }
 
         esdeEventManager.startWatching()
@@ -156,11 +160,15 @@ class MainActivity : ComponentActivity() {
                         if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
                             themeManager.shareCurrentTheme()
                         }
+                        if (context.hasNearbyPermissions() && themeManager.isWallpaperNearbyAutoStart) {
+                            themeManager.startWallpaperNearby()
+                        }
                     }
 
                     DisposableEffect(Unit) {
                         onDispose {
                             themeManager.stopSharing()
+                            themeManager.stopWallpaperNearby()
                         }
                     }
 
