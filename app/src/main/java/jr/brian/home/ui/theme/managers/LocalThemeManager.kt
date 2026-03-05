@@ -88,6 +88,9 @@ class ThemeManager(private val context: Context) {
     private val _transferProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
     val transferProgress: StateFlow<Map<String, Float>> = _transferProgress.asStateFlow()
 
+    private val _failedTransferEndpoints = MutableStateFlow<Set<String>>(emptySet())
+    val failedTransferEndpoints: StateFlow<Set<String>> = _failedTransferEndpoints.asStateFlow()
+
     private var wallpaperNearbyClient: PingNearbyClient? = null
     private var nearbyScope: CoroutineScope? = null
 
@@ -224,6 +227,10 @@ class ThemeManager(private val context: Context) {
                     _transferProgress.update { it + (endpointId to progress) }
                 }
             }
+            onTransferFailed = { endpointId ->
+                _transferProgress.update { it - endpointId }
+                _failedTransferEndpoints.update { it + endpointId }
+            }
             onImageReceived = { endpointId, bitmap ->
                 // Force-clear progress immediately on receive, don't wait for onTransferUpdate
                 _transferProgress.update { it - endpointId }
@@ -303,6 +310,7 @@ class ThemeManager(private val context: Context) {
 
     fun sendWallpaperTo(endpointId: String) {
         nearbyScope?.launch {
+            _failedTransferEndpoints.update { it - endpointId }
             val uri = getCurrentWallpaperUri() ?: return@launch
             when (getCurrentWallpaperType()) {
                 WallpaperType.GIF -> {

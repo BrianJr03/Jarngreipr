@@ -162,18 +162,18 @@ fun ThemeShareScreen(
             }
 
             item {
-                ReceivedWallpapersSection(
-                    receivedWallpapers = receivedWallpapers,
-                    onDelete = { viewModel.deleteReceivedWallpaper(it) }
-                )
-            }
-
-            item {
                 ReceivedThemesSection(
                     receivedThemes = receivedThemes,
                     onDeleteTheme = { displayName, themeId ->
                         viewModel.deleteSharedTheme(displayName, themeId)
                     }
+                )
+            }
+
+            item {
+                ReceivedWallpapersSection(
+                    receivedWallpapers = receivedWallpapers,
+                    onDelete = { viewModel.deleteReceivedWallpaper(it) }
                 )
             }
         }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Wallpaper
@@ -54,6 +55,7 @@ fun NearbyWallpaperSection(
     val discoveredEndpoints by themeManager.nearbyDiscoveredEndpoints.collectAsStateWithLifecycle()
     val connectedEndpoints by themeManager.connectedEndpoints.collectAsStateWithLifecycle()
     val transferProgress by themeManager.transferProgress.collectAsStateWithLifecycle()
+    val failedTransferEndpoints by themeManager.failedTransferEndpoints.collectAsStateWithLifecycle()
     val isDiscoveringWallpaper = themeManager.isWallpaperNearbyRunning
 
     CollapsibleSettingsSection(
@@ -188,6 +190,7 @@ fun NearbyWallpaperSection(
                 discoveredEndpoints.forEach { (endpointId, deviceName) ->
                     val isConnected = endpointId in connectedEndpoints
                     val progress = transferProgress[endpointId]
+                    val hasFailed = endpointId in failedTransferEndpoints
 
                     Column(
                         modifier = Modifier
@@ -269,33 +272,52 @@ fun NearbyWallpaperSection(
                             }
                         }
 
-                        AnimatedVisibility(visible = progress != null) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        AnimatedVisibility(visible = progress != null || hasFailed) {
+                            if (hasFailed) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text(
-                                        text = "Sending…",
-                                        color = Color.White.copy(alpha = 0.4f),
-                                        fontSize = 10.sp
+                                    Icon(
+                                        imageVector = Icons.Default.ErrorOutline,
+                                        contentDescription = null,
+                                        tint = Color(0xFFE53935).copy(alpha = 0.8f),
+                                        modifier = Modifier.size(13.dp)
                                     )
                                     Text(
-                                        text = "${((progress ?: 0f) * 100).toInt()}%",
-                                        color = ThemeSecondaryColor.copy(alpha = 0.7f),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Medium
+                                        text = stringResource(R.string.nearby_wallpaper_transfer_failed),
+                                        color = Color(0xFFE53935).copy(alpha = 0.8f),
+                                        fontSize = 11.sp
                                     )
                                 }
-                                LinearProgressIndicator(
-                                    progress = { progress ?: 0f },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(3.dp)
-                                        .clip(RoundedCornerShape(2.dp)),
-                                    color = ThemeSecondaryColor,
-                                    trackColor = Color.White.copy(alpha = 0.08f)
-                                )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Sending…",
+                                            color = Color.White.copy(alpha = 0.4f),
+                                            fontSize = 10.sp
+                                        )
+                                        Text(
+                                            text = "${((progress ?: 0f) * 100).toInt()}%",
+                                            color = ThemeSecondaryColor.copy(alpha = 0.7f),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { progress ?: 0f },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .clip(RoundedCornerShape(2.dp)),
+                                        color = ThemeSecondaryColor,
+                                        trackColor = Color.White.copy(alpha = 0.08f)
+                                    )
+                                }
                             }
                         }
                     }

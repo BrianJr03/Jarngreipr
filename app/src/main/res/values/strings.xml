@@ -121,6 +121,7 @@
     <string name="nearby_wallpaper_current_path">Sharing current wallpaper</string>
     <string name="nearby_wallpaper_scanning">Scanning for nearby devices…</string>
     <string name="nearby_wallpaper_send">Send</string>
+    <string name="nearby_wallpaper_transfer_failed">Transfer failed — tap Send to retry</string>
     <string name="nearby_wallpaper_received_title">Received Wallpapers</string>
     <string name="nearby_wallpaper_apply">Apply</string>
     <string name="nearby_wallpaper_delete_description">Delete received wallpaper</string>
@@ -371,6 +372,8 @@
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
     <string name="faq_theme_sharing_question">How does Theme Sharing work?</string>
     <string name="faq_theme_sharing_answer">Theme Sharing broadcasts your active theme to nearby devices over Bluetooth Low Energy (BLE). Both devices must have the app open with sharing active at the same time.\n\nSet a display name so others can identify your themes. When a theme is received, it appears in the Theme Sharing screen — tap it to apply and save it.\n\nFor reliable background sharing, disable battery optimization for this app in your device settings.</string>
+    <string name="faq_wallpaper_sharing_question">How does Wallpaper Sharing work?</string>
+    <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
