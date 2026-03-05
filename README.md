@@ -80,6 +80,7 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 - **OLED Mode** - True black backgrounds for OLED displays to save battery
 - **Icon Pack Support** - Use any installed icon pack (Lawnicons, Arcticons, etc.)
 - **Icon Pack Browser** - Preview and switch between icon packs in-app
+- **Theme Sharing** - Share your current theme with nearby devices via Bluetooth (Ping)
 
 ### 🖼️ **Wallpaper Options**
 
@@ -276,6 +277,50 @@ Járngreipr supports [Shizuku](https://shizuku.rikka.app/) for enhanced system f
 
 ---
 
+## 📡 Theme Sharing (Ping)
+
+Járngreipr supports sharing themes and wallpapers wirelessly with nearby devices using the **[Ping](https://github.com/BrianJr03/Ping)** library (Bluetooth LE) and the **Nearby Connections API**.
+
+### Theme Sharing via Bluetooth (Ping)
+
+Broadcasts your current theme to nearby Járngreipr devices over BLE so others can receive and apply it instantly.
+
+**Setup:**
+1. Navigate to **Settings** → **Theme Share**
+2. Grant Bluetooth permissions when prompted
+3. Grant battery optimization exemption for reliable background operation
+4. Tap **Start Sharing** in the **Theme Sharing** section to begin broadcasting
+
+**Auto-Start:** Enable auto-start in Theme Share Settings to begin broadcasting automatically every time the launcher opens.
+
+**Quick Settings Tile:** A system Quick Settings tile is available for toggling theme sharing without opening the app.
+
+### Wallpaper Sharing via Nearby Connections
+
+Discovers and receives wallpapers from nearby devices using the Nearby Connections API over Wi-Fi/Bluetooth.
+
+**Setup:**
+1. Navigate to **Settings** → **Theme Share**
+2. Grant Nearby/Wi-Fi permissions when prompted
+3. Toggle **Nearby Wallpaper** to start discovering
+
+Received wallpapers are saved and accessible in the **Received Wallpapers** list on the same screen.
+
+### Received Themes & Wallpapers
+
+Both received themes and wallpapers are stored locally and shown in the Theme Share screen, where you can apply or delete them.
+
+### Required Permissions
+
+| Permission | Purpose |
+|------------|---------|
+| `BLUETOOTH_SCAN` / `BLUETOOTH_ADVERTISE` / `BLUETOOTH_CONNECT` | BLE theme broadcasting |
+| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Background sharing |
+| `ACCESS_FINE_LOCATION` / `ACCESS_WIFI_STATE` / `CHANGE_WIFI_STATE` | Nearby wallpaper discovery |
+| `NEARBY_WIFI_DEVICES` (API 33+) | Nearby Connections |
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Whether it's bug fixes, new features, or documentation improvements.
@@ -373,6 +418,8 @@ Your support helps maintain and improve the launcher with new features, bug fixe
 - [x] Icon pack support
 - [x] Quick delete feature
 - [x] Auto-update checker
+- [x] Theme sharing via Bluetooth (Ping)
+- [x] Wallpaper sharing via Nearby Connections
 
 **Coming Soon 🚀**
 - [ ] Gesture customization

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.service.ThemeSharingTile
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
 import jr.brian.ping.PingPermissions.hasPingPermissions
@@ -72,20 +74,27 @@ class ThemeManager(private val context: Context) {
         private set
 
     private val _nearbyDiscoveredEndpoints = MutableStateFlow<Map<String, String>>(emptyMap())
-    val nearbyDiscoveredEndpoints: StateFlow<Map<String, String>> = _nearbyDiscoveredEndpoints.asStateFlow()
+    val nearbyDiscoveredEndpoints: StateFlow<Map<String, String>> =
+        _nearbyDiscoveredEndpoints.asStateFlow()
 
     private val _connectedEndpoints = MutableStateFlow<Set<String>>(emptySet())
     val connectedEndpoints: StateFlow<Set<String>> = _connectedEndpoints.asStateFlow()
 
-    private val _receivedWallpaper = MutableSharedFlow<Bitmap>(extraBufferCapacity = 8)
-    val receivedWallpaper: SharedFlow<Bitmap> = _receivedWallpaper.asSharedFlow()
+    private val _receivedWallpaperFile =
+        MutableSharedFlow<Pair<WallpaperType, Uri>>(extraBufferCapacity = 8)
+    val receivedWallpaperFile: SharedFlow<Pair<WallpaperType, Uri>> =
+        _receivedWallpaperFile.asSharedFlow()
+
+    private val _transferProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
+    val transferProgress: StateFlow<Map<String, Float>> = _transferProgress.asStateFlow()
 
     private var wallpaperNearbyClient: PingNearbyClient? = null
     private var nearbyScope: CoroutineScope? = null
 
     private fun loadTheme(): ColorTheme {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val themeId = prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id) ?: ColorTheme.PINK_VIOLET.id
+        val themeId =
+            prefs.getString(KEY_THEME, ColorTheme.PINK_VIOLET.id) ?: ColorTheme.PINK_VIOLET.id
 
         if (themeId.startsWith(ColorTheme.CUSTOM_THEME_PREFIX)) {
             val customThemesList = loadCustomThemes()
@@ -113,7 +122,7 @@ class ThemeManager(private val context: Context) {
                         isSolid = parts[4].toBoolean()
                     )
                 } else null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -208,12 +217,63 @@ class ThemeManager(private val context: Context) {
                 _nearbyDiscoveredEndpoints.update { it - id }
                 _connectedEndpoints.update { it - id }
             }
-            onImageReceived = { _, bitmap ->
-                _receivedWallpaper.tryEmit(bitmap)
+            onTransferUpdate = { endpointId, progress ->
+                if (progress >= 1f) {
+                    _transferProgress.update { it - endpointId }
+                } else {
+                    _transferProgress.update { it + (endpointId to progress) }
+                }
             }
-            onFileReceived = { _, file ->
-                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                if (bitmap != null) _receivedWallpaper.tryEmit(bitmap)
+            onImageReceived = { endpointId, bitmap ->
+                // Force-clear progress immediately on receive, don't wait for onTransferUpdate
+                _transferProgress.update { it - endpointId }
+                handleReceivedMedia(bitmap)
+            }
+            onFileReceived = { endpointId, pfd ->
+                nearbyScope?.launch {
+                    val nearbyDir = File(context.filesDir, "nearby_wallpapers").also { it.mkdirs() }
+                    val tempFile = File(nearbyDir, "wp_tmp_${System.currentTimeMillis()}")
+                    try {
+                        pfd.use { descriptor ->
+                            ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { input ->
+                                tempFile.outputStream().buffered(65536).use { output ->
+                                    input.copyTo(output, bufferSize = 65536)
+                                    output.flush()
+                                }
+                            }
+                        }
+
+                        val header = ByteArray(GIF_MARKER.size)
+                        tempFile.inputStream().use { it.read(header) }
+
+                        val destFile: File
+                        val type: WallpaperType
+
+                        if (header.contentEquals(GIF_MARKER)) {
+                            type = WallpaperType.GIF
+                            destFile = File(nearbyDir, "wp_${System.currentTimeMillis()}.gif")
+                            tempFile.inputStream().use { input ->
+                                input.skip(GIF_MARKER.size.toLong())
+                                destFile.outputStream().buffered(65536).use { output ->
+                                    input.copyTo(output, bufferSize = 65536)
+                                    output.flush()
+                                }
+                            }
+                            tempFile.delete()
+                        } else {
+                            type = if (isGif(header)) WallpaperType.GIF else WallpaperType.VIDEO
+                            val ext = if (type == WallpaperType.GIF) "gif" else "mp4"
+                            destFile = File(nearbyDir, "wp_${System.currentTimeMillis()}.$ext")
+                            tempFile.renameTo(destFile)
+                        }
+
+                        _receivedWallpaperFile.tryEmit(type to destFile.toUri())
+                        _transferProgress.update { it - endpointId }
+                    } catch (_: Exception) {
+                        tempFile.delete()
+                        _transferProgress.update { it - endpointId }
+                    }
+                }
             }
         }
         wallpaperNearbyClient?.start(pingDisplayName.ifBlank { Build.MODEL })
@@ -228,14 +288,69 @@ class ThemeManager(private val context: Context) {
         isWallpaperNearbyRunning = false
         _nearbyDiscoveredEndpoints.value = emptyMap()
         _connectedEndpoints.value = emptySet()
+        _transferProgress.value = emptyMap()
+    }
+
+    fun getCurrentWallpaperType(): WallpaperType {
+        val typeString = context.getSharedPreferences(LAUNCHER_PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_LAUNCHER_WALLPAPER_TYPE, "NONE") ?: "NONE"
+        return try {
+            WallpaperType.valueOf(typeString)
+        } catch (_: Exception) {
+            WallpaperType.NONE
+        }
     }
 
     fun sendWallpaperTo(endpointId: String) {
         nearbyScope?.launch {
-            decodeWallpaperBitmap()?.let { bitmap ->
-                wallpaperNearbyClient?.sendImage(endpointId, bitmap)
+            val uri = getCurrentWallpaperUri() ?: return@launch
+            when (getCurrentWallpaperType()) {
+                WallpaperType.GIF -> {
+                    // Prepend marker so the receiver's library routes this through
+                    // onFileReceived instead of decoding it as a static Bitmap
+                    val tempFile = File(context.cacheDir, "send_${System.currentTimeMillis()}.tmp")
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        tempFile.outputStream().use { output ->
+                            output.write(GIF_MARKER)
+                            input.copyTo(output)
+                        }
+                    }
+                    wallpaperNearbyClient?.sendFile(endpointId, tempFile.toUri())
+                }
+
+                WallpaperType.VIDEO -> {
+                    wallpaperNearbyClient?.sendFile(endpointId, uri)
+                }
+
+                else -> {
+                    decodeWallpaperBitmap()?.let { bitmap ->
+                        wallpaperNearbyClient?.sendImage(endpointId, bitmap)
+                    }
+                }
             }
         }
+    }
+
+    private fun handleReceivedMedia(bitmap: Bitmap) {
+        nearbyScope?.launch {
+            val nearbyDir = File(context.filesDir, "nearby_wallpapers").also { it.mkdirs() }
+            val destFile = File(nearbyDir, "wp_${System.currentTimeMillis()}.jpg")
+            java.io.FileOutputStream(destFile)
+                .use { bitmap.compress(Bitmap.CompressFormat.JPEG, 95, it) }
+            _receivedWallpaperFile.tryEmit(WallpaperType.IMAGE to destFile.toUri())
+        }
+    }
+
+    // GIF magic bytes: GIF8
+    private fun isGif(bytes: ByteArray) = bytes.size >= 3 &&
+            bytes[0] == 0x47.toByte() && bytes[1] == 0x49.toByte() && bytes[2] == 0x46.toByte()
+
+    companion object {
+        // 4-byte prefix prepended to GIFs before sending via sendFile.
+        // Makes BitmapFactory fail to decode the stream → library routes to onFileReceived
+        // instead of decoding the first frame and firing onImageReceived.
+        private val GIF_MARKER =
+            byteArrayOf(0xFE.toByte(), 0xFE.toByte(), 0xFE.toByte(), 0xFE.toByte())
     }
 
     private fun decodeWallpaperBitmap(): Bitmap? {
@@ -245,7 +360,11 @@ class ThemeManager(private val context: Context) {
                 BitmapFactory.decodeStream(stream)
             } ?: BitmapFactory.decodeFile(uri.path)
         } catch (_: Exception) {
-            try { BitmapFactory.decodeFile(uri.path) } catch (_: Exception) { null }
+            try {
+                BitmapFactory.decodeFile(uri.path)
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 
@@ -293,10 +412,12 @@ class ThemeManager(private val context: Context) {
         )
         val intent = PingService.buildIntent(context, profile)
         context.startForegroundService(intent)
+        ThemeSharingTile.syncState(context, true)
     }
 
     fun stopSharing() {
         context.stopService(Intent(context, PingService::class.java))
+        ThemeSharingTile.syncState(context, false)
     }
 }
 
