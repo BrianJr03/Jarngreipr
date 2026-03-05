@@ -5,6 +5,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.runtime.Composable
@@ -12,7 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
@@ -50,21 +56,28 @@ fun AppearanceSection(
         isExpanded = isExpanded,
         onToggle = onToggle
     ) {
-        ThemeSelectorItem(
-            isExpanded = expandedItem == EXPANDED_THEME,
-            onExpandChanged = {
-                expandedItem = if (it) EXPANDED_THEME else null
-            },
-            onNavigateToCustomTheme = {
-                expandedItem = null
-                onNavigateToCustomTheme()
-            }
-        )
-
-        SettingsTextButton(
-            text = stringResource(R.string.theme_sharing_title),
-            onClick = onNavigateToThemeShare
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            ThemeSelectorItem(
+                isExpanded = expandedItem == EXPANDED_THEME,
+                onExpandChanged = {
+                    expandedItem = if (it) EXPANDED_THEME else null
+                },
+                onNavigateToCustomTheme = {
+                    expandedItem = null
+                    onNavigateToCustomTheme()
+                },
+                modifier = Modifier.weight(1f)
+            )
+            SettingsTextButton(
+                text = stringResource(R.string.theme_sharing_title),
+                onClick = onNavigateToThemeShare,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         IconPackSelectorItem(
             isExpanded = expandedItem == EXPANDED_ICON_PACK,

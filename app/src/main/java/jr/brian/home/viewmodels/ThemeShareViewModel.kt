@@ -41,7 +41,6 @@ class ThemeShareViewModel @Inject constructor(
     private val repository: ThemeShareRepository,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
-
     val receivedThemes = repository.receivedThemes.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -61,6 +60,16 @@ class ThemeShareViewModel @Inject constructor(
             saveReceivedWallpapers(updated)
             updated
         }
+    }
+
+    fun saveReceivedWallpaperFile(uriString: String) {
+        val key = System.currentTimeMillis().toString()
+        _receivedWallpapers.update { currentMap ->
+            val updated = currentMap + (key to uriString)
+            saveReceivedWallpapers(updated)
+            updated
+        }
+        sendWallpaperNotification()
     }
 
     fun saveReceivedWallpaper(bitmap: Bitmap) {
