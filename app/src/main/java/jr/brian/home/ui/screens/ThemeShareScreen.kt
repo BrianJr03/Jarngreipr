@@ -101,8 +101,8 @@ fun ThemeShareScreen(
     }
 
     LaunchedEffect(themeManager) {
-        themeManager.receivedWallpaperFile.collect { (_, uri) ->
-            viewModel.saveReceivedWallpaperFile(uri.toString())
+        themeManager.receivedWallpaperFile.collect { (_, uri, senderName) ->
+            viewModel.saveReceivedWallpaperFile(uri.toString(), senderName)
         }
     }
 
