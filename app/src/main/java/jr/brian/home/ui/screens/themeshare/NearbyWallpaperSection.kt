@@ -189,7 +189,8 @@ fun NearbyWallpaperSection(
             } else {
                 discoveredEndpoints.forEach { (endpointId, deviceName) ->
                     val isConnected = endpointId in connectedEndpoints
-                    val progress = transferProgress[endpointId]
+                    val transferState = transferProgress[endpointId]
+                    val progress = transferState?.fraction
                     val hasFailed = endpointId in failedTransferEndpoints
 
                     Column(
@@ -243,7 +244,7 @@ fun NearbyWallpaperSection(
                             }
 
                             val hasWallpaper = themeManager.getCurrentWallpaperUri() != null
-                            val canSend = hasWallpaper && isConnected && progress == null
+                            val canSend = hasWallpaper && isConnected && (transferState == null || transferState.isComplete)
                             Box(
                                 modifier = Modifier
                                     .background(

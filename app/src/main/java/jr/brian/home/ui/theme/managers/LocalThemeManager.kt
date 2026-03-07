@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.widget.Toast
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import jr.brian.home.R
+import jr.brian.home.model.TransferProgress
 import jr.brian.home.service.ThemeSharingTile
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
@@ -81,12 +83,12 @@ class ThemeManager(private val context: Context) {
     val connectedEndpoints: StateFlow<Set<String>> = _connectedEndpoints.asStateFlow()
 
     private val _receivedWallpaperFile =
-        MutableSharedFlow<Pair<WallpaperType, Uri>>(extraBufferCapacity = 8)
-    val receivedWallpaperFile: SharedFlow<Pair<WallpaperType, Uri>> =
+        MutableSharedFlow<Triple<WallpaperType, Uri, String>>(extraBufferCapacity = 8)
+    val receivedWallpaperFile: SharedFlow<Triple<WallpaperType, Uri, String>> =
         _receivedWallpaperFile.asSharedFlow()
 
-    private val _transferProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
-    val transferProgress: StateFlow<Map<String, Float>> = _transferProgress.asStateFlow()
+    private val _transferProgress = MutableStateFlow<Map<String, TransferProgress>>(emptyMap())
+    val transferProgress: StateFlow<Map<String, TransferProgress>> = _transferProgress.asStateFlow()
 
     private val _failedTransferEndpoints = MutableStateFlow<Set<String>>(emptySet())
     val failedTransferEndpoints: StateFlow<Set<String>> = _failedTransferEndpoints.asStateFlow()
@@ -219,22 +221,18 @@ class ThemeManager(private val context: Context) {
             onDisconnected = { id ->
                 _nearbyDiscoveredEndpoints.update { it - id }
                 _connectedEndpoints.update { it - id }
+                _transferProgress.update { it - id }
             }
             onTransferUpdate = { endpointId, progress ->
-                if (progress >= 1f) {
-                    _transferProgress.update { it - endpointId }
-                } else {
-                    _transferProgress.update { it + (endpointId to progress) }
-                }
+                _transferProgress.update { it + (endpointId to TransferProgress(fraction = progress)) }
             }
             onTransferFailed = { endpointId ->
                 _transferProgress.update { it - endpointId }
                 _failedTransferEndpoints.update { it + endpointId }
             }
             onImageReceived = { endpointId, bitmap ->
-                // Force-clear progress immediately on receive, don't wait for onTransferUpdate
                 _transferProgress.update { it - endpointId }
-                handleReceivedMedia(bitmap)
+                handleReceivedMedia(bitmap, _nearbyDiscoveredEndpoints.value[endpointId] ?: endpointId)
             }
             onFileReceived = { endpointId, pfd ->
                 nearbyScope?.launch {
@@ -274,11 +272,14 @@ class ThemeManager(private val context: Context) {
                             tempFile.renameTo(destFile)
                         }
 
-                        _receivedWallpaperFile.tryEmit(type to destFile.toUri())
-                        _transferProgress.update { it - endpointId }
+                        val senderName = _nearbyDiscoveredEndpoints.value[endpointId] ?: endpointId
+                        _receivedWallpaperFile.tryEmit(Triple(type, destFile.toUri(), senderName))
+                        _transferProgress.update { it + (endpointId to TransferProgress(fraction = 1f)) }
                     } catch (_: Exception) {
                         tempFile.delete()
-                        _transferProgress.update { it - endpointId }
+                        _transferProgress.update { it + (endpointId to TransferProgress(fraction = 1f)) }
+                        Toast.makeText(context, "Failed to receive wallpaper", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 }
             }
@@ -339,13 +340,13 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    private fun handleReceivedMedia(bitmap: Bitmap) {
+    private fun handleReceivedMedia(bitmap: Bitmap, senderName: String) {
         nearbyScope?.launch {
             val nearbyDir = File(context.filesDir, "nearby_wallpapers").also { it.mkdirs() }
             val destFile = File(nearbyDir, "wp_${System.currentTimeMillis()}.jpg")
             java.io.FileOutputStream(destFile)
                 .use { bitmap.compress(Bitmap.CompressFormat.JPEG, 95, it) }
-            _receivedWallpaperFile.tryEmit(WallpaperType.IMAGE to destFile.toUri())
+            _receivedWallpaperFile.tryEmit(Triple(WallpaperType.IMAGE, destFile.toUri(), senderName))
         }
     }
 

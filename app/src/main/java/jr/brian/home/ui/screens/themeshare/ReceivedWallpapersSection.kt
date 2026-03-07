@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.model.ReceivedWallpaper
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -43,7 +44,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ReceivedWallpapersSection(
-    receivedWallpapers: Map<String, String>,
+    receivedWallpapers: Map<String, ReceivedWallpaper>,
     onDelete: (String) -> Unit
 ) {
     if (receivedWallpapers.isEmpty()) return
@@ -63,11 +64,26 @@ fun ReceivedWallpapersSection(
             .padding(start = 20.dp, top = 16.dp, bottom = 6.dp)
     )
 
-    receivedWallpapers.forEach { (key, uriString) ->
+    receivedWallpapers.forEach { (key, wallpaper) ->
+        val senderName = wallpaper.sender
+        val uriString = wallpaper.uri
         val mediaType = when {
             uriString.endsWith(".gif") -> WallpaperType.GIF
             uriString.endsWith(".mp4") || uriString.endsWith(".webm") -> WallpaperType.VIDEO
             else -> WallpaperType.IMAGE
+        }
+
+        if (senderName.isNotBlank()) {
+            Text(
+                text = senderName,
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, top = 8.dp, bottom = 2.dp)
+            )
         }
 
         Row(

@@ -22,6 +22,8 @@ class PingBroadcastManager @Inject constructor() {
     }
 
     init {
+        PingService.encounterCooldownMs = 300_000L // 5 Minutes
+        PingService.reconnectCooldownMs = 600_000L // 10 Minutes
         PingService.onEncounter = { deviceAddress, remoteProfile ->
             listeners.forEach { it(deviceAddress, remoteProfile) }
         }
