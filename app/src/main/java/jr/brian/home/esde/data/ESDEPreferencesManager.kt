@@ -76,6 +76,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_AUDIO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_DELAY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_SCALE_MODE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_VIDEO_OVERLAY_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BACKGROUND_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE_MODE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CUSTOM_MEDIA_PATH
@@ -323,6 +324,7 @@ class ESDEPreferencesManager(context: Context) {
             videoDelaySeconds = prefs.getInt(KEY_VIDEO_DELAY, 3),
             videoAudioEnabled = prefs.getBoolean(KEY_VIDEO_AUDIO_ENABLED, false),
             videoScaleMode = videoScaleMode,
+            videoOverlayEnabled = prefs.getBoolean(KEY_VIDEO_OVERLAY_ENABLED, true),
             systemBackgroundScaleMode = systemBackgroundScaleMode,
             gameBackgroundScaleMode = gameBackgroundScaleMode,
             lastSelectedSystem = prefs.getString(KEY_LAST_SELECTED_SYSTEM, null),
@@ -433,6 +435,11 @@ class ESDEPreferencesManager(context: Context) {
     fun setVideoScaleMode(mode: VideoScaleMode) {
         _state.value = _state.value.copy(videoScaleMode = mode)
         prefs.edit { putString(KEY_VIDEO_SCALE_MODE, mode.name) }
+    }
+
+    fun setVideoOverlayEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(videoOverlayEnabled = enabled)
+        prefs.edit { putBoolean(KEY_VIDEO_OVERLAY_ENABLED, enabled) }
     }
 
     fun setSystemBackgroundScaleMode(mode: BackgroundScaleMode) {

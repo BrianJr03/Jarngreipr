@@ -307,7 +307,7 @@ private fun createVersionTapComicPopMessage(
     val x = Random.nextInt((width * 0.08f).toInt(), (width * 0.78f).toInt().coerceAtLeast(1))
     val y = Random.nextInt((height * 0.12f).toInt(), (height * 0.72f).toInt().coerceAtLeast(1))
     return ComicPopMessage(
-        text = if (remaining <= 1) "float \uD83D\uDC10" else "$remaining",
+        text = if (remaining == 0) "float \uD83D\uDC10" else "$remaining",
         x = x,
         y = y,
         rotation = Random.nextInt(-24, 25).toFloat()

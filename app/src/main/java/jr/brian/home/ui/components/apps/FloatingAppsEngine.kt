@@ -28,6 +28,7 @@ class FloatingAppsEngine {
 
     private var containerWidth: Float = 0f
     private var containerHeight: Float = 0f
+    private var obstacles: List<FloatingObstacle> = emptyList()
 
     /**
      * Initialise (or re-initialise) the engine for the given container size
@@ -67,6 +68,10 @@ class FloatingAppsEngine {
                 )
             }
         }
+    }
+    
+    fun setObstacles(obstacles: List<FloatingObstacle>) {
+        this.obstacles = obstacles
     }
 
     /**
@@ -112,8 +117,20 @@ class FloatingAppsEngine {
 
             positions[id] = FloatingAppState(x, y, vx, vy, w, h)
         }
+        
+        // 3. Obstacle collisions (reserved UI zones)
+        if (obstacles.isNotEmpty()) {
+            val ids = positions.keys.toList()
+            for (id in ids) {
+                var state = positions[id] ?: continue
+                for (obstacle in obstacles) {
+                    state = resolveObstacleCollision(state, obstacle)
+                }
+                positions[id] = state
+            }
+        }
 
-        // 3. Item-to-item collisions (bounding-circle approximation)
+        // 4. Item-to-item collisions (bounding-circle approximation)
         val keys = positions.keys.toList()
         for (i in keys.indices) {
             for (j in i + 1 until keys.size) {
@@ -121,7 +138,7 @@ class FloatingAppsEngine {
             }
         }
         
-        // 4. Keep movement lively by preventing near-stall speeds.
+        // 5. Keep movement lively by preventing near-stall speeds.
         for ((id, state) in positions) {
             positions[id] = keepSpeedInRange(state)
         }
@@ -190,6 +207,54 @@ class FloatingAppsEngine {
         return if (Random.nextBoolean()) speed else -speed
     }
     
+    private fun resolveObstacleCollision(
+        state: FloatingAppState,
+        obstacle: FloatingObstacle
+    ): FloatingAppState {
+        val left = obstacle.x
+        val top = obstacle.y
+        val right = obstacle.x + obstacle.width
+        val bottom = obstacle.y + obstacle.height
+        val appLeft = state.x
+        val appTop = state.y
+        val appRight = state.x + state.width
+        val appBottom = state.y + state.height
+        
+        if (appRight <= left || appLeft >= right || appBottom <= top || appTop >= bottom) {
+            return state
+        }
+        
+        val overlapFromLeft = appRight - left
+        val overlapFromRight = right - appLeft
+        val overlapFromTop = appBottom - top
+        val overlapFromBottom = bottom - appTop
+        val minOverlap = minOf(
+            overlapFromLeft,
+            overlapFromRight,
+            overlapFromTop,
+            overlapFromBottom
+        )
+        
+        return when (minOverlap) {
+            overlapFromLeft -> state.copy(
+                x = (left - state.width).coerceAtLeast(0f),
+                vx = -abs(state.vx) * WALL_RESTITUTION
+            )
+            overlapFromRight -> state.copy(
+                x = right.coerceAtMost(containerWidth - state.width),
+                vx = abs(state.vx) * WALL_RESTITUTION
+            )
+            overlapFromTop -> state.copy(
+                y = (top - state.height).coerceAtLeast(0f),
+                vy = -abs(state.vy) * WALL_RESTITUTION
+            )
+            else -> state.copy(
+                y = bottom.coerceAtMost(containerHeight - state.height),
+                vy = abs(state.vy) * WALL_RESTITUTION
+            )
+        }
+    }
+    
     private fun keepSpeedInRange(state: FloatingAppState): FloatingAppState {
         val speed = sqrt(state.vx * state.vx + state.vy * state.vy)
         if (speed in MIN_CRUISE_SPEED..MAX_CRUISE_SPEED) return state
@@ -224,4 +289,10 @@ class FloatingAppsEngine {
         private const val MAX_CRUISE_SPEED = 260f
     }
 }
+data class FloatingObstacle(
+    val x: Float,
+    val y: Float,
+    val width: Float,
+    val height: Float
+)
 
