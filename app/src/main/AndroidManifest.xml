@@ -78,6 +78,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
         <activity
             android:name=".esde.ui.VideoPlayerActivity"
@@ -87,7 +90,7 @@
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
-        <provider
+<provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
@@ -111,6 +114,15 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <receiver
+            android:name=".WallpaperActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="jr.brian.SET_ESDE_WALLPAPER" />
+                <action android:name="jr.brian.SET_STANDARD_WALLPAPER" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name="jr.brian.ping.BootReceiver"

@@ -1133,4 +1133,7 @@
     <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
     <string name="floaty_mode_reset_description">Turn off and lock it again until version is tapped 7 times</string>
     <string name="floaty_mode_reset_done">Floaty mode reset. Tap version 7 times to unlock again.</string>
+
+    <string name="esde_wallpaper">ES-DE Wallpaper</string>
+    <string name="standard_wallpaper">Standard Wallpaper</string>
 </resources>
