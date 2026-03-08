@@ -14,6 +14,7 @@ object ESDEPreferencesConstants {
     const val KEY_VIDEO_DELAY = "video_delay"
     const val KEY_VIDEO_AUDIO_ENABLED = "video_audio_enabled"
     const val KEY_VIDEO_SCALE_MODE = "video_scale_mode"
+    const val KEY_VIDEO_OVERLAY_ENABLED = "video_overlay_enabled"
     const val KEY_SYSTEM_BACKGROUND_SCALE_MODE = "system_background_scale_mode"
     const val KEY_GAME_BACKGROUND_SCALE_MODE = "game_background_scale_mode"
     const val KEY_LAST_SELECTED_SYSTEM = "last_selected_system"

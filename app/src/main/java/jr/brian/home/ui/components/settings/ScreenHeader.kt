@@ -28,7 +28,7 @@ import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.util.SettingsScreenUtil.DEFAULT_VERSION_NAME
 
-private const val TAPS_TO_UNLOCK = 7
+private const val TAPS_TO_UNLOCK = 8
 
 @Composable
 fun ScreenHeader(
@@ -105,9 +105,9 @@ private fun handleFloatyUnlockTap(
         ).show()
         return tapCount
     }
-    val countdownValue = (TAPS_TO_UNLOCK - tapCount).coerceIn(1, TAPS_TO_UNLOCK)
-    onVersionTapCountdown(countdownValue)
     val updatedTapCount = tapCount + 1
+    val countdownValue = (TAPS_TO_UNLOCK - updatedTapCount).coerceAtLeast(0)
+    onVersionTapCountdown(countdownValue)
     if (updatedTapCount < TAPS_TO_UNLOCK) return updatedTapCount
     floatyModeManager.unlock()
     Toast.makeText(

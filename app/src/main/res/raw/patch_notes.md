@@ -1,4 +1,7 @@
 **New**
-- Adds Easter Egg in Settings :)
+- Adds ability to toggle off video overlay controls
 
-1.8.3
+**Quick Fixes**
+- Apps will now remain in alphabetical order after renaming
+
+1.8.4

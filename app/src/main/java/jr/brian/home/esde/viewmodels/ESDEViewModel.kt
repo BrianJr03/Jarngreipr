@@ -296,7 +296,8 @@ class ESDEViewModel @Inject constructor(
                         VideoLaunchEvent(
                             videoPath = videoPath,
                             audioEnabled = prefs.state.value.videoAudioEnabled,
-                            scaleMode = prefs.state.value.videoScaleMode
+                            scaleMode = prefs.state.value.videoScaleMode,
+                            overlayEnabled = prefs.state.value.videoOverlayEnabled
                         )
                     )
                 }

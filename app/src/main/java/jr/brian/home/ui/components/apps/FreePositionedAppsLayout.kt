@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
@@ -65,6 +66,7 @@ fun FreePositionedAppsLayout(
     forceFloatyMode: Boolean = false,
     allApps: List<AppInfo> = apps,
     bubblePopEnabled: Boolean = false,
+    floatyObstacleSpec: FloatyObstacleSpec? = null,
     onBubblePop: (AppInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -121,7 +123,8 @@ fun FreePositionedAppsLayout(
         positions = positions,
         containerSize = containerSize,
         currentContentHeight = currentContentHeight,
-        density = density
+        density = density,
+        floatyObstacleSpec = floatyObstacleSpec
     )
 
     LaunchedEffect(Unit) {
@@ -399,7 +402,8 @@ private fun rememberInitializedFloatyEngine(
     positions: Map<String, AppPosition>,
     containerSize: IntSize,
     currentContentHeight: Float,
-    density: Density
+    density: Density,
+    floatyObstacleSpec: FloatyObstacleSpec?
 ): Pair<Boolean, FloatingAppsEngine> {
     val isFloaty = forceFloatyMode || isFloatyModeActive
     val floatingEngine = remember(pageIndex) { FloatingAppsEngine() }
@@ -448,6 +452,17 @@ private fun rememberInitializedFloatyEngine(
             height = currentContentHeight // full scrollable content area
         )
     }
+    LaunchedEffect(isFloaty, containerSize, currentContentHeight, floatyObstacleSpec) {
+        if (!isFloaty || containerSize == IntSize.Zero || currentContentHeight <= 0f) {
+            floatingEngine.setObstacles(emptyList())
+            return@LaunchedEffect
+        }
+        val obstacle = floatyObstacleSpec?.toObstacle(
+            containerWidthPx = containerSize.width.toFloat(),
+            density = density
+        )
+        floatingEngine.setObstacles(if (obstacle != null) listOf(obstacle) else emptyList())
+    }
     LaunchedEffect(isFloaty, pageIndex) {
         if (!isFloaty) return@LaunchedEffect
         var lastNanos = 0L
@@ -462,4 +477,35 @@ private fun rememberInitializedFloatyEngine(
         }
     }
     return isFloaty to floatingEngine
+}
+data class FloatyObstacleSpec(
+    val width: Dp,
+    val height: Dp,
+    val topPadding: Dp,
+    val endPadding: Dp,
+    val fullWidth: Boolean = false,
+    val horizontalPadding: Dp = 0.dp
+) {
+    fun toObstacle(containerWidthPx: Float, density: Density): FloatingObstacle {
+        val widthPx = if (fullWidth) {
+            val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
+            (containerWidthPx - (horizontalPaddingPx * 2f)).coerceAtLeast(0f)
+        } else {
+            with(density) { width.toPx() }
+        }
+        val heightPx = with(density) { height.toPx() }
+        val topPx = with(density) { topPadding.toPx() }
+        val x = if (fullWidth) {
+            with(density) { horizontalPadding.toPx() }
+        } else {
+            val endPx = with(density) { endPadding.toPx() }
+            (containerWidthPx - widthPx - endPx).coerceAtLeast(0f)
+        }
+        return FloatingObstacle(
+            x = x,
+            y = topPx,
+            width = widthPx,
+            height = heightPx
+        )
+    }
 }

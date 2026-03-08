@@ -25,6 +25,7 @@ documentfile = "1.0.1"
 room = "2.6.1"
 shizuku = "13.1.5"
 konfettiCompose = "2.0.5"
+appcompat = "1.7.1"
 
 [libraries]
 konfetti-compose = { module = "nl.dionsegijn:konfetti-compose", version.ref = "konfettiCompose" }
@@ -67,6 +68,7 @@ androidx-documentfile = { group = "androidx.documentfile", name = "documentfile"
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
