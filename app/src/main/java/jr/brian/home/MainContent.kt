@@ -30,7 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.ScreensaverBehavior
-import jr.brian.home.esde.ui.VideoPlayerActivity
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
@@ -134,7 +134,7 @@ fun MainContent(
     LaunchedEffect(isAnyOverlayVisible) {
         onAnyOverlayVisibleChanged(isAnyOverlayVisible)
         if (isAnyOverlayVisible) {
-            VideoPlayerActivity.finishIfRunning()
+            VideoPresentationManager.dismiss()
         }
     }
 

@@ -373,7 +373,7 @@ fun AppsModalContent(
             ) {
                 CircularProgressIndicator()
             }
-        } else if (apps.isEmpty()) {
+        } else if (apps.isEmpty() && folders.isEmpty()) {
             EmptyAppsState(
                 onAddClick = { appVisibilityDialogState.show() }
             )

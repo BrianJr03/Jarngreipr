@@ -55,12 +55,23 @@ fun ThemeShareScreen(
     var isSettingsExpanded by remember { mutableStateOf(false) }
     var isThemeSharingExpanded by remember { mutableStateOf(false) }
     var isNearbyWallpaperExpanded by remember { mutableStateOf(false) }
+    var shouldRequestPermissions by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
 
     LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("theme_share_info_seen", false)) {
+            infoDialogState.show()
+        } else {
+            shouldRequestPermissions = true
+        }
+    }
+
+    LaunchedEffect(shouldRequestPermissions) {
+        if (!shouldRequestPermissions) return@LaunchedEffect
         with(PingPermissions) {
             if (!context.hasPingPermissions()) {
                 requestPingPermissions(permissionLauncher)
@@ -71,10 +82,6 @@ fun ThemeShareScreen(
             if (!context.hasNearbyPermissions()) {
                 requestNearbyPermissions(permissionLauncher)
             }
-        }
-        val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("theme_share_info_seen", false)) {
-            infoDialogState.show()
         }
     }
 
@@ -112,6 +119,7 @@ fun ThemeShareScreen(
                 val prefs = context.getSharedPreferences("gaming_launcher_prefs", Context.MODE_PRIVATE)
                 prefs.edit { putBoolean("theme_share_info_seen", true) }
                 infoDialogState.dismiss()
+                shouldRequestPermissions = true
             }
         )
     }

@@ -27,7 +27,10 @@ data class SystemManagers @Inject constructor(
     val onboardingManager: OnboardingManager,
     
     /** Tracks whether to show "What's New" dialog after updates */
-    val whatsNewManager: WhatsNewManager
+    val whatsNewManager: WhatsNewManager,
+
+    /** Manages broadcast communication with the Ping companion app */
+    val pingBroadcastManager: PingBroadcastManager
 ) {
     init {
         // Initialize Shizuku early to prepare for privileged operations

@@ -1,20 +1,15 @@
 package jr.brian.home
 
 import android.Manifest
-import android.app.ActivityOptions
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Bundle
-import android.view.Display
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
@@ -43,9 +38,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
-import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
-import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.ESDESetupHelper
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
@@ -53,7 +46,6 @@ import jr.brian.home.esde.data.ScriptManager
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
-import jr.brian.home.esde.ui.VideoPlayerActivity
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
@@ -82,21 +74,10 @@ class MainActivity : ComponentActivity() {
     lateinit var managers: ManagerContainer
 
     @Inject
-    lateinit var esdeEventManager: ESDEEventManager
-
-    @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
-
-    @Inject
-    lateinit var pingBroadcastManager: PingBroadcastManager
 
     private val esdeViewModel: ESDEViewModel by viewModels()
 
-    private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            esdeViewModel.onVideoActivityFinished()
-        }
-    
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
@@ -112,8 +93,8 @@ class MainActivity : ComponentActivity() {
                 permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
             }
 
-        esdeEventManager.startWatching()
-        esdeEventManager.startPolling()
+        managers.feature.esdeEventManager.startWatching()
+        managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -233,31 +214,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        esdeEventManager.stopWatching()
+        managers.feature.esdeEventManager.stopWatching()
     }
 
     @UnstableApi
     private fun launchVideoPlayer(event: VideoLaunchEvent) {
-        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
-            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
-            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
-            putExtra(VideoPlayerActivity.EXTRA_OVERLAY_ENABLED, event.overlayEnabled)
-        }
-
-        val displayManager = getSystemService(DISPLAY_SERVICE) as DisplayManager
-        val externalDisplay = displayManager.displays.firstOrNull {
-            it.displayId != Display.DEFAULT_DISPLAY
-        }
-
-        if (externalDisplay != null) {
-            val options = ActivityOptions.makeBasic().apply {
-                launchDisplayId = externalDisplay.displayId
-            }.toBundle()
-            startActivity(intent, options)
-        } else {
-            videoPlayerLauncher.launch(intent)
-        }
+        managers.feature.videoPresentationManager.show(
+            context = this,
+            videoPath = event.videoPath,
+            audioEnabled = event.audioEnabled,
+            scaleMode = event.scaleMode,
+            overlayEnabled = event.overlayEnabled
+        )
     }
 
     private fun checkAndCreateScripts() {
@@ -321,19 +289,19 @@ class MainActivity : ComponentActivity() {
             }
 
             esdeEventListener.onSystemSelected = { systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.updateForSystem(systemName)
                 onGameBrowsingUIVisibilityChanged(false)
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.SystemSelect)
             }
             esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.updateForGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(true)
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
             }
             esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.handleGameStarted(gameFilename)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
@@ -343,7 +311,7 @@ class MainActivity : ComponentActivity() {
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameStart)
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.handleGameEnded()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
@@ -351,7 +319,7 @@ class MainActivity : ComponentActivity() {
                 powerViewModel.setGamePersistActive(false)
             }
             esdeEventListener.onScreensaverStarted = {
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 onScreensaverUIVisibilityChanged(true)
                 esdeViewModel.handleScreensaverStarted()
                 onGameBrowsingUIVisibilityChanged(false)
@@ -360,7 +328,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             esdeEventListener.onScreensaverEnded = { _ ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 onScreensaverUIVisibilityChanged(false)
                 esdeViewModel.handleScreensaverEnded()
                 onGameBrowsingUIVisibilityChanged(false)
@@ -369,7 +337,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             esdeEventListener.onScreensaverGameSelected = { gameFilename, _, systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(false)
             }
