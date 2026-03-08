@@ -66,7 +66,7 @@ fun CustomThemeScreen(
     var selectedSecondaryColor by remember { mutableStateOf(Color(0xFFFF69B4)) }
     var isSolidColor by remember { mutableStateOf(false) }
     var useColorWheel by remember { mutableStateOf(false) }
-    var wheelTarget by remember { mutableStateOf("primary") } // "primary" or "secondary"
+    var wheelTarget by remember { mutableStateOf("primary") }
 
     val colorOptions = remember {
         listOf(
@@ -102,7 +102,7 @@ fun CustomThemeScreen(
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
-            Column {
+            Column(modifier = Modifier.fillMaxSize()) {
                 ScreenHeader(
                     onBackClick = onNavigateBack
                 )
@@ -120,7 +120,6 @@ fun CustomThemeScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
-                    // Preview box
                     Box(
                         modifier = Modifier
                             .width(120.dp)
@@ -149,12 +148,12 @@ fun CustomThemeScreen(
 
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .padding(horizontal = 32.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // Solid color toggle
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -180,7 +179,6 @@ fun CustomThemeScreen(
                         }
                     }
 
-                    // Presets / Wheel toggle
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -202,7 +200,6 @@ fun CustomThemeScreen(
                     }
 
                     if (useColorWheel) {
-                        // Target selector for gradient mode
                         if (!isSolidColor) {
                             item {
                                 Row(
@@ -225,7 +222,6 @@ fun CustomThemeScreen(
                             }
                         }
 
-                        // Color wheel
                         item {
                             val controller = rememberColorPickerController()
                             Column(
@@ -235,8 +231,8 @@ fun CustomThemeScreen(
                             ) {
                                 HsvColorPicker(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(280.dp),
+                                        .width(200.dp)
+                                        .height(160.dp),
                                     controller = controller,
                                     initialColor = if (isSolidColor || wheelTarget == "primary")
                                         selectedPrimaryColor else selectedSecondaryColor,
@@ -258,7 +254,6 @@ fun CustomThemeScreen(
                             }
                         }
                     } else {
-                        // Color selection section
                         if (isSolidColor) {
                             item {
                                 Text(
@@ -351,36 +346,33 @@ fun CustomThemeScreen(
                             }
                         }
                     }
+                }
 
-                    // Action buttons
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp, bottom = 32.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            ActionButton(
-                                text = stringResource(R.string.dialog_cancel),
-                                onClick = onNavigateBack,
-                                isPrimary = false,
-                                modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ActionButton(
+                        text = stringResource(R.string.dialog_cancel),
+                        onClick = onNavigateBack,
+                        isPrimary = false,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ActionButton(
+                        text = stringResource(R.string.custom_theme_create),
+                        onClick = {
+                            val customTheme = ColorTheme.createCustomTheme(
+                                primaryColor = selectedPrimaryColor,
+                                secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
+                                name = "Custom Theme"
                             )
-                            ActionButton(
-                                text = stringResource(R.string.custom_theme_create),
-                                onClick = {
-                                    val customTheme = ColorTheme.createCustomTheme(
-                                        primaryColor = selectedPrimaryColor,
-                                        secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
-                                        name = "Custom Theme"
-                                    )
-                                    onThemeCreated(customTheme)
-                                },
-                                isPrimary = true,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
+                            onThemeCreated(customTheme)
+                        },
+                        isPrimary = true,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -399,7 +391,7 @@ private fun ModeTab(
             .height(36.dp)
             .background(
                 color = if (isSelected) ThemePrimaryColor.copy(alpha = 0.8f)
-                        else Color.White.copy(alpha = 0.08f),
+                else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(8.dp)
             )
             .border(

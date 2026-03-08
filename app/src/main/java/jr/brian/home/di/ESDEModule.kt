@@ -16,11 +16,13 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.esde.data.ESDEEventListener
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -129,4 +131,9 @@ object ESDEModule {
     ): ESDEEventManager {
         return ESDEEventManager(eventListener)
     }
+
+    @UnstableApi
+    @Provides
+    @Singleton
+    fun provideVideoPresentationManager(): VideoPresentationManager = VideoPresentationManager
 }

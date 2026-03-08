@@ -374,6 +374,8 @@
     <string name="faq_theme_sharing_answer">Theme Sharing broadcasts your active theme to nearby devices over Bluetooth Low Energy (BLE). Both devices must have the app open with sharing active at the same time.\n\nSet a display name so others can identify your themes. When a theme is received, it appears in the Theme Sharing screen — tap it to apply and save it.\n\nFor reliable background sharing, disable battery optimization for this app in your device settings.</string>
     <string name="faq_wallpaper_sharing_question">How does Wallpaper Sharing work?</string>
     <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
+    <string name="faq_wallpaper_automation_question">How can I use MacroDroid (or similar) to toggle wallpaper modes?</string>
+    <string name="faq_wallpaper_automation_answer">You can trigger wallpaper mode switches from any automation app (e.g. MacroDroid, Tasker) by sending a broadcast intent.\n\nIn MacroDroid, add a Send Intent action, set Type to Broadcast, and fill in these fields:</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
@@ -1133,4 +1135,7 @@
     <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
     <string name="floaty_mode_reset_description">Turn off and lock it again until version is tapped 7 times</string>
     <string name="floaty_mode_reset_done">Floaty mode reset. Tap version 7 times to unlock again.</string>
+
+    <string name="esde_wallpaper">ES-DE Wallpaper</string>
+    <string name="standard_wallpaper">Standard Wallpaper</string>
 </resources>

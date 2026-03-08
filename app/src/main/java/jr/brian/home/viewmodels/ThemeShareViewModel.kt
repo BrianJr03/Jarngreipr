@@ -157,7 +157,6 @@ class ThemeShareViewModel @Inject constructor(
             .notify(System.currentTimeMillis().toInt(), notification)
     }
 
-
     companion object {
         private const val CHANNEL_ID = "ping_received_themes"
     }
