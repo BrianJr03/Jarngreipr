@@ -7,22 +7,35 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
@@ -59,7 +72,7 @@ fun FAQScreen(
         FAQItem(
             question = R.string.faq_app_close_question,
             answer = R.string.faq_app_close_answer
-        )
+        ),
     )
 
     Scaffold(
@@ -74,7 +87,7 @@ fun FAQScreen(
         ) {
             Column {
                 ScreenHeader(onBackClick = onDismiss)
-                
+
                 Text(
                     text = stringResource(R.string.faq_screen_title),
                     fontSize = 28.sp,
@@ -90,6 +103,8 @@ fun FAQScreen(
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    item { WallpaperAutomationFAQCard() }
+
                     items(faqItems) { faqItem ->
                         FAQCard(
                             question = stringResource(faqItem.question),
@@ -97,6 +112,126 @@ fun FAQScreen(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WallpaperAutomationFAQCard() {
+    val clipboardManager = LocalClipboardManager.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = subtleCardGradient(isFocused = false),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = 1.dp,
+                brush = borderBrush(
+                    isFocused = true,
+                    colors = listOf(
+                        ThemePrimaryColor.copy(alpha = 0.3f),
+                        ThemeSecondaryColor.copy(alpha = 0.3f)
+                    )
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(20.dp)
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.faq_wallpaper_automation_question),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = ThemePrimaryColor,
+                lineHeight = 24.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val answerText = stringResource(R.string.faq_wallpaper_automation_answer)
+            Text(
+                text = buildAnnotatedString {
+                    val keyword = "Broadcast"
+                    val idx = answerText.indexOf(keyword)
+                    if (idx >= 0) {
+                        append(answerText.substring(0, idx))
+                        withStyle(SpanStyle(color = ThemePrimaryColor)) { append(keyword) }
+                        append(answerText.substring(idx + keyword.length))
+                    } else {
+                        append(answerText)
+                    }
+                },
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.White.copy(alpha = 0.85f),
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            CopyableRow(
+                label = "Package",
+                value = "jr.brian.home",
+                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "ES-DE wallpaper action",
+                value = "jr.brian.SET_ESDE_WALLPAPER",
+                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "Standard wallpaper action",
+                value = "jr.brian.SET_STANDARD_WALLPAPER",
+                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CopyableRow(
+    label: String,
+    value: String,
+    onCopy: (String) -> Unit
+) {
+    Column {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.White.copy(alpha = 0.5f),
+            lineHeight = 16.sp
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = value,
+                fontSize = 13.sp,
+                fontFamily = FontFamily.Monospace,
+                color = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = { onCopy(value) },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copy $label",
+                    tint = ThemePrimaryColor,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }
