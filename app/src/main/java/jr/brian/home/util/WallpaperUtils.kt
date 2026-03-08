@@ -3,6 +3,8 @@ package jr.brian.home.util
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
+import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
 
@@ -104,20 +106,6 @@ object WallpaperUtils {
     }
 
     /**
-     * Deletes all wallpaper files from internal storage
-     */
-    fun deleteAllWallpapers(context: Context) {
-        try {
-            val wallpaperDir = File(context.filesDir, WALLPAPER_DIR)
-            if (wallpaperDir.exists()) {
-                wallpaperDir.listFiles()?.forEach { it.delete() }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    /**
      * Gets the appropriate video extension from the source URI
      */
     private fun getVideoExtension(context: Context, uri: Uri): String {
@@ -139,7 +127,35 @@ object WallpaperUtils {
             mimeType?.contains("png") == true -> "png"
             mimeType?.contains("webp") == true -> "webp"
             mimeType?.contains("bmp") == true -> "bmp"
-            else -> "jpg" // Default to jpg
+            else -> "jpg"
+        }
+    }
+
+    fun useStandardWallpaper(
+        target: WallpaperToggleTarget,
+        wallpaperManager: WallpaperManager
+    ) {
+        when (target) {
+            WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
+            WallpaperToggleTarget.SavedImage -> {
+                val uri = wallpaperManager.savedImageUri
+                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.IMAGE)
+                else wallpaperManager.setTransparent()
+            }
+
+            WallpaperToggleTarget.SavedGif -> {
+                val uri = wallpaperManager.savedGifUri
+                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.GIF)
+                else wallpaperManager.setTransparent()
+            }
+
+            WallpaperToggleTarget.SavedVideo -> {
+                val uri = wallpaperManager.savedVideoUri
+                if (uri != null) wallpaperManager.setWallpaper(uri, WallpaperType.VIDEO)
+                else wallpaperManager.setTransparent()
+            }
+
+            WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
         }
     }
 }
