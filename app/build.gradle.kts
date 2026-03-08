@@ -1,8 +1,7 @@
-import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -53,13 +52,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         aidl = true
         buildConfig = true
+        resValues = true
     }
     
     packaging {
@@ -70,18 +67,24 @@ android {
             )
         }
     }
+}
 
-    applicationVariants.all {
-        val variant = this
-        outputs.all {
-            if (this is ApkVariantOutputImpl) {
-                outputFileName = if (variant.buildType.name == "release") {
-                    "app-${variant.flavorName}-release.apk"
-                } else {
-                    "jarngreipr-${variant.versionName}.apk"
-                }
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val name = if (variant.buildType == "release") {
+                "app-${variant.flavorName}-release.apk"
+            } else {
+                "jarngreipr-${version}.apk"
             }
+            (output as com.android.build.api.variant.impl.VariantOutputImpl).outputFileName.set(name)
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -125,12 +128,19 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Color Picker
+    implementation(libs.colorpicker.compose)
+
     // Konfetti
     implementation(libs.konfetti.compose)
 
     // Shizuku
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
+
+    // Ping
+    implementation(libs.ping)
+    implementation(libs.ping.nearby)
 
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)

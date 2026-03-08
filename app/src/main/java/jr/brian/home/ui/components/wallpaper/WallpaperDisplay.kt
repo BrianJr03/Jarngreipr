@@ -30,6 +30,8 @@ import androidx.media3.ui.PlayerView
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
+import coil.request.repeatCount
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.theme.oledBackgroundColor
@@ -110,7 +112,10 @@ fun WallpaperDisplay(
 
                         Image(
                             painter = rememberAsyncImagePainter(
-                                model = uri.toUri(),
+                                model = ImageRequest.Builder(context)
+                                    .data(uri.toUri())
+                                    .repeatCount(-1)
+                                    .build(),
                                 imageLoader = imageLoader,
                                 onError = { showError = true }
                             ),

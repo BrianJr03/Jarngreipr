@@ -108,6 +108,7 @@ fun SettingsScreen(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
+    onNavigateToThemeShare: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
@@ -173,6 +174,7 @@ fun SettingsScreen(
                     allAppsUnfiltered = allAppsUnfiltered,
                     onNavigateToFAQ = onNavigateToFAQ,
                     onNavigateToCustomTheme = onNavigateToCustomTheme,
+                    onNavigateToThemeShare = onNavigateToThemeShare,
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                     onNavigateToMonitor = onNavigateToMonitor,
@@ -319,6 +321,7 @@ private fun SettingsContent(
     allAppsUnfiltered: List<AppInfo> = emptyList(),
     onNavigateToFAQ: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
+    onNavigateToThemeShare: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToBackButtonShortcut: () -> Unit = {},
     onNavigateToMonitor: () -> Unit = {},
@@ -456,6 +459,7 @@ private fun SettingsContent(
                     isExpanded = expandedSection == SECTION_APPEARANCE,
                     onToggle = { toggleSection(SECTION_APPEARANCE) },
                     onNavigateToCustomTheme = onNavigateToCustomTheme,
+                    onNavigateToThemeShare = onNavigateToThemeShare,
                     onIconPackChanged = onIconPackChanged,
                     onNavigateToEsdeSettings = onNavigateToEsdeSettings
                 )

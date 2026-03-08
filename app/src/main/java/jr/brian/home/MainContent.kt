@@ -55,6 +55,7 @@ import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.recentAppsScreen
+import jr.brian.home.ui.navigation.themeShareScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.volumeControlsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
@@ -289,9 +290,10 @@ fun MainContent(
 
                 recentAppsScreen(navController = navController)
 
+                themeShareScreen(navController = navController)
+
                 settingsScreen(
                     navController = navController,
-                    context = context,
                     mainViewModel = mainViewModel
                 )
 

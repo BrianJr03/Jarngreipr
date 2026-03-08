@@ -1,12 +1,16 @@
 package jr.brian.home
 
+import android.Manifest
 import android.app.ActivityOptions
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Bundle
 import android.view.Display
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,6 +20,7 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -38,6 +43,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.data.PingBroadcastManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
@@ -58,8 +64,11 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.ping.PingPermissions.hasPingPermissions
+import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -78,17 +87,30 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
+    @Inject
+    lateinit var pingBroadcastManager: PingBroadcastManager
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             esdeViewModel.onVideoActivityFinished()
         }
+    
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
 
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            }
 
         esdeEventManager.startWatching()
         esdeEventManager.startPolling()
@@ -104,9 +126,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
+                    val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
+                    val themeManager = LocalThemeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
@@ -118,6 +142,22 @@ class MainActivity : ComponentActivity() {
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
+                    
+                    LaunchedEffect(Unit) {
+                        if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
+                            themeManager.shareCurrentTheme()
+                        }
+                        if (context.hasNearbyPermissions() && themeManager.isWallpaperNearbyAutoStart) {
+                            themeManager.startWallpaperNearby()
+                        }
+                    }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            themeManager.stopSharing()
+                            themeManager.stopWallpaperNearby()
+                        }
+                    }
 
                     ObserveVideoLaunchEvents(
                         esdeViewModel = esdeViewModel,
