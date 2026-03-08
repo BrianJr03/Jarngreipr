@@ -42,6 +42,16 @@ fun FAQScreen(
 
     val faqItems = listOf(
         FAQItem(
+            question = R.string.faq_theme_sharing_question,
+            answer = R.string.faq_theme_sharing_answer
+        ),
+
+        FAQItem(
+            question = R.string.faq_wallpaper_sharing_question,
+            answer = R.string.faq_wallpaper_sharing_answer
+        ),
+
+        FAQItem(
             question = R.string.faq_keyboard_question,
             answer = R.string.faq_keyboard_answer
         ),

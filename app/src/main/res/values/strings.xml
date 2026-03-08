@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Jarngreipr</string>
+    <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
     <string name="keyboard_button_select">Select Button</string>
@@ -82,8 +83,51 @@
     <string name="app_options_rename_save">Save</string>
     <string name="app_options_rename_reset">Reset</string>
 
-    <string name="settings_color_theme_title">Color Theme</string>
-    <string name="settings_color_theme_description">Customize app colors</string>
+    <string name="settings_color_theme_title">Choose Theme</string>
+
+    <!-- Theme Share Info Dialog -->
+    <string name="theme_share_info_dialog_title">Theme Sharing</string>
+    <string name="theme_share_info_dialog_bullet_1">• Broadcasts your active theme to nearby devices over Bluetooth</string>
+    <string name="theme_share_info_dialog_bullet_2">• Both devices must have sharing active at the same time</string>
+    <string name="theme_share_info_dialog_bullet_3">• Set a display name so others know who sent a theme</string>
+    <string name="theme_share_info_dialog_bullet_4">• Tap a received theme to apply and save it</string>
+    <string name="theme_share_info_dialog_bullet_5">• Disable battery optimization for reliable background use</string>
+    <string name="theme_share_info_dialog_faq_hint">You can revisit this in FAQ</string>
+    <string name="theme_share_info_dialog_got_it">Got it</string>
+    <!-- Theme Sharing Screen -->
+    <string name="theme_sharing_title">Theme Sharing</string>
+    <string name="theme_sharing_subtitle">Theme Sharing via BLE</string>
+    <string name="theme_sharing_ping">Start Theme Sharing</string>
+    <string name="theme_sharing_stop">Stop Theme Sharing</string>
+    <string name="theme_sharing_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
+    <string name="theme_sharing_edit_name_description">Edit name</string>
+    <string name="theme_sharing_name_default_hint">Default name will be used (%1$s)</string>
+    <string name="theme_sharing_notification_title">Themes Received</string>
+    <string name="theme_sharing_notification_single">1 theme from %1$s</string>
+    <string name="theme_sharing_notification_multiple">%1$d themes from %2$s</string>
+    <string name="wallpaper_sharing_notification_title">Wallpaper Received</string>
+    <string name="wallpaper_sharing_notification_text">A new system background was received via Nearby</string>
+    <!-- Ping Service Notification -->
+    <string name="ping_notification_title">Theme Sharing is active</string>
+    <!-- Nearby Wallpaper -->
+    <string name="wallpaper_nearby_auto_start_title">Wallpaper Sharing Auto-Start</string>
+    <string name="wallpaper_nearby_auto_start_description">Broadcast current wallpaper automatically on launch</string>
+    <string name="nearby_wallpaper_title">Nearby Wallpaper</string>
+    <string name="nearby_wallpaper_subtitle">Wallpaper Sharing via Wi-Fi Direct</string>
+    <string name="nearby_wallpaper_start">Start Discovery</string>
+    <string name="nearby_wallpaper_stop">Stop Discovery</string>
+    <string name="nearby_wallpaper_no_wallpaper">No wallpaper set to share</string>
+    <string name="nearby_wallpaper_current_esde">Sharing current ESDE wallpaper</string>
+    <string name="nearby_wallpaper_current_path">Sharing current wallpaper</string>
+    <string name="nearby_wallpaper_scanning">Scanning for nearby devices…</string>
+    <string name="nearby_wallpaper_send">Send</string>
+    <string name="nearby_wallpaper_transfer_failed">Transfer failed — tap Send to retry</string>
+    <string name="nearby_wallpaper_received_title">Received Wallpapers</string>
+    <string name="nearby_wallpaper_apply">Apply</string>
+    <string name="nearby_wallpaper_delete_description">Delete received wallpaper</string>
+    <!-- Ping Auto-Start Toggle -->
+    <string name="ping_auto_start_title">Theme Sharing Auto-Start</string>
+    <string name="ping_auto_start_description">Broadcast current theme automatically on launch</string>
 
     <!-- Color Theme Names -->
     <string name="theme_pink_violet">Pink &amp; Violet</string>
@@ -98,6 +142,8 @@
     <!-- Custom Theme Dialog -->
     <string name="custom_theme_dialog_title">@string/common_create_custom_theme</string>
     <string name="custom_theme_solid_color">Solid Color</string>
+    <string name="custom_theme_mode_presets">Presets</string>
+    <string name="custom_theme_mode_wheel">Color Wheel</string>
     <string name="custom_theme_preview">Preview</string>
     <string name="custom_theme_color">Color</string>
     <string name="custom_theme_primary_color">Primary Color</string>
@@ -324,6 +370,10 @@
     <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
+    <string name="faq_theme_sharing_question">How does Theme Sharing work?</string>
+    <string name="faq_theme_sharing_answer">Theme Sharing broadcasts your active theme to nearby devices over Bluetooth Low Energy (BLE). Both devices must have the app open with sharing active at the same time.\n\nSet a display name so others can identify your themes. When a theme is received, it appears in the Theme Sharing screen — tap it to apply and save it.\n\nFor reliable background sharing, disable battery optimization for this app in your device settings.</string>
+    <string name="faq_wallpaper_sharing_question">How does Wallpaper Sharing work?</string>
+    <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>

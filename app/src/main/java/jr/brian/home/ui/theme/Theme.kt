@@ -15,7 +15,9 @@ import jr.brian.home.ui.theme.managers.TabAnimationManager
 import jr.brian.home.ui.theme.managers.ThemeManager
 
 @Composable
-fun LauncherTheme(content: @Composable () -> Unit) {
+fun LauncherTheme(
+    content: @Composable () -> Unit
+) {
     val context = LocalContext.current
     val themeManager = remember { ThemeManager(context) }
     val oledModeManager = remember { OledModeManager(context) }
