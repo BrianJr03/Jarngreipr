@@ -70,7 +70,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,7 +91,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                // Disclaimer
                 InfoBox(borderColor = ThemeSecondaryColor.copy(alpha = 0.4f)) {
                     Text(
                         text = stringResource(R.string.jingles_info_disclaimer),
@@ -102,7 +100,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     )
                 }
 
-                // Getting Started header
                 Text(
                     text = stringResource(R.string.jingles_info_getting_started),
                     color = ThemePrimaryColor,
@@ -110,21 +107,35 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     fontWeight = FontWeight.Bold
                 )
 
-                // Local Folder section
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = stringResource(R.string.jingles_info_local_title),
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column (
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = stringResource(R.string.jingles_info_local_title),
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(R.string.jingles_info_local_subtitle),
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
                     listOf(
                         stringResource(R.string.jingles_info_local_step1),
                         stringResource(R.string.jingles_info_local_step2),
                         stringResource(R.string.jingles_info_local_step3),
                         stringResource(R.string.jingles_info_local_step4)
                     ).forEach { step ->
-                        Text(text = step, color = Color.LightGray, fontSize = 13.sp, lineHeight = 20.sp)
+                        Text(
+                            text = step,
+                            color = Color.LightGray,
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp
+                        )
                     }
                     Box(
                         modifier = Modifier
@@ -142,14 +153,23 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                // GitHub section
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = stringResource(R.string.jingles_info_github_title),
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column (
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = stringResource(R.string.jingles_info_github_title),
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(R.string.jingles_info_github_subtitle),
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.jingles_info_github_body),
                         color = Color.LightGray,
@@ -184,17 +204,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                // Special thanks
-                InfoBox(borderColor = ThemeSecondaryColor.copy(alpha = 0.4f)) {
-                    Text(
-                        text = stringResource(R.string.jingles_info_thanks),
-                        color = Color.LightGray,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp
-                    )
-                }
-
-                // Close button
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
@@ -225,8 +234,15 @@ private fun InfoBox(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = Color(0xFF2A2020), shape = RoundedCornerShape(12.dp))
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
+            .background(
+                color = OledCardColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
             .padding(14.dp)
     ) {
         content()
