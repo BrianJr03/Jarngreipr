@@ -69,6 +69,7 @@ fun ESDESettingsContent(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -332,6 +333,26 @@ fun ESDESettingsContent(
         }
 
         CollapsibleSection(
+            title = stringResource(R.string.jingles_screen_title),
+            onHeaderTap = onSectionHeaderTap
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.jingles_section_info),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.jingles_launch_title),
+                    description = stringResource(R.string.jingles_manage_description),
+                    checked = false,
+                    showToggle = false,
+                    onClick = onNavigateToJingles
+                )
+            }
+        }
+
+        CollapsibleSection(
             title = stringResource(R.string.esde_settings_section_konfetti),
             onHeaderTap = onSectionHeaderTap
         ) {
@@ -565,6 +586,7 @@ fun ESDEDisplaySection(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
@@ -578,6 +600,7 @@ fun ESDEDisplaySection(
             onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
             onNavigateToSystemApps = onNavigateToSystemApps,
             onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+            onNavigateToJingles = onNavigateToJingles,
             onSectionHeaderTap = onSectionHeaderTap
         )
     }
