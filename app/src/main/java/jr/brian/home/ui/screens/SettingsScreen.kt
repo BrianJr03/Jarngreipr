@@ -76,6 +76,7 @@ import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.sections.AppearanceSection
 import jr.brian.home.ui.components.settings.sections.ESDEDisplaySection
 import jr.brian.home.ui.components.settings.sections.ExtrasSection
+import jr.brian.home.ui.components.settings.sections.JinglesSection
 import jr.brian.home.ui.components.settings.sections.LayoutSection
 import jr.brian.home.ui.components.settings.sections.SupportSection
 import jr.brian.home.ui.components.settings.sections.SystemSection
@@ -93,6 +94,7 @@ import jr.brian.home.util.UpdateInfo
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_APPEARANCE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_JINGLES
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
@@ -522,6 +524,13 @@ private fun SettingsContent(
                     isExpanded = expandedSection == SECTION_EXTRAS,
                     onToggle = { toggleSection(SECTION_EXTRAS) },
                     onWhatsNewClick = onWhatsNewClick
+                )
+            }
+
+            item(key = SECTION_JINGLES) {
+                JinglesSection(
+                    isExpanded = expandedSection == SECTION_JINGLES,
+                    onToggle = { toggleSection(SECTION_JINGLES) }
                 )
             }
         }
