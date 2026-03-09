@@ -123,6 +123,7 @@ fun SettingsScreen(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -190,6 +191,7 @@ fun SettingsScreen(
                     isCheckingForUpdates = isCheckingForUpdates,
                     onNavigateToSystemApps = onNavigateToSystemApps,
                     onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+                    onNavigateToJingles = onNavigateToJingles,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onCheckForUpdates = {
@@ -340,6 +342,7 @@ private fun SettingsContent(
     onCheckForUpdates: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -530,7 +533,8 @@ private fun SettingsContent(
             item(key = SECTION_JINGLES) {
                 JinglesSection(
                     isExpanded = expandedSection == SECTION_JINGLES,
-                    onToggle = { toggleSection(SECTION_JINGLES) }
+                    onToggle = { toggleSection(SECTION_JINGLES) },
+                    onLaunchJingles = onNavigateToJingles
                 )
             }
         }

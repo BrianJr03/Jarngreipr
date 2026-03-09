@@ -18,6 +18,7 @@ object Routes {
     const val THEME_SHARE = "theme_share"
     const val SETTINGS = "settings"
     const val VOLUME_CONTROLS = "volume_controls"
+    const val JINGLES = "jingles"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
 
     fun widgetPicker(pageIndex: Int) = "widget_picker/$pageIndex"
