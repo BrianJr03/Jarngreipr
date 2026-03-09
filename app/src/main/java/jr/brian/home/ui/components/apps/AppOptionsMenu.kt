@@ -24,7 +24,7 @@ fun AppOptionsMenu(
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {},
+    onToggleVisibility: (() -> Unit)? = null,
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}

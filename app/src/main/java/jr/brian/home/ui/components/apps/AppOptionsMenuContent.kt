@@ -48,7 +48,7 @@ fun AppOptionsMenuContent(
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {},
+    onToggleVisibility: (() -> Unit)? = null,
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}
@@ -57,37 +57,48 @@ fun AppOptionsMenuContent(
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
 
     val items: List<GridItem> = buildList {
-        add(GridItem.IconItem(
+        add(
+            GridItem.IconItem(
             icon = Icons.Default.Info,
             label = stringResource(R.string.app_options_info),
             onClick = { onAppInfoClick(); onDismiss() }
         ))
-        if (!isInDock) {
-            add(GridItem.IconItem(
+        if (!isInDock && onToggleVisibility != null) {
+            add(
+                GridItem.IconItem(
                 icon = Icons.Default.VisibilityOff,
                 label = stringResource(R.string.app_options_hide),
-                onClick = { onToggleVisibility(); onDismiss() }
+                onClick = {
+                    onToggleVisibility.invoke()
+                    onDismiss()
+                }
             ))
         }
-        add(GridItem.IconItem(
-            icon = Icons.Default.Image,
-            label = stringResource(R.string.app_options_icon),
-            onClick = onCustomIconClick
-        ))
-        add(GridItem.IconItem(
-            icon = Icons.Default.Edit,
-            label = stringResource(R.string.app_options_rename),
-            onClick = onRenameClick
-        ))
+        add(
+            GridItem.IconItem(
+                icon = Icons.Default.Image,
+                label = stringResource(R.string.app_options_icon),
+                onClick = onCustomIconClick
+            )
+        )
+        add(
+            GridItem.IconItem(
+                icon = Icons.Default.Edit,
+                label = stringResource(R.string.app_options_rename),
+                onClick = onRenameClick
+            )
+        )
         if (isInDock) {
-            add(GridItem.IconItem(
+            add(
+                GridItem.IconItem(
                 icon = Icons.Default.RemoveCircleOutline,
                 label = stringResource(R.string.dock_remove_app),
                 onClick = { onRemoveFromDock(); onDismiss() }
             ))
         }
         if (app != null && !isInDock) {
-            add(GridItem.IconItem(
+            add(
+                GridItem.IconItem(
                 icon = Icons.Default.OpenInFull,
                 label = stringResource(R.string.app_options_resize),
                 onClick = {
@@ -97,7 +108,8 @@ fun AppOptionsMenuContent(
             ))
         }
         if (hasExternalDisplay) {
-            add(GridItem.TextItem(
+            add(
+                GridItem.TextItem(
                 text = stringResource(R.string.app_options_launch_primary_descr),
                 isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                 onClick = {
@@ -105,7 +117,8 @@ fun AppOptionsMenuContent(
                     onDismiss()
                 }
             ))
-            add(GridItem.TextItem(
+            add(
+                GridItem.TextItem(
                 text = stringResource(R.string.app_options_launch_external_descr),
                 isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
                 onClick = {
@@ -167,6 +180,7 @@ fun AppOptionsMenuContent(
                                         },
                                         onFocusChanged = {}
                                     )
+
                                     is GridItem.TextItem -> TextGridOption(
                                         text = item.text,
                                         onClick = item.onClick,
