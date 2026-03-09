@@ -562,6 +562,10 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 onNavigateToKonfettiEditor = {
                     showScreen = false
                     navController.navigate(Routes.KONFETTI_EDITOR)
+                },
+                onNavigateToJingles = {
+                    showScreen = false
+                    navController.navigate(Routes.JINGLES)
                 }
             )
         }
