@@ -515,6 +515,7 @@ fun LauncherPagerScreen(
                         apps = homeUiState.allApps,
                         appsUnfiltered = homeUiState.allAppsUnfiltered,
                         isLoading = homeUiState.isLoading,
+                        showHideAppButton = false,
                         allApps = homeUiState.allAppsUnfiltered,
                         pageIndex = currentPage,
                         isHeaderVisible = isHeaderVisible,

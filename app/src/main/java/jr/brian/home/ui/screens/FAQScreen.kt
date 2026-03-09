@@ -24,14 +24,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import android.content.ClipData
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -119,7 +122,16 @@ fun FAQScreen(
 
 @Composable
 private fun WallpaperAutomationFAQCard() {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    fun copyText(text: String) {
+        scope.launch {
+            clipboard.setClipEntry(
+                ClipEntry(ClipData.newPlainText("", text))
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -174,17 +186,9 @@ private fun WallpaperAutomationFAQCard() {
             Spacer(modifier = Modifier.height(16.dp))
 
             CopyableRow(
-                label = "Package",
-                value = "jr.brian.home",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            CopyableRow(
                 label = "ES-DE wallpaper action",
                 value = "jr.brian.SET_ESDE_WALLPAPER",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+                onCopy = { copyText(it) }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -192,7 +196,23 @@ private fun WallpaperAutomationFAQCard() {
             CopyableRow(
                 label = "Standard wallpaper action",
                 value = "jr.brian.SET_STANDARD_WALLPAPER",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+                onCopy = { copyText(it) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "Package",
+                value = "jr.brian.home",
+                onCopy = { copyText(it) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "Class",
+                value = "jr.brian.home.WallpaperActionReceiver",
+                onCopy = { copyText(it) }
             )
         }
     }
