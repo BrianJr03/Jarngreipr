@@ -50,6 +50,7 @@ import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.esdeSettingsScreen
 import jr.brian.home.ui.navigation.esdeSystemAppsScreen
 import jr.brian.home.ui.navigation.faqScreen
+import jr.brian.home.ui.navigation.jinglesScreen
 import jr.brian.home.ui.navigation.konfettiEditorScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
@@ -319,6 +320,10 @@ fun MainContent(
                 )
 
                 konfettiEditorScreen(
+                    navController = navController
+                )
+
+                jinglesScreen(
                     navController = navController
                 )
             }

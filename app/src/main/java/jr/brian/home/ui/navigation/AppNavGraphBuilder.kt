@@ -22,6 +22,7 @@ import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
+import jr.brian.home.ui.screens.JinglesScreen
 import jr.brian.home.esde.ui.MarqueePressShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
@@ -291,6 +292,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToKonfettiEditor = {
                     showScreen = false
                     navController.navigate(Routes.KONFETTI_EDITOR)
+                },
+                onNavigateToJingles = {
+                    showScreen = false
+                    navController.navigate(Routes.JINGLES)
                 },
                 onDismiss = {
                     showScreen = false
@@ -619,6 +624,23 @@ fun NavGraphBuilder.konfettiEditorScreen(
 
         SlideInVertically(showScreen) {
             KonfettiEditorScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.jinglesScreen(
+    navController: NavHostController
+) {
+    composable(Routes.JINGLES) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            JinglesScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
