@@ -62,6 +62,7 @@ internal const val JINGLES_PREFS = "jingles_prefs"
 internal const val KEY_REPOS = "jingle_repos"
 internal const val KEY_LOCAL_FOLDERS = "jingle_local_folders"
 internal const val KEY_ENABLED = "jingles_enabled"
+private const val KEY_INFO_SEEN = "jingles_info_seen"
 
 @Composable
 fun JinglesScreen(
@@ -91,7 +92,7 @@ fun JinglesScreen(
     }
     var repoInput by remember { mutableStateOf("") }
     var folderError by remember { mutableStateOf<String?>(null) }
-    var showInfoDialog by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(!prefs.getBoolean(KEY_INFO_SEEN, false)) }
     val errorString = stringResource(R.string.jingles_invalid_folder_error)
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -141,7 +142,10 @@ fun JinglesScreen(
     }
 
     if (showInfoDialog) {
-        JinglesInfoDialog(onDismiss = { showInfoDialog = false })
+        JinglesInfoDialog(onDismiss = {
+            prefs.edit { putBoolean(KEY_INFO_SEEN, true) }
+            showInfoDialog = false
+        })
     }
 
     Scaffold(containerColor = OledBackgroundColor) { innerPadding ->

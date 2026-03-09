@@ -1149,7 +1149,7 @@
     <string name="jingles_repositories_label">Repositories</string>
     <string name="jingles_add_repo_description">Add repo</string>
     <string name="jingles_remove_repo_description">Remove %s</string>
-    <string name="jingles_launch_title">Launch Jingles</string>
+    <string name="jingles_launch_title">Manage Jingles</string>
     <string name="jingles_launch_description">Build your own collection of game jingles</string>
     <string name="jingles_section_info">Build a collection of game Jingles from GitHub repositories</string>
     <string name="jingles_manage_description">Manage repositories and playback settings</string>
@@ -1160,16 +1160,19 @@
     <string name="jingles_remove_folder_description">Remove %s</string>
     <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
     <!-- Jingles Info Dialog -->
-    <string name="jingles_info_button_description">About Jingles</string>
-    <string name="jingles_info_title">About Jingles</string>
-    <string name="jingles_info_disclaimer">Repositories are hosted by third parties and may contain copyrighted material. Jarngreipr does not host, verify, or control repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
+    <string name="jingles_info_button_description">About Cocoon Jingles</string>
+    <string name="jingles_info_title">About Cocoon Jingles</string>
+    <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Special thanks to the Cocoon team for creating an easy way of sharing audio assets.\n
+\nRepositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
     <string name="jingles_info_getting_started">Getting Started</string>
     <string name="jingles_info_local_title">Local Folder</string>
+    <string name="jingles_info_local_subtitle">Offline playback</string>
     <string name="jingles_info_local_step1">1. Create a folder anywhere on your device.</string>
     <string name="jingles_info_local_step2">2. Add an index.json file at the root of the folder.</string>
     <string name="jingles_info_local_step3">3. Create a jingles/ subfolder and place your audio files inside.</string>
     <string name="jingles_info_local_step4">4. Tap Pick Folder to select your folder.</string>
     <string name="jingles_info_github_title">GitHub Repo</string>
+    <string name="jingles_info_github_subtitle">Streams from GitHub</string>
     <string name="jingles_info_github_body">Fork or use the template below as a starting point, then add it as username/repo-name in the Jingle Repo field.</string>
     <string name="jingles_info_thanks">Special thanks to the Cocoon team for creating an easy way of sharing audio assets.</string>
     <string name="jingles_info_close">Got it</string>
