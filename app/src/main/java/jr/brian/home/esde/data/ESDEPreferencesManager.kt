@@ -84,7 +84,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EFFECTS_EXCLUDED_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
@@ -372,7 +372,7 @@ class ESDEPreferencesManager(context: Context) {
             effectsExcludedPages = effectsExcludedPages,
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
             marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
-            androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
+            gameBackgroundScale = prefs.getFloat(KEY_GAME_BACKGROUND_SCALE, 0.5f),
             marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f),
             overlayMediaType = overlayMediaType,
             logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
@@ -756,10 +756,10 @@ class ESDEPreferencesManager(context: Context) {
         setLogoPositionLocked(!_state.value.marqueePositionLocked)
     }
 
-    fun setAndroidGamesBackgroundScale(scale: Float) {
+    fun setGameBackgroundScale(scale: Float) {
         val coercedScale = scale.coerceIn(0.2f, 1.0f)
-        _state.value = _state.value.copy(androidGamesBackgroundScale = coercedScale)
-        prefs.edit { putFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, coercedScale) }
+        _state.value = _state.value.copy(gameBackgroundScale = coercedScale)
+        prefs.edit { putFloat(KEY_GAME_BACKGROUND_SCALE, coercedScale) }
     }
 
     fun setMarqueeMinWidthPercent(percent: Float) {

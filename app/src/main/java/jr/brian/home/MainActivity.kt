@@ -36,7 +36,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.data.JinglesManager
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEEventListenerImpl
@@ -76,9 +75,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
-
-    @Inject
-    lateinit var jinglesManager: JinglesManager
 
     private val esdeViewModel: ESDEViewModel by viewModels()
 
@@ -214,12 +210,13 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         esdeViewModel.musicController.onActivityInvisible()
+        managers.feature.jinglesManager.stop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         managers.feature.esdeEventManager.stopWatching()
-        jinglesManager.release()
+        managers.feature.jinglesManager.release()
     }
 
     @UnstableApi
@@ -295,7 +292,7 @@ class MainActivity : ComponentActivity() {
 
             esdeEventListener.onSystemSelected = { systemName ->
                 managers.feature.videoPresentationManager.dismiss()
-                jinglesManager.stop()
+                managers.feature.jinglesManager.stop()
                 esdeViewModel.updateForSystem(systemName)
                 onGameBrowsingUIVisibilityChanged(false)
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.SystemSelect)
@@ -305,11 +302,11 @@ class MainActivity : ComponentActivity() {
                 esdeViewModel.updateForGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(true)
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
-                jinglesManager.onGameSelected(gameFilename)
+                managers.feature.jinglesManager.onGameSelected(gameFilename)
             }
             esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
                 managers.feature.videoPresentationManager.dismiss()
-                jinglesManager.stop()
+                managers.feature.jinglesManager.stop()
                 esdeViewModel.handleGameStarted(gameFilename)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
@@ -320,7 +317,7 @@ class MainActivity : ComponentActivity() {
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
                 managers.feature.videoPresentationManager.dismiss()
-                jinglesManager.stop()
+                managers.feature.jinglesManager.stop()
                 esdeViewModel.handleGameEnded()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
@@ -329,7 +326,7 @@ class MainActivity : ComponentActivity() {
             }
             esdeEventListener.onScreensaverStarted = {
                 managers.feature.videoPresentationManager.dismiss()
-                jinglesManager.stop()
+                managers.feature.jinglesManager.stop()
                 onScreensaverUIVisibilityChanged(true)
                 esdeViewModel.handleScreensaverStarted()
                 onGameBrowsingUIVisibilityChanged(false)

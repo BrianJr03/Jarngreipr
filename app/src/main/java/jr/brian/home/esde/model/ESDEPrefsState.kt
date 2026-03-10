@@ -24,6 +24,7 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
+    Marquee("marquees"),
     MixImages("miximages"),
     Description(null);
 
@@ -189,7 +190,7 @@ data class ESDEPrefsState(
     
     val marqueePositionLocked: Boolean = false,
     
-    val androidGamesBackgroundScale: Float = 0.5f,
+    val gameBackgroundScale: Float = 0.5f,
     
     val marqueeMinWidthPercent: Float = 0.5f,
     

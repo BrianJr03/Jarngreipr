@@ -160,16 +160,14 @@ fun ESDEWallpaperContainer(
                 prefsState.systemBackgroundScaleMode
             }
 
-            val hasMiximage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
-            val useSmallSize = prefsState.isAndroidGamesSelected()
-                && state.isShowingGameBackground
-                && !hasMiximage
-            val androidGamesScale = prefsState.androidGamesBackgroundScale
+            val hasMixImage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
+            val useScale = state.isShowingGameBackground && !hasMixImage
+            val gameBackgroundScale = prefsState.gameBackgroundScale
 
             if (state.systemBackgroundVideoPath != null) {
-                val videoModifier = if (useSmallSize) {
+                val videoModifier = if (useScale) {
                     Modifier
-                        .fillMaxSize(androidGamesScale)
+                        .fillMaxSize(gameBackgroundScale)
                         .align(Alignment.Center)
                 } else {
                     Modifier.fillMaxSize()
@@ -183,8 +181,8 @@ fun ESDEWallpaperContainer(
             } else {
                 AnimatedWallpaperImage(
                 imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                useSmallSize = useSmallSize,
-                smallSizeScale = androidGamesScale,
+                useSmallSize = useScale,
+                smallSizeScale = gameBackgroundScale,
                 blurLevel = effectiveBlurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
