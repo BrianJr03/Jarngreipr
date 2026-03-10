@@ -114,7 +114,9 @@ class JinglesManager @Inject constructor(
                 val fileName = entry.file.substringAfterLast("/")
                 val rawUrl = "https://raw.githubusercontent.com/$repoSlug/$branch/${entry.file}"
                 val dest = File(jinglesDir, fileName)
-                URL(rawUrl).openStream().use { it.copyTo(dest.outputStream()) }
+                if (!dest.exists()) {
+                    URL(rawUrl).openStream().use { it.copyTo(dest.outputStream()) }
+                }
             }
 
             // Mark as downloaded

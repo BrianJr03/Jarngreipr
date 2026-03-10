@@ -883,6 +883,7 @@
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
+    <string name="esde_settings_game_image_marquee">Marquee</string>
     <string name="esde_settings_game_image_description">Description</string>
     <string name="esde_settings_overlay_media_type">Overlay Media Type</string>
     <string name="esde_settings_overlay_media_type_description">Choose which media type to show for the game logo overlay</string>
@@ -914,8 +915,8 @@
     <string name="esde_settings_marquee_size_reset">@string/common_reset</string>
     <string name="esde_settings_marquee_min_width">Logo Minimum Width</string>
     <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait logo images</string>
-    <string name="esde_settings_android_games_bg_scale">Android Games Background Scale</string>
-    <string name="esde_settings_android_games_bg_scale_description">Size of game artwork for Android Games platform</string>
+    <string name="esde_settings_game_bg_scale">Game Background Scale</string>
+    <string name="esde_settings_game_bg_scale_description">Size of game artwork when browsing games</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>

@@ -546,8 +546,8 @@ fun ESDESettingsContent(
                     preferencesManager.setSystemImageType(type)
                     viewModel.refreshSystemImage()
                 },
-                onAndroidGamesBackgroundScaleChange = { scale ->
-                    preferencesManager.setAndroidGamesBackgroundScale(scale)
+                onGameBackgroundChange = { scale ->
+                    preferencesManager.setGameBackgroundScale(scale)
                 }
             )
         }
