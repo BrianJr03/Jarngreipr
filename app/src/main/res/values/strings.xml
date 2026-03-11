@@ -1175,7 +1175,7 @@
     <string name="jingles_section_info">Build a collection of game Jingles from GitHub repositories</string>
     <string name="jingles_manage_description">Manage repositories and playback settings</string>
     <string name="jingles_local_folder_label">Local Folder</string>
-    <string name="jingles_local_folder_description">Point to a local folder containing index.json and a jingles sub-folder</string>
+    <string name="jingles_local_folder_description">Folder must contain index.json and a jingles sub-folder</string>
     <string name="jingles_pick_folder_description">Pick folder</string>
     <string name="jingles_local_folders_label">Local Folders</string>
     <string name="jingles_remove_folder_description">Remove %s</string>

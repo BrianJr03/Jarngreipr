@@ -62,7 +62,8 @@ fun JinglesSearchDialog(
                     width = 2.dp,
                     color = ThemePrimaryColor.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(24.dp)
-                ).padding(24.dp)
+                )
+                .padding(24.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -97,7 +98,10 @@ fun JinglesSearchDialog(
                         }
                         if (!state.isBrowseMode && state.query.isNotBlank()) {
                             Text(
-                                text = stringResource(R.string.jingles_search_query_label, state.query),
+                                text = stringResource(
+                                    R.string.jingles_search_query_label,
+                                    state.query
+                                ),
                                 color = Color.Gray,
                                 fontSize = 13.sp
                             )
@@ -212,90 +216,92 @@ private fun SearchResultCard(
     isAdded: Boolean,
     onAdd: () -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = Color.White.copy(alpha = 0.04f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.07f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .size(34.dp)
+                .fillMaxWidth()
                 .background(
-                    color = ThemePrimaryColor.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(9.dp)
+                    color = Color.White.copy(alpha = 0.04f),
+                    shape = RoundedCornerShape(12.dp)
                 )
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.07f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = ThemePrimaryColor,
-                modifier = Modifier.size(17.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = repo.fullName,
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (!repo.description.isNullOrBlank()) {
-                Text(
-                    text = repo.description,
-                    color = Color.Gray,
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 16.sp
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(
+                        color = ThemePrimaryColor.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(9.dp)
+                    )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Star,
+                    imageVector = Icons.Default.MusicNote,
                     contentDescription = null,
-                    tint = Color(0xFFFFC107),
-                    modifier = Modifier.size(11.dp)
-                )
-                Text(
-                    text = repo.stars.toString(),
-                    color = Color.Gray,
-                    fontSize = 11.sp
+                    tint = ThemePrimaryColor,
+                    modifier = Modifier.size(17.dp)
                 )
             }
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        TextButton(
-            onClick = { if (!isAdded) onAdd() },
-            enabled = !isAdded,
-            colors = ButtonDefaults.textButtonColors(
-                contentColor = if (isAdded) Color.Gray else ThemePrimaryColor,
-                disabledContentColor = Color.Gray
-            )
-        ) {
-            Text(
-                text = stringResource(
-                    if (isAdded) R.string.jingles_search_added else R.string.jingles_search_add
-                ),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = repo.fullName,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!repo.description.isNullOrBlank()) {
+                    Text(
+                        text = repo.description,
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 16.sp
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Text(
+                        text = repo.stars.toString(),
+                        color = Color.Gray,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            TextButton(
+                onClick = { if (!isAdded) onAdd() },
+                enabled = !isAdded,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = if (isAdded) Color.Gray else ThemePrimaryColor,
+                    disabledContentColor = Color.Gray
+                )
+            ) {
+                Text(
+                    text = stringResource(
+                        if (isAdded) R.string.jingles_search_added else R.string.jingles_search_add
+                    ),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

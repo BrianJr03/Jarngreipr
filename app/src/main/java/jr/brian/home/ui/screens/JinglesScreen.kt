@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
@@ -57,6 +57,7 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.dialog.JinglesInfoDialog
 import jr.brian.home.ui.components.dialog.JinglesSearchDialog
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -101,6 +102,8 @@ fun JinglesScreen(
     }
     var repoInput by remember { mutableStateOf("") }
     var folderError by remember { mutableStateOf<String?>(null) }
+    var reposExpanded by remember { mutableStateOf(false) }
+    var foldersExpanded by remember { mutableStateOf(false) }
     val infoDialogState = rememberDialogState<Unit>()
     val searchDialogState = rememberDialogState<Unit>()
     val errorString = stringResource(R.string.jingles_invalid_folder_error)
@@ -147,6 +150,7 @@ fun JinglesScreen(
         val updated = repos.filter { it != repo }
         repos = updated
         prefs.edit { putStringSet(KEY_REPOS, updated.toSet()) }
+        viewModel.removeDownloadedRepo(repo)
     }
 
     fun removeLocalFolder(uriString: String) {
@@ -160,6 +164,7 @@ fun JinglesScreen(
             val updated = (repos + fullName).sorted()
             repos = updated
             prefs.edit { putStringSet(KEY_REPOS, updated.toSet()) }
+            repoInput = ""
         }
     }
 
@@ -249,9 +254,9 @@ fun JinglesScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = stringResource(R.string.jingles_screen_subtitle),
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
                                 color = Color.Gray,
-                                lineHeight = 20.sp
+                                lineHeight = 22.sp
                             )
                         }
                     }
@@ -269,119 +274,119 @@ fun JinglesScreen(
                     }
 
                     item {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.jingles_repositories_label),
+                            icon = Icons.Default.MusicNote,
+                            isExpanded = reposExpanded,
+                            onToggle = { reposExpanded = !reposExpanded }
                         ) {
-                            Box(modifier = Modifier.weight(1f)) {
-                                SectionHeader(text = stringResource(R.string.jingles_repositories_label))
+//                            BrowseJinglesButton(onClick = {
+//                                searchDialogState.show()
+//                                viewModel.browseAllJingles()
+//                            })
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedTextField(
+                                    value = repoInput,
+                                    onValueChange = { repoInput = it },
+                                    placeholder = {
+                                        Text(
+                                            text = stringResource(R.string.jingles_repo_placeholder),
+                                            fontSize = 13.sp,
+                                            color = Color.Gray
+                                        )
+                                    },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = {
+                                        if (repoInput.isNotBlank()) {
+                                            searchDialogState.show()
+                                            viewModel.searchRepo(repoInput.trim())
+                                        }
+                                    }),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = ThemePrimaryColor,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                                        cursorColor = ThemePrimaryColor,
+                                        focusedLabelColor = ThemePrimaryColor,
+                                        unfocusedLabelColor = Color.Gray,
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SearchRepoButton(onClick = {
+                                    if (repoInput.isNotBlank()) {
+                                        searchDialogState.show()
+                                        viewModel.searchRepo(repoInput.trim())
+                                    }
+                                })
+                                AddRepoButton(onClick = ::addRepo)
                             }
-                            BrowseJinglesButton(onClick = {
-                                searchDialogState.show()
-                                viewModel.browseAllJingles()
-                            })
-                        }
-                    }
-
-                    item {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = repoInput,
-                                onValueChange = { repoInput = it },
-                                placeholder = {
-                                    Text(
-                                        text = stringResource(R.string.jingles_repo_placeholder),
-                                        fontSize = 13.sp,
-                                        color = Color.Gray
-                                    )
-                                },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    focusedBorderColor = ThemePrimaryColor,
-                                    unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                                    cursorColor = ThemePrimaryColor,
-                                    focusedLabelColor = ThemePrimaryColor,
-                                    unfocusedLabelColor = Color.Gray,
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
-                            )
-                            SearchRepoButton(onClick = {
-                                if (repoInput.isNotBlank()) {
-                                    searchDialogState.show()
-                                    viewModel.searchRepo(repoInput.trim())
-                                }
-                            })
-                            AddRepoButton(onClick = ::addRepo)
-                        }
-                    }
-
-                    items(repos, key = { it }) { repo ->
-                        val isDownloaded = repo in downloadedRepos
-                        val downloadedFileCount = remember(isDownloaded, repo) {
-                            if (isDownloaded) viewModel.getDownloadedFileCount(repo) else null
-                        }
-                        RepoCard(
-                            repo = repo,
-                            jingleName = indexNames[repo],
-                            jingleCount = indexCounts[repo],
-                            isDownloaded = isDownloaded,
-                            isDownloading = downloadingRepo == repo,
-                            downloadProgress = downloadProgress.coerceIn(0f, 1f),
-                            downloadedFileCount = downloadedFileCount,
-                            onRemove = {
-                                if (downloadingRepo == repo) viewModel.cancelDownload()
-                                removeRepo(repo)
-                            },
-                            onDownload = { viewModel.downloadRepo(repo) },
-                            onFetchSizeBytes = {
-                                if (isDownloaded) viewModel.getDownloadedSizeBytes(repo)
-                                else viewModel.fetchRepoSizeBytes(repo)
-                            }
-                        )
-                    }
-
-                    item {
-                        SectionHeader(text = stringResource(R.string.jingles_local_folders_label))
-                    }
-
-                    item {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(
-                                text = stringResource(R.string.jingles_local_folder_description),
-                                fontSize = 13.sp,
-                                color = Color.Gray,
-                                lineHeight = 18.sp
-                            )
-                            PickFolderButton(onClick = { folderPickerLauncher.launch(null) })
-                            if (folderError != null) {
-                                Text(
-                                    text = folderError!!,
-                                    fontSize = 13.sp,
-                                    color = Color.Red.copy(alpha = 0.85f)
+                            repos.forEach { repo ->
+                                val isDownloaded = repo in downloadedRepos
+                                RepoCard(
+                                    repo = repo,
+                                    jingleName = indexNames[repo],
+                                    jingleCount = indexCounts[repo],
+                                    isDownloaded = isDownloaded,
+                                    isDownloading = downloadingRepo == repo,
+                                    downloadProgress = downloadProgress.coerceIn(0f, 1f),
+                                    downloadedFileCount = if (isDownloaded) viewModel.getDownloadedFileCount(repo) else null,
+                                    onRemove = {
+                                        if (downloadingRepo == repo) viewModel.cancelDownload()
+                                        removeRepo(repo)
+                                    },
+                                    onDownload = { viewModel.downloadRepo(repo) },
+                                    onStopDownload = { viewModel.cancelDownload() },
+                                    onFetchSizeBytes = {
+                                        if (isDownloaded) viewModel.getDownloadedSizeBytes(repo)
+                                        else viewModel.fetchRepoSizeBytes(repo)
+                                    }
                                 )
                             }
                         }
                     }
 
-                    items(localFolders, key = { it }) { uriString ->
-                        FolderCard(
-                            uriString = uriString,
-                            jingleName = indexNames[uriString],
-                            jingleCount = indexCounts[uriString],
-                            isRefreshing = isRefreshingFolders,
-                            onRefresh = { viewModel.refreshLocalFolders() },
-                            onRemove = { removeLocalFolder(uriString) },
-                            onFetchSizeBytes = { viewModel.getLocalFolderSizeBytes(uriString) }
-                        )
+                    item {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.jingles_local_folders_label),
+                            icon = Icons.Default.Folder,
+                            isExpanded = foldersExpanded,
+                            onToggle = { foldersExpanded = !foldersExpanded }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.jingles_local_folder_description),
+                                fontSize = 15.sp,
+                                color = Color.Gray,
+                                lineHeight = 20.sp
+                            )
+                            PickFolderButton(onClick = { folderPickerLauncher.launch(null) })
+                            if (folderError != null) {
+                                Text(
+                                    text = folderError!!,
+                                    fontSize = 14.sp,
+                                    color = Color.Red.copy(alpha = 0.85f)
+                                )
+                            }
+                            localFolders.forEach { uriString ->
+                                FolderCard(
+                                    uriString = uriString,
+                                    jingleName = indexNames[uriString],
+                                    jingleCount = indexCounts[uriString],
+                                    isRefreshing = isRefreshingFolders,
+                                    onRefresh = { viewModel.refreshLocalFolders() },
+                                    onRemove = { removeLocalFolder(uriString) },
+                                    onFetchSizeBytes = { viewModel.getLocalFolderSizeBytes(uriString) }
+                                )
+                            }
+                        }
                     }
                 }
             }

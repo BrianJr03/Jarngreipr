@@ -77,6 +77,8 @@ class JinglesManager @Inject constructor(
     private var currentPlayJob: Job? = null
     private var currentGameFilename: String? = null
     private var cachedIndices: List<JingleSource> = emptyList()
+    private var exactMatchMap: MutableMap<String, Pair<JingleSource, JingleEntry>> = mutableMapOf()
+    private var lowerEntries: List<Triple<String, JingleSource, JingleEntry>> = emptyList()
     private var indicesLoaded = false
     private val cachedBranch = mutableMapOf<String, String>()
 
@@ -111,6 +113,11 @@ class JinglesManager @Inject constructor(
 
     fun getDownloadedRepos(): Set<String> =
         prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet()) ?: emptySet()
+
+    fun removeDownloadedRepo(repoSlug: String) {
+        val updated = getDownloadedRepos().toMutableSet().also { it.remove(repoSlug) }
+        prefs.edit { putStringSet(KEY_DOWNLOADED_REPOS, updated) }
+    }
 
     @OptIn(UnstableApi::class)
     suspend fun downloadRepo(
@@ -261,23 +268,24 @@ class JinglesManager @Inject constructor(
         }
     }
 
-    private suspend fun isValidJinglesRepo(repoSlug: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
-            val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 10_000
-                readTimeout = 15_000
-                setRequestProperty("Accept", "application/vnd.github+json")
-                instanceFollowRedirects = true
+    private suspend fun isValidJinglesRepo(repoSlug: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
+                val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
+                val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 10_000
+                    readTimeout = 15_000
+                    setRequestProperty("Accept", "application/vnd.github+json")
+                    instanceFollowRedirects = true
+                }
+                val responseCode = conn.responseCode
+                conn.disconnect()
+                responseCode in 200..299
+            } catch (_: Exception) {
+                false
             }
-            val responseCode = conn.responseCode
-            conn.disconnect()
-            responseCode in 200..299
-        } catch (_: Exception) {
-            false
         }
-    }
 
     fun refreshLocalIndices() {
         indicesLoaded = false
@@ -334,7 +342,8 @@ class JinglesManager @Inject constructor(
     /** Returns the total size (bytes) of audio files in a SAF-picked local folder. */
     suspend fun getLocalFolderSizeBytes(uriString: String): Long = withContext(Dispatchers.IO) {
         try {
-            val folder = DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return@withContext 0L
+            val folder =
+                DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return@withContext 0L
             val jinglesFolder = folder.findFile("jingles") ?: return@withContext 0L
             jinglesFolder.listFiles().filter { it.isFile }.sumOf { it.length() }
         } catch (_: Exception) {
@@ -399,6 +408,18 @@ class JinglesManager @Inject constructor(
         }
         _indexNames.value = nameMap
         _indexCounts.value = countMap
+
+        val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
+        val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
+        for (source in result) {
+            for (entry in source.index.entries) {
+                val key = entry.game.lowercase()
+                if (key !in exact) exact[key] = source to entry
+                lower.add(Triple(key, source, entry))
+            }
+        }
+        exactMatchMap = exact
+        lowerEntries = lower
     }
 
     private suspend fun fetchIndex(repoSlug: String): Pair<JingleIndex, String>? {
@@ -438,14 +459,17 @@ class JinglesManager @Inject constructor(
             .substringAfterLast("\\")
             .substringBeforeLast(".")
             .trim()
+            .lowercase()
 
-        for (source in cachedIndices) {
-            val entry = source.index.entries.firstOrNull { entry ->
-                entry.game.equals(baseName, ignoreCase = true) ||
-                        baseName.contains(entry.game, ignoreCase = true) ||
-                        entry.game.contains(baseName, ignoreCase = true)
+        // O(1) exact match
+        exactMatchMap[baseName]?.let { return it }
+
+        // O(n) contains fallback — result cached so subsequent calls for this game are O(1)
+        for ((lowerGame, source, entry) in lowerEntries) {
+            if (baseName.contains(lowerGame) || lowerGame.contains(baseName)) {
+                exactMatchMap[baseName] = source to entry
+                return source to entry
             }
-            if (entry != null) return source to entry
         }
         return null
     }
@@ -467,7 +491,10 @@ class JinglesManager @Inject constructor(
         }
     }
 
-    private suspend fun playFileFromPath(basePath: String, filePath: String) {
+    private suspend fun playFileFromPath(
+        basePath: String,
+        filePath: String
+    ) {
         val file = File(basePath, filePath)
         if (file.exists()) playFromUrl(Uri.fromFile(file).toString())
     }
