@@ -56,12 +56,13 @@ class JinglesViewModel @Inject constructor(
 
     fun browseAllJingles() {
         viewModelScope.launch {
-            _searchState.value = JinglesSearchUiState(isLoading = true, query = "jingles", isBrowseMode = true)
-            val results = runCatching { jinglesManager.searchRepos("jingles") }
+            val query = "jingles"
+            _searchState.value = JinglesSearchUiState(isLoading = true, query = query, isBrowseMode = true)
+            val results = runCatching { jinglesManager.searchRepos(query) }
             _searchState.value = JinglesSearchUiState(
                 isLoading = false,
                 results = results.getOrElse { emptyList() },
-                query = "jingles",
+                query = query,
                 isBrowseMode = true,
                 hasSearched = true,
                 isError = results.isFailure
@@ -71,13 +72,14 @@ class JinglesViewModel @Inject constructor(
 
     fun searchRepo(query: String) {
         if (query.isBlank()) return
+        val normalizedQuery = query.trim().lowercase()
         viewModelScope.launch {
-            _searchState.value = JinglesSearchUiState(isLoading = true, query = query, isBrowseMode = false)
-            val results = runCatching { jinglesManager.searchRepos(query) }
+            _searchState.value = JinglesSearchUiState(isLoading = true, query = normalizedQuery, isBrowseMode = false)
+            val results = runCatching { jinglesManager.searchRepos(normalizedQuery) }
             _searchState.value = JinglesSearchUiState(
                 isLoading = false,
                 results = results.getOrElse { emptyList() },
-                query = query,
+                query = normalizedQuery,
                 isBrowseMode = false,
                 hasSearched = true,
                 isError = results.isFailure
@@ -122,6 +124,11 @@ class JinglesViewModel @Inject constructor(
 
     fun getDownloadedSizeBytes(repoSlug: String): Long =
         jinglesManager.getDownloadedSizeBytes(repoSlug)
+
+    fun removeDownloadedRepo(repoSlug: String) {
+        jinglesManager.removeDownloadedRepo(repoSlug)
+        _downloadedRepos.value = jinglesManager.getDownloadedRepos()
+    }
 
     fun getDownloadedFileCount(repoSlug: String): Int =
         jinglesManager.getDownloadedFileCount(repoSlug)

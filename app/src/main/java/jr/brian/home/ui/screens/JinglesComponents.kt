@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -224,6 +225,7 @@ internal fun RepoCard(
     downloadedFileCount: Int?,
     onRemove: () -> Unit,
     onDownload: () -> Unit,
+    onStopDownload: () -> Unit,
     onFetchSizeBytes: suspend () -> Long?
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -309,42 +311,48 @@ internal fun RepoCard(
                             }
                         }
                     },
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = stringResource(R.string.jingles_pack_info_icon_description),
                         tint = Color.White.copy(alpha = 0.45f),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 IconButton(
-                    onClick = { if (!isDownloading) onDownload() },
-                    modifier = Modifier.size(32.dp)
+                    onClick = { if (isDownloading) onStopDownload() else onDownload() },
+                    modifier = Modifier.size(36.dp)
                 ) {
-                    if (isDownloaded) {
+                    if (isDownloading) {
+                        Icon(
+                            imageVector = Icons.Default.Stop,
+                            contentDescription = stringResource(R.string.jingles_download_description),
+                            tint = ThemeSecondaryColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else if (isDownloaded) {
                         Icon(
                             imageVector = Icons.Default.Sync,
                             contentDescription = stringResource(R.string.jingles_update_description),
                             tint = ThemePrimaryColor,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.FileDownload,
                             contentDescription = stringResource(R.string.jingles_download_description),
-                            tint = if (isDownloading) Color.White.copy(alpha = 0.3f)
-                            else Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(18.dp)
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-                IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.jingles_remove_repo_description, repo),
                         tint = ThemeSecondaryColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -454,22 +462,22 @@ internal fun FolderCard(
                         }
                     }
                 },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = stringResource(R.string.jingles_pack_info_icon_description),
                     tint = Color.White.copy(alpha = 0.45f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
             IconButton(
                 onClick = { if (!isRefreshing) onRefresh() },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 if (isRefreshing) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
                         color = ThemePrimaryColor
                     )
@@ -478,16 +486,16 @@ internal fun FolderCard(
                         imageVector = Icons.Default.Sync,
                         contentDescription = stringResource(R.string.jingles_refresh_folder_description),
                         tint = ThemePrimaryColor,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+            IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.jingles_remove_folder_description, displayName),
                     tint = ThemeSecondaryColor.copy(alpha = 0.7f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
