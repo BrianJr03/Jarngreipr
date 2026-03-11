@@ -4,12 +4,16 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,7 +23,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.layout.Column
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -32,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -49,6 +54,31 @@ import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+
+@Composable
+internal fun SectionHeader(text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(14.dp)
+                .background(
+                    brush = Brush.verticalGradient(listOf(ThemePrimaryColor, ThemeSecondaryColor)),
+                    shape = RoundedCornerShape(2.dp)
+                )
+        )
+        Text(
+            text = text.uppercase(),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White.copy(alpha = 0.45f),
+            letterSpacing = 1.2.sp
+        )
+    }
+}
 
 @Composable
 internal fun AddRepoButton(onClick: () -> Unit) {
@@ -87,6 +117,7 @@ internal fun PickFolderButton(onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(12.dp))
@@ -97,7 +128,7 @@ internal fun PickFolderButton(onClick: () -> Unit) {
             )
             .clickWithHaptic(haptic) { onClick() }
             .focusable()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Icon(
             imageVector = Icons.Default.Folder,
@@ -133,8 +164,11 @@ internal fun RepoCard(
             .onFocusChanged { isFocused = it.isFocused }
             .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(16.dp))
             .border(
-                width = if (isFocused) 2.dp else 0.dp,
-                brush = borderBrush(isFocused),
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = Brush.linearGradient(
+                    colors = if (isFocused) listOf(ThemePrimaryColor, ThemeSecondaryColor)
+                    else listOf(Color.White.copy(alpha = 0.07f), Color.White.copy(alpha = 0.07f))
+                ),
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 16.dp, vertical = 14.dp)
@@ -144,19 +178,28 @@ internal fun RepoCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = ThemeAccentColor,
-                modifier = Modifier.size(20.dp)
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        color = ThemePrimaryColor.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = ThemePrimaryColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Spacer(modifier = Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val title = jingleName?.takeIf { it.isNotBlank() } ?: repo.substringAfterLast("/")
                 Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = repo, color = Color.Gray, fontSize = 13.sp)
             }
-            // Download / Update / Loading indicator
             IconButton(
                 onClick = { if (!isDownloading) onDownload() },
                 modifier = Modifier.size(32.dp)
@@ -194,7 +237,7 @@ internal fun RepoCard(
 }
 
 @Composable
-internal fun FolderCard(uriString: String, jingleName: String?, onRemove: () -> Unit) {
+internal fun FolderCard(uriString: String, jingleName: String?, isRefreshing: Boolean, onRefresh: () -> Unit, onRemove: () -> Unit) {
     var isFocused by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val displayName = remember(uriString) {
@@ -212,8 +255,11 @@ internal fun FolderCard(uriString: String, jingleName: String?, onRemove: () -> 
             .onFocusChanged { isFocused = it.isFocused }
             .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(16.dp))
             .border(
-                width = if (isFocused) 2.dp else 0.dp,
-                brush = borderBrush(isFocused),
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = Brush.linearGradient(
+                    colors = if (isFocused) listOf(ThemePrimaryColor, ThemeSecondaryColor)
+                    else listOf(Color.White.copy(alpha = 0.07f), Color.White.copy(alpha = 0.07f))
+                ),
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(horizontal = 16.dp, vertical = 14.dp)
@@ -223,18 +269,47 @@ internal fun FolderCard(uriString: String, jingleName: String?, onRemove: () -> 
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.Default.Folder,
-                contentDescription = null,
-                tint = ThemeAccentColor,
-                modifier = Modifier.size(20.dp)
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        color = ThemeAccentColor.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Folder,
+                    contentDescription = null,
+                    tint = ThemeAccentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Spacer(modifier = Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val title = jingleName?.takeIf { it.isNotBlank() } ?: displayName
                 Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 if (jingleName?.isNotBlank() == true) {
                     Text(text = displayName, color = Color.Gray, fontSize = 13.sp)
+                }
+            }
+            IconButton(
+                onClick = { if (!isRefreshing) onRefresh() },
+                modifier = Modifier.size(32.dp)
+            ) {
+                if (isRefreshing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = ThemePrimaryColor
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Sync,
+                        contentDescription = stringResource(R.string.jingles_refresh_folder_description),
+                        tint = ThemePrimaryColor,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
             IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {

@@ -1179,4 +1179,5 @@
     <string name="jingles_info_close">Got it</string>
     <string name="jingles_download_description">Download repo</string>
     <string name="jingles_update_description">Update downloaded repo</string>
+    <string name="jingles_refresh_folder_description">Refresh local folder</string>
 </resources>
