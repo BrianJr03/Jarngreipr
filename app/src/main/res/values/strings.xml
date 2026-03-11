@@ -1181,8 +1181,8 @@
     <string name="jingles_remove_folder_description">Remove %s</string>
     <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
     <!-- Jingles Info Dialog -->
-    <string name="jingles_info_button_description">About Cocoon Jingles</string>
-    <string name="jingles_info_title">About Cocoon Jingles</string>
+    <string name="jingles_info_button_description">About Jingles</string>
+    <string name="jingles_info_title">About Jingles</string>
     <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Special thanks to the Cocoon team for creating an easy way of sharing audio assets.\n
 \nRepositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
     <string name="jingles_info_getting_started">Getting Started</string>
