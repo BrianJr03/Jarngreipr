@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.dialog.JinglesInfoDialog
+import jr.brian.home.ui.components.dialog.JinglesSearchDialog
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -76,6 +79,7 @@ fun JinglesScreen(
     val downloadedRepos by viewModel.downloadedRepos.collectAsStateWithLifecycle()
     val downloadingRepo by viewModel.downloadingRepo.collectAsStateWithLifecycle()
     val isRefreshingFolders by viewModel.isRefreshingFolders.collectAsStateWithLifecycle()
+    val searchState by viewModel.searchState.collectAsStateWithLifecycle()
     val indexNames by viewModel.indexNames.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
@@ -95,8 +99,13 @@ fun JinglesScreen(
     }
     var repoInput by remember { mutableStateOf("") }
     var folderError by remember { mutableStateOf<String?>(null) }
-    var showInfoDialog by remember { mutableStateOf(!prefs.getBoolean(KEY_INFO_SEEN, false)) }
+    val infoDialogState = rememberDialogState<Unit>()
+    val searchDialogState = rememberDialogState<Unit>()
     val errorString = stringResource(R.string.jingles_invalid_folder_error)
+
+    LaunchedEffect(Unit) {
+        if (!prefs.getBoolean(KEY_INFO_SEEN, false)) infoDialogState.show()
+    }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -144,11 +153,31 @@ fun JinglesScreen(
         prefs.edit { putStringSet(KEY_LOCAL_FOLDERS, updated.toSet()) }
     }
 
-    if (showInfoDialog) {
+    fun addRepoFromSearch(fullName: String) {
+        if (fullName !in repos) {
+            val updated = (repos + fullName).sorted()
+            repos = updated
+            prefs.edit { putStringSet(KEY_REPOS, updated.toSet()) }
+        }
+    }
+
+    if (infoDialogState.isVisible) {
         JinglesInfoDialog(onDismiss = {
             prefs.edit { putBoolean(KEY_INFO_SEEN, true) }
-            showInfoDialog = false
+            infoDialogState.dismiss()
         })
+    }
+
+    if (searchDialogState.isVisible) {
+        JinglesSearchDialog(
+            state = searchState,
+            existingRepos = repos,
+            onAddRepo = ::addRepoFromSearch,
+            onDismiss = {
+                searchDialogState.dismiss()
+                viewModel.clearSearch()
+            }
+        )
     }
 
     Scaffold(containerColor = OledBackgroundColor) { innerPadding ->
@@ -204,7 +233,7 @@ fun JinglesScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
-                                    onClick = { showInfoDialog = true },
+                                    onClick = { infoDialogState.show() },
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
@@ -238,7 +267,18 @@ fun JinglesScreen(
                     }
 
                     item {
-                        SectionHeader(text = stringResource(R.string.jingles_repositories_label))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                SectionHeader(text = stringResource(R.string.jingles_repositories_label))
+                            }
+                            BrowseJinglesButton(onClick = {
+                                searchDialogState.show()
+                                viewModel.browseAllJingles()
+                            })
+                        }
                     }
 
                     item {
@@ -274,6 +314,12 @@ fun JinglesScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.weight(1f)
                             )
+                            SearchRepoButton(onClick = {
+                                if (repoInput.isNotBlank()) {
+                                    searchDialogState.show()
+                                    viewModel.searchRepo(repoInput.trim())
+                                }
+                            })
                             AddRepoButton(onClick = ::addRepo)
                         }
                     }
