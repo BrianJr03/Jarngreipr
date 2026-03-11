@@ -366,6 +366,9 @@
     <string name="settings_faq_description">Frequently asked questions</string>
     <string name="settings_faq_icon_description">FAQ icon</string>
     <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_section_general">General</string>
+    <string name="faq_section_theming">Theming</string>
+    <string name="faq_section_jingles">Jingles</string>
     <string name="faq_app_close_question">How can I prevent the Android system from closing Jarngreipr?</string>
     <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
@@ -376,6 +379,23 @@
     <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
     <string name="faq_wallpaper_automation_question">How can I use MacroDroid (or similar) to toggle wallpaper modes?</string>
     <string name="faq_wallpaper_automation_answer">You can trigger wallpaper mode switches from any automation app (e.g. MacroDroid, Tasker) by sending a broadcast intent.\n\nIn MacroDroid, add a Send Intent action, set Type to Broadcast, and fill in these fields:</string>
+
+    <!-- Jingles FAQ -->
+    <string name="faq_jingles_what_question">What are Jingles?</string>
+    <string name="faq_jingles_what_answer">Jingles are short audio clips that play automatically when you browse games in ES-DE. When you select a game, Jarngreipr looks up a matching Jingle and plays it in the background, giving each game its own sound.\n\nJingle collections are defined by a simple index.json file that maps game titles to audio files. You can use community repos from GitHub or build your own local collection.</string>
+
+    <string name="faq_jingles_offline_question">How does offline-first playback work?</string>
+    <string name="faq_jingles_offline_answer">Jarngreipr uses three source types, each with different network behaviour:\n\n• Downloaded repos: Tap the download icon on a GitHub repo card to save all audio files to your device. Once downloaded, playback never requires a network connection.\n\n• Local folders: Pick any folder on your device containing an index.json and a jingles/ subfolder. These always play offline via direct file access.\n\n• Streaming repos: GitHub repos that have not been downloaded stream audio directly from GitHub. These require an active internet connection each time a Jingle plays and there may be delay before playback.</string>
+
+    <string name="faq_jingles_matching_question">How does the app know which Jingle to play for a game?</string>
+    <string name="faq_jingles_matching_answer">When you browse a game in ES-DE, Jarngreipr receives the game\'s filename. It strips the path and extension, then searches every loaded index.json for an entry whose game field matches.\n\nMatching is case-insensitive and works both ways. A file named "Super Mario Bros. (USA).zip" will match an entry titled "Super Mario Bros.", and vice versa. The first match found across all your sources wins.\n\nIf no match is found the currently playing Jingle stops and nothing new plays.</string>
+
+    <string name="faq_jingles_format_question">What format does index.json need to be in?</string>
+    <string name="faq_jingles_format_answer">Your index.json must live at the root of your folder or GitHub repo. The name field sets the display name shown in the app. Each entry maps a game title to an audio file path relative to the root. Supported formats are anything ExoPlayer can decode — MP3, OGG, FLAC, and WAV all work well.</string>
+    <string name="faq_jingles_format_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"Game Title\", \"file\": \"jingles/audio.mp3\" }\n  ]\n}</string>
+
+    <string name="faq_jingles_troubleshoot_question">My Jingle isn\'t playing — what should I check?</string>
+    <string name="faq_jingles_troubleshoot_answer">Work through these checks in order:\n\n1. Make sure the Enable Jingles toggle is on at the top of the Jingles screen.\n\n2. Confirm ES-DE is actually sending game selection events to Jarngreipr (the app must be running).\n\n3. Check that your game\'s filename (without extension) matches a game entry in your index.json. Partial matches are supported.\n\n4. If using a local folder, tap the refresh button on the folder card after editing index.json. Changes are not picked up automatically.\n\n5. If streaming from GitHub, verify you have an active internet connection. Download the repo for fully offline playback.\n\n6. Ensure the json file does not have any trailing commas.</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
@@ -1180,4 +1200,15 @@
     <string name="jingles_download_description">Download repo</string>
     <string name="jingles_update_description">Update downloaded repo</string>
     <string name="jingles_refresh_folder_description">Refresh local folder</string>
+    <string name="jingles_search_browse_button">Browse</string>
+    <string name="jingles_search_icon_description">Search GitHub repos</string>
+    <string name="jingles_search_browse_title">Browse Jingles Repos</string>
+    <string name="jingles_search_results_title">Search Results</string>
+    <string name="jingles_search_query_label">"%s"</string>
+    <string name="jingles_search_empty">No repositories found</string>
+    <string name="jingles_search_error">Search failed</string>
+    <string name="jingles_search_error_hint">Check your connection and try again</string>
+    <string name="jingles_search_add">Add</string>
+    <string name="jingles_search_added">Added</string>
+    <string name="jingles_search_close">Close</string>
 </resources>

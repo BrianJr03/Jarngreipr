@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.CircularProgressIndicator
 
@@ -76,6 +77,62 @@ internal fun SectionHeader(text: String) {
             fontWeight = FontWeight.Bold,
             color = Color.White.copy(alpha = 0.45f),
             letterSpacing = 1.2.sp
+        )
+    }
+}
+
+@Composable
+internal fun SearchRepoButton(onClick: () -> Unit) {
+    var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(52.dp)
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(12.dp))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = borderBrush(isFocused),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickWithHaptic(haptic) { onClick() }
+            .focusable()
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = stringResource(R.string.jingles_search_icon_description),
+            tint = Color.White,
+            modifier = Modifier.size(22.dp)
+        )
+    }
+}
+
+@Composable
+internal fun BrowseJinglesButton(onClick: () -> Unit) {
+    var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    Box(
+        modifier = Modifier
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .border(
+                width = 1.dp,
+                brush = borderBrush(true),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickWithHaptic(haptic) { onClick() }
+            .focusable()
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.jingles_search_browse_button),
+            color = ThemePrimaryColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }

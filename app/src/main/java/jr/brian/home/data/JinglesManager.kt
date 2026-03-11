@@ -15,12 +15,18 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.model.JingleSource
+import jr.brian.home.model.GitHubContentEntry
+import jr.brian.home.model.GitHubRepoResult
+import jr.brian.home.model.GitHubSearchResponse
 import jr.brian.home.model.JingleEntry
 import jr.brian.home.model.JingleIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -212,8 +218,52 @@ class JinglesManager @Inject constructor(
             Log.d(tag, "Done. loadIndices() called.")
             true
         } catch (e: Exception) {
-            Log.e("DownloadRepo", "Unhandled exception: ${e.message}", e)
-            throw e
+            Log.e("DownloadRepo", "Exception: ${e.message}", e)
+            false
+        }
+    }
+
+    suspend fun searchRepos(query: String): List<GitHubRepoResult> = withContext(Dispatchers.IO) {
+        try {
+            val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+            val url = "https://api.github.com/search/repositories?q=$encoded+in:name&sort=stars&per_page=30"
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 15_000
+                readTimeout = 30_000
+                setRequestProperty("Accept", "application/vnd.github+json")
+                instanceFollowRedirects = true
+            }
+            val text = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            val results = json.decodeFromString<GitHubSearchResponse>(text).items
+            coroutineScope {
+                results
+                    .map { repo -> async { repo to isValidJinglesRepo(repo.fullName) } }
+                    .awaitAll()
+                    .filter { (_, valid) -> valid }
+                    .map { (repo, _) -> repo }
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private suspend fun isValidJinglesRepo(repoSlug: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val (index, branch) = fetchIndex(repoSlug) ?: return@withContext false
+            if (index.entries.isEmpty()) return@withContext false
+            val url = "https://api.github.com/repos/$repoSlug/contents/jingles?ref=$branch"
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 10_000
+                readTimeout = 15_000
+                setRequestProperty("Accept", "application/vnd.github+json")
+                instanceFollowRedirects = true
+            }
+            val text = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            json.decodeFromString<List<GitHubContentEntry>>(text).isNotEmpty()
+        } catch (_: Exception) {
+            false
         }
     }
 
