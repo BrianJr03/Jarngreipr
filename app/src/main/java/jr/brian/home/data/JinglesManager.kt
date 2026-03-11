@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.model.JingleSource
+import jr.brian.home.util.GitHubUrls
 import jr.brian.home.model.GitHubContentEntry
 import jr.brian.home.model.GitHubRepoResult
 import jr.brian.home.model.GitHubSearchResponse
@@ -69,6 +70,9 @@ class JinglesManager @Inject constructor(
     private val _indexNames = MutableStateFlow<Map<String, String>>(emptyMap())
     val indexNames: StateFlow<Map<String, String>> = _indexNames
 
+    private val _indexCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val indexCounts: StateFlow<Map<String, Int>> = _indexCounts
+
     private var player: ExoPlayer? = null
     private var currentPlayJob: Job? = null
     private var currentGameFilename: String? = null
@@ -95,7 +99,7 @@ class JinglesManager @Inject constructor(
                 !source.isLocal -> {
                     val branch = cachedBranch[source.key] ?: "main"
                     val rawUrl =
-                        "https://raw.githubusercontent.com/${source.key}/$branch/${entry.file}"
+                        "${GitHubUrls.RAW_BASE}/${source.key}/$branch/${entry.file}"
                     playFromUrl(rawUrl)
                 }
 
@@ -109,7 +113,10 @@ class JinglesManager @Inject constructor(
         prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet()) ?: emptySet()
 
     @OptIn(UnstableApi::class)
-    suspend fun downloadRepo(repoSlug: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun downloadRepo(
+        repoSlug: String,
+        onProgress: (Float) -> Unit = {}
+    ): Boolean = withContext(Dispatchers.IO) {
         val tag = "DownloadRepo"
         try {
             Log.d(tag, "Starting download for repo: $repoSlug")
@@ -141,18 +148,22 @@ class JinglesManager @Inject constructor(
             Log.d(tag, "Wrote index.json (${indexFile.length()} bytes)")
 
             // Download each audio file
+            val total = index.entries.size.coerceAtLeast(1)
+            var processed = 0
+            onProgress(0f)
             for (entry in index.entries) {
-                val fileName = entry.file.substringAfterLast("/")
-                val rawUrl = "https://raw.githubusercontent.com/$repoSlug/$branch/${entry.file}"
-                val dest = File(jinglesDir, fileName)
+                val rawUrl = "${GitHubUrls.RAW_BASE}/$repoSlug/$branch/${entry.file}"
+                val dest = File(repoDir, entry.file)
+                dest.parentFile?.mkdirs()
 
                 Log.d(tag, "Processing entry: ${entry.file}")
-                Log.d(tag, "  fileName: $fileName")
                 Log.d(tag, "  rawUrl: $rawUrl")
                 Log.d(tag, "  dest: ${dest.absolutePath}")
 
                 if (dest.exists()) {
                     Log.d(tag, "  Skipping — dest already exists (${dest.length()} bytes)")
+                    processed++
+                    onProgress(processed.toFloat() / total)
                     continue
                 }
 
@@ -176,10 +187,12 @@ class JinglesManager @Inject constructor(
                     Log.e(tag, "  Download failed for ${entry.file}: HTTP $responseCode")
                     Log.e(tag, "  Error body: ${errorBody.take(300)}")
                     conn.disconnect()
-                    throw IOException("Failed to download ${entry.file}: HTTP $responseCode")
+                    processed++
+                    onProgress(processed.toFloat() / total)
+                    continue
                 }
 
-                val tmp = File(jinglesDir, "$fileName.tmp")
+                val tmp = File(dest.parentFile, "${dest.name}.tmp")
                 try {
                     conn.inputStream.use { input ->
                         tmp.outputStream().use { output ->
@@ -198,15 +211,15 @@ class JinglesManager @Inject constructor(
                             tag,
                             "  Rename failed! tmp: ${tmp.absolutePath} -> dest: ${dest.absolutePath}"
                         )
-                        throw IOException("Failed to rename tmp file to $dest")
                     }
                 } catch (e: Exception) {
                     Log.e(tag, "  Exception during download of ${entry.file}: ${e.message}", e)
                     tmp.delete()
-                    throw e
                 } finally {
                     conn.disconnect()
                 }
+                processed++
+                onProgress(processed.toFloat() / total)
             }
 
             Log.d(tag, "All entries processed. Marking $repoSlug as downloaded.")
@@ -226,7 +239,7 @@ class JinglesManager @Inject constructor(
     suspend fun searchRepos(query: String): List<GitHubRepoResult> = withContext(Dispatchers.IO) {
         try {
             val encoded = java.net.URLEncoder.encode(query, "UTF-8")
-            val url = "https://api.github.com/search/repositories?q=$encoded+in:name&sort=stars&per_page=30"
+            val url = "${GitHubUrls.API_SEARCH_REPOS}?q=$encoded+in:name&sort=stars&per_page=30"
             val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 15_000
                 readTimeout = 30_000
@@ -250,18 +263,17 @@ class JinglesManager @Inject constructor(
 
     private suspend fun isValidJinglesRepo(repoSlug: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val (index, branch) = fetchIndex(repoSlug) ?: return@withContext false
-            if (index.entries.isEmpty()) return@withContext false
-            val url = "https://api.github.com/repos/$repoSlug/contents/jingles?ref=$branch"
+            val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
+            val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
             val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 10_000
                 readTimeout = 15_000
                 setRequestProperty("Accept", "application/vnd.github+json")
                 instanceFollowRedirects = true
             }
-            val text = conn.inputStream.bufferedReader().use { it.readText() }
+            val responseCode = conn.responseCode
             conn.disconnect()
-            json.decodeFromString<List<GitHubContentEntry>>(text).isNotEmpty()
+            responseCode in 200..299
         } catch (_: Exception) {
             false
         }
@@ -283,6 +295,50 @@ class JinglesManager @Inject constructor(
         scope.launch(Dispatchers.Main) {
             player?.release()
             player = null
+        }
+    }
+
+    /** Counts audio files actually present in the downloaded jingles folder for [repoSlug]. */
+    fun getDownloadedFileCount(repoSlug: String): Int {
+        val jinglesDir = File(getDownloadedDir(repoSlug), "jingles")
+        return jinglesDir.walkTopDown().count { it.isFile }
+    }
+
+    /** Sums the sizes of all files in the downloaded jingles folder for [repoSlug]. */
+    fun getDownloadedSizeBytes(repoSlug: String): Long {
+        val jinglesDir = File(getDownloadedDir(repoSlug), "jingles")
+        return jinglesDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    /** Fetches the total size of jingle files for a GitHub repo via the contents API. */
+    suspend fun fetchJinglesSizeBytes(repoSlug: String): Long? = withContext(Dispatchers.IO) {
+        try {
+            val branch = cachedBranch[repoSlug] ?: "main"
+            val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 10_000
+                readTimeout = 15_000
+                setRequestProperty("Accept", "application/vnd.github+json")
+                instanceFollowRedirects = true
+            }
+            val text = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            json.decodeFromString<List<jr.brian.home.model.GitHubContentEntry>>(text)
+                .filter { it.type == "file" }
+                .sumOf { it.size }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /** Returns the total size (bytes) of audio files in a SAF-picked local folder. */
+    suspend fun getLocalFolderSizeBytes(uriString: String): Long = withContext(Dispatchers.IO) {
+        try {
+            val folder = DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return@withContext 0L
+            val jinglesFolder = folder.findFile("jingles") ?: return@withContext 0L
+            jinglesFolder.listFiles().filter { it.isFile }.sumOf { it.length() }
+        } catch (_: Exception) {
+            0L
         }
     }
 
@@ -326,25 +382,29 @@ class JinglesManager @Inject constructor(
         cachedIndices = result
         indicesLoaded = true
 
-        // Build name map: key → index display name
+        // Build name map and count map: key → display name / entry count
         val nameMap = mutableMapOf<String, String>()
+        val countMap = mutableMapOf<String, Int>()
         for (source in result) {
             if (source.index.name.isNotBlank()) nameMap[source.key] = source.index.name
+            countMap[source.key] = source.index.entries.size
         }
         // Downloaded repos are keyed by file path, but the screen identifies them by repo slug —
-        // map the slug too so the GitHub RepoCard can find the name before/without a network hit.
+        // map the slug too so the GitHub RepoCard can find the name/count before/without a network hit.
         val downloadedSlugs = prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet()) ?: emptySet()
         for (slug in downloadedSlugs) {
             val filePath = getDownloadedDir(slug).absolutePath
             nameMap[filePath]?.let { nameMap[slug] = it }
+            countMap[filePath]?.let { countMap[slug] = it }
         }
         _indexNames.value = nameMap
+        _indexCounts.value = countMap
     }
 
     private suspend fun fetchIndex(repoSlug: String): Pair<JingleIndex, String>? {
         for (branch in listOf("main", "master")) {
             try {
-                val url = "https://raw.githubusercontent.com/$repoSlug/$branch/index.json"
+                val url = "${GitHubUrls.RAW_BASE}/$repoSlug/$branch/index.json"
                 val text = withContext(Dispatchers.IO) {
                     val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                         connectTimeout = 15_000

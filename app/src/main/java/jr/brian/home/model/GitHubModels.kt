@@ -18,5 +18,6 @@ data class GitHubSearchResponse(
 @Serializable
 data class GitHubContentEntry(
     val name: String,
-    val type: String
+    val type: String,
+    val size: Long = 0
 )

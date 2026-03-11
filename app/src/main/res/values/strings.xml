@@ -1197,6 +1197,10 @@
     <string name="jingles_info_github_body">Fork or use the template below as a starting point, then add it as username/repo-name in the Jingle Repo field.</string>
     <string name="jingles_info_thanks">Special thanks to the Cocoon team for creating an easy way of sharing audio assets.</string>
     <string name="jingles_info_close">Got it</string>
+    <string name="jingles_faq_title">FAQ</string>
+    <string name="jingles_faq_inconsistent_q">Downloads are inconsistent or incomplete</string>
+    <string name="jingles_faq_inconsistent_a">If Jarngreipr fails to download all tracks, visit the repo directly on GitHub and download the index.json and jingles folder. You can then add this as a Local Folder for playback.</string>
+    <string name="jingles_pack_info_failed">%1$d track(s) failed to download</string>
     <string name="jingles_download_description">Download repo</string>
     <string name="jingles_update_description">Update downloaded repo</string>
     <string name="jingles_refresh_folder_description">Refresh local folder</string>
@@ -1211,4 +1215,8 @@
     <string name="jingles_search_add">Add</string>
     <string name="jingles_search_added">Added</string>
     <string name="jingles_search_close">Close</string>
+    <string name="jingles_pack_info_icon_description">Jingle pack info</string>
+    <string name="jingles_pack_info_tracks">%d tracks</string>
+    <string name="jingles_pack_info_size">~%s</string>
+    <string name="jingles_pack_info_fetching_size">Fetching size…</string>
 </resources>

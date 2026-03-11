@@ -78,9 +78,11 @@ fun JinglesScreen(
     val viewModel: JinglesViewModel = hiltViewModel()
     val downloadedRepos by viewModel.downloadedRepos.collectAsStateWithLifecycle()
     val downloadingRepo by viewModel.downloadingRepo.collectAsStateWithLifecycle()
+    val downloadProgress by viewModel.downloadProgress.collectAsStateWithLifecycle()
     val isRefreshingFolders by viewModel.isRefreshingFolders.collectAsStateWithLifecycle()
     val searchState by viewModel.searchState.collectAsStateWithLifecycle()
     val indexNames by viewModel.indexNames.collectAsStateWithLifecycle()
+    val indexCounts by viewModel.indexCounts.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -298,8 +300,6 @@ fun JinglesScreen(
                                     )
                                 },
                                 singleLine = true,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { addRepo() }),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White,
@@ -325,13 +325,27 @@ fun JinglesScreen(
                     }
 
                     items(repos, key = { it }) { repo ->
+                        val isDownloaded = repo in downloadedRepos
+                        val downloadedFileCount = remember(isDownloaded, repo) {
+                            if (isDownloaded) viewModel.getDownloadedFileCount(repo) else null
+                        }
                         RepoCard(
                             repo = repo,
                             jingleName = indexNames[repo],
-                            isDownloaded = repo in downloadedRepos,
+                            jingleCount = indexCounts[repo],
+                            isDownloaded = isDownloaded,
                             isDownloading = downloadingRepo == repo,
-                            onRemove = { removeRepo(repo) },
-                            onDownload = { viewModel.downloadRepo(repo) }
+                            downloadProgress = downloadProgress.coerceIn(0f, 1f),
+                            downloadedFileCount = downloadedFileCount,
+                            onRemove = {
+                                if (downloadingRepo == repo) viewModel.cancelDownload()
+                                removeRepo(repo)
+                            },
+                            onDownload = { viewModel.downloadRepo(repo) },
+                            onFetchSizeBytes = {
+                                if (isDownloaded) viewModel.getDownloadedSizeBytes(repo)
+                                else viewModel.fetchRepoSizeBytes(repo)
+                            }
                         )
                     }
 
@@ -362,9 +376,11 @@ fun JinglesScreen(
                         FolderCard(
                             uriString = uriString,
                             jingleName = indexNames[uriString],
+                            jingleCount = indexCounts[uriString],
                             isRefreshing = isRefreshingFolders,
                             onRefresh = { viewModel.refreshLocalFolders() },
-                            onRemove = { removeLocalFolder(uriString) }
+                            onRemove = { removeLocalFolder(uriString) },
+                            onFetchSizeBytes = { viewModel.getLocalFolderSizeBytes(uriString) }
                         )
                     }
                 }

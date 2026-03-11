@@ -78,7 +78,7 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     Text(
                         text = stringResource(R.string.jingles_info_title),
                         color = Color.White,
-                        fontSize = 22.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
@@ -95,15 +95,15 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     Text(
                         text = stringResource(R.string.jingles_info_disclaimer),
                         color = Color.LightGray,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp
                     )
                 }
 
                 Text(
                     text = stringResource(R.string.jingles_info_getting_started),
                     color = ThemePrimaryColor,
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -115,13 +115,13 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                         Text(
                             text = stringResource(R.string.jingles_info_local_title),
                             color = Color.White,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = stringResource(R.string.jingles_info_local_subtitle),
                             color = Color.Gray,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
                     listOf(
@@ -133,8 +133,8 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                         Text(
                             text = step,
                             color = Color.LightGray,
-                            fontSize = 13.sp,
-                            lineHeight = 20.sp
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp
                         )
                     }
                     Box(
@@ -161,20 +161,20 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                         Text(
                             text = stringResource(R.string.jingles_info_github_title),
                             color = Color.White,
-                            fontSize = 15.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = stringResource(R.string.jingles_info_github_subtitle),
                             color = Color.Gray,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
                     Text(
                         text = stringResource(R.string.jingles_info_github_body),
                         color = Color.LightGray,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -201,6 +201,31 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                             tint = ThemePrimaryColor,
                             modifier = Modifier.size(13.dp)
                         )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = stringResource(R.string.jingles_faq_title),
+                        color = ThemePrimaryColor,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    InfoBox(borderColor = ThemePrimaryColor.copy(alpha = 0.25f)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = stringResource(R.string.jingles_faq_inconsistent_q),
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = stringResource(R.string.jingles_faq_inconsistent_a),
+                                color = Color.LightGray,
+                                fontSize = 14.sp,
+                                lineHeight = 21.sp
+                            )
+                        }
                     }
                 }
 
