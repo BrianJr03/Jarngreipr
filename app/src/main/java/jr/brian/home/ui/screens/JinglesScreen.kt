@@ -38,25 +38,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import jr.brian.home.viewmodels.JinglesViewModel
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.documentfile.provider.DocumentFile
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.dialog.JinglesInfoDialog
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.viewmodels.JinglesViewModel
 
 internal const val JINGLES_PREFS = "jingles_prefs"
 internal const val KEY_REPOS = "jingle_repos"
@@ -73,6 +75,7 @@ fun JinglesScreen(
     val viewModel: JinglesViewModel = hiltViewModel()
     val downloadedRepos by viewModel.downloadedRepos.collectAsStateWithLifecycle()
     val downloadingRepo by viewModel.downloadingRepo.collectAsStateWithLifecycle()
+    val isRefreshingFolders by viewModel.isRefreshingFolders.collectAsStateWithLifecycle()
     val indexNames by viewModel.indexNames.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
@@ -167,29 +170,32 @@ fun JinglesScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
-                        ToggleSetting(
-                            title = stringResource(R.string.jingles_enable_title),
-                            description = stringResource(R.string.jingles_enable_description),
-                            checked = isEnabled,
-                            onCheckedChange = {
-                                isEnabled = it
-                                prefs.edit { putBoolean(KEY_ENABLED, it) }
-                            }
-                        )
-                    }
-
-                    item {
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.MusicNote,
-                                    contentDescription = null,
-                                    tint = ThemePrimaryColor,
-                                    modifier = Modifier.size(28.dp)
-                                )
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                listOf(
+                                                    ThemePrimaryColor.copy(alpha = 0.25f),
+                                                    ThemeSecondaryColor.copy(alpha = 0.2f)
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.MusicNote,
+                                        contentDescription = null,
+                                        tint = ThemePrimaryColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                                 Text(
                                     text = stringResource(R.string.jingles_screen_title),
                                     fontSize = 28.sp,
@@ -204,12 +210,12 @@ fun JinglesScreen(
                                     Icon(
                                         imageVector = Icons.Default.Info,
                                         contentDescription = stringResource(R.string.jingles_info_button_description),
-                                        tint = Color.White.copy(alpha = 0.6f),
+                                        tint = Color.White.copy(alpha = 0.5f),
                                         modifier = Modifier.size(22.dp)
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = stringResource(R.string.jingles_screen_subtitle),
                                 fontSize = 14.sp,
@@ -220,79 +226,75 @@ fun JinglesScreen(
                     }
 
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = stringResource(R.string.jingles_repo_label),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                OutlinedTextField(
-                                    value = repoInput,
-                                    onValueChange = { repoInput = it },
-                                    placeholder = {
-                                        Text(
-                                            text = stringResource(R.string.jingles_repo_placeholder),
-                                            fontSize = 13.sp,
-                                            color = Color.Gray
-                                        )
-                                    },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                    keyboardActions = KeyboardActions(onDone = { addRepo() }),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedBorderColor = ThemePrimaryColor,
-                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                                        cursorColor = ThemePrimaryColor,
-                                        focusedLabelColor = ThemePrimaryColor,
-                                        unfocusedLabelColor = Color.Gray,
-                                        focusedContainerColor = Color.Transparent,
-                                        unfocusedContainerColor = Color.Transparent
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                AddRepoButton(onClick = ::addRepo)
+                        ToggleSetting(
+                            title = stringResource(R.string.jingles_enable_title),
+                            description = stringResource(R.string.jingles_enable_description),
+                            checked = isEnabled,
+                            onCheckedChange = {
+                                isEnabled = it
+                                prefs.edit { putBoolean(KEY_ENABLED, it) }
                             }
-                        }
-                    }
-
-                    if (repos.isNotEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.jingles_repositories_label),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                        }
-                        items(repos, key = { it }) { repo ->
-                            RepoCard(
-                                repo = repo,
-                                jingleName = indexNames[repo],
-                                isDownloaded = repo in downloadedRepos,
-                                isDownloading = downloadingRepo == repo,
-                                onRemove = { removeRepo(repo) },
-                                onDownload = { viewModel.downloadRepo(repo) }
-                            )
-                        }
+                        )
                     }
 
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = stringResource(R.string.jingles_local_folder_label),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.85f)
+                        SectionHeader(text = stringResource(R.string.jingles_repositories_label))
+                    }
+
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedTextField(
+                                value = repoInput,
+                                onValueChange = { repoInput = it },
+                                placeholder = {
+                                    Text(
+                                        text = stringResource(R.string.jingles_repo_placeholder),
+                                        fontSize = 13.sp,
+                                        color = Color.Gray
+                                    )
+                                },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { addRepo() }),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedBorderColor = ThemePrimaryColor,
+                                    unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                                    cursorColor = ThemePrimaryColor,
+                                    focusedLabelColor = ThemePrimaryColor,
+                                    unfocusedLabelColor = Color.Gray,
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f)
                             )
+                            AddRepoButton(onClick = ::addRepo)
+                        }
+                    }
+
+                    items(repos, key = { it }) { repo ->
+                        RepoCard(
+                            repo = repo,
+                            jingleName = indexNames[repo],
+                            isDownloaded = repo in downloadedRepos,
+                            isDownloading = downloadingRepo == repo,
+                            onRemove = { removeRepo(repo) },
+                            onDownload = { viewModel.downloadRepo(repo) }
+                        )
+                    }
+
+                    item {
+                        SectionHeader(text = stringResource(R.string.jingles_local_folders_label))
+                    }
+
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text(
                                 text = stringResource(R.string.jingles_local_folder_description),
                                 fontSize = 13.sp,
@@ -310,22 +312,14 @@ fun JinglesScreen(
                         }
                     }
 
-                    if (localFolders.isNotEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.jingles_local_folders_label),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White.copy(alpha = 0.85f)
-                            )
-                        }
-                        items(localFolders, key = { it }) { uriString ->
-                            FolderCard(
-                                uriString = uriString,
-                                jingleName = indexNames[uriString],
-                                onRemove = { removeLocalFolder(uriString) }
-                            )
-                        }
+                    items(localFolders, key = { it }) { uriString ->
+                        FolderCard(
+                            uriString = uriString,
+                            jingleName = indexNames[uriString],
+                            isRefreshing = isRefreshingFolders,
+                            onRefresh = { viewModel.refreshLocalFolders() },
+                            onRemove = { removeLocalFolder(uriString) }
+                        )
                     }
                 }
             }

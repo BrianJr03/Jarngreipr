@@ -9,6 +9,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
@@ -24,9 +25,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,7 +45,10 @@ class JinglesManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(JINGLES_PREFS, Context.MODE_PRIVATE)
@@ -97,38 +102,124 @@ class JinglesManager @Inject constructor(
     fun getDownloadedRepos(): Set<String> =
         prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet()) ?: emptySet()
 
+    @OptIn(UnstableApi::class)
     suspend fun downloadRepo(repoSlug: String): Boolean = withContext(Dispatchers.IO) {
+        val tag = "DownloadRepo"
         try {
-            val (index, branch) = fetchIndex(repoSlug) ?: return@withContext false
+            Log.d(tag, "Starting download for repo: $repoSlug")
+
+            val fetchResult = fetchIndex(repoSlug)
+            if (fetchResult == null) {
+                Log.e(tag, "fetchIndex returned null for $repoSlug — aborting")
+                return@withContext false
+            }
+            val (index, branch) = fetchResult
+            Log.d(tag, "Fetched index. Branch: $branch, Entries: ${index.entries.size}")
+            index.entries.forEachIndexed { i, e -> Log.d(tag, "  Entry[$i]: ${e.file}") }
 
             val repoDir = getDownloadedDir(repoSlug)
             val jinglesDir = File(repoDir, "jingles")
+            Log.d(tag, "repoDir: ${repoDir.absolutePath}")
+            Log.d(tag, "jinglesDir: ${jinglesDir.absolutePath}")
+
             repoDir.mkdirs()
             jinglesDir.mkdirs()
+            Log.d(
+                tag,
+                "jinglesDir exists: ${jinglesDir.exists()}, isDir: ${jinglesDir.isDirectory}"
+            )
 
             // Write index.json
-            File(repoDir, "index.json").writeText(json.encodeToString(index))
+            val indexFile = File(repoDir, "index.json")
+            indexFile.writeText(json.encodeToString(index))
+            Log.d(tag, "Wrote index.json (${indexFile.length()} bytes)")
 
             // Download each audio file
             for (entry in index.entries) {
                 val fileName = entry.file.substringAfterLast("/")
                 val rawUrl = "https://raw.githubusercontent.com/$repoSlug/$branch/${entry.file}"
                 val dest = File(jinglesDir, fileName)
-                if (!dest.exists()) {
-                    URL(rawUrl).openStream().use { it.copyTo(dest.outputStream()) }
+
+                Log.d(tag, "Processing entry: ${entry.file}")
+                Log.d(tag, "  fileName: $fileName")
+                Log.d(tag, "  rawUrl: $rawUrl")
+                Log.d(tag, "  dest: ${dest.absolutePath}")
+
+                if (dest.exists()) {
+                    Log.d(tag, "  Skipping — dest already exists (${dest.length()} bytes)")
+                    continue
+                }
+
+                val conn = (URL(rawUrl).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 15_000
+                    readTimeout = 120_000
+                    instanceFollowRedirects = true
+                }
+
+                val responseCode = conn.responseCode
+                val contentType = conn.contentType
+                val contentLength = conn.contentLengthLong
+                Log.d(
+                    tag,
+                    "  HTTP $responseCode | Content-Type: $contentType | Length: $contentLength bytes"
+                )
+
+                if (responseCode !in 200..299) {
+                    val errorBody =
+                        conn.errorStream?.bufferedReader()?.readText() ?: "(no error body)"
+                    Log.e(tag, "  Download failed for ${entry.file}: HTTP $responseCode")
+                    Log.e(tag, "  Error body: ${errorBody.take(300)}")
+                    conn.disconnect()
+                    throw IOException("Failed to download ${entry.file}: HTTP $responseCode")
+                }
+
+                val tmp = File(jinglesDir, "$fileName.tmp")
+                try {
+                    conn.inputStream.use { input ->
+                        tmp.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    Log.d(tag, "  Downloaded to tmp (${tmp.length()} bytes)")
+
+                    val renamed = tmp.renameTo(dest)
+                    Log.d(
+                        tag,
+                        "  Renamed tmp -> dest: $renamed | dest exists: ${dest.exists()} (${dest.length()} bytes)"
+                    )
+                    if (!renamed) {
+                        Log.e(
+                            tag,
+                            "  Rename failed! tmp: ${tmp.absolutePath} -> dest: ${dest.absolutePath}"
+                        )
+                        throw IOException("Failed to rename tmp file to $dest")
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "  Exception during download of ${entry.file}: ${e.message}", e)
+                    tmp.delete()
+                    throw e
+                } finally {
+                    conn.disconnect()
                 }
             }
 
-            // Mark as downloaded
+            Log.d(tag, "All entries processed. Marking $repoSlug as downloaded.")
             val updated = getDownloadedRepos().toMutableSet().also { it.add(repoSlug) }
             prefs.edit { putStringSet(KEY_DOWNLOADED_REPOS, updated) }
 
             indicesLoaded = false
             loadIndices()
+            Log.d(tag, "Done. loadIndices() called.")
             true
-        } catch (_: Exception) {
-            false
+        } catch (e: Exception) {
+            Log.e("DownloadRepo", "Unhandled exception: ${e.message}", e)
+            throw e
         }
+    }
+
+    fun refreshLocalIndices() {
+        indicesLoaded = false
+        scope.launch { loadIndices() }
     }
 
     fun stop() {
@@ -205,7 +296,12 @@ class JinglesManager @Inject constructor(
             try {
                 val url = "https://raw.githubusercontent.com/$repoSlug/$branch/index.json"
                 val text = withContext(Dispatchers.IO) {
-                    URL(url).openStream().bufferedReader().use { it.readText() }
+                    val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 15_000
+                        readTimeout = 30_000
+                        instanceFollowRedirects = true
+                    }
+                    conn.inputStream.bufferedReader().use { it.readText() }
                 }
                 return json.decodeFromString<JingleIndex>(text) to branch
             } catch (_: Exception) {
