@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.JinglesManager
 import jr.brian.home.model.GitHubRepoResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,9 @@ class JinglesViewModel @Inject constructor(
     private val _downloadingRepo = MutableStateFlow<String?>(null)
     val downloadingRepo: StateFlow<String?> = _downloadingRepo.asStateFlow()
 
+    private val _downloadProgress = MutableStateFlow(-1f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+
     private val _isRefreshingFolders = MutableStateFlow(false)
     val isRefreshingFolders: StateFlow<Boolean> = _isRefreshingFolders.asStateFlow()
 
@@ -38,6 +42,7 @@ class JinglesViewModel @Inject constructor(
     val searchState: StateFlow<JinglesSearchUiState> = _searchState.asStateFlow()
 
     val indexNames: StateFlow<Map<String, String>> = jinglesManager.indexNames
+    val indexCounts: StateFlow<Map<String, Int>> = jinglesManager.indexCounts
 
     fun refreshLocalFolders() {
         if (_isRefreshingFolders.value) return
@@ -84,17 +89,43 @@ class JinglesViewModel @Inject constructor(
         _searchState.value = JinglesSearchUiState()
     }
 
+    private var downloadJob: Job? = null
+
+    fun cancelDownload() {
+        downloadJob?.cancel()
+        downloadJob = null
+        _downloadingRepo.value = null
+        _downloadProgress.value = -1f
+    }
+
     fun downloadRepo(
         repoSlug: String,
         onComplete: (success: Boolean) -> Unit = {}
     ) {
         if (_downloadingRepo.value != null) return
         _downloadingRepo.value = repoSlug
-        viewModelScope.launch {
-            val success = jinglesManager.downloadRepo(repoSlug)
+        _downloadProgress.value = 0f
+        downloadJob = viewModelScope.launch {
+            val success = jinglesManager.downloadRepo(repoSlug) { progress ->
+                _downloadProgress.value = progress
+            }
             _downloadedRepos.value = jinglesManager.getDownloadedRepos()
             _downloadingRepo.value = null
+            _downloadProgress.value = -1f
+            downloadJob = null
             onComplete(success)
         }
     }
+
+    suspend fun fetchRepoSizeBytes(repoSlug: String): Long? =
+        jinglesManager.fetchJinglesSizeBytes(repoSlug)
+
+    fun getDownloadedSizeBytes(repoSlug: String): Long =
+        jinglesManager.getDownloadedSizeBytes(repoSlug)
+
+    fun getDownloadedFileCount(repoSlug: String): Int =
+        jinglesManager.getDownloadedFileCount(repoSlug)
+
+    suspend fun getLocalFolderSizeBytes(uriString: String): Long =
+        jinglesManager.getLocalFolderSizeBytes(uriString)
 }
