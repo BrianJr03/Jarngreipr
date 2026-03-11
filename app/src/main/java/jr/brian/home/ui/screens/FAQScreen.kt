@@ -146,6 +146,10 @@ fun FAQScreen(
                                 question = stringResource(R.string.faq_jingles_troubleshoot_question),
                                 answer = stringResource(R.string.faq_jingles_troubleshoot_answer)
                             )
+                            FAQCard(
+                                question = stringResource(R.string.jingles_faq_inconsistent_q),
+                                answer = stringResource(R.string.jingles_faq_inconsistent_a)
+                            )
                         }
                     }
 

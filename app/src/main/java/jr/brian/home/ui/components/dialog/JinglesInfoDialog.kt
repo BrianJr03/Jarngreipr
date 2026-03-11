@@ -204,31 +204,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = stringResource(R.string.jingles_faq_title),
-                        color = ThemePrimaryColor,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    InfoBox(borderColor = ThemePrimaryColor.copy(alpha = 0.25f)) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = stringResource(R.string.jingles_faq_inconsistent_q),
-                                color = Color.White,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = stringResource(R.string.jingles_faq_inconsistent_a),
-                                color = Color.LightGray,
-                                fontSize = 14.sp,
-                                lineHeight = 21.sp
-                            )
-                        }
-                    }
-                }
-
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
