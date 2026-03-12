@@ -1,6 +1,7 @@
 package jr.brian.home.esde.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -40,7 +41,13 @@ class MusicManager(
         private const val CROSS_FADE_DURATION = 300L
         private const val DUCK_FADE_DURATION = 300L
         private const val DUCKED_VOLUME = 0.2f
+        private const val JINGLES_PREFS = "jingles_prefs"
+        private const val KEY_MUTED = "jingles_muted"
     }
+
+    private val sharedPrefs: SharedPreferences =
+        context.applicationContext.getSharedPreferences(JINGLES_PREFS, Context.MODE_PRIVATE)
+    private var isMuted: Boolean = sharedPrefs.getBoolean(KEY_MUTED, false)
 
     private fun getNormalVolume(): Float {
         return prefsManager.state.value.musicVolumeFloat
@@ -724,8 +731,12 @@ class MusicManager(
                 setOnPreparedListener { mp ->
                     Log.d(TAG, "Track prepared, starting playback")
                     mp.start()
-                    // Fade in from 0 to target volume
-                    fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                    if (isMuted) {
+                        mp.setVolume(0f, 0f)
+                    } else {
+                        // Fade in from 0 to target volume
+                        fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                    }
                 }
                 setOnCompletionListener {
                     Log.d(TAG, "Track completed, playing next")
@@ -827,6 +838,8 @@ class MusicManager(
     }
 
     override fun setMuted(muted: Boolean) {
+        isMuted = muted
+        sharedPrefs.edit().putBoolean(KEY_MUTED, muted).apply()
         volumeFadeRunnable?.let { handler.removeCallbacks(it) }
         volumeFadeRunnable = null
         try {

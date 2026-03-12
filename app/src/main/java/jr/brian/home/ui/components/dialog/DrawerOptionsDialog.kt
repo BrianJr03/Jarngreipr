@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.media3.common.util.UnstableApi
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -171,6 +173,8 @@ fun DrawerOptionsDialog(
                                 val newMuted = !isMuted
                                 jinglesManager.setMuted(newMuted)
                                 esdeViewModel.musicController.setMuted(newMuted)
+                                @OptIn(UnstableApi::class)
+                                VideoPresentationManager.setMuted(newMuted)
                             },
                             modifier = Modifier.size(48.dp)
                         ) {
