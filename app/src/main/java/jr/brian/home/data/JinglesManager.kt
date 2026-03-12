@@ -31,8 +31,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -84,12 +87,11 @@ class JinglesManager @Inject constructor(
 
     /**
      * Emits a human-readable error message whenever a background operation fails.
-     * UI can collect this to show a snackbar / toast.
+     * UI can collect this to show a snackbar / toast. Uses SharedFlow so concurrent
+     * failures are queued rather than the second silently clobbering the first.
      */
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-
-    fun clearError() { _error.value = null }
+    private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    val errors: SharedFlow<String> = _errors.asSharedFlow()
 
     /**
      * All lookup state lives in one immutable snapshot.
@@ -110,7 +112,7 @@ class JinglesManager @Inject constructor(
 
     private var player: ExoPlayer? = null
     private var currentPlayJob: Job? = null
-    private var currentGameFilename: String? = null
+    @Volatile private var currentGameFilename: String? = null
 
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
@@ -211,7 +213,7 @@ class JinglesManager @Inject constructor(
                 if (downloadResult is JinglesResult.Failure) {
                     // Log and continue — don't abort the whole batch for one missing file
                     Log.e(tag, "Failed to download ${entry.file}: ${downloadResult.message}")
-                    _error.value = "Warning: could not download ${entry.file}"
+                    _errors.tryEmit("Warning: could not download ${entry.file}")
                 }
                 onProgress(++processed / total.toFloat())
             }
@@ -224,7 +226,7 @@ class JinglesManager @Inject constructor(
         } catch (e: Exception) {
             val msg = "downloadRepo failed for $repoSlug: ${e.message}"
             Log.e(tag, msg, e)
-            _error.value = msg
+            _errors.tryEmit(msg)
             JinglesResult.Failure(msg, e)
         }
     }
@@ -250,7 +252,7 @@ class JinglesManager @Inject constructor(
                 JinglesResult.Success(filtered)
             } catch (e: Exception) {
                 val msg = "searchRepos failed: ${e.message}"
-                _error.value = msg
+                _errors.tryEmit(msg)
                 JinglesResult.Failure(msg, e)
             }
         }
@@ -321,61 +323,78 @@ class JinglesManager @Inject constructor(
      */
     @OptIn(UnstableApi::class)
     private suspend fun reloadIndices() {
+        // ── Build everything outside the lock (including all I/O and network) ──
+
+        val result = mutableListOf<JingleSource>()
+        val newBranchMap = mutableMapOf<String, String>()
+
+        // 1. Downloaded repos — offline-first
+        val downloadedRepos =
+            prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet())?.toList() ?: emptyList()
+        for (repoSlug in downloadedRepos) {
+            currentCoroutineContext().ensureActive()
+            val dir = getDownloadedDir(repoSlug)
+            if (!dir.exists()) continue
+            val indexText = runCatching { File(dir, "index.json").readText() }
+                .onFailure { Log.w("JinglesManager", "Cannot read index for $repoSlug: ${it.message}") }
+                .getOrNull() ?: continue
+            val index = runCatching { json.decodeFromString<JingleIndex>(indexText) }
+                .onFailure { Log.w("JinglesManager", "Malformed index for $repoSlug: ${it.message}") }
+                .getOrNull() ?: continue
+            result.add(JingleSource(key = dir.absolutePath, index = index, isLocal = true))
+        }
+
+        // 2. User-picked local folders (SAF)
+        currentCoroutineContext().ensureActive()
+        val folders =
+            prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList() ?: emptyList()
+        for (uriString in folders) {
+            currentCoroutineContext().ensureActive()
+            val index = loadLocalIndex(uriString) ?: continue
+            result.add(JingleSource(key = uriString, index = index, isLocal = true))
+        }
+
+        // 3. GitHub repos (network — must stay outside the lock)
+        currentCoroutineContext().ensureActive()
+        val repos = prefs.getStringSet(KEY_REPOS, emptySet())?.toList() ?: emptyList()
+        for (repo in repos) {
+            currentCoroutineContext().ensureActive()
+            val (index, branch) = fetchIndex(repo) ?: continue
+            newBranchMap[repo] = branch
+            result.add(JingleSource(key = repo, index = index, isLocal = false))
+        }
+
+        // Preserve branches already known from the old snapshot
+        val mergedBranch = snapshot.branchMap + newBranchMap
+
+        // Build lookup structures
+        val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
+        val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
+        for (source in result) {
+            for (entry in source.index.entries) {
+                val key = entry.game.lowercase()
+                if (key !in exact) exact[key] = source to entry
+                lower.add(Triple(key, source, entry))
+            }
+        }
+
+        // Build UI state maps
+        val nameMap = mutableMapOf<String, String>()
+        val countMap = mutableMapOf<String, Int>()
+        for (source in result) {
+            if (source.index.name.isNotBlank()) nameMap[source.key] = source.index.name
+            countMap[source.key] = source.index.entries.size
+        }
+        // Also expose downloaded repos by slug so cards work before network hit
+        for (slug in downloadedRepos) {
+            val filePath = getDownloadedDir(slug).absolutePath
+            nameMap[filePath]?.let { nameMap[slug] = it }
+            countMap[filePath]?.let { countMap[slug] = it }
+        }
+
+        // ── Atomic swap — only the final assignment is locked ─────────────────
         snapshotMutex.withLock {
-            val result = mutableListOf<JingleSource>()
-            val newBranchMap = mutableMapOf<String, String>()
-
-            // 1. Downloaded repos — offline-first
-            val downloadedRepos =
-                prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet())?.toList() ?: emptyList()
-            for (repoSlug in downloadedRepos) {
-                currentCoroutineContext().ensureActive()
-                val dir = getDownloadedDir(repoSlug)
-                if (!dir.exists()) continue
-                val indexText = runCatching { File(dir, "index.json").readText() }
-                    .onFailure { Log.w("JinglesManager", "Cannot read index for $repoSlug: ${it.message}") }
-                    .getOrNull() ?: continue
-                val index = runCatching { json.decodeFromString<JingleIndex>(indexText) }
-                    .onFailure { Log.w("JinglesManager", "Malformed index for $repoSlug: ${it.message}") }
-                    .getOrNull() ?: continue
-                result.add(JingleSource(key = dir.absolutePath, index = index, isLocal = true))
-            }
-
-            // 2. User-picked local folders (SAF)
-            currentCoroutineContext().ensureActive()
-            val folders =
-                prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList() ?: emptyList()
-            for (uriString in folders) {
-                currentCoroutineContext().ensureActive()
-                val index = loadLocalIndex(uriString) ?: continue
-                result.add(JingleSource(key = uriString, index = index, isLocal = true))
-            }
-
-            // 3. GitHub repos
-            currentCoroutineContext().ensureActive()
-            val repos = prefs.getStringSet(KEY_REPOS, emptySet())?.toList() ?: emptyList()
-            for (repo in repos) {
-                currentCoroutineContext().ensureActive()
-                val (index, branch) = fetchIndex(repo) ?: continue
-                newBranchMap[repo] = branch
-                result.add(JingleSource(key = repo, index = index, isLocal = false))
-            }
-
-            // Preserve any branches already known from the old snapshot
-            val mergedBranch = snapshot.branchMap + newBranchMap
-
-            // Build lookup structures
-            val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
-            val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
-            for (source in result) {
-                for (entry in source.index.entries) {
-                    val key = entry.game.lowercase()
-                    if (key !in exact) exact[key] = source to entry
-                    lower.add(Triple(key, source, entry))
-                }
-            }
-
-            // Merge any warm entries that were staged since the last reload
+            // Merge warm entries staged while we were building
             warmStagingMutex.withLock {
                 for ((k, v) in warmStaging) {
                     if (k !in exact) exact[k] = v
@@ -383,21 +402,6 @@ class JinglesManager @Inject constructor(
                 warmStaging.clear()
             }
 
-            // Build UI state maps
-            val nameMap = mutableMapOf<String, String>()
-            val countMap = mutableMapOf<String, Int>()
-            for (source in result) {
-                if (source.index.name.isNotBlank()) nameMap[source.key] = source.index.name
-                countMap[source.key] = source.index.entries.size
-            }
-            // Also expose downloaded repos by slug so cards work before network hit
-            for (slug in downloadedRepos) {
-                val filePath = getDownloadedDir(slug).absolutePath
-                nameMap[filePath]?.let { nameMap[slug] = it }
-                countMap[filePath]?.let { countMap[slug] = it }
-            }
-
-            // Atomic replace — readers always see a consistent snapshot
             snapshot = LookupSnapshot(
                 sources = result,
                 exactMap = exact,
@@ -441,22 +445,8 @@ class JinglesManager @Inject constructor(
         }
     }
 
-    @OptIn(UnstableApi::class)
     private suspend fun isValidJinglesRepo(repoSlug: String): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
-                val url =
-                    "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
-                val conn = openConnection(url)
-                val responseCode = conn.responseCode
-                conn.disconnect()
-                responseCode in 200..299
-            } catch (e: Exception) {
-                Log.d("JinglesManager", "isValidJinglesRepo false for $repoSlug: ${e.message}")
-                false
-            }
-        }
+        fetchIndex(repoSlug) != null
 
     /**
      * Two-tier lookup:

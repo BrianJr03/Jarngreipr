@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.JinglesManager
-import jr.brian.home.data.JinglesResult
 import jr.brian.home.model.GitHubRepoResult
+import jr.brian.home.model.jingles.JinglesResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
