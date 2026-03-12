@@ -18,12 +18,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -62,7 +65,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.esde.model.WallpaperToggleTarget
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -106,6 +111,9 @@ fun DrawerOptionsDialog(
     val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
     val closeFocusRequester = remember { FocusRequester() }
+    val jinglesManager = LocalJinglesManager.current
+    val esdeViewModel: ESDEViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         closeFocusRequester.requestFocus()
@@ -157,18 +165,38 @@ fun DrawerOptionsDialog(
                         fontWeight = FontWeight.Bold
                     )
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .focusRequester(closeFocusRequester)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.drawer_options_close),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                val newMuted = !isMuted
+                                jinglesManager.setMuted(newMuted)
+                                esdeViewModel.musicController.setMuted(newMuted)
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                contentDescription = if (isMuted) "Unmute" else "Mute",
+                                tint = if (isMuted) Color.White.copy(alpha = 0.4f) else Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .focusRequester(closeFocusRequester)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.drawer_options_close),
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
 

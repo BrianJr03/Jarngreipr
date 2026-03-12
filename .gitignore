@@ -18,3 +18,4 @@ local.properties
 .kotlin
 /app/standard/release
 /app/hidden/release
+index.json
