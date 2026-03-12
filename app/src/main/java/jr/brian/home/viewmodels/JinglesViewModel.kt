@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.data.JinglesManager
+import jr.brian.home.data.JinglesResult
 import jr.brian.home.model.GitHubRepoResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -58,14 +59,14 @@ class JinglesViewModel @Inject constructor(
         viewModelScope.launch {
             val query = "jingles"
             _searchState.value = JinglesSearchUiState(isLoading = true, query = query, isBrowseMode = true)
-            val results = runCatching { jinglesManager.searchRepos(query) }
+            val result = jinglesManager.searchRepos(query)
             _searchState.value = JinglesSearchUiState(
                 isLoading = false,
-                results = results.getOrElse { emptyList() },
+                results = if (result is JinglesResult.Success) result.value else emptyList(),
                 query = query,
                 isBrowseMode = true,
                 hasSearched = true,
-                isError = results.isFailure
+                isError = result is JinglesResult.Failure
             )
         }
     }
@@ -75,14 +76,14 @@ class JinglesViewModel @Inject constructor(
         val normalizedQuery = query.trim().lowercase()
         viewModelScope.launch {
             _searchState.value = JinglesSearchUiState(isLoading = true, query = normalizedQuery, isBrowseMode = false)
-            val results = runCatching { jinglesManager.searchRepos(normalizedQuery) }
+            val result = jinglesManager.searchRepos(normalizedQuery)
             _searchState.value = JinglesSearchUiState(
                 isLoading = false,
-                results = results.getOrElse { emptyList() },
+                results = if (result is JinglesResult.Success) result.value else emptyList(),
                 query = normalizedQuery,
                 isBrowseMode = false,
                 hasSearched = true,
-                isError = results.isFailure
+                isError = result is JinglesResult.Failure
             )
         }
     }
@@ -115,12 +116,14 @@ class JinglesViewModel @Inject constructor(
             _downloadingRepo.value = null
             _downloadProgress.value = -1f
             downloadJob = null
-            onComplete(success)
+            onComplete(success is JinglesResult.Success)
         }
     }
 
-    suspend fun fetchRepoSizeBytes(repoSlug: String): Long? =
-        jinglesManager.fetchJinglesSizeBytes(repoSlug)
+    suspend fun fetchRepoSizeBytes(repoSlug: String): Long? {
+        val result = jinglesManager.fetchJinglesSizeBytes(repoSlug)
+        return if (result is JinglesResult.Success) result.value else null
+    }
 
     fun getDownloadedSizeBytes(repoSlug: String): Long =
         jinglesManager.getDownloadedSizeBytes(repoSlug)

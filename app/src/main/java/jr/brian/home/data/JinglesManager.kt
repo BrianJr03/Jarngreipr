@@ -3,7 +3,6 @@ package jr.brian.home.data
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
-import android.os.Environment
 import androidx.annotation.OptIn
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -21,6 +20,8 @@ import jr.brian.home.model.GitHubRepoResult
 import jr.brian.home.model.GitHubSearchResponse
 import jr.brian.home.model.JingleEntry
 import jr.brian.home.model.JingleIndex
+import jr.brian.home.model.jingles.JinglesResult
+import jr.brian.home.model.jingles.LookupSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,10 +29,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -64,28 +69,58 @@ class JinglesManager @Inject constructor(
 
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == KEY_REPOS || key == KEY_LOCAL_FOLDERS || key == KEY_DOWNLOADED_REPOS) {
-            indicesLoaded = false
-            scope.launch { loadIndices() }
+            scope.launch { reloadIndices() }
         }
     }
 
     private val _indexNames = MutableStateFlow<Map<String, String>>(emptyMap())
-    val indexNames: StateFlow<Map<String, String>> = _indexNames
+    val indexNames: StateFlow<Map<String, String>> = _indexNames.asStateFlow()
 
     private val _indexCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val indexCounts: StateFlow<Map<String, Int>> = _indexCounts
+    val indexCounts: StateFlow<Map<String, Int>> = _indexCounts.asStateFlow()
+
+    private val _isMuted = MutableStateFlow(prefs.getBoolean(KEY_MUTED, false))
+    val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+
+    /**
+     * Emits a human-readable error message whenever a background operation fails.
+     * UI can collect this to show a snackbar / toast.
+     */
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun clearError() { _error.value = null }
+
+    /**
+     * All lookup state lives in one immutable snapshot.
+     * Writes happen under [snapshotMutex]; reads are lock-free because
+     * [@Volatile] guarantees visibility of the latest reference.
+     */
+    @Volatile
+    private var snapshot = LookupSnapshot()
+    private val snapshotMutex = Mutex()
+
+    /**
+     * Warm entries discovered via the contains() fallback are staged here
+     * and merged into the next snapshot, so we never mutate [snapshot.exactMap]
+     * from multiple coroutines simultaneously.
+     */
+    private val warmStagingMutex = Mutex()
+    private val warmStaging = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
 
     private var player: ExoPlayer? = null
     private var currentPlayJob: Job? = null
     private var currentGameFilename: String? = null
-    private var cachedIndices: List<JingleSource> = emptyList()
-    private var exactMatchMap: MutableMap<String, Pair<JingleSource, JingleEntry>> = mutableMapOf()
-    private var lowerEntries: List<Triple<String, JingleSource, JingleEntry>> = emptyList()
-    private var indicesLoaded = false
-    private val cachedBranch = mutableMapOf<String, String>()
 
-    private val _isMuted = MutableStateFlow(prefs.getBoolean(KEY_MUTED, false))
-    val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+    init {
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
+        scope.launch { reloadIndices() }
+        scope.launch(Dispatchers.Main) {
+            initPlayer()
+            if (_isMuted.value) player?.volume = 0f
+        }
+    }
+
 
     fun setMuted(muted: Boolean) {
         _isMuted.value = muted
@@ -95,34 +130,31 @@ class JinglesManager @Inject constructor(
         }
     }
 
-    init {
-        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
-        scope.launch { loadIndices() }
-        scope.launch(Dispatchers.Main) {
-            initPlayer()
-            if (_isMuted.value) player?.volume = 0f
-        }
-    }
-
     fun onGameSelected(gameFilename: String) {
         if (!prefs.getBoolean(KEY_ENABLED, true)) return
         if (gameFilename == currentGameFilename) return
         currentGameFilename = gameFilename
+
         currentPlayJob?.cancel()
         currentPlayJob = scope.launch {
             withContext(Dispatchers.Main) { player?.stop() }
-            if (!indicesLoaded) loadIndices()
+
+            // Ensure indices are loaded before trying to match
+            if (snapshot.sources.isEmpty()) reloadIndices()
+
             val (source, entry) = findMatch(gameFilename) ?: return@launch
+            val snap = snapshot
+
             when {
                 !source.isLocal -> {
-                    val branch = cachedBranch[source.key] ?: "main"
-                    val rawUrl =
-                        "${GitHubUrls.RAW_BASE}/${source.key}/$branch/${entry.file}"
+                    val branch = snap.branchMap[source.key] ?: "main"
+                    val rawUrl = "${GitHubUrls.RAW_BASE}/${source.key}/$branch/${entry.file}"
                     playFromUrl(rawUrl)
                 }
-
-                source.key.startsWith("content://") -> playLocalFile(source.key, entry.file)
-                else -> playFileFromPath(source.key, entry.file)
+                source.key.startsWith("content://") ->
+                    playLocalFile(source.key, entry.file)
+                else ->
+                    playFileFromPath(source.key, entry.file)
             }
         }
     }
@@ -139,173 +171,92 @@ class JinglesManager @Inject constructor(
     suspend fun downloadRepo(
         repoSlug: String,
         onProgress: (Float) -> Unit = {}
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): JinglesResult<Unit> = withContext(Dispatchers.IO) {
         val tag = "DownloadRepo"
         try {
             Log.d(tag, "Starting download for repo: $repoSlug")
 
             val fetchResult = fetchIndex(repoSlug)
-            if (fetchResult == null) {
-                Log.e(tag, "fetchIndex returned null for $repoSlug — aborting")
-                return@withContext false
-            }
-            val (index, branch) = fetchResult
-            Log.d(tag, "Fetched index. Branch: $branch, Entries: ${index.entries.size}")
-            index.entries.forEachIndexed { i, e -> Log.d(tag, "  Entry[$i]: ${e.file}") }
+                ?: return@withContext JinglesResult.Failure("Could not fetch index.json for $repoSlug")
 
+            val (index, branch) = fetchResult
+            Log.d(tag, "Fetched index. Branch=$branch, Entries=${index.entries.size}")
+
+            // Use app-specific external dir — no MANAGE_EXTERNAL_STORAGE needed
             val repoDir = getDownloadedDir(repoSlug)
             val jinglesDir = File(repoDir, "jingles")
-            Log.d(tag, "repoDir: ${repoDir.absolutePath}")
-            Log.d(tag, "jinglesDir: ${jinglesDir.absolutePath}")
-
             repoDir.mkdirs()
             jinglesDir.mkdirs()
-            Log.d(
-                tag,
-                "jinglesDir exists: ${jinglesDir.exists()}, isDir: ${jinglesDir.isDirectory}"
-            )
 
             // Write index.json
-            val indexFile = File(repoDir, "index.json")
-            indexFile.writeText(json.encodeToString(index))
-            Log.d(tag, "Wrote index.json (${indexFile.length()} bytes)")
+            File(repoDir, "index.json").writeText(json.encodeToString(index))
 
-            // Download each audio file
             val total = index.entries.size.coerceAtLeast(1)
             var processed = 0
             onProgress(0f)
+
             for (entry in index.entries) {
+                ensureActive() // respect cancellation between file downloads
                 val rawUrl = "${GitHubUrls.RAW_BASE}/$repoSlug/$branch/${entry.file}"
                 val dest = File(repoDir, entry.file)
                 dest.parentFile?.mkdirs()
 
-                Log.d(tag, "Processing entry: ${entry.file}")
-                Log.d(tag, "  rawUrl: $rawUrl")
-                Log.d(tag, "  dest: ${dest.absolutePath}")
-
                 if (dest.exists()) {
-                    Log.d(tag, "  Skipping — dest already exists (${dest.length()} bytes)")
-                    processed++
-                    onProgress(processed.toFloat() / total)
+                    Log.d(tag, "Skipping ${entry.file} — already exists")
+                    onProgress(++processed / total.toFloat())
                     continue
                 }
 
-                val conn = (URL(rawUrl).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 15_000
-                    readTimeout = 120_000
-                    instanceFollowRedirects = true
+                val downloadResult = downloadFile(rawUrl, dest)
+                if (downloadResult is JinglesResult.Failure) {
+                    // Log and continue — don't abort the whole batch for one missing file
+                    Log.e(tag, "Failed to download ${entry.file}: ${downloadResult.message}")
+                    _error.value = "Warning: could not download ${entry.file}"
                 }
-
-                val responseCode = conn.responseCode
-                val contentType = conn.contentType
-                val contentLength = conn.contentLengthLong
-                Log.d(
-                    tag,
-                    "  HTTP $responseCode | Content-Type: $contentType | Length: $contentLength bytes"
-                )
-
-                if (responseCode !in 200..299) {
-                    val errorBody =
-                        conn.errorStream?.bufferedReader()?.readText() ?: "(no error body)"
-                    Log.e(tag, "  Download failed for ${entry.file}: HTTP $responseCode")
-                    Log.e(tag, "  Error body: ${errorBody.take(300)}")
-                    conn.disconnect()
-                    processed++
-                    onProgress(processed.toFloat() / total)
-                    continue
-                }
-
-                val tmp = File(dest.parentFile, "${dest.name}.tmp")
-                try {
-                    conn.inputStream.use { input ->
-                        tmp.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    Log.d(tag, "  Downloaded to tmp (${tmp.length()} bytes)")
-
-                    val renamed = tmp.renameTo(dest)
-                    Log.d(
-                        tag,
-                        "  Renamed tmp -> dest: $renamed | dest exists: ${dest.exists()} (${dest.length()} bytes)"
-                    )
-                    if (!renamed) {
-                        Log.e(
-                            tag,
-                            "  Rename failed! tmp: ${tmp.absolutePath} -> dest: ${dest.absolutePath}"
-                        )
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "  Exception during download of ${entry.file}: ${e.message}", e)
-                    tmp.delete()
-                } finally {
-                    conn.disconnect()
-                }
-                processed++
-                onProgress(processed.toFloat() / total)
+                onProgress(++processed / total.toFloat())
             }
 
-            Log.d(tag, "All entries processed. Marking $repoSlug as downloaded.")
             val updated = getDownloadedRepos().toMutableSet().also { it.add(repoSlug) }
             prefs.edit { putStringSet(KEY_DOWNLOADED_REPOS, updated) }
-
-            indicesLoaded = false
-            loadIndices()
-            Log.d(tag, "Done. loadIndices() called.")
-            true
+            reloadIndices()
+            Log.d(tag, "Done.")
+            JinglesResult.Success(Unit)
         } catch (e: Exception) {
-            Log.e("DownloadRepo", "Exception: ${e.message}", e)
-            false
+            val msg = "downloadRepo failed for $repoSlug: ${e.message}"
+            Log.e(tag, msg, e)
+            _error.value = msg
+            JinglesResult.Failure(msg, e)
         }
     }
 
-    suspend fun searchRepos(query: String): List<GitHubRepoResult> = withContext(Dispatchers.IO) {
-        try {
-            val encoded = java.net.URLEncoder.encode(query, "UTF-8")
-            val url = "${GitHubUrls.API_SEARCH_REPOS}?q=$encoded+in:name&sort=stars&per_page=30"
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15_000
-                readTimeout = 30_000
-                setRequestProperty("Accept", "application/vnd.github+json")
-                instanceFollowRedirects = true
-            }
-            val text = conn.inputStream.bufferedReader().use { it.readText() }
-            conn.disconnect()
-            val results = json.decodeFromString<GitHubSearchResponse>(text).items
-            coroutineScope {
-                results
-                    .map { repo -> async { repo to isValidJinglesRepo(repo.fullName) } }
-                    .awaitAll()
-                    .filter { (_, valid) -> valid }
-                    .map { (repo, _) -> repo }
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    private suspend fun isValidJinglesRepo(repoSlug: String): Boolean =
+    suspend fun searchRepos(query: String): JinglesResult<List<GitHubRepoResult>> =
         withContext(Dispatchers.IO) {
             try {
-                val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
-                val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
-                val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 10_000
-                    readTimeout = 15_000
-                    setRequestProperty("Accept", "application/vnd.github+json")
-                    instanceFollowRedirects = true
-                }
-                val responseCode = conn.responseCode
+                val encoded = java.net.URLEncoder.encode(query, "UTF-8")
+                val url =
+                    "${GitHubUrls.API_SEARCH_REPOS}?q=$encoded+in:name&sort=stars&per_page=30"
+                val conn = openConnection(url)
+                val text = conn.inputStream.bufferedReader().use { it.readText() }
                 conn.disconnect()
-                responseCode in 200..299
-            } catch (_: Exception) {
-                false
+
+                val results = json.decodeFromString<GitHubSearchResponse>(text).items
+                val filtered = coroutineScope {
+                    results
+                        .map { repo -> async { repo to isValidJinglesRepo(repo.fullName) } }
+                        .awaitAll()
+                        .filter { (_, valid) -> valid }
+                        .map { (repo, _) -> repo }
+                }
+                JinglesResult.Success(filtered)
+            } catch (e: Exception) {
+                val msg = "searchRepos failed: ${e.message}"
+                _error.value = msg
+                JinglesResult.Failure(msg, e)
             }
         }
 
     fun refreshLocalIndices() {
-        indicesLoaded = false
-        scope.launch { loadIndices() }
+        scope.launch { reloadIndices() }
     }
 
     fun stop() {
@@ -322,141 +273,161 @@ class JinglesManager @Inject constructor(
         }
     }
 
-    /** Counts audio files actually present in the downloaded jingles folder for [repoSlug]. */
     fun getDownloadedFileCount(repoSlug: String): Int {
         val jinglesDir = File(getDownloadedDir(repoSlug), "jingles")
         return jinglesDir.walkTopDown().count { it.isFile }
     }
 
-    /** Sums the sizes of all files in the downloaded jingles folder for [repoSlug]. */
     fun getDownloadedSizeBytes(repoSlug: String): Long {
         val jinglesDir = File(getDownloadedDir(repoSlug), "jingles")
         return jinglesDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
     }
 
-    /** Fetches the total size of jingle files for a GitHub repo via the contents API. */
-    suspend fun fetchJinglesSizeBytes(repoSlug: String): Long? = withContext(Dispatchers.IO) {
-        try {
-            val branch = cachedBranch[repoSlug] ?: "main"
-            val url = "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 10_000
-                readTimeout = 15_000
-                setRequestProperty("Accept", "application/vnd.github+json")
-                instanceFollowRedirects = true
+    suspend fun fetchJinglesSizeBytes(repoSlug: String): JinglesResult<Long> =
+        withContext(Dispatchers.IO) {
+            try {
+                val branch = snapshot.branchMap[repoSlug] ?: "main"
+                val url =
+                    "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
+                val conn = openConnection(url)
+                val text = conn.inputStream.bufferedReader().use { it.readText() }
+                conn.disconnect()
+                val size = json.decodeFromString<List<GitHubContentEntry>>(text)
+                    .filter { it.type == "file" }
+                    .sumOf { it.size }
+                JinglesResult.Success(size)
+            } catch (e: Exception) {
+                JinglesResult.Failure("fetchJinglesSizeBytes failed: ${e.message}", e)
             }
-            val text = conn.inputStream.bufferedReader().use { it.readText() }
-            conn.disconnect()
-            json.decodeFromString<List<jr.brian.home.model.GitHubContentEntry>>(text)
-                .filter { it.type == "file" }
-                .sumOf { it.size }
-        } catch (_: Exception) {
-            null
         }
-    }
 
-    /** Returns the total size (bytes) of audio files in a SAF-picked local folder. */
+    @OptIn(UnstableApi::class)
     suspend fun getLocalFolderSizeBytes(uriString: String): Long = withContext(Dispatchers.IO) {
         try {
             val folder =
                 DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return@withContext 0L
             val jinglesFolder = folder.findFile("jingles") ?: return@withContext 0L
             jinglesFolder.listFiles().filter { it.isFile }.sumOf { it.length() }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("JinglesManager", "getLocalFolderSizeBytes failed: ${e.message}")
             0L
         }
     }
 
-    private fun getDownloadedDir(repoSlug: String): File =
-        File(
-            Environment.getExternalStorageDirectory(),
-            "$JARNGREIPR_FOLDER/${repoSlug.replace("/", "-")}"
-        )
+    /**
+     * Builds the full [LookupSnapshot] from all three source types and
+     * replaces [snapshot] atomically under [snapshotMutex].
+     * Cancellation-safe: [ensureActive] is called between each IO stage.
+     */
+    @OptIn(UnstableApi::class)
+    private suspend fun reloadIndices() {
+        snapshotMutex.withLock {
+            val result = mutableListOf<JingleSource>()
+            val newBranchMap = mutableMapOf<String, String>()
 
-    private suspend fun loadIndices() {
-        val result = mutableListOf<JingleSource>()
-
-        // 1. Downloaded repos — offline-first, direct file access
-        val downloadedRepos =
-            prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet())?.toList() ?: emptyList()
-        for (repoSlug in downloadedRepos) {
-            val dir = getDownloadedDir(repoSlug)
-            if (!dir.exists()) continue
-            val indexText =
-                runCatching { File(dir, "index.json").readText() }.getOrNull() ?: continue
-            val index = runCatching { json.decodeFromString<JingleIndex>(indexText) }.getOrNull()
-                ?: continue
-            result.add(JingleSource(key = dir.absolutePath, index = index, isLocal = true))
-        }
-
-        // 2. User-picked local folders (SAF)
-        val folders = prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList() ?: emptyList()
-        for (uriString in folders) {
-            val index = loadLocalIndex(uriString) ?: continue
-            result.add(JingleSource(key = uriString, index = index, isLocal = true))
-        }
-
-        // 3. GitHub repos
-        val repos = prefs.getStringSet(KEY_REPOS, emptySet())?.toList() ?: emptyList()
-        for (repo in repos) {
-            val (index, branch) = fetchIndex(repo) ?: continue
-            cachedBranch[repo] = branch
-            result.add(JingleSource(key = repo, index = index, isLocal = false))
-        }
-
-        cachedIndices = result
-        indicesLoaded = true
-
-        // Build name map and count map: key → display name / entry count
-        val nameMap = mutableMapOf<String, String>()
-        val countMap = mutableMapOf<String, Int>()
-        for (source in result) {
-            if (source.index.name.isNotBlank()) nameMap[source.key] = source.index.name
-            countMap[source.key] = source.index.entries.size
-        }
-        // Downloaded repos are keyed by file path, but the screen identifies them by repo slug —
-        // map the slug too so the GitHub RepoCard can find the name/count before/without a network hit.
-        val downloadedSlugs = prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet()) ?: emptySet()
-        for (slug in downloadedSlugs) {
-            val filePath = getDownloadedDir(slug).absolutePath
-            nameMap[filePath]?.let { nameMap[slug] = it }
-            countMap[filePath]?.let { countMap[slug] = it }
-        }
-        _indexNames.value = nameMap
-        _indexCounts.value = countMap
-
-        val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
-        val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
-        for (source in result) {
-            for (entry in source.index.entries) {
-                val key = entry.game.lowercase()
-                if (key !in exact) exact[key] = source to entry
-                lower.add(Triple(key, source, entry))
+            // 1. Downloaded repos — offline-first
+            val downloadedRepos =
+                prefs.getStringSet(KEY_DOWNLOADED_REPOS, emptySet())?.toList() ?: emptyList()
+            for (repoSlug in downloadedRepos) {
+                currentCoroutineContext().ensureActive()
+                val dir = getDownloadedDir(repoSlug)
+                if (!dir.exists()) continue
+                val indexText = runCatching { File(dir, "index.json").readText() }
+                    .onFailure { Log.w("JinglesManager", "Cannot read index for $repoSlug: ${it.message}") }
+                    .getOrNull() ?: continue
+                val index = runCatching { json.decodeFromString<JingleIndex>(indexText) }
+                    .onFailure { Log.w("JinglesManager", "Malformed index for $repoSlug: ${it.message}") }
+                    .getOrNull() ?: continue
+                result.add(JingleSource(key = dir.absolutePath, index = index, isLocal = true))
             }
+
+            // 2. User-picked local folders (SAF)
+            currentCoroutineContext().ensureActive()
+            val folders =
+                prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList() ?: emptyList()
+            for (uriString in folders) {
+                currentCoroutineContext().ensureActive()
+                val index = loadLocalIndex(uriString) ?: continue
+                result.add(JingleSource(key = uriString, index = index, isLocal = true))
+            }
+
+            // 3. GitHub repos
+            currentCoroutineContext().ensureActive()
+            val repos = prefs.getStringSet(KEY_REPOS, emptySet())?.toList() ?: emptyList()
+            for (repo in repos) {
+                currentCoroutineContext().ensureActive()
+                val (index, branch) = fetchIndex(repo) ?: continue
+                newBranchMap[repo] = branch
+                result.add(JingleSource(key = repo, index = index, isLocal = false))
+            }
+
+            // Preserve any branches already known from the old snapshot
+            val mergedBranch = snapshot.branchMap + newBranchMap
+
+            // Build lookup structures
+            val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
+            val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
+            for (source in result) {
+                for (entry in source.index.entries) {
+                    val key = entry.game.lowercase()
+                    if (key !in exact) exact[key] = source to entry
+                    lower.add(Triple(key, source, entry))
+                }
+            }
+
+            // Merge any warm entries that were staged since the last reload
+            warmStagingMutex.withLock {
+                for ((k, v) in warmStaging) {
+                    if (k !in exact) exact[k] = v
+                }
+                warmStaging.clear()
+            }
+
+            // Build UI state maps
+            val nameMap = mutableMapOf<String, String>()
+            val countMap = mutableMapOf<String, Int>()
+            for (source in result) {
+                if (source.index.name.isNotBlank()) nameMap[source.key] = source.index.name
+                countMap[source.key] = source.index.entries.size
+            }
+            // Also expose downloaded repos by slug so cards work before network hit
+            for (slug in downloadedRepos) {
+                val filePath = getDownloadedDir(slug).absolutePath
+                nameMap[filePath]?.let { nameMap[slug] = it }
+                countMap[filePath]?.let { countMap[slug] = it }
+            }
+
+            // Atomic replace — readers always see a consistent snapshot
+            snapshot = LookupSnapshot(
+                sources = result,
+                exactMap = exact,
+                lowerEntries = lower,
+                branchMap = mergedBranch,
+            )
+            _indexNames.value = nameMap
+            _indexCounts.value = countMap
         }
-        exactMatchMap = exact
-        lowerEntries = lower
     }
 
+    @OptIn(UnstableApi::class)
     private suspend fun fetchIndex(repoSlug: String): Pair<JingleIndex, String>? {
         for (branch in listOf("main", "master")) {
             try {
                 val url = "${GitHubUrls.RAW_BASE}/$repoSlug/$branch/index.json"
                 val text = withContext(Dispatchers.IO) {
-                    val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                        connectTimeout = 15_000
-                        readTimeout = 30_000
-                        instanceFollowRedirects = true
-                    }
-                    conn.inputStream.bufferedReader().use { it.readText() }
+                    val conn = openConnection(url)
+                    conn.inputStream.bufferedReader().use { it.readText() }.also { conn.disconnect() }
                 }
                 return json.decodeFromString<JingleIndex>(text) to branch
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.d("JinglesManager", "fetchIndex: branch=$branch miss for $repoSlug: ${e.message}")
             }
         }
+        Log.w("JinglesManager", "fetchIndex: could not fetch index.json for $repoSlug")
         return null
     }
 
+    @OptIn(UnstableApi::class)
     private fun loadLocalIndex(uriString: String): JingleIndex? {
         return try {
             val folder = DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return null
@@ -464,12 +435,40 @@ class JinglesManager @Inject constructor(
             val text = context.contentResolver.openInputStream(indexFile.uri)
                 ?.bufferedReader()?.use { it.readText() } ?: return null
             json.decodeFromString<JingleIndex>(text)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("JinglesManager", "loadLocalIndex failed for $uriString: ${e.message}")
             null
         }
     }
 
-    private fun findMatch(gameFilename: String): Pair<JingleSource, JingleEntry>? {
+    @OptIn(UnstableApi::class)
+    private suspend fun isValidJinglesRepo(repoSlug: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val (_, branch) = fetchIndex(repoSlug) ?: return@withContext false
+                val url =
+                    "${GitHubUrls.API_REPOS_BASE}/$repoSlug/contents/jingles?ref=$branch"
+                val conn = openConnection(url)
+                val responseCode = conn.responseCode
+                conn.disconnect()
+                responseCode in 200..299
+            } catch (e: Exception) {
+                Log.d("JinglesManager", "isValidJinglesRepo false for $repoSlug: ${e.message}")
+                false
+            }
+        }
+
+    /**
+     * Two-tier lookup:
+     * 1. O(1) exact match against the current snapshot's exactMap.
+     * 2. O(n) contains fallback — result is staged for merge into the next snapshot.
+     *
+     * Reading [snapshot] without a lock is intentional: [@Volatile] guarantees
+     * we always see the latest fully-constructed snapshot reference.
+     */
+    private suspend fun findMatch(
+        gameFilename: String
+    ): Pair<JingleSource, JingleEntry>? {
         val baseName = gameFilename
             .substringAfterLast("/")
             .substringAfterLast("\\")
@@ -477,25 +476,49 @@ class JinglesManager @Inject constructor(
             .trim()
             .lowercase()
 
-        // O(1) exact match
-        exactMatchMap[baseName]?.let { return it }
+        val snap = snapshot
 
-        // O(n) contains fallback — result cached so subsequent calls for this game are O(1)
-        for ((lowerGame, source, entry) in lowerEntries) {
+        // Tier 1 — O(1)
+        snap.exactMap[baseName]?.let { return it }
+
+        // Tier 2 — O(n) contains fallback
+        for ((lowerGame, source, entry) in snap.lowerEntries) {
             if (baseName.contains(lowerGame) || lowerGame.contains(baseName)) {
-                exactMatchMap[baseName] = source to entry
+                // Stage the warm entry; it will be merged on the next reloadIndices()
+                warmStagingMutex.withLock { warmStaging[baseName] = source to entry }
                 return source to entry
             }
         }
         return null
     }
 
-    private suspend fun playLocalFile(
-        folderUriString: String,
-        filePath: String
-    ) {
+    private fun downloadFile(rawUrl: String, dest: File): JinglesResult<Unit> {
+        val conn = openConnection(rawUrl)
+        return try {
+            val responseCode = conn.responseCode
+            if (responseCode !in 200..299) {
+                val body = conn.errorStream?.bufferedReader()?.readText()?.take(300) ?: ""
+                return JinglesResult.Failure("HTTP $responseCode for $rawUrl — $body")
+            }
+            val tmp = File(dest.parentFile, "${dest.name}.tmp")
+            conn.inputStream.use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            if (!tmp.renameTo(dest)) {
+                tmp.delete()
+                return JinglesResult.Failure("Rename failed: ${tmp.absolutePath} -> ${dest.absolutePath}")
+            }
+            JinglesResult.Success(Unit)
+        } catch (e: IOException) {
+            JinglesResult.Failure("IO error downloading $rawUrl: ${e.message}", e)
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    @OptIn(UnstableApi::class)
+    private suspend fun playLocalFile(folderUriString: String, filePath: String) {
         try {
-            val folder = DocumentFile.fromTreeUri(context, folderUriString.toUri()) ?: return
+            val folder =
+                DocumentFile.fromTreeUri(context, folderUriString.toUri()) ?: return
             val parts = filePath.split("/")
             var current: DocumentFile? = folder
             for (part in parts.dropLast(1)) {
@@ -503,27 +526,27 @@ class JinglesManager @Inject constructor(
             }
             val audioFile = current?.findFile(parts.last()) ?: return
             playFromUrl(audioFile.uri.toString())
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("JinglesManager", "playLocalFile failed: ${e.message}")
         }
     }
 
-    private suspend fun playFileFromPath(
-        basePath: String,
-        filePath: String
-    ) {
+    @OptIn(UnstableApi::class)
+    private suspend fun playFileFromPath(basePath: String, filePath: String) {
         val file = File(basePath, filePath)
-        if (file.exists()) playFromUrl(Uri.fromFile(file).toString())
+        if (file.exists()) {
+            playFromUrl(Uri.fromFile(file).toString())
+        } else {
+            Log.w("JinglesManager", "playFileFromPath: file not found: ${file.absolutePath}")
+        }
     }
 
     @OptIn(UnstableApi::class)
     private fun initPlayer() {
+        if (player != null) return
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                500,
-                10_000,
-                250,
-                500
-            ).build()
+            .setBufferDurationsMs(500, 10_000, 250, 500)
+            .build()
         player = ExoPlayer.Builder(context)
             .setLoadControl(loadControl)
             .build()
@@ -532,14 +555,36 @@ class JinglesManager @Inject constructor(
     @OptIn(UnstableApi::class)
     private suspend fun playFromUrl(url: String) {
         withContext(Dispatchers.Main) {
-            val p = player ?: run { initPlayer(); player!! }
-            with(p) {
-                stop()
-                clearMediaItems()
-                setMediaItem(MediaItem.fromUri(url))
-                prepare()
-                play()
-            }
+            initPlayer()
+            val p = player ?: return@withContext
+            p.stop()
+            p.clearMediaItems()
+            p.setMediaItem(MediaItem.fromUri(url))
+            p.prepare()
+            if (!_isMuted.value) p.volume = 1f else p.volume = 0f
+            p.play()
         }
     }
+
+    /**
+     * Opens an [HttpURLConnection] with sensible defaults.
+     * Caller is responsible for calling [HttpURLConnection.disconnect].
+     */
+    private fun openConnection(url: String): HttpURLConnection =
+        (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 15_000
+            readTimeout = 30_000
+            setRequestProperty("Accept", "application/vnd.github+json")
+            instanceFollowRedirects = true
+        }
+
+    /**
+     * Uses [Context.getExternalFilesDir] — app-specific, no special permissions needed,
+     * automatically cleaned up on uninstall.
+     */
+    private fun getDownloadedDir(repoSlug: String): File =
+        File(
+            context.getExternalFilesDir(null),
+            "${JARNGREIPR_FOLDER}/${repoSlug.replace("/", "-")}"
+        )
 }
