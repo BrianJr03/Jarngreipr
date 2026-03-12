@@ -272,7 +272,6 @@ class MainActivity : ComponentActivity() {
         onScreensaverUIVisibilityChanged: (Boolean) -> Unit,
         onGameBrowsingUIVisibilityChanged: (Boolean) -> Unit
     ) {
-        val context = LocalContext.current
         LaunchedEffect(Unit) {
             fun launchSystemAppIfTriggered(systemName: String, trigger: SystemLaunchTrigger) {
                 if (esdePreferencesManager.getSystemLaunchTrigger(systemName) == trigger) {

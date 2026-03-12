@@ -46,6 +46,7 @@ private const val KEY_REPOS = "jingle_repos"
 private const val KEY_LOCAL_FOLDERS = "jingle_local_folders"
 private const val KEY_DOWNLOADED_REPOS = "jingle_downloaded_repos"
 private const val KEY_ENABLED = "jingles_enabled"
+private const val KEY_MUTED = "jingles_muted"
 private const val JARNGREIPR_FOLDER = "Jarngreipr Jingles"
 
 @Singleton
@@ -83,11 +84,12 @@ class JinglesManager @Inject constructor(
     private var indicesLoaded = false
     private val cachedBranch = mutableMapOf<String, String>()
 
-    private val _isMuted = MutableStateFlow(false)
+    private val _isMuted = MutableStateFlow(prefs.getBoolean(KEY_MUTED, false))
     val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
 
     fun setMuted(muted: Boolean) {
         _isMuted.value = muted
+        prefs.edit { putBoolean(KEY_MUTED, muted) }
         scope.launch(Dispatchers.Main) {
             player?.volume = if (muted) 0f else 1f
         }
@@ -96,7 +98,10 @@ class JinglesManager @Inject constructor(
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         scope.launch { loadIndices() }
-        scope.launch(Dispatchers.Main) { initPlayer() }
+        scope.launch(Dispatchers.Main) {
+            initPlayer()
+            if (_isMuted.value) player?.volume = 0f
+        }
     }
 
     fun onGameSelected(gameFilename: String) {
