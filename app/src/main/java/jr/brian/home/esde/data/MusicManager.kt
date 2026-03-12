@@ -9,9 +9,9 @@ import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.esde.model.MusicVideoBehavior
+import androidx.core.content.edit
 import jr.brian.home.esde.model.MusicSource
+import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import java.io.File
 
@@ -48,6 +48,27 @@ class MusicManager(
     private val sharedPrefs: SharedPreferences =
         context.applicationContext.getSharedPreferences(JINGLES_PREFS, Context.MODE_PRIVATE)
     private var isMuted: Boolean = sharedPrefs.getBoolean(KEY_MUTED, false)
+
+    private val mutePrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == KEY_MUTED) {
+            val newMuted = sharedPrefs.getBoolean(KEY_MUTED, false)
+            if (newMuted == isMuted) return@OnSharedPreferenceChangeListener
+            isMuted = newMuted
+            handler.post {
+                try {
+                    if (newMuted) {
+                        volumeFadeRunnable?.let { handler.removeCallbacks(it) }
+                        volumeFadeRunnable = null
+                        musicPlayer?.setVolume(0f, 0f)
+                    } else {
+                        fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                    }
+                } catch (_: IllegalStateException) {
+                    Log.w(TAG, "Could not apply mute from prefs - player released")
+                }
+            }
+        }
+    }
 
     private fun getNormalVolume(): Float {
         return prefsManager.state.value.musicVolumeFloat
@@ -128,6 +149,7 @@ class MusicManager(
     init {
         Log.d(TAG, "MusicManager initialized")
         Log.d(TAG, "Base music path: ${getMusicPath()}")
+        sharedPrefs.registerOnSharedPreferenceChangeListener(mutePrefsListener)
     }
 
     private fun getMusicPath(): String {
@@ -414,6 +436,7 @@ class MusicManager(
 
     override fun release() {
         Log.d(TAG, "Releasing music resources")
+        sharedPrefs.unregisterOnSharedPreferenceChangeListener(mutePrefsListener)
 
         // Cancel any pending operations
         volumeFadeRunnable?.let { handler.removeCallbacks(it) }
@@ -628,9 +651,9 @@ class MusicManager(
             Log.d(TAG, "Fading out old player independently")
 
             // Create independent fade for old player
-            var oldPlayerVolume = 1.0f
+            var oldPlayerVolume = if (isMuted) 0f else 1.0f
             val fadeSteps = (CROSS_FADE_DURATION / 50).toInt()
-            val volumeStep = oldPlayerVolume / fadeSteps
+            val volumeStep = 1.0f / fadeSteps
             var currentStep = 0
 
             val oldPlayerFadeRunnable = object : Runnable {
@@ -730,10 +753,11 @@ class MusicManager(
                 setDataSource(file.absolutePath)
                 setOnPreparedListener { mp ->
                     Log.d(TAG, "Track prepared, starting playback")
-                    mp.start()
                     if (isMuted) {
                         mp.setVolume(0f, 0f)
+                        mp.start()
                     } else {
+                        mp.start()
                         // Fade in from 0 to target volume
                         fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
                     }
@@ -839,14 +863,14 @@ class MusicManager(
 
     override fun setMuted(muted: Boolean) {
         isMuted = muted
-        sharedPrefs.edit().putBoolean(KEY_MUTED, muted).apply()
-        volumeFadeRunnable?.let { handler.removeCallbacks(it) }
-        volumeFadeRunnable = null
+        sharedPrefs.edit { putBoolean(KEY_MUTED, muted) }
         try {
             if (muted) {
+                volumeFadeRunnable?.let { handler.removeCallbacks(it) }
+                volumeFadeRunnable = null
                 musicPlayer?.setVolume(0f, 0f)
             } else {
-                musicPlayer?.setVolume(currentVolume, currentVolume)
+                fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
             }
         } catch (_: IllegalStateException) {
             Log.w(TAG, "Could not set mute - player released")
