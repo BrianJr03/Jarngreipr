@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.dialog
 
+import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -65,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.LocalJinglesManager
@@ -87,6 +89,7 @@ import jr.brian.home.util.MediaPickerLauncher
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.util.launchApp
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
@@ -114,7 +117,9 @@ fun DrawerOptionsDialog(
     var isWallpaperExpanded by remember { mutableStateOf(false) }
     val closeFocusRequester = remember { FocusRequester() }
     val jinglesManager = LocalJinglesManager.current
-    val esdeViewModel: ESDEViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val esdeViewModel: ESDEViewModel = hiltViewModel(
+        context as ComponentActivity
+    )
     val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -173,7 +178,6 @@ fun DrawerOptionsDialog(
                                 val newMuted = !isMuted
                                 jinglesManager.setMuted(newMuted)
                                 esdeViewModel.musicController.setMuted(newMuted)
-                                @OptIn(UnstableApi::class)
                                 VideoPresentationManager.setMuted(newMuted)
                             },
                             modifier = Modifier.size(48.dp)
