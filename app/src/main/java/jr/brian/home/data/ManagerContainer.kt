@@ -2,13 +2,19 @@ package jr.brian.home.data
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalControlPadManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
-import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
+import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -16,21 +22,15 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
-import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
-import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
-import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
-import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
-import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
-import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
+import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
+import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
-import jr.brian.home.esde.data.LocalESDEPreferencesManager
-import jr.brian.home.esde.util.LocalESDEImageLoader
 import javax.inject.Inject
 
 /**
@@ -108,6 +108,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalAppDrawerFabManager provides feature.appDrawerFabManager,
         LocalGameKonfettiManager provides feature.gameKonfettiManager,
         LocalFloatyModeManager provides feature.floatyModeManager,
+        LocalJinglesManager provides feature.jinglesManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,

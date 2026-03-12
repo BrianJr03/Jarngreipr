@@ -826,6 +826,20 @@ class MusicManager(
         }
     }
 
+    override fun setMuted(muted: Boolean) {
+        volumeFadeRunnable?.let { handler.removeCallbacks(it) }
+        volumeFadeRunnable = null
+        try {
+            if (muted) {
+                musicPlayer?.setVolume(0f, 0f)
+            } else {
+                musicPlayer?.setVolume(currentVolume, currentVolume)
+            }
+        } catch (_: IllegalStateException) {
+            Log.w(TAG, "Could not set mute - player released")
+        }
+    }
+
     private fun fadeVolume(
         fromVolume: Float,
         toVolume: Float,

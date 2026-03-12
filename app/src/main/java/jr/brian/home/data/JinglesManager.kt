@@ -30,6 +30,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -81,6 +82,16 @@ class JinglesManager @Inject constructor(
     private var lowerEntries: List<Triple<String, JingleSource, JingleEntry>> = emptyList()
     private var indicesLoaded = false
     private val cachedBranch = mutableMapOf<String, String>()
+
+    private val _isMuted = MutableStateFlow(false)
+    val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+
+    fun setMuted(muted: Boolean) {
+        _isMuted.value = muted
+        scope.launch(Dispatchers.Main) {
+            player?.volume = if (muted) 0f else 1f
+        }
+    }
 
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)

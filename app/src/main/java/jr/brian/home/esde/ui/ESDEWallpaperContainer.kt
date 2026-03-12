@@ -511,23 +511,38 @@ private fun BoxScope.AnimatedLogo(
                 )
         ) {
             val minWidth = (state.marqueeWidth * minWidthPercent).dp
-            MarqueeImage(
-                marqueePath = logoPath,
-                modifier = Modifier
-                    .sizeIn(
-                        minWidth = minWidth,
-                        maxWidth = state.marqueeWidth.dp,
-                        maxHeight = state.marqueeHeight.dp
-                    )
-                    .scale(bubbleScale)
-                    .graphicsLayer { alpha = effectiveLogoAlpha },
-                animate = isUsingDefaultBackground,
-                animationStyle = state.animationStyle,
-                animationDuration = state.animationDuration,
-                animationScale = state.animationScale,
-                onClick = if (isFreePosition) openMarqueeShortcut else null,
-                onLongClick = if (!isFreePosition) openMarqueeShortcut else null
-            )
+            AnimatedContent(
+                targetState = logoPath,
+                transitionSpec = {
+                    scaleIn(
+                        initialScale = 0.6f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
+                    fadeOut(animationSpec = tween(durationMillis = 150))
+                },
+                label = "LogoBounce"
+            ) { path ->
+                MarqueeImage(
+                    marqueePath = path,
+                    modifier = Modifier
+                        .sizeIn(
+                            minWidth = minWidth,
+                            maxWidth = state.marqueeWidth.dp,
+                            maxHeight = state.marqueeHeight.dp
+                        )
+                        .scale(bubbleScale)
+                        .graphicsLayer { alpha = effectiveLogoAlpha },
+                    animate = isUsingDefaultBackground,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale,
+                    onClick = if (isFreePosition) openMarqueeShortcut else null,
+                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null
+                )
+            }
         }
     }
 }

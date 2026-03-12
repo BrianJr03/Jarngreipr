@@ -143,4 +143,10 @@ interface MusicController {
      * @return true if another audio source is active
      */
     fun isOtherAudioPlaying(): Boolean
+
+    /**
+     * Mute or unmute background music without affecting the configured volume level.
+     * @param muted true to silence, false to restore
+     */
+    fun setMuted(muted: Boolean)
 }
