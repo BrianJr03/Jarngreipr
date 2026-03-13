@@ -55,6 +55,7 @@ private const val KEY_LOCAL_FOLDERS = "jingle_local_folders"
 private const val KEY_DOWNLOADED_REPOS = "jingle_downloaded_repos"
 private const val KEY_ENABLED = "jingles_enabled"
 private const val KEY_MUTED = "jingles_muted"
+private const val KEY_VOLUME = "jingles_volume"
 private const val JARNGREIPR_FOLDER = "Jarngreipr Jingles"
 
 @Singleton
@@ -84,6 +85,9 @@ class JinglesManager @Inject constructor(
 
     private val _isMuted = MutableStateFlow(prefs.getBoolean(KEY_MUTED, false))
     val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+
+    private val _volume = MutableStateFlow(prefs.getFloat(KEY_VOLUME, 1f))
+    val volume: StateFlow<Float> = _volume.asStateFlow()
 
     /**
      * Emits a human-readable error message whenever a background operation fails.
@@ -119,7 +123,7 @@ class JinglesManager @Inject constructor(
         scope.launch { reloadIndices() }
         scope.launch(Dispatchers.Main) {
             initPlayer()
-            if (_isMuted.value) player?.volume = 0f
+            player?.volume = if (_isMuted.value) 0f else _volume.value
         }
     }
 
@@ -128,7 +132,15 @@ class JinglesManager @Inject constructor(
         _isMuted.value = muted
         prefs.edit { putBoolean(KEY_MUTED, muted) }
         scope.launch(Dispatchers.Main) {
-            player?.volume = if (muted) 0f else 1f
+            player?.volume = if (muted) 0f else _volume.value
+        }
+    }
+
+    fun setVolume(volume: Float) {
+        _volume.value = volume
+        prefs.edit { putFloat(KEY_VOLUME, volume) }
+        if (!_isMuted.value) {
+            scope.launch(Dispatchers.Main) { player?.volume = volume }
         }
     }
 
@@ -263,6 +275,18 @@ class JinglesManager @Inject constructor(
 
     fun stop() {
         currentGameFilename = null
+        currentPlayJob?.cancel()
+        scope.launch(Dispatchers.Main) { player?.stop() }
+    }
+
+    /**
+     * Called when a game is actually launched (not just selected).
+     * Stops playback like [stop] but intentionally keeps [currentGameFilename] set,
+     * so any redundant [onGameSelected] events that ES-DE fires during the launch
+     * sequence are silently ignored by the duplicate-guard in [onGameSelected].
+     * [currentGameFilename] is cleared by the normal [stop] call in MainActivity.onStop.
+     */
+    fun onGameLaunched() {
         currentPlayJob?.cancel()
         scope.launch(Dispatchers.Main) { player?.stop() }
     }
@@ -551,7 +575,7 @@ class JinglesManager @Inject constructor(
             p.clearMediaItems()
             p.setMediaItem(MediaItem.fromUri(url))
             p.prepare()
-            if (!_isMuted.value) p.volume = 1f else p.volume = 0f
+            p.volume = if (_isMuted.value) 0f else _volume.value
             p.play()
         }
     }

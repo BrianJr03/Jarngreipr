@@ -30,6 +30,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +86,8 @@ fun JinglesScreen(
     val searchState by viewModel.searchState.collectAsStateWithLifecycle()
     val indexNames by viewModel.indexNames.collectAsStateWithLifecycle()
     val indexCounts by viewModel.indexCounts.collectAsStateWithLifecycle()
+    val isMuted by viewModel.isMuted.collectAsStateWithLifecycle()
+    val volume by viewModel.volume.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -271,6 +275,48 @@ fun JinglesScreen(
                                 prefs.edit { putBoolean(KEY_ENABLED, it) }
                             }
                         )
+                    }
+
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.jingles_volume),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isMuted) Color.Gray else Color.White
+                                )
+                                Text(
+                                    text = "${(volume * 100).toInt()}%",
+                                    fontSize = 14.sp,
+                                    color = ThemePrimaryColor.copy(alpha = if (isMuted) 0.4f else 1f)
+                                )
+                            }
+                            Slider(
+                                value = volume,
+                                onValueChange = { viewModel.setVolume(it) },
+                                enabled = !isMuted,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = ThemePrimaryColor,
+                                    activeTrackColor = ThemePrimaryColor,
+                                    inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                                    disabledThumbColor = Color.Gray,
+                                    disabledActiveTrackColor = Color.Gray.copy(alpha = 0.4f),
+                                    disabledInactiveTrackColor = Color.White.copy(alpha = 0.1f)
+                                )
+                            )
+                            if (isMuted) {
+                                Text(
+                                    text = stringResource(R.string.jingles_volume_unmute),
+                                    fontSize = 13.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
                     }
 
                     item {
