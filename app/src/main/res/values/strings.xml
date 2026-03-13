@@ -1180,6 +1180,8 @@
     <string name="jingles_local_folders_label">Local Folders</string>
     <string name="jingles_remove_folder_description">Remove %s</string>
     <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
+    <string name="jingles_volume">Jingle Volume</string>
+    <string name="jingles_volume_unmute">Unmute to adjust volume</string>
     <!-- Jingles Info Dialog -->
     <string name="jingles_info_button_description">About Jingles</string>
     <string name="jingles_info_title">About Jingles</string>

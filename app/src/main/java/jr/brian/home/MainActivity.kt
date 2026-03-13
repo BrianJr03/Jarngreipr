@@ -3,7 +3,6 @@ package jr.brian.home
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -307,7 +306,7 @@ class MainActivity : ComponentActivity() {
             }
             esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
                 managers.feature.videoPresentationManager.dismiss()
-                managers.feature.jinglesManager.stop()
+                managers.feature.jinglesManager.onGameLaunched()
                 esdeViewModel.handleGameStarted(gameFilename)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
