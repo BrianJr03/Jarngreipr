@@ -1,4 +1,4 @@
-package jr.brian.home.ui.screens
+package jr.brian.home.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Folder
@@ -178,14 +179,16 @@ internal fun AddRepoButton(onClick: () -> Unit) {
 }
 
 @Composable
-internal fun PickFolderButton(onClick: () -> Unit) {
+internal fun PickFolderButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     var isFocused by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(12.dp))
@@ -207,6 +210,47 @@ internal fun PickFolderButton(onClick: () -> Unit) {
         Spacer(modifier = Modifier.size(10.dp))
         Text(
             text = stringResource(R.string.jingles_pick_folder_description),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+internal fun CreateJinglePackButton(
+    modifier: Modifier = Modifier,
+    label: String = "",
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val resolvedLabel = label.ifBlank { stringResource(R.string.jingles_create_pack_button) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .background(brush = subtleCardGradient(isFocused), shape = RoundedCornerShape(12.dp))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                brush = borderBrush(isFocused),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickWithHaptic(haptic) { onClick() }
+            .focusable()
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.AudioFile,
+            contentDescription = resolvedLabel,
+            tint = ThemeSecondaryColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.size(10.dp))
+        Text(
+            text = resolvedLabel,
             color = Color.White,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
@@ -265,7 +309,10 @@ internal fun RepoCard(
                         width = if (isFocused) 2.dp else 1.dp,
                         brush = Brush.linearGradient(
                             colors = if (isFocused) listOf(ThemePrimaryColor, ThemeSecondaryColor)
-                            else listOf(Color.White.copy(alpha = 0.07f), Color.White.copy(alpha = 0.07f))
+                            else listOf(
+                                Color.White.copy(alpha = 0.07f),
+                                Color.White.copy(alpha = 0.07f)
+                            )
                         ),
                         shape = RoundedCornerShape(16.dp)
                     )
@@ -296,8 +343,14 @@ internal fun RepoCard(
                 }
                 Spacer(modifier = Modifier.size(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    val title = jingleName?.takeIf { it.isNotBlank() } ?: repo.substringAfterLast("/")
-                    Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    val title =
+                        jingleName?.takeIf { it.isNotBlank() } ?: repo.substringAfterLast("/")
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                     Text(text = repo, color = Color.Gray, fontSize = 13.sp)
                 }
                 IconButton(
@@ -350,7 +403,10 @@ internal fun RepoCard(
                 IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.jingles_remove_repo_description, repo),
+                        contentDescription = stringResource(
+                            R.string.jingles_remove_repo_description,
+                            repo
+                        ),
                         tint = ThemeSecondaryColor.copy(alpha = 0.7f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -389,11 +445,12 @@ internal fun FolderCard(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val displayName = remember(uriString) {
-        DocumentFile.fromTreeUri(context, uriString.toUri())?.name
-            ?: uriString.toUri().lastPathSegment
-                ?.substringAfterLast(":")
-                ?.substringAfterLast("/")
-            ?: uriString
+        if (uriString.startsWith("content://")) {
+            runCatching { DocumentFile.fromTreeUri(context, uriString.toUri())?.name }.getOrNull()
+        } else {
+            null
+        }
+            ?: uriString.substringAfterLast("/")
     }
 
     if (showInfo) {
@@ -446,7 +503,12 @@ internal fun FolderCard(
             Spacer(modifier = Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val title = jingleName?.takeIf { it.isNotBlank() } ?: displayName
-                Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
                 if (jingleName?.isNotBlank() == true) {
                     Text(text = displayName, color = Color.Gray, fontSize = 13.sp)
                 }
@@ -493,7 +555,10 @@ internal fun FolderCard(
             IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.jingles_remove_folder_description, displayName),
+                    contentDescription = stringResource(
+                        R.string.jingles_remove_folder_description,
+                        displayName
+                    ),
                     tint = ThemeSecondaryColor.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
                 )
@@ -553,8 +618,12 @@ private fun JingleInfoDialog(
                             color = Color.Gray
                         )
                     }
+
                     sizeBytes != null && sizeBytes > 0 -> Text(
-                        text = stringResource(R.string.jingles_pack_info_size, formatFileSize(sizeBytes)),
+                        text = stringResource(
+                            R.string.jingles_pack_info_size,
+                            formatFileSize(sizeBytes)
+                        ),
                         fontSize = 14.sp,
                         color = Color.Gray
                     )

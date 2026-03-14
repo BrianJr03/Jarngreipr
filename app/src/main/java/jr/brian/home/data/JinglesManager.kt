@@ -329,6 +329,11 @@ class JinglesManager @Inject constructor(
 
     @OptIn(UnstableApi::class)
     suspend fun getLocalFolderSizeBytes(uriString: String): Long = withContext(Dispatchers.IO) {
+        if (!uriString.startsWith("content://")) {
+            return@withContext try {
+                File(uriString, "jingles").walkTopDown().filter { it.isFile }.sumOf { it.length() }
+            } catch (e: Exception) { 0L }
+        }
         try {
             val folder =
                 DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return@withContext 0L
@@ -418,10 +423,12 @@ class JinglesManager @Inject constructor(
 
         // ── Atomic swap — only the final assignment is locked ─────────────────
         snapshotMutex.withLock {
-            // Merge warm entries staged while we were building
+            val activeSourceKeys = result.map { it.key }.toSet()
+            // Merge warm entries staged while we were building, but only from sources
+            // still active — prevents removed repos/folders from leaking back in.
             warmStagingMutex.withLock {
                 for ((k, v) in warmStaging) {
-                    if (k !in exact) exact[k] = v
+                    if (k !in exact && v.first.key in activeSourceKeys) exact[k] = v
                 }
                 warmStaging.clear()
             }
@@ -457,6 +464,17 @@ class JinglesManager @Inject constructor(
 
     @OptIn(UnstableApi::class)
     private fun loadLocalIndex(uriString: String): JingleIndex? {
+        if (!uriString.startsWith("content://")) {
+            // Filesystem path — used for packs created directly by the app
+            return try {
+                val file = File(uriString, "index.json")
+                if (!file.exists()) return null
+                json.decodeFromString<JingleIndex>(file.readText())
+            } catch (e: Exception) {
+                Log.w("JinglesManager", "loadLocalIndex (file) failed for $uriString: ${e.message}")
+                null
+            }
+        }
         return try {
             val folder = DocumentFile.fromTreeUri(context, uriString.toUri()) ?: return null
             val indexFile = folder.findFile("index.json") ?: return null
@@ -593,12 +611,12 @@ class JinglesManager @Inject constructor(
         }
 
     /**
-     * Uses [Context.getExternalFilesDir] — app-specific, no special permissions needed,
-     * automatically cleaned up on uninstall.
+     * Downloads to /storage/emulated/0/Jarngreipr Jingles/<owner-repo> for easy user access.
+     * Requires MANAGE_EXTERNAL_STORAGE permission.
      */
     private fun getDownloadedDir(repoSlug: String): File =
         File(
-            context.getExternalFilesDir(null),
+            "/storage/emulated/0",
             "${JARNGREIPR_FOLDER}/${repoSlug.replace("/", "-")}"
         )
 }

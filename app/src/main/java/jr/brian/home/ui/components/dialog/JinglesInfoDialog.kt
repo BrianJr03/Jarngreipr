@@ -108,53 +108,7 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Column (
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = stringResource(R.string.jingles_info_local_title),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = stringResource(R.string.jingles_info_local_subtitle),
-                            color = Color.Gray,
-                            fontSize = 13.sp
-                        )
-                    }
-                    listOf(
-                        stringResource(R.string.jingles_info_local_step1),
-                        stringResource(R.string.jingles_info_local_step2),
-                        stringResource(R.string.jingles_info_local_step3),
-                        stringResource(R.string.jingles_info_local_step4)
-                    ).forEach { step ->
-                        Text(
-                            text = step,
-                            color = Color.LightGray,
-                            fontSize = 14.sp,
-                            lineHeight = 21.sp
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(color = Color(0xFF1A1A2E), shape = RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Text(
-                            text = "{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    {\"game\": \"Game Title\", \"file\": \"jingles/audio.mp3\"}\n  ]\n}",
-                            color = ThemePrimaryColor.copy(alpha = 0.9f),
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Column (
+                    Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -202,6 +156,85 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                             modifier = Modifier.size(13.dp)
                         )
                     }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = stringResource(R.string.jingles_info_local_title),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(R.string.jingles_info_local_subtitle),
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+                    }
+                    listOf(
+                        stringResource(R.string.jingles_info_local_step1),
+                        stringResource(R.string.jingles_info_local_step2),
+                        stringResource(R.string.jingles_info_local_step3),
+                        stringResource(R.string.jingles_info_local_step4)
+                    ).forEach { step ->
+                        Text(
+                            text = step,
+                            color = Color.LightGray,
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp
+                        )
+                    }
+                }
+
+                Text(
+                    text = stringResource(R.string.jingles_info_github_json_examples),
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFF1A1A2E),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        "{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n  " +
+                                "  {\n      \"game\": \"Game Title\",\n    " +
+                                "  \"file\": \"jingles/audio.mp3\"\n    }\n  ]\n}",
+                        color = ThemePrimaryColor.copy(alpha = 0.9f),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFF1A1A2E),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "{\n  \"name\": \"My Jingles\",\n  \"n3ds\": [\n " +
+                                "   {\n      \"game\": \"Game Title\",\n    " +
+                                "  \"file\": \"jingles/n3ds/audio.mp3\"\n    }\n  ]\n}",
+                        color = ThemePrimaryColor.copy(alpha = 0.9f),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
 
                 Button(

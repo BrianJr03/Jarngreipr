@@ -1,9 +1,14 @@
-package jr.brian.home.ui.screens
+package jr.brian.home.ui.screens.jingles
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,55 +18,76 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.Lifecycle
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.AddRepoButton
+import jr.brian.home.ui.components.CreateJinglePackButton
+import jr.brian.home.ui.components.FolderCard
+import jr.brian.home.ui.components.PickFolderButton
+import jr.brian.home.ui.components.RepoCard
+import jr.brian.home.ui.components.SearchRepoButton
 import jr.brian.home.ui.components.dialog.JinglesInfoDialog
 import jr.brian.home.ui.components.dialog.JinglesSearchDialog
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.viewmodels.JinglesViewModel
@@ -71,13 +97,13 @@ internal const val KEY_REPOS = "jingle_repos"
 internal const val KEY_LOCAL_FOLDERS = "jingle_local_folders"
 internal const val KEY_ENABLED = "jingles_enabled"
 private const val KEY_INFO_SEEN = "jingles_info_seen"
+private const val KEY_PACK_PARENT_URI = "jingles_pack_parent_uri"
 
 @Composable
 fun JinglesScreen(
+    onNavigateToAddJingle: (String, Boolean, String?, String?) -> Unit = { _, _, _, _ -> },
     onDismiss: () -> Unit = {}
 ) {
-    BackHandler(onBack = onDismiss)
-
     val viewModel: JinglesViewModel = hiltViewModel()
     val downloadedRepos by viewModel.downloadedRepos.collectAsStateWithLifecycle()
     val downloadingRepo by viewModel.downloadingRepo.collectAsStateWithLifecycle()
@@ -104,8 +130,20 @@ fun JinglesScreen(
             prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList()?.sorted() ?: emptyList()
         )
     }
+    var packParentUri by remember { mutableStateOf(prefs.getString(KEY_PACK_PARENT_URI, null)) }
+    var showCreatePackDialog by remember { mutableStateOf(false) }
+    var selectedExistingPack by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var showPackDropdown by remember { mutableStateOf(false) }
     var repoInput by remember { mutableStateOf("") }
     var folderError by remember { mutableStateOf<String?>(null) }
+    var isEditingRepo by remember { mutableStateOf(false) }
+    var tempRepoInput by remember { mutableStateOf("") }
+    val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
+
+    BackHandler {
+        if (isEditingRepo) isEditingRepo = false else onDismiss()
+    }
+
     var reposExpanded by remember { mutableStateOf(false) }
     var foldersExpanded by remember { mutableStateOf(false) }
     val infoDialogState = rememberDialogState<Unit>()
@@ -114,6 +152,17 @@ fun JinglesScreen(
 
     LaunchedEffect(Unit) {
         if (!prefs.getBoolean(KEY_INFO_SEEN, false)) infoDialogState.show()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                localFolders = prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList()?.sorted() ?: emptyList()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -128,7 +177,7 @@ fun JinglesScreen(
             return@rememberLauncherForActivityResult
         }
         context.contentResolver.takePersistableUriPermission(
-            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
         val uriString = uri.toString()
         if (uriString !in localFolders) {
@@ -137,6 +186,20 @@ fun JinglesScreen(
             prefs.edit { putStringSet(KEY_LOCAL_FOLDERS, updated.toSet()) }
         }
         folderError = null
+    }
+
+    val createPackLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        context.contentResolver.takePersistableUriPermission(
+            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        )
+        val uriString = uri.toString()
+        prefs.edit { putString(KEY_PACK_PARENT_URI, uriString) }
+        packParentUri = uriString
+        selectedExistingPack = null
+        onNavigateToAddJingle(uriString, true, null, null)
     }
 
     fun addRepo() {
@@ -170,6 +233,48 @@ fun JinglesScreen(
             prefs.edit { putStringSet(KEY_REPOS, updated.toSet()) }
             repoInput = ""
         }
+    }
+
+    if (showCreatePackDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreatePackDialog = false },
+            containerColor = OledCardColor,
+            titleContentColor = Color.White,
+            textContentColor = Color.White,
+            title = {
+                Text(
+                    text = stringResource(R.string.jingles_create_pack_dialog_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.jingles_create_pack_dialog_body),
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    color = Color.Gray
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCreatePackDialog = false
+                    createPackLauncher.launch(null)
+                }) {
+                    Text(
+                        text = stringResource(R.string.jingles_create_pack_dialog_confirm),
+                        color = ThemePrimaryColor
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreatePackDialog = false }) {
+                    Text(
+                        text = stringResource(R.string.jingles_create_pack_dialog_cancel),
+                        color = Color.Gray
+                    )
+                }
+            }
+        )
     }
 
     if (infoDialogState.isVisible) {
@@ -335,38 +440,28 @@ fun JinglesScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                OutlinedTextField(
-                                    value = repoInput,
-                                    onValueChange = { repoInput = it },
-                                    placeholder = {
-                                        Text(
-                                            text = stringResource(R.string.jingles_repo_placeholder),
-                                            fontSize = 13.sp,
-                                            color = Color.Gray
+                                Box(
+                                    contentAlignment = Alignment.CenterStart,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .background(subtleCardGradient(repoInput.isNotBlank()), RoundedCornerShape(12.dp))
+                                        .border(
+                                            1.dp,
+                                            if (repoInput.isNotBlank()) borderBrush(true) else borderBrush(false),
+                                            RoundedCornerShape(12.dp)
                                         )
-                                    },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                    keyboardActions = KeyboardActions(onDone = {
-                                        if (repoInput.isNotBlank()) {
-                                            searchDialogState.show()
-                                            viewModel.searchRepo(repoInput.trim())
+                                        .clickable {
+                                            tempRepoInput = repoInput
+                                            isEditingRepo = true
                                         }
-                                    }),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White,
-                                        focusedBorderColor = ThemePrimaryColor,
-                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                                        cursorColor = ThemePrimaryColor,
-                                        focusedLabelColor = ThemePrimaryColor,
-                                        unfocusedLabelColor = Color.Gray,
-                                        focusedContainerColor = Color.Transparent,
-                                        unfocusedContainerColor = Color.Transparent
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
-                                )
+                                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                                ) {
+                                    Text(
+                                        text = repoInput.ifBlank { stringResource(R.string.jingles_repo_placeholder) },
+                                        fontSize = 13.sp,
+                                        color = if (repoInput.isBlank()) Color.Gray else Color.White,
+                                    )
+                                }
                                 SearchRepoButton(onClick = {
                                     if (repoInput.isNotBlank()) {
                                         searchDialogState.show()
@@ -384,7 +479,9 @@ fun JinglesScreen(
                                     isDownloaded = isDownloaded,
                                     isDownloading = downloadingRepo == repo,
                                     downloadProgress = downloadProgress.coerceIn(0f, 1f),
-                                    downloadedFileCount = if (isDownloaded) viewModel.getDownloadedFileCount(repo) else null,
+                                    downloadedFileCount = if (isDownloaded) viewModel.getDownloadedFileCount(
+                                        repo
+                                    ) else null,
                                     onRemove = {
                                         if (downloadingRepo == repo) viewModel.cancelDownload()
                                         removeRepo(repo)
@@ -413,7 +510,133 @@ fun JinglesScreen(
                                 color = Color.Gray,
                                 lineHeight = 20.sp
                             )
-                            PickFolderButton(onClick = { folderPickerLauncher.launch(null) })
+                            val localPackOptions = remember(indexNames, localFolders) {
+                                localFolders.map { path ->
+                                    val name = indexNames[path]?.takeIf { it.isNotBlank() }
+                                        ?: path.substringAfterLast("/")
+                                    name to path
+                                }
+                            }
+                            val packButtonLabel = if (selectedExistingPack != null)
+                                stringResource(R.string.jingles_update_pack_button)
+                            else
+                                stringResource(R.string.jingles_create_pack_button)
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Max)
+                            ) {
+                                if (localPackOptions.isNotEmpty()) {
+                                    Box(modifier = Modifier.width(46.dp).fillMaxHeight()) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(subtleCardGradient(showPackDropdown), RoundedCornerShape(12.dp))
+                                                .border(
+                                                    width = if (showPackDropdown) 2.dp else 1.dp,
+                                                    brush = borderBrush(showPackDropdown),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                                .clickable { showPackDropdown = true }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowDropDown,
+                                                contentDescription = stringResource(R.string.jingles_add_pack_select_existing),
+                                                tint = Color.White,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                        DropdownMenu(
+                                            expanded = showPackDropdown,
+                                            onDismissRequest = { showPackDropdown = false },
+                                            containerColor = OledCardColor
+                                        ) {
+                                            localPackOptions.forEach { (name, path) ->
+                                                DropdownMenuItem(
+                                                    text = { Text(name, color = Color.White, fontSize = 14.sp) },
+                                                    onClick = {
+                                                        selectedExistingPack = name to path
+                                                        showPackDropdown = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                CreateJinglePackButton(
+                                    label = packButtonLabel,
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    onClick = {
+                                        val existing = selectedExistingPack
+                                        if (existing != null) {
+                                            onNavigateToAddJingle(existing.second, true, existing.second, existing.first)
+                                        } else {
+                                            val saved = packParentUri
+                                            val hasPermission = saved != null && context.contentResolver
+                                                .persistedUriPermissions.any { it.uri.toString() == saved && it.isReadPermission }
+                                            if (saved != null && hasPermission) {
+                                                onNavigateToAddJingle(saved, true, null, null)
+                                            } else {
+                                                showCreatePackDialog = true
+                                            }
+                                        }
+                                    }
+                                )
+                                PickFolderButton(
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    onClick = { folderPickerLauncher.launch(null) }
+                                )
+                            }
+                            if (selectedExistingPack != null) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.jingles_add_pack_updating),
+                                        fontSize = 12.sp,
+                                        color = ThemePrimaryColor
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.jingles_create_pack_change),
+                                        fontSize = 12.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.clickable { selectedExistingPack = null }
+                                    )
+                                }
+                            } else if (packParentUri != null) {
+                                val displayName = remember(packParentUri) {
+                                    val s = packParentUri ?: ""
+                                    if (s.startsWith("content://")) {
+                                        runCatching {
+                                            DocumentFile.fromTreeUri(context, s.toUri())?.name
+                                        }.getOrNull() ?: s.substringAfterLast("/")
+                                    } else {
+                                        s.substringAfterLast("/")
+                                    }
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.jingles_create_pack_parent, displayName),
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.jingles_create_pack_change),
+                                        fontSize = 12.sp,
+                                        color = ThemePrimaryColor,
+                                        modifier = Modifier.clickable { createPackLauncher.launch(null) }
+                                    )
+                                }
+                            }
                             if (folderError != null) {
                                 Text(
                                     text = folderError!!,
@@ -435,6 +658,24 @@ fun JinglesScreen(
                         }
                     }
                 }
+            }
+
+            AnimatedVisibility(
+                visible = isEditingRepo,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut()
+            ) {
+                JinglesKeyboardOverlay(
+                    fieldLabel = stringResource(R.string.jingles_add_repo_field_label),
+                    tempText = tempRepoInput,
+                    keyboardFocusRequesters = keyboardFocusRequesters,
+                    onTextChange = { tempRepoInput = it },
+                    onCancel = { isEditingRepo = false },
+                    onDone = {
+                        repoInput = tempRepoInput
+                        isEditingRepo = false
+                    }
+                )
             }
         }
     }
