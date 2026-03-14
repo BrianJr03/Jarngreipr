@@ -235,6 +235,14 @@ private fun QwertyAlphabetKeyboard(
         )
     }
 
+    SpecialCharsRow(
+        searchQuery = searchQuery,
+        onQueryChange = onQueryChange,
+        keyboardFocusRequesters = keyboardFocusRequesters,
+        onFocusChanged = onFocusChanged,
+        indexOffset = 50,
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -317,6 +325,14 @@ private fun QwertyNumericKeyboard(
         }
     }
 
+    SpecialCharsRow(
+        searchQuery = searchQuery,
+        onQueryChange = onQueryChange,
+        keyboardFocusRequesters = keyboardFocusRequesters,
+        onFocusChanged = onFocusChanged,
+        indexOffset = 20,
+    )
+
     // Row 3: Swap, Space, Backspace, Clear
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -375,6 +391,36 @@ private fun QwertyNumericKeyboard(
             },
             onFocusChanged = { onFocusChanged(clearIndex) },
         )
+    }
+}
+
+@Composable
+private fun SpecialCharsRow(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit,
+    indexOffset: Int,
+) {
+    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        chars.forEachIndexed { i, char ->
+            val idx = indexOffset + i
+            QwertyKeyButton(
+                label = char.toString(),
+                onClick = { onQueryChange(searchQuery + char) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp),
+                focusRequester = remember(idx) {
+                    FocusRequester().also { keyboardFocusRequesters[idx] = it }
+                },
+                onFocusChanged = { onFocusChanged(idx) },
+            )
+        }
     }
 }
 

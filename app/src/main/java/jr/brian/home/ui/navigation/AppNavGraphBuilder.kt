@@ -1,6 +1,7 @@
 package jr.brian.home.ui.navigation
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +23,8 @@ import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
-import jr.brian.home.ui.screens.JinglesScreen
+import jr.brian.home.ui.screens.jingles.AddJingleScreen
+import jr.brian.home.ui.screens.jingles.JinglesScreen
 import jr.brian.home.esde.ui.MarqueePressShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
@@ -645,7 +647,56 @@ fun NavGraphBuilder.jinglesScreen(
 
         SlideInVertically(showScreen) {
             JinglesScreen(
+                onNavigateToAddJingle = { folderUriString, createPack, existingPackPath, existingPackName ->
+                    showScreen = false
+                    navController.navigate(
+                        Routes.addJingle(
+                            encodedFolderUri = Uri.encode(folderUriString),
+                            createPack = createPack,
+                            encodedExistingPackPath = Uri.encode(existingPackPath ?: ""),
+                            encodedExistingPackName = Uri.encode(existingPackName ?: "")
+                        )
+                    )
+                },
                 onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.addJingleScreen(
+    navController: NavHostController
+) {
+    composable(
+        route = Routes.ADD_JINGLE,
+        arguments = listOf(
+            navArgument("folderUri") { type = NavType.StringType },
+            navArgument("createPack") { type = NavType.BoolType; defaultValue = false },
+            navArgument("existingPackPath") { type = NavType.StringType; defaultValue = "" },
+            navArgument("existingPackName") { type = NavType.StringType; defaultValue = "" }
+        )
+    ) { backStackEntry ->
+        val encodedUri = backStackEntry.arguments?.getString("folderUri") ?: return@composable
+        val folderUri = Uri.parse(Uri.decode(encodedUri))
+        val createPack = backStackEntry.arguments?.getBoolean("createPack") ?: false
+        val existingPackPath = backStackEntry.arguments?.getString("existingPackPath")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
+        val existingPackName = backStackEntry.arguments?.getString("existingPackName")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            AddJingleScreen(
+                localFolderUri = folderUri,
+                createPack = createPack,
+                existingPackPath = existingPackPath,
+                existingPackName = existingPackName,
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                },
+                onSuccess = {
                     showScreen = false
                     navController.popBackStack()
                 }

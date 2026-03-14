@@ -1162,7 +1162,7 @@
 
     <!-- Jingles -->
     <string name="jingles_screen_title">Jingles</string>
-    <string name="jingles_screen_subtitle">Add GitHub repos to build your collection of game Jingles</string>
+    <string name="jingles_screen_subtitle">Build your collection of game Jingles</string>
     <string name="jingles_enable_title">Enable Jingles</string>
     <string name="jingles_enable_description">Play a matching Jingle when browsing games in ES-DE</string>
     <string name="jingles_repo_label">Jingle Repo</string>
@@ -1185,19 +1185,18 @@
     <!-- Jingles Info Dialog -->
     <string name="jingles_info_button_description">About Jingles</string>
     <string name="jingles_info_title">About Jingles</string>
-    <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Special thanks to the Cocoon team for creating an easy way of sharing audio assets.\n
-\nRepositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
+    <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Repositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
     <string name="jingles_info_getting_started">Getting Started</string>
     <string name="jingles_info_local_title">Local Folder</string>
     <string name="jingles_info_local_subtitle">Offline playback</string>
     <string name="jingles_info_local_step1">1. Create a folder anywhere on your device.</string>
     <string name="jingles_info_local_step2">2. Add an index.json file at the root of the folder.</string>
-    <string name="jingles_info_local_step3">3. Create a jingles/ subfolder and place your audio files inside.</string>
+    <string name="jingles_info_local_step3">3. Create a jingles subfolder and place your audio files inside.</string>
     <string name="jingles_info_local_step4">4. Tap Pick Folder to select your folder.</string>
     <string name="jingles_info_github_title">GitHub Repo</string>
+    <string name="jingles_info_github_json_examples">JSON Formatting Examples</string>
     <string name="jingles_info_github_subtitle">Streams from GitHub</string>
     <string name="jingles_info_github_body">Fork or use the template below as a starting point, then add it as username/repo-name in the Jingle Repo field.</string>
-    <string name="jingles_info_thanks">Special thanks to the Cocoon team for creating an easy way of sharing audio assets.</string>
     <string name="jingles_info_close">Got it</string>
     <string name="jingles_faq_title">FAQ</string>
     <string name="jingles_faq_inconsistent_q">Downloads are inconsistent or incomplete</string>
@@ -1221,4 +1220,35 @@
     <string name="jingles_pack_info_tracks">%d tracks</string>
     <string name="jingles_pack_info_size">~%s</string>
     <string name="jingles_pack_info_fetching_size">Fetching size…</string>
+
+    <!-- Add Jingle Screen -->
+    <string name="jingles_add_screen_title">Add Jingle Entry</string>
+    <string name="jingles_add_pack_name_label">Pack Name</string>
+    <string name="jingles_add_pack_name_placeholder">e.g. My Awesome Jingles</string>
+    <string name="jingles_add_pack_select_existing">Select existing pack</string>
+    <string name="jingles_add_pack_updating">Updating existing pack</string>
+    <string name="jingles_create_pack_button">Create Pack</string>
+    <string name="jingles_update_pack_button">Update Pack</string>
+    <string name="jingles_create_pack_parent">Parent: %s</string>
+    <string name="jingles_create_pack_change">Change</string>
+    <string name="jingles_create_pack_dialog_title">Choose Parent Folder</string>
+    <string name="jingles_create_pack_dialog_body">Select the folder where your new jingle pack will be created as a subfolder. You\'ll name the pack on the next screen.</string>
+    <string name="jingles_create_pack_dialog_confirm">Choose Folder</string>
+    <string name="jingles_create_pack_dialog_cancel">Cancel</string>
+    <string name="jingles_add_game_label">Game</string>
+    <string name="jingles_add_game_placeholder">e.g. Phoenix Wright - Ace Attorney</string>
+    <string name="jingles_add_platform_label">Platform</string>
+    <string name="jingles_add_platform_placeholder">e.g. n3ds, gba, ps2</string>
+    <string name="jingles_add_platform_supporting">Used as the JSON key and subfolder name</string>
+    <string name="jingles_add_jingle_name_label">Jingle Name</string>
+    <string name="jingles_add_jingle_name_placeholder">e.g. ace-attorney-trilogy</string>
+    <string name="jingles_add_jingle_name_supporting">Extension is preserved from the picked file</string>
+    <string name="jingles_add_pick_audio">Pick Audio File</string>
+    <string name="jingles_add_preview_label">PREVIEW</string>
+    <string name="jingles_add_submit">Add Jingle</string>
+    <string name="jingles_add_success">Jingle added successfully!</string>
+    <string name="jingles_add_keyboard_hint">Start typing…</string>
+    <string name="jingles_add_cancel">Cancel</string>
+    <string name="jingles_add_done">Done</string>
+    <string name="jingles_add_repo_field_label">Repository</string>
 </resources>
