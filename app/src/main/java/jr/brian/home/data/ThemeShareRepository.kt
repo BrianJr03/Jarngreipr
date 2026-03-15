@@ -22,7 +22,7 @@ private const val FIELD_SEP = ":::"
 @Singleton
 class ThemeShareRepository @Inject constructor(
     pingBroadcastManager: PingBroadcastManager,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val _receivedThemes = MutableStateFlow(loadSharedThemes())
     val receivedThemes = _receivedThemes.asStateFlow()

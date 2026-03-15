@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
  * Repository for fetching and managing available widget providers
  */
 class WidgetProviderRepository(private val context: Context) {
-
     companion object {
         private const val TAG = "WidgetProviderRepo"
     }

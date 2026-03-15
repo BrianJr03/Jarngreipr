@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -110,7 +111,7 @@ fun MainContent(
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
-    var currentPagerPage by remember { mutableStateOf(0) }
+    var currentPagerPage by remember { mutableIntStateOf(0) }
     var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
 
     val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER

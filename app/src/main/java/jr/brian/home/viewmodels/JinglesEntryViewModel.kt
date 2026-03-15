@@ -34,7 +34,6 @@ class JingleEntryViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val jinglesManager: JinglesManager,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(JingleEntryUiState())
     val uiState: StateFlow<JingleEntryUiState> = _uiState.asStateFlow()
 
