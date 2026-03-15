@@ -55,7 +55,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
@@ -70,6 +69,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.ui.components.ToggleSetting
@@ -158,7 +158,8 @@ fun JinglesScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                localFolders = prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList()?.sorted() ?: emptyList()
+                localFolders = prefs.getStringSet(KEY_LOCAL_FOLDERS, emptySet())?.toList()?.sorted()
+                    ?: emptyList()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -444,10 +445,17 @@ fun JinglesScreen(
                                     contentAlignment = Alignment.CenterStart,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .background(subtleCardGradient(repoInput.isNotBlank()), RoundedCornerShape(12.dp))
+                                        .background(
+                                            subtleCardGradient(
+                                                isFocused = repoInput.isNotBlank()
+                                            ),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                         .border(
                                             1.dp,
-                                            if (repoInput.isNotBlank()) borderBrush(true) else borderBrush(false),
+                                            if (repoInput.isNotBlank()) borderBrush(true) else borderBrush(
+                                                false
+                                            ),
                                             RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
@@ -529,12 +537,19 @@ fun JinglesScreen(
                                     .height(IntrinsicSize.Max)
                             ) {
                                 if (localPackOptions.isNotEmpty()) {
-                                    Box(modifier = Modifier.width(46.dp).fillMaxHeight()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(46.dp)
+                                            .fillMaxHeight()
+                                    ) {
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .background(subtleCardGradient(showPackDropdown), RoundedCornerShape(12.dp))
+                                                .background(
+                                                    subtleCardGradient(showPackDropdown),
+                                                    RoundedCornerShape(12.dp)
+                                                )
                                                 .border(
                                                     width = if (showPackDropdown) 2.dp else 1.dp,
                                                     brush = borderBrush(showPackDropdown),
@@ -556,7 +571,13 @@ fun JinglesScreen(
                                         ) {
                                             localPackOptions.forEach { (name, path) ->
                                                 DropdownMenuItem(
-                                                    text = { Text(name, color = Color.White, fontSize = 14.sp) },
+                                                    text = {
+                                                        Text(
+                                                            name,
+                                                            color = Color.White,
+                                                            fontSize = 14.sp
+                                                        )
+                                                    },
                                                     onClick = {
                                                         selectedExistingPack = name to path
                                                         showPackDropdown = false
@@ -568,15 +589,23 @@ fun JinglesScreen(
                                 }
                                 CreateJinglePackButton(
                                     label = packButtonLabel,
-                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(),
                                     onClick = {
                                         val existing = selectedExistingPack
                                         if (existing != null) {
-                                            onNavigateToAddJingle(existing.second, true, existing.second, existing.first)
+                                            onNavigateToAddJingle(
+                                                existing.second,
+                                                true,
+                                                existing.second,
+                                                existing.first
+                                            )
                                         } else {
                                             val saved = packParentUri
-                                            val hasPermission = saved != null && context.contentResolver
-                                                .persistedUriPermissions.any { it.uri.toString() == saved && it.isReadPermission }
+                                            val hasPermission =
+                                                saved != null && context.contentResolver
+                                                    .persistedUriPermissions.any { it.uri.toString() == saved && it.isReadPermission }
                                             if (saved != null && hasPermission) {
                                                 onNavigateToAddJingle(saved, true, null, null)
                                             } else {
@@ -586,7 +615,9 @@ fun JinglesScreen(
                                     }
                                 )
                                 PickFolderButton(
-                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(),
                                     onClick = { folderPickerLauncher.launch(null) }
                                 )
                             }
@@ -605,7 +636,9 @@ fun JinglesScreen(
                                         text = stringResource(R.string.jingles_create_pack_change),
                                         fontSize = 12.sp,
                                         color = Color.Gray,
-                                        modifier = Modifier.clickable { selectedExistingPack = null }
+                                        modifier = Modifier.clickable {
+                                            selectedExistingPack = null
+                                        }
                                     )
                                 }
                             } else if (packParentUri != null) {
@@ -625,7 +658,10 @@ fun JinglesScreen(
                                     modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.jingles_create_pack_parent, displayName),
+                                        text = stringResource(
+                                            R.string.jingles_create_pack_parent,
+                                            displayName
+                                        ),
                                         fontSize = 12.sp,
                                         color = Color.Gray
                                     )
@@ -633,13 +669,17 @@ fun JinglesScreen(
                                         text = stringResource(R.string.jingles_create_pack_change),
                                         fontSize = 12.sp,
                                         color = ThemePrimaryColor,
-                                        modifier = Modifier.clickable { createPackLauncher.launch(null) }
+                                        modifier = Modifier.clickable {
+                                            createPackLauncher.launch(
+                                                null
+                                            )
+                                        }
                                     )
                                 }
                             }
-                            if (folderError != null) {
+                            folderError?.let {
                                 Text(
-                                    text = folderError!!,
+                                    text = it,
                                     fontSize = 14.sp,
                                     color = Color.Red.copy(alpha = 0.85f)
                                 )

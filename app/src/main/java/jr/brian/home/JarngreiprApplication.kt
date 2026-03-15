@@ -17,9 +17,6 @@ class JarngreiprApplication : Application(), ImageLoaderFactory {
     }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
-        .components {
-            if (Build.VERSION.SDK_INT >= 28) add(ImageDecoderDecoder.Factory())
-            else add(GifDecoder.Factory())
-        }
+        .components { add(ImageDecoderDecoder.Factory()) }
         .build()
 }

@@ -322,7 +322,12 @@ class WidgetViewModel @Inject constructor(
         }
     }
 
-    fun updateWidgetSize(widgetId: Int, pageIndex: Int, newWidth: Int, newHeight: Int) {
+    fun updateWidgetSize(
+        widgetId: Int,
+        pageIndex: Int,
+        newWidth: Int,
+        newHeight: Int
+    ) {
         viewModelScope.launch {
             isLoadingFromPreferences = true
             try {

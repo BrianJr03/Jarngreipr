@@ -10,7 +10,6 @@ import kotlin.system.exitProcess
  * This service can execute commands that require ADB/shell permissions.
  */
 class ShellService : IShellService.Stub() {
-    
     /**
      * Force stop an app using the am command.
      * Returns 0 on success, non-zero on failure.
