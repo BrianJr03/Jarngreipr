@@ -472,30 +472,23 @@ class ESDEViewModel @Inject constructor(
             }
         }
 
+        // Check custom folder before the systemImageType gate so it always takes priority
+        val customImagesPath = prefsState.customSystemImagesPath
+        if (customImagesPath != null) {
+            val found = findInCustomImagesFolder(customImagesPath, systemName, mediaSystemName)
+            if (found != null) {
+                Log.d(TAG, "Found custom system image: $found")
+                systemImageCache[systemName] = found
+                return found
+            }
+        }
+
         if (systemImageType == SystemImageType.None) {
             return null
         }
 
         if (systemImageCache.containsKey(systemName)) {
             return systemImageCache[systemName]
-        }
-
-        val customImagesPath = prefsState.customSystemImagesPath
-        if (customImagesPath != null) {
-            val customImagesDir = File(customImagesPath)
-            if (customImagesDir.exists() && customImagesDir.isDirectory) {
-                // Try exact system name first, then fall back to parent system
-                for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    for (ext in IMAGE_EXTENSIONS + VIDEO_EXTENSIONS) {
-                        val customImage = File(customImagesDir, "$name.$ext")
-                        if (customImage.exists()) {
-                            Log.d(TAG, "Found custom system image: ${customImage.absolutePath}")
-                            systemImageCache[systemName] = customImage.absolutePath
-                            return customImage.absolutePath
-                        }
-                    }
-                }
-            }
         }
 
         // This contains system-level background images like n64.png, snes.png, etc.
@@ -799,6 +792,40 @@ class ESDEViewModel @Inject constructor(
     private fun extractSubfolderPath(fullPath: String): String? {
         val beforeFilename = fullPath.substringBeforeLast("/", "")
         return beforeFilename.ifEmpty { null }
+    }
+
+    private fun findInCustomImagesFolder(
+        customImagesPath: String,
+        systemName: String,
+        mediaSystemName: String
+    ): String? {
+        val names = listOf(systemName, mediaSystemName).distinct()
+        val extensions = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+        return if (customImagesPath.startsWith("content://")) {
+            val treeDir = androidx.documentfile.provider.DocumentFile.fromTreeUri(
+                context, customImagesPath.toUri()
+            )
+            if (treeDir?.exists() == true && treeDir.isDirectory) {
+                for (name in names) {
+                    for (ext in extensions) {
+                        val file = treeDir.findFile("$name.$ext")
+                        if (file?.exists() == true) return file.uri.toString()
+                    }
+                }
+            }
+            null
+        } else {
+            val dir = File(customImagesPath)
+            if (dir.exists() && dir.isDirectory) {
+                for (name in names) {
+                    for (ext in extensions) {
+                        val file = File(dir, "$name.$ext")
+                        if (file.exists()) return file.absolutePath
+                    }
+                }
+            }
+            null
+        }
     }
 
     private fun isImageFile(file: File): Boolean {

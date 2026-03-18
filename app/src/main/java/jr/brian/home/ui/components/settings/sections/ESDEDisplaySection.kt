@@ -100,11 +100,12 @@ fun ESDESettingsContent(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let {
-            val path = getPathFromUri(it)
-            if (path != null) {
-                preferencesManager.setCustomSystemImagesPath(path)
-                viewModel.refreshSystemImage()
-            }
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            preferencesManager.setCustomSystemImagesPath(it.toString())
+            viewModel.refreshSystemImage()
         }
     }
 
