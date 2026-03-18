@@ -1,7 +1,9 @@
 package jr.brian.home
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import kotlinx.coroutines.flow.MutableSharedFlow
 import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
@@ -46,6 +48,7 @@ import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
@@ -77,6 +80,8 @@ class MainActivity : ComponentActivity() {
 
     private val esdeViewModel: ESDEViewModel by viewModels()
 
+    private var navigateToThemeShare by mutableStateOf(false)
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
@@ -87,10 +92,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
-            }
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        }
 
         managers.feature.esdeEventManager.startWatching()
         managers.feature.esdeEventManager.startPolling()
@@ -122,13 +127,19 @@ class MainActivity : ComponentActivity() {
                     val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
-                    
+
                     LaunchedEffect(Unit) {
                         if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
                             themeManager.shareCurrentTheme()
                         }
                         if (context.hasNearbyPermissions() && themeManager.isWallpaperNearbyAutoStart) {
                             themeManager.startWallpaperNearby()
+                        }
+                    }
+
+                    LaunchedEffect(Unit) {
+                        openThemeShareRequests.collect {
+                            navigateToThemeShare = true
                         }
                     }
 
@@ -160,9 +171,11 @@ class MainActivity : ComponentActivity() {
                             wallpaperState.isScreensaverActive -> {
                                 { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
                             }
+
                             wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
                                 { powerViewModel.togglePower() }
                             }
+
                             else -> null
                         },
                         hideMarquee = shouldHideMarquee || isPoweredOff,
@@ -175,6 +188,8 @@ class MainActivity : ComponentActivity() {
                                 onMarqueePressShortcutHandled = {
                                     triggerMarqueePressShortcut = false
                                 },
+                                navigateToThemeShare = navigateToThemeShare,
+                                onNavigateToThemeShareHandled = { navigateToThemeShare = false },
                                 onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
                                 onCurrentPageChanged = { currentPageIndex = it },
                                 onPagerScrollProgressChanged = { pagerScrollProgress = it },
@@ -200,6 +215,7 @@ class MainActivity : ComponentActivity() {
         esdeViewModel.musicController.onActivityVisible()
     }
 
+
     override fun onResume() {
         super.onResume()
         esdeViewModel.musicController.onActivityResumed()
@@ -217,6 +233,7 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.stopWatching()
         managers.feature.jinglesManager.release()
     }
+
 
     @UnstableApi
     private fun launchVideoPlayer(event: VideoLaunchEvent) {
@@ -239,7 +256,8 @@ class MainActivity : ComponentActivity() {
         if (!ScriptManager.areScriptsValid(scriptsDir)) {
             val setupResult = ESDESetupHelper.initializeESDEIntegration(this)
             if (setupResult.success) {
-                Toast.makeText(this, "ES-DE scripts created successfully!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "ES-DE scripts created successfully!", Toast.LENGTH_LONG)
+                    .show()
             } else {
                 Toast.makeText(this, setupResult.message, Toast.LENGTH_LONG).show()
             }
@@ -275,11 +293,12 @@ class MainActivity : ComponentActivity() {
             fun launchSystemAppIfTriggered(systemName: String, trigger: SystemLaunchTrigger) {
                 if (esdePreferencesManager.getSystemLaunchTrigger(systemName) == trigger) {
                     esdePreferencesManager.getSystemAppForSystem(systemName)?.let { pkg ->
-                        val displayPref = if (!esdePreferencesManager.isSystemBottomScreen(systemName)) {
-                            DisplayPreference.PRIMARY_DISPLAY
-                        } else {
-                            DisplayPreference.CURRENT_DISPLAY
-                        }
+                        val displayPref =
+                            if (!esdePreferencesManager.isSystemBottomScreen(systemName)) {
+                                DisplayPreference.PRIMARY_DISPLAY
+                            } else {
+                                DisplayPreference.CURRENT_DISPLAY
+                            }
                         launchApp(
                             context = this@MainActivity,
                             packageName = pkg,
@@ -438,12 +457,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private data class LetterBurstState(
-        val char: Char,
-        val colors: List<Int>,
-        val burstPreset: KonfettiPreset,
-        val formationMs: Int,
-        val holdMs: Long,
-        val particleCount: Int
-    )
+    companion object {
+        const val ACTION_OPEN_THEME_SHARE = "jr.brian.home.ACTION_OPEN_THEME_SHARE"
+        val openThemeShareRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    }
 }
