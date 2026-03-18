@@ -82,6 +82,9 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 - **Icon Pack Browser** - Preview and switch between icon packs in-app
 - **Theme Sharing** - Share your current theme with nearby devices via Bluetooth (Ping)
 
+### **What is Ping?**
+- Ping is an open sourced library developed to allow seemless `Theme Sharing` between two devices running `Jarngreipr`. It uses `bluetooth low energy (BLE)` to transfer Themes and Google's `Nearby Connections API` for transferring Wallpapers. Go to `Settings -> Appearance -> Theme Sharing` and accept the required permissions to get started. Want to know more about Ping? Here is the [GitHub repo](https://github.com/BrianJr03/Ping)!
+
 ### 🖼️ **Wallpaper Options**
 
 - **System Wallpaper** - Use your device's current wallpaper
