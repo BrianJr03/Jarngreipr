@@ -1,7 +1,9 @@
 package jr.brian.home.ui.theme.managers
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -56,6 +58,10 @@ class ThemeManager(private val context: Context) {
 
     var currentTheme by mutableStateOf(loadTheme())
         private set
+
+    init {
+        syncBootReceiverState()
+    }
 
     val allThemes: List<ColorTheme>
         get() = ColorTheme.presetThemes + customThemes.value
@@ -138,10 +144,35 @@ class ThemeManager(private val context: Context) {
         return prefs.getBoolean(KEY_PING_AUTO_START, false)
     }
 
+    private fun syncBootReceiverState() {
+        val state = if (loadPingAutoStart()) {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        } else {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+        runCatching {
+            context.packageManager.setComponentEnabledSetting(
+                ComponentName(context, "jr.brian.ping.BootReceiver"),
+                state,
+                PackageManager.DONT_KILL_APP
+            )
+        }
+    }
+
     fun updatePingAutoStart(enabled: Boolean) {
         isPingAutoStart = enabled
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit { putBoolean(KEY_PING_AUTO_START, enabled) }
+        val state = if (enabled) {
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        } else {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+        context.packageManager.setComponentEnabledSetting(
+            ComponentName(context, "jr.brian.ping.BootReceiver"),
+            state,
+            PackageManager.DONT_KILL_APP
+        )
     }
 
     private fun loadPingDisplayName(): String {

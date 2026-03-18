@@ -1,5 +1,11 @@
 package jr.brian.home.ui.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,7 +48,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
@@ -67,6 +76,18 @@ fun VerticalKeyboard(
     onFlipLayout: () -> Unit = {},
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
+
+    val cursorTransition = rememberInfiniteTransition(label = "cursor")
+    val cursorAlpha by cursorTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(530, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+
     val letters = ('A'..'Z').toList()
     val numbers = (0..9).toList()
 
@@ -85,7 +106,16 @@ fun VerticalKeyboard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
+                    text = buildAnnotatedString {
+                        if (searchQuery.isEmpty()) {
+                            append(stringResource(R.string.keyboard_label_search))
+                        } else {
+                            append(searchQuery)
+                            withStyle(SpanStyle(color = ThemePrimaryColor.copy(alpha = cursorAlpha))) {
+                                append("|")
+                            }
+                        }
+                    },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
@@ -256,6 +286,8 @@ private fun LazyListScope.numericKeyboard(
     onNavigateRight: () -> Unit,
     onSwapMode: () -> Unit,
 ) {
+    val specialChars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
+
     items(numbers.chunked(4).size) { index ->
         val rowNumbers = numbers.chunked(4)[index]
         Row(
@@ -299,6 +331,37 @@ private fun LazyListScope.numericKeyboard(
                 )
             }
             repeat(if (index == numbers.chunked(4).size - 1) 0 else 4 - rowNumbers.size) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+
+    items(specialChars.chunked(4).size) { index ->
+        val rowChars = specialChars.chunked(4)[index]
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            rowChars.forEachIndexed { charIndex, char ->
+                val combinedIndex = 20 + index * 4 + charIndex
+                KeyboardButton(
+                    label = char.toString(),
+                    onClick = { onQueryChange(searchQuery + char) },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                    focusRequester =
+                        remember(combinedIndex) {
+                            FocusRequester().also {
+                                keyboardFocusRequesters[combinedIndex] = it
+                            }
+                        },
+                    onFocusChanged = { onFocusChanged(combinedIndex) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            repeat(4 - rowChars.size) {
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
