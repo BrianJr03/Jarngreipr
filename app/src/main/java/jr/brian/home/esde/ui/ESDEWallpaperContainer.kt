@@ -176,7 +176,9 @@ fun ESDEWallpaperContainer(
                     videoPath = state.systemBackgroundVideoPath,
                     modifier = videoModifier,
                     blurLevel = effectiveBlurLevel,
-                    backgroundScaleMode = backgroundScaleMode
+                    backgroundScaleMode = backgroundScaleMode,
+                    muted = state.systemBgVideoMuted,
+                    looping = state.systemBgVideoLooping
                 )
             } else {
                 AnimatedWallpaperImage(
@@ -615,7 +617,9 @@ private fun VideoBackground(
     videoPath: String,
     modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
-    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
+    muted: Boolean = true,
+    looping: Boolean = true
 ) {
     val context = LocalContext.current
 
@@ -630,14 +634,22 @@ private fun VideoBackground(
         ExoPlayer.Builder(context).build().apply {
             try {
                 setMediaItem(MediaItem.fromUri(videoUri))
-                repeatMode = Player.REPEAT_MODE_ALL
-                volume = 0f
+                repeatMode = if (looping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                volume = if (muted) 0f else 1f
                 prepare()
                 playWhenReady = true
             } catch (e: Exception) {
                 android.util.Log.e("VideoBackground", "Failed to load video: $videoPath", e)
             }
         }
+    }
+
+    LaunchedEffect(muted) {
+        exoPlayer.volume = if (muted) 0f else 1f
+    }
+
+    LaunchedEffect(looping) {
+        exoPlayer.repeatMode = if (looping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
     }
 
     DisposableEffect(videoPath) {

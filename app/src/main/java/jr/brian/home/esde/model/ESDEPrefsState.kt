@@ -202,7 +202,9 @@ data class ESDEPrefsState(
     val romsPaths: List<String> = emptyList(),
     val systemAppMap: Map<String, String?> = emptyMap(),
     val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
-    val systemTopScreenSet: Set<String> = emptySet()
+    val systemTopScreenSet: Set<String> = emptySet(),
+    val systemBgVideoMuted: Boolean = true,
+    val systemBgVideoLooping: Boolean = true
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

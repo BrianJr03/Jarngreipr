@@ -967,6 +967,8 @@
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
     <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
     <string name="esde_settings_custom_system_images_path">System Background Folder</string>
+    <string name="esde_settings_video_options_hide">Hide</string>
+    <string name="esde_settings_video_options_more">More</string>
     <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images or videos</string>
     <string name="esde_settings_single_system_image">Single System Background</string>
     <string name="esde_settings_single_system_image_description">Use one image file for all console backgrounds</string>
@@ -979,6 +981,10 @@
     <string name="esde_settings_custom_media_path">Downloaded Media Folder</string>
     <string name="esde_settings_custom_media_path_description">Custom folder for game media (videos, screenshots, fanart, etc.). Overrides the default ES-DE downloaded_media path for the companion screen.</string>
     <string name="esde_settings_path_not_set">Not set (using default)</string>
+    <string name="esde_settings_system_bg_video_muted">Mute System Background Video</string>
+    <string name="esde_settings_system_bg_video_muted_description">Mute audio when playing a system background video</string>
+    <string name="esde_settings_system_bg_video_looping">Loop System Background Video</string>
+    <string name="esde_settings_system_bg_video_looping_description">Restart the video when it reaches the end</string>
     <string name="esde_settings_clear_path">@string/common_clear</string>
     <string name="esde_settings_select_folder">@string/common_select_folder</string>
     

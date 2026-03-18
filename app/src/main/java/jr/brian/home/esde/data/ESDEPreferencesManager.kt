@@ -95,6 +95,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_APP_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_AUTO_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAUNCH_TRIGGER_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -381,7 +383,9 @@ class ESDEPreferencesManager(context: Context) {
             romsPaths = romsPaths,
             systemAppMap = systemAppMap,
             systemLaunchTriggerMap = systemLaunchTriggerMap,
-            systemTopScreenSet = systemTopScreenSet
+            systemTopScreenSet = systemTopScreenSet,
+            systemBgVideoMuted = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, true),
+            systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true)
         )
     }
 
@@ -527,6 +531,16 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
         }
+    }
+
+    fun setSystemBgVideoMuted(muted: Boolean) {
+        _state.value = _state.value.copy(systemBgVideoMuted = muted)
+        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, muted) }
+    }
+
+    fun setSystemBgVideoLooping(looping: Boolean) {
+        _state.value = _state.value.copy(systemBgVideoLooping = looping)
+        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, looping) }
     }
 
     fun setSingleSystemImagePath(path: String?) {
