@@ -30,5 +30,7 @@ data class WallpaperState(
     val isGameRunning: Boolean = false,
     val logoBrightness: Float = 1f,
     val gameDescription: String? = null,
-    val isShowingGameBackground: Boolean = false
+    val isShowingGameBackground: Boolean = false,
+    val systemBgVideoMuted: Boolean = true,
+    val systemBgVideoLooping: Boolean = true
 )

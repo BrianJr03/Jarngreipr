@@ -292,6 +292,8 @@ fun ESDESettingsContent(
                     preferencesManager.setCustomSystemImagesPath(null)
                     viewModel.refreshSystemImage()
                 },
+                onSystemBgVideoMutedChange = { preferencesManager.setSystemBgVideoMuted(it) },
+                onSystemBgVideoLoopingChange = { preferencesManager.setSystemBgVideoLooping(it) },
                 onSelectSystemLogosPath = { systemLogosFolderPicker.launch(null) },
                 onClearSystemLogosPath = {
                     preferencesManager.setCustomSystemLogosPath(null)

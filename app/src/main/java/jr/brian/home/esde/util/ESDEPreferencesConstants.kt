@@ -82,4 +82,6 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_AUTO_LAUNCH = "system_auto_launch"
     const val KEY_SYSTEM_LAUNCH_TRIGGER_MAP = "system_launch_trigger_map"
     const val KEY_SYSTEM_TOP_SCREEN = "system_top_screen"
+    const val KEY_SYSTEM_BG_VIDEO_MUTED = "system_bg_video_muted"
+    const val KEY_SYSTEM_BG_VIDEO_LOOPING = "system_bg_video_looping"
 }
