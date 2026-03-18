@@ -12,7 +12,8 @@ import kotlinx.serialization.json.*
 @Serializable
 data class JingleEntry(
     val game: String,
-    val file: String
+    val file: String,
+    val regex: String? = null
 )
 
 @Serializable(with = JingleIndexSerializer::class)
@@ -56,6 +57,7 @@ object JingleIndexSerializer : KSerializer<JingleIndex> {
                     addJsonObject {
                         put("game", entry.game)
                         put("file", entry.file)
+                        entry.regex?.let { put("regex", it) }
                     }
                 }
             }

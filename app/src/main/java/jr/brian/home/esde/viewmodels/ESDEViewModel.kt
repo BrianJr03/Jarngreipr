@@ -486,7 +486,7 @@ class ESDEViewModel @Inject constructor(
             if (customImagesDir.exists() && customImagesDir.isDirectory) {
                 // Try exact system name first, then fall back to parent system
                 for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    for (ext in IMAGE_EXTENSIONS) {
+                    for (ext in IMAGE_EXTENSIONS + VIDEO_EXTENSIONS) {
                         val customImage = File(customImagesDir, "$name.$ext")
                         if (customImage.exists()) {
                             Log.d(TAG, "Found custom system image: ${customImage.absolutePath}")

@@ -670,6 +670,7 @@ private fun VideoBackground(
             }
         },
         update = { playerView ->
+            playerView.player = exoPlayer
             playerView.resizeMode = resizeMode
         },
         modifier = modifier

@@ -1,5 +1,12 @@
 package jr.brian.home.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
@@ -38,7 +46,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
@@ -57,12 +68,25 @@ fun QwertyKeyboard(
     modifier: Modifier = Modifier,
     showQueryText: Boolean = true,
     showFlipLayoutButton: Boolean = true,
+    showSpecialCharRow: Boolean = true,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onFlipLayout: () -> Unit = {},
+    onSpecialCharToggle: () -> Unit = {},
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
+
+    val cursorTransition = rememberInfiniteTransition(label = "cursor")
+    val cursorAlpha by cursorTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(530, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
 
     val qwertyRow1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
     val qwertyRow2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
@@ -82,12 +106,39 @@ fun QwertyKeyboard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
+                    text = buildAnnotatedString {
+                        if (searchQuery.isEmpty()) {
+                            append(stringResource(R.string.keyboard_label_search))
+                        } else {
+                            append(searchQuery)
+                            withStyle(SpanStyle(color = ThemePrimaryColor.copy(alpha = cursorAlpha))) {
+                                append("|")
+                            }
+                        }
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                     modifier = Modifier.weight(1f),
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            ThemePrimaryColor.copy(alpha = 0.3f),
+                            RoundedCornerShape(6.dp)
+                        )
+                        .clickable { onSpecialCharToggle() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "@",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 if (showFlipLayoutButton) {
                     Box(
@@ -126,6 +177,7 @@ fun QwertyKeyboard(
                 qwertyRow2 = qwertyRow2,
                 qwertyRow3 = qwertyRow3,
                 searchQuery = searchQuery,
+                showSpecialCharRow = showSpecialCharRow,
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = onFocusChanged,
@@ -141,6 +193,7 @@ private fun QwertyAlphabetKeyboard(
     qwertyRow2: List<Char>,
     qwertyRow3: List<Char>,
     searchQuery: String,
+    showSpecialCharRow: Boolean = true,
     onQueryChange: (String) -> Unit,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit,
@@ -235,13 +288,15 @@ private fun QwertyAlphabetKeyboard(
         )
     }
 
-    SpecialCharsRow(
-        searchQuery = searchQuery,
-        onQueryChange = onQueryChange,
-        keyboardFocusRequesters = keyboardFocusRequesters,
-        onFocusChanged = onFocusChanged,
-        indexOffset = 50,
-    )
+    AnimatedVisibility(showSpecialCharRow){
+        SpecialCharsRow(
+            searchQuery = searchQuery,
+            onQueryChange = onQueryChange,
+            keyboardFocusRequesters = keyboardFocusRequesters,
+            onFocusChanged = onFocusChanged,
+            indexOffset = 50,
+        )
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),

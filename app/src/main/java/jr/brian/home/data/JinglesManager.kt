@@ -116,7 +116,8 @@ class JinglesManager @Inject constructor(
 
     private var player: ExoPlayer? = null
     private var currentPlayJob: Job? = null
-    @Volatile private var currentGameFilename: String? = null
+    @Volatile
+    private var currentGameFilename: String? = null
 
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
@@ -165,8 +166,10 @@ class JinglesManager @Inject constructor(
                     val rawUrl = "${GitHubUrls.RAW_BASE}/${source.key}/$branch/${entry.file}"
                     playFromUrl(rawUrl)
                 }
+
                 source.key.startsWith("content://") ->
                     playLocalFile(source.key, entry.file)
+
                 else ->
                     playFileFromPath(source.key, entry.file)
             }
@@ -332,7 +335,9 @@ class JinglesManager @Inject constructor(
         if (!uriString.startsWith("content://")) {
             return@withContext try {
                 File(uriString, "jingles").walkTopDown().filter { it.isFile }.sumOf { it.length() }
-            } catch (e: Exception) { 0L }
+            } catch (e: Exception) {
+                0L
+            }
         }
         try {
             val folder =
@@ -365,10 +370,20 @@ class JinglesManager @Inject constructor(
             val dir = getDownloadedDir(repoSlug)
             if (!dir.exists()) continue
             val indexText = runCatching { File(dir, "index.json").readText() }
-                .onFailure { Log.w("JinglesManager", "Cannot read index for $repoSlug: ${it.message}") }
+                .onFailure {
+                    Log.w(
+                        "JinglesManager",
+                        "Cannot read index for $repoSlug: ${it.message}"
+                    )
+                }
                 .getOrNull() ?: continue
             val index = runCatching { json.decodeFromString<JingleIndex>(indexText) }
-                .onFailure { Log.w("JinglesManager", "Malformed index for $repoSlug: ${it.message}") }
+                .onFailure {
+                    Log.w(
+                        "JinglesManager",
+                        "Malformed index for $repoSlug: ${it.message}"
+                    )
+                }
                 .getOrNull() ?: continue
             result.add(JingleSource(key = dir.absolutePath, index = index, isLocal = true))
         }
@@ -399,8 +414,25 @@ class JinglesManager @Inject constructor(
         // Build lookup structures
         val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
         val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
+        val regex = mutableListOf<Triple<Regex, JingleSource, JingleEntry>>()
+
         for (source in result) {
             for (entry in source.index.entries) {
+                // Compile regex patterns if present
+                if (!entry.regex.isNullOrBlank()) {
+                    try {
+                        val pattern = Regex(entry.regex, RegexOption.IGNORE_CASE)
+                        regex.add(Triple(pattern, source, entry))
+                    } catch (e: Exception) {
+                        Log.w(
+                            "JinglesManager",
+                            "Invalid regex '${entry.regex}' for ${entry.game}: ${e.message}"
+                        )
+                        _errors.tryEmit("Invalid regex pattern for '${entry.game}': ${entry.regex}")
+                    }
+                }
+
+                // Build exact and lower maps (existing logic)
                 val key = entry.game.lowercase()
                 if (key !in exact) exact[key] = source to entry
                 lower.add(Triple(key, source, entry))
@@ -435,6 +467,7 @@ class JinglesManager @Inject constructor(
 
             snapshot = LookupSnapshot(
                 sources = result,
+                regexEntries = regex,
                 exactMap = exact,
                 lowerEntries = lower,
                 branchMap = mergedBranch,
@@ -451,11 +484,15 @@ class JinglesManager @Inject constructor(
                 val url = "${GitHubUrls.RAW_BASE}/$repoSlug/$branch/index.json"
                 val text = withContext(Dispatchers.IO) {
                     val conn = openConnection(url)
-                    conn.inputStream.bufferedReader().use { it.readText() }.also { conn.disconnect() }
+                    conn.inputStream.bufferedReader().use { it.readText() }
+                        .also { conn.disconnect() }
                 }
                 return json.decodeFromString<JingleIndex>(text) to branch
             } catch (e: Exception) {
-                Log.d("JinglesManager", "fetchIndex: branch=$branch miss for $repoSlug: ${e.message}")
+                Log.d(
+                    "JinglesManager",
+                    "fetchIndex: branch=$branch miss for $repoSlug: ${e.message}"
+                )
             }
         }
         Log.w("JinglesManager", "fetchIndex: could not fetch index.json for $repoSlug")
@@ -491,13 +528,14 @@ class JinglesManager @Inject constructor(
         fetchIndex(repoSlug) != null
 
     /**
-     * Two-tier lookup:
-     * 1. O(1) exact match against the current snapshot's exactMap.
-     * 2. O(n) contains fallback — result is staged for merge into the next snapshot.
+     * Three-tier lookup:
+     * 1. O(1) exact match against the current snapshot's exactMap (fastest).
+     * 2. O(n) regex match if entry has a regex pattern (precise).
+     * 3. O(n) contains fallback — result is staged for merge into the next snapshot (loosest).
      *
      * Reading [snapshot] without a lock is intentional: [@Volatile] guarantees
      * we always see the latest fully-constructed snapshot reference.
-     */
+     * */
     private suspend fun findMatch(
         gameFilename: String
     ): Pair<JingleSource, JingleEntry>? {
@@ -510,10 +548,19 @@ class JinglesManager @Inject constructor(
 
         val snap = snapshot
 
-        // Tier 1 — O(1)
+        // Tier 1 — O(1) exact match (fastest)
         snap.exactMap[baseName]?.let { return it }
 
-        // Tier 2 — O(n) contains fallback
+        // Tier 2 — O(n) regex match (precise)
+        for ((pattern, source, entry) in snap.regexEntries) {
+            if (pattern.containsMatchIn(baseName)) {
+                // Stage for warm cache
+                warmStagingMutex.withLock { warmStaging[baseName] = source to entry }
+                return source to entry
+            }
+        }
+
+        // Tier 3 — O(n) contains fallback (loosest)
         for ((lowerGame, source, entry) in snap.lowerEntries) {
             if (baseName.contains(lowerGame) || lowerGame.contains(baseName)) {
                 // Stage the warm entry; it will be merged on the next reloadIndices()
