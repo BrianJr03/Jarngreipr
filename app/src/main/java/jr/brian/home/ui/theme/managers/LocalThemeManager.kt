@@ -1,5 +1,6 @@
 package jr.brian.home.ui.theme.managers
 
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -10,6 +11,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import jr.brian.home.MainActivity
+import jr.brian.home.service.ThemeShareReceiver
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -446,6 +449,14 @@ class ThemeManager(private val context: Context) {
 
     fun shareCurrentTheme() {
         PingService.notificationTitle = context.getString(R.string.ping_notification_title)
+        PingService.notificationIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent(context, ThemeShareReceiver::class.java).apply {
+                action = MainActivity.ACTION_OPEN_THEME_SHARE
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val profile = PingThemeUtil.buildProfile(
             currentTheme,
             pingDisplayName.ifBlank { Build.MODEL }

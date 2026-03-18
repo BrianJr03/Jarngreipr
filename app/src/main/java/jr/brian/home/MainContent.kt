@@ -86,6 +86,8 @@ fun MainContent(
     hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
+    navigateToThemeShare: Boolean = false,
+    onNavigateToThemeShareHandled: () -> Unit = {},
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
@@ -169,6 +171,13 @@ fun MainContent(
     LaunchedEffect(shouldShowWhatsNew) {
         if (shouldShowWhatsNew) {
             whatsNewDialogState.show()
+        }
+    }
+
+    LaunchedEffect(navigateToThemeShare) {
+        if (navigateToThemeShare) {
+            navController.navigate(Routes.THEME_SHARE)
+            onNavigateToThemeShareHandled()
         }
     }
 
