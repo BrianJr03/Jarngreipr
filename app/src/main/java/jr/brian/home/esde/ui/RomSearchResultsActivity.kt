@@ -1,7 +1,6 @@
 package jr.brian.home.esde.ui
 
 import android.app.ActivityOptions
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -81,17 +80,11 @@ class RomSearchResultsActivity : ComponentActivity() {
         }
         // Persist read permission so we don't need to prompt again next time.
         contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        // Extract the volume ID from the tree URI.
-        // URI path looks like /tree/3A0D-5000%3A or /tree/3A0D-5000%3AAyn+Thor%2Fn3ds
-        // DocumentsContract.getTreeDocumentId() returns the decoded document ID e.g. "3A0D-5000:"
-        val volumeId = try {
-            DocumentsContract.getTreeDocumentId(treeUri)?.substringBefore(':')
-        } catch (_: Exception) {
-            treeUri.lastPathSegment?.substringBefore(':')
-        }
-        if (volumeId != null) {
-            esdePrefs.setSafTreeUri(volumeId, treeUri.toString())
-            Log.d("RomSearchResults", "SAF tree granted | volumeId=$volumeId | treeUri=$treeUri")
+        // Store the tree URI keyed by system name so each platform has its own independent grant.
+        val systemName = pendingGameLaunch?.first?.systemName
+        if (systemName != null) {
+            esdePrefs.setSafTreeUri(systemName, treeUri.toString())
+            Log.d("RomSearchResults", "SAF tree granted | system=$systemName | treeUri=$treeUri")
         }
         // Retry the pending launch now that we have access.
         pendingGameLaunch?.let { (game, ctx) -> launchGame(game, ctx) }
@@ -302,11 +295,11 @@ class RomSearchResultsActivity : ComponentActivity() {
     }
 
     /**
-     * Builds an authorized SAF document URI using a persisted tree grant.
-     * Returns null if no tree has been granted yet for this volume (caller should request one).
+     * Builds an authorized SAF document URI using the tree grant stored for [systemName].
+     * Returns null if no tree has been granted yet for this system (caller should request one).
      */
-    private fun buildSafDocumentUri(absolutePath: String, volumeId: String): Uri? {
-        val treeUriString = esdePrefs.getSafTreeUri(volumeId) ?: return null
+    private fun buildSafDocumentUri(absolutePath: String, volumeId: String, systemName: String): Uri? {
+        val treeUriString = esdePrefs.getSafTreeUri(systemName) ?: return null
         val treeUri = treeUriString.toUri()
         val relativePath = absolutePath.removePrefix("/storage/$volumeId/")
         val documentId = "$volumeId:$relativePath"
@@ -318,171 +311,70 @@ class RomSearchResultsActivity : ComponentActivity() {
         context: Context
     ) {
         val romPath = resolveRomPath(game) ?: run {
-            Log.e("RomSearchResults", "ROM path could not be resolved | systemName=${game.systemName} path=${game.path} romAbsolutePath=${game.romAbsolutePath} romsPaths=${esdePrefs.state.value.romsPaths}")
+            Log.e("RomSearchResults", "ROM path not resolved | system=${game.systemName} path=${game.path}")
             Toast.makeText(context, "ROM path not found", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // AzaharPlus — focused first. Add other platforms once this is confirmed working.
-        val packageName = "io.github.lime3ds.android"
-        val activityName = "org.citra.citra_emu.activities.EmulationActivity"
-        val romFile = File(romPath)
+        // Resolve the correct URI type before doing anything emulator-specific.
+        // SD card ROMs need an authorized SAF tree document URI; internal storage uses FileProvider.
+        val contentUri = resolveContentUri(game, romPath, context) ?: return  // null = SAF picker launched, will retry
 
-        // For SD card ROMs, we need an authorized SAF tree document URI.
-        // Simply constructing a com.android.externalstorage.documents URI without a prior
-        // ACTION_OPEN_DOCUMENT_TREE grant causes a SecurityException.
-        val volumeId = sdCardVolumeId(romPath)
-        val contentUri: Uri = if (volumeId != null) {
-            val safUri = buildSafDocumentUri(romPath, volumeId)
-            if (safUri == null) {
-                // No tree grant yet — ask the user to pick the SD card root, then retry.
-                Log.d("RomSearchResults", "No SAF tree for volumeId=$volumeId, requesting access")
-                pendingGameLaunch = game to context
-                val hint = "content://com.android.externalstorage.documents/document/${Uri.encode("$volumeId:")}".toUri()
-                safTreeLauncher.launch(hint)
+        val pkg = esdePrefs.getGameEmulator(gameKey(game))
+            ?: game.emulatorPackage
+            ?: run {
+                Toast.makeText(context, "No emulator configured for this game", Toast.LENGTH_SHORT).show()
                 return
             }
-            safUri
-        } else {
-            // Internal storage — use FileProvider.
-            try {
-                FileProvider.getUriForFile(context, "${context.packageName}.provider", romFile)
-            } catch (e: Exception) {
-                Log.w("RomSearchResults", "FileProvider failed, falling back to file URI", e)
-                Uri.fromFile(romFile)
-            }.also { uri ->
-                try { context.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}
-            }
-        }
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            component = ComponentName(packageName, activityName)
-            setDataAndType(contentUri, "*/*")
-            addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-        }
-
-        Log.d("RomSearchResults", "launchGame(AzaharPlus) | rom=$romPath | uri=$contentUri | uriType=${contentUri.authority}")
+        Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$contentUri")
 
         try {
+            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, contentUri, context)
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
             signalGameLaunch()
-            startActivity(intent)
+            startActivity(intent, options.toBundle())
             finish()
         } catch (e: Exception) {
-            Toast.makeText(context, "Failed to launch game", Toast.LENGTH_SHORT).show()
-            Log.e("RomSearchResults", "Failed to launch AzaharPlus", e)
+            Log.e("RomSearchResults", "Failed to launch $pkg", e)
+            // Fallback: open the emulator app itself
+            try {
+                packageManager.getLaunchIntentForPackage(pkg)?.let {
+                    startActivity(it, ActivityOptions.makeBasic().apply { launchDisplayId = 0 }.toBundle())
+                }
+            } catch (_: Exception) {}
+            signalGameLaunch()
+            finish()
         }
     }
 
-//    private fun launchGame(game: GameInfo) {
-//        Log.d(
-//            "RomSearchResults",
-//            "launchGame called | name=${game.name} system=${game.systemName} " +
-//            "path=${game.path} romAbsPath=${game.romAbsolutePath} " +
-//            "emulatorPkg=${game.emulatorPackage} launchCmd=${game.launchCommand}"
-//        )
-//        val findRulesFile =
-//            File(filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
-//                if (f.exists()) f
-//                else File("/storage/emulated/0/ES-DE/custom_systems/es_find_rules.xml")
-//            }
-//        val customRules = EsdeCommandLauncher.parseCustomRules(findRulesFile)
-//
-//        val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
-//        if (savedCommand != null && game.romAbsolutePath != null) {
-//            Log.d("RomSearchResults", "Launching via saved command | rom=${game.romAbsolutePath} | cmd=$savedCommand")
-//            val intent = EsdeCommandLauncher.buildIntent(
-//                launchCommand = savedCommand,
-//                romAbsPath = game.romAbsolutePath,
-//                context = this,
-//                customRules = customRules
-//            )
-//            if (intent != null) {
-//                Log.d("RomSearchResults", "  → intent data=${intent.data} extras=${intent.extras}")
-//                try {
-//                    val options = ActivityOptions.makeBasic()
-//                    options.launchDisplayId = 0
-//                    signalGameLaunch()
-//                    startActivity(intent, options.toBundle())
-//                    finish()
-//                    return
-//                } catch (e: Exception) {
-//                    Log.w("RomSearchResults", "Saved-command launch failed, trying package fallback", e)
-//                }
-//            }
-//        }
-//
-//        val savedPkg = esdePrefs.getGameEmulator(gameKey(game))
-//        if (savedPkg != null && game.romAbsolutePath != null) {
-//            Log.d("RomSearchResults", "Launching via saved emulator pkg=$savedPkg | rom=${game.romAbsolutePath}")
-//            launchGameWithEmulator(game, savedPkg)
-//            return
-//        }
-//
-//        val romPath = game.romAbsolutePath
-//        val command = game.launchCommand
-//
-//        if (romPath != null && command != null) {
-//            Log.d("RomSearchResults", "Launching via game launch command | rom=$romPath | cmd=$command")
-//            val intent = EsdeCommandLauncher.buildIntent(
-//                launchCommand = command,
-//                romAbsPath = romPath,
-//                context = this,
-//                customRules = customRules
-//            )
-//            if (intent != null) {
-//                Log.d("RomSearchResults", "  → intent data=${intent.data} extras=${intent.extras}")
-//                try {
-//                    val options = ActivityOptions.makeBasic()
-//                    options.launchDisplayId = 0
-//                    signalGameLaunch()
-//                    startActivity(intent, options.toBundle())
-//                    finish()
-//                    return
-//                } catch (e: Exception) {
-//                    Log.w("RomSearchResults", "Direct launch failed, falling back to app open", e)
-//                }
-//            }
-//        }
-//
-//        val pkg = game.emulatorPackage ?: run { finish(); return }
-//
-//        if (game.romAbsolutePath != null) {
-//            Log.d("RomSearchResults", "Launching via buildRomIntentFromPackage | pkg=$pkg | rom=${game.romAbsolutePath}")
-//            try {
-//                val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
-//                    packageName = pkg,
-//                    romAbsPath = game.romAbsolutePath,
-//                    context = this
-//                )
-//                Log.d("RomSearchResults", "  → intent data=${romIntent.data} extras=${romIntent.extras}")
-//                val options = ActivityOptions.makeBasic()
-//                options.launchDisplayId = 0
-//                signalGameLaunch()
-//                startActivity(romIntent, options.toBundle())
-//                finish()
-//                return
-//            } catch (e: Exception) {
-//                Log.w("RomSearchResults", "Package ROM launch failed, falling back to app open", e)
-//            }
-//        }
-//
-//        // Fallback: open the emulator app itself
-//        try {
-//            val intent = packageManager.getLaunchIntentForPackage(pkg)
-//            if (intent != null) {
-//                val options = ActivityOptions.makeBasic()
-//                options.launchDisplayId = 0
-//                startActivity(intent, options.toBundle())
-//            }
-//        } catch (_: Exception) {}
-//        signalGameLaunch()
-//        finish()
-//    }
+    /**
+     * Resolves the [android.net.Uri] to pass to the emulator.
+     * Returns null if a SAF access prompt was launched (the launch will be retried after the grant).
+     */
+    private fun resolveContentUri(game: GameInfo, romPath: String, context: Context): Uri? {
+        val volumeId = sdCardVolumeId(romPath)
+        return if (volumeId != null) {
+            val safUri = buildSafDocumentUri(romPath, volumeId, game.systemName)
+            if (safUri == null) {
+                Log.d("RomSearchResults", "Requesting SAF tree for system=${game.systemName}")
+                pendingGameLaunch = game to context
+                // Hint at the ROM's parent directory so the picker opens in the right folder.
+                val romDir = File(romPath).parent ?: "/storage/$volumeId"
+                val relDir = romDir.removePrefix("/storage/$volumeId/")
+                val hint = "content://com.android.externalstorage.documents/document/${Uri.encode("$volumeId:$relDir")}".toUri()
+                safTreeLauncher.launch(hint)
+                null
+            } else safUri
+        } else {
+            try {
+                FileProvider.getUriForFile(context, "${context.packageName}.provider", File(romPath))
+            } catch (e: Exception) {
+                Log.w("RomSearchResults", "FileProvider failed, using file URI", e)
+                Uri.fromFile(File(romPath))
+            }
+        }
+    }
 
     private fun signalGameLaunch() {
         romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)

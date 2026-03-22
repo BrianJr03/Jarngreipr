@@ -32,9 +32,17 @@ object RomListParser {
         val systemCommands = parseSystemCommands(esSystemsFile)
         val systemRomDirs = parseSystemRomDirs(esSystemsFile)
 
-        return gamelistsDir.listFiles()
-            ?.filter { it.isDirectory }
-            ?.flatMap { systemDir ->
+        // SD card parents derived from explicitly-configured systems (e.g. n3ds).
+        // Used as a last-resort fallback for systems absent from es_systems.xml — but only
+        // after internal-storage romsPaths checks fail, so Dolphin on device storage isn't
+        // accidentally redirected to the SD card.
+        val sdCardParents = systemRomDirs.values
+            .filter { it.startsWith("/storage/") && !it.startsWith("/storage/emulated") }
+            .map { it.trimEnd('/').substringBeforeLast('/') }
+            .distinct()
+
+        return (gamelistsDir.listFiles()?.filter { it.isDirectory } ?: emptyList())
+            .flatMap { systemDir ->
                 val systemName = systemDir.name
                 val gamelistFile = File(systemDir, "gamelist.xml")
                 if (gamelistFile.exists()) {
@@ -44,13 +52,14 @@ object RomListParser {
                         mediaPath = mediaPath,
                         romsPaths = romsPaths,
                         systemRomDir = systemRomDirs[systemName],
+                        sdCardParents = sdCardParents,
                         emulatorPackage = systemEmulatorMap[systemName],
                         launchCommand = systemCommands[systemName]
                     )
                 } else {
                     emptyList()
                 }
-            } ?: emptyList()
+            }
     }
 
     /** Extracts the &lt;path&gt; element for each system from es_systems.xml. */
@@ -78,7 +87,9 @@ object RomListParser {
                                 val text = buf.toString().trim()
                                 when (parser.name) {
                                     "name" -> if (currentName == null) currentName = text
-                                    "path" -> if (currentPath == null && text.isNotEmpty()) currentPath = text
+                                    // Skip paths containing % — they're unresolved ES-DE template
+                                    // variables like %ROMPATH% that we can't expand.
+                                    "path" -> if (currentPath == null && text.isNotEmpty() && !text.contains('%')) currentPath = text
                                     "system" -> {
                                         val n = currentName; val p = currentPath
                                         if (n != null && p != null) dirs[n] = p
@@ -153,6 +164,7 @@ object RomListParser {
         mediaPath: String,
         romsPaths: List<String>,
         systemRomDir: String?,
+        sdCardParents: List<String> = emptyList(),
         emulatorPackage: String?,
         launchCommand: String?
     ): List<GameInfo> {
@@ -228,7 +240,7 @@ object RomListParser {
                                             val artworkPath = resolveArtworkPath(systemName, path, mediaPath)
                                             val physicalMediaPath = resolvePhysicalMediaPath(systemName, path, mediaPath)
                                             val marqueePath = resolveMarqueePath(systemName, path, mediaPath)
-                                            val romAbsPath = resolveRomPath(systemName, path, romsPaths, systemRomDir)
+                                            val romAbsPath = resolveRomPath(systemName, path, romsPaths, systemRomDir, sdCardParents)
                                             games.add(
                                                 GameInfo(
                                                     path = path,
@@ -274,16 +286,22 @@ object RomListParser {
         systemName: String,
         gameFilename: String,
         romsPaths: List<String>,
-        systemRomDir: String? = null
+        systemRomDir: String? = null,
+        sdCardParents: List<String> = emptyList()
     ): String? {
-        // Prefer the exact path from es_systems.xml — handles SD card and non-standard roots.
-        // Skip file.exists() here since SD card files may not be readable by this app.
+        // Explicit path from es_systems.xml — use directly (covers SD card and non-standard roots).
         if (systemRomDir != null) {
             return File(systemRomDir.trimEnd('/'), gameFilename).absolutePath
         }
+        // Internal storage: check each configured ROM root with file.exists().
         for (romsRoot in romsPaths) {
             val file = File(romsRoot, "$systemName/$gameFilename")
             if (file.exists()) return file.absolutePath
+        }
+        // Last resort: try inferred SD card sibling dirs — only reached when internal storage
+        // check found nothing, so internal-storage systems (e.g. Dolphin) are never redirected here.
+        for (parent in sdCardParents) {
+            return File(parent, "$systemName/$gameFilename").absolutePath
         }
         return null
     }
