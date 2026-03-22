@@ -13,7 +13,8 @@ import kotlinx.serialization.json.*
 data class JingleEntry(
     val game: String,
     val file: String,
-    val regex: String? = null
+    val regex: String? = null,
+    val platform: String? = null
 )
 
 @Serializable(with = JingleIndexSerializer::class)
@@ -38,10 +39,12 @@ object JingleIndexSerializer : KSerializer<JingleIndex> {
             jsonDecoder.json.decodeFromJsonElement(entryListSerializer, obj["entries"]!!)
         } else {
             // Grouped format: { "n3ds": [...], "wii": [...] }
+            // The JSON key becomes the platform for each entry (used by system-jingle).
             obj.entries
                 .filter { (key, value) -> key != "name" && value is JsonArray }
-                .flatMap { (_, value) ->
+                .flatMap { (platform, value) ->
                     jsonDecoder.json.decodeFromJsonElement(entryListSerializer, value)
+                        .map { entry -> if (entry.platform == null) entry.copy(platform = platform) else entry }
                 }
         }
 
@@ -58,6 +61,7 @@ object JingleIndexSerializer : KSerializer<JingleIndex> {
                         put("game", entry.game)
                         put("file", entry.file)
                         entry.regex?.let { put("regex", it) }
+                        entry.platform?.let { put("platform", it) }
                     }
                 }
             }

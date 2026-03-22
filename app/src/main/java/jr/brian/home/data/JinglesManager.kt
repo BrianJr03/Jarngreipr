@@ -2,12 +2,14 @@ package jr.brian.home.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -56,6 +58,11 @@ private const val KEY_DOWNLOADED_REPOS = "jingle_downloaded_repos"
 private const val KEY_ENABLED = "jingles_enabled"
 private const val KEY_MUTED = "jingles_muted"
 private const val KEY_VOLUME = "jingles_volume"
+private const val KEY_REGEX_PRIORITY = "jingles_regex_priority"
+private const val KEY_NORMALIZE = "jingles_normalize"
+private const val MAX_REGEX_LENGTH = 200
+private const val GAME_GLOBAL_DEFAULT = "global-default-jingle"
+private const val GAME_SYSTEM_JINGLE = "system-jingle"
 private const val JARNGREIPR_FOLDER = "Jarngreipr Jingles"
 
 @Singleton
@@ -89,6 +96,12 @@ class JinglesManager @Inject constructor(
     private val _volume = MutableStateFlow(prefs.getFloat(KEY_VOLUME, 1f))
     val volume: StateFlow<Float> = _volume.asStateFlow()
 
+    private val _regexPriority = MutableStateFlow(prefs.getBoolean(KEY_REGEX_PRIORITY, false))
+    val regexPriority: StateFlow<Boolean> = _regexPriority.asStateFlow()
+
+    private val _isNormalizationEnabled = MutableStateFlow(prefs.getBoolean(KEY_NORMALIZE, false))
+    val isNormalizationEnabled: StateFlow<Boolean> = _isNormalizationEnabled.asStateFlow()
+
     /**
      * Emits a human-readable error message whenever a background operation fails.
      * UI can collect this to show a snackbar / toast. Uses SharedFlow so concurrent
@@ -115,6 +128,7 @@ class JinglesManager @Inject constructor(
     private val warmStaging = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
 
     private var player: ExoPlayer? = null
+    private var loudnessEnhancer: LoudnessEnhancer? = null
     private var currentPlayJob: Job? = null
     @Volatile
     private var currentGameFilename: String? = null
@@ -142,6 +156,25 @@ class JinglesManager @Inject constructor(
         prefs.edit { putFloat(KEY_VOLUME, volume) }
         if (!_isMuted.value) {
             scope.launch(Dispatchers.Main) { player?.volume = volume }
+        }
+    }
+
+    fun setRegexPriority(enabled: Boolean) {
+        _regexPriority.value = enabled
+        prefs.edit { putBoolean(KEY_REGEX_PRIORITY, enabled) }
+    }
+
+    fun setNormalizationEnabled(enabled: Boolean) {
+        _isNormalizationEnabled.value = enabled
+        prefs.edit { putBoolean(KEY_NORMALIZE, enabled) }
+        scope.launch(Dispatchers.Main) {
+            if (enabled) {
+                val sessionId = player?.audioSessionId ?: return@launch
+                if (sessionId != 0) setupLoudnessEnhancer(sessionId)
+            } else {
+                loudnessEnhancer?.release()
+                loudnessEnhancer = null
+            }
         }
     }
 
@@ -297,6 +330,8 @@ class JinglesManager @Inject constructor(
     fun release() {
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         scope.launch(Dispatchers.Main) {
+            loudnessEnhancer?.release()
+            loudnessEnhancer = null
             player?.release()
             player = null
         }
@@ -415,27 +450,56 @@ class JinglesManager @Inject constructor(
         val exact = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
         val lower = mutableListOf<Triple<String, JingleSource, JingleEntry>>()
         val regex = mutableListOf<Triple<Regex, JingleSource, JingleEntry>>()
+        val systemJingles = mutableMapOf<String, Pair<JingleSource, JingleEntry>>()
+        var globalDefault: Pair<JingleSource, JingleEntry>? = null
 
         for (source in result) {
             for (entry in source.index.entries) {
-                // Compile regex patterns if present
-                if (!entry.regex.isNullOrBlank()) {
-                    try {
-                        val pattern = Regex(entry.regex, RegexOption.IGNORE_CASE)
-                        regex.add(Triple(pattern, source, entry))
-                    } catch (e: Exception) {
+                val gameKey = entry.game.lowercase()
+
+                // Special entries — handled separately, never enter normal lookup maps.
+                if (gameKey == GAME_GLOBAL_DEFAULT) {
+                    if (globalDefault == null) globalDefault = source to entry
+                    continue
+                }
+                if (gameKey == GAME_SYSTEM_JINGLE) {
+                    val platform = entry.platform?.lowercase()
+                    if (platform != null && platform !in systemJingles) {
+                        systemJingles[platform] = source to entry
+                    } else if (platform == null) {
                         Log.w(
                             "JinglesManager",
-                            "Invalid regex '${entry.regex}' for ${entry.game}: ${e.message}"
+                            "system-jingle entry in '${source.index.name}' has no platform — skipping"
                         )
-                        _errors.tryEmit("Invalid regex pattern for '${entry.game}': ${entry.regex}")
+                    }
+                    continue
+                }
+
+                // Compile regex patterns if present
+                if (!entry.regex.isNullOrBlank()) {
+                    if (entry.regex.length > MAX_REGEX_LENGTH) {
+                        Log.w(
+                            "JinglesManager",
+                            "Skipping regex for '${entry.game}': exceeds $MAX_REGEX_LENGTH chars (ReDoS protection)"
+                        )
+                        _errors.tryEmit("Regex for '${entry.game}' skipped: pattern too long (>${MAX_REGEX_LENGTH} chars)")
+                    } else {
+                        try {
+                            val pattern = Regex(entry.regex, RegexOption.IGNORE_CASE)
+                            regex.add(Triple(pattern, source, entry))
+                        } catch (e: Exception) {
+                            Log.w(
+                                "JinglesManager",
+                                "Invalid regex '${entry.regex}' for ${entry.game}: ${e.message}"
+                            )
+                            _errors.tryEmit("Invalid regex pattern for '${entry.game}': ${entry.regex}")
+                        }
                     }
                 }
 
-                // Build exact and lower maps (existing logic)
-                val key = entry.game.lowercase()
-                if (key !in exact) exact[key] = source to entry
-                lower.add(Triple(key, source, entry))
+                // Build exact and lower maps
+                if (gameKey !in exact) exact[gameKey] = source to entry
+                lower.add(Triple(gameKey, source, entry))
             }
         }
 
@@ -471,6 +535,8 @@ class JinglesManager @Inject constructor(
                 exactMap = exact,
                 lowerEntries = lower,
                 branchMap = mergedBranch,
+                systemJingles = systemJingles,
+                globalDefault = globalDefault,
             )
             _indexNames.value = nameMap
             _indexCounts.value = countMap
@@ -528,10 +594,19 @@ class JinglesManager @Inject constructor(
         fetchIndex(repoSlug) != null
 
     /**
-     * Three-tier lookup:
+     * Five-tier lookup — tiers 1/2 order depends on [regexPriority]:
+     *
+     * Default (exact-first):
      * 1. O(1) exact match against the current snapshot's exactMap (fastest).
      * 2. O(n) regex match if entry has a regex pattern (precise).
      * 3. O(n) contains fallback — result is staged for merge into the next snapshot (loosest).
+     * 4. system-jingle for the game's platform directory (e.g. "n3ds").
+     * 5. global-default-jingle — plays for every game when nothing else matches.
+     *
+     * Regex-priority mode:
+     * 1. O(n) regex match (user-selected priority).
+     * 2. O(1) exact match (fallback).
+     * 3–5. same as above.
      *
      * Reading [snapshot] without a lock is intentional: [@Volatile] guarantees
      * we always see the latest fully-constructed snapshot reference.
@@ -547,16 +622,30 @@ class JinglesManager @Inject constructor(
             .lowercase()
 
         val snap = snapshot
+        val useRegexFirst = _regexPriority.value
 
-        // Tier 1 — O(1) exact match (fastest)
-        snap.exactMap[baseName]?.let { return it }
+        if (useRegexFirst) {
+            // Tier 1 — O(n) regex match (user-selected priority)
+            for ((pattern, source, entry) in snap.regexEntries) {
+                if (pattern.containsMatchIn(baseName)) {
+                    warmStagingMutex.withLock { warmStaging[baseName] = source to entry }
+                    return source to entry
+                }
+            }
 
-        // Tier 2 — O(n) regex match (precise)
-        for ((pattern, source, entry) in snap.regexEntries) {
-            if (pattern.containsMatchIn(baseName)) {
-                // Stage for warm cache
-                warmStagingMutex.withLock { warmStaging[baseName] = source to entry }
-                return source to entry
+            // Tier 2 — O(1) exact match (fallback)
+            snap.exactMap[baseName]?.let { return it }
+        } else {
+            // Tier 1 — O(1) exact match (fastest)
+            snap.exactMap[baseName]?.let { return it }
+
+            // Tier 2 — O(n) regex match (precise)
+            for ((pattern, source, entry) in snap.regexEntries) {
+                if (pattern.containsMatchIn(baseName)) {
+                    // Stage for warm cache
+                    warmStagingMutex.withLock { warmStaging[baseName] = source to entry }
+                    return source to entry
+                }
             }
         }
 
@@ -568,7 +657,27 @@ class JinglesManager @Inject constructor(
                 return source to entry
             }
         }
+
+        // Tier 4 — system-jingle: platform-wide default derived from the game's folder name
+        val platform = extractPlatform(gameFilename)
+        if (platform.isNotEmpty()) {
+            snap.systemJingles[platform]?.let { return it }
+        }
+
+        // Tier 5 — global-default-jingle: plays for every game when nothing else matches
+        snap.globalDefault?.let { return it }
+
         return null
+    }
+
+    /**
+     * Extracts the immediate parent directory name from [gameFilename] as the platform.
+     * E.g. "/roms/n3ds/game.3ds" → "n3ds". Returns an empty string if no parent is found.
+     */
+    private fun extractPlatform(gameFilename: String): String {
+        val normalized = gameFilename.replace('\\', '/')
+        val parent = normalized.substringBeforeLast('/')
+        return if (parent == normalized) "" else parent.substringAfterLast('/').lowercase()
     }
 
     private fun downloadFile(rawUrl: String, dest: File): JinglesResult<Unit> {
@@ -629,6 +738,23 @@ class JinglesManager @Inject constructor(
         player = ExoPlayer.Builder(context)
             .setLoadControl(loadControl)
             .build()
+        player?.addListener(object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                if (_isNormalizationEnabled.value) setupLoudnessEnhancer(audioSessionId)
+            }
+        })
+    }
+
+    private fun setupLoudnessEnhancer(audioSessionId: Int) {
+        loudnessEnhancer?.release()
+        loudnessEnhancer = try {
+            LoudnessEnhancer(audioSessionId).also {
+                it.setTargetGain(600) // 6 dB boost ceiling
+                it.enabled = true
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     @OptIn(UnstableApi::class)

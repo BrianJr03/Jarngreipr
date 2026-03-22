@@ -46,8 +46,12 @@ class JinglesViewModel @Inject constructor(
     val indexCounts: StateFlow<Map<String, Int>> = jinglesManager.indexCounts
     val isMuted: StateFlow<Boolean> = jinglesManager.isMuted
     val volume: StateFlow<Float> = jinglesManager.volume
+    val regexPriority: StateFlow<Boolean> = jinglesManager.regexPriority
+    val isNormalizationEnabled: StateFlow<Boolean> = jinglesManager.isNormalizationEnabled
 
     fun setVolume(volume: Float) = jinglesManager.setVolume(volume)
+    fun setRegexPriority(enabled: Boolean) = jinglesManager.setRegexPriority(enabled)
+    fun setNormalizationEnabled(enabled: Boolean) = jinglesManager.setNormalizationEnabled(enabled)
 
     fun refreshLocalFolders() {
         if (_isRefreshingFolders.value) return
