@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,6 +55,7 @@ internal fun RomResultsGrid(
     onUnhideGame: (GameInfo) -> Unit = {},
     onToggleKeyboard: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
 
@@ -123,7 +126,7 @@ internal fun RomResultsGrid(
                 onDismiss = { showEmulatorPicker = false },
                 onEmulatorSelected = { pkg, cmd ->
                     onSaveEmulator(game, pkg, cmd)
-                    onLaunchWithEmulator(game, pkg)
+                    Toast.makeText(context, "Emulator saved", Toast.LENGTH_SHORT).show()
                     showEmulatorPicker = false
                     selectedGame = null
                 }

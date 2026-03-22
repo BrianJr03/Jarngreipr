@@ -11,7 +11,11 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import androidx.core.net.toUri
 
-data class EmulatorOption(val packageName: String, val displayName: String, val command: String? = null)
+data class EmulatorOption(
+    val packageName: String,
+    val displayName: String,
+    val command: String? = null
+)
 
 object EsdeCommandLauncher {
     private const val TAG = "EsdeCommandLauncher"
@@ -80,41 +84,165 @@ object EsdeCommandLauncher {
         ),
         "LINKBOY" to listOf(
             "com.explusalpha.LnkEmu/com.explusalpha.LnkEmu.MainActivity"
+        ),
+        "MUPEN64PLUS" to listOf(
+            "org.mupen64plusae.v3.fzurita/org.mupen64plusae.v3.fzurita.SplashActivity",
+            "paulscode.android.mupen64plusae/paulscode.android.mupen64plusae.SplashActivity"
+        ),
+        "CEMU" to listOf(
+            "info.cemu.cemu/info.cemu.cemu.MainActivity"
+        ),
+        "EDEN" to listOf(
+            "dev.eden.eden_emulator/dev.eden.eden_emulator.ui.main.MainActivity"
         )
     )
 
     // package → Pair(display name, supported extensions)
     private val EMULATOR_EXTENSION_MAP: Map<String, Pair<String, List<String>>> = mapOf(
-        "com.retroarch"            to Pair("RetroArch",        listOf("gb","gbc","gba","nes","sfc","smc","n64","z64","v64","nds","iso","bin","cue","md","smd","gen","sms","gg","32x","pce","ccd","img","mdf","chd","pbp","cso")),
-        "com.retroarch.aarch64"    to Pair("RetroArch 64",     listOf("gb","gbc","gba","nes","sfc","smc","n64","z64","v64","nds","iso","bin","cue","md","smd","gen","sms","gg","32x","pce","ccd","img","mdf","chd","pbp","cso")),
-        "com.retroarch.ra32"       to Pair("RetroArch 32",     listOf("gb","gbc","gba","nes","sfc","smc","n64","z64","v64","nds","iso","bin","cue","md","smd","gen","sms","gg","32x","pce","ccd","img","mdf","chd","pbp","cso")),
-        "org.ppsspp.ppsspp"        to Pair("PPSSPP",           listOf("iso","cso","pbp","elf")),
-        "org.ppsspp.ppssppgold"    to Pair("PPSSPP Gold",      listOf("iso","cso","pbp","elf")),
-        "com.emu.ppss22"           to Pair("PPSS22",           listOf("iso","bin","chd","cso")),
-        "me.magnum.melonds"        to Pair("melonDS",          listOf("nds","bin")),
-        "com.drastic.ds"           to Pair("DraStic DS",       listOf("nds","bin","zip")),
-        "com.hydra.noods"          to Pair("Noods",            listOf("nds","gba")),
-        "org.dolphinemu.dolphinemu" to Pair("Dolphin",         listOf("gcm","iso","wbfs","ciso","gcz","wad","dol","elf","rvz")),
-        "com.github.stenzek.duckstation" to Pair("DuckStation",listOf("bin","cue","img","iso","chd","pbp","exe","psexe","m3u")),
-        "xyz.aethersx2.android"    to Pair("AetherSX2",       listOf("iso","bin","elf","chd","cso","gz")),
-        "net.pcsx2.pcsx2"          to Pair("PCSX2",            listOf("iso","bin","elf","chd","cso","gz")),
-        "org.citra.citra_emu"      to Pair("Citra",            listOf("3ds","cia","cxi","app","cci")),
-        "org.citra_emu.citra"      to Pair("Citra (alt)",      listOf("3ds","cia","cxi","app","cci")),
-        "io.github.lime3ds.android" to Pair("AzaharPlus",     listOf("3ds","cia","cxi","app","cci")),
-        "org.yuzu.yuzu_emu"        to Pair("Yuzu",             listOf("nsp","xci","nca","nso")),
-        "org.mupen64plusae.v3.fzurita" to Pair("M64Plus FZ",  listOf("n64","v64","z64","zip")),
-        "org.flycast.Flycast"      to Pair("Flycast",          listOf("gdi","cdi","chd","cue","bin","dat","zip","7z")),
-        "com.fastemulator.gba"     to Pair("My Boy!",          listOf("gba","zip")),
-        "com.fastemulator.gbafree" to Pair("My Boy! Free",     listOf("gba","zip")),
-        "com.fastemulator.gbc"     to Pair("My OldBoy!",       listOf("gb","gbc","zip")),
-        "com.fastemulator.gbcfree" to Pair("My OldBoy! Free",  listOf("gb","gbc","zip")),
-        "it.dbtecno.pizzaboygba"   to Pair("Pizza Boy GBA",    listOf("gba","gb","gbc","zip","7z")),
-        "it.dbtecno.pizzaboygbapro" to Pair("Pizza Boy GBA Pro",listOf("gba","gb","gbc","zip","7z")),
-        "com.sky.SkyEmu"           to Pair("SkyEmu",           listOf("gba","gb","gbc","nds")),
-        "com.explusalpha.GbaEmu"   to Pair("GBA.emu",          listOf("gba","zip","7z")),
-        "com.explusalpha.GbcEmu"   to Pair("GBC.emu",          listOf("gb","gbc","zip","7z")),
-        "com.explusalpha.LnkEmu"   to Pair("Link.emu",         listOf("gb","gbc","gba","zip")),
-        "net.rpcs3.rpcs3"          to Pair("RPCS3",            listOf("pkg","iso","bin","ps3")),
+        "com.retroarch" to Pair(
+            "RetroArch",
+            listOf(
+                "gb",
+                "gbc",
+                "gba",
+                "nes",
+                "sfc",
+                "smc",
+                "n64",
+                "z64",
+                "v64",
+                "nds",
+                "iso",
+                "bin",
+                "cue",
+                "md",
+                "smd",
+                "gen",
+                "sms",
+                "gg",
+                "32x",
+                "pce",
+                "ccd",
+                "img",
+                "mdf",
+                "chd",
+                "pbp",
+                "cso"
+            )
+        ),
+        "com.retroarch.aarch64" to Pair(
+            "RetroArch 64",
+            listOf(
+                "gb",
+                "gbc",
+                "gba",
+                "nes",
+                "sfc",
+                "smc",
+                "n64",
+                "z64",
+                "v64",
+                "nds",
+                "iso",
+                "bin",
+                "cue",
+                "md",
+                "smd",
+                "gen",
+                "sms",
+                "gg",
+                "32x",
+                "pce",
+                "ccd",
+                "img",
+                "mdf",
+                "chd",
+                "pbp",
+                "cso"
+            )
+        ),
+        "com.retroarch.ra32" to Pair(
+            "RetroArch 32",
+            listOf(
+                "gb",
+                "gbc",
+                "gba",
+                "nes",
+                "sfc",
+                "smc",
+                "n64",
+                "z64",
+                "v64",
+                "nds",
+                "iso",
+                "bin",
+                "cue",
+                "md",
+                "smd",
+                "gen",
+                "sms",
+                "gg",
+                "32x",
+                "pce",
+                "ccd",
+                "img",
+                "mdf",
+                "chd",
+                "pbp",
+                "cso"
+            )
+        ),
+        "org.ppsspp.ppsspp" to Pair("PPSSPP", listOf("iso", "cso", "pbp", "elf")),
+        "org.ppsspp.ppssppgold" to Pair("PPSSPP Gold", listOf("iso", "cso", "pbp", "elf")),
+        "com.emu.ppss22" to Pair("PPSS22", listOf("iso", "bin", "chd", "cso")),
+        "me.magnum.melonds" to Pair("melonDS", listOf("nds", "bin")),
+        "com.drastic.ds" to Pair("DraStic DS", listOf("nds", "bin", "zip")),
+        "com.hydra.noods" to Pair("Noods", listOf("nds", "gba")),
+        "org.dolphinemu.dolphinemu" to Pair(
+            "Dolphin",
+            listOf("gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz")
+        ),
+        "com.github.stenzek.duckstation" to Pair(
+            "DuckStation",
+            listOf("bin", "cue", "img", "iso", "chd", "pbp", "exe", "psexe", "m3u")
+        ),
+        "xyz.aethersx2.android" to Pair(
+            "AetherSX2",
+            listOf("iso", "bin", "elf", "chd", "cso", "gz")
+        ),
+        "net.pcsx2.pcsx2" to Pair("PCSX2", listOf("iso", "bin", "elf", "chd", "cso", "gz")),
+        "org.citra.citra_emu" to Pair("Citra", listOf("3ds", "cia", "cxi", "app", "cci")),
+        "org.citra_emu.citra" to Pair("Citra (alt)", listOf("3ds", "cia", "cxi", "app", "cci")),
+        "io.github.lime3ds.android" to Pair(
+            "AzaharPlus",
+            listOf("3ds", "cia", "cxi", "app", "cci")
+        ),
+        "org.yuzu.yuzu_emu" to Pair("Yuzu", listOf("nsp", "xci", "nca", "nso")),
+        "org.mupen64plusae.v3.fzurita" to Pair("M64Plus FZ", listOf("n64", "v64", "z64", "zip")),
+        "org.mupen64plusae.v3.fzurita.pro" to Pair(
+            "M64Plus FZ Pro",
+            listOf("n64", "v64", "z64", "zip")
+        ),
+        "info.cemu.cemu" to Pair("CEMU", listOf("wud", "wux", "iso", "rpx", "wua", "wad")),
+        "org.flycast.Flycast" to Pair(
+            "Flycast",
+            listOf("gdi", "cdi", "chd", "cue", "bin", "dat", "zip", "7z")
+        ),
+        "com.fastemulator.gba" to Pair("My Boy!", listOf("gba", "zip")),
+        "com.fastemulator.gbafree" to Pair("My Boy! Free", listOf("gba", "zip")),
+        "com.fastemulator.gbc" to Pair("My OldBoy!", listOf("gb", "gbc", "zip")),
+        "com.fastemulator.gbcfree" to Pair("My OldBoy! Free", listOf("gb", "gbc", "zip")),
+        "it.dbtecno.pizzaboygba" to Pair("Pizza Boy GBA", listOf("gba", "gb", "gbc", "zip", "7z")),
+        "it.dbtecno.pizzaboygbapro" to Pair(
+            "Pizza Boy GBA Pro",
+            listOf("gba", "gb", "gbc", "zip", "7z")
+        ),
+        "com.sky.SkyEmu" to Pair("SkyEmu", listOf("gba", "gb", "gbc", "nds")),
+        "com.explusalpha.GbaEmu" to Pair("GBA.emu", listOf("gba", "zip", "7z")),
+        "com.explusalpha.GbcEmu" to Pair("GBC.emu", listOf("gb", "gbc", "zip", "7z")),
+        "com.explusalpha.LnkEmu" to Pair("Link.emu", listOf("gb", "gbc", "gba", "zip")),
+        "net.rpcs3.rpcs3" to Pair("RPCS3", listOf("pkg", "iso", "bin", "ps3")),
+        "dev.eden.eden_emulator" to Pair("Eden", listOf("nsp", "xci", "nca", "nso")),
     )
 
     fun parseSystemCommands(esSystemsFile: File, systemName: String): List<Pair<String, String>> {
@@ -142,20 +270,25 @@ object EsdeCommandLauncher {
                                 }
                             }
                         }
+
                         XmlPullParser.TEXT -> textBuffer.append(parser.text)
                         XmlPullParser.END_TAG -> {
                             when (parser.name) {
                                 "name" -> {
                                     if (!inTargetSystem && depth == systemDepth + 1) {
-                                        if (textBuffer.toString().trim().equals(systemName, ignoreCase = true)) {
+                                        if (textBuffer.toString().trim()
+                                                .equals(systemName, ignoreCase = true)
+                                        ) {
                                             inTargetSystem = true
                                         }
                                     }
                                 }
+
                                 "command" -> if (inTargetSystem) {
                                     val cmd = textBuffer.toString().trim()
                                     if (cmd.isNotEmpty()) commands.add(commandLabel to cmd)
                                 }
+
                                 "system" -> if (inTargetSystem) return commands
                             }
                             depth--
@@ -184,11 +317,16 @@ object EsdeCommandLauncher {
         val seenPackages = mutableSetOf<String>()
         for ((label, command) in commands) {
             val emulatorName = emulatorRegex.find(command)?.groupValues?.get(1) ?: continue
-            val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName] ?: emptyList())
+            val allEntries =
+                (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName]
+                    ?: emptyList())
             val installedEntry = allEntries.firstOrNull { entry ->
                 val pkg = entry.substringBefore("/")
-                try { context.packageManager.getPackageInfo(pkg, 0); true }
-                catch (_: PackageManager.NameNotFoundException) { false }
+                try {
+                    context.packageManager.getPackageInfo(pkg, 0); true
+                } catch (_: PackageManager.NameNotFoundException) {
+                    false
+                }
             } ?: continue
             val packageName = installedEntry.substringBefore("/")
             if (seenPackages.add(packageName)) {
@@ -200,16 +338,18 @@ object EsdeCommandLauncher {
 
     fun getCompatibleEmulators(context: Context, romExtension: String): List<EmulatorOption> {
         val ext = romExtension.lowercase()
-        return EMULATOR_EXTENSION_MAP
-            .filter { (_, pair) -> pair.second.contains(ext) }
-            .mapNotNull { (pkg, pair) ->
-                try {
-                    context.packageManager.getPackageInfo(pkg, 0)
-                    EmulatorOption(pkg, pair.first)
-                } catch (_: PackageManager.NameNotFoundException) {
-                    null
-                }
+        val candidates = EMULATOR_EXTENSION_MAP.filter { (_, pair) -> pair.second.contains(ext) }
+        Log.d(TAG, "getCompatibleEmulators ext=$ext candidates=${candidates.keys}")
+        return candidates.mapNotNull { (pkg, pair) ->
+            try {
+                context.packageManager.getPackageInfo(pkg, 0)
+                Log.d(TAG, "  FOUND installed: $pkg")
+                EmulatorOption(pkg, pair.first)
+            } catch (_: PackageManager.NameNotFoundException) {
+                Log.d(TAG, "  NOT installed: $pkg")
+                null
             }
+        }
     }
 
     fun parseCustomRules(findRulesFile: File): Map<String, List<String>> {
@@ -231,6 +371,7 @@ object EsdeCommandLauncher {
                                 if (emulatorName != null) rules[emulatorName] = mutableListOf()
                             }
                         }
+
                         XmlPullParser.TEXT -> textBuffer.append(parser.text)
                         XmlPullParser.END_TAG -> {
                             if (parser.name == "entry" && emulatorName != null) {
@@ -255,11 +396,17 @@ object EsdeCommandLauncher {
         customRules: Map<String, List<String>> = emptyMap()
     ): String? {
         launchCommand ?: return null
-        val emulatorName = Regex("""%EMULATOR_([^%]+)%""").find(launchCommand)?.groupValues?.get(1) ?: return null
-        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName] ?: emptyList())
+        val emulatorName =
+            Regex("""%EMULATOR_([^%]+)%""").find(launchCommand)?.groupValues?.get(1) ?: return null
+        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName]
+            ?: emptyList())
         return allEntries.firstOrNull { entry ->
             val pkg = entry.substringBefore("/")
-            try { context.packageManager.getPackageInfo(pkg, 0); true } catch (_: PackageManager.NameNotFoundException) { false }
+            try {
+                context.packageManager.getPackageInfo(pkg, 0); true
+            } catch (_: PackageManager.NameNotFoundException) {
+                false
+            }
         }?.substringBefore("/")
     }
 
@@ -273,7 +420,8 @@ object EsdeCommandLauncher {
         val emulatorMatch = emulatorRegex.find(launchCommand) ?: return null
         val emulatorName = emulatorMatch.groupValues[1]
 
-        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName] ?: emptyList())
+        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName]
+            ?: emptyList())
         if (allEntries.isEmpty()) {
             Log.w(TAG, "No find rules for emulator: $emulatorName")
             return null
@@ -281,12 +429,17 @@ object EsdeCommandLauncher {
 
         val pkgActivity = allEntries.firstOrNull { entry ->
             val pkg = entry.substringBefore("/")
-            try { context.packageManager.getPackageInfo(pkg, 0); true } catch (_: PackageManager.NameNotFoundException) { false }
+            try {
+                context.packageManager.getPackageInfo(pkg, 0); true
+            } catch (_: PackageManager.NameNotFoundException) {
+                false
+            }
         } ?: return null
 
         val packageName = pkgActivity.substringBefore("/")
         val activityRaw = pkgActivity.substringAfter("/")
-        val activityName = if (activityRaw.startsWith(".")) "$packageName$activityRaw" else activityRaw
+        val activityName =
+            if (activityRaw.startsWith(".")) "$packageName$activityRaw" else activityRaw
 
         val intent = Intent()
         intent.component = ComponentName(packageName, activityName)
@@ -309,7 +462,8 @@ object EsdeCommandLauncher {
 
         val dataMatch = Regex("""%DATA%=([^\s]+)""").find(remaining)
         if (dataMatch != null) {
-            val resolvedUri = resolveDataUri(dataMatch.groupValues[1], romAbsPath, packageName, context)
+            val resolvedUri =
+                resolveDataUri(dataMatch.groupValues[1], romAbsPath, packageName, context)
             if (resolvedUri != null) {
                 intent.data = resolvedUri
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -330,19 +484,35 @@ object EsdeCommandLauncher {
         context: Context
     ): Intent {
         val romFile = File(romAbsPath)
-        val romDirectory = romFile.parent ?: ""
-        val romName = romFile.nameWithoutExtension
-
         val contentUri = try {
             FileProvider.getUriForFile(context, "${context.packageName}.provider", romFile)
         } catch (_: Exception) {
             android.net.Uri.fromFile(romFile)
         }
+        return buildRomIntentFromPackage(packageName, romAbsPath, contentUri, context)
+    }
+
+    /**
+     * Builds a ROM-launch intent with a caller-supplied [contentUri].
+     * Use this overload when the URI has already been resolved (e.g. SAF for SD card ROMs).
+     */
+    fun buildRomIntentFromPackage(
+        packageName: String,
+        romAbsPath: String,
+        contentUri: android.net.Uri,
+        context: Context
+    ): Intent {
+        val romFile = File(romAbsPath)
+        val romDirectory = romFile.parent ?: ""
+        val romName = romFile.nameWithoutExtension
 
         fun grantUri(pkg: String) {
+            // SAF URIs from ExternalStorageDocumentsProvider don't need manual grants.
+            if (contentUri.authority == "com.android.externalstorage.documents") return
             try {
                 context.grantUriPermission(pkg, contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
 
         // Resolve known activity from BUILTIN_RULES for the generic fallback
@@ -383,10 +553,14 @@ object EsdeCommandLauncher {
             }
 
             packageName == "org.ppsspp.ppsspp" || packageName == "org.ppsspp.ppssppgold" -> {
-                // PPSSPP: ACTION_VIEW with content URI as data launches directly into the ROM
+                // PPSSPP / PPSSPP Gold: activity class always lives under org.ppsspp.ppsspp
+                // regardless of which variant is installed (Gold shares the same codebase).
+                // Using $packageName.PpssppActivity was wrong for Gold — it produced the
+                // nonexistent class org.ppsspp.ppssppgold.PpssppActivity, causing
+                // ActivityNotFoundException → emulator-only fallback.
                 grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
-                    setClassName(packageName, "$packageName.PpssppActivity")
+                    setClassName(packageName, "org.ppsspp.ppsspp.PpssppActivity")
                     setDataAndType(contentUri, "*/*")
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
@@ -411,10 +585,57 @@ object EsdeCommandLauncher {
                     setDataAndType(contentUri, "*/*")
                     addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
+                }
+            }
+
+            packageName == "org.mupen64plusae.v3.fzurita" ||
+                    packageName == "paulscode.android.mupen64plusae" -> {
+                grantUri(packageName)
+                Intent(Intent.ACTION_VIEW).apply {
+                    setClassName(packageName, "$packageName.SplashActivity")
+                    data = contentUri
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }
+
+            packageName == "info.cemu.cemu" -> {
+                grantUri(packageName)
+                Intent(Intent.ACTION_VIEW).apply {
+                    setClassName(packageName, "info.cemu.cemu.MainActivity")
+                    data = contentUri
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+            }
+
+            packageName == "xyz.aethersx2.android" -> {
+                // AetherSX2 / NetherSX2: native layer reads "game_path" extra first, then
+                // falls back to intent.data.path — which returns a garbage path for FileProvider
+                // URIs. Passing romAbsPath in the known extra keys bypasses that problem.
+                grantUri(packageName)
+                Intent(Intent.ACTION_VIEW).apply {
+                    setClassName(packageName, "xyz.aethersx2.android.EmulationActivity")
+                    data = contentUri
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    putExtra("game_path", romAbsPath)
+                    putExtra("boot_path", romAbsPath)
+                }
+            }
+
+            packageName == "dev.eden.eden_emulator" -> {
+                // Eden (Switch emulator): needs a file:// URI — it cannot read FileProvider
+                // content URIs from other apps even with FLAG_GRANT_READ_URI_PERMISSION.
+                Intent(Intent.ACTION_VIEW).apply {
+                    setClassName(packageName, "dev.eden.eden_emulator.ui.main.MainActivity")
+                    data = android.net.Uri.fromFile(romFile)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             }
 
@@ -477,6 +698,8 @@ object EsdeCommandLauncher {
         "nes" -> "application/x-nes-rom"
         "sfc", "smc" -> "application/x-snes-rom"
         "n64", "z64", "v64" -> "application/x-n64-rom"
+        "wud", "wux", "wua" -> "application/x-wiiu-rom"
+        "rpx" -> "application/x-wiiu-rpx"
         "iso", "cso", "chd" -> "application/x-iso9660-image"
         "cue", "bin" -> "application/x-cue"
         else -> "application/octet-stream"
@@ -506,6 +729,7 @@ object EsdeCommandLauncher {
                     android.net.Uri.fromFile(File(romAbsPath))
                 }
             }
+
             token.contains("%ROMSAF%") -> {
                 // %ROMSAF% hints at a SAF tree URI, but we can't reliably manufacture one
                 // without knowing what tree root the target emulator was granted. Fall back to
@@ -520,9 +744,11 @@ object EsdeCommandLauncher {
                     android.net.Uri.fromFile(File(romAbsPath))
                 }
             }
+
             token.contains("%ROM%") -> {
                 android.net.Uri.fromFile(File(resolveToken(token, romAbsPath, packageName)))
             }
+
             else -> {
                 resolveToken(token, romAbsPath, packageName).toUri()
             }

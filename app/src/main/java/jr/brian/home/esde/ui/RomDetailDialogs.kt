@@ -57,11 +57,14 @@ internal fun EmulatorPickerDialog(
         val fromSystem = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
             context, game.systemName, esSystemsFile, customRules
         )
-        if (fromSystem.isNotEmpty()) fromSystem
-        else EsdeCommandLauncher.getCompatibleEmulators(
+        val fromExtension = EsdeCommandLauncher.getCompatibleEmulators(
             context,
             File(game.romAbsolutePath ?: game.path).extension
         )
+        // Merge both sources — es_systems.xml commands first, then any installed emulator
+        // that supports the extension but isn't listed in es_systems.xml commands.
+        val seenPackages = fromSystem.map { it.packageName }.toHashSet()
+        fromSystem + fromExtension.filter { it.packageName !in seenPackages }
     }
 
     AlertDialog(
@@ -88,6 +91,7 @@ internal fun EmulatorPickerDialog(
                         TextButton(
                             onClick = {
                                 onEmulatorSelected(emulator.packageName, emulator.command)
+                                onDismiss()
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
