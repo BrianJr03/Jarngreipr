@@ -28,7 +28,9 @@ object RomListParser {
             return emptyList()
         }
 
-        val systemCommands = parseSystemCommands(File(esdeRootPath, "custom_systems/es_systems.xml"))
+        val esSystemsFile = File(esdeRootPath, "custom_systems/es_systems.xml")
+        val systemCommands = parseSystemCommands(esSystemsFile)
+        val systemRomDirs = parseSystemRomDirs(esSystemsFile)
 
         return gamelistsDir.listFiles()
             ?.filter { it.isDirectory }
@@ -41,6 +43,7 @@ object RomListParser {
                         systemName = systemName,
                         mediaPath = mediaPath,
                         romsPaths = romsPaths,
+                        systemRomDir = systemRomDirs[systemName],
                         emulatorPackage = systemEmulatorMap[systemName],
                         launchCommand = systemCommands[systemName]
                     )
@@ -48,6 +51,51 @@ object RomListParser {
                     emptyList()
                 }
             } ?: emptyList()
+    }
+
+    /** Extracts the &lt;path&gt; element for each system from es_systems.xml. */
+    private fun parseSystemRomDirs(esSystemsFile: File): Map<String, String> {
+        if (!esSystemsFile.exists()) return emptyMap()
+        val dirs = mutableMapOf<String, String>()
+        try {
+            val parser = Xml.newPullParser()
+            esSystemsFile.inputStream().use { input ->
+                parser.setInput(input, "UTF-8")
+                var currentName: String? = null
+                var currentPath: String? = null
+                var inSystem = false
+                val buf = StringBuilder()
+                var eventType = parser.eventType
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    when (eventType) {
+                        XmlPullParser.START_TAG -> {
+                            buf.clear()
+                            if (parser.name == "system") { inSystem = true; currentName = null; currentPath = null }
+                        }
+                        XmlPullParser.TEXT -> if (inSystem) buf.append(parser.text)
+                        XmlPullParser.END_TAG -> {
+                            if (inSystem) {
+                                val text = buf.toString().trim()
+                                when (parser.name) {
+                                    "name" -> if (currentName == null) currentName = text
+                                    "path" -> if (currentPath == null && text.isNotEmpty()) currentPath = text
+                                    "system" -> {
+                                        val n = currentName; val p = currentPath
+                                        if (n != null && p != null) dirs[n] = p
+                                        inSystem = false
+                                    }
+                                }
+                            }
+                            buf.clear()
+                        }
+                    }
+                    eventType = parser.next()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing es_systems.xml for ROM dirs", e)
+        }
+        return dirs
     }
 
     private fun parseSystemCommands(esSystemsFile: File): Map<String, String> {
@@ -104,6 +152,7 @@ object RomListParser {
         systemName: String,
         mediaPath: String,
         romsPaths: List<String>,
+        systemRomDir: String?,
         emulatorPackage: String?,
         launchCommand: String?
     ): List<GameInfo> {
@@ -179,7 +228,7 @@ object RomListParser {
                                             val artworkPath = resolveArtworkPath(systemName, path, mediaPath)
                                             val physicalMediaPath = resolvePhysicalMediaPath(systemName, path, mediaPath)
                                             val marqueePath = resolveMarqueePath(systemName, path, mediaPath)
-                                            val romAbsPath = resolveRomPath(systemName, path, romsPaths)
+                                            val romAbsPath = resolveRomPath(systemName, path, romsPaths, systemRomDir)
                                             games.add(
                                                 GameInfo(
                                                     path = path,
@@ -221,7 +270,17 @@ object RomListParser {
         return games
     }
 
-    private fun resolveRomPath(systemName: String, gameFilename: String, romsPaths: List<String>): String? {
+    private fun resolveRomPath(
+        systemName: String,
+        gameFilename: String,
+        romsPaths: List<String>,
+        systemRomDir: String? = null
+    ): String? {
+        // Prefer the exact path from es_systems.xml — handles SD card and non-standard roots.
+        // Skip file.exists() here since SD card files may not be readable by this app.
+        if (systemRomDir != null) {
+            return File(systemRomDir.trimEnd('/'), gameFilename).absolutePath
+        }
         for (romsRoot in romsPaths) {
             val file = File(romsRoot, "$systemName/$gameFilename")
             if (file.exists()) return file.absolutePath

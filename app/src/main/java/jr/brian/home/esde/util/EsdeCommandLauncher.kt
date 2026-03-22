@@ -11,7 +11,7 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import androidx.core.net.toUri
 
-data class EmulatorOption(val packageName: String, val displayName: String)
+data class EmulatorOption(val packageName: String, val displayName: String, val command: String? = null)
 
 object EsdeCommandLauncher {
     private const val TAG = "EsdeCommandLauncher"
@@ -23,7 +23,7 @@ object EsdeCommandLauncher {
             "com.retroarch/com.retroarch.browser.retroactivity.RetroActivityFuture"
         ),
         "DOLPHIN" to listOf(
-            "org.dolphinemu.dolphinemu/org.dolphinemu.dolphinemu.activities.EmulationActivity"
+            "org.dolphinemu.dolphinemu/org.dolphinemu.dolphinemu.ui.main.MainActivity"
         ),
         "PPSSPP" to listOf(
             "org.ppsspp.ppsspp/org.ppsspp.ppsspp.PpssppActivity",
@@ -37,7 +37,7 @@ object EsdeCommandLauncher {
             "org.citra_emu.citra/org.citra.citra_emu.ui.main.MainActivity"
         ),
         "AZAHARPLUS" to listOf(
-            "io.github.lime3ds.android/io.github.lime3ds.android.MainActivity"
+            "io.github.lime3ds.android/org.citra.citra_emu.activities.EmulationActivity"
         ),
         "RPCS3" to listOf(
             "net.rpcs3.rpcs3/net.rpcs3.rpcs3.MainActivity"
@@ -117,6 +117,87 @@ object EsdeCommandLauncher {
         "net.rpcs3.rpcs3"          to Pair("RPCS3",            listOf("pkg","iso","bin","ps3")),
     )
 
+    fun parseSystemCommands(esSystemsFile: File, systemName: String): List<Pair<String, String>> {
+        if (!esSystemsFile.exists()) return emptyList()
+        val commands = mutableListOf<Pair<String, String>>()
+        try {
+            val parser = Xml.newPullParser()
+            esSystemsFile.inputStream().use { input ->
+                parser.setInput(input, "UTF-8")
+                var inTargetSystem = false
+                var depth = 0
+                var systemDepth = -1
+                var commandLabel = ""
+                val textBuffer = StringBuilder()
+                var eventType = parser.eventType
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    when (eventType) {
+                        XmlPullParser.START_TAG -> {
+                            depth++
+                            textBuffer.clear()
+                            when (parser.name) {
+                                "system" -> systemDepth = depth
+                                "command" -> if (inTargetSystem) {
+                                    commandLabel = parser.getAttributeValue(null, "label") ?: ""
+                                }
+                            }
+                        }
+                        XmlPullParser.TEXT -> textBuffer.append(parser.text)
+                        XmlPullParser.END_TAG -> {
+                            when (parser.name) {
+                                "name" -> {
+                                    if (!inTargetSystem && depth == systemDepth + 1) {
+                                        if (textBuffer.toString().trim().equals(systemName, ignoreCase = true)) {
+                                            inTargetSystem = true
+                                        }
+                                    }
+                                }
+                                "command" -> if (inTargetSystem) {
+                                    val cmd = textBuffer.toString().trim()
+                                    if (cmd.isNotEmpty()) commands.add(commandLabel to cmd)
+                                }
+                                "system" -> if (inTargetSystem) return commands
+                            }
+                            depth--
+                            textBuffer.clear()
+                        }
+                    }
+                    eventType = parser.next()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing es_systems.xml for system $systemName", e)
+        }
+        return commands
+    }
+
+    fun getCompatibleEmulatorsFromSystem(
+        context: Context,
+        systemName: String,
+        esSystemsFile: File,
+        customRules: Map<String, List<String>> = emptyMap()
+    ): List<EmulatorOption> {
+        val commands = parseSystemCommands(esSystemsFile, systemName)
+        if (commands.isEmpty()) return emptyList()
+        val emulatorRegex = Regex("""%EMULATOR_([^%]+)%""")
+        val result = mutableListOf<EmulatorOption>()
+        val seenPackages = mutableSetOf<String>()
+        for ((label, command) in commands) {
+            val emulatorName = emulatorRegex.find(command)?.groupValues?.get(1) ?: continue
+            val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName] ?: emptyList())
+            val installedEntry = allEntries.firstOrNull { entry ->
+                val pkg = entry.substringBefore("/")
+                try { context.packageManager.getPackageInfo(pkg, 0); true }
+                catch (_: PackageManager.NameNotFoundException) { false }
+            } ?: continue
+            val packageName = installedEntry.substringBefore("/")
+            if (seenPackages.add(packageName)) {
+                result.add(EmulatorOption(packageName, label, command))
+            }
+        }
+        return result
+    }
+
     fun getCompatibleEmulators(context: Context, romExtension: String): List<EmulatorOption> {
         val ext = romExtension.lowercase()
         return EMULATOR_EXTENSION_MAP
@@ -147,14 +228,14 @@ object EsdeCommandLauncher {
                             textBuffer.clear()
                             if (parser.name == "emulator") {
                                 emulatorName = parser.getAttributeValue(null, "name")
-                                if (emulatorName != null) rules[emulatorName!!] = mutableListOf()
+                                if (emulatorName != null) rules[emulatorName] = mutableListOf()
                             }
                         }
                         XmlPullParser.TEXT -> textBuffer.append(parser.text)
                         XmlPullParser.END_TAG -> {
                             if (parser.name == "entry" && emulatorName != null) {
                                 val entry = textBuffer.toString().trim()
-                                if (entry.isNotEmpty()) rules[emulatorName!!]?.add(entry)
+                                if (entry.isNotEmpty()) rules[emulatorName]?.add(entry)
                             }
                             textBuffer.clear()
                         }
@@ -166,6 +247,20 @@ object EsdeCommandLauncher {
             Log.e(TAG, "Error parsing es_find_rules.xml", e)
         }
         return rules
+    }
+
+    fun resolvePackage(
+        launchCommand: String?,
+        context: Context,
+        customRules: Map<String, List<String>> = emptyMap()
+    ): String? {
+        launchCommand ?: return null
+        val emulatorName = Regex("""%EMULATOR_([^%]+)%""").find(launchCommand)?.groupValues?.get(1) ?: return null
+        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName] ?: emptyList())
+        return allEntries.firstOrNull { entry ->
+            val pkg = entry.substringBefore("/")
+            try { context.packageManager.getPackageInfo(pkg, 0); true } catch (_: PackageManager.NameNotFoundException) { false }
+        }?.substringBefore("/")
     }
 
     fun buildIntent(
@@ -244,6 +339,12 @@ object EsdeCommandLauncher {
             android.net.Uri.fromFile(romFile)
         }
 
+        fun grantUri(pkg: String) {
+            try {
+                context.grantUriPermission(pkg, contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: Exception) {}
+        }
+
         // Resolve known activity from BUILTIN_RULES for the generic fallback
         val knownEntry = BUILTIN_RULES.values.flatten()
             .firstOrNull { it.substringBefore("/") == packageName }
@@ -254,7 +355,8 @@ object EsdeCommandLauncher {
 
         return when {
             packageName == "me.magnum.melonds" -> {
-                // melonDS expects ACTION_VIEW with a content URI set as intent data
+                // melonDS: ACTION_VIEW with content URI as data
+                grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
                     setClassName(packageName, "me.magnum.melonds.ui.emulator.EmulatorActivity")
                     data = contentUri
@@ -274,14 +376,19 @@ object EsdeCommandLauncher {
                         "CONFIGFILE",
                         "/storage/emulated/0/Android/data/$packageName/files/retroarch.cfg"
                     )
+                    putExtra("SDCARD", "/storage/emulated/0")
+                    putExtra("DATADIR", "/data/data/$packageName")
+                    putExtra("EXTERNAL", "/storage/emulated/0/Android/data/$packageName/files")
                 }
             }
 
             packageName == "org.ppsspp.ppsspp" || packageName == "org.ppsspp.ppssppgold" -> {
+                // PPSSPP: ACTION_VIEW with content URI as data launches directly into the ROM
+                grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
                     setClassName(packageName, "$packageName.PpssppActivity")
+                    setDataAndType(contentUri, "*/*")
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra("$packageName.Shortcuts", romAbsPath)
                 }
             }
 
@@ -294,33 +401,58 @@ object EsdeCommandLauncher {
             }
 
             packageName == "io.github.lime3ds.android" -> {
+                // AzaharPlus uses Citra's internal package layout despite the outer package name.
+                // EmulationActivity accepts a ROM URI — MainActivity is only the game browser.
+                // FileProvider + FLAG_GRANT_READ_URI_PERMISSION works on vanilla/sideload builds;
+                // the Play Store build has stricter scoped storage and may still fail (Azahar limitation).
+                grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
-                    setClassName(packageName, "$packageName.MainActivity")
-                    data = android.net.Uri.fromFile(romFile)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    setClassName(packageName, "org.citra.citra_emu.activities.EmulationActivity")
+                    setDataAndType(contentUri, "*/*")
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
                 }
             }
 
             packageName == "org.dolphinemu.dolphinemu" -> {
+                // Dolphin: pass content URI string as AutoStartFile, not an absolute path
+                grantUri(packageName)
                 Intent(Intent.ACTION_MAIN).apply {
                     setClassName(packageName, "$packageName.ui.main.MainActivity")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra("AutoStartFile", romAbsPath)
+                    putExtra("AutoStartFile", contentUri.toString())
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
                 }
             }
 
             packageName == "com.github.stenzek.duckstation" -> {
-                Intent(Intent.ACTION_VIEW).apply {
-                    setPackage(packageName)
-                    setDataAndType(contentUri, "application/octet-stream")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra("-batch", true)
+                // DuckStation: ACTION_MAIN with bootPath extra (content URI string)
+                grantUri(packageName)
+                Intent(Intent.ACTION_MAIN).apply {
+                    component = ComponentName(
+                        packageName,
+                        "com.github.stenzek.duckstation.EmulationActivity"
+                    )
+                    putExtra("bootPath", contentUri.toString())
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
                 }
             }
 
             else -> {
                 // Generic: pass every common path extra so whichever key the emulator reads
                 // will be populated. Use setPackage so Android routes via intent filters.
+                grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(contentUri, romMimeType(romFile.extension))
                     if (knownActivity != null) component = ComponentName(packageName, knownActivity)
@@ -363,7 +495,21 @@ object EsdeCommandLauncher {
         context: Context
     ): android.net.Uri? {
         return when {
-            token.contains("%ROMPROVIDER%") || token.contains("%ROMSAF%") -> {
+            token.contains("%ROMPROVIDER%") -> {
+                try {
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        File(romAbsPath)
+                    )
+                } catch (_: Exception) {
+                    android.net.Uri.fromFile(File(romAbsPath))
+                }
+            }
+            token.contains("%ROMSAF%") -> {
+                // %ROMSAF% hints at a SAF tree URI, but we can't reliably manufacture one
+                // without knowing what tree root the target emulator was granted. Fall back to
+                // FileProvider + FLAG_GRANT_READ_URI_PERMISSION (caller must add that flag).
                 try {
                     FileProvider.getUriForFile(
                         context,

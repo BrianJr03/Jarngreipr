@@ -1,0 +1,265 @@
+package jr.brian.home.esde.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import jr.brian.home.R
+import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.util.EsdeCommandLauncher
+import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
+import java.io.File
+
+@Composable
+internal fun EmulatorPickerDialog(
+    game: GameInfo,
+    onDismiss: () -> Unit,
+    onEmulatorSelected: (String, String?) -> Unit
+) {
+    val context = LocalContext.current
+    val emulators = remember(game.systemName) {
+        val findRulesFile =
+            File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
+                if (f.exists()) f
+                else File("/storage/emulated/0/ES-DE/custom_systems/es_find_rules.xml")
+            }
+        val customRules = EsdeCommandLauncher.parseCustomRules(findRulesFile)
+        val esSystemsFile =
+            File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_systems.xml").let { f ->
+                if (f.exists()) f
+                else File("/storage/emulated/0/ES-DE/custom_systems/es_systems.xml")
+            }
+        val fromSystem = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, game.systemName, esSystemsFile, customRules
+        )
+        if (fromSystem.isNotEmpty()) fromSystem
+        else EsdeCommandLauncher.getCompatibleEmulators(
+            context,
+            File(game.romAbsolutePath ?: game.path).extension
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OledCardColor,
+        title = {
+            Text(
+                text = stringResource(R.string.rom_emulator_picker_title),
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            if (emulators.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.rom_emulator_none_found),
+                    color = Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                Column {
+                    emulators.forEach { emulator ->
+                        TextButton(
+                            onClick = {
+                                onEmulatorSelected(emulator.packageName, emulator.command)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = emulator.displayName,
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.rom_detail_close))
+            }
+        }
+    )
+}
+
+@Composable
+internal fun RomDetailDialog(
+    game: GameInfo,
+    isHidden: Boolean = false,
+    onDismiss: () -> Unit,
+    onLaunch: () -> Unit,
+    onPickEmulator: () -> Unit = {},
+    onHide: () -> Unit = {},
+    onUnhide: () -> Unit = {}
+) {
+    val imageLoader = LocalESDEImageLoader.current
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OledCardColor,
+        title = {
+            Text(
+                text = game.name,
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                (game.physicalMediaPath ?: game.artworkPath)?.let { path ->
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(File(path))
+                            .crossfade(true)
+                            .build(),
+                        imageLoader = imageLoader,
+                        contentDescription = game.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                RomDetailRow(
+                    stringResource(R.string.rom_detail_system),
+                    game.systemName.uppercase()
+                )
+                game.genre?.let { RomDetailRow(stringResource(R.string.rom_detail_genre), it) }
+                game.developer?.let {
+                    RomDetailRow(stringResource(R.string.rom_detail_developer), it)
+                }
+                game.publisher?.let {
+                    RomDetailRow(stringResource(R.string.rom_detail_publisher), it)
+                }
+                game.players?.let {
+                    RomDetailRow(stringResource(R.string.rom_detail_players), it)
+                }
+                if (game.rating > 0f) {
+                    RomDetailRow(
+                        stringResource(R.string.rom_detail_rating),
+                        "%.0f%%".format(game.rating * 100)
+                    )
+                }
+                if (game.playCount > 0) {
+                    RomDetailRow(
+                        stringResource(R.string.rom_detail_play_count),
+                        game.playCount.toString()
+                    )
+                }
+                if (game.playTimeMinutes > 0) {
+                    val hours = game.playTimeMinutes / 60
+                    val minutes = game.playTimeMinutes % 60
+                    val timeStr = if (hours > 0) {
+                        stringResource(R.string.rom_detail_playtime_hm, hours, minutes)
+                    } else {
+                        stringResource(R.string.rom_detail_playtime_m, minutes)
+                    }
+                    RomDetailRow(stringResource(R.string.rom_detail_playtime), timeStr)
+                }
+                game.description?.let { desc ->
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f),
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (game.emulatorPackage != null || game.launchCommand != null) {
+                TextButton(onClick = onLaunch) {
+                    Text(stringResource(R.string.rom_detail_launch))
+                }
+            }
+        },
+        dismissButton = {
+            Row {
+                if (!isHidden) {
+                    TextButton(onClick = onPickEmulator) {
+                        Text(
+                            text = stringResource(R.string.rom_detail_pick_emulator),
+                            color = ThemeAccentColor
+                        )
+                    }
+                }
+                if (isHidden) {
+                    TextButton(onClick = onUnhide) {
+                        Text(
+                            text = stringResource(R.string.rom_detail_unhide),
+                            color = ThemeAccentColor
+                        )
+                    }
+                } else {
+                    TextButton(onClick = onHide) {
+                        Text(
+                            text = stringResource(R.string.rom_detail_hide),
+                            color = Color.Red.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.rom_detail_close))
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun RomDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = ThemeAccentColor,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(72.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White.copy(alpha = 0.9f),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}

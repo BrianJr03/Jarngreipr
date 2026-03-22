@@ -285,7 +285,6 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
             romSearchStateHolder.gameLaunchSignal.collect {
                 esdeViewModel.handleGameStarted()
-                powerViewModel.powerOff()
             }
         }
     }
