@@ -97,6 +97,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAUNCH_TRIGGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -294,6 +296,18 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        val hiddenGamesJson = prefs.getString(KEY_HIDDEN_GAMES, null)
+        val hiddenGames: Set<String> = if (!hiddenGamesJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(hiddenGamesJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
         // Migrate legacy excludeEffectsFromHome boolean to per-page set
         val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
         val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
@@ -385,7 +399,16 @@ class ESDEPreferencesManager(context: Context) {
             systemLaunchTriggerMap = systemLaunchTriggerMap,
             systemTopScreenSet = systemTopScreenSet,
             systemBgVideoMuted = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, true),
-            systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true)
+            systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true),
+            hiddenGames = hiddenGames,
+            gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap()
         )
     }
 
@@ -875,5 +898,34 @@ class ESDEPreferencesManager(context: Context) {
 
     fun isSystemBottomScreen(systemName: String): Boolean {
         return !state.value.systemTopScreenSet.contains(systemName)
+    }
+
+    fun setGameEmulator(gameKey: String, packageName: String) {
+        val updated = _state.value.gameEmulatorMap.toMutableMap()
+        updated[gameKey] = packageName
+        _state.value = _state.value.copy(gameEmulatorMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_EMULATOR_MAP, json.toString()) }
+    }
+
+    fun getGameEmulator(gameKey: String): String? {
+        return state.value.gameEmulatorMap[gameKey]
+    }
+
+    fun hideGame(gameKey: String) {
+        val updated = _state.value.hiddenGames + gameKey
+        _state.value = _state.value.copy(hiddenGames = updated)
+        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
+    }
+
+    fun isGameHidden(gameKey: String): Boolean {
+        return state.value.hiddenGames.contains(gameKey)
+    }
+
+    fun unhideGame(gameKey: String) {
+        val updated = _state.value.hiddenGames - gameKey
+        _state.value = _state.value.copy(hiddenGames = updated)
+        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
     }
 }

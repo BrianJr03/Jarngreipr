@@ -30,6 +30,7 @@ import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
 import jr.brian.home.esde.ui.ESDESettingsScreen
 import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.ui.RomSearchScreen
 import jr.brian.home.esde.ui.SystemAppsScreen
 import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.ui.util.rememberDialogState
@@ -141,6 +142,9 @@ fun NavGraphBuilder.launcherScreen(
             onNavigateToSystemApps = {
                 navController.navigate(Routes.ESDE_SYSTEM_APPS)
             },
+            onNavigateToRomSearch = {
+                navController.navigate(Routes.ROM_SEARCH)
+            },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
             onCurrentPageChanged = onCurrentPageChanged,
             onDockPositioned = onDockPositioned,
@@ -163,6 +167,10 @@ fun NavGraphBuilder.launcherScreen(
                     allApps = uiState.allAppsUnfiltered,
                     onDismiss = {
                         showAppSearchSheet = false
+                    },
+                    onNavigateToRomSearch = {
+                        showAppSearchSheet = false
+                        navController.navigate(Routes.ROM_SEARCH)
                     }
                 )
             }
@@ -393,6 +401,10 @@ fun NavGraphBuilder.appSearchScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
+                },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
                 }
             )
         }
@@ -658,6 +670,23 @@ fun NavGraphBuilder.jinglesScreen(
                         )
                     )
                 },
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.romSearchScreen(
+    navController: NavHostController
+) {
+    composable(Routes.ROM_SEARCH) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            RomSearchScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()

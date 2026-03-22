@@ -11,6 +11,7 @@ object ESDEMediaConstants {
     const val FOLDER_SCREENSHOTS = "screenshots"
     const val FOLDER_TITLESCREENS = "titlescreens"
     const val FOLDER_COVERS = "covers"
+    const val FOLDER_PHYSICALMEDIA = "physicalmedia"
     const val FOLDER_MIXIMAGES = "miximages"
     const val FOLDER_MARQUEES = "marquees"
     const val FOLDER_VIDEOS = "videos"

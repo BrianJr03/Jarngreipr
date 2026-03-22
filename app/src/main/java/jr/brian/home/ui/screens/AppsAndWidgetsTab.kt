@@ -101,6 +101,7 @@ fun AppsAndWidgetsTab(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
     onScrollStateChanged: (
@@ -433,7 +434,8 @@ fun AppsAndWidgetsTab(
             onESDESetupClick = {
                 esdeSetupDialogState.show(SetupStep.Welcome)
             },
-            onNavigateToSystemApps = onNavigateToSystemApps
+            onNavigateToSystemApps = onNavigateToSystemApps,
+            onNavigateToRomSearch = onNavigateToRomSearch
         )
     }
 

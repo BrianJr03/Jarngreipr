@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -61,6 +62,8 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 
 @Composable
 fun QwertyKeyboard(
@@ -74,9 +77,11 @@ fun QwertyKeyboard(
     onFocusChanged: (Int) -> Unit = {},
     onFlipLayout: () -> Unit = {},
     onSpecialCharToggle: () -> Unit = {},
+    onReopenResults: (() -> Unit)? = null,
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
 
+    val wallpaperManager = LocalWallpaperManager.current
     val cursorTransition = rememberInfiniteTransition(label = "cursor")
     val cursorAlpha by cursorTransition.animateFloat(
         initialValue = 1f,
@@ -138,6 +143,28 @@ fun QwertyKeyboard(
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                     )
+                }
+                if (onReopenResults != null &&
+                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable { onReopenResults() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = stringResource(R.string.keyboard_label_reopen_results),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 if (showFlipLayoutButton) {
@@ -288,7 +315,7 @@ private fun QwertyAlphabetKeyboard(
         )
     }
 
-    AnimatedVisibility(showSpecialCharRow){
+    AnimatedVisibility(showSpecialCharRow) {
         SpecialCharsRow(
             searchQuery = searchQuery,
             onQueryChange = onQueryChange,
@@ -457,7 +484,7 @@ private fun SpecialCharsRow(
     onFocusChanged: (Int) -> Unit,
     indexOffset: Int,
 ) {
-    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
+    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '@', '&')
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),

@@ -19,6 +19,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val VOLUME_CONTROLS = "volume_controls"
     const val JINGLES = "jingles"
+    const val ROM_SEARCH = "rom_search"
     const val ADD_JINGLE = "add_jingle/{folderUri}/{createPack}?existingPackPath={existingPackPath}&existingPackName={existingPackName}"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
 

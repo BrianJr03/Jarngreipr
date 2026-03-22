@@ -53,6 +53,7 @@ import jr.brian.home.ui.navigation.esdeSystemAppsScreen
 import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.addJingleScreen
 import jr.brian.home.ui.navigation.jinglesScreen
+import jr.brian.home.ui.navigation.romSearchScreen
 import jr.brian.home.ui.navigation.konfettiEditorScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
@@ -339,6 +340,10 @@ fun MainContent(
                 )
 
                 addJingleScreen(
+                    navController = navController
+                )
+
+                romSearchScreen(
                     navController = navController
                 )
             }

@@ -26,6 +26,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.media3.common.util.UnstableApi
@@ -101,7 +103,8 @@ fun DrawerOptionsDialog(
     onCreateFolderClick: (() -> Unit)?,
     onDockSettingsClick: () -> Unit,
     onESDESetupClick: () -> Unit = {},
-    onNavigateToSystemApps: () -> Unit = {}
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -188,6 +191,23 @@ fun DrawerOptionsDialog(
                                 tint = if (isMuted) Color.White.copy(alpha = 0.4f) else Color.White,
                                 modifier = Modifier.size(26.dp)
                             )
+                        }
+
+                        if (wallpaperManager.getWallpaperType() == WallpaperType.ESDE) {
+                            IconButton(
+                                onClick = {
+                                    onDismiss()
+                                    onNavigateToRomSearch()
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SportsEsports,
+                                    contentDescription = stringResource(R.string.rom_search_icon_description),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
 
                         Spacer(Modifier.width(8.dp))
