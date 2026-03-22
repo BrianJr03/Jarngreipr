@@ -147,6 +147,13 @@ fun FAQScreen(
                                 answer = stringResource(R.string.faq_jingles_troubleshoot_answer)
                             )
                             FAQCard(
+                                question = stringResource(R.string.faq_jingles_defaults_question),
+                                answer = stringResource(R.string.faq_jingles_defaults_answer),
+                                codePreview = stringResource(R.string.faq_jingles_defaults_flat_code),
+                                secondCodePreview = stringResource(R.string.faq_jingles_defaults_grouped_code),
+                                secondCodeLabel = "Grouped format"
+                            )
+                            FAQCard(
                                 question = stringResource(R.string.jingles_faq_inconsistent_q),
                                 answer = stringResource(R.string.jingles_faq_inconsistent_a)
                             )
@@ -318,7 +325,9 @@ private fun CopyableRow(
 private fun FAQCard(
     question: String,
     answer: String,
-    codePreview: String? = null
+    codePreview: String? = null,
+    secondCodePreview: String? = null,
+    secondCodeLabel: String? = null,
 ) {
     Box(
         modifier = Modifier
@@ -361,24 +370,42 @@ private fun FAQCard(
 
             if (codePreview != null) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color(0xFF1A1A2E),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(10.dp)
-                ) {
+                CodeBlock(code = codePreview)
+            }
+
+            if (secondCodePreview != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                if (secondCodeLabel != null) {
                     Text(
-                        text = codePreview,
-                        color = ThemePrimaryColor.copy(alpha = 0.9f),
+                        text = secondCodeLabel,
                         fontSize = 12.sp,
-                        lineHeight = 18.sp,
-                        fontFamily = FontFamily.Monospace
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
+                CodeBlock(code = secondCodePreview)
             }
         }
+    }
+}
+
+@Composable
+private fun CodeBlock(code: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = Color(0xFF1A1A2E),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(10.dp)
+    ) {
+        Text(
+            text = code,
+            color = ThemePrimaryColor.copy(alpha = 0.9f),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            fontFamily = FontFamily.Monospace
+        )
     }
 }

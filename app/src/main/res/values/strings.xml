@@ -398,6 +398,11 @@
     <string name="faq_jingles_troubleshoot_question">My Jingle isn\'t playing — what should I check?</string>
     <string name="faq_jingles_troubleshoot_answer">Work through these checks in order:\n\n1. Make sure the Enable Jingles toggle is on at the top of the Jingles screen.\n\n2. Confirm ES-DE is actually sending game selection events to Jarngreipr (the app must be running).\n\n3. Check that your game\'s filename (without extension) matches a game entry in your index.json. Partial matches are supported.\n\n4. If using a local folder, tap the refresh button on the folder card after editing index.json. Changes are not picked up automatically.\n\n5. If streaming from GitHub, verify you have an active internet connection. Download the repo for fully offline playback.\n\n6. Ensure the json file does not have any trailing commas.</string>
 
+    <string name="faq_jingles_defaults_question">Can I set a fallback Jingle for an entire platform or for every game?</string>
+    <string name="faq_jingles_defaults_answer">Yes — two special game names let you define fallback Jingles:\n\n• \"global-default-jingle\" — plays for any game that has no other match. Add exactly one entry with this name across your packs; the first one found wins.\n\n• \"system-jingle\" — plays for all games on a specific platform. The platform is determined by the folder name ES-DE reports (e.g. \"n3ds\", \"wii\"). In a grouped index.json the platform key is used automatically. In a flat index.json add a \"platform\" field to the entry.\n\nBoth fall back naturally: if a per-game Jingle is found it is always preferred.</string>
+    <string name="faq_jingles_defaults_flat_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"system-jingle\", \"platform\": \"n3ds\", \"file\": \"jingles/n3ds-default.mp3\" },\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
+    <string name="faq_jingles_defaults_grouped_code">{\n  \"name\": \"My Jingles\",\n  \"n3ds\": [\n    { \"game\": \"system-jingle\", \"file\": \"jingles/n3ds-default.mp3\" }\n  ],\n  \"entries\": [\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
+
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
     <string name="thor_fact_2">Thor wields Mjolnir, a hammer so powerful it can level mountains.</string>
@@ -1174,6 +1179,7 @@
     <string name="jingles_enable_description">Play a matching Jingle when browsing games in ES-DE</string>
     <string name="jingles_repo_label">Jingle Repo</string>
     <string name="jingles_repo_placeholder">your-username/your-repo-name</string>
+    <string name="jingles_playback_settings_label">Settings</string>
     <string name="jingles_repositories_label">Repositories</string>
     <string name="jingles_add_repo_description">Add repo</string>
     <string name="jingles_remove_repo_description">Remove %s</string>
@@ -1189,6 +1195,10 @@
     <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
     <string name="jingles_volume">Jingle Volume</string>
     <string name="jingles_volume_unmute">Unmute to adjust volume</string>
+    <string name="jingles_regex_priority_title">Regex Match Priority</string>
+    <string name="jingles_regex_priority_description">Try regex patterns before exact name. When off, exact name is matched first.</string>
+    <string name="jingles_normalize_title">Volume Normalization</string>
+    <string name="jingles_normalize_description">Automatically boost quiet tracks using Android\'s LoudnessEnhancer</string>
     <!-- Jingles Info Dialog -->
     <string name="jingles_info_button_description">About Jingles</string>
     <string name="jingles_info_title">About Jingles</string>

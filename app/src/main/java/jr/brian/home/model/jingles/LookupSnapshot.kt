@@ -9,4 +9,8 @@ data class LookupSnapshot(
     val exactMap: Map<String, Pair<JingleSource, JingleEntry>> = emptyMap(),
     val lowerEntries: List<Triple<String, JingleSource, JingleEntry>> = emptyList(),
     val branchMap: Map<String, String> = emptyMap(),
+    /** Keyed by lowercase platform name (e.g. "n3ds"). First match wins. */
+    val systemJingles: Map<String, Pair<JingleSource, JingleEntry>> = emptyMap(),
+    /** Played for any game when no other tier matches. */
+    val globalDefault: Pair<JingleSource, JingleEntry>? = null,
 )

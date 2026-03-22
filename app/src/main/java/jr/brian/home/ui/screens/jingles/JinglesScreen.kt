@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -114,6 +115,8 @@ fun JinglesScreen(
     val indexCounts by viewModel.indexCounts.collectAsStateWithLifecycle()
     val isMuted by viewModel.isMuted.collectAsStateWithLifecycle()
     val volume by viewModel.volume.collectAsStateWithLifecycle()
+    val isRegexPriority by viewModel.regexPriority.collectAsStateWithLifecycle()
+    val isNormalizationEnabled by viewModel.isNormalizationEnabled.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -144,6 +147,7 @@ fun JinglesScreen(
         if (isEditingRepo) isEditingRepo = false else onDismiss()
     }
 
+    var settingsExpanded by remember { mutableStateOf(false) }
     var reposExpanded by remember { mutableStateOf(false) }
     var foldersExpanded by remember { mutableStateOf(false) }
     val infoDialogState = rememberDialogState<Unit>()
@@ -384,42 +388,63 @@ fun JinglesScreen(
                     }
 
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.jingles_volume),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (isMuted) Color.Gray else Color.White
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.jingles_playback_settings_label),
+                            icon = Icons.Default.Settings,
+                            isExpanded = settingsExpanded,
+                            onToggle = { settingsExpanded = !settingsExpanded }
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.jingles_volume),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isMuted) Color.Gray else Color.White
+                                        )
+                                        Text(
+                                            text = "${(volume * 100).toInt()}%",
+                                            fontSize = 14.sp,
+                                            color = ThemePrimaryColor.copy(alpha = if (isMuted) 0.4f else 1f)
+                                        )
+                                    }
+                                    Slider(
+                                        value = volume,
+                                        onValueChange = { viewModel.setVolume(it) },
+                                        enabled = !isMuted,
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = ThemePrimaryColor,
+                                            activeTrackColor = ThemePrimaryColor,
+                                            inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                                            disabledThumbColor = Color.Gray,
+                                            disabledActiveTrackColor = Color.Gray.copy(alpha = 0.4f),
+                                            disabledInactiveTrackColor = Color.White.copy(alpha = 0.1f)
+                                        )
+                                    )
+                                    if (isMuted) {
+                                        Text(
+                                            text = stringResource(R.string.jingles_volume_unmute),
+                                            fontSize = 13.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                                ToggleSetting(
+                                    title = stringResource(R.string.jingles_regex_priority_title),
+                                    description = stringResource(R.string.jingles_regex_priority_description),
+                                    checked = isRegexPriority,
+                                    onCheckedChange = { viewModel.setRegexPriority(it) }
                                 )
-                                Text(
-                                    text = "${(volume * 100).toInt()}%",
-                                    fontSize = 14.sp,
-                                    color = ThemePrimaryColor.copy(alpha = if (isMuted) 0.4f else 1f)
-                                )
-                            }
-                            Slider(
-                                value = volume,
-                                onValueChange = { viewModel.setVolume(it) },
-                                enabled = !isMuted,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = ThemePrimaryColor,
-                                    activeTrackColor = ThemePrimaryColor,
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.2f),
-                                    disabledThumbColor = Color.Gray,
-                                    disabledActiveTrackColor = Color.Gray.copy(alpha = 0.4f),
-                                    disabledInactiveTrackColor = Color.White.copy(alpha = 0.1f)
-                                )
-                            )
-                            if (isMuted) {
-                                Text(
-                                    text = stringResource(R.string.jingles_volume_unmute),
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
+                                ToggleSetting(
+                                    title = stringResource(R.string.jingles_normalize_title),
+                                    description = stringResource(R.string.jingles_normalize_description),
+                                    checked = isNormalizationEnabled,
+                                    onCheckedChange = { viewModel.setNormalizationEnabled(it) }
                                 )
                             }
                         }
