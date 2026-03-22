@@ -12,6 +12,7 @@ class RomSearchStateHolder @Inject constructor() {
     val allGames = MutableStateFlow<List<GameInfo>>(emptyList())
     val isLoading = MutableStateFlow(false)
     val dismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val screenDismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val gameLaunchSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
     val keyboardVisible = MutableStateFlow(true)

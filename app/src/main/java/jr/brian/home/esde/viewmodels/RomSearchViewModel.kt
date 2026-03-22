@@ -9,7 +9,9 @@ import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.RomListParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -27,6 +29,7 @@ class RomSearchViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
     val keyboardVisible: StateFlow<Boolean> = store.keyboardVisible.asStateFlow()
+    val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
 
     private val esdeRootPath: String?
         get() = File(setupPreferences.scriptsPath).parentFile?.absolutePath

@@ -55,6 +55,13 @@ fun RomSearchScreen(
         launchResultsActivity(context)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.screenDismissSignal.collect {
+            viewModel.dismiss()
+            onDismiss()
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             viewModel.clearState()
