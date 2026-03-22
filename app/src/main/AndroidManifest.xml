@@ -69,6 +69,7 @@
         android:theme="@style/Theme.Home">
         <activity
             android:name=".esde.ui.RomSearchResultsActivity"
+            android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/Theme.Home"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />

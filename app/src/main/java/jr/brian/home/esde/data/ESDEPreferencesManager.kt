@@ -98,7 +98,9 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -402,6 +404,14 @@ class ESDEPreferencesManager(context: Context) {
             systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true),
             hiddenGames = hiddenGames,
             gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            gameCommandMap = prefs.getString(KEY_GAME_COMMAND_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
                     try {
@@ -843,6 +853,19 @@ class ESDEPreferencesManager(context: Context) {
         }
     }
 
+    /** Returns the persisted SAF tree URI string for the given SD card volume ID, or null. */
+    fun getSafTreeUri(volumeId: String): String? {
+        val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
+        return try { JSONObject(json).optString(volumeId, null) } catch (_: Exception) { null }
+    }
+
+    /** Persists a SAF tree URI for the given SD card volume ID. */
+    fun setSafTreeUri(volumeId: String, treeUriString: String) {
+        val json = try { JSONObject(prefs.getString(KEY_SAF_TREE_URIS, null) ?: "{}") } catch (_: Exception) { JSONObject() }
+        json.put(volumeId, treeUriString)
+        prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
+    }
+
     fun setSystemAppMap(map: Map<String, String?>) {
         _state.value = _state.value.copy(systemAppMap = map)
         if (map.isEmpty()) {
@@ -911,6 +934,19 @@ class ESDEPreferencesManager(context: Context) {
 
     fun getGameEmulator(gameKey: String): String? {
         return state.value.gameEmulatorMap[gameKey]
+    }
+
+    fun setGameLaunchCommand(gameKey: String, command: String) {
+        val updated = _state.value.gameCommandMap.toMutableMap()
+        updated[gameKey] = command
+        _state.value = _state.value.copy(gameCommandMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_COMMAND_MAP, json.toString()) }
+    }
+
+    fun getGameLaunchCommand(gameKey: String): String? {
+        return state.value.gameCommandMap[gameKey]
     }
 
     fun hideGame(gameKey: String) {

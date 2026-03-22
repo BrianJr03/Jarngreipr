@@ -85,5 +85,7 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_BG_VIDEO_MUTED = "system_bg_video_muted"
     const val KEY_SYSTEM_BG_VIDEO_LOOPING = "system_bg_video_looping"
     const val KEY_GAME_EMULATOR_MAP = "game_emulator_map"
+    const val KEY_GAME_COMMAND_MAP = "game_command_map"
     const val KEY_HIDDEN_GAMES = "hidden_games"
+    const val KEY_SAF_TREE_URIS = "saf_tree_uris"
 }
