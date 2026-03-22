@@ -109,6 +109,7 @@ fun AppDrawerTab(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -363,7 +364,8 @@ fun AppDrawerTab(
                 onESDESetupClick = {
                     esdeSetupDialogState.show(SetupStep.Welcome)
                 },
-                onNavigateToSystemApps = onNavigateToSystemApps
+                onNavigateToSystemApps = onNavigateToSystemApps,
+                onNavigateToRomSearch = onNavigateToRomSearch
             )
         }
 

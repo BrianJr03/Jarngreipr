@@ -89,6 +89,7 @@ fun LauncherPagerScreen(
     onBackButtonShortcut: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
@@ -322,6 +323,7 @@ fun LauncherPagerScreen(
                                     onNavigateToSearch = onNavigateToSearch,
                                     onNavigateToDockSettings = onNavigateToDockSettings,
                                     onNavigateToSystemApps = onNavigateToSystemApps,
+                                    onNavigateToRomSearch = onNavigateToRomSearch,
                                     onShowAppDrawer = { showAppDrawerSheet = true },
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
@@ -374,6 +376,7 @@ fun LauncherPagerScreen(
                                         onNavigateToSearch = onNavigateToSearch,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
+                                        onNavigateToRomSearch = onNavigateToRomSearch,
                                         navController = navController,
                                         onShowAppDrawer = { showAppDrawerSheet = true },
                                         onScrollStateChanged = { isScrolling, hasScrollableContent ->
@@ -431,6 +434,7 @@ fun LauncherPagerScreen(
                                         pageIndex = page,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
+                                        onNavigateToRomSearch = onNavigateToRomSearch,
                                     )
                                 }
                             }

@@ -78,6 +78,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
+    @Inject
+    lateinit var romSearchStateHolder: jr.brian.home.esde.data.RomSearchStateHolder
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private var navigateToThemeShare by mutableStateOf(false)
@@ -276,6 +279,13 @@ class MainActivity : ComponentActivity() {
                 if (!powerViewModel.isPoweredOff.value && !isGameRunning) {
                     launchVideoPlayer(event)
                 }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            romSearchStateHolder.gameLaunchSignal.collect {
+                esdeViewModel.handleGameStarted()
+                powerViewModel.powerOff()
             }
         }
     }

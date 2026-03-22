@@ -421,6 +421,11 @@ class ESDEViewModel @Inject constructor(
         } else {
             prefs.state.value.systemBackgroundDimmingFloat
         }
+        // Reset currentSystem so the next onSystemSelected event forces a full wallpaper
+        // refresh. Without this, if the screensaver displayed a game with no artwork
+        // (setting currentImagePath = null), the guard in updateForSystem would skip the
+        // update and leave a black screen until the user manually navigated away and back.
+        currentSystem = null
         _wallpaperState.value = _wallpaperState.value.copy(
             isScreensaverActive = false,
             dimmingLevel = dimmingLevel

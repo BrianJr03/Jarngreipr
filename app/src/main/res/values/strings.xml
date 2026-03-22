@@ -1,5 +1,27 @@
 <resources>
     <string name="app_name">Jarngreipr</string>
+
+    <!-- ROM Search -->
+    <string name="rom_search_icon_description">ROM Search</string>
+    <string name="rom_search_no_results">No games found</string>
+    <string name="rom_detail_system">System</string>
+    <string name="rom_detail_genre">Genre</string>
+    <string name="rom_detail_developer">Developer</string>
+    <string name="rom_detail_publisher">Publisher</string>
+    <string name="rom_detail_players">Players</string>
+    <string name="rom_detail_rating">Rating</string>
+    <string name="rom_detail_play_count">Plays</string>
+    <string name="rom_detail_playtime">Play Time</string>
+    <string name="rom_detail_playtime_hm">%1$dh %2$dm</string>
+    <string name="rom_detail_playtime_m">%1$dm</string>
+    <string name="rom_detail_launch">Launch</string>
+    <string name="rom_detail_close">Close</string>
+    <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_emulator_picker_title">Select Emulator</string>
+    <string name="rom_emulator_none_found">No compatible emulators installed</string>
+    <string name="rom_detail_hide">Hide</string>
+    <string name="rom_detail_unhide">Unhide</string>
+    <string name="rom_search_hidden_no_results">No hidden games</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
@@ -19,6 +41,7 @@
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
     <string name="keyboard_label_flip">Flip Layout</string>
+    <string name="keyboard_label_reopen_results">Reopen Results</string>
     <string name="keyboard_label_special">Toggle special characters</string>
 
     <!-- Search Screen Onboarding -->

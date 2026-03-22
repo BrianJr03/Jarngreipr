@@ -204,7 +204,9 @@ data class ESDEPrefsState(
     val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
     val systemTopScreenSet: Set<String> = emptySet(),
     val systemBgVideoMuted: Boolean = true,
-    val systemBgVideoLooping: Boolean = true
+    val systemBgVideoLooping: Boolean = true,
+    val gameEmulatorMap: Map<String, String> = emptyMap(),
+    val hiddenGames: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

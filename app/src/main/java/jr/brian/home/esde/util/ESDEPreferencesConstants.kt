@@ -84,4 +84,6 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_TOP_SCREEN = "system_top_screen"
     const val KEY_SYSTEM_BG_VIDEO_MUTED = "system_bg_video_muted"
     const val KEY_SYSTEM_BG_VIDEO_LOOPING = "system_bg_video_looping"
+    const val KEY_GAME_EMULATOR_MAP = "game_emulator_map"
+    const val KEY_HIDDEN_GAMES = "hidden_games"
 }

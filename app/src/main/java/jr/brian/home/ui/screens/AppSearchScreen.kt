@@ -66,7 +66,8 @@ import jr.brian.home.util.openAppInfo
 @Composable
 fun AppSearchScreen(
     allApps: List<AppInfo>,
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val searchLayoutManager = LocalSearchLayoutManager.current
@@ -100,14 +101,16 @@ fun AppSearchScreen(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             } else {
                 VerticalSearchLayout(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             }
         }
@@ -129,6 +132,7 @@ private fun VerticalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -164,6 +168,7 @@ private fun VerticalSearchLayout(
                 onFocusChanged = { focusedKeyIndex = it },
                 onNavigateRight = {},
                 onFlipLayout = onFlipLayout,
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -176,6 +181,7 @@ private fun HorizontalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
     var showSpecialCharRow by remember { mutableStateOf(false) }
 
@@ -216,6 +222,7 @@ private fun HorizontalSearchLayout(
                 onSpecialCharToggle = {
                     showSpecialCharRow = !showSpecialCharRow
                 },
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxWidth()
             )
         }
