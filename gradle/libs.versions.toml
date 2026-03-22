@@ -28,6 +28,7 @@ shizuku = "13.1.5"
 colorpickerCompose = "1.1.3"
 konfettiCompose = "2.0.5"
 appcompat = "1.7.1"
+androidx-tv-foundation = "1.0.0-alpha11"
 
 [libraries]
 colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
@@ -74,6 +75,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv-foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

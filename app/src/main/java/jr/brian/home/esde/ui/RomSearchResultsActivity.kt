@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items as lazyRowItems
 import androidx.compose.foundation.rememberScrollState
@@ -74,6 +72,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -146,7 +146,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                 managers.ManagerCompositionLocalProvider {
                     var isVisible by remember { mutableStateOf(false) }
                     val scope = rememberCoroutineScope()
-
                     val animDurationEnter = 220
                     val animDurationExit = 180
 
@@ -158,20 +157,23 @@ class RomSearchResultsActivity : ComponentActivity() {
                         }
                     }
 
-                    LaunchedEffect(Unit) {
-                        isVisible = true
-                    }
+                    LaunchedEffect(Unit) { isVisible = true }
 
                     val query by viewModel.query.collectAsStateWithLifecycle()
                     val allGames by viewModel.allGames.collectAsStateWithLifecycle()
                     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-                    val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
 
                     LaunchedEffect(Unit) {
                         viewModel.dismissSignal.collect { dismiss() }
                     }
 
-                    BackHandler { dismiss() }
+                    BackHandler {
+                        if (query.isNotEmpty()) {
+                            viewModel.clearState()
+                        } else {
+                            dismiss()
+                        }
+                    }
 
                     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
                     val hiddenGames = esdeState.hiddenGames
@@ -191,21 +193,44 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val selectedPlatform = remember(platformSearch, allPlatforms) {
                         allPlatforms.firstOrNull { it.equals(platformSearch, ignoreCase = true) }
                     }
-                    val filteredGames = remember(allGames, query, selectedPlatform, isPlatformMode, isHiddenMode, hiddenGames) {
+                    val filteredGames = remember(
+                        allGames,
+                        query,
+                        selectedPlatform,
+                        isPlatformMode,
+                        isHiddenMode,
+                        hiddenGames
+                    ) {
                         val list = when {
                             isHiddenMode ->
                                 allGames.filter { hiddenGameKey(it) in hiddenGames }
+
                             selectedPlatform != null ->
-                                allGames.filter { it.systemName.equals(selectedPlatform, ignoreCase = true) }
+                                allGames.filter {
+                                    it.systemName.equals(
+                                        selectedPlatform,
+                                        ignoreCase = true
+                                    )
+                                }
+
                             isPlatformMode && platformSearch != null ->
-                                allGames.filter { it.systemName.contains(platformSearch, ignoreCase = true) }
+                                allGames.filter {
+                                    it.systemName.contains(
+                                        platformSearch,
+                                        ignoreCase = true
+                                    )
+                                }
+
                             query.isBlank() -> allGames
                             else -> allGames.filter { game ->
                                 game.name.contains(query, ignoreCase = true) ||
-                                    game.systemName.contains(query, ignoreCase = true) ||
-                                    game.genre?.contains(query, ignoreCase = true) == true ||
-                                    game.developer?.contains(query, ignoreCase = true) == true ||
-                                    game.publisher?.contains(query, ignoreCase = true) == true
+                                        game.systemName.contains(query, ignoreCase = true) ||
+                                        game.genre?.contains(query, ignoreCase = true) == true ||
+                                        game.developer?.contains(
+                                            query,
+                                            ignoreCase = true
+                                        ) == true ||
+                                        game.publisher?.contains(query, ignoreCase = true) == true
                             }
                         }
                         val deduped = list.distinctBy { it.name.lowercase() }
@@ -215,9 +240,9 @@ class RomSearchResultsActivity : ComponentActivity() {
                     AnimatedVisibility(
                         visible = isVisible,
                         enter = fadeIn(tween(animDurationEnter)) +
-                            scaleIn(tween(animDurationEnter), initialScale = 0.92f),
+                                scaleIn(tween(animDurationEnter), initialScale = 0.92f),
                         exit = fadeOut(tween(animDurationExit)) +
-                            scaleOut(tween(animDurationExit), targetScale = 0.92f)
+                                scaleOut(tween(animDurationExit), targetScale = 0.92f)
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             Surface(
@@ -230,10 +255,33 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isHiddenMode = isHiddenMode,
                                     modifier = Modifier.fillMaxSize(),
                                     onLaunchGame = { game -> launchGame(game) },
-                                    onLaunchWithEmulator = { game, pkg -> launchGameWithEmulator(game, pkg) },
-                                    onSaveEmulator = { game, pkg -> esdePrefs.setGameEmulator(gameKey(game), pkg) },
-                                    hasSavedEmulator = { game -> esdePrefs.getGameEmulator(gameKey(game)) != null },
-                                    onGameFocused = { game -> viewModel.updateFocusedGame(game) },
+                                    onLaunchWithEmulator = { game, pkg ->
+                                        launchGameWithEmulator(
+                                            game,
+                                            pkg
+                                        )
+                                    },
+                                    onSaveEmulator = { game, pkg ->
+                                        esdePrefs.setGameEmulator(
+                                            gameKey(game),
+                                            pkg
+                                        )
+                                    },
+                                    hasSavedEmulator = { game ->
+                                        esdePrefs.getGameEmulator(
+                                            gameKey(
+                                                game
+                                            )
+                                        ) != null
+                                    },
+                                    onGameFocused = { game ->
+                                        viewModel.updateFocusedGame(game)
+                                        game?.let {
+                                            managers.feature.jinglesManager.onGameSelected(
+                                                File(it.path).name
+                                            )
+                                        }
+                                    },
                                     onHideGame = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
                                     onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
                                     onToggleKeyboard = {
@@ -296,7 +344,6 @@ class RomSearchResultsActivity : ComponentActivity() {
 
         val pkg = game.emulatorPackage ?: run { finish(); return }
 
-        // Try direct ROM launch via package-specific intent before falling back to app-open
         if (game.romAbsolutePath != null) {
             try {
                 val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
@@ -322,19 +369,24 @@ class RomSearchResultsActivity : ComponentActivity() {
                 options.launchDisplayId = 0
                 startActivity(intent, options.toBundle())
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         signalGameLaunch()
         finish()
     }
 
     private fun signalGameLaunch() {
         romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
+        managers.feature.jinglesManager.onGameLaunched()
     }
 
     private fun gameKey(game: GameInfo) = game.systemName
     private fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 
-    private fun launchGameWithEmulator(game: GameInfo, emulatorPackage: String) {
+    private fun launchGameWithEmulator(
+        game: GameInfo,
+        emulatorPackage: String
+    ) {
         esdePrefs.setGameEmulator(gameKey(game), emulatorPackage)
         val romPath = game.romAbsolutePath ?: run { finish(); return }
         try {
@@ -366,9 +418,7 @@ private fun PlatformSuggestionsDropdown(
             .background(OledCardColor.copy(alpha = 0.97f))
             .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             lazyRowItems(platforms) { platform ->
                 TextButton(
                     onClick = { onPlatformSelected(platform) },
@@ -392,8 +442,8 @@ private fun PlatformSuggestionsDropdown(
 private fun RomResultsGrid(
     games: List<GameInfo>,
     isLoading: Boolean,
-    isHiddenMode: Boolean = false,
     modifier: Modifier = Modifier,
+    isHiddenMode: Boolean = false,
     onLaunchGame: (GameInfo) -> Unit,
     onLaunchWithEmulator: (GameInfo, String) -> Unit = { _, _ -> },
     onSaveEmulator: (GameInfo, String) -> Unit = { _, _ -> },
@@ -403,25 +453,8 @@ private fun RomResultsGrid(
     onUnhideGame: (GameInfo) -> Unit = {},
     onToggleKeyboard: () -> Unit = {}
 ) {
-    val columns = 4
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
-    val focusRequesters = remember(games.size) { List(games.size) { FocusRequester() } }
-    val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
-    val scope = rememberCoroutineScope()
-
-    fun navigateToItem(targetIndex: Int) {
-        if (targetIndex < 0 || targetIndex >= focusRequesters.size) return
-        val isVisible = gridState.layoutInfo.visibleItemsInfo.any { it.index == targetIndex }
-        if (isVisible) {
-            try { focusRequesters[targetIndex].requestFocus() } catch (_: Exception) {}
-        } else {
-            scope.launch {
-                gridState.scrollToItem(targetIndex)
-                try { focusRequesters[targetIndex].requestFocus() } catch (_: Exception) {}
-            }
-        }
-    }
 
     Box(modifier = modifier) {
         when {
@@ -446,8 +479,7 @@ private fun RomResultsGrid(
 
             else -> {
                 LazyVerticalGrid(
-                    state = gridState,
-                    columns = GridCells.Fixed(columns),
+                    columns = GridCells.Fixed(4),
                     modifier = Modifier
                         .fillMaxSize()
                         .background(OledBackgroundColor)
@@ -456,11 +488,12 @@ private fun RomResultsGrid(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    itemsIndexed(games, key = { _, game -> "${game.systemName}/${game.path}" }) { index, game ->
+                    itemsIndexed(
+                        games,
+                        key = { _, game -> "${game.systemName}/${game.path}" }) { index, game ->
                         RomResultCard(
                             game = game,
                             autoFocus = index == 0,
-                            focusRequester = focusRequesters[index],
                             onClick = {
                                 if (hasSavedEmulator(game)) {
                                     onLaunchGame(game)
@@ -471,8 +504,6 @@ private fun RomResultsGrid(
                             },
                             onLongClick = { selectedGame = game },
                             onFocused = { onGameFocused(game) },
-                            onNavigateDown = { navigateToItem(index + columns) },
-                            onNavigateUp = { navigateToItem(index - columns) },
                             onToggleKeyboard = onToggleKeyboard
                         )
                     }
@@ -523,11 +554,9 @@ private fun RomResultCard(
     onLongClick: () -> Unit,
     onFocused: () -> Unit = {},
     autoFocus: Boolean = false,
-    focusRequester: FocusRequester = remember { FocusRequester() },
-    onNavigateDown: () -> Unit = {},
-    onNavigateUp: () -> Unit = {},
     onToggleKeyboard: () -> Unit = {}
 ) {
+    val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -538,7 +567,10 @@ private fun RomResultCard(
 
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
-            try { focusRequester.requestFocus() } catch (_: Exception) {}
+            try {
+                focusRequester.requestFocus()
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -567,28 +599,20 @@ private fun RomResultCard(
             }
             .onKeyEvent { keyEvent ->
                 when {
-                    keyEvent.type == KeyEventType.KeyDown &&
-                        keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_DPAD_DOWN -> {
-                        onNavigateDown()
-                        true
-                    }
-                    keyEvent.type == KeyEventType.KeyDown &&
-                        keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_DPAD_UP -> {
-                        onNavigateUp()
-                        true
-                    }
                     keyEvent.type == KeyEventType.KeyUp &&
-                        keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT-> {
+                            keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onToggleKeyboard()
                         true
                     }
+
                     keyEvent.type == KeyEventType.KeyUp &&
                             keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
                         true
                     }
+
                     else -> false
                 }
             }
@@ -773,10 +797,23 @@ private fun RomDetailDialog(
                     )
                 }
 
-                RomDetailRow(stringResource(R.string.rom_detail_system), game.systemName.uppercase())
+                RomDetailRow(
+                    stringResource(R.string.rom_detail_system),
+                    game.systemName.uppercase()
+                )
                 game.genre?.let { RomDetailRow(stringResource(R.string.rom_detail_genre), it) }
-                game.developer?.let { RomDetailRow(stringResource(R.string.rom_detail_developer), it) }
-                game.publisher?.let { RomDetailRow(stringResource(R.string.rom_detail_publisher), it) }
+                game.developer?.let {
+                    RomDetailRow(
+                        stringResource(R.string.rom_detail_developer),
+                        it
+                    )
+                }
+                game.publisher?.let {
+                    RomDetailRow(
+                        stringResource(R.string.rom_detail_publisher),
+                        it
+                    )
+                }
                 game.players?.let { RomDetailRow(stringResource(R.string.rom_detail_players), it) }
                 if (game.rating > 0f) {
                     RomDetailRow(
@@ -785,7 +822,10 @@ private fun RomDetailDialog(
                     )
                 }
                 if (game.playCount > 0) {
-                    RomDetailRow(stringResource(R.string.rom_detail_play_count), game.playCount.toString())
+                    RomDetailRow(
+                        stringResource(R.string.rom_detail_play_count),
+                        game.playCount.toString()
+                    )
                 }
                 if (game.playTimeMinutes > 0) {
                     val hours = game.playTimeMinutes / 60
@@ -849,57 +889,10 @@ private fun RomDetailDialog(
 }
 
 @Composable
-private fun FocusedGameInfoBar(
-    game: GameInfo,
-    modifier: Modifier = Modifier
+private fun RomDetailRow(
+    label: String,
+    value: String
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(OledCardColor.copy(alpha = 0.95f))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = game.name,
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            InfoChip(stringResource(R.string.rom_detail_system), game.systemName.uppercase())
-            game.genre?.let { InfoChip(stringResource(R.string.rom_detail_genre), it) }
-            if (game.playCount > 0) {
-                InfoChip(stringResource(R.string.rom_detail_play_count), game.playCount.toString())
-            }
-        }
-    }
-}
-
-@Composable
-private fun InfoChip(label: String, value: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = ThemeAccentColor,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.8f)
-        )
-    }
-}
-
-@Composable
-private fun RomDetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)

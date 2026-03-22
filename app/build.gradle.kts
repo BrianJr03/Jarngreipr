@@ -142,6 +142,14 @@ dependencies {
     implementation(libs.ping)
     implementation(libs.ping.nearby)
 
+    // AndroidX TV
+    implementation(libs.androidx.tv.foundation) {
+        exclude(group = "androidx.compose.foundation")
+        exclude(group = "androidx.compose.runtime")
+        exclude(group = "androidx.compose.ui")
+        exclude(group = "androidx.compose.animation")
+    }
+
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
