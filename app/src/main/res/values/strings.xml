@@ -22,6 +22,16 @@
     <string name="rom_detail_hide">Hide</string>
     <string name="rom_detail_unhide">Unhide</string>
     <string name="rom_search_hidden_no_results">No hidden games</string>
+    <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
+    <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
+    <string name="rom_search_experimental_got_it">Got it</string>
+    <string name="rom_emulator_choose_app">Choose App\u2026</string>
+    <string name="rom_emulator_choose_app_title">Choose an App</string>
+    <string name="faq_section_rom_search">ROM Search</string>
+    <string name="faq_rom_search_what_question">What is ROM Search?</string>
+    <string name="faq_rom_search_what_answer">ROM Search reads your ES-DE game library and lets you launch games directly from the home screen. Tap the controller icon to open it, then type a game name, system (e.g. @psp), or genre to filter results.</string>
+    <string name="faq_rom_search_emulator_question">My emulator isn\'t supported — what do I do?</string>
+    <string name="faq_rom_search_emulator_answer">Not every emulator is supported on day one. When picking an emulator for a game, use the \"Choose App\" option at the bottom of the list to launch with any installed app as a workaround. If you\'d like full support added, please open a GitHub issue at github.com/BrianJr03/Jarngreipr.</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
