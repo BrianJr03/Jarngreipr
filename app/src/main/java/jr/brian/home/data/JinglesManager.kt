@@ -164,6 +164,7 @@ class JinglesManager @Inject constructor(
         prefs.edit { putBoolean(KEY_REGEX_PRIORITY, enabled) }
     }
 
+    @OptIn(UnstableApi::class)
     fun setNormalizationEnabled(enabled: Boolean) {
         _isNormalizationEnabled.value = enabled
         prefs.edit { putBoolean(KEY_NORMALIZE, enabled) }

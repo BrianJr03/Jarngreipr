@@ -3,7 +3,6 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -19,12 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,11 +46,8 @@ import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
-import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.esde.model.GameInfo
-import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.util.LocalESDEImageLoader
-import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.theme.OledBackgroundColor
