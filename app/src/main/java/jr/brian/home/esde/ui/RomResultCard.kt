@@ -228,6 +228,27 @@ internal fun RomResultCard(
                         overflow = TextOverflow.Ellipsis,
                         lineHeight = 13.sp
                     )
+                    Text(
+                        text = "Select: toggle keyboard",
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp),
+                        color = ThemePrimaryColor.copy(alpha = 0.6f),
+                        fontSize = 6.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Start: game details",
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp),
+                        color = ThemePrimaryColor.copy(alpha = 0.6f),
+                        fontSize = 6.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.End,
+                        maxLines = 1
+                    )
                 }
 
                 if (game.isFavorite) {
