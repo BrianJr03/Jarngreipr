@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppGridItem
@@ -142,7 +143,7 @@ fun AppGridLayout(
             // Compute spacing so cells are exactly ICON_SIZE_DP wide, making
             // the visual side margin equal to topPadding regardless of column count.
             val equalizedSpacing = if (columns > 1) {
-                ((maxWidth - 2 * topPadding - columns * ICON_SIZE_DP) / (columns - 1))
+                ((maxWidth - 2 * topPadding - ICON_SIZE_DP * columns) / (columns - 1))
                     .coerceAtLeast(4.dp)
             } else {
                 0.dp
@@ -152,7 +153,8 @@ fun AppGridLayout(
                 state = gridState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    horizontal = topPadding,
+                    start = topPadding,
+                    end = topPadding,
                     top = topPadding,
                     bottom = bottomPadding,
                 ),

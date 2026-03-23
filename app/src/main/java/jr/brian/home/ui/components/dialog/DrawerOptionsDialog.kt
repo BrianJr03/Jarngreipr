@@ -1,8 +1,15 @@
 package jr.brian.home.ui.components.dialog
 
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -59,6 +66,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -82,7 +90,9 @@ import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
@@ -127,6 +137,42 @@ fun DrawerOptionsDialog(
 
     LaunchedEffect(Unit) {
         closeFocusRequester.requestFocus()
+    }
+
+    val romIconPrefs = remember {
+        context.getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+    }
+    var isRomIconNew by remember {
+        mutableStateOf(romIconPrefs.getBoolean("drawer_icon_new", true))
+    }
+    LaunchedEffect(Unit) {
+        if (isRomIconNew) {
+            romIconPrefs.edit().putBoolean("drawer_icon_new", false).apply()
+        }
+    }
+    val romIconTransition = rememberInfiniteTransition(label = "romIconGradient")
+    val romIconColor1 by romIconTransition.animateColor(
+        initialValue = ThemePrimaryColor,
+        targetValue = ThemeAccentColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "romIconColor1"
+    )
+    val romIconColor2 by romIconTransition.animateColor(
+        initialValue = ThemeAccentColor,
+        targetValue = ThemeSecondaryColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "romIconColor2"
+    )
+    val romIconTint = if (isRomIconNew) {
+        lerp(romIconColor1, romIconColor2, 0.5f)
+    } else {
+        Color.White
     }
 
     val mediaPickerLauncher = MediaPickerLauncher(
@@ -204,7 +250,7 @@ fun DrawerOptionsDialog(
                                 Icon(
                                     imageVector = Icons.Default.SportsEsports,
                                     contentDescription = stringResource(R.string.rom_search_icon_description),
-                                    tint = Color.White,
+                                    tint = romIconTint,
                                     modifier = Modifier.size(26.dp)
                                 )
                             }

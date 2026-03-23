@@ -1,14 +1,17 @@
-**New Features**
-- Adds ability to switch between ES-DE and Standard wallpaper modes with automation tools like Macrodroid
-  - Head to FAQs (Settings → Support) for info on how to get started
+**Jingles**
+- You can now set Jingles to play as you browse games in ES-DE
+- These are fully compatible with Jingles shared from Cocoon
+- Visit **Settings → ES-DE Settings → Jingles** to get started
 
-- Adds ability to share themes and wallpapers locally
-  - Have 2 devices running Jarngreipr? Easily share themes and wallpapers between the devices
-  - Settings → Appearance → Theme Sharing to get started
+**Rom Search [ experimental ]**
+- You can now search through your ES-DE rom library with ease
+- Open **Drawer Options** and press the game controller icon to use Rom Search
 
-- Adds Color Wheel to Create Theme screen allowing for finer control over theme
+**Hide App Names ONLY on tabs**
+- App names can be disabled exclusively on AppsTab, Apps and Widgets Tab, and App Drawer Tab
+- Visit **Settings → Layout → Visibility Options** to get started
 
 **Fixes**
-- Videos will no longer steal focus from the primary display when browsing games in ES-DE
+- Fixes issue where side margins were not equal when changing row count
 
-1.9
+2.0

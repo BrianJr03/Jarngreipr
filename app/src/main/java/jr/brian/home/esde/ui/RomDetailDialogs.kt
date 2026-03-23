@@ -1,5 +1,7 @@
 package jr.brian.home.esde.ui
 
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,7 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +62,8 @@ internal fun EmulatorPickerDialog(
     onEmulatorSelected: (String, String?) -> Unit
 ) {
     val context = LocalContext.current
+    var showAppPicker by remember { mutableStateOf(false) }
+
     val emulators = remember(game.systemName) {
         val findRulesFile =
             File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
@@ -76,10 +83,19 @@ internal fun EmulatorPickerDialog(
             context,
             File(game.romAbsolutePath ?: game.path).extension
         )
-        // Merge both sources — es_systems.xml commands first, then any installed emulator
-        // that supports the extension but isn't listed in es_systems.xml commands.
         val seenPackages = fromSystem.map { it.packageName }.toHashSet()
         fromSystem + fromExtension.filter { it.packageName !in seenPackages }
+    }
+
+    if (showAppPicker) {
+        AppPickerDialog(
+            onDismiss = { showAppPicker = false },
+            onAppSelected = { pkg ->
+                onEmulatorSelected(pkg, null)
+                showAppPicker = false
+                onDismiss()
+            }
+        )
     }
 
     AlertDialog(
@@ -95,14 +111,14 @@ internal fun EmulatorPickerDialog(
             )
         },
         text = {
-            if (emulators.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.rom_emulator_none_found),
-                    color = Color.White.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            } else {
-                Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (emulators.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.rom_emulator_none_found),
+                        color = Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
                     emulators.forEach { emulator ->
                         TextButton(
                             onClick = {
@@ -117,6 +133,77 @@ internal fun EmulatorPickerDialog(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+                    }
+                }
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                )
+                TextButton(
+                    onClick = { showAppPicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.rom_emulator_choose_app),
+                        color = Color.White.copy(alpha = 0.55f),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.rom_detail_close))
+            }
+        }
+    )
+}
+
+@Composable
+private fun AppPickerDialog(
+    onDismiss: () -> Unit,
+    onAppSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val installedApps = remember {
+        val pm = context.packageManager
+        val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+            addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+        }
+        pm.queryIntentActivities(intent, 0)
+            .map { info ->
+                val label = info.loadLabel(pm).toString()
+                val pkg = info.activityInfo.packageName
+                label to pkg
+            }
+            .sortedBy { it.first.lowercase() }
+    }
+
+    AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.95f),
+        onDismissRequest = onDismiss,
+        containerColor = OledCardColor,
+        title = {
+            Text(
+                text = stringResource(R.string.rom_emulator_choose_app_title),
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                installedApps.forEach { (label, pkg) ->
+                    TextButton(
+                        onClick = { onAppSelected(pkg) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = label,
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }

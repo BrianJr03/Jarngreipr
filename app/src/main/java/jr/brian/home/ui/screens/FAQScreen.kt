@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -59,6 +60,7 @@ import kotlinx.coroutines.launch
 private const val SECTION_GENERAL = "general"
 private const val SECTION_THEMING = "theming"
 private const val SECTION_JINGLES = "jingles"
+private const val SECTION_ROM_SEARCH = "rom_search"
 
 @Composable
 fun FAQScreen(
@@ -156,6 +158,24 @@ fun FAQScreen(
                             FAQCard(
                                 question = stringResource(R.string.jingles_faq_inconsistent_q),
                                 answer = stringResource(R.string.jingles_faq_inconsistent_a)
+                            )
+                        }
+                    }
+
+                    item(key = SECTION_ROM_SEARCH) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_rom_search),
+                            icon = Icons.Default.SportsEsports,
+                            isExpanded = expandedSection == SECTION_ROM_SEARCH,
+                            onToggle = { toggleSection(SECTION_ROM_SEARCH) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_rom_search_what_question),
+                                answer = stringResource(R.string.faq_rom_search_what_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_rom_search_emulator_question),
+                                answer = stringResource(R.string.faq_rom_search_emulator_answer)
                             )
                         }
                     }

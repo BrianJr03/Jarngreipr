@@ -22,7 +22,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +35,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -46,16 +53,19 @@ import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import androidx.core.content.edit
 
 @AndroidEntryPoint
 class RomSearchResultsActivity : ComponentActivity() {
-
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -69,6 +79,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     // Holds a game launch that needs SAF access before it can proceed.
     private var pendingGameLaunch: Pair<GameInfo, Context>? = null
+
     // Holds the system name for a manual folder-change request (no auto-launch after grant).
     private var pendingFolderChangeSystem: String? = null
 
@@ -87,12 +98,17 @@ class RomSearchResultsActivity : ComponentActivity() {
 
         // Detect if this is internal storage (primary:...) and extract the real path.
         // If so, update romsPaths so resolveRomPath picks up the correct root without SAF.
-        val treeDocId = try { DocumentsContract.getTreeDocumentId(treeUri) } catch (_: Exception) { null }
+        val treeDocId = try {
+            DocumentsContract.getTreeDocumentId(treeUri)
+        } catch (_: Exception) {
+            null
+        }
         if (treeDocId?.startsWith("primary:") == true) {
             val rel = treeDocId.removePrefix("primary:")  // e.g. "Roms/psp" or "Roms"
             val pickedDir = "/storage/emulated/0/$rel"
             val romsRoot = if (systemName != null &&
-                File(pickedDir).name.equals(systemName, ignoreCase = true)) {
+                File(pickedDir).name.equals(systemName, ignoreCase = true)
+            ) {
                 File(pickedDir).parent ?: pickedDir
             } else {
                 pickedDir
@@ -143,6 +159,46 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val scope = rememberCoroutineScope()
                     val animDurationEnter = 220
                     val animDurationExit = 180
+
+                    var showExperimentalDialog by remember {
+                        val prefs = getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+                        mutableStateOf(!prefs.getBoolean("experimental_shown", false))
+                    }
+
+                    if (showExperimentalDialog) {
+                        fun markShown() {
+                            showExperimentalDialog = false
+                            getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+                                .edit { putBoolean("experimental_shown", true) }
+                        }
+                        AlertDialog(
+                            onDismissRequest = { markShown() },
+                            containerColor = OledCardColor,
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.rom_search_experimental_title),
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.rom_search_experimental_message),
+                                    color = Color.White.copy(alpha = 0.75f),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { markShown() }) {
+                                    Text(
+                                        text = stringResource(R.string.rom_search_experimental_got_it),
+                                        color = ThemeAccentColor
+                                    )
+                                }
+                            },
+                            dismissButton = {}
+                        )
+                    }
 
                     fun dismiss() {
                         isVisible = false
@@ -247,8 +303,12 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isLoading = isLoading,
                                     isHiddenMode = isHiddenMode,
                                     modifier = Modifier.fillMaxSize(),
-                                    onLaunchGame = { game -> launchGame(game, context) },
+                                    onLaunchGame = { game ->
+                                        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                        launchGame(game, context)
+                                    },
                                     onLaunchWithEmulator = { game, pkg ->
+                                        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
                                         launchGameWithEmulator(game, pkg)
                                     },
                                     onSaveEmulator = { game, pkg, cmd ->
@@ -281,7 +341,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     isRetroArchGame = { game ->
                                         val saved = esdePrefs.getGameEmulator(gameKey(game))
-                                        (saved ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
+                                        (saved
+                                            ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
                                     },
                                     hasSavedCore = { game ->
                                         esdePrefs.getGameCore(gameKey(game)) != null
@@ -294,8 +355,13 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         pendingFolderChangeSystem = game.systemName
                                         val romPath = resolveRomPath(game)
                                         val hint = romPath?.let {
-                                            val dir = java.io.File(it).parent ?: "/storage/emulated/0"
-                                            android.net.Uri.parse("content://com.android.externalstorage.documents/document/${android.net.Uri.encode("primary:${dir.removePrefix("/storage/emulated/0/")}")}")
+                                            val dir =
+                                                java.io.File(it).parent ?: "/storage/emulated/0"
+                                            "content://com.android.externalstorage.documents/document/${
+                                                Uri.encode(
+                                                    "primary:${dir.removePrefix("/storage/emulated/0/")}"
+                                                )
+                                            }".toUri()
                                         }
                                         safTreeLauncher.launch(hint)
                                     },
@@ -331,27 +397,40 @@ class RomSearchResultsActivity : ComponentActivity() {
         if (game.romAbsolutePath != null) return game.romAbsolutePath
         val romsPaths = esdePrefs.state.value.romsPaths +
                 listOf("/storage/emulated/0/Roms")
-        val filename = File(game.path).name  // strips subdirectory prefix e.g. "Games/Title.iso" → "Title.iso"
+        val filename =
+            File(game.path).name  // strips subdirectory prefix e.g. "Games/Title.iso" → "Title.iso"
 
         // PSP and PS2: build path directly — no existence check, since File.exists() can
         // return false for these paths even when the file is there (permission timing).
         if (game.systemName.equals("psp", ignoreCase = true) ||
-            game.systemName.equals("ps2", ignoreCase = true)) {
+            game.systemName.equals("ps2", ignoreCase = true)
+        ) {
             val root = romsPaths.firstOrNull() ?: "/storage/emulated/0/Roms"
             return File(root, "${game.systemName}/$filename").absolutePath
         }
 
         for (root in romsPaths) {
             // 1. root / systemName / full-path  (e.g. Roms/ps2/Games/Title.iso)
-            File(root, "${game.systemName}/${game.path}").let { if (it.exists()) return it.absolutePath }
+            File(
+                root,
+                "${game.systemName}/${game.path}"
+            ).let { if (it.exists()) return it.absolutePath }
             // 2. root / systemName / bare filename  (e.g. Roms/ps2/Title.iso)
-            File(root, "${game.systemName}/$filename").let { if (it.exists()) return it.absolutePath }
+            File(
+                root,
+                "${game.systemName}/$filename"
+            ).let { if (it.exists()) return it.absolutePath }
             // 3. root already contains system folder: root / full-path or bare filename
             File(root, game.path).let { if (it.exists()) return it.absolutePath }
             File(root, filename).let { if (it.exists()) return it.absolutePath }
             // 4. Case-insensitive system folder scan (e.g. "PSP" vs "psp")
             File(root).listFiles()
-                ?.firstOrNull { it.isDirectory && it.name.equals(game.systemName, ignoreCase = true) }
+                ?.firstOrNull {
+                    it.isDirectory && it.name.equals(
+                        game.systemName,
+                        ignoreCase = true
+                    )
+                }
                 ?.let { systemDir ->
                     File(systemDir, game.path).let { if (it.exists()) return it.absolutePath }
                     File(systemDir, filename).let { if (it.exists()) return it.absolutePath }
@@ -372,6 +451,7 @@ class RomSearchResultsActivity : ComponentActivity() {
         val documentId = when {
             romAbsPath.startsWith("/storage/emulated/0/") ->
                 "primary:${romAbsPath.removePrefix("/storage/emulated/0/")}"
+
             else -> {
                 val volId = sdCardVolumeId(romAbsPath) ?: return null
                 "$volId:${romAbsPath.removePrefix("/storage/$volId/")}"
@@ -379,7 +459,9 @@ class RomSearchResultsActivity : ComponentActivity() {
         }
         return try {
             DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
-        } catch (_: Exception) { null }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**
@@ -396,7 +478,11 @@ class RomSearchResultsActivity : ComponentActivity() {
      * Builds an authorized SAF document URI using the tree grant stored for [systemName].
      * Returns null if no tree has been granted yet for this system (caller should request one).
      */
-    private fun buildSafDocumentUri(absolutePath: String, volumeId: String, systemName: String): Uri? {
+    private fun buildSafDocumentUri(
+        absolutePath: String,
+        volumeId: String,
+        systemName: String
+    ): Uri? {
         val treeUriString = esdePrefs.getSafTreeUri(systemName) ?: return null
         val treeUri = treeUriString.toUri()
         val relativePath = absolutePath.removePrefix("/storage/$volumeId/")
@@ -410,7 +496,8 @@ class RomSearchResultsActivity : ComponentActivity() {
     ) {
         // Android apps have no ROM file — launch the package directly.
         if (game.systemName.equals("androidgames", ignoreCase = true) ||
-            game.systemName.equals("androidapps", ignoreCase = true)) {
+            game.systemName.equals("androidapps", ignoreCase = true)
+        ) {
             // ES-DE stores the package name with a .app extension (e.g. "com.amazon.luna.app").
             // Some entries use a display name instead (e.g. "Amazon Luna.app"), so if a direct
             // package lookup fails we fall back to searching installed apps by label.
@@ -430,7 +517,10 @@ class RomSearchResultsActivity : ComponentActivity() {
         }
 
         val romPath = resolveRomPath(game) ?: run {
-            Log.e("RomSearchResults", "ROM path not resolved | system=${game.systemName} path=${game.path}")
+            Log.e(
+                "RomSearchResults",
+                "ROM path not resolved | system=${game.systemName} path=${game.path}"
+            )
             Toast.makeText(context, "ROM path not found", Toast.LENGTH_SHORT).show()
             return
         }
@@ -455,7 +545,11 @@ class RomSearchResultsActivity : ComponentActivity() {
                     startActivity(intent, options.toBundle())
                     finish()
                 } else {
-                    Toast.makeText(context, "No emulator configured for this game", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "No emulator configured for this game",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 return
             }
@@ -475,14 +569,55 @@ class RomSearchResultsActivity : ComponentActivity() {
             return
         }
 
-        val corePath = if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
+        // If a launch command was saved (e.g. GameNative, GameHub, Winlator), use it directly
+        val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
+        if (savedCommand != null) {
+            val findRulesFile =
+                File(filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
+                    if (f.exists()) f else File("/storage/emulated/0/ES-DE/custom_systems/es_find_rules.xml")
+                }
+            val customRules = EsdeCommandLauncher.parseCustomRules(findRulesFile)
+            val intent = EsdeCommandLauncher.buildIntent(savedCommand, romPath, context, customRules)
+                ?: run {
+                    Toast.makeText(context, "Failed to build launch intent", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+            Log.d("RomSearchResults", "launchGame (command) | cmd=$savedCommand rom=$romPath")
+            signalGameLaunch()
+            startActivity(intent, options.toBundle())
+            finish()
+            return
+        }
+
+        val corePath =
+            if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
         val effectiveContentUri: Uri = resolveContentUri(game, romPath, context) ?: return
 
         Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$effectiveContentUri")
 
         try {
-            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, effectiveContentUri, context, corePath)
+            val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
+                pkg,
+                romPath,
+                effectiveContentUri,
+                context,
+                corePath
+            )
             val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+            val canHandleRom = packageManager.resolveActivity(romIntent, 0) != null
+            val intent = if (canHandleRom) {
+                romIntent
+            } else {
+                // App doesn't handle ROM intents (e.g. chosen via "Choose App") — plain launch
+                packageManager.getLaunchIntentForPackage(pkg)
+                    ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                    ?: run {
+                        Toast.makeText(context, "App not installed: $pkg", Toast.LENGTH_SHORT)
+                            .show()
+                        return
+                    }
+            }
             signalGameLaunch()
             startActivity(intent, options.toBundle())
             finish()
@@ -506,13 +641,18 @@ class RomSearchResultsActivity : ComponentActivity() {
                 // Hint at the ROM's parent directory so the picker opens in the right folder.
                 val romDir = File(romPath).parent ?: "/storage/$volumeId"
                 val relDir = romDir.removePrefix("/storage/$volumeId/")
-                val hint = "content://com.android.externalstorage.documents/document/${Uri.encode("$volumeId:$relDir")}".toUri()
+                val hint =
+                    "content://com.android.externalstorage.documents/document/${Uri.encode("$volumeId:$relDir")}".toUri()
                 safTreeLauncher.launch(hint)
                 null
             } else safUri
         } else {
             try {
-                FileProvider.getUriForFile(context, "${context.packageName}.provider", File(romPath))
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.provider",
+                    File(romPath)
+                )
             } catch (e: Exception) {
                 Log.w("RomSearchResults", "FileProvider failed, using file URI", e)
                 Uri.fromFile(File(romPath))
@@ -525,13 +665,16 @@ class RomSearchResultsActivity : ComponentActivity() {
         managers.feature.jinglesManager.onGameLaunched()
     }
 
-    private fun gameKey(game: GameInfo) = game.systemName
+    private fun gameKey(game: GameInfo) = "${game.systemName}/${game.path}"
     private fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 
     private fun launchGameWithEmulator(game: GameInfo, emulatorPackage: String) {
         esdePrefs.setGameEmulator(gameKey(game), emulatorPackage)
         val romPath = resolveRomPath(game) ?: run {
-            Log.e("RomSearchResults", "launchGameWithEmulator: ROM path could not be resolved | systemName=${game.systemName} path=${game.path}")
+            Log.e(
+                "RomSearchResults",
+                "launchGameWithEmulator: ROM path could not be resolved | systemName=${game.systemName} path=${game.path}"
+            )
             Toast.makeText(this, "ROM path not found", Toast.LENGTH_SHORT).show()
             return
         }
@@ -543,7 +686,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                 pendingGameLaunch = game to this
                 val romDir = File(romPath).parent ?: "/storage/emulated/0"
                 val rel = romDir.removePrefix("/storage/emulated/0/")
-                val hint = "content://com.android.externalstorage.documents/document/${Uri.encode("primary:$rel")}".toUri()
+                val hint =
+                    "content://com.android.externalstorage.documents/document/${Uri.encode("primary:$rel")}".toUri()
                 safTreeLauncher.launch(hint)
                 return
             }
@@ -552,15 +696,33 @@ class RomSearchResultsActivity : ComponentActivity() {
             contentUri = resolveContentUri(game, romPath, this) ?: return
         }
         try {
-            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(
+            val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
                 packageName = emulatorPackage,
                 romAbsPath = romPath,
                 contentUri = contentUri,
                 context = this
             )
-            Log.d("RomSearchResults", "  → intent data=${intent.data} extras=${intent.extras}")
+            Log.d(
+                "RomSearchResults",
+                "  → intent data=${romIntent.data} extras=${romIntent.extras}"
+            )
             val options = ActivityOptions.makeBasic()
             options.launchDisplayId = 0
+            val canHandleRom = packageManager.resolveActivity(romIntent, 0) != null
+            val intent = if (canHandleRom) {
+                romIntent
+            } else {
+                packageManager.getLaunchIntentForPackage(emulatorPackage)
+                    ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                    ?: run {
+                        Toast.makeText(
+                            this,
+                            "App not installed: $emulatorPackage",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return
+                    }
+            }
             signalGameLaunch()
             startActivity(intent, options.toBundle())
             finish()

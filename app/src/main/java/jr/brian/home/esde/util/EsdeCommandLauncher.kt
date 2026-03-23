@@ -94,6 +94,25 @@ object EsdeCommandLauncher {
         ),
         "EDEN" to listOf(
             "dev.eden.eden_emulator/dev.eden.eden_emulator.ui.main.MainActivity"
+        ),
+        "GAMENATIVE" to listOf(
+            "app.gamenative/app.gamenative.MainActivity"
+        ),
+        "GAMEHUB-LITE" to listOf(
+            "gamehub.lite/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity",
+            "com.xj.landscape.launcher/com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity"
+        ),
+        "WINLATOR-CMOD" to listOf(
+            "com.winlator.cmod/com.winlator.MainActivity"
+        ),
+        "WINLATOR-LUDASHI" to listOf(
+            "com.winlator.ludashi/com.winlator.MainActivity"
+        ),
+        "WINLATOR-GLIBC" to listOf(
+            "com.winlator.glibc/com.winlator.MainActivity"
+        ),
+        "WINLATOR-PROOT" to listOf(
+            "com.winlator.proot/com.winlator.MainActivity"
         )
     )
 
@@ -304,13 +323,51 @@ object EsdeCommandLauncher {
         return commands
     }
 
+    // Built-in command definitions for systems whose es_systems.xml lives inside the ES-DE APK
+    // and is therefore not accessible to us. Used as a fallback when no custom file is found.
+    private val BUILTIN_SYSTEM_COMMANDS: Map<String, List<Pair<String, String>>> = mapOf(
+        "steam" to listOf(
+            "GameNative" to
+                "%EMULATOR_GAMENATIVE% %ACTION%=app.gamenative.LAUNCH_GAME %EXTRAINTEGER_app_id%=%INJECT%=%ROM%",
+            "GameHub Lite (Steam)" to
+                "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_steamAppId%=%INJECT%=%ROM%",
+            "GameHub Lite (Local)" to
+                "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_localGameId%=%INJECT%=%ROM%"
+        ),
+        "windows" to listOf(
+            "Winlator Cmod" to
+                "%EMULATOR_WINLATOR-CMOD% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %EXTRA_shortcut_path%=%ROM%",
+            "Winlator Ludashi" to
+                "%EMULATOR_WINLATOR-LUDASHI% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %EXTRA_shortcut_path%=%ROM%",
+            "Winlator Glibc" to
+                "%EMULATOR_WINLATOR-GLIBC% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %EXTRA_shortcut_path%=%ROM%",
+            "Winlator PRoot" to
+                "%EMULATOR_WINLATOR-PROOT% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %EXTRA_shortcut_path%=%ROM%",
+            "GameNative" to
+                "%EMULATOR_GAMENATIVE% %ACTION%=app.gamenative.LAUNCH_GAME %EXTRAINTEGER_app_id%=%INJECT%=%ROM%",
+            "GameHub Lite (Steam)" to
+                "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_steamAppId%=%INJECT%=%ROM%",
+            "GameHub Lite (Local)" to
+                "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_localGameId%=%INJECT%=%ROM%"
+        )
+    )
+
     fun getCompatibleEmulatorsFromSystem(
         context: Context,
         systemName: String,
         esSystemsFile: File,
         customRules: Map<String, List<String>> = emptyMap()
     ): List<EmulatorOption> {
-        val commands = parseSystemCommands(esSystemsFile, systemName)
+        val parsed = parseSystemCommands(esSystemsFile, systemName)
+        // Fall back to built-in commands when the custom es_systems.xml has no entry for this system
+        val builtin = BUILTIN_SYSTEM_COMMANDS[systemName] ?: emptyList()
+        val commands = if (parsed.isNotEmpty()) {
+            // Merge: custom overrides built-in; add built-in labels not already present
+            val customLabels = parsed.map { it.first }.toHashSet()
+            parsed + builtin.filter { it.first !in customLabels }
+        } else {
+            builtin
+        }
         if (commands.isEmpty()) return emptyList()
         val emulatorRegex = Regex("""%EMULATOR_([^%]+)%""")
         val result = mutableListOf<EmulatorOption>()
@@ -455,9 +512,23 @@ object EsdeCommandLauncher {
 
         val extraRegex = Regex("""%EXTRA_([^%]+)%=([^\s]+)""")
         for (match in extraRegex.findAll(remaining)) {
-            val key = match.groupValues[1].lowercase()
+            val key = match.groupValues[1]
             val value = resolveToken(match.groupValues[2], romAbsPath, packageName)
             intent.putExtra(key, value)
+        }
+
+        val extraIntegerRegex = Regex("""%EXTRAINTEGER_([^%]+)%=([^\s]+)""")
+        for (match in extraIntegerRegex.findAll(remaining)) {
+            val key = match.groupValues[1]
+            val value = resolveToken(match.groupValues[2], romAbsPath, packageName)
+            intent.putExtra(key, value.toIntOrNull() ?: 0)
+        }
+
+        val extraBoolRegex = Regex("""%EXTRABOOL_([^%]+)%=([^\s]+)""")
+        for (match in extraBoolRegex.findAll(remaining)) {
+            val key = match.groupValues[1]
+            val value = match.groupValues[2]
+            intent.putExtra(key, value.equals("true", ignoreCase = true))
         }
 
         val dataMatch = Regex("""%DATA%=([^\s]+)""").find(remaining)
@@ -768,6 +839,12 @@ object EsdeCommandLauncher {
     }
 
     private fun resolveToken(token: String, romAbsPath: String, packageName: String): String {
+        // %INJECT%=<path_token> — read the file content instead of using the path
+        if (token.startsWith("%INJECT%=")) {
+            val pathToken = token.removePrefix("%INJECT%=")
+            val filePath = resolveToken(pathToken, romAbsPath, packageName)
+            return try { File(filePath).readText().trim() } catch (_: Exception) { filePath }
+        }
         return token
             .replace("%ROM%", romAbsPath)
             .replace("%ANDROIDPACKAGE%", packageName)
