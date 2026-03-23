@@ -3,7 +3,7 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
-import android.graphics.Paint
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -19,16 +19,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import jr.brian.home.R
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,18 +40,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import jr.brian.home.R
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import java.io.File
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun RomSearchScreen(
     onDismiss: () -> Unit = {},
@@ -63,6 +71,9 @@ fun RomSearchScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
     val keyboardVisible by viewModel.keyboardVisible.collectAsStateWithLifecycle()
+
+    var showSpecialCharRow by remember { mutableStateOf(false) }
+    val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
 
     LaunchedEffect(Unit) {
         viewModel.loadGames()
@@ -92,9 +103,6 @@ fun RomSearchScreen(
         }
     }
 
-    var showSpecialCharRow by remember { mutableStateOf(false) }
-    val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
-
     Surface(
         color = OledBackgroundColor,
         modifier = Modifier.fillMaxSize()
@@ -114,18 +122,21 @@ fun RomSearchScreen(
             }
 
             AnimatedVisibility(visible = keyboardVisible) {
-                QwertyKeyboard(
-                    searchQuery = query,
-                    onQueryChange = { viewModel.updateQuery(it) },
-                    keyboardFocusRequesters = keyboardFocusRequesters,
-                    showSpecialCharRow = showSpecialCharRow,
-                    showFlipLayoutButton = false,
-                    onSpecialCharToggle = { showSpecialCharRow = !showSpecialCharRow },
-                    onReopenResults = { launchResultsActivity(context) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    QwertyKeyboard(
+                        searchQuery = query,
+                        onQueryChange = { viewModel.updateQuery(it) },
+                        keyboardFocusRequesters = keyboardFocusRequesters,
+                        showSpecialCharRow = showSpecialCharRow,
+                        showFlipLayoutButton = false,
+                        showVolControl = true,
+                        onSpecialCharToggle = { showSpecialCharRow = !showSpecialCharRow },
+                        onReopenResults = { launchResultsActivity(context) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                }
             }
         }
     }

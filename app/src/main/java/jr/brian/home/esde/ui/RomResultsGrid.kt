@@ -111,7 +111,7 @@ internal fun RomResultsGrid(
         modifier = modifier.then(
             if (selectedGame != null)
                 Modifier else
-                Modifier.padding(8.dp)
+                Modifier.padding(horizontal = 8.dp)
         )
     ) {
         when {
@@ -163,7 +163,7 @@ internal fun RomResultsGrid(
                                 else -> false
                             }
                         },
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
