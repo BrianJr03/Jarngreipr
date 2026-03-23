@@ -45,7 +45,8 @@ fun Modifier.animatedGradientBorder(
         drawContent()
         val strokePx = borderWidth.toPx()
         val outline = shape.createOutline(size, layoutDirection, density)
-        val argbColors = colors.map { it.toArgb() }.toIntArray()
+        val safeColors = if (colors.size < 2) colors + colors else colors
+        val argbColors = safeColors.map { it.toArgb() }.toIntArray()
         val brush = object : ShaderBrush() {
             override fun createShader(size: Size): android.graphics.Shader {
                 val shader = android.graphics.SweepGradient(

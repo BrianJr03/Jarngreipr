@@ -1,5 +1,6 @@
 package jr.brian.home.esde.util
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -447,26 +448,6 @@ object EsdeCommandLauncher {
         return rules
     }
 
-    fun resolvePackage(
-        launchCommand: String?,
-        context: Context,
-        customRules: Map<String, List<String>> = emptyMap()
-    ): String? {
-        launchCommand ?: return null
-        val emulatorName =
-            Regex("""%EMULATOR_([^%]+)%""").find(launchCommand)?.groupValues?.get(1) ?: return null
-        val allEntries = (customRules[emulatorName] ?: emptyList()) + (BUILTIN_RULES[emulatorName]
-            ?: emptyList())
-        return allEntries.firstOrNull { entry ->
-            val pkg = entry.substringBefore("/")
-            try {
-                context.packageManager.getPackageInfo(pkg, 0); true
-            } catch (_: PackageManager.NameNotFoundException) {
-                false
-            }
-        }?.substringBefore("/")
-    }
-
     fun buildIntent(
         launchCommand: String,
         romAbsPath: String,
@@ -542,26 +523,6 @@ object EsdeCommandLauncher {
         }
 
         return intent
-    }
-
-    /**
-     * Builds a ROM-launch intent using per-emulator intent contracts sourced from dual-play-launcher.
-     * This is the primary launch path since launchCommand is null for all default ES-DE systems
-     * (their commands live inside the ES-DE APK, not in any user-accessible file).
-     */
-    fun buildRomIntentFromPackage(
-        packageName: String,
-        romAbsPath: String,
-        context: Context,
-        corePath: String? = null
-    ): Intent {
-        val romFile = File(romAbsPath)
-        val contentUri = try {
-            FileProvider.getUriForFile(context, "${context.packageName}.provider", romFile)
-        } catch (_: Exception) {
-            android.net.Uri.fromFile(romFile)
-        }
-        return buildRomIntentFromPackage(packageName, romAbsPath, contentUri, context, corePath)
     }
 
     /**
@@ -758,6 +719,7 @@ object EsdeCommandLauncher {
      * a list of (displayName, absolutePath) pairs for each .so found.
      * displayName is derived from the filename, e.g. "mgba_libretro_android.so" → "mGBA".
      */
+    @SuppressLint("SdCardPath")
     fun getInstalledCores(context: Context): List<Pair<String, String>> {
         val pkg = listOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32")
             .firstOrNull { p ->
@@ -798,45 +760,6 @@ object EsdeCommandLauncher {
         "MAME" to "mame",
         "FinalBurn Neo" to "fbneo",
     )
-
-    private fun coreDisplayName(stem: String): String {
-        // "mgba_libretro_android" → "mgba" → pretty-print
-        val stripped = stem.removeSuffix("_libretro_android").removeSuffix("_libretro")
-        val knownNames = mapOf(
-            "mgba" to "mGBA",
-            "vba_next" to "VBA Next",
-            "gpsp" to "gpSP",
-            "snes9x" to "Snes9x",
-            "snes9x2010" to "Snes9x 2010",
-            "nestopia" to "Nestopia",
-            "fceumm" to "FCEUmm",
-            "genesis_plus_gx" to "Genesis Plus GX",
-            "picodrive" to "PicoDrive",
-            "mupen64plus_next" to "Mupen64Plus-Next",
-            "parallel_n64" to "ParaLLEl N64",
-            "pcsx_rearmed" to "PCSX ReARMed",
-            "mednafen_psx_hw" to "Beetle PSX HW",
-            "beetle_psx_hw" to "Beetle PSX HW",
-            "desmume" to "DeSmuME",
-            "melonds" to "melonDS",
-            "citra" to "Citra",
-            "dolphin" to "Dolphin",
-            "ppsspp" to "PPSSPP",
-            "flycast" to "Flycast",
-            "mame" to "MAME",
-            "fbneo" to "FinalBurn Neo",
-            "opera" to "Opera (3DO)",
-            "mednafen_saturn" to "Beetle Saturn",
-            "yabause" to "Yabause",
-            "bluemsx" to "BlueMSX",
-            "fmsx" to "fMSX",
-            "mesen" to "Mesen",
-            "bsnes" to "bsnes",
-            "bsnes_mercury_accuracy" to "bsnes-mercury Accuracy"
-        )
-        return knownNames[stripped]
-            ?: stripped.split("_").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
-    }
 
     private fun resolveToken(token: String, romAbsPath: String, packageName: String): String {
         // %INJECT%=<path_token> — read the file content instead of using the path
