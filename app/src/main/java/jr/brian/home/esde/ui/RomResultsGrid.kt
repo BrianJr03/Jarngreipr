@@ -56,7 +56,8 @@ internal fun RomResultsGrid(
     onToggleKeyboard: () -> Unit = {},
     isRetroArchGame: (GameInfo) -> Boolean = { false },
     hasSavedCore: (GameInfo) -> Boolean = { false },
-    onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> }
+    onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
+    onChangeFolder: (GameInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
@@ -171,6 +172,10 @@ internal fun RomResultsGrid(
                 },
                 onPickEmulator = { showEmulatorPicker = true },
                 onChangeCore = { showCorePicker = true },
+                onChangeFolder = {
+                    onChangeFolder(game)
+                    selectedGame = null
+                },
                 onHide = {
                     onHideGame(game)
                     selectedGame = null

@@ -68,6 +68,7 @@ internal fun EmulatorPickerDialog(
     }
 
     AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.95f),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         title = {
@@ -123,6 +124,7 @@ internal fun RomDetailDialog(
     onLaunch: () -> Unit,
     onPickEmulator: () -> Unit = {},
     onChangeCore: () -> Unit = {},
+    onChangeFolder: () -> Unit = {},
     onHide: () -> Unit = {},
     onUnhide: () -> Unit = {}
 ) {
@@ -130,6 +132,7 @@ internal fun RomDetailDialog(
     val context = LocalContext.current
 
     AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.95f),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         title = {
@@ -227,6 +230,9 @@ internal fun RomDetailDialog(
                     TextButton(onClick = onChangeCore) {
                         Text(text = "Change Core", color = ThemeAccentColor)
                     }
+                    TextButton(onClick = onChangeFolder) {
+                        Text(text = "Change Folder", color = ThemeAccentColor)
+                    }
                 }
                 if (isHidden) {
                     TextButton(onClick = onUnhide) {
@@ -262,6 +268,7 @@ internal fun RetroArchCorePickerDialog(
     }
 
     AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.95f),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         title = {
