@@ -208,7 +208,8 @@ data class ESDEPrefsState(
     val gameEmulatorMap: Map<String, String> = emptyMap(),
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
-    val hiddenGames: Set<String> = emptySet()
+    val hiddenGames: Set<String> = emptySet(),
+    val romSearchUseWallpaper: Boolean = true
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

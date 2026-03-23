@@ -102,6 +102,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -427,7 +428,8 @@ class ESDEPreferencesManager(context: Context) {
                         val obj = JSONObject(json)
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
-                } ?: emptyMap()
+                } ?: emptyMap(),
+            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, true)
         )
     }
 
@@ -842,6 +844,11 @@ class ESDEPreferencesManager(context: Context) {
     fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
         _state.value = _state.value.copy(wallpaperToggleTarget = target)
         prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
+    }
+
+    fun setRomSearchUseWallpaper(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchUseWallpaper = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, enabled) }
     }
 
     fun addRomsPath(path: String) {
