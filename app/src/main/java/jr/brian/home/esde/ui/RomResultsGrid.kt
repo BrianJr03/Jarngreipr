@@ -107,7 +107,13 @@ internal fun RomResultsGrid(
         }
     }
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.then(
+            if (selectedGame != null)
+                Modifier else
+                Modifier.padding(8.dp)
+        )
+    ) {
         when {
             isLoading -> {
                 CircularProgressIndicator(
@@ -138,10 +144,22 @@ internal fun RomResultsGrid(
                         .onKeyEvent { keyEvent ->
                             if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                             when (keyEvent.nativeKeyEvent.keyCode) {
-                               KeyEvent.KEYCODE_DPAD_RIGHT -> { moveFocus(1); true }
-                                KeyEvent.KEYCODE_DPAD_LEFT  -> { moveFocus(-1); true }
-                                KeyEvent.KEYCODE_DPAD_DOWN  -> { moveFocus(NUM_COLS); true }
-                                KeyEvent.KEYCODE_DPAD_UP    -> { moveFocus(-NUM_COLS); true }
+                                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                    moveFocus(1); true
+                                }
+
+                                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                    moveFocus(-1); true
+                                }
+
+                                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                    moveFocus(NUM_COLS); true
+                                }
+
+                                KeyEvent.KEYCODE_DPAD_UP -> {
+                                    moveFocus(-NUM_COLS); true
+                                }
+
                                 else -> false
                             }
                         },
@@ -178,6 +196,7 @@ internal fun RomResultsGrid(
                                         selectedGame = game
                                         showCorePicker = true
                                     }
+
                                     hasEmulator -> onLaunchGame(game)
                                     else -> {
                                         selectedGame = game

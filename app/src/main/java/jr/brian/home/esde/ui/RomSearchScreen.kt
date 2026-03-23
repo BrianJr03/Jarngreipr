@@ -3,18 +3,32 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
+import android.graphics.Paint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import jr.brian.home.R
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -90,9 +104,13 @@ fun RomSearchScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                contentAlignment = if (focusedGame?.marqueeImagePath != null) Alignment.Center else Alignment.TopCenter
             ) {
-                MarqueeDisplay(game = focusedGame)
+                if (focusedGame?.marqueeImagePath != null) {
+                    MarqueeDisplay(game = focusedGame)
+                } else {
+                    RomSearchControlHints()
+                }
             }
 
             AnimatedVisibility(visible = keyboardVisible) {
@@ -109,6 +127,52 @@ fun RomSearchScreen(
                         .padding(bottom = 8.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RomSearchControlHints() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Keyboard,
+                contentDescription = null,
+                tint = ThemePrimaryColor.copy(alpha = 0.5f),
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = stringResource(R.string.rom_search_hint_keyboard),
+                color = ThemePrimaryColor.copy(alpha = 0.5f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.rom_search_hint_details),
+                color = ThemePrimaryColor.copy(alpha = 0.5f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = ThemePrimaryColor.copy(alpha = 0.5f),
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }

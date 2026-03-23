@@ -1088,6 +1088,10 @@
     <string name="esde_settings_delete_button">Delete</string>
     <string name="esde_settings_cancel_button">Cancel</string>
 
+    <!-- ROM Search hints -->
+    <string name="rom_search_hint_keyboard">Select: toggle keyboard</string>
+    <string name="rom_search_hint_details">Start: open details</string>
+
     <!-- Search Settings -->
     <string name="esde_settings_section_search">Search</string>
     <string name="esde_settings_rom_search_use_wallpaper">Show System Wallpaper</string>
