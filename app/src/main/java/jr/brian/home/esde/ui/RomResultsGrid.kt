@@ -63,6 +63,7 @@ internal fun RomResultsGrid(
     isLoading: Boolean,
     modifier: Modifier = Modifier,
     isHiddenMode: Boolean = false,
+    backgroundTransparent: Boolean = false,
     onLaunchGame: (GameInfo) -> Unit,
     onSaveEmulator: (GameInfo, String, String?) -> Unit = { _, _, _ -> },
     hasSavedEmulator: (GameInfo) -> Boolean = { false },
@@ -133,8 +134,7 @@ internal fun RomResultsGrid(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(OledBackgroundColor)
-                        .padding(horizontal = 4.dp)
+                        .background(if (backgroundTransparent) Color.Transparent else OledBackgroundColor)
                         .onKeyEvent { keyEvent ->
                             if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                             when (keyEvent.nativeKeyEvent.keyCode) {
@@ -145,7 +145,7 @@ internal fun RomResultsGrid(
                                 else -> false
                             }
                         },
-                    contentPadding = PaddingValues(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {

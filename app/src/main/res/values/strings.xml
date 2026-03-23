@@ -1088,6 +1088,11 @@
     <string name="esde_settings_delete_button">Delete</string>
     <string name="esde_settings_cancel_button">Cancel</string>
 
+    <!-- Search Settings -->
+    <string name="esde_settings_section_search">Search</string>
+    <string name="esde_settings_rom_search_use_wallpaper">Show System Wallpaper</string>
+    <string name="esde_settings_rom_search_use_wallpaper_description">Display your system wallpaper behind ROM search results. When disabled, an OLED-friendly dark background is used instead.</string>
+
     <!-- What\'s New Dialog -->
     <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
 

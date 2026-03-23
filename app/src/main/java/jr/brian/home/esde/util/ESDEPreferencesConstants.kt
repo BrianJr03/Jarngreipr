@@ -89,4 +89,5 @@ object ESDEPreferencesConstants {
     const val KEY_GAME_CORE_MAP = "game_core_map"
     const val KEY_HIDDEN_GAMES = "hidden_games"
     const val KEY_SAF_TREE_URIS = "saf_tree_uris"
+    const val KEY_ROM_SEARCH_USE_WALLPAPER = "rom_search_use_wallpaper"
 }
