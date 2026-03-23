@@ -1,28 +1,42 @@
 package jr.brian.home.esde.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -31,6 +45,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import java.io.File
@@ -116,10 +131,9 @@ internal fun EmulatorPickerDialog(
 }
 
 @Composable
-internal fun RomDetailDialog(
+internal fun RomDetailScreen(
     game: GameInfo,
     isHidden: Boolean = false,
-    isRetroArch: Boolean = false,
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
     onPickEmulator: () -> Unit = {},
@@ -128,26 +142,64 @@ internal fun RomDetailDialog(
     onHide: () -> Unit = {},
     onUnhide: () -> Unit = {}
 ) {
+    val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
 
-    AlertDialog(
-        modifier = Modifier.fillMaxWidth(0.95f),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        title = {
-            Text(
-                text = game.name,
-                color = Color.White.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    BackHandler(onBack = onDismiss)
+
+    Surface(
+        color = OledBackgroundColor,
+        modifier = Modifier.fillMaxSize().focusRequester(focusRequester)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.rom_detail_close),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+                Text(
+                    text = game.name,
+                    color = Color.White.copy(alpha = 0.9f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = game.systemName.uppercase(),
+                    color = ThemeAccentColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Hero image
                 (game.physicalMediaPath ?: game.artworkPath)?.let { path ->
                     AsyncImage(
                         model = ImageRequest.Builder(context)
@@ -158,26 +210,16 @@ internal fun RomDetailDialog(
                         contentDescription = game.name,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(180.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Fit
                     )
                 }
 
-                RomDetailRow(
-                    stringResource(R.string.rom_detail_system),
-                    game.systemName.uppercase()
-                )
                 game.genre?.let { RomDetailRow(stringResource(R.string.rom_detail_genre), it) }
-                game.developer?.let {
-                    RomDetailRow(stringResource(R.string.rom_detail_developer), it)
-                }
-                game.publisher?.let {
-                    RomDetailRow(stringResource(R.string.rom_detail_publisher), it)
-                }
-                game.players?.let {
-                    RomDetailRow(stringResource(R.string.rom_detail_players), it)
-                }
+                game.developer?.let { RomDetailRow(stringResource(R.string.rom_detail_developer), it) }
+                game.publisher?.let { RomDetailRow(stringResource(R.string.rom_detail_publisher), it) }
+                game.players?.let { RomDetailRow(stringResource(R.string.rom_detail_players), it) }
                 if (game.rating > 0f) {
                     RomDetailRow(
                         stringResource(R.string.rom_detail_rating),
@@ -210,51 +252,45 @@ internal fun RomDetailDialog(
                     )
                 }
             }
-        },
-        confirmButton = {
-            if (game.emulatorPackage != null || game.launchCommand != null) {
-                TextButton(onClick = onLaunch) {
-                    Text(stringResource(R.string.rom_detail_launch))
-                }
-            }
-        },
-        dismissButton = {
-            Row {
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+
+            // Bottom action bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 if (!isHidden) {
                     TextButton(onClick = onPickEmulator) {
-                        Text(
-                            text = stringResource(R.string.rom_detail_pick_emulator),
-                            color = ThemeAccentColor
-                        )
+                        Text(stringResource(R.string.rom_detail_pick_emulator), color = ThemeAccentColor)
                     }
                     TextButton(onClick = onChangeCore) {
-                        Text(text = "Change Core", color = ThemeAccentColor)
+                        Text("Change Core", color = ThemeAccentColor)
                     }
                     TextButton(onClick = onChangeFolder) {
-                        Text(text = "Change Folder", color = ThemeAccentColor)
+                        Text("Change Folder", color = ThemeAccentColor)
                     }
                 }
                 if (isHidden) {
                     TextButton(onClick = onUnhide) {
-                        Text(
-                            text = stringResource(R.string.rom_detail_unhide),
-                            color = ThemeAccentColor
-                        )
+                        Text(stringResource(R.string.rom_detail_unhide), color = ThemeAccentColor)
                     }
                 } else {
                     TextButton(onClick = onHide) {
-                        Text(
-                            text = stringResource(R.string.rom_detail_hide),
-                            color = Color.Red.copy(alpha = 0.7f)
-                        )
+                        Text(stringResource(R.string.rom_detail_hide), color = Color.Red.copy(alpha = 0.7f))
                     }
                 }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.rom_detail_close))
+                if (game.emulatorPackage != null || game.launchCommand != null) {
+                    TextButton(onClick = onLaunch) {
+                        Text(stringResource(R.string.rom_detail_launch), color = ThemeAccentColor)
+                    }
                 }
             }
         }
-    )
+    }
 }
 
 @Composable

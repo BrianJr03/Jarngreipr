@@ -14,7 +14,6 @@ import javax.inject.Inject
 class RomSearchResultsViewModel @Inject constructor(
     private val store: RomSearchStateHolder
 ) : ViewModel() {
-
     val query: StateFlow<String> = store.query.asStateFlow()
     val allGames: StateFlow<List<GameInfo>> = store.allGames.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()

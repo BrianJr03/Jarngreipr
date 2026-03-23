@@ -2,11 +2,13 @@ package jr.brian.home.ui.components.widget
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -23,6 +25,8 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppGridItem
 import kotlinx.coroutines.launch
+
+private val ICON_SIZE_DP = 64.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -47,6 +51,8 @@ fun AppGridLayout(
         horizontal = 8.dp,
         vertical = if (isHeaderVisible) 8.dp else 20.dp,
     ),
+    equalizeMargins: Boolean = false,
+    isHomeScreen: Boolean = false,
     gridState: LazyGridState = rememberLazyGridState()
 ) {
 
@@ -60,15 +66,7 @@ fun AppGridLayout(
 
     val coroutineScope = rememberCoroutineScope()
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = gridState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
-        verticalArrangement = Arrangement.spacedBy(verticalSpacing),
-
-    ) {
+    val gridContent: LazyGridScope.() -> Unit = {
         // Render apps first
         items(displayedApps.size) { index ->
             val app = displayedApps[index]
@@ -84,6 +82,7 @@ fun AppGridLayout(
                 onLongClick = { onAppLongClick(app) },
                 onDoubleClick = { onAppDoubleClick(app) },
                 onFocusChanged = { onFocusChanged(index) },
+                isHomeScreen = isHomeScreen,
                 onNavigateUp = {
                     val prevIndex = index - columns
                     if (prevIndex >= 0) {
@@ -134,5 +133,43 @@ fun AppGridLayout(
         item {
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    if (equalizeMargins) {
+        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+            val topPadding = contentPadding.calculateTopPadding()
+            val bottomPadding = contentPadding.calculateBottomPadding()
+            // Compute spacing so cells are exactly ICON_SIZE_DP wide, making
+            // the visual side margin equal to topPadding regardless of column count.
+            val equalizedSpacing = if (columns > 1) {
+                ((maxWidth - 2 * topPadding - columns * ICON_SIZE_DP) / (columns - 1))
+                    .coerceAtLeast(4.dp)
+            } else {
+                0.dp
+            }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
+                state = gridState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = topPadding,
+                    top = topPadding,
+                    bottom = bottomPadding,
+                ),
+                horizontalArrangement = Arrangement.spacedBy(equalizedSpacing),
+                verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+                content = gridContent,
+            )
+        }
+    } else {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            state = gridState,
+            modifier = modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+            horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+            content = gridContent,
+        )
     }
 }

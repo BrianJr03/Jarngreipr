@@ -1,6 +1,12 @@
 package jr.brian.home.esde.ui
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -132,11 +138,45 @@ internal fun RomResultsGrid(
                 }
             }
         }
+
+        // Full-screen detail overlay (inside Box so it covers the grid)
+        AnimatedVisibility(
+            visible = selectedGame != null && !showEmulatorPicker && !showCorePicker,
+            enter = slideInHorizontally(tween(240)) { it } + fadeIn(tween(240)),
+            exit = slideOutHorizontally(tween(200)) { it } + fadeOut(tween(200))
+        ) {
+            selectedGame?.let { game ->
+                RomDetailScreen(
+                    game = game,
+                    isHidden = isHiddenMode,
+                    onDismiss = { selectedGame = null },
+                    onLaunch = {
+                        onLaunchGame(game)
+                        selectedGame = null
+                    },
+                    onPickEmulator = { showEmulatorPicker = true },
+                    onChangeCore = { showCorePicker = true },
+                    onChangeFolder = {
+                        onChangeFolder(game)
+                        selectedGame = null
+                    },
+                    onHide = {
+                        onHideGame(game)
+                        selectedGame = null
+                    },
+                    onUnhide = {
+                        onUnhideGame(game)
+                        selectedGame = null
+                    }
+                )
+            }
+        }
     }
 
+    // Picker dialogs float above everything (AlertDialog handles their own overlay)
     selectedGame?.let { game ->
-        when {
-            showCorePicker -> RetroArchCorePickerDialog(
+        if (showCorePicker) {
+            RetroArchCorePickerDialog(
                 onDismiss = {
                     showCorePicker = false
                     selectedGame = null
@@ -147,7 +187,8 @@ internal fun RomResultsGrid(
                     selectedGame = null
                 }
             )
-            showEmulatorPicker -> EmulatorPickerDialog(
+        } else if (showEmulatorPicker) {
+            EmulatorPickerDialog(
                 game = game,
                 onDismiss = { showEmulatorPicker = false },
                 onEmulatorSelected = { pkg, cmd ->
@@ -159,30 +200,6 @@ internal fun RomResultsGrid(
                     } else {
                         selectedGame = null
                     }
-                }
-            )
-            else -> RomDetailDialog(
-                game = game,
-                isHidden = isHiddenMode,
-                isRetroArch = isRetroArchGame(game),
-                onDismiss = { selectedGame = null },
-                onLaunch = {
-                    onLaunchGame(game)
-                    selectedGame = null
-                },
-                onPickEmulator = { showEmulatorPicker = true },
-                onChangeCore = { showCorePicker = true },
-                onChangeFolder = {
-                    onChangeFolder(game)
-                    selectedGame = null
-                },
-                onHide = {
-                    onHideGame(game)
-                    selectedGame = null
-                },
-                onUnhide = {
-                    onUnhideGame(game)
-                    selectedGame = null
                 }
             )
         }

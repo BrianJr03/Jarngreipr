@@ -289,18 +289,18 @@ object RomListParser {
         systemRomDir: String? = null,
         sdCardParents: List<String> = emptyList()
     ): String? {
-        // Explicit path from es_systems.xml — use directly (covers SD card and non-standard roots).
-        if (systemRomDir != null) {
-            return File(systemRomDir.trimEnd('/'), gameFilename).absolutePath
-        }
-        // Internal storage: check each configured ROM root with file.exists().
+        // Check user-configured internal storage paths first, so a stale or SD card
+        // es_systems.xml path never overrides a ROM that's actually on internal storage.
         for (romsRoot in romsPaths) {
             val file = File(romsRoot, "$systemName/$gameFilename")
             if (file.exists()) return file.absolutePath
         }
-        // Last resort: try inferred SD card sibling dirs — only reached when internal storage
-        // check found nothing. Verify the file actually exists before returning, so systems
-        // whose ROMs are on internal storage are never incorrectly assigned an SD card path.
+        // Explicit path from es_systems.xml — reached only after internal storage misses.
+        // SD card files may not be stat-able by this app, so skip existence check.
+        if (systemRomDir != null) {
+            return File(systemRomDir.trimEnd('/'), gameFilename).absolutePath
+        }
+        // Last resort: inferred SD card sibling dirs.
         for (parent in sdCardParents) {
             val file = File(parent, "$systemName/$gameFilename")
             if (file.exists()) return file.absolutePath

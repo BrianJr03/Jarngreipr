@@ -550,12 +550,15 @@ object EsdeCommandLauncher {
             }
 
             packageName == "org.ppsspp.ppsspp" || packageName == "org.ppsspp.ppssppgold" -> {
-                // PPSSPP / PPSSPP Gold: activity class always lives under org.ppsspp.ppsspp
-                // regardless of which variant is installed (Gold shares the same codebase).
-                grantUri(packageName)
+                val uri = try {
+                    FileProvider.getUriForFile(context, "${context.packageName}.provider", romFile)
+                } catch (e: Exception) {
+                    Log.e(TAG, "FileProvider failed, falling back: ${e.message}")
+                    android.net.Uri.fromFile(romFile)
+                }
                 Intent(Intent.ACTION_VIEW).apply {
                     component = ComponentName(packageName, "org.ppsspp.ppsspp.PpssppActivity")
-                    data = contentUri
+                    data = uri
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
@@ -569,10 +572,6 @@ object EsdeCommandLauncher {
             }
 
             packageName == "io.github.lime3ds.android" -> {
-                // AzaharPlus uses Citra's internal package layout despite the outer package name.
-                // EmulationActivity accepts a ROM URI — MainActivity is only the game browser.
-                // FileProvider + FLAG_GRANT_READ_URI_PERMISSION works on vanilla/sideload builds;
-                // the Play Store build has stricter scoped storage and may still fail (Azahar limitation).
                 grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
                     setClassName(packageName, "org.citra.citra_emu.activities.EmulationActivity")
@@ -606,18 +605,14 @@ object EsdeCommandLauncher {
             }
 
             packageName == "xyz.aethersx2.android" -> {
-                // AetherSX2 / NetherSX2: ACTION_MAIN with bootPath absolute path string.
-                // Does not use a content URI — passes the raw filesystem path directly.
                 Intent(Intent.ACTION_MAIN).apply {
                     component = ComponentName(packageName, "$packageName.EmulationActivity")
-                    putExtra("bootPath", romAbsPath)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra("bootPath", romFile.absolutePath)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
 
             packageName == "dev.eden.eden_emulator" -> {
-                // Eden (Switch emulator): needs a file:// URI — it cannot read FileProvider
-                // content URIs from other apps even with FLAG_GRANT_READ_URI_PERMISSION.
                 Intent(Intent.ACTION_VIEW).apply {
                     setClassName(packageName, "dev.eden.eden_emulator.ui.main.MainActivity")
                     data = android.net.Uri.fromFile(romFile)
@@ -626,7 +621,6 @@ object EsdeCommandLauncher {
             }
 
             packageName == "org.dolphinemu.dolphinemu" -> {
-                // Dolphin: pass content URI string as AutoStartFile, not an absolute path
                 grantUri(packageName)
                 Intent(Intent.ACTION_MAIN).apply {
                     setClassName(packageName, "$packageName.ui.main.MainActivity")
@@ -640,7 +634,6 @@ object EsdeCommandLauncher {
             }
 
             packageName == "com.github.stenzek.duckstation" -> {
-                // DuckStation: ACTION_MAIN with bootPath extra (content URI string)
                 grantUri(packageName)
                 Intent(Intent.ACTION_MAIN).apply {
                     component = ComponentName(
@@ -657,8 +650,6 @@ object EsdeCommandLauncher {
             }
 
             else -> {
-                // Generic: pass every common path extra so whichever key the emulator reads
-                // will be populated. Use setPackage so Android routes via intent filters.
                 grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(contentUri, romMimeType(romFile.extension))

@@ -692,9 +692,6 @@ private fun ModalAppSelectionContent(
         gridState = gridState,
         modifier = modifier
             .fillMaxSize()
-            .padding(
-                horizontal = 20.dp,
-            )
             .nestedScroll(nestedScrollConnection),
         appFocusRequesters = appFocusRequesters,
         onFocusChanged = onAppFocusChanged,
@@ -710,7 +707,7 @@ private fun ModalAppSelectionContent(
             top = 10.dp,
             bottom = 20.dp,
         ),
-        horizontalSpacing = 10.dp,
+        equalizeMargins = true,
         verticalSpacing = 24.dp
     )
 }

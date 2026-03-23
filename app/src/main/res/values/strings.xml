@@ -187,8 +187,10 @@
     <string name="settings_icon_shape_rounded">Rounded</string>
     <string name="settings_icon_shape_square">Square</string>
 
-    <string name="settings_show_app_names_title">Show App Names</string>
-    <string name="settings_show_app_names_description">Display names below app icons</string>
+    <string name="settings_show_app_names_title">Show App Names (Drawer)</string>
+    <string name="settings_show_app_names_description">Display names below icons in the app drawer</string>
+    <string name="settings_show_home_screen_app_names_title">Show App Names (Home)</string>
+    <string name="settings_show_home_screen_app_names_description">Display names below icons on the home screen</string>
 
     <string name="settings_app_label_font_size_title">App Label Font Size</string>
     <string name="settings_app_label_font_size_description">Adjust the font size of app name labels</string>
