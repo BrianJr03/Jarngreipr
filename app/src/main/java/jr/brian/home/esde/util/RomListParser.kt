@@ -299,9 +299,11 @@ object RomListParser {
             if (file.exists()) return file.absolutePath
         }
         // Last resort: try inferred SD card sibling dirs — only reached when internal storage
-        // check found nothing, so internal-storage systems (e.g. Dolphin) are never redirected here.
+        // check found nothing. Verify the file actually exists before returning, so systems
+        // whose ROMs are on internal storage are never incorrectly assigned an SD card path.
         for (parent in sdCardParents) {
-            return File(parent, "$systemName/$gameFilename").absolutePath
+            val file = File(parent, "$systemName/$gameFilename")
+            if (file.exists()) return file.absolutePath
         }
         return null
     }

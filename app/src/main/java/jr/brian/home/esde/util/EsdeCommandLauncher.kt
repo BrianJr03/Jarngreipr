@@ -552,13 +552,10 @@ object EsdeCommandLauncher {
             packageName == "org.ppsspp.ppsspp" || packageName == "org.ppsspp.ppssppgold" -> {
                 // PPSSPP / PPSSPP Gold: activity class always lives under org.ppsspp.ppsspp
                 // regardless of which variant is installed (Gold shares the same codebase).
-                // Using $packageName.PpssppActivity was wrong for Gold — it produced the
-                // nonexistent class org.ppsspp.ppssppgold.PpssppActivity, causing
-                // ActivityNotFoundException → emulator-only fallback.
                 grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
-                    setClassName(packageName, "org.ppsspp.ppsspp.PpssppActivity")
-                    setDataAndType(contentUri, "*/*")
+                    component = ComponentName(packageName, "org.ppsspp.ppsspp.PpssppActivity")
+                    data = contentUri
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
@@ -602,27 +599,19 @@ object EsdeCommandLauncher {
             packageName == "info.cemu.cemu" -> {
                 grantUri(packageName)
                 Intent(Intent.ACTION_VIEW).apply {
-                    setClassName(packageName, "info.cemu.cemu.MainActivity")
                     data = contentUri
-                    addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
+                    setPackage(packageName)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
 
             packageName == "xyz.aethersx2.android" -> {
-                // AetherSX2 / NetherSX2: native layer reads "game_path" extra first, then
-                // falls back to intent.data.path — which returns a garbage path for FileProvider
-                // URIs. Passing romAbsPath in the known extra keys bypasses that problem.
-                grantUri(packageName)
-                Intent(Intent.ACTION_VIEW).apply {
-                    setClassName(packageName, "xyz.aethersx2.android.EmulationActivity")
-                    data = contentUri
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra("game_path", romAbsPath)
-                    putExtra("boot_path", romAbsPath)
+                // AetherSX2 / NetherSX2: ACTION_MAIN with bootPath absolute path string.
+                // Does not use a content URI — passes the raw filesystem path directly.
+                Intent(Intent.ACTION_MAIN).apply {
+                    component = ComponentName(packageName, "$packageName.EmulationActivity")
+                    putExtra("bootPath", romAbsPath)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             }
 

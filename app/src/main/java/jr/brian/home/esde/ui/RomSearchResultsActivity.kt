@@ -69,26 +69,30 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     // Holds a game launch that needs SAF access before it can proceed.
     private var pendingGameLaunch: Pair<GameInfo, Context>? = null
+    // Holds the system name for a manual folder-change request (no auto-launch after grant).
+    private var pendingFolderChangeSystem: String? = null
 
     private val safTreeLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { treeUri ->
         if (treeUri == null) {
-            Toast.makeText(this, "SD card access denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Folder access denied", Toast.LENGTH_SHORT).show()
             pendingGameLaunch = null
+            pendingFolderChangeSystem = null
             return@registerForActivityResult
         }
         // Persist read permission so we don't need to prompt again next time.
         contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         // Store the tree URI keyed by system name so each platform has its own independent grant.
-        val systemName = pendingGameLaunch?.first?.systemName
+        val systemName = pendingFolderChangeSystem ?: pendingGameLaunch?.first?.systemName
         if (systemName != null) {
             esdePrefs.setSafTreeUri(systemName, treeUri.toString())
             Log.d("RomSearchResults", "SAF tree granted | system=$systemName | treeUri=$treeUri")
         }
-        // Retry the pending launch now that we have access.
+        // Retry the pending launch if this grant came from an auto-launch request.
         pendingGameLaunch?.let { (game, ctx) -> launchGame(game, ctx) }
         pendingGameLaunch = null
+        pendingFolderChangeSystem = null
     }
 
     override fun finish() {
@@ -265,6 +269,15 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         esdePrefs.setGameCore(gameKey(game), corePath)
                                         launchGame(game, context)
                                     },
+                                    onChangeFolder = { game ->
+                                        pendingFolderChangeSystem = game.systemName
+                                        val romPath = resolveRomPath(game)
+                                        val hint = romPath?.let {
+                                            val dir = java.io.File(it).parent ?: "/storage/emulated/0"
+                                            android.net.Uri.parse("content://com.android.externalstorage.documents/document/${android.net.Uri.encode("primary:${dir.removePrefix("/storage/emulated/0/")}")}")
+                                        }
+                                        safTreeLauncher.launch(hint)
+                                    },
                                 )
                             }
 
@@ -295,11 +308,24 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     private fun resolveRomPath(game: GameInfo): String? {
         if (game.romAbsolutePath != null) return game.romAbsolutePath
-        // Fallback: try user-configured ROM roots (internal storage only)
-        val romsPaths = esdePrefs.state.value.romsPaths
+        val romsPaths = esdePrefs.state.value.romsPaths +
+                listOf("/storage/emulated/0/Roms")
+        val filename = File(game.path).name  // strips subdirectory prefix e.g. "Games/Title.iso" → "Title.iso"
         for (root in romsPaths) {
-            val candidate = File(root, "${game.systemName}/${game.path}")
-            if (candidate.exists()) return candidate.absolutePath
+            // 1. root / systemName / full-path  (e.g. Roms/ps2/Games/Title.iso)
+            File(root, "${game.systemName}/${game.path}").let { if (it.exists()) return it.absolutePath }
+            // 2. root / systemName / bare filename  (e.g. Roms/ps2/Title.iso)
+            File(root, "${game.systemName}/$filename").let { if (it.exists()) return it.absolutePath }
+            // 3. root already contains system folder: root / full-path or bare filename
+            File(root, game.path).let { if (it.exists()) return it.absolutePath }
+            File(root, filename).let { if (it.exists()) return it.absolutePath }
+            // 4. Case-insensitive system folder scan (e.g. "PSP" vs "psp")
+            File(root).listFiles()
+                ?.firstOrNull { it.isDirectory && it.name.equals(game.systemName, ignoreCase = true) }
+                ?.let { systemDir ->
+                    File(systemDir, game.path).let { if (it.exists()) return it.absolutePath }
+                    File(systemDir, filename).let { if (it.exists()) return it.absolutePath }
+                }
         }
         return null
     }
