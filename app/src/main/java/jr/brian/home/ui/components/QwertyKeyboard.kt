@@ -1,5 +1,7 @@
 package jr.brian.home.ui.components
 
+import androidx.activity.ComponentActivity
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -25,11 +27,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +50,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -53,7 +59,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.R
+import jr.brian.home.data.LocalJinglesManager
+import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
@@ -65,6 +77,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 
+@OptIn(UnstableApi::class)
 @Composable
 fun QwertyKeyboard(
     searchQuery: String,
@@ -72,6 +85,7 @@ fun QwertyKeyboard(
     showQueryText: Boolean = true,
     showFlipLayoutButton: Boolean = true,
     showSpecialCharRow: Boolean = true,
+    showVolControl: Boolean = false,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
@@ -79,6 +93,7 @@ fun QwertyKeyboard(
     onSpecialCharToggle: () -> Unit = {},
     onReopenResults: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     var isNumericMode by remember { mutableStateOf(false) }
 
     val wallpaperManager = LocalWallpaperManager.current
@@ -92,6 +107,11 @@ fun QwertyKeyboard(
         ),
         label = "cursorAlpha"
     )
+
+    val jinglesManager = LocalJinglesManager.current
+    val esdeViewModel: ESDEViewModel = hiltViewModel(context as ComponentActivity)
+    val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
+
 
     val qwertyRow1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
     val qwertyRow2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
@@ -126,6 +146,31 @@ fun QwertyKeyboard(
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                     modifier = Modifier.weight(1f),
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                if (showVolControl) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable {
+                                val newMuted = !isMuted
+                                jinglesManager.setMuted(newMuted)
+                                esdeViewModel.musicController.setMuted(newMuted)
+                                VideoPresentationManager.setMuted(newMuted)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = if (isMuted) "Unmute" else "Mute",
+                            tint = if (isMuted) ThemePrimaryColor.copy(alpha = 0.4f) else ThemePrimaryColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
