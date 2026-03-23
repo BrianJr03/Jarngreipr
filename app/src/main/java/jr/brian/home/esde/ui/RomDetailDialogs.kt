@@ -218,17 +218,14 @@ internal fun RomDetailDialog(
         dismissButton = {
             Row {
                 if (!isHidden) {
-                    if (isRetroArch) {
-                        TextButton(onClick = onChangeCore) {
-                            Text(text = "Change Core", color = ThemeAccentColor)
-                        }
-                    } else {
-                        TextButton(onClick = onPickEmulator) {
-                            Text(
-                                text = stringResource(R.string.rom_detail_pick_emulator),
-                                color = ThemeAccentColor
-                            )
-                        }
+                    TextButton(onClick = onPickEmulator) {
+                        Text(
+                            text = stringResource(R.string.rom_detail_pick_emulator),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = onChangeCore) {
+                        Text(text = "Change Core", color = ThemeAccentColor)
                     }
                 }
                 if (isHidden) {
@@ -283,7 +280,7 @@ internal fun RetroArchCorePickerDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
             } else {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     cores.forEach { (displayName, corePath) ->
                         TextButton(
                             onClick = {
