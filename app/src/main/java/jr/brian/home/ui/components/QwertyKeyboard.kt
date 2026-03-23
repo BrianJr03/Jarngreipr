@@ -112,7 +112,6 @@ fun QwertyKeyboard(
     val esdeViewModel: ESDEViewModel = hiltViewModel(context as ComponentActivity)
     val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
 
-
     val qwertyRow1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
     val qwertyRow2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
     val qwertyRow3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
