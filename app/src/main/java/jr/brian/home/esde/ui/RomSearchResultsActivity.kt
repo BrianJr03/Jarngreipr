@@ -83,12 +83,32 @@ class RomSearchResultsActivity : ComponentActivity() {
         }
         // Persist read permission so we don't need to prompt again next time.
         contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        // Store the tree URI keyed by system name so each platform has its own independent grant.
         val systemName = pendingFolderChangeSystem ?: pendingGameLaunch?.first?.systemName
-        if (systemName != null) {
+
+        // Detect if this is internal storage (primary:...) and extract the real path.
+        // If so, update romsPaths so resolveRomPath picks up the correct root without SAF.
+        val treeDocId = try { DocumentsContract.getTreeDocumentId(treeUri) } catch (_: Exception) { null }
+        if (treeDocId?.startsWith("primary:") == true) {
+            val rel = treeDocId.removePrefix("primary:")  // e.g. "Roms/psp" or "Roms"
+            val pickedDir = "/storage/emulated/0/$rel"
+            val romsRoot = if (systemName != null &&
+                File(pickedDir).name.equals(systemName, ignoreCase = true)) {
+                File(pickedDir).parent ?: pickedDir
+            } else {
+                pickedDir
+            }
+            esdePrefs.addRomsPath(romsRoot)
+            // Also store the tree URI so we can build document URIs for emulators
+            // (e.g. NetherSX2) that access files via SAF rather than raw paths.
+            if (systemName != null) {
+                esdePrefs.setSafTreeUri(systemName, treeUri.toString())
+            }
+            Log.d("RomSearchResults", "Internal folder | romsRoot=$romsRoot treeUri=$treeUri")
+        } else if (systemName != null) {
             esdePrefs.setSafTreeUri(systemName, treeUri.toString())
             Log.d("RomSearchResults", "SAF tree granted | system=$systemName | treeUri=$treeUri")
         }
+
         // Retry the pending launch if this grant came from an auto-launch request.
         pendingGameLaunch?.let { (game, ctx) -> launchGame(game, ctx) }
         pendingGameLaunch = null
@@ -146,6 +166,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                         if (query.isNotEmpty()) {
                             viewModel.clearState()
                         } else {
+                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
                             dismiss()
                         }
                     }
@@ -311,6 +332,15 @@ class RomSearchResultsActivity : ComponentActivity() {
         val romsPaths = esdePrefs.state.value.romsPaths +
                 listOf("/storage/emulated/0/Roms")
         val filename = File(game.path).name  // strips subdirectory prefix e.g. "Games/Title.iso" → "Title.iso"
+
+        // PSP and PS2: build path directly — no existence check, since File.exists() can
+        // return false for these paths even when the file is there (permission timing).
+        if (game.systemName.equals("psp", ignoreCase = true) ||
+            game.systemName.equals("ps2", ignoreCase = true)) {
+            val root = romsPaths.firstOrNull() ?: "/storage/emulated/0/Roms"
+            return File(root, "${game.systemName}/$filename").absolutePath
+        }
+
         for (root in romsPaths) {
             // 1. root / systemName / full-path  (e.g. Roms/ps2/Games/Title.iso)
             File(root, "${game.systemName}/${game.path}").let { if (it.exists()) return it.absolutePath }
@@ -328,6 +358,28 @@ class RomSearchResultsActivity : ComponentActivity() {
                 }
         }
         return null
+    }
+
+    /**
+     * Builds a tree-based SAF document URI for AetherSX2/NetherSX2 using our stored tree grant.
+     * This mirrors ES-DE's approach: send a tree document URI with FLAG_GRANT_READ_URI_PERMISSION
+     * so the emulator gets one-time read access without needing All Files Access.
+     * Returns null if no tree grant has been stored yet for [systemName].
+     */
+    private fun buildAetherDocUri(systemName: String, romAbsPath: String): android.net.Uri? {
+        val treeUriStr = esdePrefs.getSafTreeUri(systemName) ?: return null
+        val treeUri = treeUriStr.toUri()
+        val documentId = when {
+            romAbsPath.startsWith("/storage/emulated/0/") ->
+                "primary:${romAbsPath.removePrefix("/storage/emulated/0/")}"
+            else -> {
+                val volId = sdCardVolumeId(romAbsPath) ?: return null
+                "$volId:${romAbsPath.removePrefix("/storage/$volId/")}"
+            }
+        }
+        return try {
+            DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+        } catch (_: Exception) { null }
     }
 
     /**
@@ -383,37 +435,60 @@ class RomSearchResultsActivity : ComponentActivity() {
             return
         }
 
-        // Resolve the correct URI type before doing anything emulator-specific.
-        // SD card ROMs need an authorized SAF tree document URI; internal storage uses FileProvider.
-        val contentUri = resolveContentUri(game, romPath, context) ?: return  // null = SAF picker launched, will retry
-
         val pkg = esdePrefs.getGameEmulator(gameKey(game))
             ?: game.emulatorPackage
             ?: run {
-                Toast.makeText(context, "No emulator configured for this game", Toast.LENGTH_SHORT).show()
+                // No emulator configured — for known emulators just open the app directly.
+                val knownFallbacks = listOf(
+                    "org.ppsspp.ppsspp",
+                    "org.ppsspp.ppssppgold",
+                    "xyz.aethersx2.android"
+                )
+                val fallbackPkg = knownFallbacks.firstOrNull { p ->
+                    packageManager.getLaunchIntentForPackage(p) != null
+                }
+                if (fallbackPkg != null) {
+                    val intent = packageManager.getLaunchIntentForPackage(fallbackPkg)!!
+                        .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                    val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+                    signalGameLaunch()
+                    startActivity(intent, options.toBundle())
+                    finish()
+                } else {
+                    Toast.makeText(context, "No emulator configured for this game", Toast.LENGTH_SHORT).show()
+                }
                 return
             }
 
-        val corePath = if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
+        // For PPSSPP and NetherSX2/AetherSX2, just open the emulator directly.
+        if (pkg == "org.ppsspp.ppsspp" || pkg == "org.ppsspp.ppssppgold" || pkg == "xyz.aethersx2.android") {
+            val intent = packageManager.getLaunchIntentForPackage(pkg)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+                signalGameLaunch()
+                startActivity(intent, options.toBundle())
+                finish()
+            } else {
+                Toast.makeText(context, "Emulator not installed: $pkg", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
 
-        Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$contentUri")
+        val corePath = if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
+        val effectiveContentUri: Uri = resolveContentUri(game, romPath, context) ?: return
+
+        Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$effectiveContentUri")
 
         try {
-            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, contentUri, context, corePath)
+            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, effectiveContentUri, context, corePath)
             val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
             signalGameLaunch()
             startActivity(intent, options.toBundle())
             finish()
         } catch (e: Exception) {
             Log.e("RomSearchResults", "Failed to launch $pkg", e)
-            // Fallback: open the emulator app itself
-            try {
-                packageManager.getLaunchIntentForPackage(pkg)?.let {
-                    startActivity(it, ActivityOptions.makeBasic().apply { launchDisplayId = 0 }.toBundle())
-                }
-            } catch (_: Exception) {}
-            signalGameLaunch()
-            finish()
+            Toast.makeText(context, "Failed to launch: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -461,10 +536,26 @@ class RomSearchResultsActivity : ComponentActivity() {
             return
         }
         Log.d("RomSearchResults", "launchGameWithEmulator | pkg=$emulatorPackage | rom=$romPath")
+        val contentUri: Uri
+        if (emulatorPackage == "xyz.aethersx2.android") {
+            val aetherSafUri = buildAetherDocUri(game.systemName, romPath)
+            if (aetherSafUri == null) {
+                pendingGameLaunch = game to this
+                val romDir = File(romPath).parent ?: "/storage/emulated/0"
+                val rel = romDir.removePrefix("/storage/emulated/0/")
+                val hint = "content://com.android.externalstorage.documents/document/${Uri.encode("primary:$rel")}".toUri()
+                safTreeLauncher.launch(hint)
+                return
+            }
+            contentUri = aetherSafUri
+        } else {
+            contentUri = resolveContentUri(game, romPath, this) ?: return
+        }
         try {
             val intent = EsdeCommandLauncher.buildRomIntentFromPackage(
                 packageName = emulatorPackage,
                 romAbsPath = romPath,
+                contentUri = contentUri,
                 context = this
             )
             Log.d("RomSearchResults", "  → intent data=${intent.data} extras=${intent.extras}")
@@ -473,22 +564,9 @@ class RomSearchResultsActivity : ComponentActivity() {
             signalGameLaunch()
             startActivity(intent, options.toBundle())
             finish()
-            return
         } catch (e: Exception) {
-            Log.w("RomSearchResults", "Emulator picker launch failed for $emulatorPackage", e)
+            Log.e("RomSearchResults", "Emulator picker launch failed for $emulatorPackage", e)
+            Toast.makeText(this, "Failed to launch: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-
-        // Fallback: open the emulator app itself
-        try {
-            val fallbackIntent = packageManager.getLaunchIntentForPackage(emulatorPackage)
-            if (fallbackIntent != null) {
-                val options = ActivityOptions.makeBasic()
-                options.launchDisplayId = 0
-                startActivity(fallbackIntent, options.toBundle())
-            }
-        } catch (_: Exception) {
-        }
-        signalGameLaunch()
-        finish()
     }
 }

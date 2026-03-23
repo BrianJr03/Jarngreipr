@@ -145,6 +145,8 @@ fun AppsTabContent(
                 allApps = allApps,
                 onFolderClick = onFolderClick,
                 isHeaderVisible = isHeaderVisible,
+                equalizeMargins = true,
+                isHomeScreen = true,
                 gridState = gridState
             )
         }

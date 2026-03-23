@@ -67,6 +67,7 @@ fun VisibilitySettingsItem(
     val powerSettingsManager = LocalPowerSettingsManager.current
     
     val showAppNames = appVisibilityManager.showAppNames
+    val showHomeScreenAppNames = appVisibilityManager.showHomeScreenAppNames
     val showFolderNames = appVisibilityManager.showFolderNames
     val showSettingsBackButton = appVisibilityManager.showSettingsBackButton
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
@@ -183,6 +184,14 @@ fun VisibilitySettingsItem(
                     description = stringResource(id = R.string.settings_show_app_names_description),
                     isEnabled = showAppNames,
                     onClick = { appVisibilityManager.toggleShowAppNames() }
+                )
+
+                VisibilityToggleOption(
+                    icon = Icons.Default.Api,
+                    title = stringResource(id = R.string.settings_show_home_screen_app_names_title),
+                    description = stringResource(id = R.string.settings_show_home_screen_app_names_description),
+                    isEnabled = showHomeScreenAppNames,
+                    onClick = { appVisibilityManager.toggleShowHomeScreenAppNames() }
                 )
 
                 VisibilityToggleOption(

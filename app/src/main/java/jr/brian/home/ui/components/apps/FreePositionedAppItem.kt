@@ -172,7 +172,7 @@ fun FreePositionedAppItem(
 
             Spacer(Modifier.height(4.dp))
 
-            if (appVisibilityManager.showAppNames) {
+            if (appVisibilityManager.showHomeScreenAppNames) {
                 app.AppName()
             }
 
