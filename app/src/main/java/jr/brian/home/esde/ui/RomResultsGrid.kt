@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items as lazyRowItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,14 +27,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +53,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
+import kotlinx.coroutines.launch
 
 private const val NUM_COLS = 4
 
@@ -53,7 +64,6 @@ internal fun RomResultsGrid(
     modifier: Modifier = Modifier,
     isHiddenMode: Boolean = false,
     onLaunchGame: (GameInfo) -> Unit,
-    onLaunchWithEmulator: (GameInfo, String) -> Unit = { _, _ -> },
     onSaveEmulator: (GameInfo, String, String?) -> Unit = { _, _, _ -> },
     hasSavedEmulator: (GameInfo) -> Boolean = { false },
     onGameFocused: (GameInfo?) -> Unit = {},
@@ -69,6 +79,32 @@ internal fun RomResultsGrid(
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+
+    var focusedIndex by remember { mutableIntStateOf(0) }
+    val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
+
+    LaunchedEffect(focusedIndex) {
+        focusRequesters[focusedIndex]?.requestFocus()
+    }
+
+    fun moveFocus(delta: Int) {
+        val next = (focusedIndex + delta).coerceIn(0, games.size - 1)
+        if (next == focusedIndex) return
+        focusedIndex = next
+        coroutineScope.launch {
+            val visibleItems = listState.layoutInfo.visibleItemsInfo
+            val isVisible = visibleItems.any { it.index == next }
+            if (!isVisible) {
+                listState.animateScrollToItem(
+                    index = next,
+                    scrollOffset = 0
+                )
+            }
+        }
+    }
 
     Box(modifier = modifier) {
         when {
@@ -94,10 +130,21 @@ internal fun RomResultsGrid(
             else -> {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(NUM_COLS),
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(OledBackgroundColor)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 4.dp)
+                        .onKeyEvent { keyEvent ->
+                            if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
+                            when (keyEvent.nativeKeyEvent.keyCode) {
+                               KeyEvent.KEYCODE_DPAD_RIGHT -> { moveFocus(1); true }
+                                KeyEvent.KEYCODE_DPAD_LEFT  -> { moveFocus(-1); true }
+                                KeyEvent.KEYCODE_DPAD_DOWN  -> { moveFocus(NUM_COLS); true }
+                                KeyEvent.KEYCODE_DPAD_UP    -> { moveFocus(-NUM_COLS); true }
+                                else -> false
+                            }
+                        },
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -106,17 +153,25 @@ internal fun RomResultsGrid(
                         games,
                         key = { _, game -> "${game.systemName}/${game.path}" }
                     ) { index, game ->
+                        val focusRequester = remember { FocusRequester() }
+
+                        DisposableEffect(index) {
+                            focusRequesters[index] = focusRequester
+                            onDispose { focusRequesters.remove(index) }
+                        }
+
                         RomResultCard(
                             game = game,
-                            autoFocus = index == 0,
+                            autoFocus = index == 0 && focusedIndex == 0,
+                            focusRequester = focusRequester,
                             onClick = {
                                 val isAndroid =
                                     game.systemName.equals("androidgames", ignoreCase = true) ||
-                                    game.systemName.equals("androidapps", ignoreCase = true)
+                                            game.systemName.equals("androidapps", ignoreCase = true)
                                 val needsCore = isRetroArchGame(game) && !hasSavedCore(game)
                                 val hasEmulator = hasSavedEmulator(game) ||
-                                    game.launchCommand != null ||
-                                    game.emulatorPackage != null
+                                        game.launchCommand != null ||
+                                        game.emulatorPackage != null
                                 when {
                                     isAndroid -> onLaunchGame(game)
                                     needsCore -> {
@@ -131,7 +186,12 @@ internal fun RomResultsGrid(
                                 }
                             },
                             onLongClick = { selectedGame = game },
-                            onFocused = { onGameFocused(game) },
+                            onFocused = {
+                                if (focusedIndex != index) {
+                                    focusedIndex = index
+                                }
+                                onGameFocused(game)
+                            },
                             onToggleKeyboard = onToggleKeyboard
                         )
                     }
@@ -139,7 +199,6 @@ internal fun RomResultsGrid(
             }
         }
 
-        // Full-screen detail overlay (inside Box so it covers the grid)
         AnimatedVisibility(
             visible = selectedGame != null && !showEmulatorPicker && !showCorePicker,
             enter = slideInHorizontally(tween(240)) { it } + fadeIn(tween(240)),
@@ -173,7 +232,6 @@ internal fun RomResultsGrid(
         }
     }
 
-    // Picker dialogs float above everything (AlertDialog handles their own overlay)
     selectedGame?.let { game ->
         if (showCorePicker) {
             RetroArchCorePickerDialog(

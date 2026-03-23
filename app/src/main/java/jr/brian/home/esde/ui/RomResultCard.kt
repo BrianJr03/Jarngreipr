@@ -1,6 +1,15 @@
 package jr.brian.home.esde.ui
 
+import android.R
 import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -27,10 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
@@ -50,8 +63,12 @@ import coil.request.ImageRequest
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.themePrimaryColor
+import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -69,7 +86,6 @@ internal fun RomResultCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
-    val gradient = cardGradient()
     var isFocused by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
 
@@ -77,7 +93,8 @@ internal fun RomResultCard(
         if (autoFocus) {
             try {
                 focusRequester.requestFocus()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -87,16 +104,64 @@ internal fun RomResultCard(
     val hasImage = imageData != null
     val shape = RoundedCornerShape(8.dp)
 
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
+        label = "glowAlpha"
+    )
+
+    val glowRadius by animateDpAsState(
+        targetValue = if (isFocused) 2.dp else 0.dp,
+        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
+        label = "glowRadius"
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "glow_pulse")
+    val glowPulse by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowPulse"
+    )
+
+    val primary = themePrimaryColor()
+
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
-            .scale(scale)
             .then(
-                if (!hasImage) Modifier.border(1.dp, Color.White.copy(alpha = 0.15f), shape)
+                if (hasImage) Modifier.scale(scale) else Modifier
+            )
+            .drawBehind {
+                if (glowAlpha > 0f && hasImage) {
+                    val pulse = if (isFocused) glowPulse else 1f
+                    val radius = (size.maxDimension / 1.7f) + glowRadius.toPx()
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primary.copy(alpha = 1f * glowAlpha * pulse),
+                                Color.Transparent
+                            ),
+                            center = Offset(size.width / 2f, size.height / 2f),
+                            radius = radius
+                        ),
+                        radius = radius,
+                        center = Offset(size.width / 2f, size.height / 2f)
+                    )
+                }
+            }
+            .then(
+                if (!hasImage and isFocused) Modifier
+                    .animatedGradientBorder(
+                        colors = listOf(primary, themeSecondaryColor()),
+                        shape = shape
+                    )
                 else Modifier
             )
             .clip(shape)
-            .background(gradient)
             .onFocusChanged {
                 isFocused = it.isFocused
                 if (it.isFocused) {
@@ -105,16 +170,14 @@ internal fun RomResultCard(
                 }
             }
             .onKeyEvent { keyEvent ->
-                when {
-                    keyEvent.type == KeyEventType.KeyUp &&
-                            keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
+                when (keyEvent.type) {
+                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onToggleKeyboard()
                         true
                     }
 
-                    keyEvent.type == KeyEventType.KeyUp &&
-                            keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START -> {
+                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
                         true
@@ -139,7 +202,6 @@ internal fun RomResultCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(if (hasImage) 1f else 4f / 3f)
-                    .background(Color.Black.copy(alpha = 0.3f))
             ) {
                 if (hasImage) {
                     AsyncImage(

@@ -11,6 +11,10 @@
 - App names can be disabled exclusively on AppsTab, Apps and Widgets Tab, and App Drawer Tab
 - Visit **Settings → Layout → Visibility Options** to get started
 
+**Video backgrounds for Systems**
+- Set videos as background as you browse systems in ES-DE
+- Visit **Settings → ES-DE Settings → Custom Paths** to get started
+
 **Fixes**
 - Fixes issue where side margins were not equal when changing row count
 

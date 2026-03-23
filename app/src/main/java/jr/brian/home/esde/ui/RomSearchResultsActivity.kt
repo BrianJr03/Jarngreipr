@@ -307,10 +307,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
                                         launchGame(game, context)
                                     },
-                                    onLaunchWithEmulator = { game, pkg ->
-                                        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
-                                        launchGameWithEmulator(game, pkg)
-                                    },
                                     onSaveEmulator = { game, pkg, cmd ->
                                         esdePrefs.setGameEmulator(gameKey(game), pkg)
                                         cmd?.let {
