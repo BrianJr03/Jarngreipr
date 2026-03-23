@@ -277,8 +277,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isHiddenMode = isHiddenMode,
                                     backgroundTransparent = romSearchUseWallpaper,
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(8.dp),
+                                        .fillMaxSize(),
                                     onLaunchGame = { game ->
                                         romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
                                         romLauncher.launchGame(game, context)

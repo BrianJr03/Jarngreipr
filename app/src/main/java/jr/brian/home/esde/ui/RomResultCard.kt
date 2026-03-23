@@ -1,6 +1,5 @@
 package jr.brian.home.esde.ui
 
-import android.R
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.RepeatMode
@@ -10,7 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,7 +40,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -64,12 +61,12 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.animatedGradientBorder
-import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.themePrimaryColor
 import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
+import android.view.KeyEvent as AndroidKeyEvent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -159,7 +156,12 @@ internal fun RomResultCard(
                         colors = listOf(primary, themeSecondaryColor()),
                         shape = shape
                     )
-                else Modifier
+                else if (!hasImage) {
+                    Modifier.border(
+                        width = 2.dp,
+                        Color.DarkGray, shape = shape
+                    )
+                } else Modifier
             )
             .clip(shape)
             .onFocusChanged {
@@ -227,27 +229,6 @@ internal fun RomResultCard(
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         lineHeight = 13.sp
-                    )
-                    Text(
-                        text = "Select: toggle keyboard",
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(4.dp),
-                        color = ThemePrimaryColor.copy(alpha = 0.6f),
-                        fontSize = 6.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = "Start: game details",
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp),
-                        color = ThemePrimaryColor.copy(alpha = 0.6f),
-                        fontSize = 6.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.End,
-                        maxLines = 1
                     )
                 }
 
