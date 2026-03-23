@@ -118,9 +118,11 @@ internal fun EmulatorPickerDialog(
 internal fun RomDetailDialog(
     game: GameInfo,
     isHidden: Boolean = false,
+    isRetroArch: Boolean = false,
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
     onPickEmulator: () -> Unit = {},
+    onChangeCore: () -> Unit = {},
     onHide: () -> Unit = {},
     onUnhide: () -> Unit = {}
 ) {
@@ -216,11 +218,17 @@ internal fun RomDetailDialog(
         dismissButton = {
             Row {
                 if (!isHidden) {
-                    TextButton(onClick = onPickEmulator) {
-                        Text(
-                            text = stringResource(R.string.rom_detail_pick_emulator),
-                            color = ThemeAccentColor
-                        )
+                    if (isRetroArch) {
+                        TextButton(onClick = onChangeCore) {
+                            Text(text = "Change Core", color = ThemeAccentColor)
+                        }
+                    } else {
+                        TextButton(onClick = onPickEmulator) {
+                            Text(
+                                text = stringResource(R.string.rom_detail_pick_emulator),
+                                color = ThemeAccentColor
+                            )
+                        }
                     }
                 }
                 if (isHidden) {
@@ -241,6 +249,63 @@ internal fun RomDetailDialog(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.rom_detail_close))
                 }
+            }
+        }
+    )
+}
+
+@Composable
+internal fun RetroArchCorePickerDialog(
+    onDismiss: () -> Unit,
+    onCoreSelected: (displayName: String, corePath: String) -> Unit
+) {
+    val context = LocalContext.current
+    val cores = remember {
+        EsdeCommandLauncher.getInstalledCores(context)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OledCardColor,
+        title = {
+            Text(
+                text = "Select RetroArch Core",
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            if (cores.isEmpty()) {
+                Text(
+                    text = "No cores found. Download cores in RetroArch → Online Updater → Core Downloader.",
+                    color = Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                Column {
+                    cores.forEach { (displayName, corePath) ->
+                        TextButton(
+                            onClick = {
+                                onCoreSelected(displayName, corePath)
+                                onDismiss()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = displayName,
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.rom_detail_close))
             }
         }
     )

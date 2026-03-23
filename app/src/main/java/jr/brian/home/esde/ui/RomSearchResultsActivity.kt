@@ -253,7 +253,18 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     onToggleKeyboard = {
                                         romSearchStateHolder.keyboardVisible.value =
                                             !romSearchStateHolder.keyboardVisible.value
-                                    }
+                                    },
+                                    isRetroArchGame = { game ->
+                                        val saved = esdePrefs.getGameEmulator(gameKey(game))
+                                        (saved ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
+                                    },
+                                    hasSavedCore = { game ->
+                                        esdePrefs.getGameCore(gameKey(game)) != null
+                                    },
+                                    onCoreSelected = { game, _, corePath ->
+                                        esdePrefs.setGameCore(gameKey(game), corePath)
+                                        launchGame(game, context)
+                                    },
                                 )
                             }
 
@@ -270,6 +281,15 @@ class RomSearchResultsActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun resolveAndroidAppByLabel(label: String): Intent? {
+        val pm = packageManager
+        return pm.getInstalledApplications(0).firstOrNull { appInfo ->
+            pm.getApplicationLabel(appInfo).toString().equals(label, ignoreCase = true)
+        }?.let { appInfo ->
+            pm.getLaunchIntentForPackage(appInfo.packageName)
         }
     }
 
@@ -310,6 +330,27 @@ class RomSearchResultsActivity : ComponentActivity() {
         game: GameInfo,
         context: Context
     ) {
+        // Android apps have no ROM file — launch the package directly.
+        if (game.systemName.equals("androidgames", ignoreCase = true) ||
+            game.systemName.equals("androidapps", ignoreCase = true)) {
+            // ES-DE stores the package name with a .app extension (e.g. "com.amazon.luna.app").
+            // Some entries use a display name instead (e.g. "Amazon Luna.app"), so if a direct
+            // package lookup fails we fall back to searching installed apps by label.
+            val key = game.path.trimEnd('/').removeSuffix(".app")
+            val intent = packageManager.getLaunchIntentForPackage(key)
+                ?: resolveAndroidAppByLabel(key)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+                signalGameLaunch()
+                startActivity(intent, options.toBundle())
+            } else {
+                Toast.makeText(context, "App not installed: $key", Toast.LENGTH_SHORT).show()
+            }
+            finish()
+            return
+        }
+
         val romPath = resolveRomPath(game) ?: run {
             Log.e("RomSearchResults", "ROM path not resolved | system=${game.systemName} path=${game.path}")
             Toast.makeText(context, "ROM path not found", Toast.LENGTH_SHORT).show()
@@ -327,10 +368,12 @@ class RomSearchResultsActivity : ComponentActivity() {
                 return
             }
 
+        val corePath = if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
+
         Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$contentUri")
 
         try {
-            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, contentUri, context)
+            val intent = EsdeCommandLauncher.buildRomIntentFromPackage(pkg, romPath, contentUri, context, corePath)
             val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
             signalGameLaunch()
             startActivity(intent, options.toBundle())
