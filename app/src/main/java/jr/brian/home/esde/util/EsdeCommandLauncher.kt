@@ -481,7 +481,8 @@ object EsdeCommandLauncher {
     fun buildRomIntentFromPackage(
         packageName: String,
         romAbsPath: String,
-        context: Context
+        context: Context,
+        corePath: String? = null
     ): Intent {
         val romFile = File(romAbsPath)
         val contentUri = try {
@@ -489,7 +490,7 @@ object EsdeCommandLauncher {
         } catch (_: Exception) {
             android.net.Uri.fromFile(romFile)
         }
-        return buildRomIntentFromPackage(packageName, romAbsPath, contentUri, context)
+        return buildRomIntentFromPackage(packageName, romAbsPath, contentUri, context, corePath)
     }
 
     /**
@@ -500,7 +501,8 @@ object EsdeCommandLauncher {
         packageName: String,
         romAbsPath: String,
         contentUri: android.net.Uri,
-        context: Context
+        context: Context,
+        corePath: String? = null
     ): Intent {
         val romFile = File(romAbsPath)
         val romDirectory = romFile.parent ?: ""
@@ -540,15 +542,10 @@ object EsdeCommandLauncher {
                         packageName,
                         "com.retroarch.browser.retroactivity.RetroActivityFuture"
                     )
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
                     putExtra("ROM", romAbsPath)
-                    putExtra(
-                        "CONFIGFILE",
-                        "/storage/emulated/0/Android/data/$packageName/files/retroarch.cfg"
-                    )
-                    putExtra("SDCARD", "/storage/emulated/0")
-                    putExtra("DATADIR", "/data/data/$packageName")
-                    putExtra("EXTERNAL", "/storage/emulated/0/Android/data/$packageName/files")
+                    corePath?.let { putExtra("LIBRETRO", it) }
                 }
             }
 
@@ -703,6 +700,91 @@ object EsdeCommandLauncher {
         "iso", "cso", "chd" -> "application/x-iso9660-image"
         "cue", "bin" -> "application/x-cue"
         else -> "application/octet-stream"
+    }
+
+    /**
+     * Scans the cores directory of every installed RetroArch variant and returns
+     * a list of (displayName, absolutePath) pairs for each .so found.
+     * displayName is derived from the filename, e.g. "mgba_libretro_android.so" → "mGBA".
+     */
+    fun getInstalledCores(context: Context): List<Pair<String, String>> {
+        val pkg = listOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32")
+            .firstOrNull { p ->
+                try { context.packageManager.getPackageInfo(p, 0); true }
+                catch (_: Exception) { false }
+            } ?: return emptyList()
+
+        // RetroArch always reverts its core directory to its private internal storage
+        // (/data/data/{pkg}/cores/) which other apps cannot list. However, RetroArch CAN
+        // load cores from that path when given it via the LIBRETRO intent extra. We construct
+        // the expected path for each known core and let RetroArch resolve it at launch time.
+        val internalCoresDir = "/data/data/$pkg/cores"
+        return KNOWN_CORE_STEMS.map { (displayName, stem) ->
+            displayName to "$internalCoresDir/${stem}_libretro_android.so"
+        }
+    }
+
+    private val KNOWN_CORE_STEMS = listOf(
+        "mGBA" to "mgba",
+        "VBA Next" to "vba_next",
+        "gpSP" to "gpsp",
+        "Snes9x" to "snes9x",
+        "Snes9x 2010" to "snes9x2010",
+        "Nestopia" to "nestopia",
+        "FCEUmm" to "fceumm",
+        "Genesis Plus GX" to "genesis_plus_gx",
+        "PicoDrive" to "picodrive",
+        "Mupen64Plus-Next" to "mupen64plus_next",
+        "ParaLLEl N64" to "parallel_n64",
+        "PCSX ReARMed" to "pcsx_rearmed",
+        "Beetle PSX HW" to "mednafen_psx_hw",
+        "DeSmuME" to "desmume",
+        "melonDS" to "melonds",
+        "Citra" to "citra",
+        "Dolphin" to "dolphin",
+        "PPSSPP" to "ppsspp",
+        "Flycast" to "flycast",
+        "MAME" to "mame",
+        "FinalBurn Neo" to "fbneo",
+    )
+
+    private fun coreDisplayName(stem: String): String {
+        // "mgba_libretro_android" → "mgba" → pretty-print
+        val stripped = stem.removeSuffix("_libretro_android").removeSuffix("_libretro")
+        val knownNames = mapOf(
+            "mgba" to "mGBA",
+            "vba_next" to "VBA Next",
+            "gpsp" to "gpSP",
+            "snes9x" to "Snes9x",
+            "snes9x2010" to "Snes9x 2010",
+            "nestopia" to "Nestopia",
+            "fceumm" to "FCEUmm",
+            "genesis_plus_gx" to "Genesis Plus GX",
+            "picodrive" to "PicoDrive",
+            "mupen64plus_next" to "Mupen64Plus-Next",
+            "parallel_n64" to "ParaLLEl N64",
+            "pcsx_rearmed" to "PCSX ReARMed",
+            "mednafen_psx_hw" to "Beetle PSX HW",
+            "beetle_psx_hw" to "Beetle PSX HW",
+            "desmume" to "DeSmuME",
+            "melonds" to "melonDS",
+            "citra" to "Citra",
+            "dolphin" to "Dolphin",
+            "ppsspp" to "PPSSPP",
+            "flycast" to "Flycast",
+            "mame" to "MAME",
+            "fbneo" to "FinalBurn Neo",
+            "opera" to "Opera (3DO)",
+            "mednafen_saturn" to "Beetle Saturn",
+            "yabause" to "Yabause",
+            "bluemsx" to "BlueMSX",
+            "fmsx" to "fMSX",
+            "mesen" to "Mesen",
+            "bsnes" to "bsnes",
+            "bsnes_mercury_accuracy" to "bsnes-mercury Accuracy"
+        )
+        return knownNames[stripped]
+            ?: stripped.split("_").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
     }
 
     private fun resolveToken(token: String, romAbsPath: String, packageName: String): String {

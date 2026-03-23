@@ -99,6 +99,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
@@ -412,6 +413,14 @@ class ESDEPreferencesManager(context: Context) {
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
             gameCommandMap = prefs.getString(KEY_GAME_COMMAND_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            gameCoreMap = prefs.getString(KEY_GAME_CORE_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
                     try {
@@ -947,6 +956,19 @@ class ESDEPreferencesManager(context: Context) {
 
     fun getGameLaunchCommand(gameKey: String): String? {
         return state.value.gameCommandMap[gameKey]
+    }
+
+    fun setGameCore(gameKey: String, corePath: String) {
+        val updated = _state.value.gameCoreMap.toMutableMap()
+        updated[gameKey] = corePath
+        _state.value = _state.value.copy(gameCoreMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_CORE_MAP, json.toString()) }
+    }
+
+    fun getGameCore(gameKey: String): String? {
+        return state.value.gameCoreMap[gameKey]
     }
 
     fun hideGame(gameKey: String) {

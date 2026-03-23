@@ -53,11 +53,15 @@ internal fun RomResultsGrid(
     onGameFocused: (GameInfo?) -> Unit = {},
     onHideGame: (GameInfo) -> Unit = {},
     onUnhideGame: (GameInfo) -> Unit = {},
-    onToggleKeyboard: () -> Unit = {}
+    onToggleKeyboard: () -> Unit = {},
+    isRetroArchGame: (GameInfo) -> Boolean = { false },
+    hasSavedCore: (GameInfo) -> Boolean = { false },
+    onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
+    var showCorePicker by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
         when {
@@ -99,14 +103,24 @@ internal fun RomResultsGrid(
                             game = game,
                             autoFocus = index == 0,
                             onClick = {
-                                if (hasSavedEmulator(game) ||
+                                val isAndroid =
+                                    game.systemName.equals("androidgames", ignoreCase = true) ||
+                                    game.systemName.equals("androidapps", ignoreCase = true)
+                                val needsCore = isRetroArchGame(game) && !hasSavedCore(game)
+                                val hasEmulator = hasSavedEmulator(game) ||
                                     game.launchCommand != null ||
                                     game.emulatorPackage != null
-                                ) {
-                                    onLaunchGame(game)
-                                } else {
-                                    selectedGame = game
-                                    showEmulatorPicker = true
+                                when {
+                                    isAndroid -> onLaunchGame(game)
+                                    needsCore -> {
+                                        selectedGame = game
+                                        showCorePicker = true
+                                    }
+                                    hasEmulator -> onLaunchGame(game)
+                                    else -> {
+                                        selectedGame = game
+                                        showEmulatorPicker = true
+                                    }
                                 }
                             },
                             onLongClick = { selectedGame = game },
@@ -120,27 +134,43 @@ internal fun RomResultsGrid(
     }
 
     selectedGame?.let { game ->
-        if (showEmulatorPicker) {
-            EmulatorPickerDialog(
+        when {
+            showCorePicker -> RetroArchCorePickerDialog(
+                onDismiss = {
+                    showCorePicker = false
+                    selectedGame = null
+                },
+                onCoreSelected = { displayName, corePath ->
+                    onCoreSelected(game, displayName, corePath)
+                    showCorePicker = false
+                    selectedGame = null
+                }
+            )
+            showEmulatorPicker -> EmulatorPickerDialog(
                 game = game,
                 onDismiss = { showEmulatorPicker = false },
                 onEmulatorSelected = { pkg, cmd ->
                     onSaveEmulator(game, pkg, cmd)
                     Toast.makeText(context, "Emulator saved", Toast.LENGTH_SHORT).show()
                     showEmulatorPicker = false
-                    selectedGame = null
+                    if (pkg.startsWith("com.retroarch")) {
+                        showCorePicker = true
+                    } else {
+                        selectedGame = null
+                    }
                 }
             )
-        } else {
-            RomDetailDialog(
+            else -> RomDetailDialog(
                 game = game,
                 isHidden = isHiddenMode,
+                isRetroArch = isRetroArchGame(game),
                 onDismiss = { selectedGame = null },
                 onLaunch = {
                     onLaunchGame(game)
                     selectedGame = null
                 },
                 onPickEmulator = { showEmulatorPicker = true },
+                onChangeCore = { showCorePicker = true },
                 onHide = {
                     onHideGame(game)
                     selectedGame = null

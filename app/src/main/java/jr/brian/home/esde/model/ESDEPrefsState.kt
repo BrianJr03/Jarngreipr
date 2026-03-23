@@ -207,6 +207,7 @@ data class ESDEPrefsState(
     val systemBgVideoLooping: Boolean = true,
     val gameEmulatorMap: Map<String, String> = emptyMap(),
     val gameCommandMap: Map<String, String> = emptyMap(),
+    val gameCoreMap: Map<String, String> = emptyMap(),
     val hiddenGames: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
