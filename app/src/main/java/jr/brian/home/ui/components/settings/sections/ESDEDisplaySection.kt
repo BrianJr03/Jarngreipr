@@ -463,6 +463,20 @@ fun ESDESettingsContent(
         }
 
         CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_search),
+            onHeaderTap = onSectionHeaderTap
+        ) {
+            ToggleSetting(
+                title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
+                description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
+                checked = prefsState.romSearchUseWallpaper,
+                onCheckedChange = { enabled ->
+                    preferencesManager.setRomSearchUseWallpaper(enabled)
+                }
+            )
+        }
+
+        CollapsibleSection(
             title = stringResource(R.string.esde_settings_section_system_apps),
             onHeaderTap = onSectionHeaderTap
         ) {
@@ -575,20 +589,6 @@ fun ESDESettingsContent(
                 },
                 onDeleteEmptyFolders = {
                     showDeleteConfirmation = true
-                }
-            )
-        }
-
-        CollapsibleSection(
-            title = stringResource(R.string.esde_settings_section_search),
-            onHeaderTap = onSectionHeaderTap
-        ) {
-            ToggleSetting(
-                title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
-                description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
-                checked = prefsState.romSearchUseWallpaper,
-                onCheckedChange = { enabled ->
-                    preferencesManager.setRomSearchUseWallpaper(enabled)
                 }
             )
         }
