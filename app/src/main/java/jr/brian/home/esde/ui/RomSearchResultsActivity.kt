@@ -1,6 +1,5 @@
 package jr.brian.home.esde.ui
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -45,8 +44,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.R
-import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.ManagerCompositionLocalProvider
+import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.model.RomSearchCardMediaType
@@ -65,9 +64,12 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class RomSearchResultsActivity : ComponentActivity() {
-    @Inject lateinit var managers: ManagerContainer
-    @Inject lateinit var esdePrefs: ESDEPreferencesManager
-    @Inject lateinit var romSearchStateHolder: RomSearchStateHolder
+    @Inject
+    lateinit var managers: ManagerContainer
+    @Inject
+    lateinit var esdePrefs: ESDEPreferencesManager
+    @Inject
+    lateinit var romSearchStateHolder: RomSearchStateHolder
 
     private val viewModel: RomSearchResultsViewModel by viewModels()
 
@@ -84,11 +86,14 @@ class RomSearchResultsActivity : ComponentActivity() {
             return@registerForActivityResult
         }
         contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        val systemName = pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
+        val systemName =
+            pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
 
         val treeDocId = try {
             DocumentsContract.getTreeDocumentId(treeUri)
-        } catch (_: Exception) { null }
+        } catch (_: Exception) {
+            null
+        }
 
         if (treeDocId?.startsWith("primary:") == true) {
             val rel = treeDocId.removePrefix("primary:")
@@ -147,14 +152,16 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val animDurationExit = 180
 
                     var showExperimentalDialog by remember {
-                        val prefs = getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+                        val prefs = getSharedPreferences("rom_search_prefs", MODE_PRIVATE)
                         mutableStateOf(!prefs.getBoolean("experimental_shown", false))
                     }
+
+                    val context = LocalContext.current
 
                     if (showExperimentalDialog) {
                         fun markShown() {
                             showExperimentalDialog = false
-                            getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+                            getSharedPreferences("rom_search_prefs", MODE_PRIVATE)
                                 .edit { putBoolean("experimental_shown", true) }
                         }
                         AlertDialog(
@@ -252,16 +259,32 @@ class RomSearchResultsActivity : ComponentActivity() {
                         val list = when {
                             isHiddenMode ->
                                 allGames.filter { hiddenGameKey(it) in hiddenGames }
+
                             selectedPlatform != null ->
-                                allGames.filter { it.systemName.equals(selectedPlatform, ignoreCase = true) }
+                                allGames.filter {
+                                    it.systemName.equals(
+                                        selectedPlatform,
+                                        ignoreCase = true
+                                    )
+                                }
+
                             isPlatformMode && platformSearch != null ->
-                                allGames.filter { it.systemName.contains(platformSearch, ignoreCase = true) }
+                                allGames.filter {
+                                    it.systemName.contains(
+                                        platformSearch,
+                                        ignoreCase = true
+                                    )
+                                }
+
                             query.isBlank() -> allGames
                             else -> allGames.filter { game ->
                                 game.name.contains(query, ignoreCase = true) ||
                                         game.systemName.contains(query, ignoreCase = true) ||
                                         game.genre?.contains(query, ignoreCase = true) == true ||
-                                        game.developer?.contains(query, ignoreCase = true) == true ||
+                                        game.developer?.contains(
+                                            query,
+                                            ignoreCase = true
+                                        ) == true ||
                                         game.publisher?.contains(query, ignoreCase = true) == true
                             }
                         }
@@ -272,13 +295,26 @@ class RomSearchResultsActivity : ComponentActivity() {
                         if (hideNoImage && !isHiddenMode) {
                             result = result.filter { game ->
                                 val resolvedPath = when (cardMediaType) {
-                                    RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath ?: game.artworkPath
-                                    RomSearchCardMediaType.Covers -> game.artworkPath ?: game.physicalMediaPath
-                                    RomSearchCardMediaType.Screenshots -> game.screenshotPath ?: game.physicalMediaPath ?: game.artworkPath
-                                    RomSearchCardMediaType.Fanart -> game.fanartPath ?: game.physicalMediaPath ?: game.artworkPath
-                                    RomSearchCardMediaType.TitleScreens -> game.titlescreenPath ?: game.physicalMediaPath ?: game.artworkPath
-                                    RomSearchCardMediaType.Marquee -> game.marqueeImagePath ?: game.physicalMediaPath ?: game.artworkPath
-                                    RomSearchCardMediaType.MixImages -> game.miximagePath ?: game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath
+                                        ?: game.artworkPath
+
+                                    RomSearchCardMediaType.Covers -> game.artworkPath
+                                        ?: game.physicalMediaPath
+
+                                    RomSearchCardMediaType.Screenshots -> game.screenshotPath
+                                        ?: game.physicalMediaPath ?: game.artworkPath
+
+                                    RomSearchCardMediaType.Fanart -> game.fanartPath
+                                        ?: game.physicalMediaPath ?: game.artworkPath
+
+                                    RomSearchCardMediaType.TitleScreens -> game.titlescreenPath
+                                        ?: game.physicalMediaPath ?: game.artworkPath
+
+                                    RomSearchCardMediaType.Marquee -> game.marqueeImagePath
+                                        ?: game.physicalMediaPath ?: game.artworkPath
+
+                                    RomSearchCardMediaType.MixImages -> game.miximagePath
+                                        ?: game.physicalMediaPath ?: game.artworkPath
                                 }
                                 resolvedPath != null
                             }
@@ -292,8 +328,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                         }
                         result
                     }
-
-                    val context = LocalContext.current
 
                     AnimatedVisibility(
                         visible = isVisible,
@@ -317,7 +351,9 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
                                     onToggleGameDiscSpin = { game ->
                                         val key = gameKey(game)
-                                        if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(key)
+                                        if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(
+                                            key
+                                        )
                                         else esdePrefs.disableFocusAnimation(key)
                                     },
                                     getGameMediaType = { game ->
@@ -328,15 +364,19 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
                                         else esdePrefs.setGameMediaType(gameKey(game), type)
                                     },
-                                    modifier = Modifier
-                                        .fillMaxSize(),
+                                    modifier = Modifier.fillMaxSize(),
                                     onLaunchGame = { game ->
                                         romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
                                         romLauncher.launchGame(game, context)
                                     },
                                     onSaveEmulator = { game, pkg, cmd ->
                                         esdePrefs.setGameEmulator(gameKey(game), pkg)
-                                        cmd?.let { esdePrefs.setGameLaunchCommand(gameKey(game), it) }
+                                        cmd?.let {
+                                            esdePrefs.setGameLaunchCommand(
+                                                gameKey(game),
+                                                it
+                                            )
+                                        }
                                     },
                                     hasSavedEmulator = { game ->
                                         esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
@@ -361,7 +401,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     isRetroArchGame = { game ->
                                         val saved = esdePrefs.getGameEmulator(gameKey(game))
-                                        (saved ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
+                                        (saved
+                                            ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
                                     },
                                     hasSavedCore = { game ->
                                         esdePrefs.getGameCore(gameKey(game)) != null
@@ -372,7 +413,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     onChangeFolder = { game ->
                                         pendingFolderChangeSystem = game.systemName
-                                        val romPath = resolveRomPath(game, esdePrefs.state.value.romsPaths)
+                                        val romPath =
+                                            resolveRomPath(game, esdePrefs.state.value.romsPaths)
                                         val hint = romPath?.let {
                                             val dir = File(it).parent ?: "/storage/emulated/0"
                                             "content://com.android.externalstorage.documents/document/${

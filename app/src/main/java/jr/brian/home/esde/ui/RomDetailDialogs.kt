@@ -220,196 +220,6 @@ private fun AppPickerDialog(
 }
 
 @Composable
-internal fun RomDetailScreen(
-    game: GameInfo,
-    isHidden: Boolean = false,
-    currentMediaType: RomSearchCardMediaType? = null,
-    globalMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
-    onDismiss: () -> Unit,
-    onLaunch: () -> Unit,
-    onPickEmulator: () -> Unit = {},
-    onChangeCore: () -> Unit = {},
-    onChangeFolder: () -> Unit = {},
-    onHide: () -> Unit = {},
-    onUnhide: () -> Unit = {},
-    onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
-    discSpinEnabled: Boolean = false,
-    discSpinDisabled: Boolean = false,
-    onToggleDiscSpin: () -> Unit = {}
-) {
-    val focusRequester = remember { FocusRequester() }
-    val imageLoader = LocalESDEImageLoader.current
-    val context = LocalContext.current
-    var showMediaTypePicker by remember { mutableStateOf(false) }
-
-    if (showMediaTypePicker) {
-        MediaTypePickerDialog(
-            currentType = currentMediaType,
-            onDismiss = { showMediaTypePicker = false },
-            onSelected = { type ->
-                onSetMediaType(type)
-                showMediaTypePicker = false
-            }
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    BackHandler(onBack = onDismiss)
-
-    Surface(
-        color = OledBackgroundColor,
-        modifier = Modifier.fillMaxSize().focusRequester(focusRequester)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Top bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.rom_detail_close),
-                        tint = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-                Text(
-                    text = game.name,
-                    color = Color.White.copy(alpha = 0.9f),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = game.systemName.uppercase(),
-                    color = ThemeAccentColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(end = 12.dp)
-                )
-            }
-
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
-
-            // Scrollable content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Hero image — use per-game override, fall back to global setting
-                effectiveMediaPath(game, currentMediaType ?: globalMediaType)?.let { path ->
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(File(path))
-                            .crossfade(true)
-                            .build(),
-                        imageLoader = imageLoader,
-                        contentDescription = game.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(240.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-
-                game.genre?.let { RomDetailRow(stringResource(R.string.rom_detail_genre), it) }
-                game.developer?.let { RomDetailRow(stringResource(R.string.rom_detail_developer), it) }
-                game.publisher?.let { RomDetailRow(stringResource(R.string.rom_detail_publisher), it) }
-                game.players?.let { RomDetailRow(stringResource(R.string.rom_detail_players), it) }
-                if (game.rating > 0f) {
-                    RomDetailRow(
-                        stringResource(R.string.rom_detail_rating),
-                        "%.0f%%".format(game.rating * 100)
-                    )
-                }
-                if (game.playCount > 0) {
-                    RomDetailRow(
-                        stringResource(R.string.rom_detail_play_count),
-                        game.playCount.toString()
-                    )
-                }
-                if (game.playTimeMinutes > 0) {
-                    val hours = game.playTimeMinutes / 60
-                    val minutes = game.playTimeMinutes % 60
-                    val timeStr = if (hours > 0) {
-                        stringResource(R.string.rom_detail_playtime_hm, hours, minutes)
-                    } else {
-                        stringResource(R.string.rom_detail_playtime_m, minutes)
-                    }
-                    RomDetailRow(stringResource(R.string.rom_detail_playtime), timeStr)
-                }
-                game.description?.let { desc ->
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f),
-                        lineHeight = 18.sp
-                    )
-                }
-            }
-
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
-
-            // Bottom action bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!isHidden) {
-                    TextButton(onClick = onPickEmulator) {
-                        Text(stringResource(R.string.rom_detail_pick_emulator), color = ThemeAccentColor)
-                    }
-                    TextButton(onClick = onChangeCore) {
-                        Text("Change Core", color = ThemeAccentColor)
-                    }
-                    TextButton(onClick = onChangeFolder) {
-                        Text("Change Folder", color = ThemeAccentColor)
-                    }
-                    TextButton(onClick = { showMediaTypePicker = true }) {
-                        Text(
-                            text = "Media: ${currentMediaType?.displayName ?: "Default"}",
-                            color = ThemeAccentColor
-                        )
-                    }
-                    if (discSpinEnabled && game.systemName.lowercase() in ESDEMediaConstants.DISC_PLATFORMS) {
-                        TextButton(onClick = onToggleDiscSpin) {
-                            Text(
-                                text = "Spin: ${if (discSpinDisabled) "Off" else "On"}",
-                                color = ThemeAccentColor
-                            )
-                        }
-                    }
-                }
-                if (isHidden) {
-                    TextButton(onClick = onUnhide) {
-                        Text(stringResource(R.string.rom_detail_unhide), color = ThemeAccentColor)
-                    }
-                } else {
-                    TextButton(onClick = onHide) {
-                        Text(stringResource(R.string.rom_detail_hide), color = Color.Red.copy(alpha = 0.7f))
-                    }
-                }
-                if (game.emulatorPackage != null || game.launchCommand != null) {
-                    TextButton(onClick = onLaunch) {
-                        Text(stringResource(R.string.rom_detail_launch), color = ThemeAccentColor)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 internal fun RetroArchCorePickerDialog(
     onDismiss: () -> Unit,
     onCoreSelected: (displayName: String, corePath: String) -> Unit
@@ -467,7 +277,7 @@ internal fun RetroArchCorePickerDialog(
     )
 }
 
-private fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): String? = when (type) {
+fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): String? = when (type) {
     RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath ?: game.artworkPath
     RomSearchCardMediaType.Covers -> game.artworkPath ?: game.physicalMediaPath
     RomSearchCardMediaType.Screenshots -> game.screenshotPath ?: game.physicalMediaPath ?: game.artworkPath
@@ -478,7 +288,7 @@ private fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): St
 }
 
 @Composable
-private fun MediaTypePickerDialog(
+fun MediaTypePickerDialog(
     currentType: RomSearchCardMediaType?,
     onDismiss: () -> Unit,
     onSelected: (RomSearchCardMediaType?) -> Unit
@@ -535,7 +345,7 @@ private fun MediaTypePickerDialog(
 }
 
 @Composable
-private fun RomDetailRow(label: String, value: String) {
+fun RomDetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
