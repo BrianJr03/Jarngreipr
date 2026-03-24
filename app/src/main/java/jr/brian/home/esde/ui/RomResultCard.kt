@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -42,6 +43,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -58,15 +60,37 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.ui.animations.animatedFlip
 import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.themePrimaryColor
 import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
 import android.view.KeyEvent as AndroidKeyEvent
+
+@Composable
+private fun glowPulseAlpha(isFocused: Boolean): Float {
+    return if (isFocused) {
+        val infiniteTransition = rememberInfiniteTransition(label = "glow_pulse")
+        val pulse by infiniteTransition.animateFloat(
+            initialValue = 0.6f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = EaseInOutCubic),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glowPulse"
+        )
+        pulse
+    } else {
+        1f
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -77,7 +101,12 @@ internal fun RomResultCard(
     onFocused: () -> Unit = {},
     autoFocus: Boolean = false,
     focusRequester: FocusRequester = remember { FocusRequester() },
-    onToggleKeyboard: () -> Unit = {}
+    onToggleKeyboard: () -> Unit = {},
+    mediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
+    focusAnimationEnabled: Boolean = false,
+    isFocusAnimationDisabled: Boolean = false,
+    flipEnabled: Boolean = false,
+    flipDisabledForGame: Boolean = false
 ) {
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
@@ -85,6 +114,13 @@ internal fun RomResultCard(
     val view = LocalView.current
     var isFocused by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
+
+    val isDiscPlatform = remember(game.systemName) {
+        game.systemName.lowercase() in ESDEMediaConstants.DISC_PLATFORMS
+    }
+
+    val shouldFlip = flipEnabled && !flipDisabledForGame && !(isDiscPlatform  && mediaType == RomSearchCardMediaType.PhysicalMedia)
+    val flipRotation = animatedFlip(isFocused = isFocused && shouldFlip, durationMillis = 1200)
 
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
@@ -95,9 +131,32 @@ internal fun RomResultCard(
         }
     }
 
-    val imageData = remember(game.physicalMediaPath, game.artworkPath) {
-        (game.physicalMediaPath ?: game.artworkPath)?.let { File(it) }
+    val shouldSpin = focusAnimationEnabled && !isFocusAnimationDisabled &&
+            mediaType == RomSearchCardMediaType.PhysicalMedia && isDiscPlatform
+    val discRotation = animatedRotation(isFocused = isFocused && shouldSpin, durationMillis = 1200)
+
+    val imageData = remember(game, mediaType) {
+        val path = when (mediaType) {
+            RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath ?: game.artworkPath
+            RomSearchCardMediaType.Covers -> game.artworkPath ?: game.physicalMediaPath
+            RomSearchCardMediaType.Screenshots -> game.screenshotPath ?: game.physicalMediaPath
+            ?: game.artworkPath
+
+            RomSearchCardMediaType.Fanart -> game.fanartPath ?: game.physicalMediaPath
+            ?: game.artworkPath
+
+            RomSearchCardMediaType.TitleScreens -> game.titlescreenPath ?: game.physicalMediaPath
+            ?: game.artworkPath
+
+            RomSearchCardMediaType.Marquee -> game.marqueeImagePath ?: game.physicalMediaPath
+            ?: game.artworkPath
+
+            RomSearchCardMediaType.MixImages -> game.miximagePath ?: game.physicalMediaPath
+            ?: game.artworkPath
+        }
+        path?.let { File(it) }
     }
+
     val hasImage = imageData != null
     val shape = RoundedCornerShape(8.dp)
 
@@ -113,25 +172,13 @@ internal fun RomResultCard(
         label = "glowRadius"
     )
 
-    val infiniteTransition = rememberInfiniteTransition(label = "glow_pulse")
-    val glowPulse by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowPulse"
-    )
-
+    val glowPulse = glowPulseAlpha(isFocused)
     val primary = themePrimaryColor()
 
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
-            .then(
-                if (hasImage) Modifier.scale(scale) else Modifier
-            )
+            .then(if (hasImage) Modifier.scale(scale) else Modifier)
             .drawBehind {
                 if (glowAlpha > 0f && hasImage) {
                     val pulse = if (isFocused) glowPulse else 1f
@@ -139,7 +186,7 @@ internal fun RomResultCard(
                     drawCircle(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                primary.copy(alpha = 1f * glowAlpha * pulse),
+                                primary.copy(alpha = 1.3f * glowAlpha * pulse),
                                 Color.Transparent
                             ),
                             center = Offset(size.width / 2f, size.height / 2f),
@@ -151,17 +198,12 @@ internal fun RomResultCard(
                 }
             }
             .then(
-                if (!hasImage and isFocused) Modifier
-                    .animatedGradientBorder(
-                        colors = listOf(primary, themeSecondaryColor()),
-                        shape = shape
-                    )
-                else if (!hasImage) {
-                    Modifier.border(
-                        width = 2.dp,
-                        Color.DarkGray, shape = shape
-                    )
-                } else Modifier
+                if (!hasImage && isFocused) Modifier.animatedGradientBorder(
+                    colors = listOf(primary, themeSecondaryColor()),
+                    shape = shape
+                )
+                else if (!hasImage) Modifier.border(width = 2.dp, Color.DarkGray, shape = shape)
+                else Modifier
             )
             .clip(shape)
             .onFocusChanged {
@@ -213,7 +255,13 @@ internal fun RomResultCard(
                             .build(),
                         imageLoader = imageLoader,
                         contentDescription = game.name,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .scale(0.85f)
+                            .then(if (shouldSpin) Modifier.rotate(discRotation) else Modifier)
+                            .then(if (shouldFlip) Modifier.graphicsLayer {
+                                rotationY = flipRotation
+                            } else Modifier),
                         contentScale = ContentScale.Fit
                     )
                 } else {

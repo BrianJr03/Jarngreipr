@@ -86,6 +86,7 @@ fun CollapsibleSection(
     showBorder: Boolean = false,
     initiallyExpanded: Boolean = false,
     onHeaderTap: (() -> Unit)? = null,
+    badge: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -138,12 +139,18 @@ fun CollapsibleSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                badge?.invoke()
+            }
 
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,

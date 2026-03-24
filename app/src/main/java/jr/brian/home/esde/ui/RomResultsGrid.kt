@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -64,13 +66,20 @@ internal fun RomResultsGrid(
     modifier: Modifier = Modifier,
     isHiddenMode: Boolean = false,
     backgroundTransparent: Boolean = false,
+    cardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
+    focusAnimationEnabled: Boolean = false,
+    isFocusAnimationDisabled: (GameInfo) -> Boolean = { false },
+    onToggleGameDiscSpin: (GameInfo) -> Unit = {},
+    getGameMediaType: (GameInfo) -> RomSearchCardMediaType? = { null },
+    onSetGameMediaType: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
     onLaunchGame: (GameInfo) -> Unit,
     onSaveEmulator: (GameInfo, String, String?) -> Unit = { _, _, _ -> },
     hasSavedEmulator: (GameInfo) -> Boolean = { false },
     onGameFocused: (GameInfo?) -> Unit = {},
     onHideGame: (GameInfo) -> Unit = {},
     onUnhideGame: (GameInfo) -> Unit = {},
-    onToggleKeyboard: () -> Unit = {},
+    onUnhideAllGames: (List<GameInfo>) -> Unit = {},
+    onToggleHintAndKeyboard: () -> Unit = {},
     isRetroArchGame: (GameInfo) -> Boolean = { false },
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
@@ -80,9 +89,19 @@ internal fun RomResultsGrid(
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
+    var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
 
     val listState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
+
+    val hiddenPlatforms = remember(games, isHiddenMode) {
+        if (isHiddenMode) games.map { it.systemName }.distinct().sorted() else emptyList()
+    }
+    val displayedGames = remember(games, isHiddenMode, hiddenPlatformFilter) {
+        if (isHiddenMode && hiddenPlatformFilter != null) {
+            games.filter { it.systemName.equals(hiddenPlatformFilter, ignoreCase = true) }
+        } else games
+    }
 
     var focusedIndex by remember { mutableIntStateOf(0) }
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
@@ -122,12 +141,9 @@ internal fun RomResultsGrid(
                 )
             }
 
-            games.isEmpty() -> {
+            !isHiddenMode && displayedGames.isEmpty() -> {
                 Text(
-                    text = stringResource(
-                        if (isHiddenMode) R.string.rom_search_hidden_no_results
-                        else R.string.rom_search_no_results
-                    ),
+                    text = stringResource(R.string.rom_search_no_results),
                     modifier = Modifier.align(Alignment.Center),
                     color = Color.White.copy(alpha = 0.5f),
                     style = MaterialTheme.typography.bodyMedium
@@ -167,8 +183,21 @@ internal fun RomResultsGrid(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    if (isHiddenMode) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            HiddenModeHeader(
+                                platforms = hiddenPlatforms,
+                                activePlatform = hiddenPlatformFilter,
+                                visibleCount = displayedGames.size,
+                                onPlatformToggle = { platform ->
+                                    hiddenPlatformFilter = if (hiddenPlatformFilter == platform) null else platform
+                                },
+                                onUnhideAll = { onUnhideAllGames(displayedGames) }
+                            )
+                        }
+                    }
                     itemsIndexed(
-                        games,
+                        displayedGames,
                         key = { _, game -> "${game.systemName}/${game.path}" }
                     ) { index, game ->
                         val focusRequester = remember { FocusRequester() }
@@ -182,6 +211,11 @@ internal fun RomResultsGrid(
                             game = game,
                             autoFocus = index == 0 && focusedIndex == 0,
                             focusRequester = focusRequester,
+                            mediaType = getGameMediaType(game) ?: cardMediaType,
+                            focusAnimationEnabled = focusAnimationEnabled,
+                            isFocusAnimationDisabled = isFocusAnimationDisabled(game),
+                            flipEnabled = focusAnimationEnabled,
+                            flipDisabledForGame = isFocusAnimationDisabled(game),
                             onClick = {
                                 val isAndroid =
                                     game.systemName.equals("androidgames", ignoreCase = true) ||
@@ -211,7 +245,7 @@ internal fun RomResultsGrid(
                                 }
                                 onGameFocused(game)
                             },
-                            onToggleKeyboard = onToggleKeyboard
+                            onToggleKeyboard = onToggleHintAndKeyboard
                         )
                     }
                 }
@@ -227,6 +261,8 @@ internal fun RomResultsGrid(
                 RomDetailScreen(
                     game = game,
                     isHidden = isHiddenMode,
+                    currentMediaType = getGameMediaType(game),
+                    globalMediaType = cardMediaType,
                     onDismiss = { selectedGame = null },
                     onLaunch = {
                         onLaunchGame(game)
@@ -245,7 +281,11 @@ internal fun RomResultsGrid(
                     onUnhide = {
                         onUnhideGame(game)
                         selectedGame = null
-                    }
+                    },
+                    onSetMediaType = { type -> onSetGameMediaType(game, type) },
+                    discSpinEnabled = focusAnimationEnabled,
+                    discSpinDisabled = isFocusAnimationDisabled(game),
+                    onToggleDiscSpin = { onToggleGameDiscSpin(game) }
                 )
             }
         }
@@ -278,6 +318,70 @@ internal fun RomResultsGrid(
                         selectedGame = null
                     }
                 }
+            )
+        }
+    }
+}
+
+@Composable
+private fun HiddenModeHeader(
+    platforms: List<String>,
+    activePlatform: String?,
+    visibleCount: Int,
+    onPlatformToggle: (String) -> Unit,
+    onUnhideAll: () -> Unit
+) {
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (platforms.size > 1) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
+                lazyRowItems(platforms) { platform ->
+                    val selected = activePlatform == platform
+                    TextButton(
+                        onClick = { onPlatformToggle(platform) },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (selected) ThemeAccentColor.copy(alpha = 0.2f) else OledBackgroundColor)
+                    ) {
+                        Text(
+                            text = platform.uppercase(),
+                            color = if (selected) ThemeAccentColor else ThemeAccentColor.copy(alpha = 0.5f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
+        if (visibleCount > 0) {
+            TextButton(
+                onClick = onUnhideAll,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.Red.copy(alpha = 0.08f))
+                    .padding(horizontal = 4.dp)
+            ) {
+                Text(
+                    text = "Unhide All${if (activePlatform != null) " ($activePlatform)" else ""} ($visibleCount)",
+                    color = Color.Red.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        } else {
+            Text(
+                text = stringResource(R.string.rom_search_hidden_no_results),
+                color = Color.White.copy(alpha = 0.4f),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
     }

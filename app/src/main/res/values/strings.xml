@@ -189,6 +189,8 @@
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
+    <string name="settings_keyboard_oled_exempt_title">Keyboard Ignores OLED Mode</string>
+    <string name="settings_keyboard_oled_exempt_description">Keep keyboard keys styled when OLED mode is on</string>
 
     <string name="settings_tab_animation_title">Tab Animation</string>
     <string name="settings_tab_animation_description">Long press animation on tabs</string>
@@ -1089,13 +1091,32 @@
     <string name="esde_settings_cancel_button">Cancel</string>
 
     <!-- ROM Search hints -->
-    <string name="rom_search_hint_keyboard">Select: toggle keyboard</string>
+    <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
     <string name="rom_search_hint_details">Start: open details</string>
+    <string name="rom_search_commands">Search Commands</string>
+    <string name="rom_search_commands_info">Use @hidden to view all hidden games. Use @{system} to view games from a specific system.</string>
 
     <!-- Search Settings -->
     <string name="esde_settings_section_search">Search</string>
     <string name="esde_settings_rom_search_use_wallpaper">Show System Wallpaper</string>
     <string name="esde_settings_rom_search_use_wallpaper_description">Display your system wallpaper behind ROM search results. When disabled, an OLED-friendly dark background is used instead.</string>
+
+    <!-- ROM Search Settings Screen -->
+    <string name="rom_search_settings_title">ROM Search Settings</string>
+    <string name="rom_search_settings_back">Back</string>
+    <string name="rom_search_settings_section_display">Display</string>
+    <string name="rom_search_settings_section_card_media">Card Media</string>
+    <string name="rom_search_settings_black_bg_title">Always Black Background</string>
+    <string name="rom_search_settings_black_bg_description">Use pure black for the search screen background, or follow OLED background color when off.</string>
+    <string name="rom_search_settings_wallpaper_title">Show System Wallpaper</string>
+    <string name="rom_search_settings_wallpaper_description">Display your system wallpaper behind ROM search results.</string>
+    <string name="rom_search_settings_hide_no_image_title">Hide Games Without Image</string>
+    <string name="rom_search_settings_hide_no_image_description">Exclude games with no artwork of any type.</string>
+    <string name="rom_search_settings_hide_no_metadata_title">Hide Games Without Metadata</string>
+    <string name="rom_search_settings_hide_no_metadata_description">Exclude games with no artwork, descriptions, or other scraped info.</string>
+    <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
+    <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
+    <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
 
     <!-- What\'s New Dialog -->
     <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>

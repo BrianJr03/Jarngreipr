@@ -4,8 +4,12 @@ import android.util.Log
 import android.util.Xml
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_COVERS
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_FANART
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_PHYSICALMEDIA
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_SCREENSHOTS
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_TITLESCREENS
 import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS_WITH_SVG
 import jr.brian.home.esde.util.ESDEMediaConstants.MARQUEE_FALLBACK_DIRS
@@ -240,6 +244,10 @@ object RomListParser {
                                             val artworkPath = resolveArtworkPath(systemName, path, mediaPath)
                                             val physicalMediaPath = resolvePhysicalMediaPath(systemName, path, mediaPath)
                                             val marqueePath = resolveMarqueePath(systemName, path, mediaPath)
+                                            val screenshotPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_SCREENSHOTS)
+                                            val fanartPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_FANART)
+                                            val titlescreenPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_TITLESCREENS)
+                                            val miximagePath = resolveMediaPath(systemName, path, mediaPath, FOLDER_MIXIMAGES)
                                             val romAbsPath = resolveRomPath(systemName, path, romsPaths, systemRomDir, sdCardParents)
                                             games.add(
                                                 GameInfo(
@@ -260,6 +268,10 @@ object RomListParser {
                                                     artworkPath = artworkPath,
                                                     physicalMediaPath = physicalMediaPath,
                                                     marqueeImagePath = marqueePath,
+                                                    screenshotPath = screenshotPath,
+                                                    fanartPath = fanartPath,
+                                                    titlescreenPath = titlescreenPath,
+                                                    miximagePath = miximagePath,
                                                     emulatorPackage = emulatorPackage,
                                                     romAbsolutePath = romAbsPath,
                                                     launchCommand = launchCommand
@@ -320,6 +332,24 @@ object RomListParser {
                     if (file.exists()) return file.absolutePath
                 }
                 val file = File(mediaPath, "$sysName/$FOLDER_PHYSICALMEDIA/$nameOnly.$ext")
+                if (file.exists()) return file.absolutePath
+            }
+        }
+        return null
+    }
+
+    private fun resolveMediaPath(systemName: String, gameFilename: String, mediaPath: String, folder: String): String? {
+        val nameOnly = File(gameFilename).nameWithoutExtension
+        val parentDir = File(gameFilename).parent
+        val mediaSystemName = getMediaSystemName(systemName)
+
+        for (sysName in listOf(systemName, mediaSystemName).distinct()) {
+            for (ext in IMAGE_EXTENSIONS) {
+                if (parentDir != null) {
+                    val file = File(mediaPath, "$sysName/$folder/$parentDir/$nameOnly.$ext")
+                    if (file.exists()) return file.absolutePath
+                }
+                val file = File(mediaPath, "$sysName/$folder/$nameOnly.$ext")
                 if (file.exists()) return file.absolutePath
             }
         }

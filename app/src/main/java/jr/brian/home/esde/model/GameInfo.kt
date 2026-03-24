@@ -18,6 +18,10 @@ data class GameInfo(
     val artworkPath: String? = null,
     val physicalMediaPath: String? = null,
     val marqueeImagePath: String? = null,
+    val screenshotPath: String? = null,
+    val fanartPath: String? = null,
+    val titlescreenPath: String? = null,
+    val miximagePath: String? = null,
     val emulatorPackage: String? = null,
     val romAbsolutePath: String? = null,
     val launchCommand: String? = null

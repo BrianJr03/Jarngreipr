@@ -115,6 +115,22 @@ enum class OverlayMediaType(val folderName: String, val displayName: String) {
     }
 }
 
+enum class RomSearchCardMediaType(val displayName: String) {
+    PhysicalMedia("Physical Media"),
+    Covers("Covers"),
+    Screenshots("Screenshots"),
+    Fanart("Fanart"),
+    TitleScreens("Title Screens"),
+    Marquee("Marquee"),
+    MixImages("Mix Images");
+
+    companion object {
+        fun fromName(name: String): RomSearchCardMediaType {
+            return entries.find { it.name == name } ?: PhysicalMedia
+        }
+    }
+}
+
 data class ESDEPrefsState(
     val animationStyle: AnimationStyle = AnimationStyle.Fade,
     val animationDuration: Int = 300,
@@ -209,7 +225,14 @@ data class ESDEPrefsState(
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
-    val romSearchUseWallpaper: Boolean = true
+    val romSearchUseWallpaper: Boolean = true,
+    val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
+    val romSearchGameMediaMap: Map<String, String> = emptyMap(),
+    val romSearchHideNoMetadata: Boolean = false,
+    val romSearchHideNoImage: Boolean = false,
+    val romSearchDiscSpin: Boolean = false,
+    val romSearchBlackBackground: Boolean = true,
+    val romSearchFocusAnimationDisabledGames: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

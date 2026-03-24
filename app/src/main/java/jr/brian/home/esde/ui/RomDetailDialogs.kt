@@ -48,6 +48,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -221,17 +223,35 @@ private fun AppPickerDialog(
 internal fun RomDetailScreen(
     game: GameInfo,
     isHidden: Boolean = false,
+    currentMediaType: RomSearchCardMediaType? = null,
+    globalMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
     onPickEmulator: () -> Unit = {},
     onChangeCore: () -> Unit = {},
     onChangeFolder: () -> Unit = {},
     onHide: () -> Unit = {},
-    onUnhide: () -> Unit = {}
+    onUnhide: () -> Unit = {},
+    onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
+    discSpinEnabled: Boolean = false,
+    discSpinDisabled: Boolean = false,
+    onToggleDiscSpin: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
+    var showMediaTypePicker by remember { mutableStateOf(false) }
+
+    if (showMediaTypePicker) {
+        MediaTypePickerDialog(
+            currentType = currentMediaType,
+            onDismiss = { showMediaTypePicker = false },
+            onSelected = { type ->
+                onSetMediaType(type)
+                showMediaTypePicker = false
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -283,8 +303,8 @@ internal fun RomDetailScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Hero image
-                (game.physicalMediaPath ?: game.artworkPath)?.let { path ->
+                // Hero image — use per-game override, fall back to global setting
+                effectiveMediaPath(game, currentMediaType ?: globalMediaType)?.let { path ->
                     AsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(File(path))
@@ -355,6 +375,20 @@ internal fun RomDetailScreen(
                     TextButton(onClick = onChangeFolder) {
                         Text("Change Folder", color = ThemeAccentColor)
                     }
+                    TextButton(onClick = { showMediaTypePicker = true }) {
+                        Text(
+                            text = "Media: ${currentMediaType?.displayName ?: "Default"}",
+                            color = ThemeAccentColor
+                        )
+                    }
+                    if (discSpinEnabled && game.systemName.lowercase() in ESDEMediaConstants.DISC_PLATFORMS) {
+                        TextButton(onClick = onToggleDiscSpin) {
+                            Text(
+                                text = "Spin: ${if (discSpinDisabled) "Off" else "On"}",
+                                color = ThemeAccentColor
+                            )
+                        }
+                    }
                 }
                 if (isHidden) {
                     TextButton(onClick = onUnhide) {
@@ -420,6 +454,73 @@ internal fun RetroArchCorePickerDialog(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.rom_detail_close))
+            }
+        }
+    )
+}
+
+private fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): String? = when (type) {
+    RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath ?: game.artworkPath
+    RomSearchCardMediaType.Covers -> game.artworkPath ?: game.physicalMediaPath
+    RomSearchCardMediaType.Screenshots -> game.screenshotPath ?: game.physicalMediaPath ?: game.artworkPath
+    RomSearchCardMediaType.Fanart -> game.fanartPath ?: game.physicalMediaPath ?: game.artworkPath
+    RomSearchCardMediaType.TitleScreens -> game.titlescreenPath ?: game.physicalMediaPath ?: game.artworkPath
+    RomSearchCardMediaType.Marquee -> game.marqueeImagePath ?: game.physicalMediaPath ?: game.artworkPath
+    RomSearchCardMediaType.MixImages -> game.miximagePath ?: game.physicalMediaPath ?: game.artworkPath
+}
+
+@Composable
+private fun MediaTypePickerDialog(
+    currentType: RomSearchCardMediaType?,
+    onDismiss: () -> Unit,
+    onSelected: (RomSearchCardMediaType?) -> Unit
+) {
+    AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.95f),
+        onDismissRequest = onDismiss,
+        containerColor = OledCardColor,
+        title = {
+            Text(
+                text = "Card Media Type",
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                TextButton(
+                    onClick = { onSelected(null) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (currentType == null) "✓ Default (use global setting)" else "Default (use global setting)",
+                        color = if (currentType == null) Color.White else Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                )
+                RomSearchCardMediaType.entries.forEach { type ->
+                    TextButton(
+                        onClick = { onSelected(type) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (currentType == type) "✓ ${type.displayName}" else type.displayName,
+                            color = if (currentType == type) Color.White else Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }

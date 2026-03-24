@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
@@ -74,6 +75,7 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 
@@ -86,12 +88,16 @@ fun QwertyKeyboard(
     showFlipLayoutButton: Boolean = true,
     showSpecialCharRow: Boolean = true,
     showVolControl: Boolean = false,
+    showSettings: Boolean = false,
+    showController: Boolean = true,
+    showAtKey: Boolean = false,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onFlipLayout: () -> Unit = {},
     onSpecialCharToggle: () -> Unit = {},
     onReopenResults: (() -> Unit)? = null,
+    onOpenRomSearchSettings: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var isNumericMode by remember { mutableStateOf(false) }
@@ -190,6 +196,7 @@ fun QwertyKeyboard(
                 }
                 if (onReopenResults != null &&
                     wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                    && showController
                 ) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
@@ -211,6 +218,26 @@ fun QwertyKeyboard(
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
+                if (showSettings) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            ).clickable {
+                               onOpenRomSearchSettings?.invoke()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 if (showFlipLayoutButton) {
                     Box(
                         modifier = Modifier
@@ -249,6 +276,7 @@ fun QwertyKeyboard(
                 qwertyRow3 = qwertyRow3,
                 searchQuery = searchQuery,
                 showSpecialCharRow = showSpecialCharRow,
+                showAtKey = showAtKey,
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = onFocusChanged,
@@ -265,6 +293,7 @@ private fun QwertyAlphabetKeyboard(
     qwertyRow3: List<Char>,
     searchQuery: String,
     showSpecialCharRow: Boolean = true,
+    showAtKey: Boolean = false,
     onQueryChange: (String) -> Unit,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit,
@@ -293,7 +322,7 @@ private fun QwertyAlphabetKeyboard(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Spacer(modifier = Modifier.weight(0.5f))
+        if (!showAtKey) Spacer(modifier = Modifier.weight(0.5f))
         qwertyRow2.forEachIndexed { index, letter ->
             val combinedIndex = index + qwertyRow1.size
             QwertyKeyButton(
@@ -308,7 +337,22 @@ private fun QwertyAlphabetKeyboard(
                 onFocusChanged = { onFocusChanged(combinedIndex) },
             )
         }
-        Spacer(modifier = Modifier.weight(0.5f))
+        if (showAtKey) {
+            val atIndex = qwertyRow1.size + qwertyRow2.size
+            QwertyKeyButton(
+                label = "@",
+                onClick = { onQueryChange(searchQuery + "@") },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                focusRequester = remember(atIndex) {
+                    FocusRequester().also { keyboardFocusRequesters[atIndex] = it }
+                },
+                onFocusChanged = { onFocusChanged(atIndex) },
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(0.5f))
+        }
     }
 
     Row(
@@ -560,6 +604,7 @@ private fun QwertyKeyButton(
     onFocusChanged: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
+    val oledManager = LocalOledModeManager.current
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
@@ -582,7 +627,7 @@ private fun QwertyKeyButton(
                 isFocused = it.isFocused
             }
             .background(
-                brush = cardGradient(isFocused, isPressed = isPressed),
+                brush = cardGradient(isFocused, isPressed = isPressed, ignoreOled = oledManager.isKeyboardOledExempt),
                 shape = RoundedCornerShape(6.dp),
             )
             .border(

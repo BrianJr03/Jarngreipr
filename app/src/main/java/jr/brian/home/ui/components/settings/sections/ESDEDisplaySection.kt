@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.WallpaperToggleTarget
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
@@ -464,16 +465,99 @@ fun ESDESettingsContent(
 
         CollapsibleSection(
             title = stringResource(R.string.esde_settings_section_search),
-            onHeaderTap = onSectionHeaderTap
-        ) {
-            ToggleSetting(
-                title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
-                description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
-                checked = prefsState.romSearchUseWallpaper,
-                onCheckedChange = { enabled ->
-                    preferencesManager.setRomSearchUseWallpaper(enabled)
+            onHeaderTap = onSectionHeaderTap,
+            badge = {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFFFA500).copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "Experimental",
+                        color = Color(0xFFFFA500),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
-            )
+            }
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_black_bg_title),
+                    description = stringResource(R.string.rom_search_settings_black_bg_description),
+                    checked = prefsState.romSearchBlackBackground,
+                    onCheckedChange = { preferencesManager.setRomSearchBlackBackground(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
+                    description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
+                    checked = prefsState.romSearchUseWallpaper,
+                    onCheckedChange = { preferencesManager.setRomSearchUseWallpaper(it) }
+                )
+                ToggleSetting(
+                    title = "Hide Games Without Image",
+                    description = "Exclude games with no artwork of any type.",
+                    checked = prefsState.romSearchHideNoImage,
+                    onCheckedChange = { preferencesManager.setRomSearchHideNoImage(it) }
+                )
+                ToggleSetting(
+                    title = "Hide Games Without Metadata",
+                    description = "Exclude games with no artwork, descriptions, or other scraped info.",
+                    checked = prefsState.romSearchHideNoMetadata,
+                    onCheckedChange = { preferencesManager.setRomSearchHideNoMetadata(it) }
+                )
+                ToggleSetting(
+                    title = "Spin Disc Art",
+                    description = "Animate disc art with a spin when focused. Applies to PS1, PS2, PS3, Sega CD, Saturn, Dreamcast, GameCube, Wii, Wii U, Xbox, Xbox 360, 3DO, Jaguar CD, CD32, and CDTV. Only active when Physical Media type is selected.",
+                    checked = prefsState.romSearchDiscSpin,
+                    onCheckedChange = { preferencesManager.setRomSearchDiscSpin(it) }
+                )
+                Text(
+                    text = "Card Media Type",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+                RomSearchCardMediaType.entries.forEach { type ->
+                    val selected = prefsState.romSearchCardMediaType == type
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.12f)
+                                else Color.Transparent
+                            )
+                            .border(
+                                width = if (selected) 1.dp else 0.dp,
+                                color = if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.4f) else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { preferencesManager.setRomSearchCardMediaType(type) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = type.displayName,
+                            color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                            fontSize = 14.sp
+                        )
+                        if (selected) {
+                            Text(
+                                text = "✓",
+                                color = jr.brian.home.ui.theme.ThemeAccentColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         CollapsibleSection(
