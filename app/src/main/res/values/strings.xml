@@ -1032,7 +1032,7 @@
     <string name="esde_settings_system_bg_video_looping_description">Restart the video when it reaches the end</string>
     <string name="esde_settings_clear_path">@string/common_clear</string>
     <string name="esde_settings_select_folder">@string/common_select_folder</string>
-    <string name="settings_search_settings">Search settings…</string>
+    <string name="settings_search_settings">Search Settings…</string>
 
     <!-- ESDE Screensaver Settings -->
     <string name="esde_settings_section_screensaver">Screensaver</string>
