@@ -380,6 +380,9 @@
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_layout">Layout</string>
+    <string name="settings_layout_scroll_title">Disable Scroll</string>
+    <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
+    <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>
