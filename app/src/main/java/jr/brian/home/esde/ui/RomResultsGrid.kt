@@ -106,6 +106,10 @@ internal fun RomResultsGrid(
     var focusedIndex by remember { mutableIntStateOf(0) }
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
 
+    LaunchedEffect(Unit) {
+        focusRequesters[0]?.requestFocus()
+    }
+
     LaunchedEffect(focusedIndex) {
         focusRequesters[focusedIndex]?.requestFocus()
     }
