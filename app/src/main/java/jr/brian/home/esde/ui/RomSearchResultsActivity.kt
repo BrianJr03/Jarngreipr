@@ -20,7 +20,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,7 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
@@ -51,6 +49,7 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.util.resolveRomPath
@@ -217,6 +216,12 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
                     val hiddenGames = esdeState.hiddenGames
                     val romSearchUseWallpaper = esdeState.romSearchUseWallpaper
+                    val cardMediaType = esdeState.romSearchCardMediaType
+                    val gameMediaMap = esdeState.romSearchGameMediaMap
+                    val hideNoMetadata = esdeState.romSearchHideNoMetadata
+                    val hideNoImage = esdeState.romSearchHideNoImage
+                    val focusAnimationEnabled = esdeState.romSearchDiscSpin
+                    val focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames
 
                     val isHiddenMode = query.equals("@hidden", ignoreCase = true)
                     val isPlatformMode = !isHiddenMode && query.startsWith("@")
@@ -234,7 +239,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                         allPlatforms.firstOrNull { it.equals(platformSearch, ignoreCase = true) }
                     }
                     val filteredGames = remember(
-                        allGames, query, selectedPlatform, isPlatformMode, isHiddenMode, hiddenGames
+                        allGames, query, selectedPlatform, isPlatformMode, isHiddenMode, hiddenGames, hideNoMetadata, hideNoImage
                     ) {
                         val list = when {
                             isHiddenMode ->
@@ -253,8 +258,29 @@ class RomSearchResultsActivity : ComponentActivity() {
                             }
                         }
                         val deduped = list.distinctBy { it.name.lowercase() }
-                        if (isHiddenMode) deduped
+                        val visibleList = if (isHiddenMode) deduped
                         else deduped.filter { hiddenGameKey(it) !in hiddenGames }
+                        var result = visibleList
+                        if (hideNoImage && !isHiddenMode) {
+                            result = result.filter { game ->
+                                game.artworkPath != null || game.physicalMediaPath != null ||
+                                        game.screenshotPath != null || game.fanartPath != null ||
+                                        game.titlescreenPath != null || game.miximagePath != null ||
+                                        game.marqueeImagePath != null
+                            }
+                        }
+                        if (hideNoMetadata && !isHiddenMode) {
+                            result = result.filter { game ->
+                                game.description != null || game.genre != null ||
+                                        game.developer != null || game.publisher != null ||
+                                        game.rating > 0f ||
+                                        game.artworkPath != null || game.physicalMediaPath != null ||
+                                        game.screenshotPath != null || game.fanartPath != null ||
+                                        game.titlescreenPath != null || game.miximagePath != null ||
+                                        game.marqueeImagePath != null
+                            }
+                        }
+                        result
                     }
 
                     val context = LocalContext.current
@@ -276,6 +302,22 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isLoading = isLoading,
                                     isHiddenMode = isHiddenMode,
                                     backgroundTransparent = romSearchUseWallpaper,
+                                    cardMediaType = cardMediaType,
+                                    focusAnimationEnabled = focusAnimationEnabled,
+                                    isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
+                                    onToggleGameDiscSpin = { game ->
+                                        val key = gameKey(game)
+                                        if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(key)
+                                        else esdePrefs.disableFocusAnimation(key)
+                                    },
+                                    getGameMediaType = { game ->
+                                        gameMediaMap[gameKey(game)]
+                                            ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                                    },
+                                    onSetGameMediaType = { game, type ->
+                                        if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
+                                        else esdePrefs.setGameMediaType(gameKey(game), type)
+                                    },
                                     modifier = Modifier
                                         .fillMaxSize(),
                                     onLaunchGame = { game ->
@@ -300,9 +342,12 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     onHideGame = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
                                     onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
-                                    onToggleKeyboard = {
-                                        romSearchStateHolder.keyboardVisible.value =
-                                            !romSearchStateHolder.keyboardVisible.value
+                                    onUnhideAllGames = { games ->
+                                        esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
+                                    },
+                                    onToggleHintAndKeyboard = {
+                                        romSearchStateHolder.hintAndKbVisible.value =
+                                            !romSearchStateHolder.hintAndKbVisible.value
                                     },
                                     isRetroArchGame = { game ->
                                         val saved = esdePrefs.getGameEmulator(gameKey(game))

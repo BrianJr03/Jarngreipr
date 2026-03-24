@@ -64,6 +64,7 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 
@@ -405,6 +406,7 @@ private fun KeyboardButton(
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
+    val oledManager = LocalOledModeManager.current
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
@@ -426,7 +428,7 @@ private fun KeyboardButton(
                     isFocused = it.isFocused
                 }
                 .background(
-                    brush = cardGradient(isFocused, isPressed = isPressed),
+                    brush = cardGradient(isFocused, isPressed = isPressed, ignoreOled = oledManager.isKeyboardOledExempt),
                     shape = RoundedCornerShape(8.dp),
                 )
                 .border(

@@ -96,6 +96,20 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.ui.focus.FocusRequester
+import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.components.QwertyKeyboard
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -350,6 +364,9 @@ private fun SettingsContent(
     var expandedSection by remember { mutableStateOf<String?>(null) }
     var headerKonfettiKey by remember { mutableIntStateOf(0) }
     var headerKonfettiParties by remember { mutableStateOf<List<Party>?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var isKeyboardVisible by remember { mutableStateOf(false) }
+    val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val listState = rememberLazyListState()
     val density = LocalDensity.current
     var containerHeight by remember { mutableStateOf(0) }
@@ -357,6 +374,41 @@ private fun SettingsContent(
     val thumbHeightPx = with(density) { thumbHeight.toPx() }
 
     val isThorDevice = remember { Build.MODEL == DeviceModel.THOR }
+
+    val sectionKeywords = mapOf(
+        SECTION_APPEARANCE to listOf(
+            "appearance", "theme", "icon pack", "wallpaper", "oled", "icon shape",
+            "font", "brightness", "tab animation", "keyboard"
+        ),
+        SECTION_ESDE to listOf(
+            "esde", "es-de", "emulation", "animation", "music", "jingles", "konfetti",
+            "marquee", "power", "screensaver", "video", "effects", "custom paths",
+            "system apps", "setup wizard", "rom search", "search"
+        ),
+        SECTION_LAYOUT to listOf(
+            "layout", "grid", "back button", "dock", "app drawer", "columns", "visibility",
+            "thor", "shortcut", "fab"
+        ),
+        SECTION_SUPPORT to listOf(
+            "support", "faq", "help", "question"
+        ),
+        SECTION_SYSTEM to listOf(
+            "system", "update", "crash logs", "control pad", "monitor", "volume", "notification"
+        ),
+        SECTION_EXTRAS to listOf(
+            "extras", "what's new", "floaty mode", "floaty", "whats new"
+        )
+    )
+
+    fun sectionMatchesQuery(sectionKey: String): Boolean {
+        if (searchQuery.isBlank()) return true
+        val q = searchQuery.lowercase().trim()
+        return sectionKeywords[sectionKey]?.any { fuzzyMatches(q, it) } == true
+    }
+
+    val hasSearchResults = searchQuery.isBlank() ||
+        listOf(SECTION_APPEARANCE, SECTION_ESDE, SECTION_LAYOUT, SECTION_SUPPORT, SECTION_SYSTEM, SECTION_EXTRAS)
+            .any { sectionMatchesQuery(it) }
 
     val scrollProgress by remember {
         derivedStateOf {
@@ -372,7 +424,12 @@ private fun SettingsContent(
     }
 
     BackHandler {
-        if (expandedSection != null) expandedSection = null else onDismiss()
+        when {
+            isKeyboardVisible -> isKeyboardVisible = false
+            searchQuery.isNotEmpty() -> searchQuery = ""
+            expandedSection != null -> expandedSection = null
+            else -> onDismiss()
+        }
     }
     
     fun toggleSection(section: String) {
@@ -385,16 +442,45 @@ private fun SettingsContent(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize().onSizeChanged { containerHeight = it.height }
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        SettingsSearchBar(
+            query = searchQuery,
+            isKeyboardVisible = isKeyboardVisible,
+            onQueryChange = { searchQuery = it },
+            onToggleKeyboard = { isKeyboardVisible = !isKeyboardVisible },
+            modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
+        )
+
+        AnimatedVisibility(
+            visible = isKeyboardVisible,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            QwertyKeyboard(
+                searchQuery = searchQuery,
+                showQueryText = false,
+                showFlipLayoutButton = false,
+                showVolControl = false,
+                showSettings = false,
+                showController = false,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .onSizeChanged { containerHeight = it.height }
+        ) {
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 4.dp),
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "support_links") {
+            if (searchQuery.isBlank()) item(key = "support_links") {
                 val coffeeUrl = stringResource(R.string.settings_buy_me_coffee_url)
                 val kofiUrl = stringResource(R.string.settings_kofi_url)
                 val discordUrl = stringResource(R.string.settings_discord_url)
@@ -457,7 +543,7 @@ private fun SettingsContent(
                 }
             }
 
-            item(key = SECTION_APPEARANCE) {
+            if (sectionMatchesQuery(SECTION_APPEARANCE)) item(key = SECTION_APPEARANCE) {
                 AppearanceSection(
                     isExpanded = expandedSection == SECTION_APPEARANCE,
                     onToggle = { toggleSection(SECTION_APPEARANCE) },
@@ -468,7 +554,7 @@ private fun SettingsContent(
                 )
             }
 
-            item(key = SECTION_ESDE) {
+            if (sectionMatchesQuery(SECTION_ESDE)) item(key = SECTION_ESDE) {
                 ESDEDisplaySection(
                     isExpanded = expandedSection == SECTION_ESDE,
                     onToggle = { toggleSection(SECTION_ESDE) },
@@ -488,7 +574,7 @@ private fun SettingsContent(
                 )
             }
 
-            item(key = SECTION_LAYOUT) {
+            if (sectionMatchesQuery(SECTION_LAYOUT)) item(key = SECTION_LAYOUT) {
                 LayoutSection(
                     isExpanded = expandedSection == SECTION_LAYOUT,
                     onToggle = { toggleSection(SECTION_LAYOUT) },
@@ -499,7 +585,7 @@ private fun SettingsContent(
                 )
             }
 
-            item(key = SECTION_SUPPORT) {
+            if (sectionMatchesQuery(SECTION_SUPPORT)) item(key = SECTION_SUPPORT) {
                 SupportSection(
                     isExpanded = expandedSection == SECTION_SUPPORT,
                     onToggle = { toggleSection(SECTION_SUPPORT) },
@@ -507,7 +593,7 @@ private fun SettingsContent(
                 )
             }
 
-            item(key = SECTION_SYSTEM) {
+            if (sectionMatchesQuery(SECTION_SYSTEM)) item(key = SECTION_SYSTEM) {
                 SystemSection(
                     isExpanded = expandedSection == SECTION_SYSTEM,
                     onToggle = { toggleSection(SECTION_SYSTEM) },
@@ -521,12 +607,27 @@ private fun SettingsContent(
                 )
             }
 
-            item(key = SECTION_EXTRAS) {
+            if (sectionMatchesQuery(SECTION_EXTRAS)) item(key = SECTION_EXTRAS) {
                 ExtrasSection(
                     isExpanded = expandedSection == SECTION_EXTRAS,
                     onToggle = { toggleSection(SECTION_EXTRAS) },
                     onWhatsNewClick = onWhatsNewClick
                 )
+            }
+
+            if (!hasSearchResults) item(key = "no_results") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No settings match \"$searchQuery\"",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
 
@@ -564,6 +665,93 @@ private fun SettingsContent(
                     parties = parties
                 )
             }
+        }
+        }
+    }
+}
+
+private fun fuzzyMatches(query: String, target: String): Boolean {
+    var qi = 0
+    for (c in target) {
+        if (qi < query.length && c == query[qi]) qi++
+    }
+    return qi == query.length
+}
+
+@Composable
+private fun SettingsSearchBar(
+    query: String,
+    isKeyboardVisible: Boolean,
+    onQueryChange: (String) -> Unit,
+    onToggleKeyboard: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                brush = subtleCardGradient(isKeyboardVisible || query.isNotEmpty()),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .border(
+                width = if (isKeyboardVisible || query.isNotEmpty()) 2.dp else 1.dp,
+                brush = borderBrush(
+                    isFocused = true,
+                    colors = if (isKeyboardVisible || query.isNotEmpty()) {
+                        listOf(
+                            ThemePrimaryColor.copy(alpha = 0.8f),
+                            ThemeSecondaryColor.copy(alpha = 0.6f),
+                        )
+                    } else {
+                        listOf(
+                            ThemePrimaryColor.copy(alpha = 0.4f),
+                            ThemeSecondaryColor.copy(alpha = 0.3f),
+                        )
+                    }
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = null,
+            tint = if (query.isNotEmpty()) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = if (query.isEmpty()) "Search settings..." else query,
+            color = if (query.isEmpty()) Color.White.copy(alpha = 0.4f) else Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        if (query.isNotEmpty()) {
+            IconButton(
+                onClick = { onQueryChange("") },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Clear search",
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        IconButton(
+            onClick = onToggleKeyboard,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Keyboard,
+                contentDescription = if (isKeyboardVisible) "Hide keyboard" else "Show keyboard",
+                tint = if (isKeyboardVisible) ThemePrimaryColor else Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

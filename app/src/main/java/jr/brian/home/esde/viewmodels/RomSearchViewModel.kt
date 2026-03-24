@@ -25,10 +25,9 @@ class RomSearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     val query: StateFlow<String> = store.query.asStateFlow()
-    val allGames: StateFlow<List<GameInfo>> = store.allGames.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
-    val keyboardVisible: StateFlow<Boolean> = store.keyboardVisible.asStateFlow()
+    val hintAndKbVisible: StateFlow<Boolean> = store.hintAndKbVisible.asStateFlow()
     val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
 
     private val esdeRootPath: String?
@@ -52,8 +51,8 @@ class RomSearchViewModel @Inject constructor(
         store.focusedGame.value = null
     }
 
-    fun resetKeyboardVisibility() {
-        store.keyboardVisible.value = true
+    fun resetHintAndKbVisibility() {
+        store.hintAndKbVisible.value = true
     }
 
     fun loadGames() {

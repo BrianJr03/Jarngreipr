@@ -23,6 +23,7 @@ import jr.brian.home.ui.components.settings.AppLabelFontSizeSliderItem
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
+import jr.brian.home.ui.components.settings.KeyboardOledExemptToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
 import jr.brian.home.ui.components.settings.PoweredOffBrightnessSliderItem
 import jr.brian.home.ui.components.settings.SettingsTextButton
@@ -80,6 +81,7 @@ fun AppearanceSection(
 
         IconShapeToggleItem(isExpanded = false)
         OledModeToggleItem(isExpanded = false)
+        KeyboardOledExemptToggleItem(isExpanded = false)
         TabAnimationToggleItem(isExpanded = false)
         AppLabelFontSizeSliderItem()
         PoweredOffBrightnessSliderItem()
