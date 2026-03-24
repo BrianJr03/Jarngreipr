@@ -1,21 +1,11 @@
-**Jingles**
-- You can now set Jingles to play as you browse games in ES-DE
-- These are fully compatible with Jingles shared from Cocoon
-- Visit **Settings → ES-DE Settings → Jingles** to get started
-
 **Rom Search [ experimental ]**
-- You can now search through your ES-DE rom library with ease
-- Open **Drawer Options** and press the game controller icon to use Rom Search
+- Adds Rom Search Settings that allows for more customization
+- Choose what media type to display in the card and more!
 
-**Hide App Names ONLY on tabs**
-- App names can be disabled exclusively on AppsTab, Apps and Widgets Tab, and App Drawer Tab
-- Visit **Settings → Layout → Visibility Options** to get started
-
-**Video backgrounds for Systems**
-- Set videos as background as you browse systems in ES-DE
-- Visit **Settings → ES-DE Settings → Custom Paths** to get started
+**Settings Search**
+- You can now search for options in Settings
 
 **Fixes**
-- Fixes issue where side margins were not equal when changing row count
+- Fixes issue where video wallpaper became black screen after device wake
 
-2.0
+2.1

@@ -48,7 +48,8 @@ enum class LogoAlignment {
 enum class ScreensaverBehavior {
     ShowContent,
     PowerOff,
-    Floaty
+    Floaty,
+    ShowAll
 }
 
 enum class MusicVideoBehavior(val value: String) {
@@ -232,7 +233,9 @@ data class ESDEPrefsState(
     val romSearchHideNoImage: Boolean = false,
     val romSearchDiscSpin: Boolean = false,
     val romSearchBlackBackground: Boolean = true,
-    val romSearchFocusAnimationDisabledGames: Set<String> = emptySet()
+    val romSearchFocusAnimationDisabledGames: Set<String> = emptySet(),
+    val logoVisibilityAnimation: Boolean = false,
+    val logoChangeAnimation: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

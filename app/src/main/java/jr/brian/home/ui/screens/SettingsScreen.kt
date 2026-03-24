@@ -98,6 +98,7 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -110,6 +111,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.focus.FocusRequester
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.components.QwertyKeyboard
+import jr.brian.home.util.sectionKeywords
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -141,6 +143,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val appUpdateManager = LocalAppUpdateManager.current
+
+    val updateAvailable = stringResource(R.string.update_not_available)
     
     val updateDialogState = rememberDialogState<UpdateInfo>()
     val notificationAccessDialogState = rememberDialogState<Unit>()
@@ -221,7 +225,7 @@ fun SettingsScreen(
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        context.getString(R.string.update_not_available),
+                                        updateAvailable,
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -375,30 +379,7 @@ private fun SettingsContent(
 
     val isThorDevice = remember { Build.MODEL == DeviceModel.THOR }
 
-    val sectionKeywords = mapOf(
-        SECTION_APPEARANCE to listOf(
-            "appearance", "theme", "icon pack", "wallpaper", "oled", "icon shape",
-            "font", "brightness", "tab animation", "keyboard"
-        ),
-        SECTION_ESDE to listOf(
-            "esde", "es-de", "emulation", "animation", "music", "jingles", "konfetti",
-            "marquee", "power", "screensaver", "video", "effects", "custom paths",
-            "system apps", "setup wizard", "rom search", "search"
-        ),
-        SECTION_LAYOUT to listOf(
-            "layout", "grid", "back button", "dock", "app drawer", "columns", "visibility",
-            "thor", "shortcut", "fab"
-        ),
-        SECTION_SUPPORT to listOf(
-            "support", "faq", "help", "question"
-        ),
-        SECTION_SYSTEM to listOf(
-            "system", "update", "crash logs", "control pad", "monitor", "volume", "notification"
-        ),
-        SECTION_EXTRAS to listOf(
-            "extras", "what's new", "floaty mode", "floaty", "whats new"
-        )
-    )
+
 
     fun sectionMatchesQuery(sectionKey: String): Boolean {
         if (searchQuery.isBlank()) return true
@@ -688,6 +669,10 @@ private fun SettingsSearchBar(
 ) {
     Row(
         modifier = modifier
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onToggleKeyboard() }
             .fillMaxWidth()
             .background(
                 brush = subtleCardGradient(isKeyboardVisible || query.isNotEmpty()),
@@ -723,7 +708,7 @@ private fun SettingsSearchBar(
             modifier = Modifier.size(20.dp)
         )
         Text(
-            text = if (query.isEmpty()) "Search settings..." else query,
+            text = query.ifEmpty { stringResource(R.string.settings_search_settings) },
             color = if (query.isEmpty()) Color.White.copy(alpha = 0.4f) else Color.White,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,

@@ -41,7 +41,9 @@ fun MarqueeSectionContent(
     onShowMarqueeForGameChange: (Boolean) -> Unit,
     onMarqueeMinWidthPercentChange: (Float) -> Unit,
     onOverlayMediaTypeChange: (OverlayMediaType) -> Unit,
-    onMarqueeOnlyModeChange: (Boolean) -> Unit = {}
+    onMarqueeOnlyModeChange: (Boolean) -> Unit = {},
+    onLogoVisibilityAnimationChange: (Boolean) -> Unit = {},
+    onLogoChangeAnimationChange: (Boolean) -> Unit = {}
 ) {
     val pageCount = pageTypes.size
 
@@ -131,6 +133,20 @@ fun MarqueeSectionContent(
         description = stringResource(R.string.esde_settings_marquee_show_for_game_description),
         checked = prefsState.showMarqueeForGame,
         onCheckedChange = { show -> onShowMarqueeForGameChange(show) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_visibility_animation),
+        description = stringResource(R.string.esde_settings_logo_visibility_animation_description),
+        checked = prefsState.logoVisibilityAnimation,
+        onCheckedChange = { enabled -> onLogoVisibilityAnimationChange(enabled) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_change_animation),
+        description = stringResource(R.string.esde_settings_logo_change_animation_description),
+        checked = prefsState.logoChangeAnimation,
+        onCheckedChange = { enabled -> onLogoChangeAnimationChange(enabled) }
     )
 
     if (pageCount > 1) {
