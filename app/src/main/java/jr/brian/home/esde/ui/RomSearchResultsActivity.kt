@@ -239,7 +239,15 @@ class RomSearchResultsActivity : ComponentActivity() {
                         allPlatforms.firstOrNull { it.equals(platformSearch, ignoreCase = true) }
                     }
                     val filteredGames = remember(
-                        allGames, query, selectedPlatform, isPlatformMode, isHiddenMode, hiddenGames, hideNoMetadata, hideNoImage
+                        allGames,
+                        query,
+                        selectedPlatform,
+                        isPlatformMode,
+                        isHiddenMode,
+                        hiddenGames,
+                        hideNoMetadata,
+                        hideNoImage,
+                        cardMediaType
                     ) {
                         val list = when {
                             isHiddenMode ->
@@ -263,21 +271,23 @@ class RomSearchResultsActivity : ComponentActivity() {
                         var result = visibleList
                         if (hideNoImage && !isHiddenMode) {
                             result = result.filter { game ->
-                                game.artworkPath != null || game.physicalMediaPath != null ||
-                                        game.screenshotPath != null || game.fanartPath != null ||
-                                        game.titlescreenPath != null || game.miximagePath != null ||
-                                        game.marqueeImagePath != null
+                                val resolvedPath = when (cardMediaType) {
+                                    RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.Covers -> game.artworkPath ?: game.physicalMediaPath
+                                    RomSearchCardMediaType.Screenshots -> game.screenshotPath ?: game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.Fanart -> game.fanartPath ?: game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.TitleScreens -> game.titlescreenPath ?: game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.Marquee -> game.marqueeImagePath ?: game.physicalMediaPath ?: game.artworkPath
+                                    RomSearchCardMediaType.MixImages -> game.miximagePath ?: game.physicalMediaPath ?: game.artworkPath
+                                }
+                                resolvedPath != null
                             }
                         }
                         if (hideNoMetadata && !isHiddenMode) {
                             result = result.filter { game ->
                                 game.description != null || game.genre != null ||
                                         game.developer != null || game.publisher != null ||
-                                        game.rating > 0f ||
-                                        game.artworkPath != null || game.physicalMediaPath != null ||
-                                        game.screenshotPath != null || game.fanartPath != null ||
-                                        game.titlescreenPath != null || game.miximagePath != null ||
-                                        game.marqueeImagePath != null
+                                        game.rating > 0f
                             }
                         }
                         result

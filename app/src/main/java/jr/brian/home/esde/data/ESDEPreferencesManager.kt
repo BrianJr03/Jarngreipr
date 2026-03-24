@@ -110,6 +110,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_M
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_FOCUS_ANIMATION_SPIN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_BLACK_BACKGROUND
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_VISIBILITY_ANIMATION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_CHANGE_ANIMATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
@@ -460,7 +462,9 @@ class ESDEPreferencesManager(context: Context) {
                         val arr = JSONArray(json)
                         (0 until arr.length()).map { arr.getString(it) }.toSet()
                     } catch (_: Exception) { emptySet() }
-                } ?: emptySet()
+                } ?: emptySet(),
+            logoVisibilityAnimation = prefs.getBoolean(KEY_LOGO_VISIBILITY_ANIMATION, false),
+            logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false)
         )
     }
 
@@ -911,6 +915,16 @@ class ESDEPreferencesManager(context: Context) {
     fun setRomSearchBlackBackground(enabled: Boolean) {
         _state.value = _state.value.copy(romSearchBlackBackground = enabled)
         prefs.edit { putBoolean(KEY_ROM_SEARCH_BLACK_BACKGROUND, enabled) }
+    }
+
+    fun setLogoVisibilityAnimation(enabled: Boolean) {
+        _state.value = _state.value.copy(logoVisibilityAnimation = enabled)
+        prefs.edit { putBoolean(KEY_LOGO_VISIBILITY_ANIMATION, enabled) }
+    }
+
+    fun setLogoChangeAnimation(enabled: Boolean) {
+        _state.value = _state.value.copy(logoChangeAnimation = enabled)
+        prefs.edit { putBoolean(KEY_LOGO_CHANGE_ANIMATION, enabled) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

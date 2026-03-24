@@ -353,13 +353,16 @@ class MainActivity : ComponentActivity() {
                 powerViewModel.setGamePersistActive(false)
             }
             esdeEventListener.onScreensaverStarted = {
-                managers.feature.videoPresentationManager.dismiss()
-                managers.feature.jinglesManager.stop()
-                onScreensaverUIVisibilityChanged(true)
-                esdeViewModel.handleScreensaverStarted()
-                onGameBrowsingUIVisibilityChanged(false)
-                if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
-                    powerViewModel.powerOff()
+                val behavior = esdePreferencesManager.state.value.screensaverBehavior
+                if (behavior != ScreensaverBehavior.ShowAll) {
+                    managers.feature.videoPresentationManager.dismiss()
+                    managers.feature.jinglesManager.stop()
+                    onScreensaverUIVisibilityChanged(true)
+                    esdeViewModel.handleScreensaverStarted()
+                    onGameBrowsingUIVisibilityChanged(false)
+                    if (behavior == ScreensaverBehavior.PowerOff) {
+                        powerViewModel.powerOff()
+                    }
                 }
             }
             esdeEventListener.onScreensaverEnded = { _ ->

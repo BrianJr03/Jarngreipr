@@ -4,6 +4,9 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -135,6 +138,8 @@ fun ESDEWallpaperContainer(
     val isFreePosition = prefsState.logoAlignment == LogoAlignment.FreePosition
     val isMarqueeDraggable = isFreePosition && !prefsState.marqueePositionLocked
     val useAnimatedLogo = !prefsState.marqueePositionLocked
+    val logoVisibilityAnimation = prefsState.logoVisibilityAnimation
+    val logoChangeAnimation = prefsState.logoChangeAnimation
 
     Box(
         modifier = modifier
@@ -209,12 +214,13 @@ fun ESDEWallpaperContainer(
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
-
                 isPositionLocked = prefsState.marqueePositionLocked,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
-                minWidthPercent = prefsState.marqueeMinWidthPercent
+                minWidthPercent = prefsState.marqueeMinWidthPercent,
+                visibilityAnimationEnabled = logoVisibilityAnimation,
+                changeAnimationEnabled = logoChangeAnimation
             )
         }
 
@@ -235,7 +241,9 @@ fun ESDEWallpaperContainer(
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
-                minWidthPercent = prefsState.marqueeMinWidthPercent
+                minWidthPercent = prefsState.marqueeMinWidthPercent,
+                visibilityAnimationEnabled = logoVisibilityAnimation,
+                changeAnimationEnabled = logoChangeAnimation
             )
         }
 
@@ -410,7 +418,9 @@ private fun BoxScope.AnimatedLogo(
     freeOffsetX: Float = 0f,
     freeOffsetY: Float = 0f,
     onOffsetChange: ((Float, Float) -> Unit)? = null,
-    minWidthPercent: Float = 0.5f
+    minWidthPercent: Float = 0.5f,
+    visibilityAnimationEnabled: Boolean = true,
+    changeAnimationEnabled: Boolean = true
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -459,23 +469,27 @@ private fun BoxScope.AnimatedLogo(
 
         AnimatedVisibility(
             visible = !hideMarquee,
-            enter = fadeIn(
-                animationSpec = tween(durationMillis = 400)
-            ) + scaleIn(
-                initialScale = 0.8f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-                transformOrigin = TransformOrigin.Center
-            ),
-            exit = fadeOut(
-                animationSpec = tween(durationMillis = 300)
-            ) + scaleOut(
-                targetScale = 0.6f,
-                animationSpec = tween(durationMillis = 300),
-                transformOrigin = TransformOrigin.Center
-            ),
+            enter = if (visibilityAnimationEnabled) {
+                fadeIn(animationSpec = tween(durationMillis = 400)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    transformOrigin = TransformOrigin.Center
+                )
+            } else {
+                fadeIn(animationSpec = tween(durationMillis = 0))
+            },
+            exit = if (visibilityAnimationEnabled) {
+                fadeOut(animationSpec = tween(durationMillis = 300)) + scaleOut(
+                    targetScale = 0.6f,
+                    animationSpec = tween(durationMillis = 300),
+                    transformOrigin = TransformOrigin.Center
+                )
+            } else {
+                fadeOut(animationSpec = tween(durationMillis = 0))
+            },
             modifier = Modifier
                 .align(finalAlignment)
                 .offset(
@@ -516,14 +530,19 @@ private fun BoxScope.AnimatedLogo(
             AnimatedContent(
                 targetState = logoPath,
                 transitionSpec = {
-                    scaleIn(
-                        initialScale = 0.6f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    ) + fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
-                    fadeOut(animationSpec = tween(durationMillis = 150))
+                    if (changeAnimationEnabled) {
+                        scaleIn(
+                            initialScale = 0.6f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        ) + fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 150))
+                    } else {
+                        fadeIn(animationSpec = tween(durationMillis = 0)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 0))
+                    }
                 },
                 label = "LogoBounce"
             ) { path ->
@@ -650,6 +669,21 @@ private fun VideoBackground(
 
     LaunchedEffect(looping) {
         exoPlayer.repeatMode = if (looping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> exoPlayer.play()
+                Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     DisposableEffect(videoPath) {

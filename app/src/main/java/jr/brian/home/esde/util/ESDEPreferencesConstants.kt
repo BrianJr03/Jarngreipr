@@ -97,4 +97,6 @@ object ESDEPreferencesConstants {
     const val KEY_ROM_FOCUS_ANIMATION_SPIN = "rom_search_disc_spin"
     const val KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES = "rom_search_disc_spin_disabled_games"
     const val KEY_ROM_SEARCH_BLACK_BACKGROUND = "rom_search_black_background"
+    const val KEY_LOGO_VISIBILITY_ANIMATION = "logo_visibility_animation"
+    const val KEY_LOGO_CHANGE_ANIMATION = "logo_change_animation"
 }

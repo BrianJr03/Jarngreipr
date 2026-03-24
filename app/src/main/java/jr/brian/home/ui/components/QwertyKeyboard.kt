@@ -90,7 +90,7 @@ fun QwertyKeyboard(
     showVolControl: Boolean = false,
     showSettings: Boolean = false,
     showController: Boolean = true,
-    showAtKey: Boolean = false,
+    showAtKey: Boolean = true,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
@@ -341,7 +341,7 @@ private fun QwertyAlphabetKeyboard(
             val atIndex = qwertyRow1.size + qwertyRow2.size
             QwertyKeyButton(
                 label = "@",
-                onClick = { onQueryChange(searchQuery + "@") },
+                onClick = { onQueryChange("$searchQuery@") },
                 modifier = Modifier
                     .weight(1f)
                     .height(44.dp),
@@ -572,7 +572,7 @@ private fun SpecialCharsRow(
     onFocusChanged: (Int) -> Unit,
     indexOffset: Int,
 ) {
-    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '@', '&')
+    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),

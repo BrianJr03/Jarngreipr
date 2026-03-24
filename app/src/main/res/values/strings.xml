@@ -1029,7 +1029,8 @@
     <string name="esde_settings_system_bg_video_looping_description">Restart the video when it reaches the end</string>
     <string name="esde_settings_clear_path">@string/common_clear</string>
     <string name="esde_settings_select_folder">@string/common_select_folder</string>
-    
+    <string name="settings_search_settings">Search settings…</string>
+
     <!-- ESDE Screensaver Settings -->
     <string name="esde_settings_section_screensaver">Screensaver</string>
     <string name="esde_settings_screensaver_behavior">Screen Behavior</string>
@@ -1039,6 +1040,7 @@
     <string name="esde_settings_screensaver_power_off">Power Off</string>
     <string name="esde_settings_screensaver_power_off_description">Show clock and battery info</string>
     <string name="esde_settings_screensaver_floaty">Floating Apps</string>
+    <string name="esde_settings_screensaver_show_all">Show All</string>
     <string name="esde_settings_screensaver_app_count">Floaty App Count</string>
     <string name="esde_settings_screensaver_app_count_description">How many apps to show while screensaver is active (All = no limit)</string>
     <string name="esde_settings_screensaver_app_count_all">All</string>
@@ -1117,6 +1119,11 @@
     <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
     <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
     <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
+    <string name="rom_search_settings_launch_title">Launch ROM Search</string>
+    <string name="rom_search_settings_launch_description">Open ROM Search directly from settings.</string>
+    <string name="rom_search_settings_disc_spin_title">Spin Disc Art</string>
+    <string name="rom_search_settings_disc_spin_description">Animate disc art with a spin when focused. Applies to PS1, PS2, PS3, Sega CD, Saturn, Dreamcast, GameCube, Wii, Wii U, Xbox, Xbox 360, 3DO, Jaguar CD, CD32, and CDTV. Only active when Physical Media type is selected.</string>
+    <string name="rom_search_settings_card_media_type">Card Media Type</string>
 
     <!-- What\'s New Dialog -->
     <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
@@ -1146,6 +1153,10 @@
     <string name="esde_system_apps_remove_confirm_no">Cancel</string>
     <string name="esde_system_apps_select_app">Select app for %1$s</string>
     <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
+    <string name="esde_settings_logo_visibility_animation">Logo Appear/Disappear Animation</string>
+    <string name="esde_settings_logo_visibility_animation_description">Animate the logo bouncing in and out when it shows or hides</string>
+    <string name="esde_settings_logo_change_animation">Logo Change Animation</string>
+    <string name="esde_settings_logo_change_animation_description">Animate the logo bouncing in when switching between systems or games</string>
     <string name="esde_settings_section_system_apps">System Apps</string>
     <string name="esde_settings_system_apps_info">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
     <string name="esde_settings_configure_system_apps">Configure System Apps</string>

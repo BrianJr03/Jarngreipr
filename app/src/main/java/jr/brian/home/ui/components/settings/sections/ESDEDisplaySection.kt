@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.settings.sections
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,6 +44,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.esde.ui.RomSearchResultsActivity
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
@@ -417,6 +419,12 @@ fun ESDESettingsContent(
                 },
                 onMarqueeOnlyModeChange = { enabled ->
                     preferencesManager.setLogoOnlyMode(enabled)
+                },
+                onLogoVisibilityAnimationChange = { enabled ->
+                    preferencesManager.setLogoVisibilityAnimation(enabled)
+                },
+                onLogoChangeAnimationChange = { enabled ->
+                    preferencesManager.setLogoChangeAnimation(enabled)
                 }
             )
         }
@@ -476,7 +484,7 @@ fun ESDESettingsContent(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "Experimental",
+                        text = stringResource(R.string.settings_tag_experimental),
                         color = Color(0xFFFFA500),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold
@@ -485,6 +493,18 @@ fun ESDESettingsContent(
             }
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_launch_title),
+                    description = stringResource(R.string.rom_search_settings_launch_description),
+                    checked = false,
+                    showToggle = false,
+                    onClick = {
+                        val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        }
+                        context.startActivity(intent, ActivityOptions.makeBasic().toBundle())
+                    }
+                )
                 ToggleSetting(
                     title = stringResource(R.string.rom_search_settings_black_bg_title),
                     description = stringResource(R.string.rom_search_settings_black_bg_description),
@@ -498,25 +518,19 @@ fun ESDESettingsContent(
                     onCheckedChange = { preferencesManager.setRomSearchUseWallpaper(it) }
                 )
                 ToggleSetting(
-                    title = "Hide Games Without Image",
-                    description = "Exclude games with no artwork of any type.",
+                    title = stringResource(R.string.rom_search_settings_hide_no_image_title),
+                    description = stringResource(R.string.rom_search_settings_hide_no_image_description),
                     checked = prefsState.romSearchHideNoImage,
                     onCheckedChange = { preferencesManager.setRomSearchHideNoImage(it) }
                 )
                 ToggleSetting(
-                    title = "Hide Games Without Metadata",
-                    description = "Exclude games with no artwork, descriptions, or other scraped info.",
+                    title = stringResource(R.string.rom_search_settings_hide_no_metadata_title),
+                    description = stringResource(R.string.rom_search_settings_hide_no_metadata_description),
                     checked = prefsState.romSearchHideNoMetadata,
                     onCheckedChange = { preferencesManager.setRomSearchHideNoMetadata(it) }
                 )
-                ToggleSetting(
-                    title = "Spin Disc Art",
-                    description = "Animate disc art with a spin when focused. Applies to PS1, PS2, PS3, Sega CD, Saturn, Dreamcast, GameCube, Wii, Wii U, Xbox, Xbox 360, 3DO, Jaguar CD, CD32, and CDTV. Only active when Physical Media type is selected.",
-                    checked = prefsState.romSearchDiscSpin,
-                    onCheckedChange = { preferencesManager.setRomSearchDiscSpin(it) }
-                )
                 Text(
-                    text = "Card Media Type",
+                    text = stringResource(R.string.rom_search_settings_card_media_type),
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
