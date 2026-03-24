@@ -123,6 +123,9 @@ fun AppsTab(
     val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
     val isDragLocked = dragLockedByPage[pageIndex] ?: true
 
+    val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
+    val isScrollDisabled = scrollDisabledByPage[pageIndex] ?: false
+
     LaunchedEffect(pageIndex) {
         appPositionManager.setDragLock(pageIndex, true)
     }
@@ -463,7 +466,8 @@ fun AppsTab(
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
                 onFolderClick = folderContentsDialogState::show,
-                gridState = gridState
+                gridState = gridState,
+                scrollEnabled = !isScrollDisabled
             )
         }
 

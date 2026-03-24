@@ -61,7 +61,8 @@ fun AppsTabContent(
     onNavigateToSearch: () -> Unit = {},
     folders: List<Folder> = emptyList(),
     onFolderClick: (Folder) -> Unit = {},
-    gridState: LazyGridState = rememberLazyGridState()
+    gridState: LazyGridState = rememberLazyGridState(),
+    scrollEnabled: Boolean = true
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -147,7 +148,8 @@ fun AppsTabContent(
                 isHeaderVisible = isHeaderVisible,
                 equalizeMargins = true,
                 isHomeScreen = true,
-                gridState = gridState
+                gridState = gridState,
+                scrollEnabled = scrollEnabled
             )
         }
     }

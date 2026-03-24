@@ -54,7 +54,8 @@ fun AppGridLayout(
     ),
     equalizeMargins: Boolean = false,
     isHomeScreen: Boolean = false,
-    gridState: LazyGridState = rememberLazyGridState()
+    gridState: LazyGridState = rememberLazyGridState(),
+    scrollEnabled: Boolean = true
 ) {
 
     val displayedApps = remember(apps, maxAppsPerPage) {
@@ -152,6 +153,7 @@ fun AppGridLayout(
                 columns = GridCells.Fixed(columns),
                 state = gridState,
                 modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = scrollEnabled,
                 contentPadding = PaddingValues(
                     start = topPadding,
                     end = topPadding,
@@ -168,6 +170,7 @@ fun AppGridLayout(
             columns = GridCells.Fixed(columns),
             state = gridState,
             modifier = modifier.fillMaxSize(),
+            userScrollEnabled = scrollEnabled,
             contentPadding = contentPadding,
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
