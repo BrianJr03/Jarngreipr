@@ -116,6 +116,7 @@ fun NavGraphBuilder.launcherScreen(
                         BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
                         BackButtonShortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                         BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
+                        BackButtonShortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
                         BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
                         BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
                         BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true

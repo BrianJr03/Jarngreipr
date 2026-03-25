@@ -188,6 +188,7 @@ fun MainContent(
                 Shortcut.NONE -> navController.navigate(Routes.ESDE_SETTINGS)
                 Shortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                 Shortcut.APP_SEARCH -> navController.navigate(Routes.APP_SEARCH)
+                Shortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
                 Shortcut.POWERED_OFF -> powerViewModel.togglePower()
                 Shortcut.QUICK_DELETE -> {}
                 Shortcut.CUSTOM_THEME -> navController.navigate(Routes.CUSTOM_THEME)

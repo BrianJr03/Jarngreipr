@@ -23,6 +23,7 @@ fun BackButtonShortcutScreen(
     val shortcuts = listOf(
         ShortcutOption(Shortcut.APP, stringResource(R.string.back_button_shortcut_app)),
         ShortcutOption(Shortcut.APP_SEARCH, stringResource(R.string.back_button_shortcut_app_search)),
+        ShortcutOption(Shortcut.ROM_SEARCH, stringResource(R.string.rom_search_icon_description)),
         ShortcutOption(Shortcut.CONTROL_PAD, stringResource(R.string.back_button_shortcut_control_pad)),
         ShortcutOption(Shortcut.CUSTOM_THEME, stringResource(R.string.back_button_shortcut_custom_theme)),
         ShortcutOption(Shortcut.QUICK_DELETE, stringResource(R.string.back_button_shortcut_quick_delete)),
@@ -57,6 +58,7 @@ fun BackButtonShortcut.toShortcut(): Shortcut = when (this) {
     BackButtonShortcut.NONE -> Shortcut.NONE
     BackButtonShortcut.SETTINGS -> Shortcut.SETTINGS
     BackButtonShortcut.APP_SEARCH -> Shortcut.APP_SEARCH
+    BackButtonShortcut.ROM_SEARCH -> Shortcut.ROM_SEARCH
     BackButtonShortcut.POWERED_OFF -> Shortcut.POWERED_OFF
     BackButtonShortcut.QUICK_DELETE -> Shortcut.QUICK_DELETE
     BackButtonShortcut.CUSTOM_THEME -> Shortcut.CUSTOM_THEME
@@ -74,6 +76,7 @@ fun Shortcut.toBackButtonShortcut(): BackButtonShortcut = when (this) {
     Shortcut.NONE -> BackButtonShortcut.NONE
     Shortcut.SETTINGS -> BackButtonShortcut.SETTINGS
     Shortcut.APP_SEARCH -> BackButtonShortcut.APP_SEARCH
+    Shortcut.ROM_SEARCH -> BackButtonShortcut.ROM_SEARCH
     Shortcut.POWERED_OFF -> BackButtonShortcut.POWERED_OFF
     Shortcut.QUICK_DELETE -> BackButtonShortcut.QUICK_DELETE
     Shortcut.CUSTOM_THEME -> BackButtonShortcut.CUSTOM_THEME

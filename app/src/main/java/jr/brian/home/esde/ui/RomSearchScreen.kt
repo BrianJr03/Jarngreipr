@@ -237,14 +237,13 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
         "@{partial}" to "Partial platform match. Example: @nin shows Nintendo 64, SNES, NES, etc.",
         "{name}" to "Search by game name, system, genre, developer, or publisher.",
     )
-
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = jr.brian.home.ui.theme.OledCardColor,
         title = {
             Text(
                 text = "Search Commands",
-                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.9f),
+                color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -264,7 +263,7 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
                         )
                         Text(
                             text = description,
-                            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.65f),
+                            color = Color.White.copy(alpha = 0.65f),
                             fontSize = 13.sp,
                             lineHeight = 18.sp
                         )
@@ -272,7 +271,7 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
                     if (index < commands.lastIndex) {
                         Spacer(Modifier.height(2.dp))
                         HorizontalDivider(
-                            color = androidx.compose.ui.graphics.Color.White.copy(
+                            color = Color.White.copy(
                                 alpha = 0.07f
                             )
                         )

@@ -99,6 +99,7 @@ fun MarqueeSectionContent(
         Shortcut.NONE -> stringResource(R.string.shortcut_none)
         Shortcut.SETTINGS -> stringResource(R.string.shortcut_settings)
         Shortcut.APP_SEARCH -> stringResource(R.string.shortcut_app_search)
+        Shortcut.ROM_SEARCH -> stringResource(R.string.rom_search_icon_description)
         Shortcut.POWERED_OFF -> stringResource(R.string.shortcut_powered_off)
         Shortcut.QUICK_DELETE -> stringResource(R.string.shortcut_quick_delete)
         Shortcut.CUSTOM_THEME -> stringResource(R.string.shortcut_custom_theme)
