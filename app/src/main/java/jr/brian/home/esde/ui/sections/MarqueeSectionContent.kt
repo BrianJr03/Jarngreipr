@@ -41,7 +41,9 @@ fun MarqueeSectionContent(
     onShowMarqueeForGameChange: (Boolean) -> Unit,
     onMarqueeMinWidthPercentChange: (Float) -> Unit,
     onOverlayMediaTypeChange: (OverlayMediaType) -> Unit,
-    onMarqueeOnlyModeChange: (Boolean) -> Unit = {}
+    onMarqueeOnlyModeChange: (Boolean) -> Unit = {},
+    onLogoVisibilityAnimationChange: (Boolean) -> Unit = {},
+    onLogoChangeAnimationChange: (Boolean) -> Unit = {}
 ) {
     val pageCount = pageTypes.size
 
@@ -97,6 +99,7 @@ fun MarqueeSectionContent(
         Shortcut.NONE -> stringResource(R.string.shortcut_none)
         Shortcut.SETTINGS -> stringResource(R.string.shortcut_settings)
         Shortcut.APP_SEARCH -> stringResource(R.string.shortcut_app_search)
+        Shortcut.ROM_SEARCH -> stringResource(R.string.rom_search_icon_description)
         Shortcut.POWERED_OFF -> stringResource(R.string.shortcut_powered_off)
         Shortcut.QUICK_DELETE -> stringResource(R.string.shortcut_quick_delete)
         Shortcut.CUSTOM_THEME -> stringResource(R.string.shortcut_custom_theme)
@@ -131,6 +134,20 @@ fun MarqueeSectionContent(
         description = stringResource(R.string.esde_settings_marquee_show_for_game_description),
         checked = prefsState.showMarqueeForGame,
         onCheckedChange = { show -> onShowMarqueeForGameChange(show) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_visibility_animation),
+        description = stringResource(R.string.esde_settings_logo_visibility_animation_description),
+        checked = prefsState.logoVisibilityAnimation,
+        onCheckedChange = { enabled -> onLogoVisibilityAnimationChange(enabled) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_change_animation),
+        description = stringResource(R.string.esde_settings_logo_change_animation_description),
+        checked = prefsState.logoChangeAnimation,
+        onCheckedChange = { enabled -> onLogoChangeAnimationChange(enabled) }
     )
 
     if (pageCount > 1) {

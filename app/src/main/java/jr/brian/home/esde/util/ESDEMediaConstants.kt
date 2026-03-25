@@ -11,6 +11,7 @@ object ESDEMediaConstants {
     const val FOLDER_SCREENSHOTS = "screenshots"
     const val FOLDER_TITLESCREENS = "titlescreens"
     const val FOLDER_COVERS = "covers"
+    const val FOLDER_PHYSICALMEDIA = "physicalmedia"
     const val FOLDER_MIXIMAGES = "miximages"
     const val FOLDER_MARQUEES = "marquees"
     const val FOLDER_VIDEOS = "videos"
@@ -82,4 +83,18 @@ object ESDEMediaConstants {
     fun getMediaSystemName(systemName: String): String {
         return SYSTEM_MEDIA_ALIASES[systemName] ?: systemName
     }
+
+    /** Systems that use disc-based physical media. Used for the disc spin animation. */
+    val DISC_PLATFORMS = setOf(
+        // Sony
+        "ps1", "psx", "ps2", "ps3", "psp",
+        // Sega
+        "segacd", "saturn", "dreamcast",
+        // Nintendo
+        "gamecube", "gc", "wii", "wiiu",
+        // Microsoft
+        "xbox", "xbox360",
+        // Other
+        "3do", "atarijaguarcd", "cd32", "amigacd32", "cdtv", "amigacdtv", "steam", "windows"
+    )
 }

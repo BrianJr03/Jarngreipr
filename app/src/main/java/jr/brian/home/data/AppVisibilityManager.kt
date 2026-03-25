@@ -21,6 +21,9 @@ class AppVisibilityManager(context: Context) {
     var showAppNames by mutableStateOf(loadShowAppNames())
         private set
 
+    var showHomeScreenAppNames by mutableStateOf(loadShowHomeScreenAppNames())
+        private set
+
     var appLabelFontSize by mutableStateOf(loadAppLabelFontSize())
         private set
 
@@ -64,6 +67,10 @@ class AppVisibilityManager(context: Context) {
         return prefs.getBoolean(KEY_SHOW_APP_NAMES, false)
     }
 
+    private fun loadShowHomeScreenAppNames(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, true)
+    }
+
     private fun loadAppLabelFontSize(): Int {
         return prefs.getInt(KEY_APP_LABEL_FONT_SIZE, DEFAULT_APP_LABEL_FONT_SIZE)
     }
@@ -80,6 +87,14 @@ class AppVisibilityManager(context: Context) {
         showAppNames = !showAppNames
         prefs.edit().apply {
             putBoolean(KEY_SHOW_APP_NAMES, showAppNames)
+            apply()
+        }
+    }
+
+    fun toggleShowHomeScreenAppNames() {
+        showHomeScreenAppNames = !showHomeScreenAppNames
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, showHomeScreenAppNames)
             apply()
         }
     }
@@ -172,6 +187,7 @@ class AppVisibilityManager(context: Context) {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"
         private const val KEY_SHOW_APP_NAMES = "show_app_names"
+        private const val KEY_SHOW_HOME_SCREEN_APP_NAMES = "show_home_screen_app_names"
         private const val KEY_SHOW_FOLDER_NAMES = "show_folder_names"
         private const val KEY_SHOW_SETTINGS_BACK_BUTTON = "show_settings_back_button"
         private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"

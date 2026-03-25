@@ -44,7 +44,7 @@ fun EffectsSectionContent(
     onGameImageTypeChange: (GameImageType) -> Unit,
     onRandomSystemImageChange: (Boolean) -> Unit,
     onSystemImageTypeChange: (SystemImageType) -> Unit,
-    onAndroidGamesBackgroundScaleChange: (Float) -> Unit
+    onGameBackgroundChange: (Float) -> Unit
 ) {
     BackgroundColorSelector(
         selectedColor = Color(prefsState.backgroundColor),
@@ -68,15 +68,15 @@ fun EffectsSectionContent(
     )
 
     SliderSetting(
-        title = stringResource(R.string.esde_settings_android_games_bg_scale),
-        value = prefsState.androidGamesBackgroundScale,
+        title = stringResource(R.string.esde_settings_game_bg_scale),
+        value = prefsState.gameBackgroundScale,
         valueRange = 0.2f..1.0f,
         steps = 7,
-        valueText = "${(prefsState.androidGamesBackgroundScale * 100).toInt()}%",
+        valueText = "${(prefsState.gameBackgroundScale * 100).toInt()}%",
         onValueChange = { scale ->
-            onAndroidGamesBackgroundScaleChange(scale)
+            onGameBackgroundChange(scale)
         },
-        description = stringResource(R.string.esde_settings_android_games_bg_scale_description)
+        description = stringResource(R.string.esde_settings_game_bg_scale_description)
     )
 
     SliderSetting(

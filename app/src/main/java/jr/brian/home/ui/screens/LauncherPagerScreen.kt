@@ -89,6 +89,8 @@ fun LauncherPagerScreen(
     onBackButtonShortcut: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
@@ -322,6 +324,8 @@ fun LauncherPagerScreen(
                                     onNavigateToSearch = onNavigateToSearch,
                                     onNavigateToDockSettings = onNavigateToDockSettings,
                                     onNavigateToSystemApps = onNavigateToSystemApps,
+                                    onNavigateToRomSearch = onNavigateToRomSearch,
+                                    onNavigateToTrackpad = onNavigateToTrackpad,
                                     onShowAppDrawer = { showAppDrawerSheet = true },
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
@@ -374,6 +378,8 @@ fun LauncherPagerScreen(
                                         onNavigateToSearch = onNavigateToSearch,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
+                                        onNavigateToRomSearch = onNavigateToRomSearch,
+                                        onNavigateToTrackpad = onNavigateToTrackpad,
                                         navController = navController,
                                         onShowAppDrawer = { showAppDrawerSheet = true },
                                         onScrollStateChanged = { isScrolling, hasScrollableContent ->
@@ -431,6 +437,8 @@ fun LauncherPagerScreen(
                                         pageIndex = page,
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
+                                        onNavigateToRomSearch = onNavigateToRomSearch,
+                                        onNavigateToTrackpad = onNavigateToTrackpad,
                                     )
                                 }
                             }
@@ -515,6 +523,7 @@ fun LauncherPagerScreen(
                         apps = homeUiState.allApps,
                         appsUnfiltered = homeUiState.allAppsUnfiltered,
                         isLoading = homeUiState.isLoading,
+                        showHideAppButton = false,
                         allApps = homeUiState.allAppsUnfiltered,
                         pageIndex = currentPage,
                         isHeaderVisible = isHeaderVisible,

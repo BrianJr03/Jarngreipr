@@ -172,6 +172,10 @@ class VideoPresentation(
         return exoPlayer?.isPlaying == true
     }
 
+    fun setMuted(muted: Boolean) {
+        exoPlayer?.volume = if (muted) 0f else 1f
+    }
+
     override fun dismiss() {
         hideOverlayRunnable?.let { handler.removeCallbacks(it) }
         exoPlayer?.release()

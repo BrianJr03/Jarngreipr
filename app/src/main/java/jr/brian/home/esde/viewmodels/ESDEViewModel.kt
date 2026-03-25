@@ -97,6 +97,7 @@ class ESDEViewModel @Inject constructor(
 
     private var isViewingGame: Boolean = false
     private var isLauncherActive: Boolean = true
+    private var romSearchGameLaunched: Boolean = false
 
     init {
         Log.d(TAG, "ESDE Media path configured: $mediaPath")
@@ -126,6 +127,8 @@ class ESDEViewModel @Inject constructor(
                     backgroundColor = Color(prefsState.backgroundColor),
                     videoAudioEnabled = prefsState.videoAudioEnabled,
                     videoDelaySeconds = prefsState.videoDelaySeconds,
+                    systemBgVideoMuted = prefsState.systemBgVideoMuted,
+                    systemBgVideoLooping = prefsState.systemBgVideoLooping,
                     showSystemLogo = prefsState.showSystemLogo,
                     logoAlignment = prefsState.logoAlignment,
                     marqueeWidth = prefsState.marqueeWidth,
@@ -187,6 +190,8 @@ class ESDEViewModel @Inject constructor(
             backgroundColor = Color(prefsState.backgroundColor),
             videoAudioEnabled = prefsState.videoAudioEnabled,
             videoDelaySeconds = prefsState.videoDelaySeconds,
+            systemBgVideoMuted = prefsState.systemBgVideoMuted,
+            systemBgVideoLooping = prefsState.systemBgVideoLooping,
             logoPath = lastSystem?.let { getSystemLogoPath(it) },
             showSystemLogo = prefsState.showSystemLogo,
             logoAlignment = prefsState.logoAlignment,
@@ -204,6 +209,7 @@ class ESDEViewModel @Inject constructor(
         stopVideo()
         currentSystem = systemName
         isViewingGame = false
+        romSearchGameLaunched = false
         systemImageCache.remove(systemName)
 
         prefs.setLastSelectedSystem(systemName)
@@ -216,6 +222,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = if (isVideo) systemPath else null,
             isVideoPlaying = false,
             videoPath = null,
+            isGameRunning = false,
             logoPath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
@@ -231,7 +238,9 @@ class ESDEViewModel @Inject constructor(
         gameFilename: String
     ) {
         if (_wallpaperState.value.isGameRunning) {
-            return
+            // ES-DE is sending browse events so no game is actually running anymore.
+            // Clear stale ROM-search game state so we don't block the UI update.
+            romSearchGameLaunched = false
         }
 
         cancelPendingVideo()
@@ -254,6 +263,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = null,
             isVideoPlaying = false,
             videoPath = null,
+            isGameRunning = false,
             logoPath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
@@ -344,6 +354,18 @@ class ESDEViewModel @Inject constructor(
         }
     }
 
+    fun handleRomSearchGameStarted() {
+        romSearchGameLaunched = true
+        handleGameStarted()
+    }
+
+    fun handleLauncherResumed() {
+        if (romSearchGameLaunched) {
+            romSearchGameLaunched = false
+            handleGameEnded()
+        }
+    }
+
     fun handleGameStarted(gameFilename: String? = null) {
         if (gameFilename != null) {
             viewModelScope.launch {
@@ -389,8 +411,10 @@ class ESDEViewModel @Inject constructor(
     }
 
     fun handleScreensaverStarted() {
-        stopVideo()
         val behavior = prefs.state.value.screensaverBehavior
+        if (behavior == ScreensaverBehavior.ShowAll) return
+
+        stopVideo()
 
         val baseDimming = if (isViewingGame) {
             prefs.state.value.gameBackgroundDimmingFloat
@@ -402,6 +426,7 @@ class ESDEViewModel @Inject constructor(
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
             ScreensaverBehavior.Floaty -> 0.7f
+            ScreensaverBehavior.ShowAll -> baseDimming
         }
 
         _wallpaperState.value = _wallpaperState.value.copy(
@@ -417,6 +442,11 @@ class ESDEViewModel @Inject constructor(
         } else {
             prefs.state.value.systemBackgroundDimmingFloat
         }
+        // Reset currentSystem so the next onSystemSelected event forces a full wallpaper
+        // refresh. Without this, if the screensaver displayed a game with no artwork
+        // (setting currentImagePath = null), the guard in updateForSystem would skip the
+        // update and leave a black screen until the user manually navigated away and back.
+        currentSystem = null
         _wallpaperState.value = _wallpaperState.value.copy(
             isScreensaverActive = false,
             dimmingLevel = dimmingLevel
@@ -434,6 +464,7 @@ class ESDEViewModel @Inject constructor(
         val baseDimming = prefs.state.value.gameBackgroundDimmingFloat
 
         val dimmingLevel = when (behavior) {
+            ScreensaverBehavior.ShowAll -> 0f
             ScreensaverBehavior.ShowContent -> 0.7f
             ScreensaverBehavior.PowerOff -> baseDimming
             ScreensaverBehavior.Floaty -> 0.7f
@@ -472,30 +503,23 @@ class ESDEViewModel @Inject constructor(
             }
         }
 
+        // Check custom folder before the systemImageType gate so it always takes priority
+        val customImagesPath = prefsState.customSystemImagesPath
+        if (customImagesPath != null) {
+            val found = findInCustomImagesFolder(customImagesPath, systemName, mediaSystemName)
+            if (found != null) {
+                Log.d(TAG, "Found custom system image: $found")
+                systemImageCache[systemName] = found
+                return found
+            }
+        }
+
         if (systemImageType == SystemImageType.None) {
             return null
         }
 
         if (systemImageCache.containsKey(systemName)) {
             return systemImageCache[systemName]
-        }
-
-        val customImagesPath = prefsState.customSystemImagesPath
-        if (customImagesPath != null) {
-            val customImagesDir = File(customImagesPath)
-            if (customImagesDir.exists() && customImagesDir.isDirectory) {
-                // Try exact system name first, then fall back to parent system
-                for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    for (ext in IMAGE_EXTENSIONS) {
-                        val customImage = File(customImagesDir, "$name.$ext")
-                        if (customImage.exists()) {
-                            Log.d(TAG, "Found custom system image: ${customImage.absolutePath}")
-                            systemImageCache[systemName] = customImage.absolutePath
-                            return customImage.absolutePath
-                        }
-                    }
-                }
-            }
         }
 
         // This contains system-level background images like n64.png, snes.png, etc.
@@ -799,6 +823,40 @@ class ESDEViewModel @Inject constructor(
     private fun extractSubfolderPath(fullPath: String): String? {
         val beforeFilename = fullPath.substringBeforeLast("/", "")
         return beforeFilename.ifEmpty { null }
+    }
+
+    private fun findInCustomImagesFolder(
+        customImagesPath: String,
+        systemName: String,
+        mediaSystemName: String
+    ): String? {
+        val names = listOf(systemName, mediaSystemName).distinct()
+        val extensions = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+        return if (customImagesPath.startsWith("content://")) {
+            val treeDir = androidx.documentfile.provider.DocumentFile.fromTreeUri(
+                context, customImagesPath.toUri()
+            )
+            if (treeDir?.exists() == true && treeDir.isDirectory) {
+                for (name in names) {
+                    for (ext in extensions) {
+                        val file = treeDir.findFile("$name.$ext")
+                        if (file?.exists() == true) return file.uri.toString()
+                    }
+                }
+            }
+            null
+        } else {
+            val dir = File(customImagesPath)
+            if (dir.exists() && dir.isDirectory) {
+                for (name in names) {
+                    for (ext in extensions) {
+                        val file = File(dir, "$name.$ext")
+                        if (file.exists()) return file.absolutePath
+                    }
+                }
+            }
+            null
+        }
     }
 
     private fun isImageFile(file: File): Boolean {

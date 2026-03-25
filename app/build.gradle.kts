@@ -17,7 +17,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = 1
-        versionName = "1.9"
+        versionName = "2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -141,6 +141,14 @@ dependencies {
     // Ping
     implementation(libs.ping)
     implementation(libs.ping.nearby)
+
+    // AndroidX TV
+    implementation(libs.androidx.tv.foundation) {
+        exclude(group = "androidx.compose.foundation")
+        exclude(group = "androidx.compose.runtime")
+        exclude(group = "androidx.compose.ui")
+        exclude(group = "androidx.compose.animation")
+    }
 
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)

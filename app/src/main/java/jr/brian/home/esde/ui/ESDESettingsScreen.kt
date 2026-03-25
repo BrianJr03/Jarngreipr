@@ -49,7 +49,8 @@ fun ESDESettingsScreen(
     onRunSetupWizard: () -> Unit,
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
-    onNavigateToKonfettiEditor: () -> Unit = {}
+    onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val floatyModeManager = LocalFloatyModeManager.current
@@ -110,6 +111,7 @@ fun ESDESettingsScreen(
                         onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
                         onNavigateToSystemApps = onNavigateToSystemApps,
                         onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+                        onNavigateToJingles = onNavigateToJingles,
                         onSectionHeaderTap = {
                             if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
                                 // Force-destroy current animation, then start a fresh explode burst.

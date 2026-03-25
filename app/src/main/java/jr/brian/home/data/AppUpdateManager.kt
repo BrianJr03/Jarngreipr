@@ -3,6 +3,7 @@ package jr.brian.home.data
 import android.content.Context
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 private const val PREFS_NAME = "update_prefs"
 private const val KEY_SKIPPED_VERSION = "skipped_version"
@@ -27,7 +28,7 @@ class AppUpdateManager @Inject constructor() {
      */
     fun skipVersion(context: Context, version: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_SKIPPED_VERSION, version).apply()
+        prefs.edit { putString(KEY_SKIPPED_VERSION, version) }
     }
 
     /**
@@ -35,7 +36,7 @@ class AppUpdateManager @Inject constructor() {
      */
     fun clearSkippedVersion(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_SKIPPED_VERSION).apply()
+        prefs.edit { remove(KEY_SKIPPED_VERSION) }
     }
     
     /**
@@ -51,7 +52,7 @@ class AppUpdateManager @Inject constructor() {
      */
     fun markVersionDownloaded(context: Context, version: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_DOWNLOADED_VERSION, version).apply()
+        prefs.edit { putString(KEY_DOWNLOADED_VERSION, version) }
     }
 
     /**
@@ -59,7 +60,7 @@ class AppUpdateManager @Inject constructor() {
      */
     fun clearDownloadedVersion(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_DOWNLOADED_VERSION).apply()
+        prefs.edit { remove(KEY_DOWNLOADED_VERSION) }
     }
     
     /**

@@ -95,6 +95,7 @@ private fun ScreensaverBehaviorChip(
         ScreensaverBehavior.ShowContent -> stringResource(R.string.esde_settings_screensaver_show_companion)
         ScreensaverBehavior.PowerOff -> stringResource(R.string.esde_settings_screensaver_power_off)
         ScreensaverBehavior.Floaty -> stringResource(R.string.esde_settings_screensaver_floaty)
+        ScreensaverBehavior.ShowAll -> stringResource(R.string.esde_settings_screensaver_show_all)
     }
 
     Box(

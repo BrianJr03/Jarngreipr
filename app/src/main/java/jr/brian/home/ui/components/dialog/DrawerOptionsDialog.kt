@@ -1,7 +1,15 @@
 package jr.brian.home.ui.components.dialog
 
+import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,12 +26,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Mouse
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.media3.common.util.UnstableApi
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -38,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +63,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -57,9 +77,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.esde.model.WallpaperToggleTarget
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -68,7 +91,9 @@ import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
@@ -77,6 +102,7 @@ import jr.brian.home.util.MediaPickerLauncher
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.util.launchApp
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
@@ -88,7 +114,9 @@ fun DrawerOptionsDialog(
     onCreateFolderClick: (() -> Unit)?,
     onDockSettingsClick: () -> Unit,
     onESDESetupClick: () -> Unit = {},
-    onNavigateToSystemApps: () -> Unit = {}
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -102,6 +130,53 @@ fun DrawerOptionsDialog(
     val lastSelectedSystem = esdePrefsState.lastSelectedSystem
     val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
+    val closeFocusRequester = remember { FocusRequester() }
+    val jinglesManager = LocalJinglesManager.current
+    val esdeViewModel: ESDEViewModel = hiltViewModel(
+        context as ComponentActivity
+    )
+    val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        closeFocusRequester.requestFocus()
+    }
+
+    val romIconPrefs = remember {
+        context.getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+    }
+    var isRomIconNew by remember {
+        mutableStateOf(romIconPrefs.getBoolean("drawer_icon_new", true))
+    }
+    LaunchedEffect(Unit) {
+        if (isRomIconNew) {
+            romIconPrefs.edit().putBoolean("drawer_icon_new", false).apply()
+        }
+    }
+    val romIconTransition = rememberInfiniteTransition(label = "romIconGradient")
+    val romIconColor1 by romIconTransition.animateColor(
+        initialValue = ThemePrimaryColor,
+        targetValue = ThemeAccentColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "romIconColor1"
+    )
+    val romIconColor2 by romIconTransition.animateColor(
+        initialValue = ThemeAccentColor,
+        targetValue = ThemeSecondaryColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "romIconColor2"
+    )
+    val romIconTint = if (isRomIconNew) {
+        lerp(romIconColor1, romIconColor2, 0.5f)
+    } else {
+        Color.White
+    }
+
     val mediaPickerLauncher = MediaPickerLauncher(
         onResult = {
             isWallpaperExpanded = false
@@ -148,16 +223,71 @@ fun DrawerOptionsDialog(
                         fontWeight = FontWeight.Bold
                     )
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.drawer_options_close),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                val newMuted = !isMuted
+                                jinglesManager.setMuted(newMuted)
+                                esdeViewModel.musicController.setMuted(newMuted)
+                                VideoPresentationManager.setMuted(newMuted)
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                contentDescription = if (isMuted) "Unmute" else "Mute",
+                                tint = if (isMuted) Color.White.copy(alpha = 0.4f) else Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+
+//                        IconButton(
+//                            onClick = {
+//                                onDismiss()
+//                                onNavigateToTrackpad()
+//                            },
+//                            modifier = Modifier.size(48.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Mouse,
+//                                contentDescription = "Trackpad",
+//                                tint = Color.White,
+//                                modifier = Modifier.size(26.dp)
+//                            )
+//                        }
+
+                        if (wallpaperManager.getWallpaperType() == WallpaperType.ESDE) {
+                            IconButton(
+                                onClick = {
+                                    onDismiss()
+                                    onNavigateToRomSearch()
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SportsEsports,
+                                    contentDescription = stringResource(R.string.rom_search_icon_description),
+                                    tint = romIconTint,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .focusRequester(closeFocusRequester)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.drawer_options_close),
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
 

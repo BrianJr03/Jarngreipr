@@ -69,6 +69,10 @@ object VideoPresentationManager {
         return activePresentation?.isPlaying() == true
     }
 
+    fun setMuted(muted: Boolean) {
+        activePresentation?.setMuted(muted)
+    }
+
     /**
      * Returns the best display for the Presentation:
      * Prefers DISPLAY_CATEGORY_PRESENTATION displays (external/secondary),

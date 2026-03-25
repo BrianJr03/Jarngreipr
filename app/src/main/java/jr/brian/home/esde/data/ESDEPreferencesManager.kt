@@ -11,6 +11,7 @@ import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.model.OverlayMediaType
+import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.model.SystemLaunchTrigger
@@ -84,7 +85,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EXCLUDE_EFFECTS_FROM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_EFFECTS_EXCLUDED_PAGES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDE_UI_FOR_GAME_BROWSING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_POSITION_LOCKED
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ANDROID_GAMES_BACKGROUND_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_BACKGROUND_SCALE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_MARQUEE_MIN_WIDTH_PERCENT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_OVERLAY_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
@@ -95,6 +96,24 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_APP_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_AUTO_LAUNCH
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAUNCH_TRIGGER_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_METADATA
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_FOCUS_ANIMATION_SPIN
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_BLACK_BACKGROUND
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_VISIBILITY_ANIMATION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_CHANGE_ANIMATION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -292,6 +311,18 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        val hiddenGamesJson = prefs.getString(KEY_HIDDEN_GAMES, null)
+        val hiddenGames: Set<String> = if (!hiddenGamesJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(hiddenGamesJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
         // Migrate legacy excludeEffectsFromHome boolean to per-page set
         val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
         val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
@@ -372,7 +403,7 @@ class ESDEPreferencesManager(context: Context) {
             effectsExcludedPages = effectsExcludedPages,
             hideUIForGameBrowsing = prefs.getBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, false),
             marqueePositionLocked = prefs.getBoolean(KEY_MARQUEE_POSITION_LOCKED, false),
-            androidGamesBackgroundScale = prefs.getFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, 0.5f),
+            gameBackgroundScale = prefs.getFloat(KEY_GAME_BACKGROUND_SCALE, 0.5f),
             marqueeMinWidthPercent = prefs.getFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, 0.5f),
             overlayMediaType = overlayMediaType,
             logoOnlyMode = prefs.getBoolean(KEY_LOGO_ONLY_MODE, false),
@@ -381,7 +412,61 @@ class ESDEPreferencesManager(context: Context) {
             romsPaths = romsPaths,
             systemAppMap = systemAppMap,
             systemLaunchTriggerMap = systemLaunchTriggerMap,
-            systemTopScreenSet = systemTopScreenSet
+            systemTopScreenSet = systemTopScreenSet,
+            systemBgVideoMuted = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, true),
+            systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true),
+            hiddenGames = hiddenGames,
+            gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            gameCommandMap = prefs.getString(KEY_GAME_COMMAND_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            gameCoreMap = prefs.getString(KEY_GAME_CORE_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, true),
+            romSearchCardMediaType = prefs.getString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, null)
+                ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                ?: RomSearchCardMediaType.PhysicalMedia,
+            romSearchGameMediaMap = prefs.getString(KEY_ROM_SEARCH_GAME_MEDIA_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            romSearchHideNoMetadata = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, false),
+            romSearchHideNoImage = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, false),
+            romSearchDiscSpin = prefs.getBoolean(KEY_ROM_FOCUS_ANIMATION_SPIN, false),
+            romSearchBlackBackground = prefs.getBoolean(KEY_ROM_SEARCH_BLACK_BACKGROUND, true),
+            romSearchFocusAnimationDisabledGames = prefs.getString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val arr = JSONArray(json)
+                        (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    } catch (_: Exception) { emptySet() }
+                } ?: emptySet(),
+            logoVisibilityAnimation = prefs.getBoolean(KEY_LOGO_VISIBILITY_ANIMATION, false),
+            logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false),
+            romSearchShowAllAndroidApps = prefs.getBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, false)
         )
     }
 
@@ -527,6 +612,16 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
         }
+    }
+
+    fun setSystemBgVideoMuted(muted: Boolean) {
+        _state.value = _state.value.copy(systemBgVideoMuted = muted)
+        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, muted) }
+    }
+
+    fun setSystemBgVideoLooping(looping: Boolean) {
+        _state.value = _state.value.copy(systemBgVideoLooping = looping)
+        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, looping) }
     }
 
     fun setSingleSystemImagePath(path: String?) {
@@ -756,10 +851,10 @@ class ESDEPreferencesManager(context: Context) {
         setLogoPositionLocked(!_state.value.marqueePositionLocked)
     }
 
-    fun setAndroidGamesBackgroundScale(scale: Float) {
+    fun setGameBackgroundScale(scale: Float) {
         val coercedScale = scale.coerceIn(0.2f, 1.0f)
-        _state.value = _state.value.copy(androidGamesBackgroundScale = coercedScale)
-        prefs.edit { putFloat(KEY_ANDROID_GAMES_BACKGROUND_SCALE, coercedScale) }
+        _state.value = _state.value.copy(gameBackgroundScale = coercedScale)
+        prefs.edit { putFloat(KEY_GAME_BACKGROUND_SCALE, coercedScale) }
     }
 
     fun setMarqueeMinWidthPercent(percent: Float) {
@@ -788,6 +883,93 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
     }
 
+    fun setRomSearchUseWallpaper(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchUseWallpaper = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, enabled) }
+    }
+
+    fun setRomSearchCardMediaType(type: RomSearchCardMediaType) {
+        _state.value = _state.value.copy(romSearchCardMediaType = type)
+        prefs.edit { putString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, type.name) }
+    }
+
+    fun setGameMediaType(gameKey: String, type: RomSearchCardMediaType) {
+        val updated = _state.value.romSearchGameMediaMap + (gameKey to type.name)
+        _state.value = _state.value.copy(romSearchGameMediaMap = updated)
+        prefs.edit { putString(KEY_ROM_SEARCH_GAME_MEDIA_MAP, JSONObject(updated).toString()) }
+    }
+
+    fun setRomSearchHideNoMetadata(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchHideNoMetadata = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, enabled) }
+    }
+
+    fun setRomSearchHideNoImage(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchHideNoImage = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, enabled) }
+    }
+
+    fun setRomSearchDiscSpin(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchDiscSpin = enabled)
+        prefs.edit { putBoolean(KEY_ROM_FOCUS_ANIMATION_SPIN, enabled) }
+    }
+
+    fun setRomSearchBlackBackground(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchBlackBackground = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_BLACK_BACKGROUND, enabled) }
+    }
+
+    fun setLogoVisibilityAnimation(enabled: Boolean) {
+        _state.value = _state.value.copy(logoVisibilityAnimation = enabled)
+        prefs.edit { putBoolean(KEY_LOGO_VISIBILITY_ANIMATION, enabled) }
+    }
+
+    fun setLogoChangeAnimation(enabled: Boolean) {
+        _state.value = _state.value.copy(logoChangeAnimation = enabled)
+        prefs.edit { putBoolean(KEY_LOGO_CHANGE_ANIMATION, enabled) }
+    }
+
+    fun setRomSearchShowAllAndroidApps(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchShowAllAndroidApps = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, enabled) }
+    }
+
+    fun disableFocusAnimation(gameKey: String) {
+        val updated = _state.value.romSearchFocusAnimationDisabledGames + gameKey
+        _state.value = _state.value.copy(romSearchFocusAnimationDisabledGames = updated)
+        prefs.edit { putString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, JSONArray(updated.toList()).toString()) }
+    }
+
+    fun enableFocusAnimation(gameKey: String) {
+        val updated = _state.value.romSearchFocusAnimationDisabledGames - gameKey
+        _state.value = _state.value.copy(romSearchFocusAnimationDisabledGames = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES) }
+        } else {
+            prefs.edit { putString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, JSONArray(updated.toList()).toString()) }
+        }
+    }
+
+    fun unhideAllGames(gameKeys: Collection<String>) {
+        val updated = _state.value.hiddenGames - gameKeys.toSet()
+        _state.value = _state.value.copy(hiddenGames = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_HIDDEN_GAMES) }
+        } else {
+            prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
+        }
+    }
+
+    fun clearGameMediaType(gameKey: String) {
+        val updated = _state.value.romSearchGameMediaMap - gameKey
+        _state.value = _state.value.copy(romSearchGameMediaMap = updated)
+        if (updated.isEmpty()) {
+            prefs.edit { remove(KEY_ROM_SEARCH_GAME_MEDIA_MAP) }
+        } else {
+            prefs.edit { putString(KEY_ROM_SEARCH_GAME_MEDIA_MAP, JSONObject(updated).toString()) }
+        }
+    }
+
     fun addRomsPath(path: String) {
         val current = _state.value.romsPaths
         if (current.contains(path)) return
@@ -804,6 +986,19 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
         }
+    }
+
+    /** Returns the persisted SAF tree URI string for the given SD card volume ID, or null. */
+    fun getSafTreeUri(volumeId: String): String? {
+        val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
+        return try { JSONObject(json).optString(volumeId, null) } catch (_: Exception) { null }
+    }
+
+    /** Persists a SAF tree URI for the given SD card volume ID. */
+    fun setSafTreeUri(volumeId: String, treeUriString: String) {
+        val json = try { JSONObject(prefs.getString(KEY_SAF_TREE_URIS, null) ?: "{}") } catch (_: Exception) { JSONObject() }
+        json.put(volumeId, treeUriString)
+        prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
     }
 
     fun setSystemAppMap(map: Map<String, String?>) {
@@ -861,5 +1056,60 @@ class ESDEPreferencesManager(context: Context) {
 
     fun isSystemBottomScreen(systemName: String): Boolean {
         return !state.value.systemTopScreenSet.contains(systemName)
+    }
+
+    fun setGameEmulator(gameKey: String, packageName: String) {
+        val updated = _state.value.gameEmulatorMap.toMutableMap()
+        updated[gameKey] = packageName
+        _state.value = _state.value.copy(gameEmulatorMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_EMULATOR_MAP, json.toString()) }
+    }
+
+    fun getGameEmulator(gameKey: String): String? {
+        return state.value.gameEmulatorMap[gameKey]
+    }
+
+    fun setGameLaunchCommand(gameKey: String, command: String) {
+        val updated = _state.value.gameCommandMap.toMutableMap()
+        updated[gameKey] = command
+        _state.value = _state.value.copy(gameCommandMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_COMMAND_MAP, json.toString()) }
+    }
+
+    fun getGameLaunchCommand(gameKey: String): String? {
+        return state.value.gameCommandMap[gameKey]
+    }
+
+    fun setGameCore(gameKey: String, corePath: String) {
+        val updated = _state.value.gameCoreMap.toMutableMap()
+        updated[gameKey] = corePath
+        _state.value = _state.value.copy(gameCoreMap = updated)
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_CORE_MAP, json.toString()) }
+    }
+
+    fun getGameCore(gameKey: String): String? {
+        return state.value.gameCoreMap[gameKey]
+    }
+
+    fun hideGame(gameKey: String) {
+        val updated = _state.value.hiddenGames + gameKey
+        _state.value = _state.value.copy(hiddenGames = updated)
+        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
+    }
+
+    fun isGameHidden(gameKey: String): Boolean {
+        return state.value.hiddenGames.contains(gameKey)
+    }
+
+    fun unhideGame(gameKey: String) {
+        val updated = _state.value.hiddenGames - gameKey
+        _state.value = _state.value.copy(hiddenGames = updated)
+        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
     }
 }

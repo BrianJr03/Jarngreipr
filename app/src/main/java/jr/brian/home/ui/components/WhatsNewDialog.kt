@@ -69,28 +69,20 @@ fun WhatsNewDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = true,
+            dismissOnClickOutside = false,
             usePlatformDefaultWidth = false
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Surface(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.8f)
-                    .border(
-                        width = 2.dp,
-                        color = ThemePrimaryColor.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(24.dp)
-                    ),
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.fillMaxSize(),
                 color = OledCardColor,
                 tonalElevation = 0.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .systemBarsPadding()
                         .padding(24.dp)
                 ) {
                     Row(

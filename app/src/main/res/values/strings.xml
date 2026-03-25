@@ -1,5 +1,37 @@
 <resources>
     <string name="app_name">Jarngreipr</string>
+
+    <!-- ROM Search -->
+    <string name="rom_search_icon_description">Rom Search</string>
+    <string name="rom_search_no_results">No games found</string>
+    <string name="rom_detail_system">System</string>
+    <string name="rom_detail_genre">Genre</string>
+    <string name="rom_detail_developer">Developer</string>
+    <string name="rom_detail_publisher">Publisher</string>
+    <string name="rom_detail_players">Players</string>
+    <string name="rom_detail_rating">Rating</string>
+    <string name="rom_detail_play_count">Plays</string>
+    <string name="rom_detail_playtime">Play Time</string>
+    <string name="rom_detail_playtime_hm">%1$dh %2$dm</string>
+    <string name="rom_detail_playtime_m">%1$dm</string>
+    <string name="rom_detail_launch">Launch</string>
+    <string name="rom_detail_close">Close</string>
+    <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_emulator_picker_title">Select Emulator</string>
+    <string name="rom_emulator_none_found">No compatible emulators installed</string>
+    <string name="rom_detail_hide">Hide</string>
+    <string name="rom_detail_unhide">Unhide</string>
+    <string name="rom_search_hidden_no_results">No hidden games</string>
+    <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
+    <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
+    <string name="rom_search_experimental_got_it">Got it</string>
+    <string name="rom_emulator_choose_app">Choose App\u2026</string>
+    <string name="rom_emulator_choose_app_title">Choose an App</string>
+    <string name="faq_section_rom_search">ROM Search</string>
+    <string name="faq_rom_search_what_question">What is ROM Search?</string>
+    <string name="faq_rom_search_what_answer">ROM Search reads your ES-DE game library and lets you launch games directly from the home screen. Tap the controller icon to open it, then type a game name, system (e.g. @psp), or genre to filter results.</string>
+    <string name="faq_rom_search_emulator_question">My emulator isn\'t supported — what do I do?</string>
+    <string name="faq_rom_search_emulator_answer">Not every emulator is supported on day one. When picking an emulator for a game, use the \"Choose App\" option at the bottom of the list to launch with any installed app as a workaround. If you\'d like full support added, please open a GitHub issue at github.com/BrianJr03/Jarngreipr.</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
@@ -19,6 +51,8 @@
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
     <string name="keyboard_label_flip">Flip Layout</string>
+    <string name="keyboard_label_reopen_results">Reopen Results</string>
+    <string name="keyboard_label_special">Toggle special characters</string>
 
     <!-- Search Screen Onboarding -->
     <string name="search_onboarding_title">Switch Layout</string>
@@ -155,6 +189,8 @@
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
+    <string name="settings_keyboard_oled_exempt_title">Keyboard Ignores OLED Mode</string>
+    <string name="settings_keyboard_oled_exempt_description">Keep keyboard keys styled when OLED mode is on</string>
 
     <string name="settings_tab_animation_title">Tab Animation</string>
     <string name="settings_tab_animation_description">Long press animation on tabs</string>
@@ -163,8 +199,10 @@
     <string name="settings_icon_shape_rounded">Rounded</string>
     <string name="settings_icon_shape_square">Square</string>
 
-    <string name="settings_show_app_names_title">Show App Names</string>
-    <string name="settings_show_app_names_description">Display names below app icons</string>
+    <string name="settings_show_app_names_title">Show App Names (Drawer)</string>
+    <string name="settings_show_app_names_description">Display names below icons in the app drawer</string>
+    <string name="settings_show_home_screen_app_names_title">Show App Names (Home)</string>
+    <string name="settings_show_home_screen_app_names_description">Display names below icons on the home screen</string>
 
     <string name="settings_app_label_font_size_title">App Label Font Size</string>
     <string name="settings_app_label_font_size_description">Adjust the font size of app name labels</string>
@@ -342,6 +380,9 @@
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_layout">Layout</string>
+    <string name="settings_layout_scroll_title">Disable Scroll</string>
+    <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
+    <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>
@@ -366,6 +407,9 @@
     <string name="settings_faq_description">Frequently asked questions</string>
     <string name="settings_faq_icon_description">FAQ icon</string>
     <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_section_general">General</string>
+    <string name="faq_section_theming">Theming</string>
+    <string name="faq_section_jingles">Jingles</string>
     <string name="faq_app_close_question">How can I prevent the Android system from closing Jarngreipr?</string>
     <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
@@ -376,6 +420,28 @@
     <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
     <string name="faq_wallpaper_automation_question">How can I use MacroDroid (or similar) to toggle wallpaper modes?</string>
     <string name="faq_wallpaper_automation_answer">You can trigger wallpaper mode switches from any automation app (e.g. MacroDroid, Tasker) by sending a broadcast intent.\n\nIn MacroDroid, add a Send Intent action, set Type to Broadcast, and fill in these fields:</string>
+
+    <!-- Jingles FAQ -->
+    <string name="faq_jingles_what_question">What are Jingles?</string>
+    <string name="faq_jingles_what_answer">Jingles are short audio clips that play automatically when you browse games in ES-DE. When you select a game, Jarngreipr looks up a matching Jingle and plays it in the background, giving each game its own sound.\n\nJingle collections are defined by a simple index.json file that maps game titles to audio files. You can use community repos from GitHub or build your own local collection.</string>
+
+    <string name="faq_jingles_offline_question">How does offline-first playback work?</string>
+    <string name="faq_jingles_offline_answer">Jarngreipr uses three source types, each with different network behaviour:\n\n• Downloaded repos: Tap the download icon on a GitHub repo card to save all audio files to your device. Once downloaded, playback never requires a network connection.\n\n• Local folders: Pick any folder on your device containing an index.json and a jingles/ subfolder. These always play offline via direct file access.\n\n• Streaming repos: GitHub repos that have not been downloaded stream audio directly from GitHub. These require an active internet connection each time a Jingle plays and there may be delay before playback.</string>
+
+    <string name="faq_jingles_matching_question">How does the app know which Jingle to play for a game?</string>
+    <string name="faq_jingles_matching_answer">When you browse a game in ES-DE, Jarngreipr receives the game\'s filename. It strips the path and extension, then searches every loaded index.json for an entry whose game field matches.\n\nMatching is case-insensitive and works both ways. A file named "Super Mario Bros. (USA).zip" will match an entry titled "Super Mario Bros.", and vice versa. The first match found across all your sources wins.\n\nIf no match is found the currently playing Jingle stops and nothing new plays.</string>
+
+    <string name="faq_jingles_format_question">What format does index.json need to be in?</string>
+    <string name="faq_jingles_format_answer">Your index.json must live at the root of your folder or GitHub repo. The name field sets the display name shown in the app. Each entry maps a game title to an audio file path relative to the root. Supported formats are anything ExoPlayer can decode — MP3, OGG, FLAC, and WAV all work well.</string>
+    <string name="faq_jingles_format_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"Game Title\", \"file\": \"jingles/audio.mp3\" }\n  ]\n}</string>
+
+    <string name="faq_jingles_troubleshoot_question">My Jingle isn\'t playing — what should I check?</string>
+    <string name="faq_jingles_troubleshoot_answer">Work through these checks in order:\n\n1. Make sure the Enable Jingles toggle is on at the top of the Jingles screen.\n\n2. Confirm ES-DE is actually sending game selection events to Jarngreipr (the app must be running).\n\n3. Check that your game\'s filename (without extension) matches a game entry in your index.json. Partial matches are supported.\n\n4. If using a local folder, tap the refresh button on the folder card after editing index.json. Changes are not picked up automatically.\n\n5. If streaming from GitHub, verify you have an active internet connection. Download the repo for fully offline playback.\n\n6. Ensure the json file does not have any trailing commas.</string>
+
+    <string name="faq_jingles_defaults_question">Can I set a fallback Jingle for an entire platform or for every game?</string>
+    <string name="faq_jingles_defaults_answer">Yes — two special game names let you define fallback Jingles:\n\n• \"global-default-jingle\" — plays for any game that has no other match. Add exactly one entry with this name across your packs; the first one found wins.\n\n• \"system-jingle\" — plays for all games on a specific platform. The platform is determined by the folder name ES-DE reports (e.g. \"n3ds\", \"wii\"). In a grouped index.json the platform key is used automatically. In a flat index.json add a \"platform\" field to the entry.\n\nBoth fall back naturally: if a per-game Jingle is found it is always preferred.</string>
+    <string name="faq_jingles_defaults_flat_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"system-jingle\", \"platform\": \"n3ds\", \"file\": \"jingles/n3ds-default.mp3\" },\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
+    <string name="faq_jingles_defaults_grouped_code">{\n  \"name\": \"My Jingles\",\n  \"n3ds\": [\n    { \"game\": \"system-jingle\", \"file\": \"jingles/n3ds-default.mp3\" }\n  ],\n  \"entries\": [\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
@@ -883,6 +949,7 @@
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
+    <string name="esde_settings_game_image_marquee">Marquee</string>
     <string name="esde_settings_game_image_description">Description</string>
     <string name="esde_settings_overlay_media_type">Overlay Media Type</string>
     <string name="esde_settings_overlay_media_type_description">Choose which media type to show for the game logo overlay</string>
@@ -914,8 +981,8 @@
     <string name="esde_settings_marquee_size_reset">@string/common_reset</string>
     <string name="esde_settings_marquee_min_width">Logo Minimum Width</string>
     <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait logo images</string>
-    <string name="esde_settings_android_games_bg_scale">Android Games Background Scale</string>
-    <string name="esde_settings_android_games_bg_scale_description">Size of game artwork for Android Games platform</string>
+    <string name="esde_settings_game_bg_scale">Game Background Scale</string>
+    <string name="esde_settings_game_bg_scale_description">Size of game artwork when browsing games</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>
@@ -944,8 +1011,10 @@
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
     <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
-    <string name="esde_settings_custom_system_images_path">System Backgrounds Folder</string>
-    <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images</string>
+    <string name="esde_settings_custom_system_images_path">System Background Folder</string>
+    <string name="esde_settings_video_options_hide">Hide</string>
+    <string name="esde_settings_video_options_more">More</string>
+    <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images or videos</string>
     <string name="esde_settings_single_system_image">Single System Background</string>
     <string name="esde_settings_single_system_image_description">Use one image file for all console backgrounds</string>
     <string name="esde_settings_single_system_logo">Single System Logo</string>
@@ -957,9 +1026,14 @@
     <string name="esde_settings_custom_media_path">Downloaded Media Folder</string>
     <string name="esde_settings_custom_media_path_description">Custom folder for game media (videos, screenshots, fanart, etc.). Overrides the default ES-DE downloaded_media path for the companion screen.</string>
     <string name="esde_settings_path_not_set">Not set (using default)</string>
+    <string name="esde_settings_system_bg_video_muted">Mute System Background Video</string>
+    <string name="esde_settings_system_bg_video_muted_description">Mute audio when playing a system background video</string>
+    <string name="esde_settings_system_bg_video_looping">Loop System Background Video</string>
+    <string name="esde_settings_system_bg_video_looping_description">Restart the video when it reaches the end</string>
     <string name="esde_settings_clear_path">@string/common_clear</string>
     <string name="esde_settings_select_folder">@string/common_select_folder</string>
-    
+    <string name="settings_search_settings">Search Settings…</string>
+
     <!-- ESDE Screensaver Settings -->
     <string name="esde_settings_section_screensaver">Screensaver</string>
     <string name="esde_settings_screensaver_behavior">Screen Behavior</string>
@@ -969,6 +1043,7 @@
     <string name="esde_settings_screensaver_power_off">Power Off</string>
     <string name="esde_settings_screensaver_power_off_description">Show clock and battery info</string>
     <string name="esde_settings_screensaver_floaty">Floating Apps</string>
+    <string name="esde_settings_screensaver_show_all">Show All</string>
     <string name="esde_settings_screensaver_app_count">Floaty App Count</string>
     <string name="esde_settings_screensaver_app_count_description">How many apps to show while screensaver is active (All = no limit)</string>
     <string name="esde_settings_screensaver_app_count_all">All</string>
@@ -1020,6 +1095,41 @@
     <string name="esde_settings_delete_button">Delete</string>
     <string name="esde_settings_cancel_button">Cancel</string>
 
+    <!-- ROM Search hints -->
+    <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
+    <string name="rom_search_hint_details">Start: open details</string>
+    <string name="rom_search_commands">Search Commands</string>
+    <string name="rom_search_commands_info">• @hidden — view all hidden games\n• @android — browse all installed Android apps (requires setting)\n• @{system} — filter by a specific system\n• plain text — search games and apps</string>
+
+    <!-- Search Settings -->
+    <string name="esde_settings_section_search">Search</string>
+    <string name="esde_settings_rom_search_use_wallpaper">Show System Wallpaper</string>
+    <string name="esde_settings_rom_search_use_wallpaper_description">Display your system wallpaper behind ROM search results. When disabled, an OLED-friendly dark background is used instead.</string>
+
+    <!-- ROM Search Settings Screen -->
+    <string name="rom_search_settings_title">ROM Search Settings</string>
+    <string name="rom_search_settings_back">Back</string>
+    <string name="rom_search_settings_section_display">Display</string>
+    <string name="rom_search_settings_section_card_media">Card Media</string>
+    <string name="rom_search_settings_black_bg_title">Always Black Background</string>
+    <string name="rom_search_settings_black_bg_description">Use pure black for the search screen background, or follow OLED background color when off.</string>
+    <string name="rom_search_settings_wallpaper_title">Show System Wallpaper</string>
+    <string name="rom_search_settings_wallpaper_description">Display your system wallpaper behind ROM search results.</string>
+    <string name="rom_search_settings_hide_no_image_title">Hide Games Without Image</string>
+    <string name="rom_search_settings_hide_no_image_description">Exclude games with no artwork of any type.</string>
+    <string name="rom_search_settings_hide_no_metadata_title">Hide Games Without Metadata</string>
+    <string name="rom_search_settings_hide_no_metadata_description">Exclude games with no artwork, descriptions, or other scraped info.</string>
+    <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
+    <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
+    <string name="rom_search_settings_show_android_apps_title">Show All Android Apps</string>
+    <string name="rom_search_settings_show_android_apps_description">Enable the @android command and plain-text search to include all installed apps.</string>
+    <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
+    <string name="rom_search_settings_launch_title">Launch ROM Search</string>
+    <string name="rom_search_settings_launch_description">Open ROM Search directly from settings.</string>
+    <string name="rom_search_settings_disc_spin_title">Spin Disc Art</string>
+    <string name="rom_search_settings_disc_spin_description">Animate disc art with a spin when focused. Applies to PS1, PS2, PS3, Sega CD, Saturn, Dreamcast, GameCube, Wii, Wii U, Xbox, Xbox 360, 3DO, Jaguar CD, CD32, and CDTV. Only active when Physical Media type is selected.</string>
+    <string name="rom_search_settings_card_media_type">Card Media Type</string>
+
     <!-- What\'s New Dialog -->
     <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
 
@@ -1048,6 +1158,10 @@
     <string name="esde_system_apps_remove_confirm_no">Cancel</string>
     <string name="esde_system_apps_select_app">Select app for %1$s</string>
     <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
+    <string name="esde_settings_logo_visibility_animation">Logo Appear/Disappear Animation</string>
+    <string name="esde_settings_logo_visibility_animation_description">Animate the logo bouncing in and out when it shows or hides</string>
+    <string name="esde_settings_logo_change_animation">Logo Change Animation</string>
+    <string name="esde_settings_logo_change_animation_description">Animate the logo bouncing in when switching between systems or games</string>
     <string name="esde_settings_section_system_apps">System Apps</string>
     <string name="esde_settings_system_apps_info">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
     <string name="esde_settings_configure_system_apps">Configure System Apps</string>
@@ -1138,4 +1252,101 @@
 
     <string name="esde_wallpaper">ES-DE Wallpaper</string>
     <string name="standard_wallpaper">Standard Wallpaper</string>
+
+    <!-- Jingles -->
+    <string name="jingles_screen_title">Jingles</string>
+    <string name="jingles_screen_subtitle">Build your collection of game Jingles</string>
+    <string name="jingles_enable_title">Enable Jingles</string>
+    <string name="jingles_enable_description">Play a matching Jingle when browsing games in ES-DE</string>
+    <string name="jingles_repo_label">Jingle Repo</string>
+    <string name="jingles_repo_placeholder">your-username/your-repo-name</string>
+    <string name="jingles_playback_settings_label">Settings</string>
+    <string name="jingles_repositories_label">Repositories</string>
+    <string name="jingles_add_repo_description">Add repo</string>
+    <string name="jingles_remove_repo_description">Remove %s</string>
+    <string name="jingles_launch_title">Manage Jingles</string>
+    <string name="jingles_launch_description">Build your own collection of game jingles</string>
+    <string name="jingles_section_info">Build a collection of game Jingles from GitHub repositories</string>
+    <string name="jingles_manage_description">Manage repositories and playback settings</string>
+    <string name="jingles_local_folder_label">Local Folder</string>
+    <string name="jingles_local_folder_description">Folder must contain index.json and a jingles sub-folder</string>
+    <string name="jingles_pick_folder_description">Pick folder</string>
+    <string name="jingles_local_folders_label">Local Folders</string>
+    <string name="jingles_remove_folder_description">Remove %s</string>
+    <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
+    <string name="jingles_volume">Jingle Volume</string>
+    <string name="jingles_volume_unmute">Unmute to adjust volume</string>
+    <string name="jingles_regex_priority_title">Regex Match Priority</string>
+    <string name="jingles_regex_priority_description">Try regex patterns before exact name. When off, exact name is matched first.</string>
+    <string name="jingles_normalize_title">Volume Normalization</string>
+    <string name="jingles_normalize_description">Automatically boost quiet tracks using Android\'s LoudnessEnhancer</string>
+    <!-- Jingles Info Dialog -->
+    <string name="jingles_info_button_description">About Jingles</string>
+    <string name="jingles_info_title">About Jingles</string>
+    <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Repositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
+    <string name="jingles_info_getting_started">Getting Started</string>
+    <string name="jingles_info_local_title">Local Folder</string>
+    <string name="jingles_info_local_subtitle">Offline playback</string>
+    <string name="jingles_info_local_step1">1. Create a folder anywhere on your device.</string>
+    <string name="jingles_info_local_step2">2. Add an index.json file at the root of the folder.</string>
+    <string name="jingles_info_local_step3">3. Create a jingles subfolder and place your audio files inside.</string>
+    <string name="jingles_info_local_step4">4. Tap Pick Folder to select your folder.</string>
+    <string name="jingles_info_github_title">GitHub Repo</string>
+    <string name="jingles_info_github_json_examples">JSON Formatting Examples</string>
+    <string name="jingles_info_github_subtitle">Streams from GitHub</string>
+    <string name="jingles_info_github_body">Fork or use the template below as a starting point, then add it as username/repo-name in the Jingle Repo field.</string>
+    <string name="jingles_info_close">Got it</string>
+    <string name="jingles_faq_title">FAQ</string>
+    <string name="jingles_faq_inconsistent_q">Downloads are inconsistent or incomplete</string>
+    <string name="jingles_faq_inconsistent_a">If Jarngreipr fails to download all tracks, visit the repo directly on GitHub and download the index.json and jingles folder. You can then add this as a Local Folder for playback.</string>
+    <string name="jingles_pack_info_failed">%1$d track(s) failed to download</string>
+    <string name="jingles_download_description">Download repo</string>
+    <string name="jingles_update_description">Update downloaded repo</string>
+    <string name="jingles_refresh_folder_description">Refresh local folder</string>
+    <string name="jingles_search_browse_button">Browse</string>
+    <string name="jingles_search_icon_description">Search GitHub repos</string>
+    <string name="jingles_search_browse_title">Browse Jingles Repos</string>
+    <string name="jingles_search_results_title">Search Results</string>
+    <string name="jingles_search_query_label">"%s"</string>
+    <string name="jingles_search_empty">No repositories found</string>
+    <string name="jingles_search_error">Search failed</string>
+    <string name="jingles_search_error_hint">Check your connection and try again</string>
+    <string name="jingles_search_add">Add</string>
+    <string name="jingles_search_added">Added</string>
+    <string name="jingles_search_close">Close</string>
+    <string name="jingles_pack_info_icon_description">Jingle pack info</string>
+    <string name="jingles_pack_info_tracks">%d tracks</string>
+    <string name="jingles_pack_info_size">~%s</string>
+    <string name="jingles_pack_info_fetching_size">Fetching size…</string>
+
+    <!-- Add Jingle Screen -->
+    <string name="jingles_add_screen_title">Add Jingle Entry</string>
+    <string name="jingles_add_pack_name_label">Pack Name</string>
+    <string name="jingles_add_pack_name_placeholder">e.g. My Awesome Jingles</string>
+    <string name="jingles_add_pack_select_existing">Select existing pack</string>
+    <string name="jingles_add_pack_updating">Updating existing pack</string>
+    <string name="jingles_create_pack_button">Create Pack</string>
+    <string name="jingles_update_pack_button">Update Pack</string>
+    <string name="jingles_create_pack_parent">Parent: %s</string>
+    <string name="jingles_create_pack_change">Change</string>
+    <string name="jingles_create_pack_dialog_title">Choose Parent Folder</string>
+    <string name="jingles_create_pack_dialog_body">Select the folder where your new jingle pack will be created as a subfolder. You\'ll name the pack on the next screen.</string>
+    <string name="jingles_create_pack_dialog_confirm">Choose Folder</string>
+    <string name="jingles_create_pack_dialog_cancel">Cancel</string>
+    <string name="jingles_add_game_label">Game</string>
+    <string name="jingles_add_game_placeholder">e.g. Phoenix Wright - Ace Attorney</string>
+    <string name="jingles_add_platform_label">Platform</string>
+    <string name="jingles_add_platform_placeholder">e.g. n3ds, gba, ps2</string>
+    <string name="jingles_add_platform_supporting">Used as the JSON key and subfolder name</string>
+    <string name="jingles_add_jingle_name_label">Jingle Name</string>
+    <string name="jingles_add_jingle_name_placeholder">e.g. ace-attorney-trilogy</string>
+    <string name="jingles_add_jingle_name_supporting">Extension is preserved from the picked file</string>
+    <string name="jingles_add_pick_audio">Pick Audio File</string>
+    <string name="jingles_add_preview_label">PREVIEW</string>
+    <string name="jingles_add_submit">Add Jingle</string>
+    <string name="jingles_add_success">Jingle added successfully!</string>
+    <string name="jingles_add_keyboard_hint">Start typing…</string>
+    <string name="jingles_add_cancel">Cancel</string>
+    <string name="jingles_add_done">Done</string>
+    <string name="jingles_add_repo_field_label">Repository</string>
 </resources>

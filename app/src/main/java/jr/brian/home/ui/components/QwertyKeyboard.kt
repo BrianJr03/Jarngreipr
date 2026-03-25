@@ -1,5 +1,14 @@
 package jr.brian.home.ui.components
 
+import androidx.activity.ComponentActivity
+import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,9 +27,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,12 +51,22 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.R
+import jr.brian.home.data.LocalJinglesManager
+import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.extensions.pressWithHaptic
 import jr.brian.home.ui.colors.borderBrush
@@ -50,19 +75,49 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 
+@OptIn(UnstableApi::class)
 @Composable
 fun QwertyKeyboard(
     searchQuery: String,
     modifier: Modifier = Modifier,
     showQueryText: Boolean = true,
     showFlipLayoutButton: Boolean = true,
+    showSpecialCharRow: Boolean = true,
+    showVolControl: Boolean = false,
+    showSettings: Boolean = false,
+    showController: Boolean = true,
+    showAtKey: Boolean = true,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onFlipLayout: () -> Unit = {},
+    onSpecialCharToggle: () -> Unit = {},
+    onReopenResults: (() -> Unit)? = null,
+    onOpenRomSearchSettings: (() -> Unit)? = null,
+    onAtClick: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     var isNumericMode by remember { mutableStateOf(false) }
+
+    val wallpaperManager = LocalWallpaperManager.current
+    val cursorTransition = rememberInfiniteTransition(label = "cursor")
+    val cursorAlpha by cursorTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(530, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+
+    val jinglesManager = LocalJinglesManager.current
+    val esdeViewModel: ESDEViewModel = hiltViewModel(context as ComponentActivity)
+    val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
 
     val qwertyRow1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
     val qwertyRow2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
@@ -82,13 +137,108 @@ fun QwertyKeyboard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
+                    text = buildAnnotatedString {
+                        if (searchQuery.isEmpty()) {
+                            append(stringResource(R.string.keyboard_label_search))
+                        } else {
+                            append(searchQuery)
+                            withStyle(SpanStyle(color = ThemePrimaryColor.copy(alpha = cursorAlpha))) {
+                                append("|")
+                            }
+                        }
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                if (showVolControl) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable {
+                                val newMuted = !isMuted
+                                jinglesManager.setMuted(newMuted)
+                                esdeViewModel.musicController.setMuted(newMuted)
+                                VideoPresentationManager.setMuted(newMuted)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = if (isMuted) "Unmute" else "Mute",
+                            tint = if (isMuted) ThemePrimaryColor.copy(alpha = 0.4f) else ThemePrimaryColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            ThemePrimaryColor.copy(alpha = 0.3f),
+                            RoundedCornerShape(6.dp)
+                        )
+                        .clickable { if (onAtClick != null) onAtClick() else onSpecialCharToggle() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "@",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                }
+                if (onReopenResults != null &&
+                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                    && showController
+                ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            )
+                            .clickable { onReopenResults() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = stringResource(R.string.keyboard_label_reopen_results),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (showSettings) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                ThemePrimaryColor.copy(alpha = 0.3f),
+                                RoundedCornerShape(6.dp)
+                            ).clickable {
+                               onOpenRomSearchSettings?.invoke()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 if (showFlipLayoutButton) {
                     Box(
                         modifier = Modifier
@@ -126,6 +276,8 @@ fun QwertyKeyboard(
                 qwertyRow2 = qwertyRow2,
                 qwertyRow3 = qwertyRow3,
                 searchQuery = searchQuery,
+                showSpecialCharRow = showSpecialCharRow,
+                showAtKey = showAtKey,
                 onQueryChange = onQueryChange,
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = onFocusChanged,
@@ -141,6 +293,8 @@ private fun QwertyAlphabetKeyboard(
     qwertyRow2: List<Char>,
     qwertyRow3: List<Char>,
     searchQuery: String,
+    showSpecialCharRow: Boolean = true,
+    showAtKey: Boolean = false,
     onQueryChange: (String) -> Unit,
     keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit,
@@ -169,7 +323,7 @@ private fun QwertyAlphabetKeyboard(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Spacer(modifier = Modifier.weight(0.5f))
+        if (!showAtKey) Spacer(modifier = Modifier.weight(0.5f))
         qwertyRow2.forEachIndexed { index, letter ->
             val combinedIndex = index + qwertyRow1.size
             QwertyKeyButton(
@@ -184,7 +338,22 @@ private fun QwertyAlphabetKeyboard(
                 onFocusChanged = { onFocusChanged(combinedIndex) },
             )
         }
-        Spacer(modifier = Modifier.weight(0.5f))
+        if (showAtKey) {
+            val atIndex = qwertyRow1.size + qwertyRow2.size
+            QwertyKeyButton(
+                label = "@",
+                onClick = { onQueryChange("$searchQuery@") },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp),
+                focusRequester = remember(atIndex) {
+                    FocusRequester().also { keyboardFocusRequesters[atIndex] = it }
+                },
+                onFocusChanged = { onFocusChanged(atIndex) },
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(0.5f))
+        }
     }
 
     Row(
@@ -232,6 +401,16 @@ private fun QwertyAlphabetKeyboard(
                 FocusRequester().also { keyboardFocusRequesters[backspaceIndex] = it }
             },
             onFocusChanged = { onFocusChanged(backspaceIndex) },
+        )
+    }
+
+    AnimatedVisibility(showSpecialCharRow) {
+        SpecialCharsRow(
+            searchQuery = searchQuery,
+            onQueryChange = onQueryChange,
+            keyboardFocusRequesters = keyboardFocusRequesters,
+            onFocusChanged = onFocusChanged,
+            indexOffset = 50,
         )
     }
 
@@ -317,6 +496,14 @@ private fun QwertyNumericKeyboard(
         }
     }
 
+    SpecialCharsRow(
+        searchQuery = searchQuery,
+        onQueryChange = onQueryChange,
+        keyboardFocusRequesters = keyboardFocusRequesters,
+        onFocusChanged = onFocusChanged,
+        indexOffset = 20,
+    )
+
     // Row 3: Swap, Space, Backspace, Clear
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -379,6 +566,36 @@ private fun QwertyNumericKeyboard(
 }
 
 @Composable
+private fun SpecialCharsRow(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    keyboardFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
+    onFocusChanged: (Int) -> Unit,
+    indexOffset: Int,
+) {
+    val chars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        chars.forEachIndexed { i, char ->
+            val idx = indexOffset + i
+            QwertyKeyButton(
+                label = char.toString(),
+                onClick = { onQueryChange(searchQuery + char) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp),
+                focusRequester = remember(idx) {
+                    FocusRequester().also { keyboardFocusRequesters[idx] = it }
+                },
+                onFocusChanged = { onFocusChanged(idx) },
+            )
+        }
+    }
+}
+
+@Composable
 private fun QwertyKeyButton(
     label: String,
     onClick: () -> Unit,
@@ -388,6 +605,7 @@ private fun QwertyKeyButton(
     onFocusChanged: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
+    val oledManager = LocalOledModeManager.current
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
@@ -410,7 +628,7 @@ private fun QwertyKeyButton(
                 isFocused = it.isFocused
             }
             .background(
-                brush = cardGradient(isFocused, isPressed = isPressed),
+                brush = cardGradient(isFocused, isPressed = isPressed, ignoreOled = oledManager.isKeyboardOledExempt),
                 shape = RoundedCornerShape(6.dp),
             )
             .border(

@@ -1,5 +1,6 @@
 package jr.brian.home.service
 
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.core.content.edit
+import jr.brian.home.MainActivity
 import jr.brian.home.R
 import jr.brian.home.ui.theme.ColorTheme
 import jr.brian.home.util.PingThemeUtil
@@ -44,6 +46,14 @@ class ThemeSharingTile : TileService() {
         val theme = loadTheme(prefs, themeId)
         val name = prefs.getString(KEY_DISPLAY_NAME, "").orEmpty().ifBlank { Build.MODEL }
         PingService.notificationTitle = getString(R.string.ping_notification_title)
+        PingService.notificationIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(this, ThemeShareReceiver::class.java).apply {
+                action = MainActivity.ACTION_OPEN_THEME_SHARE
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val profile = PingThemeUtil.buildProfile(theme, name)
         startForegroundService(PingService.buildIntent(this, profile))
     }

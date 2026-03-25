@@ -4,6 +4,9 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -135,6 +138,8 @@ fun ESDEWallpaperContainer(
     val isFreePosition = prefsState.logoAlignment == LogoAlignment.FreePosition
     val isMarqueeDraggable = isFreePosition && !prefsState.marqueePositionLocked
     val useAnimatedLogo = !prefsState.marqueePositionLocked
+    val logoVisibilityAnimation = prefsState.logoVisibilityAnimation
+    val logoChangeAnimation = prefsState.logoChangeAnimation
 
     Box(
         modifier = modifier
@@ -160,16 +165,14 @@ fun ESDEWallpaperContainer(
                 prefsState.systemBackgroundScaleMode
             }
 
-            val hasMiximage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
-            val useSmallSize = prefsState.isAndroidGamesSelected()
-                && state.isShowingGameBackground
-                && !hasMiximage
-            val androidGamesScale = prefsState.androidGamesBackgroundScale
+            val hasMixImage = state.currentImagePath?.contains(FOLDER_MIXIMAGES) == true
+            val useScale = state.isShowingGameBackground && !hasMixImage
+            val gameBackgroundScale = prefsState.gameBackgroundScale
 
             if (state.systemBackgroundVideoPath != null) {
-                val videoModifier = if (useSmallSize) {
+                val videoModifier = if (useScale) {
                     Modifier
-                        .fillMaxSize(androidGamesScale)
+                        .fillMaxSize(gameBackgroundScale)
                         .align(Alignment.Center)
                 } else {
                     Modifier.fillMaxSize()
@@ -178,13 +181,15 @@ fun ESDEWallpaperContainer(
                     videoPath = state.systemBackgroundVideoPath,
                     modifier = videoModifier,
                     blurLevel = effectiveBlurLevel,
-                    backgroundScaleMode = backgroundScaleMode
+                    backgroundScaleMode = backgroundScaleMode,
+                    muted = state.systemBgVideoMuted,
+                    looping = state.systemBgVideoLooping
                 )
             } else {
                 AnimatedWallpaperImage(
                 imagePath = state.currentImagePath ?: DEFAULT_BACKGROUND_PATH,
-                useSmallSize = useSmallSize,
-                smallSizeScale = androidGamesScale,
+                useSmallSize = useScale,
+                smallSizeScale = gameBackgroundScale,
                 blurLevel = effectiveBlurLevel,
                 animationStyle = state.animationStyle,
                 animationDuration = state.animationDuration,
@@ -209,12 +214,13 @@ fun ESDEWallpaperContainer(
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
-
                 isPositionLocked = prefsState.marqueePositionLocked,
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
-                minWidthPercent = prefsState.marqueeMinWidthPercent
+                minWidthPercent = prefsState.marqueeMinWidthPercent,
+                visibilityAnimationEnabled = logoVisibilityAnimation,
+                changeAnimationEnabled = logoChangeAnimation
             )
         }
 
@@ -235,7 +241,9 @@ fun ESDEWallpaperContainer(
                 freeOffsetX = prefsState.logoOffsetX,
                 freeOffsetY = prefsState.logoOffsetY,
                 onOffsetChange = { x, y -> preferencesManager.setLogoOffset(x, y) },
-                minWidthPercent = prefsState.marqueeMinWidthPercent
+                minWidthPercent = prefsState.marqueeMinWidthPercent,
+                visibilityAnimationEnabled = logoVisibilityAnimation,
+                changeAnimationEnabled = logoChangeAnimation
             )
         }
 
@@ -410,7 +418,9 @@ private fun BoxScope.AnimatedLogo(
     freeOffsetX: Float = 0f,
     freeOffsetY: Float = 0f,
     onOffsetChange: ((Float, Float) -> Unit)? = null,
-    minWidthPercent: Float = 0.5f
+    minWidthPercent: Float = 0.5f,
+    visibilityAnimationEnabled: Boolean = true,
+    changeAnimationEnabled: Boolean = true
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -459,23 +469,27 @@ private fun BoxScope.AnimatedLogo(
 
         AnimatedVisibility(
             visible = !hideMarquee,
-            enter = fadeIn(
-                animationSpec = tween(durationMillis = 400)
-            ) + scaleIn(
-                initialScale = 0.8f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-                transformOrigin = TransformOrigin.Center
-            ),
-            exit = fadeOut(
-                animationSpec = tween(durationMillis = 300)
-            ) + scaleOut(
-                targetScale = 0.6f,
-                animationSpec = tween(durationMillis = 300),
-                transformOrigin = TransformOrigin.Center
-            ),
+            enter = if (visibilityAnimationEnabled) {
+                fadeIn(animationSpec = tween(durationMillis = 400)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    transformOrigin = TransformOrigin.Center
+                )
+            } else {
+                fadeIn(animationSpec = tween(durationMillis = 0))
+            },
+            exit = if (visibilityAnimationEnabled) {
+                fadeOut(animationSpec = tween(durationMillis = 300)) + scaleOut(
+                    targetScale = 0.6f,
+                    animationSpec = tween(durationMillis = 300),
+                    transformOrigin = TransformOrigin.Center
+                )
+            } else {
+                fadeOut(animationSpec = tween(durationMillis = 0))
+            },
             modifier = Modifier
                 .align(finalAlignment)
                 .offset(
@@ -513,23 +527,43 @@ private fun BoxScope.AnimatedLogo(
                 )
         ) {
             val minWidth = (state.marqueeWidth * minWidthPercent).dp
-            MarqueeImage(
-                marqueePath = logoPath,
-                modifier = Modifier
-                    .sizeIn(
-                        minWidth = minWidth,
-                        maxWidth = state.marqueeWidth.dp,
-                        maxHeight = state.marqueeHeight.dp
-                    )
-                    .scale(bubbleScale)
-                    .graphicsLayer { alpha = effectiveLogoAlpha },
-                animate = isUsingDefaultBackground,
-                animationStyle = state.animationStyle,
-                animationDuration = state.animationDuration,
-                animationScale = state.animationScale,
-                onClick = if (isFreePosition) openMarqueeShortcut else null,
-                onLongClick = if (!isFreePosition) openMarqueeShortcut else null
-            )
+            AnimatedContent(
+                targetState = logoPath,
+                transitionSpec = {
+                    if (changeAnimationEnabled) {
+                        scaleIn(
+                            initialScale = 0.6f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        ) + fadeIn(animationSpec = tween(durationMillis = 200)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 150))
+                    } else {
+                        fadeIn(animationSpec = tween(durationMillis = 0)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 0))
+                    }
+                },
+                label = "LogoBounce"
+            ) { path ->
+                MarqueeImage(
+                    marqueePath = path,
+                    modifier = Modifier
+                        .sizeIn(
+                            minWidth = minWidth,
+                            maxWidth = state.marqueeWidth.dp,
+                            maxHeight = state.marqueeHeight.dp
+                        )
+                        .scale(bubbleScale)
+                        .graphicsLayer { alpha = effectiveLogoAlpha },
+                    animate = isUsingDefaultBackground,
+                    animationStyle = state.animationStyle,
+                    animationDuration = state.animationDuration,
+                    animationScale = state.animationScale,
+                    onClick = if (isFreePosition) openMarqueeShortcut else null,
+                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null
+                )
+            }
         }
     }
 }
@@ -602,7 +636,9 @@ private fun VideoBackground(
     videoPath: String,
     modifier: Modifier = Modifier,
     blurLevel: Float = 0f,
-    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop
+    backgroundScaleMode: BackgroundScaleMode = BackgroundScaleMode.Crop,
+    muted: Boolean = true,
+    looping: Boolean = true
 ) {
     val context = LocalContext.current
 
@@ -617,13 +653,36 @@ private fun VideoBackground(
         ExoPlayer.Builder(context).build().apply {
             try {
                 setMediaItem(MediaItem.fromUri(videoUri))
-                repeatMode = Player.REPEAT_MODE_ALL
-                volume = 0f
+                repeatMode = if (looping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                volume = if (muted) 0f else 1f
                 prepare()
                 playWhenReady = true
             } catch (e: Exception) {
                 android.util.Log.e("VideoBackground", "Failed to load video: $videoPath", e)
             }
+        }
+    }
+
+    LaunchedEffect(muted) {
+        exoPlayer.volume = if (muted) 0f else 1f
+    }
+
+    LaunchedEffect(looping) {
+        exoPlayer.repeatMode = if (looping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> exoPlayer.play()
+                Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -657,6 +716,7 @@ private fun VideoBackground(
             }
         },
         update = { playerView ->
+            playerView.player = exoPlayer
             playerView.resizeMode = resizeMode
         },
         modifier = modifier

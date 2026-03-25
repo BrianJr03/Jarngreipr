@@ -106,6 +106,7 @@ private fun GameImageTypeChip(
         GameImageType.Fanart -> stringResource(R.string.esde_settings_game_image_fanart)
         GameImageType.TitleScreens -> stringResource(R.string.esde_settings_game_image_titlescreens)
         GameImageType.Covers -> stringResource(R.string.esde_settings_game_image_covers)
+        GameImageType.Marquee -> stringResource(R.string.esde_settings_game_image_marquee)
         GameImageType.MixImages -> stringResource(R.string.esde_settings_game_image_miximages)
         GameImageType.Description -> stringResource(R.string.esde_settings_game_image_description)
     }
