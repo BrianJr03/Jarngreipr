@@ -2,7 +2,7 @@
     <string name="app_name">Jarngreipr</string>
 
     <!-- ROM Search -->
-    <string name="rom_search_icon_description">ROM Search</string>
+    <string name="rom_search_icon_description">Rom Search</string>
     <string name="rom_search_no_results">No games found</string>
     <string name="rom_detail_system">System</string>
     <string name="rom_detail_genre">Genre</string>

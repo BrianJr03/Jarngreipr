@@ -1,13 +1,10 @@
 package jr.brian.home
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import kotlinx.coroutines.flow.MutableSharedFlow
 import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -50,7 +48,6 @@ import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
-import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
 import jr.brian.home.ui.components.konfetti.LetterFormationBurst
 import jr.brian.home.ui.theme.LauncherTheme
@@ -63,6 +60,7 @@ import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.ping.PingPermissions.hasPingPermissions
 import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
+import kotlinx.coroutines.flow.MutableSharedFlow
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
