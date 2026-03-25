@@ -235,7 +235,8 @@ data class ESDEPrefsState(
     val romSearchBlackBackground: Boolean = true,
     val romSearchFocusAnimationDisabledGames: Set<String> = emptySet(),
     val logoVisibilityAnimation: Boolean = false,
-    val logoChangeAnimation: Boolean = false
+    val logoChangeAnimation: Boolean = false,
+    val romSearchShowAllAndroidApps: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

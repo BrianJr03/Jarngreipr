@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Mouse
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.media3.common.util.UnstableApi
@@ -114,7 +115,8 @@ fun DrawerOptionsDialog(
     onDockSettingsClick: () -> Unit,
     onESDESetupClick: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
-    onNavigateToRomSearch: () -> Unit = {}
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
@@ -238,6 +240,21 @@ fun DrawerOptionsDialog(
                                 modifier = Modifier.size(26.dp)
                             )
                         }
+
+//                        IconButton(
+//                            onClick = {
+//                                onDismiss()
+//                                onNavigateToTrackpad()
+//                            },
+//                            modifier = Modifier.size(48.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Mouse,
+//                                contentDescription = "Trackpad",
+//                                tint = Color.White,
+//                                modifier = Modifier.size(26.dp)
+//                            )
+//                        }
 
                         if (wallpaperManager.getWallpaperType() == WallpaperType.ESDE) {
                             IconButton(

@@ -22,12 +22,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,12 +43,15 @@ import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.ThorSettingToggleButton
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.themePrimaryColor
+import jr.brian.home.ui.theme.themeSecondaryColor
 
 @Composable
 internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
     val prefsManager = LocalESDEPreferencesManager.current
     val state by prefsManager.state.collectAsStateWithLifecycle()
     var showInfoBox by rememberSaveable { mutableStateOf(false) }
+    val secondaryColor = themeSecondaryColor()
 
     Surface(
         color = OledBackgroundColor,
@@ -86,7 +92,7 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
                     modifier = Modifier.padding(horizontal = 16.dp),
                     label = stringResource(R.string.rom_search_commands),
                     content = stringResource(R.string.rom_search_commands_info),
-                    highlightedTerms = listOf("@hidden", "@{system}"),
+                    highlightedTerms = listOf("@hidden", "@android", "@{system}"),
                     contentTextColor = ThemeSecondaryColor
                 )
             }
@@ -145,6 +151,30 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
                         description = stringResource(R.string.rom_search_settings_focus_animation_description),
                         checked = state.romSearchDiscSpin,
                         onCheckedChange = { prefsManager.setRomSearchDiscSpin(it) }
+                    )
+                }
+
+                item {
+                    val androidAppsDesc = stringResource(R.string.rom_search_settings_show_android_apps_description)
+                    val androidAppsAnnotated = remember(androidAppsDesc) {
+                        val term = "@android"
+                        val idx = androidAppsDesc.indexOf(term, ignoreCase = true)
+                        buildAnnotatedString {
+                            append(androidAppsDesc)
+                            if (idx >= 0) {
+                                addStyle(
+                                    SpanStyle(color = secondaryColor),
+                                    start = idx,
+                                    end = idx + term.length
+                                )
+                            }
+                        }
+                    }
+                    ToggleSetting(
+                        title = stringResource(R.string.rom_search_settings_show_android_apps_title),
+                        description = androidAppsAnnotated,
+                        checked = state.romSearchShowAllAndroidApps,
+                        onCheckedChange = { prefsManager.setRomSearchShowAllAndroidApps(it) }
                     )
                 }
 

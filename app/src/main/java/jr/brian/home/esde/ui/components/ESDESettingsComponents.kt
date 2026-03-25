@@ -49,6 +49,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -301,6 +302,72 @@ fun ToggleSetting(
         if (showToggle) {
             Spacer(modifier = Modifier.width(12.dp))
 
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = ThemePrimaryColor,
+                    checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = Color.DarkGray
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ToggleSetting(
+    title: String,
+    description: AnnotatedString,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit = {},
+    showToggle: Boolean = true,
+    onClick: (() -> Unit)? = null
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                brush = subtleCardGradient(isFocused),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .clickWithHaptic(haptic) { clickAction() }
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (description.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        if (showToggle) {
+            Spacer(modifier = Modifier.width(12.dp))
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,

@@ -90,6 +90,7 @@ fun LauncherPagerScreen(
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
@@ -324,6 +325,7 @@ fun LauncherPagerScreen(
                                     onNavigateToDockSettings = onNavigateToDockSettings,
                                     onNavigateToSystemApps = onNavigateToSystemApps,
                                     onNavigateToRomSearch = onNavigateToRomSearch,
+                                    onNavigateToTrackpad = onNavigateToTrackpad,
                                     onShowAppDrawer = { showAppDrawerSheet = true },
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
@@ -377,6 +379,7 @@ fun LauncherPagerScreen(
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
                                         onNavigateToRomSearch = onNavigateToRomSearch,
+                                        onNavigateToTrackpad = onNavigateToTrackpad,
                                         navController = navController,
                                         onShowAppDrawer = { showAppDrawerSheet = true },
                                         onScrollStateChanged = { isScrolling, hasScrollableContent ->
@@ -435,6 +438,7 @@ fun LauncherPagerScreen(
                                         onNavigateToDockSettings = onNavigateToDockSettings,
                                         onNavigateToSystemApps = onNavigateToSystemApps,
                                         onNavigateToRomSearch = onNavigateToRomSearch,
+                                        onNavigateToTrackpad = onNavigateToTrackpad,
                                     )
                                 }
                             }

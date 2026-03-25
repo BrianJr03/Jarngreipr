@@ -97,6 +97,7 @@ class ESDEViewModel @Inject constructor(
 
     private var isViewingGame: Boolean = false
     private var isLauncherActive: Boolean = true
+    private var romSearchGameLaunched: Boolean = false
 
     init {
         Log.d(TAG, "ESDE Media path configured: $mediaPath")
@@ -208,6 +209,7 @@ class ESDEViewModel @Inject constructor(
         stopVideo()
         currentSystem = systemName
         isViewingGame = false
+        romSearchGameLaunched = false
         systemImageCache.remove(systemName)
 
         prefs.setLastSelectedSystem(systemName)
@@ -220,6 +222,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = if (isVideo) systemPath else null,
             isVideoPlaying = false,
             videoPath = null,
+            isGameRunning = false,
             logoPath = getSystemLogoPath(systemName),
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
@@ -235,7 +238,9 @@ class ESDEViewModel @Inject constructor(
         gameFilename: String
     ) {
         if (_wallpaperState.value.isGameRunning) {
-            return
+            // ES-DE is sending browse events so no game is actually running anymore.
+            // Clear stale ROM-search game state so we don't block the UI update.
+            romSearchGameLaunched = false
         }
 
         cancelPendingVideo()
@@ -258,6 +263,7 @@ class ESDEViewModel @Inject constructor(
             systemBackgroundVideoPath = null,
             isVideoPlaying = false,
             videoPath = null,
+            isGameRunning = false,
             logoPath = getGameMarqueePath(systemName, gameFilename),
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
@@ -345,6 +351,18 @@ class ESDEViewModel @Inject constructor(
         isLauncherActive = active
         if (!active) {
             cancelPendingVideo()
+        }
+    }
+
+    fun handleRomSearchGameStarted() {
+        romSearchGameLaunched = true
+        handleGameStarted()
+    }
+
+    fun handleLauncherResumed() {
+        if (romSearchGameLaunched) {
+            romSearchGameLaunched = false
+            handleGameEnded()
         }
     }
 

@@ -99,4 +99,5 @@ object ESDEPreferencesConstants {
     const val KEY_ROM_SEARCH_BLACK_BACKGROUND = "rom_search_black_background"
     const val KEY_LOGO_VISIBILITY_ANIMATION = "logo_visibility_animation"
     const val KEY_LOGO_CHANGE_ANIMATION = "logo_change_animation"
+    const val KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS = "rom_search_show_all_android_apps"
 }

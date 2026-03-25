@@ -98,6 +98,7 @@ fun QwertyKeyboard(
     onSpecialCharToggle: () -> Unit = {},
     onReopenResults: (() -> Unit)? = null,
     onOpenRomSearchSettings: (() -> Unit)? = null,
+    onAtClick: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var isNumericMode by remember { mutableStateOf(false) }
@@ -184,7 +185,7 @@ fun QwertyKeyboard(
                             ThemePrimaryColor.copy(alpha = 0.3f),
                             RoundedCornerShape(6.dp)
                         )
-                        .clickable { onSpecialCharToggle() },
+                        .clickable { if (onAtClick != null) onAtClick() else onSpecialCharToggle() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
