@@ -113,6 +113,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_BLACK_BAC
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_VISIBILITY_ANIMATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_CHANGE_ANIMATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -464,7 +465,8 @@ class ESDEPreferencesManager(context: Context) {
                     } catch (_: Exception) { emptySet() }
                 } ?: emptySet(),
             logoVisibilityAnimation = prefs.getBoolean(KEY_LOGO_VISIBILITY_ANIMATION, false),
-            logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false)
+            logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false),
+            romSearchShowAllAndroidApps = prefs.getBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, false)
         )
     }
 
@@ -925,6 +927,11 @@ class ESDEPreferencesManager(context: Context) {
     fun setLogoChangeAnimation(enabled: Boolean) {
         _state.value = _state.value.copy(logoChangeAnimation = enabled)
         prefs.edit { putBoolean(KEY_LOGO_CHANGE_ANIMATION, enabled) }
+    }
+
+    fun setRomSearchShowAllAndroidApps(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchShowAllAndroidApps = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, enabled) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

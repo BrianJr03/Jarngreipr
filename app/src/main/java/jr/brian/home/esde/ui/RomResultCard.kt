@@ -157,7 +157,19 @@ internal fun RomResultCard(
         path?.let { File(it) }
     }
 
-    val hasImage = imageData != null
+    val isAndroidEntry = imageData == null && (
+        game.systemName.equals("androidapps", ignoreCase = true) ||
+        game.systemName.equals("androidgames", ignoreCase = true)
+    )
+    val appIcon = remember(game.path, isAndroidEntry) {
+        if (!isAndroidEntry) null
+        else runCatching {
+            val pkg = game.path.trimEnd('/').removeSuffix(".app")
+            context.packageManager.getApplicationIcon(pkg)
+        }.getOrNull()
+    }
+
+    val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
 
     val glowAlpha by animateFloatAsState(
@@ -247,7 +259,7 @@ internal fun RomResultCard(
                     .fillMaxWidth()
                     .aspectRatio(if (hasImage) 1f else 4f / 3f)
             ) {
-                if (hasImage) {
+                if (imageData != null) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(imageData)
@@ -264,19 +276,32 @@ internal fun RomResultCard(
                             } else Modifier),
                         contentScale = ContentScale.Fit
                     )
+                } else if (appIcon != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(appIcon)
+                            .crossfade(true)
+                            .build(),
+                        imageLoader = imageLoader,
+                        contentDescription = game.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .scale(0.75f)
+                            .then(if (shouldFlip) Modifier.graphicsLayer {
+                                rotationY = flipRotation
+                            } else Modifier),
+                        contentScale = ContentScale.Fit
+                    )
                 } else {
-                    Text(
-                        text = game.name,
+                    AnimatedGameTitle(
+                        name = game.name,
+                        fontSize = 10.sp,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(horizontal = 8.dp),
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        lineHeight = 13.sp
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 

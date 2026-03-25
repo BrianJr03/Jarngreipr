@@ -40,6 +40,7 @@ import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.screens.TrackpadScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
 import jr.brian.home.ui.screens.jingles.AddJingleScreen
@@ -146,6 +147,9 @@ fun NavGraphBuilder.launcherScreen(
             },
             onNavigateToRomSearch = {
                 navController.navigate(Routes.ROM_SEARCH)
+            },
+            onNavigateToTrackpad = {
+                navController.navigate(Routes.TRACKPAD)
             },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
             onCurrentPageChanged = onCurrentPageChanged,
@@ -692,6 +696,23 @@ fun NavGraphBuilder.romSearchScreen(
                 onDismiss = {
                     showScreen = false
                     jinglesManager.stop()
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.trackpadScreen(
+    navController: NavHostController
+) {
+    composable(Routes.TRACKPAD) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            TrackpadScreen(
+                onDismiss = {
+                    showScreen = false
                     navController.popBackStack()
                 }
             )

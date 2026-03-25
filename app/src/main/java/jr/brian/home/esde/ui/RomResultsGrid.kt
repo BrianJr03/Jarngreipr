@@ -1,5 +1,8 @@
 package jr.brian.home.esde.ui
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -9,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,6 +26,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items as lazyRowItems
+import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -36,10 +42,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -80,10 +88,12 @@ internal fun RomResultsGrid(
     onUnhideGame: (GameInfo) -> Unit = {},
     onUnhideAllGames: (List<GameInfo>) -> Unit = {},
     onToggleHintAndKeyboard: () -> Unit = {},
+    onAndroidAppInfo: (GameInfo) -> Unit = {},
     isRetroArchGame: (GameInfo) -> Boolean = { false },
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
-    onChangeFolder: (GameInfo) -> Unit = {}
+    onChangeFolder: (GameInfo) -> Unit = {},
+    focusResetKey: Any? = Unit
 ) {
     val context = LocalContext.current
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
@@ -108,6 +118,28 @@ internal fun RomResultsGrid(
 
     LaunchedEffect(focusedIndex) {
         focusRequesters[focusedIndex]?.requestFocus()
+    }
+
+    // Focus first item once both games and apps have finished loading.
+    LaunchedEffect(isLoading, displayedGames.isNotEmpty()) {
+        if (!isLoading && displayedGames.isNotEmpty()) {
+            repeat(3) {
+                delay(80)
+                runCatching { focusRequesters[0]?.requestFocus() }
+            }
+        }
+    }
+
+    // Caller-controlled reset: jumps to index 0 when a new filter/search is applied.
+    // Does NOT fire when clearing the query (caller keeps the key stable then).
+    LaunchedEffect(focusResetKey) {
+        if (displayedGames.isNotEmpty()) {
+            focusedIndex = 0
+            repeat(3) {
+                delay(80)
+                runCatching { focusRequesters[0]?.requestFocus() }
+            }
+        }
     }
 
     fun moveFocus(delta: Int) {
@@ -207,12 +239,6 @@ internal fun RomResultsGrid(
                             onDispose { focusRequesters.remove(index) }
                         }
 
-                        LaunchedEffect(Unit) {
-                            if (index == 0) {
-                                focusRequester.requestFocus()
-                            }
-                        }
-
                         RomResultCard(
                             game = game,
                             autoFocus = index == 0 && focusedIndex == 0,
@@ -244,7 +270,13 @@ internal fun RomResultsGrid(
                                     }
                                 }
                             },
-                            onLongClick = { selectedGame = game },
+                            onLongClick = {
+                                val isAndroid =
+                                    game.systemName.equals("androidgames", ignoreCase = true) ||
+                                            game.systemName.equals("androidapps", ignoreCase = true)
+                                if (isAndroid) onAndroidAppInfo(game)
+                                else selectedGame = game
+                            },
                             onFocused = {
                                 if (focusedIndex != index) {
                                     focusedIndex = index
@@ -397,27 +429,49 @@ private fun HiddenModeHeader(
 internal fun PlatformSuggestionsDropdown(
     platforms: List<String>,
     onPlatformSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showAllApps: Boolean = false,
+    focusedIndex: Int = -1
 ) {
+    val allItems = remember(showAllApps, platforms) {
+        buildList { if (showAllApps) add("android"); addAll(platforms) }
+    }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(focusedIndex) {
+        if (focusedIndex >= 0 && focusedIndex < allItems.size) {
+            coroutineScope.launch { listState.animateScrollToItem(focusedIndex) }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(OledCardColor.copy(alpha = 0.97f))
             .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            lazyRowItems(platforms) { platform ->
+        LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            lazyRowItemsIndexed(allItems) { index, item ->
+                val isFocused = index == focusedIndex
                 TextButton(
-                    onClick = { onPlatformSelected(platform) },
+                    onClick = { onPlatformSelected(item) },
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(OledBackgroundColor)
+                        .background(
+                            if (isFocused) ThemeAccentColor.copy(alpha = 0.18f)
+                            else OledBackgroundColor
+                        )
+                        .then(
+                            if (isFocused) Modifier.border(1.dp, ThemeAccentColor.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                            else Modifier
+                        )
                 ) {
                     Text(
-                        text = platform.uppercase(),
-                        color = ThemeAccentColor,
+                        text = if (item == "android") "APPS" else item.uppercase(),
+                        color = if (isFocused) ThemeAccentColor else ThemeAccentColor.copy(alpha = 0.6f),
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
                     )
                 }
             }

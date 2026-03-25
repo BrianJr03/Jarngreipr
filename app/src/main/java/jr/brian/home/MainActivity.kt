@@ -221,6 +221,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         esdeViewModel.musicController.onActivityResumed()
         esdeViewModel.onVideoActivityFinished()
+        esdeViewModel.handleLauncherResumed()
     }
 
     override fun onStop() {
@@ -282,7 +283,7 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(Unit) {
             romSearchStateHolder.gameLaunchSignal.collect {
-                esdeViewModel.handleGameStarted()
+                esdeViewModel.handleRomSearchGameStarted()
             }
         }
     }

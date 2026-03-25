@@ -6,6 +6,12 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -52,6 +58,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,8 +74,11 @@ import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.components.QwertyKeyboard
+import androidx.compose.ui.graphics.lerp
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
 import java.io.File
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -139,8 +151,11 @@ fun RomSearchScreen(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (focusedGame?.marqueeImagePath != null) {
-                        MarqueeDisplay(game = focusedGame)
+                    val game = focusedGame
+                    if (game?.marqueeImagePath != null) {
+                        MarqueeDisplay(game = game)
+                    } else if (game != null) {
+                        AnimatedGameTitle(name = game.name)
                     }
                 }
 
@@ -158,6 +173,7 @@ fun RomSearchScreen(
                             showController = false,
                             onOpenRomSearchSettings = { showSettings = true },
                             onSpecialCharToggle = { showSpecialCharRow = !showSpecialCharRow },
+                            onAtClick = { viewModel.updateQuery(query + "@") },
                             onReopenResults = { launchResultsActivity(context) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -284,6 +300,46 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
                 Text("Got it", color = ThemePrimaryColor)
             }
         }
+    )
+}
+
+@Composable
+internal fun AnimatedGameTitle(
+    name: String,
+    fontSize: TextUnit = 32.sp,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Center,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip
+) {
+    val transition = rememberInfiniteTransition(label = "titleColor")
+    val color1 by transition.animateColor(
+        initialValue = ThemePrimaryColor,
+        targetValue = ThemeAccentColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "titleColor1"
+    )
+    val color2 by transition.animateColor(
+        initialValue = ThemeAccentColor,
+        targetValue = ThemeSecondaryColor,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "titleColor2"
+    )
+    Text(
+        text = name,
+        color = lerp(color1, color2, 0.5f),
+        fontSize = fontSize,
+        fontWeight = FontWeight.Bold,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        overflow = overflow,
+        modifier = modifier
     )
 }
 

@@ -273,5 +273,35 @@ object ShizukuInputManager {
         }
     }
 
+    fun injectMouseMove(x: Float, y: Float): Boolean {
+        return try {
+            inputService?.injectMouseMove(x, y)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseMove failed", e)
+            false
+        }
+    }
+
+    fun injectMouseClick(x: Float, y: Float, button: Int, action: Int): Boolean {
+        return try {
+            inputService?.injectMouseClick(x, y, button, action)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseClick failed", e)
+            false
+        }
+    }
+
+    fun injectMouseScroll(x: Float, y: Float, vscroll: Float): Boolean {
+        return try {
+            inputService?.injectMouseScroll(x, y, vscroll)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseScroll failed", e)
+            false
+        }
+    }
+
     const val SHIZUKU_PERMISSION_REQUEST_CODE = 1001
 }
