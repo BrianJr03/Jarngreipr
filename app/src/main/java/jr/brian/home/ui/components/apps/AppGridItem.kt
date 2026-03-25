@@ -43,6 +43,7 @@ fun AppGridItem(
     onNavigateLeft: () -> Unit = {},
     onNavigateRight: () -> Unit = {},
     onFocusChanged: () -> Unit = {},
+    isHomeScreen: Boolean = false,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val appVisibilityManager = LocalAppVisibilityManager.current
@@ -98,7 +99,12 @@ fun AppGridItem(
 
         Spacer(Modifier.height(4.dp))
 
-        if (appVisibilityManager.showAppNames) {
+        val shouldShowName = if (isHomeScreen) {
+            appVisibilityManager.showHomeScreenAppNames
+        } else {
+            appVisibilityManager.showAppNames
+        }
+        if (shouldShowName) {
             app.AppName()
         }
 

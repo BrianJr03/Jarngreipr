@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +51,10 @@ import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.esdeSettingsScreen
 import jr.brian.home.ui.navigation.esdeSystemAppsScreen
 import jr.brian.home.ui.navigation.faqScreen
+import jr.brian.home.ui.navigation.addJingleScreen
+import jr.brian.home.ui.navigation.jinglesScreen
+import jr.brian.home.ui.navigation.trackpadScreen
+import jr.brian.home.ui.navigation.romSearchScreen
 import jr.brian.home.ui.navigation.konfettiEditorScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
@@ -83,6 +88,8 @@ fun MainContent(
     hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
+    navigateToThemeShare: Boolean = false,
+    onNavigateToThemeShareHandled: () -> Unit = {},
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
@@ -108,7 +115,7 @@ fun MainContent(
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
-    var currentPagerPage by remember { mutableStateOf(0) }
+    var currentPagerPage by remember { mutableIntStateOf(0) }
     var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
 
     val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER
@@ -169,12 +176,20 @@ fun MainContent(
         }
     }
 
+    LaunchedEffect(navigateToThemeShare) {
+        if (navigateToThemeShare) {
+            navController.navigate(Routes.THEME_SHARE)
+            onNavigateToThemeShareHandled()
+        }
+    }
+
     LaunchedEffect(triggerMarqueePressShortcut) {
         if (triggerMarqueePressShortcut) {
             when (esdePrefsState.marqueePressShortcut) {
                 Shortcut.NONE -> navController.navigate(Routes.ESDE_SETTINGS)
                 Shortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                 Shortcut.APP_SEARCH -> navController.navigate(Routes.APP_SEARCH)
+                Shortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
                 Shortcut.POWERED_OFF -> powerViewModel.togglePower()
                 Shortcut.QUICK_DELETE -> {}
                 Shortcut.CUSTOM_THEME -> navController.navigate(Routes.CUSTOM_THEME)
@@ -319,6 +334,22 @@ fun MainContent(
                 )
 
                 konfettiEditorScreen(
+                    navController = navController
+                )
+
+                jinglesScreen(
+                    navController = navController
+                )
+
+                addJingleScreen(
+                    navController = navController
+                )
+
+                romSearchScreen(
+                    navController = navController
+                )
+
+                trackpadScreen(
                     navController = navController
                 )
             }

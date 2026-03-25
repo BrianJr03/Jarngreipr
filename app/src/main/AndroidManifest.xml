@@ -68,6 +68,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Home">
         <activity
+            android:name=".esde.ui.RomSearchResultsActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.Home"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Home"
@@ -106,6 +113,14 @@
         </service>
 
         <receiver
+            android:name=".service.ThemeShareReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="jr.brian.home.ACTION_OPEN_THEME_SHARE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".WallpaperActionReceiver"
             android:exported="true">
             <intent-filter>
@@ -116,6 +131,7 @@
 
         <receiver
             android:name="jr.brian.ping.BootReceiver"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

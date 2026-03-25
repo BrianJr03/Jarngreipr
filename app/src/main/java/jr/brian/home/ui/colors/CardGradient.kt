@@ -12,11 +12,12 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun cardGradient(
     isFocused: Boolean = false,
     isSelected: Boolean = false,
-    isPressed: Boolean = false
+    isPressed: Boolean = false,
+    ignoreOled: Boolean = false
 ): Brush {
     val oledManager = LocalOledModeManager.current
     val active = isFocused || isSelected || isPressed
-    return if (oledManager.isOledModeEnabled) {
+    return if (oledManager.isOledModeEnabled && !ignoreOled) {
         Brush.linearGradient(
             colors = if (active) {
                 listOf(

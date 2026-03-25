@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import android.content.ClipData
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,21 +17,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -39,13 +48,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.model.FAQItem
-import jr.brian.home.ui.components.settings.ScreenHeader
-import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
+import jr.brian.home.ui.components.settings.ScreenHeader
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import kotlinx.coroutines.launch
+
+private const val SECTION_GENERAL = "general"
+private const val SECTION_THEMING = "theming"
+private const val SECTION_JINGLES = "jingles"
+private const val SECTION_ROM_SEARCH = "rom_search"
 
 @Composable
 fun FAQScreen(
@@ -53,27 +68,11 @@ fun FAQScreen(
 ) {
     BackHandler(onBack = onDismiss)
 
-    val faqItems = listOf(
-        FAQItem(
-            question = R.string.faq_theme_sharing_question,
-            answer = R.string.faq_theme_sharing_answer
-        ),
+    var expandedSection by remember { mutableStateOf<String?>(null) }
 
-        FAQItem(
-            question = R.string.faq_wallpaper_sharing_question,
-            answer = R.string.faq_wallpaper_sharing_answer
-        ),
-
-        FAQItem(
-            question = R.string.faq_keyboard_question,
-            answer = R.string.faq_keyboard_answer
-        ),
-
-        FAQItem(
-            question = R.string.faq_app_close_question,
-            answer = R.string.faq_app_close_answer
-        ),
-    )
+    fun toggleSection(section: String) {
+        expandedSection = if (expandedSection == section) null else section
+    }
 
     Scaffold(
         containerColor = OledBackgroundColor,
@@ -100,16 +99,104 @@ fun FAQScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 32.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(vertical = 8.dp, horizontal = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    item { WallpaperAutomationFAQCard() }
+                    item(key = SECTION_GENERAL) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_general),
+                            icon = Icons.AutoMirrored.Filled.Help,
+                            isExpanded = expandedSection == SECTION_GENERAL,
+                            onToggle = { toggleSection(SECTION_GENERAL) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_keyboard_question),
+                                answer = stringResource(R.string.faq_keyboard_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_app_close_question),
+                                answer = stringResource(R.string.faq_app_close_answer)
+                            )
+                        }
+                    }
 
-                    items(faqItems) { faqItem ->
-                        FAQCard(
-                            question = stringResource(faqItem.question),
-                            answer = stringResource(faqItem.answer)
-                        )
+                    item(key = SECTION_JINGLES) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_jingles),
+                            icon = Icons.Default.MusicNote,
+                            isExpanded = expandedSection == SECTION_JINGLES,
+                            onToggle = { toggleSection(SECTION_JINGLES) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_what_question),
+                                answer = stringResource(R.string.faq_jingles_what_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_offline_question),
+                                answer = stringResource(R.string.faq_jingles_offline_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_matching_question),
+                                answer = stringResource(R.string.faq_jingles_matching_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_format_question),
+                                answer = stringResource(R.string.faq_jingles_format_answer),
+                                codePreview = stringResource(R.string.faq_jingles_format_code)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_troubleshoot_question),
+                                answer = stringResource(R.string.faq_jingles_troubleshoot_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_jingles_defaults_question),
+                                answer = stringResource(R.string.faq_jingles_defaults_answer),
+                                codePreview = stringResource(R.string.faq_jingles_defaults_flat_code),
+                                secondCodePreview = stringResource(R.string.faq_jingles_defaults_grouped_code),
+                                secondCodeLabel = "Grouped format"
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.jingles_faq_inconsistent_q),
+                                answer = stringResource(R.string.jingles_faq_inconsistent_a)
+                            )
+                        }
+                    }
+
+                    item(key = SECTION_ROM_SEARCH) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_rom_search),
+                            icon = Icons.Default.SportsEsports,
+                            isExpanded = expandedSection == SECTION_ROM_SEARCH,
+                            onToggle = { toggleSection(SECTION_ROM_SEARCH) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_rom_search_what_question),
+                                answer = stringResource(R.string.faq_rom_search_what_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_rom_search_emulator_question),
+                                answer = stringResource(R.string.faq_rom_search_emulator_answer)
+                            )
+                        }
+                    }
+
+                    item(key = SECTION_THEMING) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_theming),
+                            icon = Icons.Default.Palette,
+                            isExpanded = expandedSection == SECTION_THEMING,
+                            onToggle = { toggleSection(SECTION_THEMING) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_theme_sharing_question),
+                                answer = stringResource(R.string.faq_theme_sharing_answer)
+                            )
+                            FAQCard(
+                                question = stringResource(R.string.faq_wallpaper_sharing_question),
+                                answer = stringResource(R.string.faq_wallpaper_sharing_answer)
+                            )
+                            WallpaperAutomationFAQCard()
+                        }
                     }
                 }
             }
@@ -119,7 +206,16 @@ fun FAQScreen(
 
 @Composable
 private fun WallpaperAutomationFAQCard() {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    fun copyText(text: String) {
+        scope.launch {
+            clipboard.setClipEntry(
+                ClipEntry(ClipData.newPlainText("", text))
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -174,17 +270,9 @@ private fun WallpaperAutomationFAQCard() {
             Spacer(modifier = Modifier.height(16.dp))
 
             CopyableRow(
-                label = "Package",
-                value = "jr.brian.home",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            CopyableRow(
                 label = "ES-DE wallpaper action",
                 value = "jr.brian.SET_ESDE_WALLPAPER",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+                onCopy = { copyText(it) }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -192,7 +280,23 @@ private fun WallpaperAutomationFAQCard() {
             CopyableRow(
                 label = "Standard wallpaper action",
                 value = "jr.brian.SET_STANDARD_WALLPAPER",
-                onCopy = { clipboardManager.setText(AnnotatedString(it)) }
+                onCopy = { copyText(it) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "Package",
+                value = "jr.brian.home",
+                onCopy = { copyText(it) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CopyableRow(
+                label = "Class",
+                value = "jr.brian.home.WallpaperActionReceiver",
+                onCopy = { copyText(it) }
             )
         }
     }
@@ -240,7 +344,10 @@ private fun CopyableRow(
 @Composable
 private fun FAQCard(
     question: String,
-    answer: String
+    answer: String,
+    codePreview: String? = null,
+    secondCodePreview: String? = null,
+    secondCodeLabel: String? = null,
 ) {
     Box(
         modifier = Modifier
@@ -280,6 +387,45 @@ private fun FAQCard(
                 color = Color.White.copy(alpha = 0.85f),
                 lineHeight = 22.sp
             )
+
+            if (codePreview != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                CodeBlock(code = codePreview)
+            }
+
+            if (secondCodePreview != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                if (secondCodeLabel != null) {
+                    Text(
+                        text = secondCodeLabel,
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                CodeBlock(code = secondCodePreview)
+            }
         }
+    }
+}
+
+@Composable
+private fun CodeBlock(code: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = Color(0xFF1A1A2E),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(10.dp)
+    ) {
+        Text(
+            text = code,
+            color = ThemePrimaryColor.copy(alpha = 0.9f),
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            fontFamily = FontFamily.Monospace
+        )
     }
 }

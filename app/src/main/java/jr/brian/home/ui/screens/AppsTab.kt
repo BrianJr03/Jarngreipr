@@ -97,6 +97,8 @@ fun AppsTab(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
     onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
@@ -121,6 +123,9 @@ fun AppsTab(
 
     val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
     val isDragLocked = dragLockedByPage[pageIndex] ?: true
+
+    val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
+    val isScrollDisabled = scrollDisabledByPage[pageIndex] ?: false
 
     LaunchedEffect(pageIndex) {
         appPositionManager.setDragLock(pageIndex, true)
@@ -324,7 +329,9 @@ fun AppsTab(
             onESDESetupClick = {
                 esdeSetupDialogState.show(SetupStep.Welcome)
             },
-            onNavigateToSystemApps = onNavigateToSystemApps
+            onNavigateToSystemApps = onNavigateToSystemApps,
+            onNavigateToRomSearch = onNavigateToRomSearch,
+            onNavigateToTrackpad = onNavigateToTrackpad
         )
     }
 
@@ -461,7 +468,8 @@ fun AppsTab(
                 onNavigateToSearch = onNavigateToSearch,
                 folders = folders,
                 onFolderClick = folderContentsDialogState::show,
-                gridState = gridState
+                gridState = gridState,
+                scrollEnabled = !isScrollDisabled
             )
         }
 

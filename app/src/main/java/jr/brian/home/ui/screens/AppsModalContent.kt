@@ -89,6 +89,7 @@ fun AppsModalContent(
     apps: List<AppInfo>,
     appsUnfiltered: List<AppInfo>,
     isLoading: Boolean = false,
+    showHideAppButton: Boolean = true,
     allApps: List<AppInfo> = emptyList(),
     pageIndex: Int,
     isHeaderVisible: Boolean,
@@ -255,6 +256,14 @@ fun AppsModalContent(
                 appVisibilityManager.isAppHidden(pageIndex, appInfo.packageName)
             }
 
+            val onToggleVisibility = {
+                if (isAppHidden) {
+                    appVisibilityManager.showApp(pageIndex, appInfo.packageName)
+                } else {
+                    appVisibilityManager.hideApp(pageIndex, appInfo.packageName)
+                }
+            }
+
             AppOptionsMenu(
                 appLabel = appInfo.displayName(),
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
@@ -273,13 +282,7 @@ fun AppsModalContent(
                 app = null,
                 currentIconSize = currentIconSize,
                 onIconSizeChange = {},
-                onToggleVisibility = {
-                    if (isAppHidden) {
-                        appVisibilityManager.showApp(pageIndex, appInfo.packageName)
-                    } else {
-                        appVisibilityManager.hideApp(pageIndex, appInfo.packageName)
-                    }
-                },
+                onToggleVisibility = if (showHideAppButton) onToggleVisibility else null,
                 onCustomIconClick = {
                     customIconDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
@@ -689,9 +692,6 @@ private fun ModalAppSelectionContent(
         gridState = gridState,
         modifier = modifier
             .fillMaxSize()
-            .padding(
-                horizontal = 20.dp,
-            )
             .nestedScroll(nestedScrollConnection),
         appFocusRequesters = appFocusRequesters,
         onFocusChanged = onAppFocusChanged,
@@ -707,7 +707,7 @@ private fun ModalAppSelectionContent(
             top = 10.dp,
             bottom = 20.dp,
         ),
-        horizontalSpacing = 10.dp,
+        equalizeMargins = true,
         verticalSpacing = 24.dp
     )
 }

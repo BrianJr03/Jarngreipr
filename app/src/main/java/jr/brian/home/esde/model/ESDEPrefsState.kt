@@ -24,6 +24,7 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
+    Marquee("marquees"),
     MixImages("miximages"),
     Description(null);
 
@@ -47,7 +48,8 @@ enum class LogoAlignment {
 enum class ScreensaverBehavior {
     ShowContent,
     PowerOff,
-    Floaty
+    Floaty,
+    ShowAll
 }
 
 enum class MusicVideoBehavior(val value: String) {
@@ -110,6 +112,22 @@ enum class OverlayMediaType(val folderName: String, val displayName: String) {
     companion object {
         fun fromValue(value: String): OverlayMediaType {
             return entries.find { it.name == value } ?: Marquees
+        }
+    }
+}
+
+enum class RomSearchCardMediaType(val displayName: String) {
+    PhysicalMedia("Physical Media"),
+    Covers("Covers"),
+    Screenshots("Screenshots"),
+    Fanart("Fanart"),
+    TitleScreens("Title Screens"),
+    Marquee("Marquee"),
+    MixImages("Mix Images");
+
+    companion object {
+        fun fromName(name: String): RomSearchCardMediaType {
+            return entries.find { it.name == name } ?: PhysicalMedia
         }
     }
 }
@@ -189,7 +207,7 @@ data class ESDEPrefsState(
     
     val marqueePositionLocked: Boolean = false,
     
-    val androidGamesBackgroundScale: Float = 0.5f,
+    val gameBackgroundScale: Float = 0.5f,
     
     val marqueeMinWidthPercent: Float = 0.5f,
     
@@ -201,7 +219,24 @@ data class ESDEPrefsState(
     val romsPaths: List<String> = emptyList(),
     val systemAppMap: Map<String, String?> = emptyMap(),
     val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
-    val systemTopScreenSet: Set<String> = emptySet()
+    val systemTopScreenSet: Set<String> = emptySet(),
+    val systemBgVideoMuted: Boolean = true,
+    val systemBgVideoLooping: Boolean = true,
+    val gameEmulatorMap: Map<String, String> = emptyMap(),
+    val gameCommandMap: Map<String, String> = emptyMap(),
+    val gameCoreMap: Map<String, String> = emptyMap(),
+    val hiddenGames: Set<String> = emptySet(),
+    val romSearchUseWallpaper: Boolean = true,
+    val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
+    val romSearchGameMediaMap: Map<String, String> = emptyMap(),
+    val romSearchHideNoMetadata: Boolean = false,
+    val romSearchHideNoImage: Boolean = false,
+    val romSearchDiscSpin: Boolean = false,
+    val romSearchBlackBackground: Boolean = true,
+    val romSearchFocusAnimationDisabledGames: Set<String> = emptySet(),
+    val logoVisibilityAnimation: Boolean = false,
+    val logoChangeAnimation: Boolean = false,
+    val romSearchShowAllAndroidApps: Boolean = false
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

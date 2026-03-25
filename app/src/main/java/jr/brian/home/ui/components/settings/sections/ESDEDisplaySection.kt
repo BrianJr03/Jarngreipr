@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.settings.sections
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -41,7 +42,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.esde.ui.RomSearchResultsActivity
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
@@ -69,6 +72,7 @@ fun ESDESettingsContent(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -99,11 +103,12 @@ fun ESDESettingsContent(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let {
-            val path = getPathFromUri(it)
-            if (path != null) {
-                preferencesManager.setCustomSystemImagesPath(path)
-                viewModel.refreshSystemImage()
-            }
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            preferencesManager.setCustomSystemImagesPath(it.toString())
+            viewModel.refreshSystemImage()
         }
     }
 
@@ -290,6 +295,8 @@ fun ESDESettingsContent(
                     preferencesManager.setCustomSystemImagesPath(null)
                     viewModel.refreshSystemImage()
                 },
+                onSystemBgVideoMutedChange = { preferencesManager.setSystemBgVideoMuted(it) },
+                onSystemBgVideoLoopingChange = { preferencesManager.setSystemBgVideoLooping(it) },
                 onSelectSystemLogosPath = { systemLogosFolderPicker.launch(null) },
                 onClearSystemLogosPath = {
                     preferencesManager.setCustomSystemLogosPath(null)
@@ -329,6 +336,26 @@ fun ESDESettingsContent(
                     viewModel.refreshSystemImage()
                 }
             )
+        }
+
+        CollapsibleSection(
+            title = stringResource(R.string.jingles_screen_title),
+            onHeaderTap = onSectionHeaderTap
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.jingles_section_info),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.jingles_launch_title),
+                    description = stringResource(R.string.jingles_manage_description),
+                    checked = false,
+                    showToggle = false,
+                    onClick = onNavigateToJingles
+                )
+            }
         }
 
         CollapsibleSection(
@@ -392,6 +419,12 @@ fun ESDESettingsContent(
                 },
                 onMarqueeOnlyModeChange = { enabled ->
                     preferencesManager.setLogoOnlyMode(enabled)
+                },
+                onLogoVisibilityAnimationChange = { enabled ->
+                    preferencesManager.setLogoVisibilityAnimation(enabled)
+                },
+                onLogoChangeAnimationChange = { enabled ->
+                    preferencesManager.setLogoChangeAnimation(enabled)
                 }
             )
         }
@@ -436,6 +469,109 @@ fun ESDESettingsContent(
                     preferencesManager.setScreensaverBehavior(behavior)
                 }
             )
+        }
+
+        CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_search),
+            onHeaderTap = onSectionHeaderTap,
+            badge = {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFFFA500).copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_tag_experimental),
+                        color = Color(0xFFFFA500),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_launch_title),
+                    description = stringResource(R.string.rom_search_settings_launch_description),
+                    checked = false,
+                    showToggle = false,
+                    onClick = {
+                        val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        }
+                        context.startActivity(intent, ActivityOptions.makeBasic().toBundle())
+                    }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_black_bg_title),
+                    description = stringResource(R.string.rom_search_settings_black_bg_description),
+                    checked = prefsState.romSearchBlackBackground,
+                    onCheckedChange = { preferencesManager.setRomSearchBlackBackground(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
+                    description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
+                    checked = prefsState.romSearchUseWallpaper,
+                    onCheckedChange = { preferencesManager.setRomSearchUseWallpaper(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_hide_no_image_title),
+                    description = stringResource(R.string.rom_search_settings_hide_no_image_description),
+                    checked = prefsState.romSearchHideNoImage,
+                    onCheckedChange = { preferencesManager.setRomSearchHideNoImage(it) }
+                )
+                ToggleSetting(
+                    title = stringResource(R.string.rom_search_settings_hide_no_metadata_title),
+                    description = stringResource(R.string.rom_search_settings_hide_no_metadata_description),
+                    checked = prefsState.romSearchHideNoMetadata,
+                    onCheckedChange = { preferencesManager.setRomSearchHideNoMetadata(it) }
+                )
+                Text(
+                    text = stringResource(R.string.rom_search_settings_card_media_type),
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+                RomSearchCardMediaType.entries.forEach { type ->
+                    val selected = prefsState.romSearchCardMediaType == type
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.12f)
+                                else Color.Transparent
+                            )
+                            .border(
+                                width = if (selected) 1.dp else 0.dp,
+                                color = if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.4f) else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { preferencesManager.setRomSearchCardMediaType(type) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = type.displayName,
+                            color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                            fontSize = 14.sp
+                        )
+                        if (selected) {
+                            Text(
+                                text = "✓",
+                                color = jr.brian.home.ui.theme.ThemeAccentColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         CollapsibleSection(
@@ -525,8 +661,8 @@ fun ESDESettingsContent(
                     preferencesManager.setSystemImageType(type)
                     viewModel.refreshSystemImage()
                 },
-                onAndroidGamesBackgroundScaleChange = { scale ->
-                    preferencesManager.setAndroidGamesBackgroundScale(scale)
+                onGameBackgroundChange = { scale ->
+                    preferencesManager.setGameBackgroundScale(scale)
                 }
             )
         }
@@ -565,6 +701,7 @@ fun ESDEDisplaySection(
     onNavigateToMarqueePressShortcut: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
+    onNavigateToJingles: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
@@ -578,6 +715,7 @@ fun ESDEDisplaySection(
             onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
             onNavigateToSystemApps = onNavigateToSystemApps,
             onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+            onNavigateToJingles = onNavigateToJingles,
             onSectionHeaderTap = onSectionHeaderTap
         )
     }

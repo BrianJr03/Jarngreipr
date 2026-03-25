@@ -1,6 +1,7 @@
 package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -65,7 +66,8 @@ import jr.brian.home.util.openAppInfo
 @Composable
 fun AppSearchScreen(
     allApps: List<AppInfo>,
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val searchLayoutManager = LocalSearchLayoutManager.current
@@ -99,14 +101,16 @@ fun AppSearchScreen(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             } else {
                 VerticalSearchLayout(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             }
         }
@@ -128,6 +132,7 @@ private fun VerticalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -163,6 +168,7 @@ private fun VerticalSearchLayout(
                 onFocusChanged = { focusedKeyIndex = it },
                 onNavigateRight = {},
                 onFlipLayout = onFlipLayout,
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -175,7 +181,10 @@ private fun HorizontalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
+    var showSpecialCharRow by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -189,6 +198,7 @@ private fun HorizontalSearchLayout(
         ) {
             HorizontalAppGrid(
                 apps = filteredApps,
+                showAppNames = !showSpecialCharRow,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -208,6 +218,11 @@ private fun HorizontalSearchLayout(
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = { focusedKeyIndex = it },
                 onFlipLayout = onFlipLayout,
+                showSpecialCharRow = showSpecialCharRow,
+                onSpecialCharToggle = {
+                    showSpecialCharRow = !showSpecialCharRow
+                },
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -302,6 +317,7 @@ private fun AppGrid(
 @Composable
 private fun HorizontalAppGrid(
     apps: List<AppInfo>,
+    showAppNames: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -323,6 +339,7 @@ private fun HorizontalAppGrid(
         items(apps, key = { it.packageName }) { app ->
             HorizontalAppGridItem(
                 app = app,
+                showAppName = showAppNames,
                 onAppClick = {
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -386,6 +403,7 @@ private fun HorizontalAppGrid(
 private fun HorizontalAppGridItem(
     app: AppInfo,
     modifier: Modifier = Modifier,
+    showAppName: Boolean = true,
     onAppClick: () -> Unit,
     onAppDoubleClick: () -> Unit = {},
     onAppLongClick: () -> Unit
@@ -432,7 +450,9 @@ private fun HorizontalAppGridItem(
         }
 
         Spacer(Modifier.height(2.dp))
-        app.AppName()
+        AnimatedVisibility(showAppName) {
+            app.AppName()
+        }
     }
 }
 
