@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -494,43 +495,45 @@ internal fun PlatformSuggestionsDropdown(
                 val imageUri =
                     if (platformImagesEnabled && item != "android") getPlatformImage(item) else null
 
-                TextButton(
-                    onClick = { onPlatformSelected(item) },
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier
-                        .size(width = 64.dp, height = 36.dp)
-                        .scale(animatedFocusedScale(isFocused))
-                        .clip(RoundedCornerShape(6.dp))
-                        .then(
-                            if (isFocused && imageUri == null) Modifier.background(
-                                ThemeAccentColor.copy(alpha = 0.18f)
-                            ) else Modifier
-                        )
-                        .then(
-                            if (isFocused) Modifier.animatedGradientBorder()
-                            else Modifier
-                        )
-                ) {
-                    if (imageUri != null) {
-                        val context = LocalContext.current
-                        val gifImageLoader = remember(context) {
-                            ImageLoader.Builder(context)
-                                .components {
-                                    add(ImageDecoderDecoder.Factory())
-                                }
-                                .build()
-                        }
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(imageUri)
-                                .crossfade(true)
-                                .build(),
-                            imageLoader = gifImageLoader,
-                            contentDescription = item,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
+                val sharedModifier = Modifier
+                    .size(width = 64.dp, height = 36.dp)
+                    .scale(animatedFocusedScale(isFocused))
+                    .clip(RoundedCornerShape(6.dp))
+                    .then(
+                        if (isFocused && imageUri == null) Modifier.background(
+                            ThemeAccentColor.copy(alpha = 0.18f)
+                        ) else Modifier
+                    )
+                    .then(
+                        if (isFocused) Modifier.animatedGradientBorder()
+                        else Modifier
+                    )
+
+                if (imageUri != null) {
+                    val context = LocalContext.current
+                    val gifImageLoader = remember(context) {
+                        ImageLoader.Builder(context)
+                            .components {
+                                add(ImageDecoderDecoder.Factory())
+                            }
+                            .build()
+                    }
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(imageUri)
+                            .crossfade(true)
+                            .build(),
+                        imageLoader = gifImageLoader,
+                        contentDescription = item,
+                        contentScale = ContentScale.Fit,
+                        modifier = sharedModifier.clickable { onPlatformSelected(item) }
+                    )
+                } else {
+                    TextButton(
+                        onClick = { onPlatformSelected(item) },
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = sharedModifier
+                    ) {
                         Text(
                             text = when (item) {
                                 "android" -> "APPS"
