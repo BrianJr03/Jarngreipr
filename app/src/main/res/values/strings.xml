@@ -24,6 +24,12 @@
     <string name="rom_emulator_none_found">No compatible emulators installed</string>
     <string name="rom_detail_hide">Hide</string>
     <string name="rom_detail_unhide">Unhide</string>
+    <string name="rom_detail_apply">Apply</string>
+    <string name="rom_detail_cancel">Cancel</string>
+    <string name="rom_detail_resize_image_title">Resize Image</string>
+    <string name="rom_detail_image_height">Image Height</string>
+    <string name="rom_detail_media_type">Media: %1$s</string>
+    <string name="rom_detail_media_type_default">Default</string>
     <string name="rom_search_hidden_no_results">No hidden games</string>
     <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
