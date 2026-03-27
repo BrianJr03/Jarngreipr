@@ -1137,7 +1137,7 @@
     <string name="rom_search_settings_platform_auto_filter_description">Automatically filter by platform when navigating the platform row with a controller.</string>
     <string name="rom_search_settings_platform_images_title">Platform System Images</string>
     <string name="rom_search_settings_platform_images_description">Show platform logo images in the platform row instead of text labels.</string>
-    <string name="rom_search_settings_platform_images_smart_folder">Cocoon Smart Folder</string>
+    <string name="rom_search_settings_platform_images_smart_folder">Smart Folder</string>
     <string name="rom_search_settings_platform_images_default_folder">Default Folder</string>
     <string name="rom_search_settings_platform_images_clear">Clear</string>
     <string name="rom_search_settings_platform_images_structure_title">Folder Structures</string>
