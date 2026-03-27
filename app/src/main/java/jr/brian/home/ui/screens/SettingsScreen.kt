@@ -138,6 +138,7 @@ fun SettingsScreen(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -210,6 +211,7 @@ fun SettingsScreen(
                     onNavigateToJingles = onNavigateToJingles,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
+                    onNavigateToRomSearch = onNavigateToRomSearch,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -359,6 +361,7 @@ private fun SettingsContent(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -544,6 +547,7 @@ private fun SettingsContent(
                     onNavigateToSystemApps = onNavigateToSystemApps,
                     onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
                     onNavigateToJingles = onNavigateToJingles,
+                    onNavigateToRomSearch = onNavigateToRomSearch,
                     onSectionHeaderTap = {
                         if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
                             // Force-destroy current animation, then start a fresh explode burst.

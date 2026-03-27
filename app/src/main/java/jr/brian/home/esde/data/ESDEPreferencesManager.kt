@@ -114,6 +114,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_VISIBILITY_ANIM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_CHANGE_ANIMATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -466,7 +468,9 @@ class ESDEPreferencesManager(context: Context) {
                 } ?: emptySet(),
             logoVisibilityAnimation = prefs.getBoolean(KEY_LOGO_VISIBILITY_ANIMATION, false),
             logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false),
-            romSearchShowAllAndroidApps = prefs.getBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, false)
+            romSearchShowAllAndroidApps = prefs.getBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, false),
+            romSearchPlatformAutoFilter = prefs.getBoolean(KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER, false),
+            romSearchFocusAnimationDelayMs = prefs.getInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, 150)
         )
     }
 
@@ -929,9 +933,19 @@ class ESDEPreferencesManager(context: Context) {
         prefs.edit { putBoolean(KEY_LOGO_CHANGE_ANIMATION, enabled) }
     }
 
+    fun setRomSearchPlatformAutoFilter(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchPlatformAutoFilter = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER, enabled) }
+    }
+
     fun setRomSearchShowAllAndroidApps(enabled: Boolean) {
         _state.value = _state.value.copy(romSearchShowAllAndroidApps = enabled)
         prefs.edit { putBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, enabled) }
+    }
+
+    fun setRomSearchFocusAnimationDelayMs(delayMs: Int) {
+        _state.value = _state.value.copy(romSearchFocusAnimationDelayMs = delayMs)
+        prefs.edit { putInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, delayMs) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

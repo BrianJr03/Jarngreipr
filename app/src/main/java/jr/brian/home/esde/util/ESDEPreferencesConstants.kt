@@ -100,4 +100,6 @@ object ESDEPreferencesConstants {
     const val KEY_LOGO_VISIBILITY_ANIMATION = "logo_visibility_animation"
     const val KEY_LOGO_CHANGE_ANIMATION = "logo_change_animation"
     const val KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS = "rom_search_show_all_android_apps"
+    const val KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER = "rom_search_platform_auto_filter"
+    const val KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS = "rom_search_focus_animation_delay_ms"
 }

@@ -50,6 +50,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -643,6 +648,16 @@ private fun QwertyKeyButton(
                 ),
                 shape = RoundedCornerShape(6.dp),
             )
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.ButtonA ||
+                     event.key == Key.DirectionCenter ||
+                     event.key == Key.Enter)
+                ) {
+                    onClick()
+                    true
+                } else false
+            }
             .pressWithHaptic(
                 onClick, label,
                 haptic = haptic,
