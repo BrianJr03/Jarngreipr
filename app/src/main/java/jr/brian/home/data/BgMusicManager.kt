@@ -1,7 +1,9 @@
 package jr.brian.home.data
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.media.MediaPlayer
 import android.net.Uri
@@ -26,6 +28,7 @@ class BgMusicManager @Inject constructor(
         private const val KEY_SINGLE_FILE_URI = "bg_music_file_uri"
         private const val KEY_VOLUME = "bg_music_volume"
         private const val KEY_MODE = "bg_music_mode"
+        private const val DUCK_FACTOR = 0.2f
         private val AUDIO_EXTENSIONS = setOf("mp3", "ogg", "flac", "m4a", "wav", "aac", "opus")
     }
 
@@ -36,6 +39,25 @@ class BgMusicManager @Inject constructor(
 
     var vol by mutableFloatStateOf(prefs.getFloat(KEY_VOLUME, 0.5f))
         private set
+
+    private var isDucked = false
+
+    private fun effectiveVolume() = if (isDucked) vol * DUCK_FACTOR else vol
+
+    fun duck() {
+        if (isDucked) return
+        isDucked = true
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
+    }
+
+    fun unDuck() {
+        if (!isDucked) return
+        isDucked = false
+        mediaPlayer?.setVolume(vol, vol)
+        nextMediaPlayer?.setVolume(vol, vol)
+    }
 
     var folderUri by mutableStateOf(prefs.getString(KEY_FOLDER_URI, null))
         private set
@@ -51,8 +73,26 @@ class BgMusicManager @Inject constructor(
         private set
 
     private var mediaPlayer: MediaPlayer? = null
+    private var nextMediaPlayer: MediaPlayer? = null
     private var playlist: List<Uri> = emptyList()
     private var currentIndex = 0
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> pausePlayback()
+                Intent.ACTION_SCREEN_ON -> resumePlayback()
+            }
+        }
+    }
+
+    init {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        context.registerReceiver(screenReceiver, filter)
+    }
 
     fun setFolderUri(uri: Uri) {
         runCatching {
@@ -89,7 +129,9 @@ class BgMusicManager @Inject constructor(
     fun setVolume(v: Float) {
         vol = v.coerceIn(0f, 1f)
         prefs.edit { putFloat(KEY_VOLUME, vol) }
-        mediaPlayer?.setVolume(vol, vol)
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
     }
 
     fun startPlayback() {
@@ -101,11 +143,27 @@ class BgMusicManager @Inject constructor(
     }
 
     fun stopPlayback() {
-        mediaPlayer?.runCatching {
-            if (isPlaying) stop()
-            release()
-        }
+        mediaPlayer?.runCatching { if (isPlaying) stop(); release() }
+        nextMediaPlayer?.runCatching { release() }
         mediaPlayer = null
+        nextMediaPlayer = null
+    }
+
+    fun release() {
+        runCatching { context.unregisterReceiver(screenReceiver) }
+        stopPlayback()
+    }
+
+    fun pausePlayback() {
+        mediaPlayer?.runCatching { if (isPlaying) pause() }
+    }
+
+    fun resumePlayback() {
+        if (mediaPlayer != null) {
+            mediaPlayer?.runCatching { start() }
+        } else {
+            resumeIfConfigured()
+        }
     }
 
     /** Called on app start to resume playback if a source is configured. */
@@ -123,51 +181,148 @@ class BgMusicManager @Inject constructor(
         playlist = docFile.listFiles()
             .filter { file ->
                 file.isFile &&
-                    file.name?.substringAfterLast('.', "")?.lowercase() in AUDIO_EXTENSIONS
+                        file.name?.substringAfterLast('.', "")?.lowercase() in AUDIO_EXTENSIONS
             }
             .sortedBy { it.name?.lowercase() }
             .mapNotNull { it.uri }
         if (playlist.isEmpty()) return
         currentIndex = 0
-        playTrack(playlist[currentIndex])
+        playFolderTrack(playlist[currentIndex])
     }
 
-    private fun playTrack(uri: Uri) {
+    /**
+     * Builds the primary [MediaPlayer] for [uri]. Once it is prepared and
+     * started, we immediately begin buffering the next track so it is ready
+     * to be chained via [MediaPlayer.setNextMediaPlayer].
+     */
+    private fun playFolderTrack(uri: Uri) {
         mediaPlayer?.runCatching { release() }
-        mediaPlayer = MediaPlayer().apply {
+        nextMediaPlayer?.runCatching { release() }
+        nextMediaPlayer = null
+
+        mediaPlayer = buildFolderPlayer(uri).also { player ->
+            player.setOnPreparedListener { mp ->
+                mp.start()
+                // Start pre-buffering the next track now that playback is live
+                prebufferNextFolderTrack()
+            }
+            player.prepareAsync()
+        }
+    }
+
+    /**
+     * Prepares the track after [currentIndex] in the background.
+     * Once ready, chains it to the current player via [MediaPlayer.setNextMediaPlayer]
+     * so the OS can hand off without any gap.
+     */
+    private fun prebufferNextFolderTrack() {
+        if (playlist.isEmpty()) return
+        val nextIndex = (currentIndex + 1) % playlist.size
+        val nextUri = playlist[nextIndex]
+
+        nextMediaPlayer?.runCatching { release() }
+        nextMediaPlayer = buildFolderPlayer(nextUri).also { next ->
+            next.setOnPreparedListener { preparedNext ->
+                // Chain: when the current track ends, the OS starts preparedNext seamlessly
+                mediaPlayer?.setNextMediaPlayer(preparedNext)
+            }
+            next.prepareAsync()
+        }
+    }
+
+    /**
+     * Builds a [MediaPlayer] for folder playback.
+     * The completion listener advances state and pre-buffers the track after next.
+     */
+    private fun buildFolderPlayer(uri: Uri): MediaPlayer {
+        return MediaPlayer().apply {
             runCatching {
                 setDataSource(context, uri)
-                setVolume(vol, vol)
-                setOnPreparedListener { start() }
+                setVolume(effectiveVolume(), effectiveVolume())
+
+                // onCompletion fires after the OS transitions to the next player,
+                // so at this point nextMediaPlayer IS the current player.
                 setOnCompletionListener {
+                    mediaPlayer?.runCatching { release() }
+                    mediaPlayer = nextMediaPlayer
+                    nextMediaPlayer = null
                     if (playlist.isNotEmpty()) {
                         currentIndex = (currentIndex + 1) % playlist.size
-                        playTrack(playlist[currentIndex])
+                        prebufferNextFolderTrack()
                     }
                 }
+
                 setOnErrorListener { _, _, _ ->
+                    // Skip broken track and try the next one
                     if (playlist.isNotEmpty()) {
                         currentIndex = (currentIndex + 1) % playlist.size
-                        playTrack(playlist[currentIndex])
+                        playFolderTrack(playlist[currentIndex])
                     }
                     true
                 }
-                prepareAsync()
             }
         }
     }
 
+    /**
+     * Creates two [MediaPlayer] instances pointing at the same file and
+     * chains them via [MediaPlayer.setNextMediaPlayer]. When one finishes
+     * the OS immediately continues with the other, and we rebuild the
+     * just-finished player in the background ready for the next handoff.
+     */
     private fun startSingleFilePlayback() {
         val uri = singleFileUri?.toUri() ?: return
+
+        // Build the primary player
         mediaPlayer?.runCatching { release() }
-        mediaPlayer = MediaPlayer().apply {
+        nextMediaPlayer?.runCatching { release() }
+        nextMediaPlayer = null
+
+        mediaPlayer = buildSingleFilePlayer(uri).also { primary ->
+            primary.setOnPreparedListener { mp ->
+                // Build and prepare the looper before primary starts so it
+                // is ready to be chained immediately after prepare.
+                val looper = buildSingleFilePlayer(uri).also { next ->
+                    next.setOnPreparedListener { preparedNext ->
+                        mp.setNextMediaPlayer(preparedNext)
+                    }
+                    next.prepareAsync()
+                }
+                nextMediaPlayer = looper
+                mp.start()
+            }
+            primary.prepareAsync()
+        }
+    }
+
+    /**
+     * Builds a [MediaPlayer] for single-file loop playback.
+     * On completion, the active players are rotated and a fresh player
+     * is buffered for the next loop iteration.
+     */
+    private fun buildSingleFilePlayer(uri: Uri): MediaPlayer {
+        return MediaPlayer().apply {
             runCatching {
                 setDataSource(context, uri)
-                setVolume(vol, vol)
-                isLooping = true
-                setOnPreparedListener { start() }
+                setVolume(effectiveVolume(), effectiveVolume())
+
+                setOnCompletionListener {
+                    // Rotate: nextMediaPlayer becomes the active one
+                    mediaPlayer?.runCatching { release() }
+                    mediaPlayer = nextMediaPlayer
+                    nextMediaPlayer = null
+
+                    // Buffer a fresh player for the upcoming loop
+                    val next = buildSingleFilePlayer(uri).also { fresh ->
+                        fresh.setOnPreparedListener { preparedFresh ->
+                            mediaPlayer?.setNextMediaPlayer(preparedFresh)
+                        }
+                        fresh.prepareAsync()
+                    }
+                    nextMediaPlayer = next
+                }
+
                 setOnErrorListener { _, _, _ -> true }
-                prepareAsync()
             }
         }
     }
