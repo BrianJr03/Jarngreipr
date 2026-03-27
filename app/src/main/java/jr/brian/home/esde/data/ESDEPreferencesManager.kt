@@ -13,6 +13,7 @@ import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.model.PlatformImageFolderType
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.model.VideoScaleMode
@@ -116,6 +117,10 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANI
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -470,7 +475,13 @@ class ESDEPreferencesManager(context: Context) {
             logoChangeAnimation = prefs.getBoolean(KEY_LOGO_CHANGE_ANIMATION, false),
             romSearchShowAllAndroidApps = prefs.getBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, false),
             romSearchPlatformAutoFilter = prefs.getBoolean(KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER, false),
-            romSearchFocusAnimationDelayMs = prefs.getInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, 150)
+            romSearchFocusAnimationDelayMs = prefs.getInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, 150),
+            romSearchPlatformImagesEnabled = prefs.getBoolean(KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED, false),
+            romSearchPlatformImagesFolderUri = prefs.getString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI, null),
+            romSearchPlatformImagesFolderType = prefs.getString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE, null)
+                ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
+                ?: PlatformImageFolderType.Default,
+            romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240)
         )
     }
 
@@ -946,6 +957,29 @@ class ESDEPreferencesManager(context: Context) {
     fun setRomSearchFocusAnimationDelayMs(delayMs: Int) {
         _state.value = _state.value.copy(romSearchFocusAnimationDelayMs = delayMs)
         prefs.edit { putInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, delayMs) }
+    }
+
+    fun setRomSearchPlatformImagesEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(romSearchPlatformImagesEnabled = enabled)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED, enabled) }
+    }
+
+    fun setRomSearchPlatformImagesFolderUri(uri: String?) {
+        _state.value = _state.value.copy(romSearchPlatformImagesFolderUri = uri)
+        prefs.edit {
+            if (uri != null) putString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI, uri)
+            else remove(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI)
+        }
+    }
+
+    fun setRomSearchPlatformImagesFolderType(type: PlatformImageFolderType) {
+        _state.value = _state.value.copy(romSearchPlatformImagesFolderType = type)
+        prefs.edit { putString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE, type.name) }
+    }
+
+    fun setRomSearchDetailImageHeightDp(heightDp: Int) {
+        _state.value = _state.value.copy(romSearchDetailImageHeightDp = heightDp)
+        prefs.edit { putInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, heightDp) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

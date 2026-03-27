@@ -255,6 +255,51 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames
 
                     val romSearchShowAllAndroidApps = esdeState.romSearchShowAllAndroidApps
+                    val platformImagesEnabled = esdeState.romSearchPlatformImagesEnabled
+                    val platformImagesFolderUri = esdeState.romSearchPlatformImagesFolderUri
+                    val platformImagesFolderType = esdeState.romSearchPlatformImagesFolderType
+
+                    var platformImageMap by remember { mutableStateOf(emptyMap<String, Uri>()) }
+                    LaunchedEffect(platformImagesEnabled, platformImagesFolderUri, platformImagesFolderType) {
+                        if (!platformImagesEnabled || platformImagesFolderUri == null) {
+                            platformImageMap = emptyMap()
+                            return@LaunchedEffect
+                        }
+                        val map = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            runCatching {
+                                val treeUri = platformImagesFolderUri.toUri()
+                                val rootDoc = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, treeUri)
+                                    ?: return@runCatching emptyMap()
+                                when (platformImagesFolderType) {
+                                    jr.brian.home.esde.model.PlatformImageFolderType.Smart ->
+                                        rootDoc.listFiles()
+                                            .filter { it.isDirectory }
+                                            .mapNotNull { dir ->
+                                                val image = dir.listFiles().firstOrNull { file ->
+                                                    file.isFile && file.name?.let { n ->
+                                                        val ext = n.substringAfterLast(".", "").lowercase()
+                                                        ext in setOf("png", "jpg", "jpeg", "gif", "webp")
+                                                    } == true
+                                                }
+                                                val name = dir.name?.lowercase()
+                                                if (image != null && name != null) name to image.uri else null
+                                            }
+                                            .toMap()
+                                    jr.brian.home.esde.model.PlatformImageFolderType.Default ->
+                                        rootDoc.listFiles()
+                                            .filter { it.isFile }
+                                            .mapNotNull { file ->
+                                                val name = file.name
+                                                    ?.substringBeforeLast(".")
+                                                    ?.lowercase()
+                                                if (name != null) name to file.uri else null
+                                            }
+                                            .toMap()
+                                }
+                            }.getOrDefault(emptyMap())
+                        }
+                        platformImageMap = map
+                    }
 
                     LaunchedEffect(romSearchShowAllAndroidApps) {
                         if (romSearchShowAllAndroidApps) mainViewModel.loadAllApps(context)
@@ -276,10 +321,16 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val allPlatforms = remember(allGames) {
                         allGames.map { it.systemName }.distinct().sorted()
                     }
-                    val platformSuggestions = remember(platformSearch, allPlatforms) {
+                    val platformSuggestions = remember(platformSearch, allPlatforms, allGames, hiddenGames) {
                         platformSearch?.let { text ->
-                            if (text.isBlank()) allPlatforms
+                            val candidates = if (text.isBlank()) allPlatforms
                             else allPlatforms.filter { it.contains(text, ignoreCase = true) }
+                            candidates.filter { platform ->
+                                allGames.any { game ->
+                                    game.systemName.equals(platform, ignoreCase = true) &&
+                                            hiddenGameKey(game) !in hiddenGames
+                                }
+                            }
                         } ?: emptyList()
                     }
                     val selectedPlatform = remember(platformSearch, allPlatforms) {
@@ -296,6 +347,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                                 )
                             }
                         }
+                    var autoFilterPlatform by remember { mutableStateOf<String?>(null) }
+
                     val filteredGames = remember(
                         allGames,
                         queryTrimmed,
@@ -308,7 +361,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                         hiddenGames,
                         hideNoMetadata,
                         hideNoImage,
-                        cardMediaType
+                        cardMediaType,
+                        autoFilterPlatform
                     ) {
                         if (isAndroidMode) return@remember if (androidModeFilter.isBlank()) allAndroidApps
                         else allAndroidApps.filter {
@@ -320,6 +374,11 @@ class RomSearchResultsActivity : ComponentActivity() {
                         val list = when {
                             isHiddenMode ->
                                 allGames.filter { hiddenGameKey(it) in hiddenGames }
+
+                            autoFilterPlatform != null ->
+                                allGames.filter {
+                                    it.systemName.equals(autoFilterPlatform, ignoreCase = true)
+                                }
 
                             selectedPlatform != null ->
                                 allGames.filter {
@@ -418,6 +477,11 @@ class RomSearchResultsActivity : ComponentActivity() {
                     // Reset dropdown focus whenever the dropdown hides
                     LaunchedEffect(dropdownVisible) {
                         if (!dropdownVisible) dropdownFocusedIndex = -1
+                    }
+
+                    // Clear autoFilter preview when focus leaves the dropdown
+                    LaunchedEffect(dropdownFocusedIndex) {
+                        if (dropdownFocusedIndex < 0) autoFilterPlatform = null
                     }
 
                     val dropdownItems = remember(romSearchShowAllAndroidApps, platformSuggestions) {
@@ -571,9 +635,10 @@ class RomSearchResultsActivity : ComponentActivity() {
                                             !romSearchStateHolder.hintAndKbVisible.value
                                     },
                                     onAndroidAppInfo = { game ->
+                                        val pkg = game.path.trimEnd('/').removeSuffix(".app")
                                         val intent =
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                data = Uri.parse("package:${game.path}")
+                                                data = Uri.parse("package:$pkg")
                                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                             }
                                         context.startActivity(intent)
@@ -618,6 +683,9 @@ class RomSearchResultsActivity : ComponentActivity() {
                                             dropdownFocusedIndex = -1
                                         }
                                     },
+                                    onPlatformFocused = { platform -> autoFilterPlatform = platform },
+                                    platformImagesEnabled = platformImagesEnabled,
+                                    getPlatformImage = { platform -> platformImageMap[platform.lowercase()] },
                                     modifier = Modifier.align(Alignment.BottomCenter)
                                 )
                             }
