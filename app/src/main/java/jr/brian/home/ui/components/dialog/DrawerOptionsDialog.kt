@@ -256,21 +256,19 @@ fun DrawerOptionsDialog(
 //                            )
 //                        }
 
-                        if (wallpaperManager.getWallpaperType() == WallpaperType.ESDE) {
-                            IconButton(
-                                onClick = {
-                                    onDismiss()
-                                    onNavigateToRomSearch()
-                                },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SportsEsports,
-                                    contentDescription = stringResource(R.string.rom_search_icon_description),
-                                    tint = romIconTint,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
+                        IconButton(
+                            onClick = {
+                                onDismiss()
+                                onNavigateToRomSearch()
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = stringResource(R.string.rom_search_icon_description),
+                                tint = romIconTint,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
 
                         Spacer(Modifier.width(8.dp))
@@ -501,11 +499,15 @@ fun DrawerOptionsDialog(
                                 modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.drawer_options_launch_system_app),
                                 onClick = {
-                                    val displayPref = if (esdePrefsState.systemTopScreenSet.contains(lastSelectedSystem)) {
-                                        DisplayPreference.PRIMARY_DISPLAY
-                                    } else {
-                                        DisplayPreference.CURRENT_DISPLAY
-                                    }
+                                    val displayPref =
+                                        if (esdePrefsState.systemTopScreenSet.contains(
+                                                lastSelectedSystem
+                                            )
+                                        ) {
+                                            DisplayPreference.PRIMARY_DISPLAY
+                                        } else {
+                                            DisplayPreference.CURRENT_DISPLAY
+                                        }
                                     launchApp(
                                         context = context,
                                         packageName = packageName,

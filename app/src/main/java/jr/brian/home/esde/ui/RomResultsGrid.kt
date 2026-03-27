@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import android.net.Uri
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -9,13 +10,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -31,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,19 +42,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -274,7 +287,10 @@ internal fun RomResultsGrid(
                             onLongClick = {
                                 val isAndroid =
                                     game.systemName.equals("androidgames", ignoreCase = true) ||
-                                            game.systemName.equals("androidapps", ignoreCase = true)
+                                            game.systemName.equals(
+                                                "androidapps",
+                                                ignoreCase = true
+                                            ) || game.systemName.equals("games", ignoreCase = true)
                                 if (isAndroid) onAndroidAppInfo(game)
                                 else selectedGame = game
                             },
@@ -433,7 +449,10 @@ internal fun PlatformSuggestionsDropdown(
     modifier: Modifier = Modifier,
     showAllApps: Boolean = false,
     focusedIndex: Int = -1,
-    autoFilter: Boolean = false
+    autoFilter: Boolean = false,
+    onPlatformFocused: (String) -> Unit = {},
+    platformImagesEnabled: Boolean = false,
+    getPlatformImage: (String) -> Uri? = { null }
 ) {
     val allItems = remember(showAllApps, platforms) {
         buildList { if (showAllApps) add("android"); addAll(platforms) }
@@ -444,45 +463,86 @@ internal fun PlatformSuggestionsDropdown(
     LaunchedEffect(focusedIndex) {
         if (focusedIndex >= 0 && focusedIndex < allItems.size) {
             coroutineScope.launch { listState.animateScrollToItem(focusedIndex) }
-            if (autoFilter) onPlatformSelected(allItems[focusedIndex])
+            if (autoFilter) onPlatformFocused(allItems[focusedIndex])
         }
     }
 
+    var rowHeightPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val verticalPadding by remember(rowHeightPx) {
+        derivedStateOf { with(density) { (rowHeightPx / 2).toDp() } }
+    }
+
     Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxWidth()
             .background(OledCardColor.copy(alpha = 0.97f))
-            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .padding(horizontal = 8.dp)
+            .padding(vertical = verticalPadding)
     ) {
         LazyRow(
             state = listState,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+            modifier = Modifier
+                .onSizeChanged { rowHeightPx = it.height }
+                .graphicsLayer { clip = false }
         ) {
             lazyRowItemsIndexed(allItems) { index, item ->
                 val isFocused = index == focusedIndex
+                val imageUri =
+                    if (platformImagesEnabled && item != "android") getPlatformImage(item) else null
+
                 TextButton(
                     onClick = { onPlatformSelected(item) },
+                    contentPadding = PaddingValues(0.dp),
                     modifier = Modifier
+                        .size(width = 64.dp, height = 36.dp)
+                        .scale(animatedFocusedScale(isFocused))
                         .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            if (isFocused) ThemeAccentColor.copy(alpha = 0.18f)
-                            else OledBackgroundColor
+                        .then(
+                            if (isFocused && imageUri == null) Modifier.background(
+                                ThemeAccentColor.copy(alpha = 0.18f)
+                            ) else Modifier
                         )
                         .then(
-                            if (isFocused) Modifier.border(
-                                width = 1.dp,
-                                color = ThemeAccentColor.copy(alpha = 0.6f),
-                                shape = RoundedCornerShape(6.dp)
-                            )
+                            if (isFocused) Modifier.animatedGradientBorder()
                             else Modifier
                         )
                 ) {
-                    Text(
-                        text = if (item == "android") "APPS" else item.uppercase(),
-                        color = if (isFocused) ThemeAccentColor else ThemeAccentColor.copy(alpha = 0.6f),
-                        fontSize = 11.sp,
-                        fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
-                    )
+                    if (imageUri != null) {
+                        val context = LocalContext.current
+                        val gifImageLoader = remember(context) {
+                            ImageLoader.Builder(context)
+                                .components {
+                                    add(ImageDecoderDecoder.Factory())
+                                }
+                                .build()
+                        }
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(imageUri)
+                                .crossfade(true)
+                                .build(),
+                            imageLoader = gifImageLoader,
+                            contentDescription = item,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Text(
+                            text = when (item) {
+                                "android" -> "APPS"
+                                "androidgames" -> "GAMES"
+                                else -> item.uppercase()
+                            },
+                            color = if (isFocused) ThemeAccentColor
+                            else ThemeAccentColor.copy(alpha = 0.6f),
+                            fontSize = 11.sp,
+                            fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

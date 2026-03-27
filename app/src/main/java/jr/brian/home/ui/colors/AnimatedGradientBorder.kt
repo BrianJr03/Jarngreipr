@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -21,13 +22,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import jr.brian.home.ui.theme.themePrimaryColor
+import jr.brian.home.ui.theme.themeSecondaryColor
 
 fun Modifier.animatedGradientBorder(
-    colors: List<Color>,
-    shape: Shape,
+    colors: List<Color> = emptyList(),
+    shape: Shape = RoundedCornerShape(16.dp),
     borderWidth: Dp = 2.dp,
     durationMs: Int = 2000
 ): Modifier = composed {
+    val colorsSafe = if (colors.size < 2) listOf(themePrimaryColor(), themeSecondaryColor()) else colors
     val transition = rememberInfiniteTransition(label = "gradientBorder")
     val angle by transition.animateFloat(
         initialValue = 0f,
@@ -45,7 +49,7 @@ fun Modifier.animatedGradientBorder(
         drawContent()
         val strokePx = borderWidth.toPx()
         val outline = shape.createOutline(size, layoutDirection, density)
-        val safeColors = if (colors.size < 2) colors + colors else colors
+        val safeColors = if (colorsSafe.size < 2) colorsSafe + colorsSafe else colorsSafe
         val argbColors = safeColors.map { it.toArgb() }.toIntArray()
         val brush = object : ShaderBrush() {
             override fun createShader(size: Size): android.graphics.Shader {

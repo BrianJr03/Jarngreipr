@@ -1,5 +1,8 @@
 package jr.brian.home.esde.ui
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,15 +15,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,21 +36,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.PlatformImageFolderType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.ThorSettingToggleButton
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.themeSecondaryColor
 
@@ -57,6 +71,24 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
     var cardMediaExpanded by rememberSaveable { mutableStateOf(false) }
     var displayExpanded by rememberSaveable { mutableStateOf(false) }
     val secondaryColor = themeSecondaryColor()
+    val context = LocalContext.current
+
+    var pendingFolderType by remember { mutableStateOf<PlatformImageFolderType?>(null) }
+    val platformImagesFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            prefsManager.setRomSearchPlatformImagesFolderUri(uri.toString())
+            pendingFolderType?.let { prefsManager.setRomSearchPlatformImagesFolderType(it) }
+        }
+        pendingFolderType = null
+    }
 
     Surface(
         color = OledBackgroundColor,
@@ -222,12 +254,165 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
                             checked = state.romSearchHideNoMetadata,
                             onCheckedChange = { prefsManager.setRomSearchHideNoMetadata(it) }
                         )
+                        // ToggleSetting(
+                        //     title = stringResource(R.string.rom_search_settings_platform_auto_filter_title),
+                        //     description = stringResource(R.string.rom_search_settings_platform_auto_filter_description),
+                        //     checked = state.romSearchPlatformAutoFilter,
+                        //     onCheckedChange = { prefsManager.setRomSearchPlatformAutoFilter(it) }
+                        // )
                         ToggleSetting(
-                            title = stringResource(R.string.rom_search_settings_platform_auto_filter_title),
-                            description = stringResource(R.string.rom_search_settings_platform_auto_filter_description),
-                            checked = state.romSearchPlatformAutoFilter,
-                            onCheckedChange = { prefsManager.setRomSearchPlatformAutoFilter(it) }
+                            title = stringResource(R.string.rom_search_settings_platform_images_title),
+                            description = stringResource(R.string.rom_search_settings_platform_images_description),
+                            checked = state.romSearchPlatformImagesEnabled,
+                            onCheckedChange = { prefsManager.setRomSearchPlatformImagesEnabled(it) }
                         )
+                        AnimatedVisibility(state.romSearchPlatformImagesEnabled) {
+                            var showStructureDialog by remember { mutableStateOf(false) }
+                            if (showStructureDialog) {
+                                AlertDialog(
+                                    onDismissRequest = { showStructureDialog = false },
+                                    confirmButton = {
+                                        TextButton(onClick = { showStructureDialog = false }) {
+                                            Text(text = "OK", color = ThemeAccentColor)
+                                        }
+                                    },
+                                    title = {
+                                        Text(
+                                            text = stringResource(R.string.rom_search_settings_platform_images_structure_title),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    },
+                                    text = {
+                                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            Text(
+                                                text = stringResource(R.string.rom_search_settings_platform_images_smart_folder),
+                                                color = Color.White,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(
+                                                        color = OledCardColor,
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                                    .padding(10.dp)
+                                            ) {
+                                                Text(
+                                                    text = "folder/\n  wii/\n    logo.gif\n  psp/\n    logo.png\n  nds/\n    logo.webp",
+                                                    color = ThemeAccentColor.copy(alpha = 0.9f),
+                                                    fontSize = 12.sp,
+                                                    lineHeight = 18.sp,
+                                                    fontFamily = FontFamily.Monospace
+                                                )
+                                            }
+                                            Text(
+                                                text = stringResource(R.string.rom_search_settings_platform_images_default_folder),
+                                                color = Color.White,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(
+                                                        color = OledCardColor,
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                                    .padding(10.dp)
+                                            ) {
+                                                Text(
+                                                    text = "folder/\n  wii.png\n  psp.gif\n  nds.jpg",
+                                                    color = ThemeAccentColor.copy(alpha = 0.9f),
+                                                    fontSize = 12.sp,
+                                                    lineHeight = 18.sp,
+                                                    fontFamily = FontFamily.Monospace
+                                                )
+                                            }
+                                        }
+                                    },
+                                    containerColor = OledBackgroundColor
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            pendingFolderType = PlatformImageFolderType.Smart
+                                            platformImagesFolderPicker.launch(null)
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FolderOpen,
+                                            contentDescription = null,
+                                            tint = ThemeAccentColor.copy(alpha = 0.8f),
+                                            modifier = Modifier.padding(end = 4.dp)
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.rom_search_settings_platform_images_smart_folder),
+                                            color = ThemeAccentColor.copy(alpha = 0.8f),
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            pendingFolderType = PlatformImageFolderType.Default
+                                            platformImagesFolderPicker.launch(null)
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FolderOpen,
+                                            contentDescription = null,
+                                            tint = ThemeAccentColor.copy(alpha = 0.8f),
+                                            modifier = Modifier.padding(end = 4.dp)
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.rom_search_settings_platform_images_default_folder),
+                                            color = ThemeAccentColor.copy(alpha = 0.8f),
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    IconButton(onClick = { showStructureDialog = true }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = stringResource(R.string.rom_search_settings_platform_images_structure_title),
+                                            tint = Color.White.copy(alpha = 0.4f)
+                                        )
+                                    }
+                                }
+                                if (state.romSearchPlatformImagesFolderUri != null) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = "${state.romSearchPlatformImagesFolderType.name}: ${state.romSearchPlatformImagesFolderUri}",
+                                            color = Color.White.copy(alpha = 0.35f),
+                                            fontSize = 10.sp,
+                                            maxLines = 2,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        TextButton(onClick = {
+                                            prefsManager.setRomSearchPlatformImagesFolderUri(null)
+                                        }) {
+                                            Text(
+                                                text = stringResource(R.string.rom_search_settings_platform_images_clear),
+                                                color = Color.Red.copy(alpha = 0.6f),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         val androidAppsDesc = stringResource(R.string.rom_search_settings_show_android_apps_description)
                         val androidAppsAnnotated = remember(androidAppsDesc) {
                             val term = "@android"

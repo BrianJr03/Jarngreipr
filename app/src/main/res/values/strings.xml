@@ -15,8 +15,11 @@
     <string name="rom_detail_playtime_hm">%1$dh %2$dm</string>
     <string name="rom_detail_playtime_m">%1$dm</string>
     <string name="rom_detail_launch">Launch</string>
+    <string name="rom_detail_resize_image">Resize Image</string>
     <string name="rom_detail_close">Close</string>
     <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_detail_change_core">Change Core</string>
+    <string name="rom_detail_change_folder">Change Folder</string>
     <string name="rom_emulator_picker_title">Select Emulator</string>
     <string name="rom_emulator_none_found">No compatible emulators installed</string>
     <string name="rom_detail_hide">Hide</string>
@@ -1132,6 +1135,12 @@
     <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
     <string name="rom_search_settings_platform_auto_filter_title">Platform Auto-Filter</string>
     <string name="rom_search_settings_platform_auto_filter_description">Automatically filter by platform when navigating the platform row with a controller.</string>
+    <string name="rom_search_settings_platform_images_title">Platform System Images</string>
+    <string name="rom_search_settings_platform_images_description">Show platform logo images in the platform row instead of text labels.</string>
+    <string name="rom_search_settings_platform_images_smart_folder">Cocoon Smart Folder</string>
+    <string name="rom_search_settings_platform_images_default_folder">Default Folder</string>
+    <string name="rom_search_settings_platform_images_clear">Clear</string>
+    <string name="rom_search_settings_platform_images_structure_title">Folder Structures</string>
     <string name="rom_search_settings_show_android_apps_title">Show All Android Apps</string>
     <string name="rom_search_settings_show_android_apps_description">Enable the @android command and plain-text search to include all installed apps.</string>
     <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
