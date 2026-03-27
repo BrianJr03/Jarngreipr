@@ -13,11 +13,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -27,6 +31,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +75,7 @@ import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.util.animatedColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.items as lazyRowItems
@@ -480,11 +486,11 @@ internal fun PlatformSuggestionsDropdown(
             .fillMaxWidth()
             .background(OledCardColor.copy(alpha = 0.97f))
             .padding(horizontal = 8.dp)
-            .padding(vertical = verticalPadding)
+            .padding(vertical = verticalPadding / 2)
     ) {
         LazyRow(
             state = listState,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 4.dp),
             modifier = Modifier
                 .onSizeChanged { rowHeightPx = it.height }
@@ -496,7 +502,7 @@ internal fun PlatformSuggestionsDropdown(
                     if (platformImagesEnabled && item != "android") getPlatformImage(item) else null
 
                 val sharedModifier = Modifier
-                    .size(width = 64.dp, height = 36.dp)
+                    .size(width = 64.dp, height = 64.dp)
                     .scale(animatedFocusedScale(isFocused))
                     .clip(RoundedCornerShape(6.dp))
                     .then(
@@ -504,46 +510,58 @@ internal fun PlatformSuggestionsDropdown(
                             ThemeAccentColor.copy(alpha = 0.18f)
                         ) else Modifier
                     )
-                    .then(
-                        if (isFocused) Modifier.animatedGradientBorder()
-                        else Modifier
-                    )
 
-                if (imageUri != null) {
-                    val context = LocalContext.current
-                    val gifImageLoader = remember(context) {
-                        ImageLoader.Builder(context)
-                            .components {
-                                add(ImageDecoderDecoder.Factory())
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    when (imageUri) {
+                        null -> {
+                            TextButton(
+                                onClick = { onPlatformSelected(item) },
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = sharedModifier
+                            ) {
+                                Text(
+                                    text = when (item) {
+                                        "android" -> "APPS"
+                                        "androidgames" -> "GAMES"
+                                        else -> item.uppercase()
+                                    },
+                                    color = if (isFocused) ThemeAccentColor
+                                    else ThemeAccentColor.copy(alpha = 0.6f),
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
+                                )
                             }
-                            .build()
+                        }
+
+                        else -> {
+                            val context = LocalContext.current
+                            val gifImageLoader = remember(context) {
+                                ImageLoader.Builder(context)
+                                    .components {
+                                        add(ImageDecoderDecoder.Factory())
+                                    }
+                                    .build()
+                            }
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(imageUri)
+                                    .crossfade(true)
+                                    .build(),
+                                imageLoader = gifImageLoader,
+                                contentDescription = item,
+                                contentScale = ContentScale.FillBounds,
+                                modifier = sharedModifier.clickable { onPlatformSelected(item) }
+                            )
+                        }
                     }
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(imageUri)
-                            .crossfade(true)
-                            .build(),
-                        imageLoader = gifImageLoader,
-                        contentDescription = item,
-                        contentScale = ContentScale.Fit,
-                        modifier = sharedModifier.clickable { onPlatformSelected(item) }
-                    )
-                } else {
-                    TextButton(
-                        onClick = { onPlatformSelected(item) },
-                        contentPadding = PaddingValues(0.dp),
-                        modifier = sharedModifier
-                    ) {
-                        Text(
-                            text = when (item) {
-                                "android" -> "APPS"
-                                "androidgames" -> "GAMES"
-                                else -> item.uppercase()
-                            },
-                            color = if (isFocused) ThemeAccentColor
-                            else ThemeAccentColor.copy(alpha = 0.6f),
-                            fontSize = 11.sp,
-                            fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
+
+                    if (isFocused) {
+                        Spacer(Modifier.height(8.dp))
+                        HorizontalDivider(
+                            color = animatedColor(),
+                            modifier = Modifier
+                                .width(64.dp)
+                                .scale(animatedFocusedScale(true))
                         )
                     }
                 }

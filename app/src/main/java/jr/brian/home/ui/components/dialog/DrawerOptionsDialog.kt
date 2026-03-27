@@ -101,6 +101,8 @@ import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.MediaPickerLauncher
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.util.launchApp
+import androidx.core.content.edit
+import jr.brian.home.ui.util.animatedColor
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
@@ -149,33 +151,10 @@ fun DrawerOptionsDialog(
     }
     LaunchedEffect(Unit) {
         if (isRomIconNew) {
-            romIconPrefs.edit().putBoolean("drawer_icon_new", false).apply()
+            romIconPrefs.edit { putBoolean("drawer_icon_new", false) }
         }
     }
-    val romIconTransition = rememberInfiniteTransition(label = "romIconGradient")
-    val romIconColor1 by romIconTransition.animateColor(
-        initialValue = ThemePrimaryColor,
-        targetValue = ThemeAccentColor,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "romIconColor1"
-    )
-    val romIconColor2 by romIconTransition.animateColor(
-        initialValue = ThemeAccentColor,
-        targetValue = ThemeSecondaryColor,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "romIconColor2"
-    )
-    val romIconTint = if (isRomIconNew) {
-        lerp(romIconColor1, romIconColor2, 0.5f)
-    } else {
-        Color.White
-    }
+
 
     val mediaPickerLauncher = MediaPickerLauncher(
         onResult = {
@@ -266,7 +245,7 @@ fun DrawerOptionsDialog(
                             Icon(
                                 imageVector = Icons.Default.SportsEsports,
                                 contentDescription = stringResource(R.string.rom_search_icon_description),
-                                tint = romIconTint,
+                                tint = animatedColor(firstSeen = isRomIconNew),
                                 modifier = Modifier.size(26.dp)
                             )
                         }
