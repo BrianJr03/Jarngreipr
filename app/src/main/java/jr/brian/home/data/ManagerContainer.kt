@@ -13,6 +13,7 @@ import jr.brian.home.ui.theme.managers.LocalControlPadManager
 import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
@@ -109,6 +110,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalGameKonfettiManager provides feature.gameKonfettiManager,
         LocalFloatyModeManager provides feature.floatyModeManager,
         LocalJinglesManager provides feature.jinglesManager,
+        LocalBgMusicManager provides feature.bgMusicManager,
         
         // System Integration
         LocalNotificationCountManager provides system.notificationCountManager,
