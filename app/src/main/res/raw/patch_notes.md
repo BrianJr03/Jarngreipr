@@ -1,11 +1,10 @@
 **Rom Search [ experimental ]**
-- Adds Rom Search Settings that allows for more customization
-- Choose what media type to display in the card and more!
+- Adds ability to chose icons for systems
+  - When browsing games, enter '@' or press R1/R2 or L1/L2 to filter by system
+- Adds ability to configure card size in details screen
+- Various qol updates
 
-**Settings Search**
-- You can now search for options in Settings
+**Global Background Music**
+ - You can now set global background music in Settings
 
-**Fixes**
-- Fixes issue where video wallpaper became black screen after device wake
-
-2.1
+2.2

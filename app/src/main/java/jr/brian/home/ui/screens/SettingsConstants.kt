@@ -8,4 +8,5 @@ object SettingsConstants {
     const val SECTION_SUPPORT = "support"
     const val SECTION_EXTRAS = "extras"
     const val SECTION_JINGLES = "jingles"
+    const val SECTION_MUSIC = "music"
 }

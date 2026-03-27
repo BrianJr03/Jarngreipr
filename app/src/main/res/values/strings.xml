@@ -1369,4 +1369,13 @@
     <string name="jingles_add_cancel">Cancel</string>
     <string name="jingles_add_done">Done</string>
     <string name="jingles_add_repo_field_label">Repository</string>
+    <string name="music_section_title">Background Music</string>
+    <string name="music_section_select_folder_title">Select Music Folder</string>
+    <string name="music_section_select_folder_description">Play all audio files in a folder in order, looping</string>
+    <string name="music_section_select_folder_selected">Selected: %1$s</string>
+    <string name="music_section_select_file_title">Select Music File</string>
+    <string name="music_section_select_file_description">Loop a single audio file continuously</string>
+    <string name="music_section_select_file_selected">Selected: %1$s</string>
+    <string name="music_section_volume_title">Volume</string>
+    <string name="music_section_volume_description">Global background music volume</string>
 </resources>
