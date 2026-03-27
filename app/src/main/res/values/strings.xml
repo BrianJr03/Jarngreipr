@@ -1099,7 +1099,16 @@
     <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
     <string name="rom_search_hint_details">Start: open details</string>
     <string name="rom_search_commands">Search Commands</string>
-    <string name="rom_search_commands_info">• @hidden — view all hidden games\n• @android — browse all installed Android apps (requires setting)\n• @{system} — filter by a specific system\n• plain text — search games and apps</string>
+    <string name="rom_search_command_android">@android</string>
+    <string name="rom_search_command_android_desc">Browse all installed Android apps</string>
+    <string name="rom_search_command_hidden">@hidden</string>
+    <string name="rom_search_command_hidden_desc">Show all hidden games</string>
+    <string name="rom_search_command_platform">@{platform}</string>
+    <string name="rom_search_command_platform_desc">Filter games to a specific system</string>
+    <string name="rom_search_command_partial">@{partial}</string>
+    <string name="rom_search_command_partial_desc">Partial platform match</string>
+    <string name="rom_search_command_name">{name}</string>
+    <string name="rom_search_command_name_desc">Search by game name, system, genre, developer, or publisher</string>
 
     <!-- Search Settings -->
     <string name="esde_settings_section_search">Search</string>
@@ -1121,6 +1130,8 @@
     <string name="rom_search_settings_hide_no_metadata_description">Exclude games with no artwork, descriptions, or other scraped info.</string>
     <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
     <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
+    <string name="rom_search_settings_platform_auto_filter_title">Platform Auto-Filter</string>
+    <string name="rom_search_settings_platform_auto_filter_description">Automatically filter by platform when navigating the platform row with a controller.</string>
     <string name="rom_search_settings_show_android_apps_title">Show All Android Apps</string>
     <string name="rom_search_settings_show_android_apps_description">Enable the @android command and plain-text search to include all installed apps.</string>
     <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
@@ -1181,7 +1192,7 @@
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_close">Close</string>
-    <string name="whats_new_got_it">Got it!</string>
+    <string name="whats_new_got_it">Got it</string>
 
     <!-- Konfetti Animation Chooser -->
     <string name="konfetti_section_title">Konfetti Animation</string>

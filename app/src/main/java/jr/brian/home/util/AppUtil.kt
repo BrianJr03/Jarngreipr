@@ -10,11 +10,11 @@ import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 fun launchApp(
     context: Context,
     packageName: String,
-    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY
+    displayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY,
+    intent: Intent? = null
 ) {
     try {
-        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-
+        val intent = intent ?: context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
             when (displayPreference) {
                 DisplayPreference.PRIMARY_DISPLAY -> {
