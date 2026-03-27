@@ -222,18 +222,21 @@ class MainActivity : ComponentActivity() {
         esdeViewModel.musicController.onActivityResumed()
         esdeViewModel.onVideoActivityFinished()
         esdeViewModel.handleLauncherResumed()
+        managers.feature.bgMusicManager.resumePlayback()
     }
 
     override fun onStop() {
         super.onStop()
         esdeViewModel.musicController.onActivityInvisible()
         managers.feature.jinglesManager.stop()
+        managers.feature.bgMusicManager.pausePlayback()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         managers.feature.esdeEventManager.stopWatching()
         managers.feature.jinglesManager.release()
+        managers.feature.bgMusicManager.release()
     }
 
 
