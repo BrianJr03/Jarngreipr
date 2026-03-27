@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -94,7 +95,7 @@ internal fun RomDetailScreen(
     }
 
     if (showResizeDialog) {
-        var sliderValue by remember { mutableStateOf(prefsState.romSearchDetailImageHeightDp.toFloat()) }
+        var sliderValue by remember { mutableFloatStateOf(prefsState.romSearchDetailImageHeightDp.toFloat()) }
         AlertDialog(
             onDismissRequest = { showResizeDialog = false },
             confirmButton = {
@@ -102,16 +103,16 @@ internal fun RomDetailScreen(
                     prefsManager.setRomSearchDetailImageHeightDp(sliderValue.toInt())
                     showResizeDialog = false
                 }) {
-                    Text("Apply", color = ThemeAccentColor)
+                    Text(stringResource(R.string.rom_detail_apply), color = ThemeAccentColor)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResizeDialog = false }) {
-                    Text("Cancel", color = ThemeAccentColor)
+                    Text(stringResource(R.string.rom_detail_cancel), color = ThemeAccentColor)
                 }
             },
             title = {
-                Text("Resize Image", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.rom_detail_resize_image_title), color = Color.White, fontWeight = FontWeight.Bold)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -120,7 +121,7 @@ internal fun RomDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Image Height",
+                            text = stringResource(R.string.rom_detail_image_height),
                             color = Color.White.copy(alpha = 0.9f),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
@@ -298,7 +299,10 @@ internal fun RomDetailScreen(
                     }
                     TextButton(onClick = { showMediaTypePicker = true }) {
                         Text(
-                            text = "Media: ${currentMediaType?.displayName ?: "Default"}",
+                            text = stringResource(
+                                R.string.rom_detail_media_type,
+                                currentMediaType?.displayName ?: stringResource(R.string.rom_detail_media_type_default)
+                            ),
                             color = ThemeAccentColor
                         )
                     }
