@@ -219,9 +219,6 @@ private fun HorizontalSearchLayout(
                 onFocusChanged = { focusedKeyIndex = it },
                 onFlipLayout = onFlipLayout,
                 showSpecialCharRow = showSpecialCharRow,
-                onSpecialCharToggle = {
-                    showSpecialCharRow = !showSpecialCharRow
-                },
                 onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxWidth()
             )

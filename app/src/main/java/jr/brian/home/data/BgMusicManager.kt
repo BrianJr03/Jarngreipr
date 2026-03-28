@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.compose.runtime.getValue
@@ -77,6 +80,41 @@ class BgMusicManager @Inject constructor(
     private var playlist: List<Uri> = emptyList()
     private var currentIndex = 0
 
+    // true from startPlayback() until stopPlayback(); unaffected by pause/focus events
+    private var isIntendedToPlay = false
+
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> pausePlayback()
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> duck()
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                unDuck()
+                if (isIntendedToPlay) resumePlayback()
+            }
+        }
+    }
+
+    private val audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+        )
+        .setOnAudioFocusChangeListener(audioFocusListener)
+        .build()
+
+    private fun requestAudioFocus(): Boolean =
+        audioManager.requestAudioFocus(audioFocusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+
+    private fun abandonAudioFocus() {
+        audioManager.abandonAudioFocusRequest(audioFocusRequest)
+    }
+
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -136,6 +174,8 @@ class BgMusicManager @Inject constructor(
 
     fun startPlayback() {
         stopPlayback()
+        if (!requestAudioFocus()) return
+        isIntendedToPlay = true
         when (mode) {
             Mode.FOLDER -> startFolderPlayback()
             Mode.SINGLE_FILE -> startSingleFilePlayback()
@@ -143,10 +183,23 @@ class BgMusicManager @Inject constructor(
     }
 
     fun stopPlayback() {
+        isIntendedToPlay = false
         mediaPlayer?.runCatching { if (isPlaying) stop(); release() }
         nextMediaPlayer?.runCatching { release() }
         mediaPlayer = null
         nextMediaPlayer = null
+        abandonAudioFocus()
+    }
+
+    fun setMuted(muted: Boolean) {
+        mediaPlayer?.setVolume(
+            if (muted) 0f else effectiveVolume(),
+            if (muted) 0f else effectiveVolume()
+        )
+        nextMediaPlayer?.setVolume(
+            if (muted) 0f else effectiveVolume(),
+            if (muted) 0f else effectiveVolume()
+        )
     }
 
     fun release() {
