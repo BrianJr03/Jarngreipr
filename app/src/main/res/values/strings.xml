@@ -1384,4 +1384,8 @@
     <string name="music_section_select_file_selected">Selected: %1$s</string>
     <string name="music_section_volume_title">Volume</string>
     <string name="music_section_volume_description">Global background music volume</string>
+    <string name="music_options_title">Music</string>
+    <string name="music_options_mute_all">Mute All Music</string>
+    <string name="music_options_unmute_all">Unmute All Music</string>
+    <string name="music_options_resume_bg">Resume Background Music</string>
 </resources>

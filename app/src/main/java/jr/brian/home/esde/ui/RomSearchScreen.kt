@@ -33,10 +33,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -86,6 +84,7 @@ import java.io.File
 @Composable
 fun RomSearchScreen(
     onDismiss: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
     viewModel: RomSearchViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -175,7 +174,7 @@ fun RomSearchScreen(
                             showSettings = true,
                             showController = false,
                             onOpenRomSearchSettings = { showSettings = true },
-                            onSpecialCharToggle = { showSpecialCharRow = !showSpecialCharRow },
+                            onNavigateToSearch = onNavigateToSearch,
                             onAtClick = { viewModel.updateQuery("$query@") },
                             onReopenResults = { launchResultsActivity(context) },
                             modifier = Modifier

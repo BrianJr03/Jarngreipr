@@ -701,6 +701,9 @@ fun NavGraphBuilder.romSearchScreen(
         val jinglesManager = LocalJinglesManager.current
         SlideInVertically(showScreen) {
             RomSearchScreen(
+                onNavigateToSearch = {
+                    navController.navigate(Routes.APP_SEARCH)
+                },
                 onDismiss = {
                     showScreen = false
                     jinglesManager.stop()
