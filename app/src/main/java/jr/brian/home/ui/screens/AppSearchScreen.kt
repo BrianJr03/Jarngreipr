@@ -137,7 +137,7 @@ private fun VerticalSearchLayout(
     Row(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -188,7 +188,7 @@ private fun HorizontalSearchLayout(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .padding(4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -243,7 +243,7 @@ private fun AppGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier
             .background(OledBackgroundColor)
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 4.dp),
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
