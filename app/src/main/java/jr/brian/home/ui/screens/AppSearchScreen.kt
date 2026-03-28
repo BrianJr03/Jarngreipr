@@ -135,9 +135,7 @@ private fun VerticalSearchLayout(
     onNavigateToRomSearch: () -> Unit = {},
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(4.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -186,9 +184,7 @@ private fun HorizontalSearchLayout(
     var showSpecialCharRow by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(4.dp),
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -241,9 +237,7 @@ private fun AppGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
-        modifier = modifier
-            .background(OledBackgroundColor)
-            .padding(horizontal = 4.dp),
+        modifier = modifier.background(OledBackgroundColor),
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
