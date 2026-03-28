@@ -174,8 +174,8 @@ fun QwertyKeyboard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 QwertyIconBox({ onAtClick?.invoke() }) {
                     Text(
                         text = "@",
@@ -185,8 +185,8 @@ fun QwertyKeyboard(
                     )
                 }
                 if (onReopenResults != null &&
-                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-                    && showController
+                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE &&
+                    showController
                 ) {
                     Spacer(modifier = Modifier.width(8.dp))
                     QwertyIconBox(onClick = onReopenResults) {
@@ -198,63 +198,65 @@ fun QwertyKeyboard(
                         )
                     }
                 }
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            onNavigateToSearch?.let {
-                QwertyIconBox({ onOpenRomSearchSettings?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = stringResource(R.string.home_tab_search_apps),
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
+                if (showSettings) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onOpenRomSearchSettings?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-            }
-            if (showSettings) {
-                QwertyIconBox({ onOpenRomSearchSettings?.invoke() }) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                onNavigateToSearch?.let {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onNavigateToSearch() }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.home_tab_search_apps),
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
-            }
-            if (showFlipLayoutButton) {
-                QwertyIconBox({ onFlipLayout() }) {
-                    Icon(
-                        imageVector = Icons.Default.FlipCameraAndroid,
-                        contentDescription = stringResource(R.string.keyboard_label_flip),
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                if (showFlipLayoutButton) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onFlipLayout() }) {
+                        Icon(
+                            imageVector = Icons.Default.FlipCameraAndroid,
+                            contentDescription = stringResource(R.string.keyboard_label_flip),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
-    }
 
-    if (isNumericMode) {
-        QwertyNumericKeyboard(
-            numbers = numbers,
-            searchQuery = searchQuery,
-            onQueryChange = onQueryChange,
-            keyboardFocusRequesters = keyboardFocusRequesters,
-            onFocusChanged = onFocusChanged,
-            onSwapMode = { isNumericMode = false }
-        )
-    } else {
-        QwertyAlphabetKeyboard(
-            qwertyRow1 = qwertyRow1,
-            qwertyRow2 = qwertyRow2,
-            qwertyRow3 = qwertyRow3,
-            searchQuery = searchQuery,
-            showSpecialCharRow = showSpecialCharRow,
-            showAtKey = showAtKey,
-            onQueryChange = onQueryChange,
-            keyboardFocusRequesters = keyboardFocusRequesters,
-            onFocusChanged = onFocusChanged,
-            onSwapMode = { isNumericMode = true }
-        )
+        if (isNumericMode) {
+            QwertyNumericKeyboard(
+                numbers = numbers,
+                searchQuery = searchQuery,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = onFocusChanged,
+                onSwapMode = { isNumericMode = false }
+            )
+        } else {
+            QwertyAlphabetKeyboard(
+                qwertyRow1 = qwertyRow1,
+                qwertyRow2 = qwertyRow2,
+                qwertyRow3 = qwertyRow3,
+                searchQuery = searchQuery,
+                showSpecialCharRow = showSpecialCharRow,
+                showAtKey = showAtKey,
+                onQueryChange = onQueryChange,
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                onFocusChanged = onFocusChanged,
+                onSwapMode = { isNumericMode = true }
+            )
+        }
     }
 }
 
