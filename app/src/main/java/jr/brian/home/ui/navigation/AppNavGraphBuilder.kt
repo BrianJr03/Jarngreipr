@@ -702,6 +702,7 @@ fun NavGraphBuilder.romSearchScreen(
         SlideInVertically(showScreen) {
             RomSearchScreen(
                 onNavigateToSearch = {
+                    showScreen = false
                     navController.navigate(Routes.APP_SEARCH)
                 },
                 onDismiss = {
