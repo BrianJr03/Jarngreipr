@@ -127,6 +127,9 @@ fun AppsTab(
     val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
     val isScrollDisabled = scrollDisabledByPage[pageIndex] ?: false
 
+    val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
+    val isBottomFlingDisabled = bottomFlingDisabledByPage[pageIndex] ?: false
+
     LaunchedEffect(pageIndex) {
         appPositionManager.setDragLock(pageIndex, true)
     }
@@ -160,6 +163,8 @@ fun AppsTab(
 
     val gridState = rememberLazyGridState()
     var isScrolling by remember { mutableStateOf(false) }
+
+    val appVisibilityManager = LocalAppVisibilityManager.current
 
     val hasScrollableContent by remember {
         derivedStateOf {
@@ -304,7 +309,12 @@ fun AppsTab(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                pageTypeManager.reorderPages(newOrder)
+                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+            }
         )
     }
 
@@ -384,7 +394,7 @@ fun AppsTab(
         modifier =
             Modifier
                 .fillMaxSize()
-                .nestedScroll(bottomFlingTrigger)
+                .then(if (!isBottomFlingDisabled) Modifier.nestedScroll(bottomFlingTrigger) else Modifier)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .offset(y = offsetY)
                 .scale(pressScale)

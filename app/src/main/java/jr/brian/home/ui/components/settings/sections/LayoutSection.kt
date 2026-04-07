@@ -31,6 +31,7 @@ import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_APP_DRAWER_FAB
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_DOCK
@@ -51,8 +52,10 @@ fun LayoutSection(
 
     val pageTypeManager = LocalPageTypeManager.current
     val appPositionManager = LocalAppPositionManager.current
+    val powerSettingsManager = LocalPowerSettingsManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
+    val appDrawerFilterByPage by powerSettingsManager.appDrawerFilterByPage.collectAsStateWithLifecycle()
 
     CollapsibleSettingsSection(
         title = stringResource(id = R.string.settings_section_layout),
@@ -132,5 +135,37 @@ fun LayoutSection(
                 }
             }
         }
+
+        val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
+        val flingTabs = pageTypes.mapIndexedNotNull { index, type ->
+            if (type == PageType.APPS_TAB || type == PageType.APPS_AND_WIDGETS_TAB) index else null
+        }
+        if (flingTabs.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.settings_layout_bottom_fling_per_tab),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                flingTabs.forEachIndexed { tabNumber, pageIndex ->
+                    val isDisabled = bottomFlingDisabledByPage[pageIndex] ?: false
+                    ToggleSetting(
+                        title = "Tab ${tabNumber + 1}",
+                        description = stringResource(R.string.settings_layout_bottom_fling_description),
+                        checked = isDisabled,
+                        onCheckedChange = { appPositionManager.setBottomFlingDisabled(pageIndex, it) }
+                    )
+                }
+            }
+        }
+
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_app_drawer_filter_by_page),
+            description = stringResource(R.string.settings_layout_app_drawer_filter_by_page_description),
+            checked = appDrawerFilterByPage,
+            onCheckedChange = { powerSettingsManager.setAppDrawerFilterByPage(it) }
+        )
     }
 }

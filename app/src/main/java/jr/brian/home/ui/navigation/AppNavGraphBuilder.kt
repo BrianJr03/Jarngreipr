@@ -40,6 +40,7 @@ import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.screens.RssSettingsScreen
 import jr.brian.home.ui.screens.TrackpadScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
@@ -147,6 +148,9 @@ fun NavGraphBuilder.launcherScreen(
             },
             onNavigateToRomSearch = {
                 navController.navigate(Routes.ROM_SEARCH)
+            },
+            onNavigateToRssSettings = {
+                navController.navigate(Routes.RSS_SETTINGS)
             },
             onNavigateToTrackpad = {
                 navController.navigate(Routes.TRACKPAD)
@@ -316,6 +320,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToRomSearch = {
                     showScreen = false
                     navController.navigate(Routes.ROM_SEARCH)
+                },
+                onNavigateToRssSettings = {
+                    showScreen = false
+                    navController.navigate(Routes.RSS_SETTINGS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -723,6 +731,23 @@ fun NavGraphBuilder.trackpadScreen(
 
         SlideInVertically(showScreen) {
             TrackpadScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.rssSettingsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.RSS_SETTINGS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            RssSettingsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()

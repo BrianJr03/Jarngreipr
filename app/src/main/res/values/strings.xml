@@ -392,6 +392,10 @@
     <string name="settings_layout_scroll_title">Disable Scroll</string>
     <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
     <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
+    <string name="settings_layout_bottom_fling_per_tab">Bottom Fling Per Tab</string>
+    <string name="settings_layout_bottom_fling_description">Open app drawer by flinging to the bottom on this tab.</string>
+    <string name="settings_layout_app_drawer_filter_by_page">Filter App Drawer by Tab</string>
+    <string name="settings_layout_app_drawer_filter_by_page_description">Only show apps visible on the current tab when opening the app drawer.</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>
@@ -521,6 +525,8 @@
     <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
     <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
+    <string name="home_tab_page_type_rss_tab">RSS Tab</string>
+    <string name="home_tab_page_type_rss_tab_description">A tab for browsing RSS feeds.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->

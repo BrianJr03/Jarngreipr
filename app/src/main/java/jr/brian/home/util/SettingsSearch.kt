@@ -5,6 +5,7 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_MUSIC
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_RSS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 
@@ -33,5 +34,8 @@ val sectionKeywords = mapOf(
     ),
     SECTION_MUSIC to listOf(
         "music", "background music", "audio", "song", "playlist", "volume", "folder", "mp3"
+    ),
+    SECTION_RSS to listOf(
+        "rss", "feed", "feeds", "news", "articles", "refresh", "interval", "atom", "syndication"
     )
 )

@@ -51,6 +51,17 @@ class PageTypeManager(context: Context) {
         }
     }
 
+    fun reorderPages(newOrder: List<PageType>) {
+        _pageTypes.value = newOrder
+        prefs.edit().apply {
+            putInt(KEY_PAGE_COUNT, newOrder.size)
+            newOrder.forEachIndexed { idx, pageType ->
+                putString("${KEY_PAGE_TYPE_PREFIX}$idx", pageType.name)
+            }
+            apply()
+        }
+    }
+
     fun removePage(index: Int) {
         val currentTypes = _pageTypes.value.toMutableList()
         if (index in currentTypes.indices) {
