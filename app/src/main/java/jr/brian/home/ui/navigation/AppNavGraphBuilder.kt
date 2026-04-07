@@ -56,6 +56,7 @@ import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import androidx.core.net.toUri
 
 @UnstableApi
 fun NavGraphBuilder.launcherScreen(
@@ -770,7 +771,7 @@ fun NavGraphBuilder.addJingleScreen(
         )
     ) { backStackEntry ->
         val encodedUri = backStackEntry.arguments?.getString("folderUri") ?: return@composable
-        val folderUri = Uri.parse(Uri.decode(encodedUri))
+        val folderUri = Uri.decode(encodedUri).toUri()
         val createPack = backStackEntry.arguments?.getBoolean("createPack") ?: false
         val existingPackPath = backStackEntry.arguments?.getString("existingPackPath")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
         val existingPackName = backStackEntry.arguments?.getString("existingPackName")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }

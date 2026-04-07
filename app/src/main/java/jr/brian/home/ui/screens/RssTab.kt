@@ -61,8 +61,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.R
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
@@ -74,6 +76,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.viewmodels.RssViewModel
 
 @Composable
@@ -129,11 +132,11 @@ fun RssTab(
                     Icon(
                         imageVector = Icons.Default.RssFeed,
                         contentDescription = null,
-                        tint = ThemePrimaryColor,
+                        tint = animatedColor(),
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = "RSS",
+                        text = stringResource(R.string.rss_tab_title),
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
@@ -153,7 +156,7 @@ fun RssTab(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh all",
+                            contentDescription = stringResource(R.string.rss_tab_refresh_cd),
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(22.dp)
                         )
@@ -164,7 +167,7 @@ fun RssTab(
                             IconButton(onClick = { showFilterMenu = true }) {
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
-                                    contentDescription = "Filter feeds",
+                                    contentDescription = stringResource(R.string.rss_tab_filter_cd),
                                     tint = if (selectedFeedUrls.isEmpty()) Color.White.copy(alpha = 0.7f)
                                            else ThemePrimaryColor,
                                     modifier = Modifier.size(22.dp)
@@ -182,7 +185,7 @@ fun RssTab(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            text = "All Feeds",
+                                            text = stringResource(R.string.rss_tab_all_feeds),
                                             color = if (selectedFeedUrls.isEmpty()) ThemePrimaryColor
                                                     else Color.White,
                                             fontSize = 14.sp,
@@ -248,7 +251,7 @@ fun RssTab(
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.rss_tab_settings_cd),
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(22.dp)
                         )
@@ -423,12 +426,12 @@ private fun RssItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayCircle,
-                            contentDescription = "Play video",
+                            contentDescription = stringResource(R.string.rss_tab_play_video_cd),
                             tint = ThemeAccentColor,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Video available",
+                            text = stringResource(R.string.rss_tab_video_available),
                             color = ThemeAccentColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -443,12 +446,12 @@ private fun RssItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Headphones,
-                            contentDescription = "Play audio",
+                            contentDescription = stringResource(R.string.rss_tab_play_audio_cd),
                             tint = ThemeAccentColor,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Listen",
+                            text = stringResource(R.string.rss_tab_listen),
                             color = ThemeAccentColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -537,7 +540,7 @@ private fun MediaThumbnail(
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayCircle,
-                    contentDescription = "Play video",
+                    contentDescription = stringResource(R.string.rss_tab_play_video_cd),
                     tint = Color.White.copy(alpha = 0.9f),
                     modifier = Modifier.size(52.dp)
                 )
@@ -554,7 +557,7 @@ private fun MediaThumbnail(
             ) {
                 Icon(
                     imageVector = Icons.Default.Headphones,
-                    contentDescription = "Play audio",
+                    contentDescription = stringResource(R.string.rss_tab_play_audio_cd),
                     tint = Color.White.copy(alpha = 0.9f),
                     modifier = Modifier.size(44.dp)
                 )
@@ -602,13 +605,13 @@ private fun EmptyRssState() {
                 modifier = Modifier.size(72.dp)
             )
             Text(
-                text = "No RSS feeds",
+                text = stringResource(R.string.rss_tab_empty_title),
                 color = Color.White.copy(alpha = 0.35f),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Add feeds in Settings → RSS",
+                text = stringResource(R.string.rss_tab_empty_hint),
                 color = Color.White.copy(alpha = 0.2f),
                 fontSize = 13.sp
             )
@@ -631,7 +634,7 @@ private fun NoItemsState(onRefresh: () -> Unit) {
                 modifier = Modifier.size(72.dp)
             )
             Text(
-                text = "No articles yet",
+                text = stringResource(R.string.rss_tab_no_articles),
                 color = Color.White.copy(alpha = 0.35f),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
@@ -644,7 +647,7 @@ private fun NoItemsState(onRefresh: () -> Unit) {
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Text(
-                    text = "Refresh Now",
+                    text = stringResource(R.string.rss_tab_refresh_now),
                     color = ThemePrimaryColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold

@@ -148,6 +148,12 @@ class RssViewModel @Inject constructor(
         }
     }
 
+    fun reorderFeeds(orderedUrls: List<String>) {
+        viewModelScope.launch {
+            rssRepository.reorderFeeds(orderedUrls)
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

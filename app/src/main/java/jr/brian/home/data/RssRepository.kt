@@ -55,6 +55,12 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
         rssFeedDao.updateRefreshInterval(url, minutes)
     }
 
+    suspend fun reorderFeeds(orderedUrls: List<String>) {
+        orderedUrls.forEachIndexed { index, url ->
+            rssFeedDao.updateSortOrder(url, index)
+        }
+    }
+
     suspend fun refreshFeed(url: String): Result<Unit> = runCatching {
         val result = fetchAndParse(url)
         rssFeedDao.updateFeedAfterRefresh(
