@@ -8,6 +8,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,18 +28,19 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -46,7 +48,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.zIndex
+import jr.brian.home.R
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,25 +76,18 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.model.rss.RssFeed
-import jr.brian.home.model.state.RssUIState
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.viewmodels.RssViewModel
 
-private val REFRESH_INTERVAL_OPTIONS = listOf(
-    0 to "Manual only",
-    15 to "15 minutes",
-    30 to "30 minutes",
-    60 to "1 hour",
-    120 to "2 hours",
-    360 to "6 hours",
-    720 to "12 hours"
-)
+private val REFRESH_INTERVAL_MINUTES = listOf(0, 15, 30, 60, 120, 360, 720)
 
 @Composable
 fun RssSettingsScreen(
@@ -93,6 +96,14 @@ fun RssSettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddFeedDialog by remember { mutableStateOf(false) }
+    var displayExpanded by remember { mutableStateOf(false) }
+
+    val localFeeds = remember(uiState.feeds) {
+        mutableStateListOf(*uiState.feeds.toTypedArray())
+    }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    val itemHeightsPx = remember { mutableMapOf<Int, Float>() }
 
     if (showAddFeedDialog) {
         AddFeedDialog(
@@ -128,11 +139,11 @@ fun RssSettingsScreen(
                     Icon(
                         imageVector = Icons.Default.RssFeed,
                         contentDescription = null,
-                        tint = ThemePrimaryColor,
+                        tint = animatedColor(),
                         modifier = Modifier.size(28.dp)
                     )
                     Text(
-                        text = "RSS Feeds",
+                        text = stringResource(R.string.rss_settings_title),
                         color = Color.White,
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold
@@ -149,7 +160,7 @@ fun RssSettingsScreen(
                         IconButton(onClick = { viewModel.refreshAllFeeds() }) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh all feeds",
+                                contentDescription = stringResource(R.string.rss_settings_refresh_all_cd),
                                 tint = Color.White.copy(alpha = 0.8f),
                                 modifier = Modifier.size(24.dp)
                             )
@@ -158,7 +169,15 @@ fun RssSettingsScreen(
                     IconButton(onClick = { showAddFeedDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Add feed",
+                            contentDescription = stringResource(R.string.rss_settings_add_feed_cd),
+                            tint = ThemePrimaryColor,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.rss_settings_save_cd),
                             tint = ThemePrimaryColor,
                             modifier = Modifier.size(26.dp)
                         )
@@ -199,7 +218,7 @@ fun RssSettingsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             TextButton(onClick = { viewModel.clearError() }) {
-                                Text("Dismiss", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                                Text(stringResource(R.string.rss_settings_error_dismiss), color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
                             }
                         }
                     }
@@ -224,13 +243,13 @@ fun RssSettingsScreen(
                             modifier = Modifier.size(64.dp)
                         )
                         Text(
-                            text = "No RSS feeds added yet",
+                            text = stringResource(R.string.rss_settings_empty_title),
                             color = Color.White.copy(alpha = 0.4f),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Tap + to add your first feed",
+                            text = stringResource(R.string.rss_settings_empty_hint),
                             color = Color.White.copy(alpha = 0.25f),
                             fontSize = 13.sp
                         )
@@ -245,23 +264,163 @@ fun RssSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        DisplaySettingsCard(
-                            useDMY = uiState.useDMYDateFormat,
-                            use24Hour = uiState.use24HourClock,
-                            onToggleDateFormat = { viewModel.setUseDMYDateFormat(!uiState.useDMYDateFormat) },
-                            onToggleTimeFormat = { viewModel.setUse24HourClock(!uiState.use24HourClock) }
-                        )
-                    }
-                    items(uiState.feeds, key = { it.url }) { feed ->
-                        FeedCard(
-                            feed = feed,
-                            isRefreshing = uiState.isRefreshing,
-                            onRefresh = { viewModel.refreshFeed(feed.url) },
-                            onDelete = { viewModel.removeFeed(feed.url) },
-                            onIntervalSelected = { minutes ->
-                                viewModel.setRefreshInterval(feed.url, minutes)
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.rss_settings_display_section),
+                            icon = Icons.Default.Tune,
+                            isExpanded = displayExpanded,
+                            onToggle = { displayExpanded = !displayExpanded }
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.rss_settings_date_format),
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    listOf(true to stringResource(R.string.rss_settings_date_dmy), false to stringResource(R.string.rss_settings_date_mdy)).forEach { (isDMY, label) ->
+                                        val selected = uiState.useDMYDateFormat == isDMY
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
+                                                    else Color.White.copy(alpha = 0.07f)
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
+                                                            else Color.Transparent,
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable { if (!selected) viewModel.setUseDMYDateFormat(isDMY) }
+                                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                            )
+                                        }
+                                    }
+                                }
                             }
-                        )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.rss_settings_time_format),
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    listOf(true to stringResource(R.string.rss_settings_time_24h), false to stringResource(R.string.rss_settings_time_12h)).forEach { (is24, label) ->
+                                        val selected = uiState.use24HourClock == is24
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
+                                                    else Color.White.copy(alpha = 0.07f)
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
+                                                            else Color.Transparent,
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable { if (!selected) viewModel.setUse24HourClock(is24) }
+                                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    item(key = "feed_list") {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            localFeeds.forEachIndexed { listPos, feed ->
+                                val isDragging = draggingIndex == listPos
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .zIndex(if (isDragging) 1f else 0f)
+                                        .graphicsLayer {
+                                            translationY = if (isDragging) dragOffsetY else 0f
+                                            shadowElevation = if (isDragging) 24f else 0f
+                                            scaleX = if (isDragging) 1.03f else 1f
+                                            scaleY = if (isDragging) 1.03f else 1f
+                                            alpha = if (isDragging) 0.92f else 1f
+                                        }
+                                        .onGloballyPositioned { coords ->
+                                            itemHeightsPx[listPos] = coords.size.height.toFloat()
+                                        }
+                                ) {
+                                    FeedCard(
+                                        feed = feed,
+                                        isRefreshing = uiState.isRefreshing,
+                                        isDragging = isDragging,
+                                        onRefresh = { viewModel.refreshFeed(feed.url) },
+                                        onDelete = { viewModel.removeFeed(feed.url) },
+                                        onIntervalSelected = { minutes ->
+                                            viewModel.setRefreshInterval(feed.url, minutes)
+                                        },
+                                        dragHandleModifier = Modifier.pointerInput(listPos) {
+                                            detectDragGesturesAfterLongPress(
+                                                onDragStart = {
+                                                    draggingIndex = listPos
+                                                    dragOffsetY = 0f
+                                                },
+                                                onDrag = { _, dragAmount ->
+                                                    dragOffsetY += dragAmount.y
+                                                    val cur = draggingIndex ?: return@detectDragGesturesAfterLongPress
+                                                    if (cur < localFeeds.size - 1) {
+                                                        val nextH = itemHeightsPx[cur + 1] ?: 80f
+                                                        if (dragOffsetY > nextH * 0.5f) {
+                                                            localFeeds.add(cur + 1, localFeeds.removeAt(cur))
+                                                            draggingIndex = cur + 1
+                                                            dragOffsetY -= nextH
+                                                        }
+                                                    }
+                                                    if (cur > 0) {
+                                                        val prevH = itemHeightsPx[cur - 1] ?: 80f
+                                                        if (dragOffsetY < -prevH * 0.5f) {
+                                                            localFeeds.add(cur - 1, localFeeds.removeAt(cur))
+                                                            draggingIndex = cur - 1
+                                                            dragOffsetY += prevH
+                                                        }
+                                                    }
+                                                },
+                                                onDragEnd = {
+                                                    viewModel.reorderFeeds(localFeeds.map { it.url })
+                                                    draggingIndex = null
+                                                    dragOffsetY = 0f
+                                                },
+                                                onDragCancel = {
+                                                    localFeeds.clear()
+                                                    localFeeds.addAll(uiState.feeds)
+                                                    draggingIndex = null
+                                                    dragOffsetY = 0f
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -273,13 +432,23 @@ fun RssSettingsScreen(
 private fun FeedCard(
     feed: RssFeed,
     isRefreshing: Boolean,
+    isDragging: Boolean = false,
     onRefresh: () -> Unit,
     onDelete: () -> Unit,
-    onIntervalSelected: (Int) -> Unit
+    onIntervalSelected: (Int) -> Unit,
+    dragHandleModifier: Modifier = Modifier
 ) {
     var showIntervalMenu by remember { mutableStateOf(false) }
-    val intervalLabel = REFRESH_INTERVAL_OPTIONS
-        .firstOrNull { it.first == feed.refreshIntervalMinutes }?.second
+    val intervalLabels = mapOf(
+        0 to stringResource(R.string.rss_settings_interval_manual),
+        15 to stringResource(R.string.rss_settings_interval_15m),
+        30 to stringResource(R.string.rss_settings_interval_30m),
+        60 to stringResource(R.string.rss_settings_interval_1h),
+        120 to stringResource(R.string.rss_settings_interval_2h),
+        360 to stringResource(R.string.rss_settings_interval_6h),
+        720 to stringResource(R.string.rss_settings_interval_12h)
+    )
+    val intervalLabel = intervalLabels[feed.refreshIntervalMinutes]
         ?: "${feed.refreshIntervalMinutes} min"
 
     Box(
@@ -327,7 +496,7 @@ private fun FeedCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh feed",
+                            contentDescription = stringResource(R.string.rss_settings_feed_refresh_cd),
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -338,8 +507,21 @@ private fun FeedCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Remove feed",
+                            contentDescription = stringResource(R.string.rss_settings_feed_delete_cd),
                             tint = Color(0xFFFF5252),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .then(dragHandleModifier),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DragHandle,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = if (isDragging) 1f else 0.4f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -374,7 +556,8 @@ private fun FeedCard(
                     onDismissRequest = { showIntervalMenu = false },
                     containerColor = OledCardColor
                 ) {
-                    REFRESH_INTERVAL_OPTIONS.forEach { (minutes, label) ->
+                    REFRESH_INTERVAL_MINUTES.forEach { minutes ->
+                        val label = intervalLabels[minutes] ?: "$minutes min"
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -446,7 +629,7 @@ private fun AddFeedDialog(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Add RSS Feed",
+                        text = stringResource(R.string.rss_settings_dialog_title),
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
@@ -458,11 +641,11 @@ private fun AddFeedDialog(
                     onValueChange = { url = it },
                     placeholder = {
                         Text(
-                            "https://example.com/feed.xml",
+                            stringResource(R.string.rss_settings_dialog_url_placeholder),
                             color = Color.White.copy(alpha = 0.3f)
                         )
                     },
-                    label = { Text("Feed URL", color = Color.White.copy(alpha = 0.6f)) },
+                    label = { Text(stringResource(R.string.rss_settings_dialog_url_label), color = Color.White.copy(alpha = 0.6f)) },
                     singleLine = true,
                     trailingIcon = {
                         IconButton(onClick = {
@@ -470,7 +653,7 @@ private fun AddFeedDialog(
                         }) {
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
-                                contentDescription = "Paste",
+                                contentDescription = stringResource(R.string.rss_settings_dialog_paste_cd),
                                 tint = Color.White.copy(alpha = 0.5f),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -494,7 +677,7 @@ private fun AddFeedDialog(
                 )
 
                 Text(
-                    text = "Supports RSS 2.0 and Atom feeds",
+                    text = stringResource(R.string.rss_settings_dialog_hint),
                     color = Color.White.copy(alpha = 0.35f),
                     fontSize = 12.sp
                 )
@@ -507,7 +690,7 @@ private fun AddFeedDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                        Text(stringResource(R.string.rss_settings_dialog_cancel), color = Color.White.copy(alpha = 0.6f))
                     }
                     Spacer(modifier = Modifier.size(8.dp))
                     Box(
@@ -534,131 +717,12 @@ private fun AddFeedDialog(
                             )
                         } else {
                             Text(
-                                text = "Add Feed",
+                                text = stringResource(R.string.rss_settings_dialog_add),
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp
                             )
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DisplaySettingsCard(
-    useDMY: Boolean,
-    use24Hour: Boolean,
-    onToggleDateFormat: () -> Unit,
-    onToggleTimeFormat: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(brush = subtleCardGradient(false), shape = RoundedCornerShape(16.dp))
-            .border(
-                width = 1.dp,
-                brush = borderBrush(isFocused = false),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clip(RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = "Display",
-            color = Color.White.copy(alpha = 0.45f),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
-        )
-        HorizontalDivider(color = Color.White.copy(alpha = 0.06f), thickness = 1.dp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onToggleDateFormat)
-                .padding(vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Date format",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                listOf(true to "D/MM/YYYY", false to "MM/D/YYYY").forEach { (isDMY, label) ->
-                    val selected = useDMY == isDMY
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
-                                else Color.White.copy(alpha = 0.07f)
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
-                                        else Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clickable { if (!selected) onToggleDateFormat() }
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
-                            fontSize = 12.sp,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
-        }
-        HorizontalDivider(color = Color.White.copy(alpha = 0.06f), thickness = 1.dp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onToggleTimeFormat)
-                .padding(vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Time format",
-                color = Color.White,
-                fontSize = 14.sp
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                listOf(true to "24h", false to "12h").forEach { (is24, label) ->
-                    val selected = use24Hour == is24
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
-                                else Color.White.copy(alpha = 0.07f)
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
-                                        else Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clickable { if (!selected) onToggleTimeFormat() }
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
-                            fontSize = 12.sp,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                        )
                     }
                 }
             }

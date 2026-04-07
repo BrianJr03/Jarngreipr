@@ -10,7 +10,8 @@ data class RssFeedEntity(
     val title: String,
     val description: String,
     val refreshIntervalMinutes: Int,
-    val lastRefreshedAt: Long
+    val lastRefreshedAt: Long,
+    val sortOrder: Int = 0
 ) {
     fun toDomain() = RssFeed(
         url = url,

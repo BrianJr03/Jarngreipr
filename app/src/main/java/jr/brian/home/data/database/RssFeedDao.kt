@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RssFeedDao {
 
-    @Query("SELECT * FROM rss_feeds")
+    @Query("SELECT * FROM rss_feeds ORDER BY sortOrder ASC")
     fun getAllFeeds(): Flow<List<RssFeedEntity>>
 
-    @Query("SELECT * FROM rss_feeds")
+    @Query("SELECT * FROM rss_feeds ORDER BY sortOrder ASC")
     suspend fun getAllFeedsSnapshot(): List<RssFeedEntity>
 
     @Query("SELECT * FROM rss_feeds WHERE url = :url")
@@ -41,4 +41,7 @@ interface RssFeedDao {
 
     @Query("UPDATE rss_feeds SET refreshIntervalMinutes = :minutes WHERE url = :url")
     suspend fun updateRefreshInterval(url: String, minutes: Int)
+
+    @Query("UPDATE rss_feeds SET sortOrder = :sortOrder WHERE url = :url")
+    suspend fun updateSortOrder(url: String, sortOrder: Int)
 }

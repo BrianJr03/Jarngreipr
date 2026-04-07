@@ -738,14 +738,14 @@ private fun SettingsSectionGrid(
 ) {
     val sections = remember {
         listOf(
-            SectionInfo(SECTION_APPEARANCE, "Appearance", "Theme & icons", Icons.Default.Palette),
-            SectionInfo(SECTION_LAYOUT, "Layout", "Grid & dock", Icons.Default.GridView),
-            SectionInfo(SECTION_MUSIC, "Music", "Background audio", Icons.Default.MusicNote),
-            SectionInfo(SECTION_RSS, "RSS", "News feeds", Icons.Default.RssFeed),
-            SectionInfo(SECTION_ESDE, "ESDE", "Emulation display", Icons.Default.SportsEsports),
-            SectionInfo(SECTION_EXTRAS, "Extras", "Floaty & more", Icons.Default.AutoAwesome),
-            SectionInfo(SECTION_SYSTEM, "System", "Updates & tools", Icons.Default.Tune),
-            SectionInfo(SECTION_SUPPORT, "Support", "FAQ & links", Icons.Default.Help),
+            SectionInfo(SECTION_APPEARANCE, "Appearance", "Theme & Icons", Icons.Default.Palette),
+            SectionInfo(SECTION_LAYOUT, "Layout", "Grid & Dock", Icons.Default.GridView),
+            SectionInfo(SECTION_MUSIC, "Music", "Background Audio", Icons.Default.MusicNote),
+            SectionInfo(SECTION_RSS, "RSS", "News Feeds", Icons.Default.RssFeed),
+            SectionInfo(SECTION_ESDE, "ES-DE", "Emulation Display", Icons.Default.SportsEsports),
+            SectionInfo(SECTION_EXTRAS, "Extras", "Extras! Extras!", Icons.Default.AutoAwesome),
+            SectionInfo(SECTION_SYSTEM, "System", "Updates & Tools", Icons.Default.Tune),
+            SectionInfo(SECTION_SUPPORT, "Support", "FAQ & Links", Icons.Default.Help),
         )
     }
 

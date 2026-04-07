@@ -1394,4 +1394,51 @@
     <string name="music_options_mute_all">Mute All Music</string>
     <string name="music_options_unmute_all">Unmute All Music</string>
     <string name="music_options_resume_bg">Resume Background Music</string>
+
+    <!-- RSS Settings Screen -->
+    <string name="rss_settings_title">RSS Feeds</string>
+    <string name="rss_settings_refresh_all_cd">Refresh all feeds</string>
+    <string name="rss_settings_add_feed_cd">Add feed</string>
+    <string name="rss_settings_save_cd">Save</string>
+    <string name="rss_settings_display_section">Display</string>
+    <string name="rss_settings_date_format">Date format</string>
+    <string name="rss_settings_date_dmy">D/MM/YYYY</string>
+    <string name="rss_settings_date_mdy">MM/D/YYYY</string>
+    <string name="rss_settings_time_format">Time format</string>
+    <string name="rss_settings_time_24h">24h</string>
+    <string name="rss_settings_time_12h">12h</string>
+    <string name="rss_settings_empty_title">No RSS feeds added yet</string>
+    <string name="rss_settings_empty_hint">Tap + to add your first feed</string>
+    <string name="rss_settings_error_dismiss">Dismiss</string>
+    <string name="rss_settings_feed_refresh_cd">Refresh feed</string>
+    <string name="rss_settings_feed_delete_cd">Remove feed</string>
+    <string name="rss_settings_interval_manual">Manual only</string>
+    <string name="rss_settings_interval_15m">15 minutes</string>
+    <string name="rss_settings_interval_30m">30 minutes</string>
+    <string name="rss_settings_interval_1h">1 hour</string>
+    <string name="rss_settings_interval_2h">2 hours</string>
+    <string name="rss_settings_interval_6h">6 hours</string>
+    <string name="rss_settings_interval_12h">12 hours</string>
+    <string name="rss_settings_dialog_title">Add RSS Feed</string>
+    <string name="rss_settings_dialog_url_placeholder">https://example.com/feed.xml</string>
+    <string name="rss_settings_dialog_url_label">Feed URL</string>
+    <string name="rss_settings_dialog_paste_cd">Paste</string>
+    <string name="rss_settings_dialog_hint">Supports RSS 2.0 and Atom feeds</string>
+    <string name="rss_settings_dialog_cancel">Cancel</string>
+    <string name="rss_settings_dialog_add">Add Feed</string>
+
+    <!-- RSS Tab -->
+    <string name="rss_tab_title">RSS</string>
+    <string name="rss_tab_refresh_cd">Refresh all</string>
+    <string name="rss_tab_filter_cd">Filter feeds</string>
+    <string name="rss_tab_all_feeds">All Feeds</string>
+    <string name="rss_tab_settings_cd">Settings</string>
+    <string name="rss_tab_video_available">Video available</string>
+    <string name="rss_tab_play_video_cd">Play video</string>
+    <string name="rss_tab_play_audio_cd">Play audio</string>
+    <string name="rss_tab_listen">Listen</string>
+    <string name="rss_tab_empty_title">No RSS feeds</string>
+    <string name="rss_tab_empty_hint">Add feeds in Settings → RSS</string>
+    <string name="rss_tab_no_articles">No articles yet</string>
+    <string name="rss_tab_refresh_now">Refresh Now</string>
 </resources>
