@@ -9,5 +9,7 @@ data class RssUIState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: String? = null,
-    val selectedFeedUrls: Set<String> = emptySet()
+    val selectedFeedUrls: Set<String> = emptySet(),
+    val useDMYDateFormat: Boolean = true,
+    val use24HourClock: Boolean = true
 )
