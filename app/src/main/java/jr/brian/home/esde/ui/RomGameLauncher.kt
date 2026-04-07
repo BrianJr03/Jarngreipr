@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.EsdeCommandLauncher
@@ -17,6 +18,7 @@ import jr.brian.home.esde.util.buildSafDocumentUri
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.util.sdCardVolumeId
+import jr.brian.home.util.launchApp
 import java.io.File
 
 class RomGameLauncher(
@@ -39,7 +41,8 @@ class RomGameLauncher(
     fun resolveContentUri(game: GameInfo, romPath: String, context: Context): Uri? {
         val volumeId = sdCardVolumeId(romPath)
         return if (volumeId != null) {
-            val safUri = buildSafDocumentUri(romPath, volumeId, game.systemName, esdePrefs::getSafTreeUri)
+            val safUri =
+                buildSafDocumentUri(romPath, volumeId, game.systemName, esdePrefs::getSafTreeUri)
             if (safUri == null) {
                 Log.d("RomSearchResults", "Requesting SAF tree for system=${game.systemName}")
                 pendingGameLaunch = game to context
@@ -64,7 +67,11 @@ class RomGameLauncher(
         }
     }
 
-    fun launchGame(game: GameInfo, context: Context) {
+    fun launchGame(
+        game: GameInfo,
+        context: Context,
+        displayPreference: AppDisplayPreferenceManager.DisplayPreference
+    ) {
         if (game.systemName.equals("androidgames", ignoreCase = true) ||
             game.systemName.equals("androidapps", ignoreCase = true)
         ) {
@@ -72,10 +79,12 @@ class RomGameLauncher(
             val intent = activity.packageManager.getLaunchIntentForPackage(key)
                 ?: resolveAndroidAppByLabel(key)
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
                 onSignalGameLaunch()
-                activity.startActivity(intent, options.toBundle())
+                launchApp(
+                    context = context,
+                    packageName = key,
+                    displayPreference = displayPreference
+                )
             } else {
                 Toast.makeText(context, "App not installed: $key", Toast.LENGTH_SHORT).show()
             }
@@ -84,7 +93,10 @@ class RomGameLauncher(
         }
 
         val romPath = resolveRomPath(game, esdePrefs.state.value.romsPaths) ?: run {
-            Log.e("RomSearchResults", "ROM path not resolved | system=${game.systemName} path=${game.path}")
+            Log.e(
+                "RomSearchResults",
+                "ROM path not resolved | system=${game.systemName} path=${game.path}"
+            )
             Toast.makeText(context, "ROM path not found", Toast.LENGTH_SHORT).show()
             return
         }
@@ -108,7 +120,11 @@ class RomGameLauncher(
                     activity.startActivity(intent, options.toBundle())
                     activity.finish()
                 } else {
-                    Toast.makeText(context, "No emulator configured for this game", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "No emulator configured for this game",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 return
             }
@@ -130,15 +146,20 @@ class RomGameLauncher(
         val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
         if (savedCommand != null) {
             val findRulesFile =
-                File(activity.filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
+                File(
+                    activity.filesDir.parent ?: "",
+                    "ES-DE/custom_systems/es_find_rules.xml"
+                ).let { f ->
                     if (f.exists()) f else File("/storage/emulated/0/ES-DE/custom_systems/es_find_rules.xml")
                 }
             val customRules = EsdeCommandLauncher.parseCustomRules(findRulesFile)
-            val intent = EsdeCommandLauncher.buildIntent(savedCommand, romPath, context, customRules)
-                ?: run {
-                    Toast.makeText(context, "Failed to build launch intent", Toast.LENGTH_SHORT).show()
-                    return
-                }
+            val intent =
+                EsdeCommandLauncher.buildIntent(savedCommand, romPath, context, customRules)
+                    ?: run {
+                        Toast.makeText(context, "Failed to build launch intent", Toast.LENGTH_SHORT)
+                            .show()
+                        return
+                    }
             val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
             Log.d("RomSearchResults", "launchGame (command) | cmd=$savedCommand rom=$romPath")
             onSignalGameLaunch()
@@ -147,7 +168,8 @@ class RomGameLauncher(
             return
         }
 
-        val corePath = if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
+        val corePath =
+            if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
         val effectiveContentUri: Uri = resolveContentUri(game, romPath, context) ?: return
 
         Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$effectiveContentUri")
@@ -164,7 +186,8 @@ class RomGameLauncher(
                 activity.packageManager.getLaunchIntentForPackage(pkg)
                     ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
                     ?: run {
-                        Toast.makeText(context, "App not installed: $pkg", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "App not installed: $pkg", Toast.LENGTH_SHORT)
+                            .show()
                         return
                     }
             }
@@ -211,7 +234,10 @@ class RomGameLauncher(
                 contentUri = contentUri,
                 context = activity
             )
-            Log.d("RomSearchResults", "  → intent data=${romIntent.data} extras=${romIntent.extras}")
+            Log.d(
+                "RomSearchResults",
+                "  → intent data=${romIntent.data} extras=${romIntent.extras}"
+            )
             val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
             val canHandleRom = activity.packageManager.resolveActivity(romIntent, 0) != null
             val intent = if (canHandleRom) {
@@ -220,7 +246,11 @@ class RomGameLauncher(
                 activity.packageManager.getLaunchIntentForPackage(emulatorPackage)
                     ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
                     ?: run {
-                        Toast.makeText(activity, "App not installed: $emulatorPackage", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            activity,
+                            "App not installed: $emulatorPackage",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return
                     }
             }

@@ -29,13 +29,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,6 +49,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -75,6 +79,7 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -95,15 +100,16 @@ fun QwertyKeyboard(
     onQueryChange: (String) -> Unit,
     onFocusChanged: (Int) -> Unit = {},
     onFlipLayout: () -> Unit = {},
-    onSpecialCharToggle: () -> Unit = {},
     onReopenResults: (() -> Unit)? = null,
     onOpenRomSearchSettings: (() -> Unit)? = null,
+    onNavigateToSearch: (() -> Unit)? = null,
     onAtClick: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var isNumericMode by remember { mutableStateOf(false) }
 
     val wallpaperManager = LocalWallpaperManager.current
+    val localBgMusicManager = LocalBgMusicManager.current
     val cursorTransition = rememberInfiniteTransition(label = "cursor")
     val cursorAlpha by cursorTransition.animateFloat(
         initialValue = 1f,
@@ -154,21 +160,13 @@ fun QwertyKeyboard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 if (showVolControl) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                ThemePrimaryColor.copy(alpha = 0.3f),
-                                RoundedCornerShape(6.dp)
-                            )
-                            .clickable {
-                                val newMuted = !isMuted
-                                jinglesManager.setMuted(newMuted)
-                                esdeViewModel.musicController.setMuted(newMuted)
-                                VideoPresentationManager.setMuted(newMuted)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
+                    QwertyIconBox({
+                        val newMuted = !isMuted
+                        jinglesManager.setMuted(newMuted)
+                        esdeViewModel.musicController.setMuted(newMuted)
+                        VideoPresentationManager.setMuted(newMuted)
+                        localBgMusicManager.setMuted(newMuted)
+                    }) {
                         Icon(
                             imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = if (isMuted) "Unmute" else "Mute",
@@ -176,18 +174,9 @@ fun QwertyKeyboard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            RoundedCornerShape(6.dp)
-                        )
-                        .clickable { if (onAtClick != null) onAtClick() else onSpecialCharToggle() },
-                    contentAlignment = Alignment.Center
-                ) {
+                QwertyIconBox({ onAtClick?.invoke() }) {
                     Text(
                         text = "@",
                         fontSize = 18.sp,
@@ -196,20 +185,11 @@ fun QwertyKeyboard(
                     )
                 }
                 if (onReopenResults != null &&
-                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-                    && showController
+                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE &&
+                    showController
                 ) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                ThemePrimaryColor.copy(alpha = 0.3f),
-                                RoundedCornerShape(6.dp)
-                            )
-                            .clickable { onReopenResults() },
-                        contentAlignment = Alignment.Center
-                    ) {
+                    QwertyIconBox(onClick = onReopenResults) {
                         Icon(
                             imageVector = Icons.Default.SportsEsports,
                             contentDescription = stringResource(R.string.keyboard_label_reopen_results),
@@ -218,19 +198,9 @@ fun QwertyKeyboard(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 if (showSettings) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                ThemePrimaryColor.copy(alpha = 0.3f),
-                                RoundedCornerShape(6.dp)
-                            ).clickable {
-                               onOpenRomSearchSettings?.invoke()
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onOpenRomSearchSettings?.invoke() }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
@@ -239,17 +209,20 @@ fun QwertyKeyboard(
                         )
                     }
                 }
+                onNavigateToSearch?.let {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onNavigateToSearch() }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.home_tab_search_apps),
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
                 if (showFlipLayoutButton) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                ThemePrimaryColor.copy(alpha = 0.3f),
-                                RoundedCornerShape(6.dp)
-                            )
-                            .clickable { onFlipLayout() },
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    QwertyIconBox({ onFlipLayout() }) {
                         Icon(
                             imageVector = Icons.Default.FlipCameraAndroid,
                             contentDescription = stringResource(R.string.keyboard_label_flip),
@@ -284,6 +257,26 @@ fun QwertyKeyboard(
                 onSwapMode = { isNumericMode = true }
             )
         }
+    }
+}
+
+
+@Composable
+private fun QwertyIconBox(
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .background(
+                ThemePrimaryColor.copy(alpha = 0.3f),
+                RoundedCornerShape(6.dp)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        content()
     }
 }
 
@@ -628,7 +621,11 @@ private fun QwertyKeyButton(
                 isFocused = it.isFocused
             }
             .background(
-                brush = cardGradient(isFocused, isPressed = isPressed, ignoreOled = oledManager.isKeyboardOledExempt),
+                brush = cardGradient(
+                    isFocused,
+                    isPressed = isPressed,
+                    ignoreOled = oledManager.isKeyboardOledExempt
+                ),
                 shape = RoundedCornerShape(6.dp),
             )
             .border(
@@ -643,6 +640,16 @@ private fun QwertyKeyButton(
                 ),
                 shape = RoundedCornerShape(6.dp),
             )
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.ButtonA ||
+                            event.key == Key.DirectionCenter ||
+                            event.key == Key.Enter)
+                ) {
+                    onClick()
+                    true
+                } else false
+            }
             .pressWithHaptic(
                 onClick, label,
                 haptic = haptic,

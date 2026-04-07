@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.model.Shortcut
 
+enum class PlatformImageFolderType { Smart, Default }
+
 enum class SystemImageType(val folderName: String?) {
     None(null),
     All(null),
@@ -236,7 +238,13 @@ data class ESDEPrefsState(
     val romSearchFocusAnimationDisabledGames: Set<String> = emptySet(),
     val logoVisibilityAnimation: Boolean = false,
     val logoChangeAnimation: Boolean = false,
-    val romSearchShowAllAndroidApps: Boolean = false
+    val romSearchShowAllAndroidApps: Boolean = false,
+    val romSearchPlatformAutoFilter: Boolean = false,
+    val romSearchFocusAnimationDelayMs: Int = 150,
+    val romSearchPlatformImagesEnabled: Boolean = false,
+    val romSearchPlatformImagesFolderUri: String? = null,
+    val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
+    val romSearchDetailImageHeightDp: Int = 240
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

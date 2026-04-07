@@ -4,6 +4,7 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_APPEARANCE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_MUSIC
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 
@@ -29,5 +30,8 @@ val sectionKeywords = mapOf(
     ),
     SECTION_EXTRAS to listOf(
         "extras", "what's new", "floaty mode", "floaty", "whats new"
+    ),
+    SECTION_MUSIC to listOf(
+        "music", "background music", "audio", "song", "playlist", "volume", "folder", "mp3"
     )
 )

@@ -33,10 +33,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -75,6 +73,7 @@ import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.components.QwertyKeyboard
 import androidx.compose.ui.graphics.lerp
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -85,9 +84,11 @@ import java.io.File
 @Composable
 fun RomSearchScreen(
     onDismiss: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
     viewModel: RomSearchViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val jinglesManager = LocalJinglesManager.current
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -100,6 +101,7 @@ fun RomSearchScreen(
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
 
     LaunchedEffect(Unit) {
+        jinglesManager.stop()
         viewModel.loadGames()
         launchResultsActivity(context)
     }
@@ -172,8 +174,8 @@ fun RomSearchScreen(
                             showSettings = true,
                             showController = false,
                             onOpenRomSearchSettings = { showSettings = true },
-                            onSpecialCharToggle = { showSpecialCharRow = !showSpecialCharRow },
-                            onAtClick = { viewModel.updateQuery(query + "@") },
+                            onNavigateToSearch = onNavigateToSearch,
+                            onAtClick = { viewModel.updateQuery("$query@") },
                             onReopenResults = { launchResultsActivity(context) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -247,18 +249,13 @@ private fun RomSearchControlHints(
 
 @Composable
 private fun SearchCommandsDialog(onDismiss: () -> Unit) {
-    val commands = listOf(
-        "@hidden" to "Show all hidden games. Use the platform chips that appear to filter by system, and the Unhide All button to bulk unhide.",
-        "@{platform}" to "Filter games to a specific system. Example: @psp shows all PSP games, @snes shows all SNES games.",
-        "@{partial}" to "Partial platform match. Example: @nin shows Nintendo 64, SNES, NES, etc.",
-        "{name}" to "Search by game name, system, genre, developer, or publisher.",
-    )
+    val commands = romSearchCommands()
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = jr.brian.home.ui.theme.OledCardColor,
         title = {
             Text(
-                text = "Search Commands",
+                text = stringResource(R.string.rom_search_commands),
                 color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
@@ -297,7 +294,10 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Got it", color = ThemePrimaryColor)
+                Text(
+                    text = stringResource(R.string.whats_new_got_it),
+                    color = ThemePrimaryColor
+                )
             }
         }
     )
@@ -306,8 +306,8 @@ private fun SearchCommandsDialog(onDismiss: () -> Unit) {
 @Composable
 internal fun AnimatedGameTitle(
     name: String,
-    fontSize: TextUnit = 32.sp,
     modifier: Modifier = Modifier,
+    fontSize: TextUnit = 40.sp,
     textAlign: TextAlign = TextAlign.Center,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip

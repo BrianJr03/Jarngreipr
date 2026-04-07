@@ -68,6 +68,7 @@ import jr.brian.home.ui.screens.AppsModalContent
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.util.rememberDialogState
@@ -105,6 +106,7 @@ fun MainContent(
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
     val appUpdateManager = LocalAppUpdateManager.current
+    val bgMusicManager = LocalBgMusicManager.current
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
@@ -143,6 +145,10 @@ fun MainContent(
         if (isAnyOverlayVisible) {
             VideoPresentationManager.dismiss()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        bgMusicManager.resumeIfConfigured()
     }
 
     LaunchedEffect(Unit) {
