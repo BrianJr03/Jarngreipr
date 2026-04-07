@@ -141,8 +141,7 @@ fun LauncherPagerScreen(
         showAppDrawerSheet = false
         scope.launch { runCatching { appDrawerSheetState.hide() } }
     }
-    // Safety-net: whenever the sheet actually reaches Hidden (by any means),
-    // guarantee the compose tree removes it and resets game state.
+
     LaunchedEffect(appDrawerSheetState) {
         var wasSheetExpanded = false
         snapshotFlow { appDrawerSheetState.currentValue }
@@ -230,7 +229,6 @@ fun LauncherPagerScreen(
         onBackButtonShortcut()
     }
 
-    // While the game is active in the app drawer, consume system back/gesture.
     BackHandler(enabled = showAppDrawerSheet && isAppDrawerGameInProgress) {}
 
     val widgetToResize = resizeWidgetInfo
@@ -401,9 +399,6 @@ fun LauncherPagerScreen(
 
                     PageType.RSS_TAB -> {
                         RssTab(
-                            totalPages = totalPages,
-                            pagerState = pagerState,
-                            pageIndex = page,
                             onSettingsClick = onNavigateToRssSettings
                         )
                     }

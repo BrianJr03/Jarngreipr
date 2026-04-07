@@ -56,7 +56,6 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
     }
 
     private fun loadFabExplicitPages(): Boolean {
-        // If user previously saved page visibility, auto-migrate to explicit mode
         val savedPagesStr = prefs.getString(KEY_FAB_VISIBLE_PAGES, null)
         val hasExplicitPages = !savedPagesStr.isNullOrEmpty()
         return prefs.getBoolean(KEY_FAB_EXPLICIT_PAGES, hasExplicitPages)
@@ -99,7 +98,6 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
 
     fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
         if (!_fabExplicitPages.value) {
-            // First time interacting: switch to explicit mode and initialize with all pages
             setFabExplicitPages(true)
             val allPages = (0 until totalPages).toMutableSet()
             allPages.remove(pageIndex)
