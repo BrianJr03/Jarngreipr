@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.edit
+import jr.brian.home.data.BgMusicManager
 import jr.brian.home.esde.model.MusicSource
 import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
@@ -31,7 +32,8 @@ import java.io.File
  *           └── arcade-music.mp3*/
 class MusicManager(
     context: Context,
-    private val prefsManager: ESDEPreferencesManager
+    private val prefsManager: ESDEPreferencesManager,
+    private val bgMusicManager: BgMusicManager
 ) : MusicController {
 
     companion object {
@@ -451,6 +453,7 @@ class MusicManager(
 
         // Abandon audio focus
         abandonAudioFocus()
+        bgMusicManager.unDuck()
     }
 
     override fun pauseMusic() {
@@ -458,6 +461,7 @@ class MusicManager(
             if (player.isPlaying) {
                 Log.d(TAG, "Pausing music via user control")
                 player.pause()
+                bgMusicManager.unDuck()
             }
         }
     }
@@ -469,6 +473,7 @@ class MusicManager(
                 player.start()
                 // Ensure volume is at normal level
                 fadeVolume(currentVolume, getNormalVolume(), DUCK_FADE_DURATION)
+                bgMusicManager.duck()
             }
         }
     }
@@ -583,6 +588,7 @@ class MusicManager(
         // Play first track
         playTrack(playlist[0])
         isMusicPlaying = true
+        bgMusicManager.duck()
     }
 
     private fun stopMusic() {
@@ -604,6 +610,7 @@ class MusicManager(
             isMusicPlaying = false
             targetVolume = getNormalVolume()
             abandonAudioFocus()
+            bgMusicManager.unDuck()
         }
     }
 

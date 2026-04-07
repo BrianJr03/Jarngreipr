@@ -1,6 +1,5 @@
 package jr.brian.home.ui.components.settings.sections
 
-import android.app.ActivityOptions
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,7 +43,6 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.WallpaperToggleTarget
-import jr.brian.home.esde.ui.RomSearchResultsActivity
 import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersConfirmationDialog
 import jr.brian.home.esde.ui.components.DeleteEmptyFoldersProgressDialog
@@ -73,6 +71,7 @@ fun ESDESettingsContent(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -498,79 +497,8 @@ fun ESDESettingsContent(
                     description = stringResource(R.string.rom_search_settings_launch_description),
                     checked = false,
                     showToggle = false,
-                    onClick = {
-                        val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                        }
-                        context.startActivity(intent, ActivityOptions.makeBasic().toBundle())
-                    }
+                    onClick = { onNavigateToRomSearch() }
                 )
-                ToggleSetting(
-                    title = stringResource(R.string.rom_search_settings_black_bg_title),
-                    description = stringResource(R.string.rom_search_settings_black_bg_description),
-                    checked = prefsState.romSearchBlackBackground,
-                    onCheckedChange = { preferencesManager.setRomSearchBlackBackground(it) }
-                )
-                ToggleSetting(
-                    title = stringResource(R.string.esde_settings_rom_search_use_wallpaper),
-                    description = stringResource(R.string.esde_settings_rom_search_use_wallpaper_description),
-                    checked = prefsState.romSearchUseWallpaper,
-                    onCheckedChange = { preferencesManager.setRomSearchUseWallpaper(it) }
-                )
-                ToggleSetting(
-                    title = stringResource(R.string.rom_search_settings_hide_no_image_title),
-                    description = stringResource(R.string.rom_search_settings_hide_no_image_description),
-                    checked = prefsState.romSearchHideNoImage,
-                    onCheckedChange = { preferencesManager.setRomSearchHideNoImage(it) }
-                )
-                ToggleSetting(
-                    title = stringResource(R.string.rom_search_settings_hide_no_metadata_title),
-                    description = stringResource(R.string.rom_search_settings_hide_no_metadata_description),
-                    checked = prefsState.romSearchHideNoMetadata,
-                    onCheckedChange = { preferencesManager.setRomSearchHideNoMetadata(it) }
-                )
-                Text(
-                    text = stringResource(R.string.rom_search_settings_card_media_type),
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                )
-                RomSearchCardMediaType.entries.forEach { type ->
-                    val selected = prefsState.romSearchCardMediaType == type
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.12f)
-                                else Color.Transparent
-                            )
-                            .border(
-                                width = if (selected) 1.dp else 0.dp,
-                                color = if (selected) jr.brian.home.ui.theme.ThemeAccentColor.copy(alpha = 0.4f) else Color.Transparent,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable { preferencesManager.setRomSearchCardMediaType(type) }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = type.displayName,
-                            color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
-                            fontSize = 14.sp
-                        )
-                        if (selected) {
-                            Text(
-                                text = "✓",
-                                color = jr.brian.home.ui.theme.ThemeAccentColor,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
             }
         }
 
@@ -702,6 +630,7 @@ fun ESDEDisplaySection(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onSectionHeaderTap: () -> Unit = {}
 ) {
     CollapsibleSettingsSection(
@@ -716,6 +645,7 @@ fun ESDEDisplaySection(
             onNavigateToSystemApps = onNavigateToSystemApps,
             onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
             onNavigateToJingles = onNavigateToJingles,
+            onNavigateToRomSearch = onNavigateToRomSearch,
             onSectionHeaderTap = onSectionHeaderTap
         )
     }

@@ -29,5 +29,6 @@ data class FeatureManagers @Inject constructor(
     val gameKonfettiManager: GameKonfettiManager,
     val floatyModeManager: FloatyModeManager,
     val jinglesManager: JinglesManager,
+    val bgMusicManager: BgMusicManager,
     @param:ESDEImageLoader val esdeImageLoader: ImageLoader
 )

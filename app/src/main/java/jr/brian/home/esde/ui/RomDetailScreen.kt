@@ -1,6 +1,7 @@
 package jr.brian.home.esde.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,19 +15,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,7 +78,10 @@ internal fun RomDetailScreen(
     val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     var showMediaTypePicker by remember { mutableStateOf(false) }
+    var showResizeDialog by remember { mutableStateOf(false) }
 
     if (showMediaTypePicker) {
         MediaTypePickerDialog(
@@ -82,6 +91,57 @@ internal fun RomDetailScreen(
                 onSetMediaType(type)
                 showMediaTypePicker = false
             }
+        )
+    }
+
+    if (showResizeDialog) {
+        var sliderValue by remember { mutableFloatStateOf(prefsState.romSearchDetailImageHeightDp.toFloat()) }
+        AlertDialog(
+            onDismissRequest = { showResizeDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    prefsManager.setRomSearchDetailImageHeightDp(sliderValue.toInt())
+                    showResizeDialog = false
+                }) {
+                    Text(stringResource(R.string.rom_detail_apply), color = ThemeAccentColor)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResizeDialog = false }) {
+                    Text(stringResource(R.string.rom_detail_cancel), color = ThemeAccentColor)
+                }
+            },
+            title = {
+                Text(stringResource(R.string.rom_detail_resize_image_title), color = Color.White, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.rom_detail_image_height),
+                            color = Color.White.copy(alpha = 0.9f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${sliderValue.toInt()}dp",
+                            color = Color.White.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        valueRange = 80f..480f,
+                        steps = 19,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            containerColor = OledBackgroundColor
         )
     }
 
@@ -148,7 +208,7 @@ internal fun RomDetailScreen(
                         contentDescription = game.name,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(240.dp)
+                            .height(prefsState.romSearchDetailImageHeightDp.dp)
                             .clip(RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Fit
                     )
@@ -204,53 +264,77 @@ internal fun RomDetailScreen(
             HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isHidden) {
-                    TextButton(onClick = onPickEmulator) {
+                    TextButton(onClick = onChangeCore) {
                         Text(
-                            stringResource(R.string.rom_detail_pick_emulator),
+                            stringResource(R.string.rom_detail_change_core),
                             color = ThemeAccentColor
                         )
-                    }
-                    TextButton(onClick = onChangeCore) {
-                        Text("Change Core", color = ThemeAccentColor)
                     }
                     TextButton(onClick = onChangeFolder) {
-                        Text("Change Folder", color = ThemeAccentColor)
-                    }
-                    TextButton(onClick = { showMediaTypePicker = true }) {
                         Text(
-                            text = "Media: ${currentMediaType?.displayName ?: "Default"}",
+                            stringResource(R.string.rom_detail_change_folder),
                             color = ThemeAccentColor
                         )
                     }
-                    if (discSpinEnabled && game.systemName.lowercase() in ESDEMediaConstants.DISC_PLATFORMS) {
-                        TextButton(onClick = onToggleDiscSpin) {
-                            Text(
-                                text = "Spin: ${if (discSpinDisabled) "Off" else "On"}",
-                                color = ThemeAccentColor
-                            )
-                        }
-                    }
-                }
-                if (isHidden) {
-                    TextButton(onClick = onUnhide) {
-                        Text(stringResource(R.string.rom_detail_unhide), color = ThemeAccentColor)
-                    }
-                } else {
                     TextButton(onClick = onHide) {
                         Text(
                             stringResource(R.string.rom_detail_hide),
                             color = Color.Red.copy(alpha = 0.7f)
                         )
                     }
-                }
-                if (game.emulatorPackage != null || game.launchCommand != null) {
-                    TextButton(onClick = onLaunch) {
-                        Text(stringResource(R.string.rom_detail_launch), color = ThemeAccentColor)
+                    if (game.emulatorPackage != null || game.launchCommand != null) {
+                        TextButton(onClick = onLaunch) {
+                            Text(
+                                stringResource(R.string.rom_detail_launch),
+                                color = ThemeAccentColor
+                            )
+                        }
+                    }
+                    TextButton(onClick = { showMediaTypePicker = true }) {
+                        Text(
+                            text = stringResource(
+                                R.string.rom_detail_media_type,
+                                currentMediaType?.displayName ?: stringResource(R.string.rom_detail_media_type_default)
+                            ),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = onPickEmulator) {
+                        Text(
+                            stringResource(R.string.rom_detail_pick_emulator),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = { showResizeDialog = true }) {
+                        Text(
+                            stringResource(R.string.rom_detail_resize_image),
+                            color = ThemeAccentColor
+                        )
+                    }
+                } else {
+                    if (game.emulatorPackage != null || game.launchCommand != null) {
+                        TextButton(onClick = onLaunch) {
+                            Text(
+                                stringResource(R.string.rom_detail_launch),
+                                color = ThemeAccentColor
+                            )
+                        }
+                    }
+                    TextButton(onClick = { showResizeDialog = true }) {
+                        Text(
+                            stringResource(R.string.rom_detail_resize_image),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = onUnhide) {
+                        Text(stringResource(R.string.rom_detail_unhide), color = ThemeAccentColor)
                     }
                 }
             }

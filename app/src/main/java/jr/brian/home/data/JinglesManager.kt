@@ -67,7 +67,8 @@ private const val JARNGREIPR_FOLDER = "Jarngreipr Jingles"
 
 @Singleton
 class JinglesManager @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val bgMusicManager: BgMusicManager
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val json = Json {
@@ -313,7 +314,10 @@ class JinglesManager @Inject constructor(
     fun stop() {
         currentGameFilename = null
         currentPlayJob?.cancel()
-        scope.launch(Dispatchers.Main) { player?.stop() }
+        scope.launch(Dispatchers.Main) {
+            player?.stop()
+            bgMusicManager.unDuck()
+        }
     }
 
     /**
@@ -325,7 +329,10 @@ class JinglesManager @Inject constructor(
      */
     fun onGameLaunched() {
         currentPlayJob?.cancel()
-        scope.launch(Dispatchers.Main) { player?.stop() }
+        scope.launch(Dispatchers.Main) {
+            player?.stop()
+            bgMusicManager.unDuck()
+        }
     }
 
     fun release() {
@@ -335,6 +342,7 @@ class JinglesManager @Inject constructor(
             loudnessEnhancer = null
             player?.release()
             player = null
+            bgMusicManager.unDuck()
         }
     }
 
@@ -743,6 +751,12 @@ class JinglesManager @Inject constructor(
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 if (_isNormalizationEnabled.value) setupLoudnessEnhancer(audioSessionId)
             }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED || playbackState == Player.STATE_IDLE) {
+                    bgMusicManager.unDuck()
+                }
+            }
         })
     }
 
@@ -768,6 +782,7 @@ class JinglesManager @Inject constructor(
             p.setMediaItem(MediaItem.fromUri(url))
             p.prepare()
             p.volume = if (_isMuted.value) 0f else _volume.value
+            bgMusicManager.duck()
             p.play()
         }
     }

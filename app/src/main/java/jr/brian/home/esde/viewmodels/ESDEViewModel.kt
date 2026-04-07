@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.ESDECleanupManager
 import jr.brian.home.esde.data.MusicController
 import jr.brian.home.esde.data.MusicManager
@@ -58,7 +59,8 @@ class ESDEViewModel @Inject constructor(
     val prefs: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val cleanupHelper: ESDECleanupHelper,
-    val cleanupManager: ESDECleanupManager
+    val cleanupManager: ESDECleanupManager,
+    private val bgMusicManager: BgMusicManager
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
@@ -83,7 +85,7 @@ class ESDEViewModel @Inject constructor(
     private val _gameKonfettiEvent = MutableSharedFlow<GameKonfettiEvent>()
     val gameKonfettiEvent: SharedFlow<GameKonfettiEvent> = _gameKonfettiEvent.asSharedFlow()
 
-    val musicController: MusicController = MusicManager(context, prefs)
+    val musicController: MusicController = MusicManager(context, prefs, bgMusicManager)
 
     private val videoDelayHandler = Handler(Looper.getMainLooper())
     private var pendingVideoRunnable: Runnable? = null

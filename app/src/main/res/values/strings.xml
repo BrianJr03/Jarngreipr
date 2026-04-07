@@ -15,12 +15,21 @@
     <string name="rom_detail_playtime_hm">%1$dh %2$dm</string>
     <string name="rom_detail_playtime_m">%1$dm</string>
     <string name="rom_detail_launch">Launch</string>
+    <string name="rom_detail_resize_image">Resize Image</string>
     <string name="rom_detail_close">Close</string>
     <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_detail_change_core">Change Core</string>
+    <string name="rom_detail_change_folder">Change Folder</string>
     <string name="rom_emulator_picker_title">Select Emulator</string>
     <string name="rom_emulator_none_found">No compatible emulators installed</string>
     <string name="rom_detail_hide">Hide</string>
     <string name="rom_detail_unhide">Unhide</string>
+    <string name="rom_detail_apply">Apply</string>
+    <string name="rom_detail_cancel">Cancel</string>
+    <string name="rom_detail_resize_image_title">Resize Image</string>
+    <string name="rom_detail_image_height">Image Height</string>
+    <string name="rom_detail_media_type">Media: %1$s</string>
+    <string name="rom_detail_media_type_default">Default</string>
     <string name="rom_search_hidden_no_results">No hidden games</string>
     <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
@@ -1099,7 +1108,16 @@
     <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
     <string name="rom_search_hint_details">Start: open details</string>
     <string name="rom_search_commands">Search Commands</string>
-    <string name="rom_search_commands_info">• @hidden — view all hidden games\n• @android — browse all installed Android apps (requires setting)\n• @{system} — filter by a specific system\n• plain text — search games and apps</string>
+    <string name="rom_search_command_android">@android</string>
+    <string name="rom_search_command_android_desc">Browse all installed Android apps</string>
+    <string name="rom_search_command_hidden">@hidden</string>
+    <string name="rom_search_command_hidden_desc">Show all hidden games</string>
+    <string name="rom_search_command_platform">@{platform}</string>
+    <string name="rom_search_command_platform_desc">Filter games to a specific system</string>
+    <string name="rom_search_command_partial">@{partial}</string>
+    <string name="rom_search_command_partial_desc">Partial platform match</string>
+    <string name="rom_search_command_name">{name}</string>
+    <string name="rom_search_command_name_desc">Search by game name, system, genre, developer, or publisher</string>
 
     <!-- Search Settings -->
     <string name="esde_settings_section_search">Search</string>
@@ -1121,6 +1139,14 @@
     <string name="rom_search_settings_hide_no_metadata_description">Exclude games with no artwork, descriptions, or other scraped info.</string>
     <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
     <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
+    <string name="rom_search_settings_platform_auto_filter_title">Platform Auto-Filter</string>
+    <string name="rom_search_settings_platform_auto_filter_description">Automatically filter by platform when navigating the platform row with a controller.</string>
+    <string name="rom_search_settings_platform_images_title">Platform System Images</string>
+    <string name="rom_search_settings_platform_images_description">Show platform logo images in the platform row instead of text labels.</string>
+    <string name="rom_search_settings_platform_images_smart_folder">Smart Folder</string>
+    <string name="rom_search_settings_platform_images_default_folder">Default Folder</string>
+    <string name="rom_search_settings_platform_images_clear">Clear</string>
+    <string name="rom_search_settings_platform_images_structure_title">Folder Structures</string>
     <string name="rom_search_settings_show_android_apps_title">Show All Android Apps</string>
     <string name="rom_search_settings_show_android_apps_description">Enable the @android command and plain-text search to include all installed apps.</string>
     <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
@@ -1181,7 +1207,7 @@
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_close">Close</string>
-    <string name="whats_new_got_it">Got it!</string>
+    <string name="whats_new_got_it">Got it</string>
 
     <!-- Konfetti Animation Chooser -->
     <string name="konfetti_section_title">Konfetti Animation</string>
@@ -1349,4 +1375,17 @@
     <string name="jingles_add_cancel">Cancel</string>
     <string name="jingles_add_done">Done</string>
     <string name="jingles_add_repo_field_label">Repository</string>
+    <string name="music_section_title">Background Music</string>
+    <string name="music_section_select_folder_title">Select Music Folder</string>
+    <string name="music_section_select_folder_description">Play all audio files in a folder in order, looping</string>
+    <string name="music_section_select_folder_selected">Selected: %1$s</string>
+    <string name="music_section_select_file_title">Select Music File</string>
+    <string name="music_section_select_file_description">Loop a single audio file continuously</string>
+    <string name="music_section_select_file_selected">Selected: %1$s</string>
+    <string name="music_section_volume_title">Volume</string>
+    <string name="music_section_volume_description">Global background music volume</string>
+    <string name="music_options_title">Music</string>
+    <string name="music_options_mute_all">Mute All Music</string>
+    <string name="music_options_unmute_all">Unmute All Music</string>
+    <string name="music_options_resume_bg">Resume Background Music</string>
 </resources>

@@ -313,6 +313,10 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.navigate(Routes.JINGLES)
                 },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
+                },
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
@@ -586,6 +590,10 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 onNavigateToJingles = {
                     showScreen = false
                     navController.navigate(Routes.JINGLES)
+                },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
                 }
             )
         }
@@ -693,6 +701,10 @@ fun NavGraphBuilder.romSearchScreen(
         val jinglesManager = LocalJinglesManager.current
         SlideInVertically(showScreen) {
             RomSearchScreen(
+                onNavigateToSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.APP_SEARCH)
+                },
                 onDismiss = {
                     showScreen = false
                     jinglesManager.stop()

@@ -68,7 +68,7 @@ class RomSearchViewModel @Inject constructor(
                 systemEmulatorMap = prefsState.systemAppMap
             )
             store.allGames.value = games.sortedWith(
-                compareBy({ it.name.lowercase() }, { it.systemName })
+                compareBy({ it.name.lowercase() }, { it.systemName.trim() })
             )
             store.isLoading.value = false
         }

@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,21 +107,32 @@ internal fun RomResultCard(
     focusAnimationEnabled: Boolean = false,
     isFocusAnimationDisabled: Boolean = false,
     flipEnabled: Boolean = false,
-    flipDisabledForGame: Boolean = false
+    flipDisabledForGame: Boolean = false,
+    focusAnimationDelayMs: Int = 150
 ) {
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
     var isFocused by remember { mutableStateOf(false) }
+    var isFocusedDelayed by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
+
+    LaunchedEffect(isFocused) {
+        if (isFocused) {
+            delay(focusAnimationDelayMs.toLong())
+            isFocusedDelayed = true
+        } else {
+            isFocusedDelayed = false
+        }
+    }
 
     val isDiscPlatform = remember(game.systemName) {
         game.systemName.lowercase() in ESDEMediaConstants.DISC_PLATFORMS
     }
 
     val shouldFlip = flipEnabled && !flipDisabledForGame && !(isDiscPlatform  && mediaType == RomSearchCardMediaType.PhysicalMedia)
-    val flipRotation = animatedFlip(isFocused = isFocused && shouldFlip, durationMillis = 1200)
+    val flipRotation = animatedFlip(isFocused = isFocusedDelayed && shouldFlip, durationMillis = 1200)
 
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
@@ -133,7 +145,7 @@ internal fun RomResultCard(
 
     val shouldSpin = focusAnimationEnabled && !isFocusAnimationDisabled &&
             mediaType == RomSearchCardMediaType.PhysicalMedia && isDiscPlatform
-    val discRotation = animatedRotation(isFocused = isFocused && shouldSpin, durationMillis = 1200)
+    val discRotation = animatedRotation(isFocused = isFocusedDelayed && shouldSpin, durationMillis = 1200)
 
     val imageData = remember(game, mediaType) {
         val path = when (mediaType) {

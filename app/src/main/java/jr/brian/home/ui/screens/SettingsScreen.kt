@@ -77,6 +77,7 @@ import jr.brian.home.ui.components.settings.sections.AppearanceSection
 import jr.brian.home.ui.components.settings.sections.ESDEDisplaySection
 import jr.brian.home.ui.components.settings.sections.ExtrasSection
 import jr.brian.home.ui.components.settings.sections.LayoutSection
+import jr.brian.home.ui.components.settings.sections.MusicSection
 import jr.brian.home.ui.components.settings.sections.SupportSection
 import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -94,6 +95,7 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_APPEARANCE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_MUSIC
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 import androidx.compose.animation.expandVertically
@@ -138,6 +140,7 @@ fun SettingsScreen(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -210,6 +213,7 @@ fun SettingsScreen(
                     onNavigateToJingles = onNavigateToJingles,
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
+                    onNavigateToRomSearch = onNavigateToRomSearch,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -359,6 +363,7 @@ private fun SettingsContent(
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -388,7 +393,7 @@ private fun SettingsContent(
     }
 
     val hasSearchResults = searchQuery.isBlank() ||
-        listOf(SECTION_APPEARANCE, SECTION_ESDE, SECTION_LAYOUT, SECTION_SUPPORT, SECTION_SYSTEM, SECTION_EXTRAS)
+        listOf(SECTION_APPEARANCE, SECTION_ESDE, SECTION_LAYOUT, SECTION_SUPPORT, SECTION_SYSTEM, SECTION_EXTRAS, SECTION_MUSIC)
             .any { sectionMatchesQuery(it) }
 
     val scrollProgress by remember {
@@ -535,6 +540,13 @@ private fun SettingsContent(
                 )
             }
 
+            if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
+                MusicSection(
+                    isExpanded = expandedSection == SECTION_MUSIC,
+                    onToggle = { toggleSection(SECTION_MUSIC) }
+                )
+            }
+
             if (sectionMatchesQuery(SECTION_ESDE)) item(key = SECTION_ESDE) {
                 ESDEDisplaySection(
                     isExpanded = expandedSection == SECTION_ESDE,
@@ -544,6 +556,7 @@ private fun SettingsContent(
                     onNavigateToSystemApps = onNavigateToSystemApps,
                     onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
                     onNavigateToJingles = onNavigateToJingles,
+                    onNavigateToRomSearch = onNavigateToRomSearch,
                     onSectionHeaderTap = {
                         if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
                             // Force-destroy current animation, then start a fresh explode burst.

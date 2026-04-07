@@ -17,7 +17,6 @@ class RomSearchResultsViewModel @Inject constructor(
     val query: StateFlow<String> = store.query.asStateFlow()
     val allGames: StateFlow<List<GameInfo>> = store.allGames.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
-    val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
     val dismissSignal: SharedFlow<Unit> = store.dismissSignal.asSharedFlow()
 
     fun updateQuery(q: String) {

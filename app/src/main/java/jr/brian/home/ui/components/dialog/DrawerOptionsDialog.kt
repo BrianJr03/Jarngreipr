@@ -4,12 +4,6 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,22 +27,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.filled.Mouse
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.media3.common.util.UnstableApi
-import jr.brian.home.esde.ui.video.VideoPresentationManager
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,7 +57,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -77,29 +66,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.edit
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.R
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
-import jr.brian.home.esde.viewmodels.ESDEViewModel
-import jr.brian.home.esde.model.WallpaperToggleTarget
 import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.util.MediaPickerLauncher
-import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.util.launchApp
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -121,6 +113,7 @@ fun DrawerOptionsDialog(
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
+    val bgMusicManager = LocalBgMusicManager.current
     val setupPreferences = remember { SetupPreferences(context) }
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
@@ -130,6 +123,7 @@ fun DrawerOptionsDialog(
     val lastSelectedSystem = esdePrefsState.lastSelectedSystem
     val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
+    var showMuteOptionsDialog by remember { mutableStateOf(false) }
     val closeFocusRequester = remember { FocusRequester() }
     val jinglesManager = LocalJinglesManager.current
     val esdeViewModel: ESDEViewModel = hiltViewModel(
@@ -149,33 +143,10 @@ fun DrawerOptionsDialog(
     }
     LaunchedEffect(Unit) {
         if (isRomIconNew) {
-            romIconPrefs.edit().putBoolean("drawer_icon_new", false).apply()
+            romIconPrefs.edit { putBoolean("drawer_icon_new", false) }
         }
     }
-    val romIconTransition = rememberInfiniteTransition(label = "romIconGradient")
-    val romIconColor1 by romIconTransition.animateColor(
-        initialValue = ThemePrimaryColor,
-        targetValue = ThemeAccentColor,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "romIconColor1"
-    )
-    val romIconColor2 by romIconTransition.animateColor(
-        initialValue = ThemeAccentColor,
-        targetValue = ThemeSecondaryColor,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "romIconColor2"
-    )
-    val romIconTint = if (isRomIconNew) {
-        lerp(romIconColor1, romIconColor2, 0.5f)
-    } else {
-        Color.White
-    }
+
 
     val mediaPickerLauncher = MediaPickerLauncher(
         onResult = {
@@ -183,6 +154,33 @@ fun DrawerOptionsDialog(
             onDismiss()
         }
     )
+
+    if (showMuteOptionsDialog) {
+        val hasBgMusic = bgMusicManager.folderUri != null || bgMusicManager.singleFileUri != null
+        MuteOptionsDialog(
+            isMuted = isMuted,
+            hasBgMusic = hasBgMusic,
+            onMuteAll = {
+                jinglesManager.setMuted(true)
+                esdeViewModel.musicController.setMuted(true)
+                VideoPresentationManager.setMuted(true)
+                bgMusicManager.setMuted(true)
+                showMuteOptionsDialog = false
+            },
+            onResumeBgMusic = {
+                bgMusicManager.resumePlayback()
+                showMuteOptionsDialog = false
+            },
+            onUnmuteAll = {
+                jinglesManager.setMuted(false)
+                esdeViewModel.musicController.setMuted(false)
+                VideoPresentationManager.setMuted(false)
+                bgMusicManager.setMuted(false)
+                showMuteOptionsDialog = false
+            },
+            onDismiss = { showMuteOptionsDialog = false }
+        )
+    }
 
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -225,12 +223,7 @@ fun DrawerOptionsDialog(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
-                            onClick = {
-                                val newMuted = !isMuted
-                                jinglesManager.setMuted(newMuted)
-                                esdeViewModel.musicController.setMuted(newMuted)
-                                VideoPresentationManager.setMuted(newMuted)
-                            },
+                            onClick = { showMuteOptionsDialog = true },
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
@@ -256,21 +249,19 @@ fun DrawerOptionsDialog(
 //                            )
 //                        }
 
-                        if (wallpaperManager.getWallpaperType() == WallpaperType.ESDE) {
-                            IconButton(
-                                onClick = {
-                                    onDismiss()
-                                    onNavigateToRomSearch()
-                                },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SportsEsports,
-                                    contentDescription = stringResource(R.string.rom_search_icon_description),
-                                    tint = romIconTint,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
+                        IconButton(
+                            onClick = {
+                                onDismiss()
+                                onNavigateToRomSearch()
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = stringResource(R.string.rom_search_icon_description),
+                                tint = animatedColor(firstSeen = isRomIconNew),
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
 
                         Spacer(Modifier.width(8.dp))
@@ -501,11 +492,15 @@ fun DrawerOptionsDialog(
                                 modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.drawer_options_launch_system_app),
                                 onClick = {
-                                    val displayPref = if (esdePrefsState.systemTopScreenSet.contains(lastSelectedSystem)) {
-                                        DisplayPreference.PRIMARY_DISPLAY
-                                    } else {
-                                        DisplayPreference.CURRENT_DISPLAY
-                                    }
+                                    val displayPref =
+                                        if (esdePrefsState.systemTopScreenSet.contains(
+                                                lastSelectedSystem
+                                            )
+                                        ) {
+                                            DisplayPreference.PRIMARY_DISPLAY
+                                        } else {
+                                            DisplayPreference.CURRENT_DISPLAY
+                                        }
                                     launchApp(
                                         context = context,
                                         packageName = packageName,
@@ -643,6 +638,77 @@ private fun WallpaperOptionsSection(
                         }
                     }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MuteOptionsDialog(
+    isMuted: Boolean,
+    hasBgMusic: Boolean,
+    onMuteAll: () -> Unit,
+    onResumeBgMusic: () -> Unit,
+    onUnmuteAll: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    DimmedDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.75f)
+                .background(
+                    color = OledCardColor,
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .border(
+                    width = 2.dp,
+                    color = ThemePrimaryColor.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .padding(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.music_options_title),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (isMuted) {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_unmute_all),
+                        icon = Icons.Default.VolumeUp,
+                        onClick = onUnmuteAll
+                    )
+                } else {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_mute_all),
+                        icon = Icons.Default.VolumeOff,
+                        onClick = onMuteAll
+                    )
+                }
+
+                if (hasBgMusic) {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_resume_bg),
+                        icon = Icons.Default.VolumeUp,
+                        onClick = onResumeBgMusic
+                    )
+                }
             }
         }
     }
