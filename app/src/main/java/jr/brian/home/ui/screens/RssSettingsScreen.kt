@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -243,6 +244,14 @@ fun RssSettingsScreen(
                     contentPadding = PaddingValues(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item {
+                        DisplaySettingsCard(
+                            useDMY = uiState.useDMYDateFormat,
+                            use24Hour = uiState.use24HourClock,
+                            onToggleDateFormat = { viewModel.setUseDMYDateFormat(!uiState.useDMYDateFormat) },
+                            onToggleTimeFormat = { viewModel.setUse24HourClock(!uiState.use24HourClock) }
+                        )
+                    }
                     items(uiState.feeds, key = { it.url }) { feed ->
                         FeedCard(
                             feed = feed,
@@ -531,6 +540,125 @@ private fun AddFeedDialog(
                                 fontSize = 14.sp
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DisplaySettingsCard(
+    useDMY: Boolean,
+    use24Hour: Boolean,
+    onToggleDateFormat: () -> Unit,
+    onToggleTimeFormat: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(brush = subtleCardGradient(false), shape = RoundedCornerShape(16.dp))
+            .border(
+                width = 1.dp,
+                brush = borderBrush(isFocused = false),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = "Display",
+            color = Color.White.copy(alpha = 0.45f),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+        )
+        HorizontalDivider(color = Color.White.copy(alpha = 0.06f), thickness = 1.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleDateFormat)
+                .padding(vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Date format",
+                color = Color.White,
+                fontSize = 14.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf(true to "D/MM/YYYY", false to "MM/D/YYYY").forEach { (isDMY, label) ->
+                    val selected = useDMY == isDMY
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
+                                else Color.White.copy(alpha = 0.07f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
+                                        else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { if (!selected) onToggleDateFormat() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
+                            fontSize = 12.sp,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.06f), thickness = 1.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleTimeFormat)
+                .padding(vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Time format",
+                color = Color.White,
+                fontSize = 14.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf(true to "24h", false to "12h").forEach { (is24, label) ->
+                    val selected = use24Hour == is24
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (selected) ThemePrimaryColor.copy(alpha = 0.2f)
+                                else Color.White.copy(alpha = 0.07f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (selected) ThemePrimaryColor.copy(alpha = 0.5f)
+                                        else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { if (!selected) onToggleTimeFormat() }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (selected) ThemePrimaryColor else Color.White.copy(alpha = 0.5f),
+                            fontSize = 12.sp,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                        )
                     }
                 }
             }

@@ -1,5 +1,7 @@
 **RSS Tab**
 - Adds RSS Tab, allowing you to stay up-to-date with your fav RSS feeds
+- Customize publish date and time formatting
+- RSS Feed titles are sticky
 
 **App Drawer App Visibility**
 - You can now choose between displaying all apps or visible apps within the current tab
@@ -11,4 +13,4 @@
 **Fixes**
 - Fixes issue where bg music randomly resume playback after being muted
 
-2.3
+2.3.1

@@ -32,6 +32,10 @@ class RssViewModel @Inject constructor(
     init {
         observeFeeds()
         startAutoRefreshTicker()
+        _uiState.value = _uiState.value.copy(
+            useDMYDateFormat = prefs.getBoolean(KEY_USE_DMY_DATE_FORMAT, true),
+            use24HourClock = prefs.getBoolean(KEY_USE_24_HOUR_CLOCK, true)
+        )
     }
 
     private fun loadSelectedFeedUrls(): Set<String> {
@@ -40,6 +44,16 @@ class RssViewModel @Inject constructor(
 
     private fun saveSelectedFeedUrls(urls: Set<String>) {
         prefs.edit().putStringSet(KEY_SELECTED_FEED_URLS, urls).apply()
+    }
+
+    fun setUseDMYDateFormat(useDMY: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_DMY_DATE_FORMAT, useDMY).apply()
+        _uiState.value = _uiState.value.copy(useDMYDateFormat = useDMY)
+    }
+
+    fun setUse24HourClock(use24Hour: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_24_HOUR_CLOCK, use24Hour).apply()
+        _uiState.value = _uiState.value.copy(use24HourClock = use24Hour)
     }
 
     private fun observeFeeds() {
@@ -140,5 +154,7 @@ class RssViewModel @Inject constructor(
 
     companion object {
         private const val KEY_SELECTED_FEED_URLS = "selected_feed_urls"
+        private const val KEY_USE_DMY_DATE_FORMAT = "use_dmy_date_format"
+        private const val KEY_USE_24_HOUR_CLOCK = "use_24_hour_clock"
     }
 }

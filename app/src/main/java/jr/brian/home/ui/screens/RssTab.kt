@@ -276,12 +276,14 @@ fun RssTab(
                         filteredFeeds.forEach { feed ->
                             val feedItems = filteredItemsByFeed[feed.url]
                             if (!feedItems.isNullOrEmpty()) {
-                                item(key = "header_${feed.url}") {
+                                stickyHeader(key = "header_${feed.url}") {
                                     FeedSectionHeader(feed = feed)
                                 }
                                 items(feedItems, key = { "${feed.url}_${it.id}" }) { item ->
                                     RssItemCard(
                                         item = item,
+                                        useDMYDateFormat = uiState.useDMYDateFormat,
+                                        use24HourClock = uiState.use24HourClock,
                                         onClick = {
                                             val target = item.link.ifEmpty { item.audioUrl }
                                             if (target.isNotEmpty()) {
@@ -332,6 +334,7 @@ private fun FeedSectionHeader(feed: RssFeed) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(OledBackgroundColor)
             .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -365,6 +368,8 @@ private fun FeedSectionHeader(feed: RssFeed) {
 @Composable
 private fun RssItemCard(
     item: RssItem,
+    useDMYDateFormat: Boolean,
+    use24HourClock: Boolean,
     onClick: () -> Unit,
     onVideoClick: () -> Unit,
     onAudioClick: () -> Unit
@@ -473,7 +478,7 @@ private fun RssItemCard(
 
                 if (item.pubDate.isNotEmpty()) {
                     Text(
-                        text = formatPubDate(item.pubDate),
+                        text = formatPubDate(item.pubDate, useDMYDateFormat, use24HourClock),
                         color = ThemeSecondaryColor.copy(alpha = 0.7f),
                         fontSize = 11.sp
                     )
@@ -654,6 +659,25 @@ private fun stripHtml(html: String): String {
     return Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
 }
 
-private fun formatPubDate(raw: String): String {
+private fun formatPubDate(raw: String, useDMY: Boolean, use24Hour: Boolean): String {
+    if (raw.isBlank()) return ""
+    val inputFormats = listOf(
+        "EEE, dd MMM yyyy HH:mm:ss Z",
+        "EEE, dd MMM yyyy HH:mm:ss z",
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ssz",
+        "dd MMM yyyy HH:mm:ss Z"
+    )
+    val datePattern = if (useDMY) "d/MM/yyyy" else "MM/d/yyyy"
+    val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
+    val output = java.text.SimpleDateFormat("$datePattern @ $timePattern", java.util.Locale.getDefault())
+    for (fmt in inputFormats) {
+        runCatching {
+            val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.ENGLISH)
+            sdf.isLenient = false
+            return output.format(sdf.parse(raw.trim())!!)
+        }
+    }
     return raw.take(30).trimEnd()
 }
