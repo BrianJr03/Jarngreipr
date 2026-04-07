@@ -56,18 +56,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import jr.brian.home.R
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
+import jr.brian.home.R
 import jr.brian.home.model.rss.RssFeed
 import jr.brian.home.model.rss.RssItem
 import jr.brian.home.ui.colors.borderBrush
@@ -76,7 +76,6 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.viewmodels.RssViewModel
 
 @Composable
@@ -132,7 +131,7 @@ fun RssTab(
                     Icon(
                         imageVector = Icons.Default.RssFeed,
                         contentDescription = null,
-                        tint = animatedColor(),
+                        tint = Color.White,
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
