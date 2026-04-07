@@ -163,6 +163,23 @@ class AppVisibilityManager(context: Context) {
         return packageName in getHiddenApps(pageIndex)
     }
 
+    fun reorderHiddenApps(newOrderFromOld: List<Int>) {
+        val oldMap = _hiddenAppsByPage.value
+        val newMap = mutableMapOf<Int, Set<String>>()
+        newOrderFromOld.forEachIndexed { newIndex, oldIndex ->
+            val hiddenAtOld = oldMap[oldIndex]
+            if (hiddenAtOld != null) newMap[newIndex] = hiddenAtOld
+        }
+        _hiddenAppsByPage.value = newMap
+        prefs.edit().apply {
+            for (i in 0 until 10) remove("${KEY_HIDDEN_APPS}_$i")
+            newMap.forEach { (pageIndex, hiddenApps) ->
+                putString("${KEY_HIDDEN_APPS}_$pageIndex", hiddenApps.joinToString(SEPARATOR))
+            }
+            apply()
+        }
+    }
+
     private fun saveHiddenAppsForPage(pageIndex: Int, hiddenApps: Set<String>) {
         val currentMap = _hiddenAppsByPage.value.toMutableMap()
         if (hiddenApps.isEmpty()) {

@@ -90,6 +90,7 @@ fun LauncherPagerScreen(
     onNavigateToDockSettings: () -> Unit = {},
     onNavigateToSystemApps: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToRssSettings: () -> Unit = {},
     onNavigateToTrackpad: () -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
@@ -120,6 +121,7 @@ fun LauncherPagerScreen(
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
+    val appDrawerFilterByPage by powerSettingsManager.appDrawerFilterByPage.collectAsStateWithLifecycle()
 
     var resizePageIndex by remember { mutableIntStateOf(0) }
     var showResizeScreen by remember { mutableStateOf(false) }
@@ -172,6 +174,11 @@ fun LauncherPagerScreen(
         if (totalPages == 0) {
             homeTabManager.setHomeTabIndex(0)
         }
+        // After a reorder, snap the pager to wherever the current home tab now lives.
+        val homeIdx = homeTabManager.homeTabIndex.value
+        if (homeIdx in 0 until totalPages && homeIdx != pagerState.currentPage) {
+            pagerState.scrollToPage(homeIdx)
+        }
     }
 
     LaunchedEffect(pagerState) {
@@ -222,7 +229,7 @@ fun LauncherPagerScreen(
     ) {
         onBackButtonShortcut()
     }
-    
+
     // While the game is active in the app drawer, consume system back/gesture.
     BackHandler(enabled = showAppDrawerSheet && isAppDrawerGameInProgress) {}
 
@@ -280,11 +287,133 @@ fun LauncherPagerScreen(
                 beyondViewportPageCount = 1,
                 userScrollEnabled = pagerVisible,
             ) { page ->
-                    val pageType =
-                        if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
+                val pageType =
+                    if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
-                    when (pageType) {
-                        PageType.APPS_TAB -> {
+                when (pageType) {
+                    PageType.APPS_TAB -> {
+                        val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
+                        val visibleApps = remember(homeUiState.allApps, hiddenApps) {
+                            homeUiState.allApps.filter { app ->
+                                app.packageName !in hiddenApps
+                            }
+                        }
+
+                        key(globalIconRefreshManager?.refreshCounter) {
+                            AppsTab(
+                                apps = visibleApps,
+                                appsUnfiltered = homeUiState.allAppsUnfiltered,
+                                isLoading = homeUiState.isLoading,
+                                onSettingsClick = onSettingsClick,
+                                powerViewModel = powerViewModel,
+                                totalPages = totalPages,
+                                pagerState = pagerState,
+                                onShowBottomSheet = onShowBottomSheet,
+                                pageIndex = page,
+                                onDockPositioned = onDockPositioned,
+                                onDeletePage = { pagerPageIndex ->
+                                    scope.launch {
+                                        deleteTab(
+                                            totalPages = totalPages,
+                                            pagerPageIndex = pagerPageIndex,
+                                            pagerState = pagerState,
+                                            pageTypeManager = pageTypeManager,
+                                            pageCountManager = pageCountManager,
+                                            homeTabManager = homeTabManager,
+                                            onDeleteWidgetPage = { widgetPageIndex ->
+                                                widgetViewModel.deletePage(widgetPageIndex)
+                                            }
+                                        )
+                                    }
+                                },
+                                pageIndicatorBorderColor = ThemePrimaryColor,
+                                allApps = homeUiState.allAppsUnfiltered,
+                                onNavigateToSearch = onNavigateToSearch,
+                                onNavigateToDockSettings = onNavigateToDockSettings,
+                                onNavigateToSystemApps = onNavigateToSystemApps,
+                                onNavigateToRomSearch = onNavigateToRomSearch,
+                                onNavigateToTrackpad = onNavigateToTrackpad,
+                                onShowAppDrawer = { showAppDrawerSheet = true },
+                                onScrollStateChanged = { isScrolling, hasScrollableContent ->
+                                    currentTabIsScrolling = isScrolling
+                                    currentTabHasScrollableContent = hasScrollableContent
+                                }
+                            )
+                        }
+                    }
+
+                    PageType.APPS_AND_WIDGETS_TAB -> {
+                        val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+                        if (widgetPage != null) {
+                            key(globalIconRefreshManager?.refreshCounter) {
+                                AppsAndWidgetsTab(
+                                    pageIndex = widgetPageIndex,
+                                    pagerPageIndex = page,
+                                    widgets = widgetPage.widgets,
+                                    viewModel = widgetViewModel,
+                                    powerViewModel = powerViewModel,
+                                    allApps = homeUiState.allAppsUnfiltered,
+                                    totalPages = totalPages,
+                                    pagerState = pagerState,
+                                    onShowBottomSheet = onShowBottomSheet,
+                                    onSettingsClick = onSettingsClick,
+                                    onDockPositioned = onDockPositioned,
+                                    onNavigateToResize = { widgetInfo, pageIdx ->
+                                        resizeWidgetInfo = widgetInfo
+                                        resizePageIndex = pageIdx
+                                        showResizeScreen = true
+                                    },
+                                    onDeletePage = { pagerPageIndex ->
+                                        scope.launch {
+                                            deleteTab(
+                                                totalPages = totalPages,
+                                                pagerPageIndex = pagerPageIndex,
+                                                pagerState = pagerState,
+                                                pageTypeManager = pageTypeManager,
+                                                pageCountManager = pageCountManager,
+                                                homeTabManager = homeTabManager,
+                                                onDeleteWidgetPage = { widgetPageIndex ->
+                                                    widgetViewModel.deletePage(
+                                                        widgetPageIndex
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    },
+                                    pageIndicatorBorderColor = ThemeSecondaryColor,
+                                    onNavigateToSearch = onNavigateToSearch,
+                                    onNavigateToDockSettings = onNavigateToDockSettings,
+                                    onNavigateToSystemApps = onNavigateToSystemApps,
+                                    onNavigateToRomSearch = onNavigateToRomSearch,
+                                    onNavigateToTrackpad = onNavigateToTrackpad,
+                                    navController = navController,
+                                    onShowAppDrawer = { showAppDrawerSheet = true },
+                                    onScrollStateChanged = { isScrolling, hasScrollableContent ->
+                                        currentTabIsScrolling = isScrolling
+                                        currentTabHasScrollableContent = hasScrollableContent
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    PageType.RSS_TAB -> {
+                        RssTab(
+                            totalPages = totalPages,
+                            pagerState = pagerState,
+                            pageIndex = page,
+                            onSettingsClick = onNavigateToRssSettings
+                        )
+                    }
+
+                    PageType.APP_DRAWER_TAB -> {
+                        val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
+                        val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
+
+
+                        if (widgetPage != null) {
                             val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
                             val visibleApps = remember(homeUiState.allApps, hiddenApps) {
                                 homeUiState.allApps.filter { app ->
@@ -293,16 +422,14 @@ fun LauncherPagerScreen(
                             }
 
                             key(globalIconRefreshManager?.refreshCounter) {
-                                AppsTab(
-                                    apps = visibleApps,
-                                    appsUnfiltered = homeUiState.allAppsUnfiltered,
-                                    isLoading = homeUiState.isLoading,
-                                    onSettingsClick = onSettingsClick,
+                                AppDrawerTab(
                                     powerViewModel = powerViewModel,
                                     totalPages = totalPages,
-                                    pagerState = pagerState,
                                     onShowBottomSheet = onShowBottomSheet,
-                                    pageIndex = page,
+                                    onSettingsClick = onSettingsClick,
+                                    apps = visibleApps,
+                                    appsUnfiltered = homeUiState.allAppsUnfiltered,
+                                    allApps = homeUiState.allAppsUnfiltered,
                                     onDockPositioned = onDockPositioned,
                                     onDeletePage = { pagerPageIndex ->
                                         scope.launch {
@@ -314,137 +441,27 @@ fun LauncherPagerScreen(
                                                 pageCountManager = pageCountManager,
                                                 homeTabManager = homeTabManager,
                                                 onDeleteWidgetPage = { widgetPageIndex ->
-                                                    widgetViewModel.deletePage(widgetPageIndex)
+                                                    widgetViewModel.deletePage(
+                                                        widgetPageIndex
+                                                    )
                                                 }
                                             )
                                         }
                                     },
-                                    pageIndicatorBorderColor = ThemePrimaryColor,
-                                    allApps = homeUiState.allAppsUnfiltered,
-                                    onNavigateToSearch = onNavigateToSearch,
+                                    pageIndicatorBorderColor = ThemeSecondaryColor,
+                                    pagerState = pagerState,
+                                    isLoading = homeUiState.isLoading,
+                                    pageIndex = page,
                                     onNavigateToDockSettings = onNavigateToDockSettings,
                                     onNavigateToSystemApps = onNavigateToSystemApps,
                                     onNavigateToRomSearch = onNavigateToRomSearch,
                                     onNavigateToTrackpad = onNavigateToTrackpad,
-                                    onShowAppDrawer = { showAppDrawerSheet = true },
-                                    onScrollStateChanged = { isScrolling, hasScrollableContent ->
-                                        currentTabIsScrolling = isScrolling
-                                        currentTabHasScrollableContent = hasScrollableContent
-                                    }
                                 )
-                            }
-                        }
-
-                        PageType.APPS_AND_WIDGETS_TAB -> {
-                            val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
-                            val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-                            if (widgetPage != null) {
-                                key(globalIconRefreshManager?.refreshCounter) {
-                                    AppsAndWidgetsTab(
-                                        pageIndex = widgetPageIndex,
-                                        widgets = widgetPage.widgets,
-                                        viewModel = widgetViewModel,
-                                        powerViewModel = powerViewModel,
-                                        allApps = homeUiState.allAppsUnfiltered,
-                                        totalPages = totalPages,
-                                        pagerState = pagerState,
-                                        onShowBottomSheet = onShowBottomSheet,
-                                        onSettingsClick = onSettingsClick,
-                                        onDockPositioned = onDockPositioned,
-                                        onNavigateToResize = { widgetInfo, pageIdx ->
-                                            resizeWidgetInfo = widgetInfo
-                                            resizePageIndex = pageIdx
-                                            showResizeScreen = true
-                                        },
-                                        onDeletePage = { pagerPageIndex ->
-                                            scope.launch {
-                                                deleteTab(
-                                                    totalPages = totalPages,
-                                                    pagerPageIndex = pagerPageIndex,
-                                                    pagerState = pagerState,
-                                                    pageTypeManager = pageTypeManager,
-                                                    pageCountManager = pageCountManager,
-                                                    homeTabManager = homeTabManager,
-                                                    onDeleteWidgetPage = { widgetPageIndex ->
-                                                        widgetViewModel.deletePage(
-                                                            widgetPageIndex
-                                                        )
-                                                    }
-                                                )
-                                            }
-                                        },
-                                        pageIndicatorBorderColor = ThemeSecondaryColor,
-                                        onNavigateToSearch = onNavigateToSearch,
-                                        onNavigateToDockSettings = onNavigateToDockSettings,
-                                        onNavigateToSystemApps = onNavigateToSystemApps,
-                                        onNavigateToRomSearch = onNavigateToRomSearch,
-                                        onNavigateToTrackpad = onNavigateToTrackpad,
-                                        navController = navController,
-                                        onShowAppDrawer = { showAppDrawerSheet = true },
-                                        onScrollStateChanged = { isScrolling, hasScrollableContent ->
-                                            currentTabIsScrolling = isScrolling
-                                            currentTabHasScrollableContent = hasScrollableContent
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        PageType.APP_DRAWER_TAB -> {
-                            val widgetPageIndex = getAppAndWidgetTabIndex(page, pageTypes)
-                            val widgetPage = widgetUiState.widgetPages.getOrNull(widgetPageIndex)
-
-
-                            if (widgetPage != null) {
-                                val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
-                                val visibleApps = remember(homeUiState.allApps, hiddenApps) {
-                                    homeUiState.allApps.filter { app ->
-                                        app.packageName !in hiddenApps
-                                    }
-                                }
-
-                                key(globalIconRefreshManager?.refreshCounter) {
-                                    AppDrawerTab(
-                                        powerViewModel = powerViewModel,
-                                        totalPages = totalPages,
-                                        onShowBottomSheet = onShowBottomSheet,
-                                        onSettingsClick = onSettingsClick,
-                                        apps = visibleApps,
-                                        appsUnfiltered = homeUiState.allAppsUnfiltered,
-                                        allApps = homeUiState.allAppsUnfiltered,
-                                        onDockPositioned = onDockPositioned,
-                                        onDeletePage = { pagerPageIndex ->
-                                            scope.launch {
-                                                deleteTab(
-                                                    totalPages = totalPages,
-                                                    pagerPageIndex = pagerPageIndex,
-                                                    pagerState = pagerState,
-                                                    pageTypeManager = pageTypeManager,
-                                                    pageCountManager = pageCountManager,
-                                                    homeTabManager = homeTabManager,
-                                                    onDeleteWidgetPage = { widgetPageIndex ->
-                                                        widgetViewModel.deletePage(
-                                                            widgetPageIndex
-                                                        )
-                                                    }
-                                                )
-                                            }
-                                        },
-                                        pageIndicatorBorderColor = ThemeSecondaryColor,
-                                        pagerState = pagerState,
-                                        isLoading = homeUiState.isLoading,
-                                        pageIndex = page,
-                                        onNavigateToDockSettings = onNavigateToDockSettings,
-                                        onNavigateToSystemApps = onNavigateToSystemApps,
-                                        onNavigateToRomSearch = onNavigateToRomSearch,
-                                        onNavigateToTrackpad = onNavigateToTrackpad,
-                                    )
-                                }
                             }
                         }
                     }
                 }
+            }
 
             AnimatedVisibility(
                 visible = isPoweredOff,
@@ -493,6 +510,13 @@ fun LauncherPagerScreen(
 
             if (showAppDrawerSheet) {
                 val currentPage = pagerState.currentPage
+                val hiddenApps = hiddenAppsByPage[currentPage] ?: emptySet()
+                val filteredApps = remember(homeUiState.allApps, hiddenApps, currentPage) {
+                    homeUiState.allApps.filter { app ->
+                        app.packageName !in hiddenApps
+                    }
+                }
+                val drawerApps = if (appDrawerFilterByPage) filteredApps else homeUiState.allApps
                 ModalBottomSheet(
                     onDismissRequest = { closeAppDrawerSheet() },
                     sheetState = appDrawerSheetState,
@@ -520,7 +544,7 @@ fun LauncherPagerScreen(
                 ) {
                     AppsModalContent(
                         modifier = Modifier.fillMaxSize(),
-                        apps = homeUiState.allApps,
+                        apps = drawerApps,
                         appsUnfiltered = homeUiState.allAppsUnfiltered,
                         isLoading = homeUiState.isLoading,
                         showHideAppButton = false,

@@ -78,6 +78,7 @@ import jr.brian.home.ui.components.settings.sections.ESDEDisplaySection
 import jr.brian.home.ui.components.settings.sections.ExtrasSection
 import jr.brian.home.ui.components.settings.sections.LayoutSection
 import jr.brian.home.ui.components.settings.sections.MusicSection
+import jr.brian.home.ui.components.settings.sections.RssSection
 import jr.brian.home.ui.components.settings.sections.SupportSection
 import jr.brian.home.ui.components.settings.sections.SystemSection
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -96,6 +97,7 @@ import jr.brian.home.ui.screens.SettingsConstants.SECTION_ESDE
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_EXTRAS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_LAYOUT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_MUSIC
+import jr.brian.home.ui.screens.SettingsConstants.SECTION_RSS
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SUPPORT
 import jr.brian.home.ui.screens.SettingsConstants.SECTION_SYSTEM
 import androidx.compose.animation.expandVertically
@@ -141,6 +143,7 @@ fun SettingsScreen(
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToRssSettings: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -214,6 +217,7 @@ fun SettingsScreen(
                     onNotificationBadgeClick = { notificationAccessDialogState.show(Unit) },
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onNavigateToRomSearch = onNavigateToRomSearch,
+                    onNavigateToRssSettings = onNavigateToRssSettings,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -368,6 +372,7 @@ private fun SettingsContent(
     onNavigateToKonfettiEditor: () -> Unit = {},
     onNavigateToJingles: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToRssSettings: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -403,7 +408,8 @@ private fun SettingsContent(
                 SECTION_SUPPORT,
                 SECTION_SYSTEM,
                 SECTION_EXTRAS,
-                SECTION_MUSIC
+                SECTION_MUSIC,
+                SECTION_RSS
             )
                 .any { sectionMatchesQuery(it) }
 
@@ -577,13 +583,6 @@ private fun SettingsContent(
                     )
                 }
 
-                if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
-                    MusicSection(
-                        isExpanded = expandedSection == SECTION_MUSIC,
-                        onToggle = { toggleSection(SECTION_MUSIC) }
-                    )
-                }
-
                 if (sectionMatchesQuery(SECTION_ESDE)) item(key = SECTION_ESDE) {
                     ESDEDisplaySection(
                         isExpanded = expandedSection == SECTION_ESDE,
@@ -605,6 +604,14 @@ private fun SettingsContent(
                     )
                 }
 
+                if (sectionMatchesQuery(SECTION_EXTRAS)) item(key = SECTION_EXTRAS) {
+                    ExtrasSection(
+                        isExpanded = expandedSection == SECTION_EXTRAS,
+                        onToggle = { toggleSection(SECTION_EXTRAS) },
+                        onWhatsNewClick = onWhatsNewClick
+                    )
+                }
+
                 if (sectionMatchesQuery(SECTION_LAYOUT)) item(key = SECTION_LAYOUT) {
                     LayoutSection(
                         isExpanded = expandedSection == SECTION_LAYOUT,
@@ -613,6 +620,21 @@ private fun SettingsContent(
                         allAppsUnfiltered = allAppsUnfiltered,
                         onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                         onNavigateToDockSettings = onNavigateToDockSettings
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
+                    MusicSection(
+                        isExpanded = expandedSection == SECTION_MUSIC,
+                        onToggle = { toggleSection(SECTION_MUSIC) }
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_RSS)) item(key = SECTION_RSS) {
+                    RssSection(
+                        isExpanded = expandedSection == SECTION_RSS,
+                        onToggle = { toggleSection(SECTION_RSS) },
+                        onNavigateToRssSettings = onNavigateToRssSettings
                     )
                 }
 
@@ -635,14 +657,6 @@ private fun SettingsContent(
                         onNavigateToMonitor = onNavigateToMonitor,
                         onNavigateToVolumeControls = onNavigateToVolumeControls,
                         onNotificationBadgeClick = onNotificationBadgeClick
-                    )
-                }
-
-                if (sectionMatchesQuery(SECTION_EXTRAS)) item(key = SECTION_EXTRAS) {
-                    ExtrasSection(
-                        isExpanded = expandedSection == SECTION_EXTRAS,
-                        onToggle = { toggleSection(SECTION_EXTRAS) },
-                        onWhatsNewClick = onWhatsNewClick
                     )
                 }
 

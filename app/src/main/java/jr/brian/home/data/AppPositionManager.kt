@@ -25,6 +25,9 @@ class AppPositionManager(context: Context) {
     private val _isScrollDisabledByPage = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val isScrollDisabledByPage: StateFlow<Map<Int, Boolean>> = _isScrollDisabledByPage.asStateFlow()
 
+    private val _isBottomFlingDisabledByPage = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    val isBottomFlingDisabledByPage: StateFlow<Map<Int, Boolean>> = _isBottomFlingDisabledByPage.asStateFlow()
+
     init {
         loadAllPageData()
         repeat(3) {
@@ -50,15 +53,18 @@ class AppPositionManager(context: Context) {
         val freeModeKey = "${KEY_FREE_MODE}_$pageIndex"
         val dragLockedKey = "${KEY_DRAG_LOCKED}_$pageIndex"
         val scrollDisabledKey = "${KEY_SCROLL_DISABLED}_$pageIndex"
+        val bottomFlingDisabledKey = "${KEY_BOTTOM_FLING_DISABLED}_$pageIndex"
         val positionsKey = "${KEY_POSITIONS}_$pageIndex"
 
         val isFreeMode = prefs.getBoolean(freeModeKey, false)
         val isDragLocked = prefs.getBoolean(dragLockedKey, true)
         val isScrollDisabled = prefs.getBoolean(scrollDisabledKey, false)
+        val isBottomFlingDisabled = prefs.getBoolean(bottomFlingDisabledKey, false)
 
         _isFreeModeByPage.value += (pageIndex to isFreeMode)
         _isDragLockedByPage.value += (pageIndex to isDragLocked)
         _isScrollDisabledByPage.value += (pageIndex to isScrollDisabled)
+        _isBottomFlingDisabledByPage.value += (pageIndex to isBottomFlingDisabled)
 
         val positionsJson = prefs.getString(positionsKey, null) ?: return
         val pagePositions = mutableStateMapOf<String, AppPosition>()
@@ -112,6 +118,14 @@ class AppPositionManager(context: Context) {
         }
     }
 
+    fun setBottomFlingDisabled(pageIndex: Int, disabled: Boolean) {
+        _isBottomFlingDisabledByPage.value += (pageIndex to disabled)
+        prefs.edit().apply {
+            putBoolean("${KEY_BOTTOM_FLING_DISABLED}_$pageIndex", disabled)
+            apply()
+        }
+    }
+
     fun savePosition(pageIndex: Int, position: AppPosition) {
         val pagePositions = _positionsByPage.getOrPut(pageIndex) { mutableStateMapOf() }
         pagePositions[position.packageName] = position
@@ -149,6 +163,7 @@ class AppPositionManager(context: Context) {
         private const val KEY_FREE_MODE = "free_mode"
         private const val KEY_DRAG_LOCKED = "drag_locked"
         private const val KEY_SCROLL_DISABLED = "scroll_disabled"
+        private const val KEY_BOTTOM_FLING_DISABLED = "bottom_fling_disabled"
         private const val SEPARATOR_APPS = "||"
         private const val SEPARATOR_COORDS = ","
     }

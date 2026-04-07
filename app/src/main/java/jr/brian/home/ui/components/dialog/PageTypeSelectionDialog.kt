@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +31,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.model.PageType
@@ -56,6 +58,7 @@ fun PageTypeSelectionDialog(
             shape = RoundedCornerShape(24.dp),
             modifier = modifier
                 .fillMaxWidth(0.9f)
+                .heightIn(max = 560.dp)
                 .border(
                     width = 1.dp,
                     brush = borderBrush(isFocused = true),
@@ -63,7 +66,9 @@ fun PageTypeSelectionDialog(
                 )
         ) {
             Column(
-                modifier = Modifier.padding(28.dp),
+                modifier = Modifier
+                    .padding(28.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -97,6 +102,15 @@ fun PageTypeSelectionDialog(
                     description = stringResource(R.string.home_tab_page_type_app_drawer_tab_description),
                     onClick = {
                         onTypeSelected(PageType.APP_DRAWER_TAB)
+                        onDismiss()
+                    }
+                )
+
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_rss_tab),
+                    description = stringResource(R.string.home_tab_page_type_rss_tab_description),
+                    onClick = {
+                        onTypeSelected(PageType.RSS_TAB)
                         onDismiss()
                     }
                 )

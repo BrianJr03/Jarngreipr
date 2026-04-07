@@ -44,8 +44,13 @@ class BgMusicManager @Inject constructor(
         private set
 
     private var isDucked = false
+    private var isMuted = false
 
-    private fun effectiveVolume() = if (isDucked) vol * DUCK_FACTOR else vol
+    private fun effectiveVolume() = when {
+        isMuted -> 0f
+        isDucked -> vol * DUCK_FACTOR
+        else -> vol
+    }
 
     fun duck() {
         if (isDucked) return
@@ -58,8 +63,9 @@ class BgMusicManager @Inject constructor(
     fun unDuck() {
         if (!isDucked) return
         isDucked = false
-        mediaPlayer?.setVolume(vol, vol)
-        nextMediaPlayer?.setVolume(vol, vol)
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
     }
 
     var folderUri by mutableStateOf(prefs.getString(KEY_FOLDER_URI, null))
@@ -119,7 +125,7 @@ class BgMusicManager @Inject constructor(
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_SCREEN_OFF -> pausePlayback()
-                Intent.ACTION_SCREEN_ON -> resumePlayback()
+                Intent.ACTION_SCREEN_ON -> if (isIntendedToPlay) resumePlayback()
             }
         }
     }
@@ -192,14 +198,10 @@ class BgMusicManager @Inject constructor(
     }
 
     fun setMuted(muted: Boolean) {
-        mediaPlayer?.setVolume(
-            if (muted) 0f else effectiveVolume(),
-            if (muted) 0f else effectiveVolume()
-        )
-        nextMediaPlayer?.setVolume(
-            if (muted) 0f else effectiveVolume(),
-            if (muted) 0f else effectiveVolume()
-        )
+        isMuted = muted
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
     }
 
     fun release() {
@@ -214,7 +216,7 @@ class BgMusicManager @Inject constructor(
     fun resumePlayback() {
         if (mediaPlayer != null) {
             mediaPlayer?.runCatching { start() }
-        } else {
+        } else if (isIntendedToPlay) {
             resumeIfConfigured()
         }
     }

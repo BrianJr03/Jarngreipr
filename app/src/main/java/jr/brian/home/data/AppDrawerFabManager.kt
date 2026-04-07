@@ -31,6 +31,9 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
     private val _fabVisiblePages = MutableStateFlow(loadFabVisiblePages())
     val fabVisiblePages: StateFlow<Set<Int>> = _fabVisiblePages.asStateFlow()
 
+    private val _fabExplicitPages = MutableStateFlow(loadFabExplicitPages())
+    val fabExplicitPages: StateFlow<Boolean> = _fabExplicitPages.asStateFlow()
+
     private val _fabPosition = MutableStateFlow(loadFabPosition())
     val fabPosition: StateFlow<FabPosition> = _fabPosition.asStateFlow()
 
@@ -50,6 +53,13 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         } else {
             pagesString.split(",").mapNotNull { it.toIntOrNull() }.toSet()
         }
+    }
+
+    private fun loadFabExplicitPages(): Boolean {
+        // If user previously saved page visibility, auto-migrate to explicit mode
+        val savedPagesStr = prefs.getString(KEY_FAB_VISIBLE_PAGES, null)
+        val hasExplicitPages = !savedPagesStr.isNullOrEmpty()
+        return prefs.getBoolean(KEY_FAB_EXPLICIT_PAGES, hasExplicitPages)
     }
 
     private fun loadFabPosition(): FabPosition {
@@ -77,32 +87,38 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         prefs.edit { putString(KEY_FAB_VISIBLE_PAGES, pagesString) }
     }
 
+    fun setFabExplicitPages(explicit: Boolean) {
+        _fabExplicitPages.value = explicit
+        prefs.edit { putBoolean(KEY_FAB_EXPLICIT_PAGES, explicit) }
+    }
+
     fun setFabPosition(position: FabPosition) {
         _fabPosition.value = position
         prefs.edit { putString(KEY_FAB_POSITION, position.name) }
     }
 
     fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
-        val currentPages = _fabVisiblePages.value.toMutableSet()
-
-        if (currentPages.isEmpty()) {
-            for (i in 0 until totalPages) {
-                currentPages.add(i)
-            }
+        if (!_fabExplicitPages.value) {
+            // First time interacting: switch to explicit mode and initialize with all pages
+            setFabExplicitPages(true)
+            val allPages = (0 until totalPages).toMutableSet()
+            allPages.remove(pageIndex)
+            setFabVisiblePages(allPages)
+            return
         }
 
+        val currentPages = _fabVisiblePages.value.toMutableSet()
         if (currentPages.contains(pageIndex)) {
             currentPages.remove(pageIndex)
         } else {
             currentPages.add(pageIndex)
         }
-
         setFabVisiblePages(currentPages)
     }
 
     fun isFabVisibleOnPage(pageIndex: Int): Boolean {
         if (!_isFabEnabled.value) return false
-        if (_fabVisiblePages.value.isEmpty()) return true // Empty means all pages
+        if (!_fabExplicitPages.value) return true // Default: all pages
         return _fabVisiblePages.value.contains(pageIndex)
     }
 
@@ -111,6 +127,7 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         private const val KEY_FAB_COLOR = "fab_color"
         private const val KEY_FAB_ENABLED = "fab_enabled"
         private const val KEY_FAB_VISIBLE_PAGES = "fab_visible_pages"
+        private const val KEY_FAB_EXPLICIT_PAGES = "fab_explicit_pages"
         private const val KEY_FAB_POSITION = "fab_position"
     }
 }

@@ -65,6 +65,8 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -85,6 +87,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppsAndWidgetsTab(
     pageIndex: Int,
+    pagerPageIndex: Int = pageIndex,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
     modifier: Modifier = Modifier,
@@ -113,6 +116,7 @@ fun AppsAndWidgetsTab(
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
@@ -172,6 +176,9 @@ fun AppsAndWidgetsTab(
         }
     }
 
+    val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
+    val isBottomFlingDisabled = bottomFlingDisabledByPage[pagerPageIndex] ?: false
+
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
@@ -208,7 +215,7 @@ fun AppsAndWidgetsTab(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .nestedScroll(bottomFlingTrigger)
+            .then(if (!isBottomFlingDisabled) Modifier.nestedScroll(bottomFlingTrigger) else Modifier)
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -392,6 +399,7 @@ fun AppsAndWidgetsTab(
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
+        val appVisibilityManager = LocalAppVisibilityManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
@@ -410,7 +418,12 @@ fun AppsAndWidgetsTab(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                pageTypeManager.reorderPages(newOrder)
+                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+            }
         )
     }
 
