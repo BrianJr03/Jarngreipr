@@ -2,7 +2,6 @@ package jr.brian.home.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.text.Html
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,7 +48,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +56,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,9 +76,6 @@ import jr.brian.home.viewmodels.RssViewModel
 
 @Composable
 fun RssTab(
-    totalPages: Int,
-    pagerState: PagerState,
-    pageIndex: Int,
     onSettingsClick: () -> Unit,
     viewModel: RssViewModel = hiltViewModel()
 ) {
@@ -89,7 +84,6 @@ fun RssTab(
     val listState = rememberLazyListState()
 
     var showFilterMenu by remember { mutableStateOf(false) }
-    // Empty set = all feeds visible
     var selectedFeedUrls by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     val itemsByFeed = remember(uiState.items) {
@@ -113,7 +107,6 @@ fun RssTab(
             .systemBarsPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -376,7 +369,6 @@ private fun RssItemCard(
             .clickable(onClick = onClick)
     ) {
         Column {
-            // Image / Video thumbnail
             if (hasImage || hasVideo) {
                 val mediaUrl = if (hasImage) item.imageUrl else item.videoUrl
                 MediaThumbnail(
@@ -396,7 +388,6 @@ private fun RssItemCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (hasVideo && hasImage) {
-                    // Show video badge if there's both image and video
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -486,7 +477,6 @@ private fun MediaThumbnail(
                 )
         )
 
-        // Dim overlay + play button for video
         if (isVideo) {
             Box(
                 modifier = Modifier
@@ -504,7 +494,6 @@ private fun MediaThumbnail(
             }
         }
 
-        // Loading placeholder shimmer feel
         AnimatedVisibility(
             visible = imageState is AsyncImagePainter.State.Loading,
             enter = fadeIn(),
@@ -525,7 +514,6 @@ private fun MediaThumbnail(
             }
         }
 
-        // Error state — hide the broken image container
         if (imageState is AsyncImagePainter.State.Error) {
             Box(modifier = Modifier.fillMaxSize().background(Color.Transparent))
         }
@@ -601,16 +589,9 @@ private fun NoItemsState(onRefresh: () -> Unit) {
 
 private fun stripHtml(html: String): String {
     if (html.isBlank()) return ""
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
-    } else {
-        @Suppress("DEPRECATION")
-        Html.fromHtml(html).toString()
-    }
+    return Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
 }
 
 private fun formatPubDate(raw: String): String {
-    // Return as-is for now — dates come in various RFC formats
-    // Trim to a reasonable length to avoid overflow
     return raw.take(30).trimEnd()
 }
