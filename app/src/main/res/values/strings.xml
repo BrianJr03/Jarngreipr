@@ -895,8 +895,8 @@
     <string name="esde_setup_warning_scripts_missing">Warning: Required scripts are missing from this folder.\n\nWithout these, the app cannot receive game information from ES-DE.\n\nContinue anyway?</string>
 
     <!-- ESDE Settings Screen -->
-    <string name="esde_settings_title">ES-DE Settings</string>
-    <string name="esde_settings_description">Configure ES-DE wallpaper and effects</string>
+    <string name="esde_settings_title">Frontend Settings</string>
+    <string name="esde_settings_description">Rom Search, Jingles and more!</string>
     <string name="esde_settings_section_animation">Animation</string>
     <string name="esde_settings_section_effects">Visual Effects</string>
     <string name="esde_settings_section_video">Video</string>

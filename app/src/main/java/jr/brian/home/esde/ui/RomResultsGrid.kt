@@ -137,16 +137,6 @@ internal fun RomResultsGrid(
         focusRequesters[focusedIndex]?.requestFocus()
     }
 
-    // Focus first item once both games and apps have finished loading.
-    LaunchedEffect(isLoading, displayedGames.isNotEmpty()) {
-        if (!isLoading && displayedGames.isNotEmpty()) {
-            repeat(3) {
-                delay(500)
-                runCatching { focusRequesters[0]?.requestFocus() }
-            }
-        }
-    }
-
     // Caller-controlled reset: jumps to index 0 when a new filter/search is applied.
     // Does NOT fire when clearing the query (caller keeps the key stable then).
     LaunchedEffect(focusResetKey) {
@@ -192,14 +182,14 @@ internal fun RomResultsGrid(
                 )
             }
 
-            !isHiddenMode && displayedGames.isEmpty() -> {
-                Text(
-                    text = stringResource(R.string.rom_search_no_results),
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.White.copy(alpha = 0.5f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+//            !isHiddenMode && displayedGames.isEmpty() -> {
+//                Text(
+//                    text = stringResource(R.string.rom_search_no_results),
+//                    modifier = Modifier.align(Alignment.Center),
+//                    color = Color.White.copy(alpha = 0.5f),
+//                    style = MaterialTheme.typography.bodyMedium
+//                )
+//            }
 
             else -> {
                 LazyVerticalGrid(
@@ -393,7 +383,7 @@ private fun HiddenModeHeader(
     onPlatformToggle: (String) -> Unit,
     onUnhideAll: () -> Unit
 ) {
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
