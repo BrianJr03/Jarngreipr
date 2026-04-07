@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RssFeed
@@ -52,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -402,6 +404,7 @@ private fun AddFeedDialog(
     onDismiss: () -> Unit
 ) {
     var url by remember { mutableStateOf("") }
+    val clipboard = LocalClipboardManager.current
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -452,6 +455,18 @@ private fun AddFeedDialog(
                     },
                     label = { Text("Feed URL", color = Color.White.copy(alpha = 0.6f)) },
                     singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            clipboard.getText()?.text?.let { url = it }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.ContentPaste,
+                                contentDescription = "Paste",
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Uri,
                         imeAction = ImeAction.Done

@@ -12,7 +12,8 @@ data class RssItemEntity(
     val description: String,
     val pubDate: String,
     val imageUrl: String = "",
-    val videoUrl: String = ""
+    val videoUrl: String = "",
+    val audioUrl: String = ""
 ) {
     fun toDomain() = RssItem(
         id = id,
@@ -22,6 +23,7 @@ data class RssItemEntity(
         description = description,
         pubDate = pubDate,
         imageUrl = imageUrl,
-        videoUrl = videoUrl
+        videoUrl = videoUrl,
+        audioUrl = audioUrl
     )
 }

@@ -1,10 +1,12 @@
 package jr.brian.home.viewmodels
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.data.RssRepository
-import jr.brian.home.model.rss.RssItem
 import jr.brian.home.model.state.RssUIState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,17 +17,29 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RssViewModel @Inject constructor(
-    private val rssRepository: RssRepository
+    private val rssRepository: RssRepository,
+    @ApplicationContext context: Context
 ) : ViewModel() {
+
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("rss_filter_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(RssUIState())
     val uiState = _uiState.asStateFlow()
 
-    private val _selectedFeedUrl = MutableStateFlow<String?>(null)
+    private val _selectedFeedUrls = MutableStateFlow(loadSelectedFeedUrls())
 
     init {
         observeFeeds()
         startAutoRefreshTicker()
+    }
+
+    private fun loadSelectedFeedUrls(): Set<String> {
+        return prefs.getStringSet(KEY_SELECTED_FEED_URLS, emptySet()) ?: emptySet()
+    }
+
+    private fun saveSelectedFeedUrls(urls: Set<String>) {
+        prefs.edit().putStringSet(KEY_SELECTED_FEED_URLS, urls).apply()
     }
 
     private fun observeFeeds() {
@@ -33,19 +47,14 @@ class RssViewModel @Inject constructor(
             combine(
                 rssRepository.feeds,
                 rssRepository.allItems,
-                _selectedFeedUrl
-            ) { feeds, allItems, selectedUrl ->
-                val filteredItems = if (selectedUrl == null) {
-                    allItems
-                } else {
-                    allItems.filter { it.feedUrl == selectedUrl }
-                }
-                Triple(feeds, filteredItems, selectedUrl)
-            }.collect { (feeds, items, selectedUrl) ->
+                _selectedFeedUrls
+            ) { feeds, allItems, selectedUrls ->
+                Triple(feeds, allItems, selectedUrls)
+            }.collect { (feeds, items, selectedUrls) ->
                 _uiState.value = _uiState.value.copy(
                     feeds = feeds,
                     items = items,
-                    selectedFeedUrl = selectedUrl
+                    selectedFeedUrls = selectedUrls
                 )
             }
         }
@@ -67,8 +76,9 @@ class RssViewModel @Inject constructor(
         }
     }
 
-    fun selectFeed(feedUrl: String?) {
-        _selectedFeedUrl.value = feedUrl
+    fun setSelectedFeedUrls(urls: Set<String>) {
+        _selectedFeedUrls.value = urls
+        saveSelectedFeedUrls(urls)
     }
 
     fun addFeed(url: String) {
@@ -85,7 +95,11 @@ class RssViewModel @Inject constructor(
     fun removeFeed(url: String) {
         viewModelScope.launch {
             rssRepository.removeFeed(url)
-            if (_selectedFeedUrl.value == url) _selectedFeedUrl.value = null
+            val updated = _selectedFeedUrls.value - url
+            if (updated != _selectedFeedUrls.value) {
+                _selectedFeedUrls.value = updated
+                saveSelectedFeedUrls(updated)
+            }
         }
     }
 
@@ -122,5 +136,9 @@ class RssViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    companion object {
+        private const val KEY_SELECTED_FEED_URLS = "selected_feed_urls"
     }
 }

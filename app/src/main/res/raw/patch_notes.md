@@ -5,6 +5,9 @@
 - You can now choose between displaying all apps or visible apps within the current tab
 - Settings → Layout → Filter App Drawer by Tab
 
+**Drag to Reorder Tabs**
+- On any tab go Menu → Home to drag and reorder tabs
+
 **Fixes**
 - Fixes issue where bg music randomly resume playback after being muted
 

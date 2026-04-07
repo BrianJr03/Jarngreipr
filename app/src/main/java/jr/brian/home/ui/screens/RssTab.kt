@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RssFeed
@@ -44,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,7 +86,7 @@ fun RssTab(
     val listState = rememberLazyListState()
 
     var showFilterMenu by remember { mutableStateOf(false) }
-    var selectedFeedUrls by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val selectedFeedUrls = uiState.selectedFeedUrls
 
     val itemsByFeed = remember(uiState.items) {
         uiState.items.groupBy { it.feedUrl }
@@ -98,6 +100,12 @@ fun RssTab(
     val filteredFeeds = remember(uiState.feeds, selectedFeedUrls) {
         if (selectedFeedUrls.isEmpty()) uiState.feeds
         else uiState.feeds.filter { it.url in selectedFeedUrls }
+    }
+
+    LaunchedEffect(selectedFeedUrls) {
+        if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
+            listState.animateScrollToItem(0)
+        }
     }
 
     Box(
@@ -192,7 +200,7 @@ fun RssTab(
                                             )
                                         }
                                     } else null,
-                                    onClick = { selectedFeedUrls = emptySet() }
+                                    onClick = { viewModel.setSelectedFeedUrls(emptySet()) }
                                 )
                                 HorizontalDivider(
                                     color = Color.White.copy(alpha = 0.08f),
@@ -224,12 +232,12 @@ fun RssTab(
                                             }
                                         } else null,
                                         onClick = {
-                                            selectedFeedUrls = if (isSelected) {
-                                                val next = selectedFeedUrls - feed.url
-                                                next
+                                            val next = if (isSelected) {
+                                                selectedFeedUrls - feed.url
                                             } else {
                                                 selectedFeedUrls + feed.url
                                             }
+                                            viewModel.setSelectedFeedUrls(next)
                                         }
                                     )
                                 }
@@ -275,10 +283,11 @@ fun RssTab(
                                     RssItemCard(
                                         item = item,
                                         onClick = {
-                                            if (item.link.isNotEmpty()) {
+                                            val target = item.link.ifEmpty { item.audioUrl }
+                                            if (target.isNotEmpty()) {
                                                 runCatching {
                                                     context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, Uri.parse(item.link))
+                                                        Intent(Intent.ACTION_VIEW, Uri.parse(target))
                                                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     )
                                                 }
@@ -289,6 +298,16 @@ fun RssTab(
                                                 runCatching {
                                                     context.startActivity(
                                                         Intent(Intent.ACTION_VIEW, Uri.parse(item.videoUrl))
+                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onAudioClick = {
+                                            if (item.audioUrl.isNotEmpty()) {
+                                                runCatching {
+                                                    context.startActivity(
+                                                        Intent(Intent.ACTION_VIEW, Uri.parse(item.audioUrl))
                                                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     )
                                                 }
@@ -347,10 +366,12 @@ private fun FeedSectionHeader(feed: RssFeed) {
 private fun RssItemCard(
     item: RssItem,
     onClick: () -> Unit,
-    onVideoClick: () -> Unit
+    onVideoClick: () -> Unit,
+    onAudioClick: () -> Unit
 ) {
     val hasImage = item.imageUrl.isNotEmpty()
     val hasVideo = item.videoUrl.isNotEmpty()
+    val hasAudio = item.audioUrl.isNotEmpty()
     val plainDescription = remember(item.description) {
         stripHtml(item.description).trim()
     }
@@ -374,7 +395,9 @@ private fun RssItemCard(
                 MediaThumbnail(
                     url = mediaUrl,
                     isVideo = !hasImage && hasVideo,
-                    onVideoClick = onVideoClick
+                    isAudio = hasAudio && !hasVideo,
+                    onVideoClick = onVideoClick,
+                    onAudioClick = onAudioClick
                 )
             }
 
@@ -401,6 +424,26 @@ private fun RssItemCard(
                         )
                         Text(
                             text = "Video available",
+                            color = ThemeAccentColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+                if (hasAudio && !hasVideo && !hasImage) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clickable(onClick = onAudioClick)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Headphones,
+                            contentDescription = "Play audio",
+                            tint = ThemeAccentColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Listen",
                             color = ThemeAccentColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -444,7 +487,9 @@ private fun RssItemCard(
 private fun MediaThumbnail(
     url: String,
     isVideo: Boolean,
-    onVideoClick: () -> Unit
+    isAudio: Boolean,
+    onVideoClick: () -> Unit,
+    onAudioClick: () -> Unit
 ) {
     val context = LocalContext.current
     var imageState by remember { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
@@ -490,6 +535,23 @@ private fun MediaThumbnail(
                     contentDescription = "Play video",
                     tint = Color.White.copy(alpha = 0.9f),
                     modifier = Modifier.size(52.dp)
+                )
+            }
+        }
+
+        if (isAudio) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .clickable(onClick = onAudioClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Headphones,
+                    contentDescription = "Play audio",
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(44.dp)
                 )
             }
         }

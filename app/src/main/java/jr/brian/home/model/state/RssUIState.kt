@@ -9,5 +9,5 @@ data class RssUIState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: String? = null,
-    val selectedFeedUrl: String? = null
+    val selectedFeedUrls: Set<String> = emptySet()
 )
