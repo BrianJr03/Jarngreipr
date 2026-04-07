@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         RssFeedEntity::class,
         RssItemEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -48,6 +48,12 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE rss_items ADD COLUMN imageUrl TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE rss_items ADD COLUMN videoUrl TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE rss_items ADD COLUMN audioUrl TEXT NOT NULL DEFAULT ''")
             }
         }
     }

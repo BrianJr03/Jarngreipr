@@ -8,5 +8,6 @@ data class RssItem(
     val description: String,
     val pubDate: String = "",
     val imageUrl: String = "",
-    val videoUrl: String = ""
+    val videoUrl: String = "",
+    val audioUrl: String = ""
 )

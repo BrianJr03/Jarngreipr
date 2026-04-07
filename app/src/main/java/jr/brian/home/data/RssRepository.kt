@@ -97,6 +97,7 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
             var currentPubDate = ""
             var currentImageUrl = ""
             var currentVideoUrl = ""
+            var currentAudioUrl = ""
 
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -113,7 +114,7 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                                 val href = parser.getAttributeValue(null, "href")
                                 if (href != null) currentLink = href
                             }
-                            // <enclosure url="..." type="image/jpeg" /> or type="video/mp4"
+                            // <enclosure url="..." type="image/jpeg" /> or type="video/mp4" or type="audio/mpeg"
                             tagName == "enclosure" && inItem -> {
                                 val encUrl = parser.getAttributeValue(null, "url") ?: ""
                                 val encType = parser.getAttributeValue(null, "type") ?: ""
@@ -122,6 +123,15 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                                         currentImageUrl = encUrl
                                     encType.startsWith("video") && currentVideoUrl.isEmpty() ->
                                         currentVideoUrl = encUrl
+                                    encType.startsWith("audio") && currentAudioUrl.isEmpty() ->
+                                        currentAudioUrl = encUrl
+                                }
+                            }
+                            // <itunes:image href="..."/> per-episode artwork
+                            (tagName == "itunes:image" || tagName == "image") && inItem -> {
+                                val href = parser.getAttributeValue(null, "href") ?: ""
+                                if (href.isNotEmpty() && currentImageUrl.isEmpty()) {
+                                    currentImageUrl = href
                                 }
                             }
                             // <media:content url="..." type="image/jpeg" medium="image"/>
@@ -134,8 +144,8 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                                         currentImageUrl = mediaUrl
                                     (medium == "video" || mediaType.startsWith("video")) && currentVideoUrl.isEmpty() ->
                                         currentVideoUrl = mediaUrl
-                                    mediaUrl.isNotEmpty() && currentImageUrl.isEmpty() ->
-                                        currentImageUrl = mediaUrl
+                                    (medium == "audio" || mediaType.startsWith("audio")) && currentAudioUrl.isEmpty() ->
+                                        currentAudioUrl = mediaUrl
                                 }
                             }
                             // <media:thumbnail url="..."/>
@@ -190,7 +200,8 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                                         description = currentDescription,
                                         pubDate = currentPubDate,
                                         imageUrl = resolvedImage,
-                                        videoUrl = currentVideoUrl
+                                        videoUrl = currentVideoUrl,
+                                        audioUrl = currentAudioUrl
                                     )
                                 )
                             }
@@ -200,6 +211,7 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                             currentPubDate = ""
                             currentImageUrl = ""
                             currentVideoUrl = ""
+                            currentAudioUrl = ""
                             inItem = false
                         }
                         currentTag = ""
