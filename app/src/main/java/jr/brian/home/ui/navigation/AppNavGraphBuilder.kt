@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
@@ -55,6 +56,7 @@ import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.home.viewmodels.RssViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import androidx.core.net.toUri
 
@@ -744,15 +746,20 @@ fun NavGraphBuilder.trackpadScreen(
 fun NavGraphBuilder.rssSettingsScreen(
     navController: NavHostController
 ) {
-    composable(Routes.RSS_SETTINGS) {
+    composable(Routes.RSS_SETTINGS) { backStackEntry ->
         var showScreen by remember { mutableStateOf(true) }
+        val launcherEntry = remember(backStackEntry) {
+            navController.getBackStackEntry(Routes.LAUNCHER)
+        }
+        val viewModel: RssViewModel = hiltViewModel(launcherEntry)
 
         SlideInVertically(showScreen) {
             RssSettingsScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
-                }
+                },
+                viewModel = viewModel
             )
         }
     }

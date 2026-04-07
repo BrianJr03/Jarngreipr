@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @HiltViewModel
 class RssViewModel @Inject constructor(
@@ -43,16 +44,16 @@ class RssViewModel @Inject constructor(
     }
 
     private fun saveSelectedFeedUrls(urls: Set<String>) {
-        prefs.edit().putStringSet(KEY_SELECTED_FEED_URLS, urls).apply()
+        prefs.edit { putStringSet(KEY_SELECTED_FEED_URLS, urls) }
     }
 
     fun setUseDMYDateFormat(useDMY: Boolean) {
-        prefs.edit().putBoolean(KEY_USE_DMY_DATE_FORMAT, useDMY).apply()
+        prefs.edit { putBoolean(KEY_USE_DMY_DATE_FORMAT, useDMY) }
         _uiState.value = _uiState.value.copy(useDMYDateFormat = useDMY)
     }
 
     fun setUse24HourClock(use24Hour: Boolean) {
-        prefs.edit().putBoolean(KEY_USE_24_HOUR_CLOCK, use24Hour).apply()
+        prefs.edit { putBoolean(KEY_USE_24_HOUR_CLOCK, use24Hour) }
         _uiState.value = _uiState.value.copy(use24HourClock = use24Hour)
     }
 

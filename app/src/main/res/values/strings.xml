@@ -1402,8 +1402,8 @@
     <string name="rss_settings_save_cd">Save</string>
     <string name="rss_settings_display_section">Display</string>
     <string name="rss_settings_date_format">Date format</string>
-    <string name="rss_settings_date_dmy">D/MM/YYYY</string>
-    <string name="rss_settings_date_mdy">MM/D/YYYY</string>
+    <string name="rss_settings_date_dmy">D/M/YYYY</string>
+    <string name="rss_settings_date_mdy">M/D/YYYY</string>
     <string name="rss_settings_time_format">Time format</string>
     <string name="rss_settings_time_24h">24h</string>
     <string name="rss_settings_time_12h">12h</string>
