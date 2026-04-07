@@ -148,14 +148,14 @@ fun SettingsScreen(
     val appUpdateManager = LocalAppUpdateManager.current
 
     val updateAvailable = stringResource(R.string.update_not_available)
-    
+
     val updateDialogState = rememberDialogState<UpdateInfo>()
     val notificationAccessDialogState = rememberDialogState<Unit>()
     val whatsNewDialogState = rememberDialogState<Unit>()
     var isCheckingForUpdates by remember { mutableStateOf(false) }
     var comicPopMessage by remember { mutableStateOf<ComicPopMessage?>(null) }
     var comicPopContainer by remember { mutableStateOf(IntSize.Zero) }
-    
+
     val currentVersionName = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
@@ -169,7 +169,7 @@ fun SettingsScreen(
             comicPopMessage = null
         }
     }
-    
+
     Scaffold(
         containerColor = OledBackgroundColor,
     ) { innerPadding ->
@@ -220,10 +220,10 @@ fun SettingsScreen(
                             scope.launch {
                                 appUpdateManager.clearSkippedVersion(context)
                                 appUpdateManager.clearDownloadedVersion(context)
-                                
+
                                 val update = UpdateChecker.checkForUpdate(currentVersionName)
                                 isCheckingForUpdates = false
-                                
+
                                 if (update.isUpdateAvailable) {
                                     updateDialogState.show(update)
                                 } else {
@@ -239,7 +239,7 @@ fun SettingsScreen(
                     onDismiss = onDismiss
                 )
             }
-            
+
             updateDialogState.item?.let { updateInfo ->
                 if (updateDialogState.isVisible) {
                     UpdateAvailableDialog(
@@ -252,7 +252,10 @@ fun SettingsScreen(
                             updateDialogState.dismiss()
                         },
                         onDownloadComplete = {
-                            appUpdateManager.markVersionDownloaded(context, updateInfo.latestVersion)
+                            appUpdateManager.markVersionDownloaded(
+                                context,
+                                updateInfo.latestVersion
+                            )
                         }
                     )
                 }
@@ -287,7 +290,7 @@ fun SettingsScreen(
                     }
                 }
             }
-            
+
             if (notificationAccessDialogState.isVisible) {
                 NotificationAccessDialog(
                     onDismiss = notificationAccessDialogState::dismiss,
@@ -324,6 +327,7 @@ fun SettingsScreen(
         }
     }
 }
+
 private fun createVersionTapComicPopMessage(
     remaining: Int,
     container: IntSize
@@ -385,7 +389,6 @@ private fun SettingsContent(
     val isThorDevice = remember { Build.MODEL == DeviceModel.THOR }
 
 
-
     fun sectionMatchesQuery(sectionKey: String): Boolean {
         if (searchQuery.isBlank()) return true
         val q = searchQuery.lowercase().trim()
@@ -393,8 +396,16 @@ private fun SettingsContent(
     }
 
     val hasSearchResults = searchQuery.isBlank() ||
-        listOf(SECTION_APPEARANCE, SECTION_ESDE, SECTION_LAYOUT, SECTION_SUPPORT, SECTION_SYSTEM, SECTION_EXTRAS, SECTION_MUSIC)
-            .any { sectionMatchesQuery(it) }
+            listOf(
+                SECTION_APPEARANCE,
+                SECTION_ESDE,
+                SECTION_LAYOUT,
+                SECTION_SUPPORT,
+                SECTION_SYSTEM,
+                SECTION_EXTRAS,
+                SECTION_MUSIC
+            )
+                .any { sectionMatchesQuery(it) }
 
     val scrollProgress by remember {
         derivedStateOf {
@@ -403,8 +414,11 @@ private fun SettingsContent(
             else {
                 val firstVisible = listState.firstVisibleItemIndex
                 val firstVisibleOffset = listState.firstVisibleItemScrollOffset
-                val avgItemSize = listState.layoutInfo.visibleItemsInfo.map { it.size }.average().takeIf { it > 0 } ?: 1.0
-                ((firstVisible + firstVisibleOffset / avgItemSize) / (totalItems - 1).coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
+                val avgItemSize = listState.layoutInfo.visibleItemsInfo.map { it.size }.average()
+                    .takeIf { it > 0 } ?: 1.0
+                ((firstVisible + firstVisibleOffset / avgItemSize) / (totalItems - 1).coerceAtLeast(
+                    1
+                )).toFloat().coerceIn(0f, 1f)
             }
         }
     }
@@ -417,7 +431,7 @@ private fun SettingsContent(
             else -> onDismiss()
         }
     }
-    
+
     fun toggleSection(section: String) {
         expandedSection = if (expandedSection == section) null else section
         if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
@@ -460,206 +474,238 @@ private fun SettingsContent(
                 .weight(1f)
                 .onSizeChanged { containerHeight = it.height }
         ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 4.dp),
-            contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (searchQuery.isBlank()) item(key = "support_links") {
-                val coffeeUrl = stringResource(R.string.settings_buy_me_coffee_url)
-                val kofiUrl = stringResource(R.string.settings_kofi_url)
-                val discordUrl = stringResource(R.string.settings_discord_url)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(vertical = 16.dp, horizontal = 0.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (searchQuery.isBlank()) item(key = "support_links") {
+                    val coffeeUrl = stringResource(R.string.settings_buy_me_coffee_url)
+                    val kofiUrl = stringResource(R.string.settings_kofi_url)
+                    val discordUrl = stringResource(R.string.settings_discord_url)
 
-                val assetManager = context.assets
-                val coffeeBitmap = remember {
-                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-buy-me-a-coffee-96.png"))
-                        ?.asImageBitmap()
-                }
-                val kofiBitmap = remember {
-                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-ko-fi-96.png"))
-                        ?.asImageBitmap()
-                }
-                val discordBitmap = remember {
-                    BitmapFactory.decodeStream(assetManager.open("icons/icons8-discord-96.png"))
-                        ?.asImageBitmap()
-                }
+                    val assetManager = context.assets
+                    val coffeeBitmap = remember {
+                        BitmapFactory.decodeStream(assetManager.open("icons/icons8-buy-me-a-coffee-96.png"))
+                            ?.asImageBitmap()
+                    }
+                    val kofiBitmap = remember {
+                        BitmapFactory.decodeStream(assetManager.open("icons/icons8-ko-fi-96.png"))
+                            ?.asImageBitmap()
+                    }
+                    val discordBitmap = remember {
+                        BitmapFactory.decodeStream(assetManager.open("icons/icons8-discord-96.png"))
+                            ?.asImageBitmap()
+                    }
 
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    val items = listOf(
-                        Triple(coffeeBitmap, stringResource(R.string.settings_buy_me_coffee_title), coffeeUrl),
-                        Triple(kofiBitmap, stringResource(R.string.settings_kofi_title), kofiUrl),
-                        Triple(discordBitmap, stringResource(R.string.settings_discord_title), discordUrl),
-                    )
-                    items.forEach { (bitmap, title, url) ->
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(
-                                    brush = subtleCardGradient(isFocused = false),
-                                    shape = RoundedCornerShape(16.dp)
+                    Column {
+                        AnimatedVisibility(!isKeyboardVisible && expandedSection == null) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                val items = listOf(
+                                    Triple(
+                                        coffeeBitmap,
+                                        stringResource(R.string.settings_buy_me_coffee_title),
+                                        coffeeUrl
+                                    ),
+                                    Triple(
+                                        kofiBitmap,
+                                        stringResource(R.string.settings_kofi_title),
+                                        kofiUrl
+                                    ),
+                                    Triple(
+                                        discordBitmap,
+                                        stringResource(R.string.settings_discord_title),
+                                        discordUrl
+                                    ),
                                 )
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                items.forEach { (bitmap, title, url) ->
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .background(
+                                                brush = subtleCardGradient(isFocused = false),
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                context.startActivity(
+                                                    Intent(
+                                                        Intent.ACTION_VIEW,
+                                                        url.toUri()
+                                                    )
+                                                )
+                                            }
+                                            .padding(vertical = 16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center,
+                                    ) {
+                                        if (bitmap != null) {
+                                            Image(
+                                                bitmap = bitmap,
+                                                contentDescription = title,
+                                                modifier = Modifier.size(36.dp),
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = title,
+                                            color = Color.White,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
                                 }
-                                .padding(vertical = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            if (bitmap != null) {
-                                Image(
-                                    bitmap = bitmap,
-                                    contentDescription = title,
-                                    modifier = Modifier.size(36.dp),
-                                )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = title,
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
                         }
                     }
                 }
-            }
 
-            if (sectionMatchesQuery(SECTION_APPEARANCE)) item(key = SECTION_APPEARANCE) {
-                AppearanceSection(
-                    isExpanded = expandedSection == SECTION_APPEARANCE,
-                    onToggle = { toggleSection(SECTION_APPEARANCE) },
-                    onNavigateToCustomTheme = onNavigateToCustomTheme,
-                    onNavigateToThemeShare = onNavigateToThemeShare,
-                    onIconPackChanged = onIconPackChanged,
-                    onNavigateToEsdeSettings = onNavigateToEsdeSettings
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
-                MusicSection(
-                    isExpanded = expandedSection == SECTION_MUSIC,
-                    onToggle = { toggleSection(SECTION_MUSIC) }
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_ESDE)) item(key = SECTION_ESDE) {
-                ESDEDisplaySection(
-                    isExpanded = expandedSection == SECTION_ESDE,
-                    onToggle = { toggleSection(SECTION_ESDE) },
-                    onRunSetupWizard = onRunSetupWizard,
-                    onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
-                    onNavigateToSystemApps = onNavigateToSystemApps,
-                    onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
-                    onNavigateToJingles = onNavigateToJingles,
-                    onNavigateToRomSearch = onNavigateToRomSearch,
-                    onSectionHeaderTap = {
-                        if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
-                            // Force-destroy current animation, then start a fresh explode burst.
-                            headerKonfettiParties = null
-                            headerKonfettiKey++
-                            headerKonfettiParties = explodeParties
-                        }
-                    }
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_LAYOUT)) item(key = SECTION_LAYOUT) {
-                LayoutSection(
-                    isExpanded = expandedSection == SECTION_LAYOUT,
-                    onToggle = { toggleSection(SECTION_LAYOUT) },
-                    isThorDevice = isThorDevice,
-                    allAppsUnfiltered = allAppsUnfiltered,
-                    onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
-                    onNavigateToDockSettings = onNavigateToDockSettings
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_SUPPORT)) item(key = SECTION_SUPPORT) {
-                SupportSection(
-                    isExpanded = expandedSection == SECTION_SUPPORT,
-                    onToggle = { toggleSection(SECTION_SUPPORT) },
-                    onNavigateToFAQ = onNavigateToFAQ
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_SYSTEM)) item(key = SECTION_SYSTEM) {
-                SystemSection(
-                    isExpanded = expandedSection == SECTION_SYSTEM,
-                    onToggle = { toggleSection(SECTION_SYSTEM) },
-                    isCheckingForUpdates = isCheckingForUpdates,
-                    onCheckForUpdates = onCheckForUpdates,
-                    onNavigateToCrashLogs = onNavigateToCrashLogs,
-                    onNavigateToControlPad = onNavigateToControlPad,
-                    onNavigateToMonitor = onNavigateToMonitor,
-                    onNavigateToVolumeControls = onNavigateToVolumeControls,
-                    onNotificationBadgeClick = onNotificationBadgeClick
-                )
-            }
-
-            if (sectionMatchesQuery(SECTION_EXTRAS)) item(key = SECTION_EXTRAS) {
-                ExtrasSection(
-                    isExpanded = expandedSection == SECTION_EXTRAS,
-                    onToggle = { toggleSection(SECTION_EXTRAS) },
-                    onWhatsNewClick = onWhatsNewClick
-                )
-            }
-
-            if (!hasSearchResults) item(key = "no_results") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No settings match \"$searchQuery\"",
-                        color = Color.White.copy(alpha = 0.5f),
-                        fontSize = 14.sp
+                if (sectionMatchesQuery(SECTION_APPEARANCE)) item(key = SECTION_APPEARANCE) {
+                    AppearanceSection(
+                        isExpanded = expandedSection == SECTION_APPEARANCE,
+                        onToggle = { toggleSection(SECTION_APPEARANCE) },
+                        onNavigateToCustomTheme = onNavigateToCustomTheme,
+                        onNavigateToThemeShare = onNavigateToThemeShare,
+                        onIconPackChanged = onIconPackChanged,
+                        onNavigateToEsdeSettings = onNavigateToEsdeSettings
                     )
                 }
-            }
-        }
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .width(6.dp)
-                .padding(vertical = 24.dp, horizontal = 2.dp)
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures { change, _ ->
-                        change.consume()
-                        val trackHeight = containerHeight - thumbHeightPx - 48.dp.toPx()
-                        val newProgress = ((change.position.y - thumbHeightPx / 2) / trackHeight).coerceIn(0f, 1f)
-                        val totalItems = listState.layoutInfo.totalItemsCount
-                        val targetIndex = (newProgress * (totalItems - 1)).roundToInt()
-                        scope.launch { listState.scrollToItem(targetIndex) }
+                if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
+                    MusicSection(
+                        isExpanded = expandedSection == SECTION_MUSIC,
+                        onToggle = { toggleSection(SECTION_MUSIC) }
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_ESDE)) item(key = SECTION_ESDE) {
+                    ESDEDisplaySection(
+                        isExpanded = expandedSection == SECTION_ESDE,
+                        onToggle = { toggleSection(SECTION_ESDE) },
+                        onRunSetupWizard = onRunSetupWizard,
+                        onNavigateToMarqueePressShortcut = onNavigateToMarqueePressShortcut,
+                        onNavigateToSystemApps = onNavigateToSystemApps,
+                        onNavigateToKonfettiEditor = onNavigateToKonfettiEditor,
+                        onNavigateToJingles = onNavigateToJingles,
+                        onNavigateToRomSearch = onNavigateToRomSearch,
+                        onSectionHeaderTap = {
+                            if (floatyModeManager.isFloatyModeActive && floatyModeManager.isSectionTapKonfettiEnabled) {
+                                // Force-destroy current animation, then start a fresh explode burst.
+                                headerKonfettiParties = null
+                                headerKonfettiKey++
+                                headerKonfettiParties = explodeParties
+                            }
+                        }
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_LAYOUT)) item(key = SECTION_LAYOUT) {
+                    LayoutSection(
+                        isExpanded = expandedSection == SECTION_LAYOUT,
+                        onToggle = { toggleSection(SECTION_LAYOUT) },
+                        isThorDevice = isThorDevice,
+                        allAppsUnfiltered = allAppsUnfiltered,
+                        onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
+                        onNavigateToDockSettings = onNavigateToDockSettings
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_SUPPORT)) item(key = SECTION_SUPPORT) {
+                    SupportSection(
+                        isExpanded = expandedSection == SECTION_SUPPORT,
+                        onToggle = { toggleSection(SECTION_SUPPORT) },
+                        onNavigateToFAQ = onNavigateToFAQ
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_SYSTEM)) item(key = SECTION_SYSTEM) {
+                    SystemSection(
+                        isExpanded = expandedSection == SECTION_SYSTEM,
+                        onToggle = { toggleSection(SECTION_SYSTEM) },
+                        isCheckingForUpdates = isCheckingForUpdates,
+                        onCheckForUpdates = onCheckForUpdates,
+                        onNavigateToCrashLogs = onNavigateToCrashLogs,
+                        onNavigateToControlPad = onNavigateToControlPad,
+                        onNavigateToMonitor = onNavigateToMonitor,
+                        onNavigateToVolumeControls = onNavigateToVolumeControls,
+                        onNotificationBadgeClick = onNotificationBadgeClick
+                    )
+                }
+
+                if (sectionMatchesQuery(SECTION_EXTRAS)) item(key = SECTION_EXTRAS) {
+                    ExtrasSection(
+                        isExpanded = expandedSection == SECTION_EXTRAS,
+                        onToggle = { toggleSection(SECTION_EXTRAS) },
+                        onWhatsNewClick = onWhatsNewClick
+                    )
+                }
+
+                if (!hasSearchResults) item(key = "no_results") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No settings match \"$searchQuery\"",
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 14.sp
+                        )
                     }
                 }
-        ) {
+            }
+
             Box(
                 modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight(0.15f)
-                    .offset { IntOffset(0, ((containerHeight - thumbHeightPx - 48.dp.toPx()) * scrollProgress).roundToInt()) }
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(ThemePrimaryColor)
-            )
-        }
-        
-        headerKonfettiParties?.let { parties ->
-            key(headerKonfettiKey) {
-                KonfettiView(
-                    modifier = Modifier.fillMaxSize(),
-                    parties = parties
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .width(6.dp)
+                    .padding(vertical = 24.dp, horizontal = 2.dp)
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures { change, _ ->
+                            change.consume()
+                            val trackHeight = containerHeight - thumbHeightPx - 48.dp.toPx()
+                            val newProgress =
+                                ((change.position.y - thumbHeightPx / 2) / trackHeight).coerceIn(
+                                    0f,
+                                    1f
+                                )
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            val targetIndex = (newProgress * (totalItems - 1)).roundToInt()
+                            scope.launch { listState.scrollToItem(targetIndex) }
+                        }
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .fillMaxHeight(0.15f)
+                        .offset {
+                            IntOffset(
+                                0,
+                                ((containerHeight - thumbHeightPx - 48.dp.toPx()) * scrollProgress).roundToInt()
+                            )
+                        }
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(ThemePrimaryColor)
                 )
             }
-        }
+
+            headerKonfettiParties?.let { parties ->
+                key(headerKonfettiKey) {
+                    KonfettiView(
+                        modifier = Modifier.fillMaxSize(),
+                        parties = parties
+                    )
+                }
+            }
         }
     }
 }
