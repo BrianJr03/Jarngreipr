@@ -401,7 +401,7 @@ private fun RssItemCard(
                 val mediaUrl = if (hasImage) item.imageUrl else item.videoUrl
                 MediaThumbnail(
                     url = mediaUrl,
-                    isVideo = !hasImage && hasVideo,
+                    isVideo = !hasImage,
                     isAudio = hasAudio && !hasVideo,
                     onVideoClick = onVideoClick,
                     onAudioClick = onAudioClick
@@ -671,7 +671,7 @@ private fun formatPubDate(raw: String, useDMY: Boolean, use24Hour: Boolean): Str
         "yyyy-MM-dd'T'HH:mm:ssz",
         "dd MMM yyyy HH:mm:ss Z"
     )
-    val datePattern = if (useDMY) "d/MM/yyyy" else "MM/d/yyyy"
+    val datePattern = if (useDMY) "d/M/yyyy" else "M/d/yyyy"
     val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
     val output = java.text.SimpleDateFormat("$datePattern @ $timePattern", java.util.Locale.getDefault())
     for (fmt in inputFormats) {
