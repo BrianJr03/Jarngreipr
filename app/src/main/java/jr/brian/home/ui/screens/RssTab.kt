@@ -76,7 +76,18 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.viewmodels.RssViewModel
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import jr.brian.home.data.NowPlayingManager
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.net.toUri
 
 @Composable
 fun RssTab(
@@ -110,6 +121,21 @@ fun RssTab(
         }
     }
 
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    var showNowPlayingDialog by remember { mutableStateOf(false) }
+
+    nowPlaying?.let { info ->
+        if (showNowPlayingDialog) {
+            NowPlayingDialog(
+                info = info,
+                onPlayPause = { viewModel.togglePlayPause() },
+                onPrevious = { viewModel.skipToPrevious() },
+                onNext = { viewModel.skipToNext() },
+                onDismiss = { showNowPlayingDialog = false }
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -120,11 +146,14 @@ fun RssTab(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(.8f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -148,7 +177,26 @@ fun RssTab(
                         )
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+
+                val info = nowPlaying
+                Box(
+                    modifier = Modifier.weight(1.2f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (info != null) {
+                        NowPlayingBubble(
+                            title = info.title,
+                            onPrevious = { viewModel.skipToPrevious() },
+                            onNext = { viewModel.skipToNext() },
+                            onClick = { showNowPlayingDialog = true }
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.End
+                ) {
                     IconButton(
                         onClick = { viewModel.refreshAllFeeds() },
                         enabled = !uiState.isRefreshing
@@ -168,7 +216,7 @@ fun RssTab(
                                     imageVector = Icons.Default.FilterList,
                                     contentDescription = stringResource(R.string.rss_tab_filter_cd),
                                     tint = if (selectedFeedUrls.isEmpty()) Color.White.copy(alpha = 0.7f)
-                                           else ThemePrimaryColor,
+                                    else ThemePrimaryColor,
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
@@ -186,10 +234,10 @@ fun RssTab(
                                         Text(
                                             text = stringResource(R.string.rss_tab_all_feeds),
                                             color = if (selectedFeedUrls.isEmpty()) ThemePrimaryColor
-                                                    else Color.White,
+                                            else Color.White,
                                             fontSize = 14.sp,
                                             fontWeight = if (selectedFeedUrls.isEmpty()) FontWeight.Bold
-                                                         else FontWeight.Normal
+                                            else FontWeight.Normal
                                         )
                                     },
                                     leadingIcon = if (selectedFeedUrls.isEmpty()) {
@@ -215,10 +263,10 @@ fun RssTab(
                                             Text(
                                                 text = feed.title,
                                                 color = if (isSelected) ThemePrimaryColor
-                                                        else Color.White.copy(alpha = 0.85f),
+                                                else Color.White.copy(alpha = 0.85f),
                                                 fontSize = 14.sp,
                                                 fontWeight = if (isSelected) FontWeight.SemiBold
-                                                             else FontWeight.Normal,
+                                                else FontWeight.Normal,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -263,6 +311,7 @@ fun RssTab(
                 uiState.items.isEmpty() && !uiState.isRefreshing -> NoItemsState(
                     onRefresh = { viewModel.refreshAllFeeds() }
                 )
+
                 else -> {
                     LazyColumn(
                         state = listState,
@@ -287,12 +336,19 @@ fun RssTab(
                                         useDMYDateFormat = uiState.useDMYDateFormat,
                                         use24HourClock = uiState.use24HourClock,
                                         onClick = {
-                                            val target = item.link.ifEmpty { item.audioUrl }
-                                            if (target.isNotEmpty()) {
+                                            if (item.link.isNotEmpty()) {
+                                                runCatching {
+                                                    CustomTabsIntent.Builder()
+                                                        .build()
+                                                        .launchUrl(context, Uri.parse(item.link))
+                                                }
+                                            } else if (item.audioUrl.isNotEmpty()) {
                                                 runCatching {
                                                     context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, Uri.parse(target))
-                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                        Intent(
+                                                            Intent.ACTION_VIEW,
+                                                            Uri.parse(item.audioUrl)
+                                                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     )
                                                 }
                                             }
@@ -301,7 +357,10 @@ fun RssTab(
                                             if (item.videoUrl.isNotEmpty()) {
                                                 runCatching {
                                                     context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, Uri.parse(item.videoUrl))
+                                                        Intent(
+                                                            Intent.ACTION_VIEW,
+                                                            item.videoUrl.toUri()
+                                                        )
                                                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     )
                                                 }
@@ -311,7 +370,10 @@ fun RssTab(
                                             if (item.audioUrl.isNotEmpty()) {
                                                 runCatching {
                                                     context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, Uri.parse(item.audioUrl))
+                                                        Intent(
+                                                            Intent.ACTION_VIEW,
+                                                            Uri.parse(item.audioUrl)
+                                                        )
                                                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     )
                                                 }
@@ -584,7 +646,11 @@ private fun MediaThumbnail(
         }
 
         if (imageState is AsyncImagePainter.State.Error) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.Transparent))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+            )
         }
     }
 }
@@ -656,6 +722,183 @@ private fun NoItemsState(onRefresh: () -> Unit) {
     }
 }
 
+@Composable
+private fun NowPlayingBubble(
+    title: String,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(ThemePrimaryColor.copy(alpha = 0.12f))
+            .animatedGradientBorder(
+                shape = RoundedCornerShape(20.dp),
+                borderWidth = 1.dp,
+                durationMs = 2500
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.SkipPrevious,
+            contentDescription = "Previous",
+            tint = ThemePrimaryColor,
+            modifier = Modifier
+                .size(18.dp)
+                .clickable(onClick = onPrevious)
+        )
+        Icon(
+            imageVector = Icons.Default.Headphones,
+            contentDescription = null,
+            tint = ThemePrimaryColor,
+            modifier = Modifier.size(12.dp)
+        )
+        Text(
+            text = title,
+            color = ThemePrimaryColor,
+            fontSize = 11.sp,
+            maxLines = 1,
+            modifier = Modifier.basicMarquee()
+        )
+        Icon(
+            imageVector = Icons.Default.SkipNext,
+            contentDescription = "Next",
+            tint = ThemePrimaryColor,
+            modifier = Modifier
+                .size(18.dp)
+                .clickable(onClick = onNext)
+        )
+    }
+}
+
+@Composable
+private fun NowPlayingDialog(
+    info: NowPlayingManager.NowPlayingInfo,
+    onPlayPause: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFF1A1A1A))
+                .border(1.dp, ThemePrimaryColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Headphones,
+                        contentDescription = null,
+                        tint = ThemePrimaryColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "Now Playing",
+                        color = ThemePrimaryColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = info.title,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .basicMarquee()
+                    )
+                    if (info.artist != null) {
+                        Text(
+                            text = info.artist,
+                            color = Color.White.copy(alpha = 0.55f),
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(ThemePrimaryColor.copy(alpha = 0.15f))
+                            .clickable(onClick = onPrevious),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "Previous",
+                            tint = ThemePrimaryColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(ThemePrimaryColor)
+                            .clickable(onClick = onPlayPause),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (info.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (info.isPlaying) "Pause" else "Play",
+                            tint = OledBackgroundColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(ThemePrimaryColor.copy(alpha = 0.15f))
+                            .clickable(onClick = onNext),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "Next",
+                            tint = ThemePrimaryColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun stripHtml(html: String): String {
     if (html.isBlank()) return ""
     return Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
@@ -673,7 +916,8 @@ private fun formatPubDate(raw: String, useDMY: Boolean, use24Hour: Boolean): Str
     )
     val datePattern = if (useDMY) "d/M/yyyy" else "M/d/yyyy"
     val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
-    val output = java.text.SimpleDateFormat("$datePattern @ $timePattern", java.util.Locale.getDefault())
+    val output =
+        java.text.SimpleDateFormat("$datePattern @ $timePattern", java.util.Locale.getDefault())
     for (fmt in inputFormats) {
         runCatching {
             val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.ENGLISH)

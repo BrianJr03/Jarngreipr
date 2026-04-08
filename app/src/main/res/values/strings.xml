@@ -1442,4 +1442,11 @@
     <string name="rss_tab_empty_hint">Add feeds in Settings → RSS</string>
     <string name="rss_tab_no_articles">No articles yet</string>
     <string name="rss_tab_refresh_now">Refresh Now</string>
+
+    <string name="faq_section_rss">RSS / Now Playing</string>
+    <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>
+    <string name="faq_rss_nowplaying_answer">The Now Playing bubble reads media metadata from other apps via Android\'s notification listener. It requires Notification Access to be granted once.\n\nGo to Settings → Apps → Special app access → Notification access and enable it for this app.\n\nIf you\'re sideloading and can\'t reach that screen, you can grant it with a single ADB command — no PC required if you use Termux.</string>
+    <string name="faq_rss_adb_question">How do I grant Notification Access via ADB (no PC needed)?</string>
+    <string name="faq_rss_adb_answer">You can run ADB commands directly on your Android device using Termux from F-Droid (not the Play Store version).\n\n1. Install Termux from f-droid.org\n2. Open Termux and run: pkg update &amp;&amp; pkg install android-tools\n3. Go to Settings → Developer Options → enable Wireless Debugging\n4. Tap "Pair device with pairing code" — note the IP, pairing port, and code shown\n5. In Termux: adb pair IP:PAIRPORT then enter the code when prompted\n6. Then: adb connect IP:DEBUGPORT (the debug port shown on the main Wireless Debugging screen)\n7. Finally run the command below\n\nNotification access persists across reinstalls of this app.</string>
+    <string name="faq_rss_adb_command">adb shell cmd notification allow_listener jr.brian.home/jr.brian.home.service.AppNotificationListenerService</string>
 </resources>
