@@ -2,6 +2,7 @@ package jr.brian.home.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+
 import android.text.Html
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -343,14 +344,7 @@ fun RssTab(
                                                         .launchUrl(context, Uri.parse(item.link))
                                                 }
                                             } else if (item.audioUrl.isNotEmpty()) {
-                                                runCatching {
-                                                    context.startActivity(
-                                                        Intent(
-                                                            Intent.ACTION_VIEW,
-                                                            Uri.parse(item.audioUrl)
-                                                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                    )
-                                                }
+                                                viewModel.playAudio(item)
                                             }
                                         },
                                         onVideoClick = {
@@ -368,15 +362,7 @@ fun RssTab(
                                         },
                                         onAudioClick = {
                                             if (item.audioUrl.isNotEmpty()) {
-                                                runCatching {
-                                                    context.startActivity(
-                                                        Intent(
-                                                            Intent.ACTION_VIEW,
-                                                            Uri.parse(item.audioUrl)
-                                                        )
-                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                    )
-                                                }
+                                                viewModel.playAudio(item)
                                             }
                                         }
                                     )
