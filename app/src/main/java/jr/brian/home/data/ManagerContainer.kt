@@ -1,7 +1,9 @@
 package jr.brian.home.data
 
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -46,6 +48,7 @@ import javax.inject.Inject
  * All managers are injected via Hilt and scoped as Singletons at the application level.
  * Managers are accessed through CompositionLocal providers (e.g., `LocalXxxManager.current`)
  */
+@OptIn(UnstableApi::class)
 data class ManagerContainer @Inject constructor(
     val ui: UIManagers,
     val app: AppManagers,
@@ -75,6 +78,7 @@ data class ManagerContainer @Inject constructor(
  * }
  * ```
  */
+@OptIn(UnstableApi::class)
 @Composable
 fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> Unit) {
     CompositionLocalProvider(
