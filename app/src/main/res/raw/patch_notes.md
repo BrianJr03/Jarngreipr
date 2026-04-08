@@ -1,5 +1,10 @@
-**Quick Fixes**
-- Fixes issue where RSS entries would appear out of order. Newest will always appear first.
-- NOTE: You must remove and re-add RSS Feed for this to update.
+**RSS Now Playing**
+- Now Playing Card appears when playing RSS audio
+- Press for Pause/Play and Previous/Next controls
 
-2.3.2
+**Quick Fixes**
+- Greatly improves RSS audio/video playback
+- No longer opens tabs, plays audio/video directly in app 
+- App Drawer no longer "jumps" when scrolling to the top
+
+2.3.3

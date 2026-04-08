@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 @Singleton
 class NowPlayingManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     data class NowPlayingInfo(
         val title: String,
@@ -31,6 +31,14 @@ class NowPlayingManager @Inject constructor(
 
     private val _nowPlaying = MutableStateFlow<NowPlayingInfo?>(null)
     val nowPlaying: StateFlow<NowPlayingInfo?> = _nowPlaying.asStateFlow()
+
+    private val _currentItemId = MutableStateFlow<String?>(null)
+    val currentItemId: StateFlow<String?> = _currentItemId.asStateFlow()
+
+    private val _currentFeedUrl = MutableStateFlow<String?>(null)
+    val currentFeedUrl: StateFlow<String?> = _currentFeedUrl.asStateFlow()
+
+    private var currentQueue: List<RssItem> = emptyList()
 
     private var controller: MediaController? = null
     private val controllerFuture: ListenableFuture<MediaController>
@@ -67,20 +75,34 @@ class NowPlayingManager @Inject constructor(
             )
         }
 
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            val idx = controller?.currentMediaItemIndex ?: return
+            val item = currentQueue.getOrNull(idx)
+            _currentItemId.value = item?.id
+            _currentFeedUrl.value = item?.feedUrl
+        }
+
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_IDLE) {
                 _nowPlaying.value = null
+                _currentItemId.value = null
+                _currentFeedUrl.value = null
             }
         }
     }
 
     fun play(audioItems: List<RssItem>, startIndex: Int) {
-        val mediaItems = audioItems.map { item ->
+        currentQueue = audioItems
+        val item = audioItems.getOrNull(startIndex)
+        _currentItemId.value = item?.id
+        _currentFeedUrl.value = item?.feedUrl
+
+        val mediaItems = audioItems.map { rssItem ->
             MediaItem.Builder()
-                .setUri(item.audioUrl)
+                .setUri(rssItem.audioUrl)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
-                        .setTitle(item.title)
+                        .setTitle(rssItem.title)
                         .build()
                 )
                 .build()

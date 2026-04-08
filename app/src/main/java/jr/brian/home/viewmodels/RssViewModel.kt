@@ -25,6 +25,8 @@ class RssViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     val nowPlaying = nowPlayingManager.nowPlaying
+    val currentlyPlayingItemId = nowPlayingManager.currentItemId
+    val currentlyPlayingFeedUrl = nowPlayingManager.currentFeedUrl
 
     fun togglePlayPause() = nowPlayingManager.togglePlayPause()
     fun skipToNext() = nowPlayingManager.skipToNext()

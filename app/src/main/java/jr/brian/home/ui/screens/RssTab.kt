@@ -1,8 +1,6 @@
 package jr.brian.home.ui.screens
 
-import android.content.Intent
 import android.net.Uri
-
 import android.text.Html
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -78,6 +76,7 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.colors.animatedGradientBorder
+import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.viewmodels.RssViewModel
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material.icons.filled.Pause
@@ -88,7 +87,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import jr.brian.home.data.NowPlayingManager
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.core.net.toUri
 
 @Composable
 fun RssTab(
@@ -111,15 +109,26 @@ fun RssTab(
         else itemsByFeed.filterKeys { it in selectedFeedUrls }
     }
 
-    val filteredFeeds = remember(uiState.feeds, selectedFeedUrls) {
-        if (selectedFeedUrls.isEmpty()) uiState.feeds
+    val currentlyPlayingFeedUrl: String? by viewModel.currentlyPlayingFeedUrl.collectAsStateWithLifecycle()
+    val currentlyPlayingItemId: String? by viewModel.currentlyPlayingItemId.collectAsStateWithLifecycle()
+
+    val filteredFeeds = remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl) {
+        val base = if (selectedFeedUrls.isEmpty()) uiState.feeds
         else uiState.feeds.filter { it.url in selectedFeedUrls }
+        val playingUrl = currentlyPlayingFeedUrl ?: return@remember base
+        val playing = base.find { it.url == playingUrl } ?: return@remember base
+        listOf(playing) + base.filter { it.url != playingUrl }
     }
 
     LaunchedEffect(selectedFeedUrls) {
         if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
             listState.animateScrollToItem(0)
         }
+    }
+
+    var playingVideoUrl by remember { mutableStateOf<String?>(null) }
+    playingVideoUrl?.let { url ->
+        RssVideoPlayerDialog(url = url, onDismiss = { playingVideoUrl = null })
     }
 
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
@@ -329,11 +338,18 @@ fun RssTab(
                             val feedItems = filteredItemsByFeed[feed.url]
                             if (!feedItems.isNullOrEmpty()) {
                                 stickyHeader(key = "header_${feed.url}") {
-                                    FeedSectionHeader(feed = feed)
+                                    FeedSectionHeader(
+                                        feed = feed,
+                                        modifier = Modifier.animateItem()
+                                    )
                                 }
-                                items(feedItems, key = { "${feed.url}_${it.id}" }) { item ->
+                                items(
+                                    items = feedItems,
+                                    key = { "${feed.url}_${it.id}" }) { item ->
                                     RssItemCard(
                                         item = item,
+                                        isCurrentlyPlaying = item.id == currentlyPlayingItemId,
+                                        modifier = Modifier.animateItem(),
                                         useDMYDateFormat = uiState.useDMYDateFormat,
                                         use24HourClock = uiState.use24HourClock,
                                         onClick = {
@@ -349,15 +365,7 @@ fun RssTab(
                                         },
                                         onVideoClick = {
                                             if (item.videoUrl.isNotEmpty()) {
-                                                runCatching {
-                                                    context.startActivity(
-                                                        Intent(
-                                                            Intent.ACTION_VIEW,
-                                                            item.videoUrl.toUri()
-                                                        )
-                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                    )
-                                                }
+                                                playingVideoUrl = item.videoUrl
                                             }
                                         },
                                         onAudioClick = {
@@ -380,9 +388,9 @@ fun RssTab(
 }
 
 @Composable
-private fun FeedSectionHeader(feed: RssFeed) {
+private fun FeedSectionHeader(feed: RssFeed, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(OledBackgroundColor)
             .padding(horizontal = 4.dp, vertical = 10.dp),
@@ -418,6 +426,8 @@ private fun FeedSectionHeader(feed: RssFeed) {
 @Composable
 private fun RssItemCard(
     item: RssItem,
+    isCurrentlyPlaying: Boolean,
+    modifier: Modifier = Modifier,
     useDMYDateFormat: Boolean,
     use24HourClock: Boolean,
     onClick: () -> Unit,
@@ -430,9 +440,10 @@ private fun RssItemCard(
     val plainDescription = remember(item.description) {
         stripHtml(item.description).trim()
     }
-
+    val animColor = animatedColor()
+    val audioIconColor = if (isCurrentlyPlaying) animColor else ThemeAccentColor
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .background(brush = subtleCardGradient(false), shape = RoundedCornerShape(14.dp))
@@ -494,12 +505,12 @@ private fun RssItemCard(
                         Icon(
                             imageVector = Icons.Default.Headphones,
                             contentDescription = stringResource(R.string.rss_tab_play_audio_cd),
-                            tint = ThemeAccentColor,
+                            tint = audioIconColor,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = stringResource(R.string.rss_tab_listen),
-                            color = ThemeAccentColor,
+                            color = audioIconColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -709,7 +720,7 @@ private fun NoItemsState(onRefresh: () -> Unit) {
 }
 
 @Composable
-private fun NowPlayingBubble(
+internal fun NowPlayingBubble(
     title: String,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -762,7 +773,7 @@ private fun NowPlayingBubble(
 }
 
 @Composable
-private fun NowPlayingDialog(
+internal fun NowPlayingDialog(
     info: NowPlayingManager.NowPlayingInfo,
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
