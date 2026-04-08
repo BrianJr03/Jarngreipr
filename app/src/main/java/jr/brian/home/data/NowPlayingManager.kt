@@ -1,13 +1,18 @@
 package jr.brian.home.data
 
+import android.content.ComponentName
 import android.content.Context
-import android.media.MediaMetadata
-import android.media.session.MediaController
-import android.media.session.MediaSession
-import android.media.session.PlaybackState
-import android.os.Handler
-import android.os.Looper
+import androidx.core.content.ContextCompat
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.model.rss.RssItem
+import jr.brian.home.service.RssPlaybackService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +21,7 @@ import javax.inject.Singleton
 
 @Singleton
 class NowPlayingManager @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     data class NowPlayingInfo(
         val title: String,
@@ -27,73 +32,87 @@ class NowPlayingManager @Inject constructor(
     private val _nowPlaying = MutableStateFlow<NowPlayingInfo?>(null)
     val nowPlaying: StateFlow<NowPlayingInfo?> = _nowPlaying.asStateFlow()
 
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private var currentController: MediaController? = null
-    private var currentCallback: MediaController.Callback? = null
+    private var controller: MediaController? = null
+    private val controllerFuture: ListenableFuture<MediaController>
+    private var pendingPlay: (() -> Unit)? = null
 
-    fun onMediaSession(token: MediaSession.Token) {
-        mainHandler.post {
-            val controller = MediaController(context, token)
-            val metadata = controller.metadata
-            val title = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
-                ?: metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
-                ?: return@post
-            val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
-            val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+    init {
+        val sessionToken = SessionToken(
+            context,
+            ComponentName(context, RssPlaybackService::class.java)
+        )
+        controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+        controllerFuture.addListener({
+            try {
+                controller = controllerFuture.get().also { ctrl ->
+                    ctrl.addListener(playerListener)
+                    pendingPlay?.invoke()
+                    pendingPlay = null
+                }
+            } catch (_: Exception) {}
+        }, ContextCompat.getMainExecutor(context))
+    }
 
-            _nowPlaying.value = NowPlayingInfo(title = title, artist = artist, isPlaying = isPlaying)
+    private val playerListener = object : Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            _nowPlaying.value = _nowPlaying.value?.copy(isPlaying = isPlaying)
+        }
 
-            if (currentController?.sessionToken != token) {
-                detachCallback()
-                attachCallback(controller)
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            val title = mediaMetadata.title?.toString() ?: return
+            _nowPlaying.value = NowPlayingInfo(
+                title = title,
+                artist = mediaMetadata.artist?.toString(),
+                isPlaying = controller?.isPlaying == true
+            )
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_IDLE) {
+                _nowPlaying.value = null
             }
         }
     }
 
-    fun onMediaSessionRemoved(hasRemainingMediaSessions: Boolean) {
-        if (!hasRemainingMediaSessions) {
-            mainHandler.post {
-                _nowPlaying.value = null
-                detachCallback()
+    fun play(audioItems: List<RssItem>, startIndex: Int) {
+        val mediaItems = audioItems.map { item ->
+            MediaItem.Builder()
+                .setUri(item.audioUrl)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(item.title)
+                        .build()
+                )
+                .build()
+        }
+        val ctrl = controller
+        if (ctrl != null) {
+            ctrl.setMediaItems(mediaItems, startIndex, C.TIME_UNSET)
+            ctrl.prepare()
+            ctrl.play()
+        } else {
+            pendingPlay = {
+                controller?.setMediaItems(mediaItems, startIndex, C.TIME_UNSET)
+                controller?.prepare()
+                controller?.play()
             }
         }
     }
 
     fun togglePlayPause() {
-        val controller = currentController ?: return
-        if (_nowPlaying.value?.isPlaying == true) controller.transportControls.pause()
-        else controller.transportControls.play()
+        val ctrl = controller ?: return
+        if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
     }
 
-    private fun attachCallback(controller: MediaController) {
-        val cb = object : MediaController.Callback() {
-            override fun onPlaybackStateChanged(state: PlaybackState?) {
-                _nowPlaying.value = _nowPlaying.value?.copy(
-                    isPlaying = state?.state == PlaybackState.STATE_PLAYING
-                )
-            }
-            override fun onMetadataChanged(metadata: MediaMetadata?) {
-                val title = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
-                    ?: metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
-                    ?: return
-                val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
-                _nowPlaying.value = _nowPlaying.value?.copy(title = title, artist = artist)
-            }
-            override fun onSessionDestroyed() {
-                _nowPlaying.value = null
-                currentController = null
-                currentCallback = null
-            }
-        }
-        controller.registerCallback(cb, mainHandler)
-        currentController = controller
-        currentCallback = cb
+    fun skipToNext() {
+        controller?.seekToNextMediaItem()
     }
 
-    private fun detachCallback() {
-        val cb = currentCallback ?: return
-        try { currentController?.unregisterCallback(cb) } catch (_: Exception) {}
-        currentController = null
-        currentCallback = null
+    fun skipToPrevious() {
+        controller?.seekToPreviousMediaItem()
+    }
+
+    fun release() {
+        MediaController.releaseFuture(controllerFuture)
     }
 }

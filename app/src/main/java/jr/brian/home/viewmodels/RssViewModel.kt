@@ -1,9 +1,7 @@
 package jr.brian.home.viewmodels
 
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,46 +27,16 @@ class RssViewModel @Inject constructor(
     val nowPlaying = nowPlayingManager.nowPlaying
 
     fun togglePlayPause() = nowPlayingManager.togglePlayPause()
+    fun skipToNext() = nowPlayingManager.skipToNext()
+    fun skipToPrevious() = nowPlayingManager.skipToPrevious()
 
-    private var currentAudioItemIndex = -1
-
-    private fun filteredAudioItems(): List<RssItem> {
+    fun playAudio(item: RssItem) {
         val selectedUrls = _uiState.value.selectedFeedUrls
         val items = _uiState.value.items
         val filtered = if (selectedUrls.isEmpty()) items else items.filter { it.feedUrl in selectedUrls }
-        return filtered.filter { it.audioUrl.isNotEmpty() }
-    }
-
-    fun setCurrentAudioItem(item: RssItem) {
-        currentAudioItemIndex = filteredAudioItems().indexOfFirst { it.id == item.id }
-    }
-
-    fun skipToNext() {
-        val audioItems = filteredAudioItems()
-        val nextIdx = (currentAudioItemIndex + 1).coerceAtMost(audioItems.size - 1)
-        if (nextIdx != currentAudioItemIndex && nextIdx >= 0) {
-            currentAudioItemIndex = nextIdx
-            launchAudio(audioItems[nextIdx].audioUrl)
-        }
-    }
-
-    fun skipToPrevious() {
-        val audioItems = filteredAudioItems()
-        val prevIdx = (currentAudioItemIndex - 1).coerceAtLeast(0)
-        if (prevIdx != currentAudioItemIndex && prevIdx >= 0) {
-            currentAudioItemIndex = prevIdx
-            launchAudio(audioItems[prevIdx].audioUrl)
-        }
-    }
-
-    private fun launchAudio(url: String) {
-        if (url.isEmpty()) return
-        runCatching {
-            context.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-        }
+        val audioItems = filtered.filter { it.audioUrl.isNotEmpty() }
+        val idx = audioItems.indexOfFirst { it.id == item.id }
+        if (idx >= 0) nowPlayingManager.play(audioItems, idx)
     }
 
     private val prefs: SharedPreferences =
