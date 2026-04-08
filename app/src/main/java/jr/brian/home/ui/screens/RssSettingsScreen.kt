@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
@@ -61,6 +62,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -437,6 +439,7 @@ private fun FeedCard(
     dragHandleModifier: Modifier = Modifier
 ) {
     var showIntervalMenu by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
     val intervalLabels = mapOf(
         0 to stringResource(R.string.rss_settings_interval_manual),
         15 to stringResource(R.string.rss_settings_interval_15m),
@@ -526,61 +529,81 @@ private fun FeedCard(
                 }
             }
 
-            Box {
-                Row(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.07f))
+                            .clickable { showIntervalMenu = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Timer,
+                            contentDescription = null,
+                            tint = ThemeAccentColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = intervalLabel,
+                            color = ThemeAccentColor,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showIntervalMenu,
+                        onDismissRequest = { showIntervalMenu = false },
+                        containerColor = OledCardColor
+                    ) {
+                        REFRESH_INTERVAL_MINUTES.forEach { minutes ->
+                            val label = intervalLabels[minutes] ?: "$minutes min"
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = label,
+                                        color = if (minutes == feed.refreshIntervalMinutes) {
+                                            ThemeAccentColor
+                                        } else {
+                                            Color.White
+                                        },
+                                        fontWeight = if (minutes == feed.refreshIntervalMinutes) {
+                                            FontWeight.SemiBold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
+                                    )
+                                },
+                                onClick = {
+                                    onIntervalSelected(minutes)
+                                    showIntervalMenu = false
+                                },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+                Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color.White.copy(alpha = 0.07f))
-                        .clickable { showIntervalMenu = true }
+                        .clickable { clipboard.setText(AnnotatedString(feed.url)) }
                         .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        tint = ThemeAccentColor,
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(R.string.rss_settings_copy_url_cd),
+                        tint = Color.White.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp)
                     )
-                    Text(
-                        text = intervalLabel,
-                        color = ThemeAccentColor,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                DropdownMenu(
-                    expanded = showIntervalMenu,
-                    onDismissRequest = { showIntervalMenu = false },
-                    containerColor = OledCardColor
-                ) {
-                    REFRESH_INTERVAL_MINUTES.forEach { minutes ->
-                        val label = intervalLabels[minutes] ?: "$minutes min"
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = label,
-                                    color = if (minutes == feed.refreshIntervalMinutes) {
-                                        ThemeAccentColor
-                                    } else {
-                                        Color.White
-                                    },
-                                    fontWeight = if (minutes == feed.refreshIntervalMinutes) {
-                                        FontWeight.SemiBold
-                                    } else {
-                                        FontWeight.Normal
-                                    }
-                                )
-                            },
-                            onClick = {
-                                onIntervalSelected(minutes)
-                                showIntervalMenu = false
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = Color.White
-                            )
-                        )
-                    }
                 }
             }
         }
