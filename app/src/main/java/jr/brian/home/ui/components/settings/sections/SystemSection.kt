@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.settings.sections
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.SettingItem
+import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.util.SettingsTag
 
 @Composable
@@ -88,11 +91,19 @@ fun SystemSection(
             tag = SettingsTag.EXPERIMENTAL
         )
 
+        val notificationCountManager = LocalNotificationCountManager.current
         SettingItem(
             title = stringResource(id = R.string.settings_notification_badge_title),
             description = stringResource(id = R.string.settings_notification_badge_description),
             icon = Icons.Default.Notifications,
-            onClick = onNotificationBadgeClick
+            onClick = onNotificationBadgeClick,
+            trailing = {
+                Text(
+                    text = if (notificationCountManager.badgesVisible) "ON" else "OFF",
+                    color = if (notificationCountManager.badgesVisible) Color.Green else Color.Gray,
+                    modifier = Modifier.clickable { notificationCountManager.toggleBadgesVisible() }
+                )
+            }
         )
     }
 }

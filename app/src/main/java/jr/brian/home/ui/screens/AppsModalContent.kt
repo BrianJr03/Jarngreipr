@@ -154,7 +154,7 @@ fun AppsModalContent(
                 available: Velocity
             ): Velocity {
                 if (preventNestedScroll.value) {
-                    return available.times(100f)
+                    return available
                 }
                 return super.onPostFling(consumed, available)
             }
@@ -172,7 +172,7 @@ fun AppsModalContent(
                         preventNestedScroll.value = false
                         scheduledJob.value = null
                     }
-                    return available.times(100f)
+                    return available
                 }
                 return super.onPostScroll(consumed, available, source)
             }

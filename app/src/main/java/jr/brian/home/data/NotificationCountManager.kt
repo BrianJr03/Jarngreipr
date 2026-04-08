@@ -1,20 +1,44 @@
 package jr.brian.home.data
 
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val PREFS_NAME = "notification_badge_prefs"
+private const val KEY_BADGES_VISIBLE = "badges_visible"
+
 /**
  * Manager class that tracks notification counts per app package.
  * Works in conjunction with AppNotificationListenerService to receive updates.
- * 
+ *
  * This is a singleton scoped to the application lifecycle and is injected
  * via Hilt into both UI components and the NotificationListenerService.
  */
 @Singleton
-class NotificationCountManager @Inject constructor() {
+class NotificationCountManager @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) {
+    var badgesVisible by mutableStateOf(loadBadgesVisible())
+        private set
+
+    private fun loadBadgesVisible(): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_BADGES_VISIBLE, true)
+    }
+
+    fun toggleBadgesVisible() {
+        badgesVisible = !badgesVisible
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putBoolean(KEY_BADGES_VISIBLE, badgesVisible) }
+    }
     
     private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()

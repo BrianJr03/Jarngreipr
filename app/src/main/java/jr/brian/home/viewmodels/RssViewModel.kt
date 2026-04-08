@@ -1,12 +1,16 @@
 package jr.brian.home.viewmodels
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.data.NowPlayingManager
 import jr.brian.home.data.RssRepository
+import jr.brian.home.model.rss.RssItem
 import jr.brian.home.model.state.RssUIState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +23,53 @@ import androidx.core.content.edit
 @HiltViewModel
 class RssViewModel @Inject constructor(
     private val rssRepository: RssRepository,
-    @ApplicationContext context: Context
+    private val nowPlayingManager: NowPlayingManager,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
+    val nowPlaying = nowPlayingManager.nowPlaying
+
+    fun togglePlayPause() = nowPlayingManager.togglePlayPause()
+
+    private var currentAudioItemIndex = -1
+
+    private fun filteredAudioItems(): List<RssItem> {
+        val selectedUrls = _uiState.value.selectedFeedUrls
+        val items = _uiState.value.items
+        val filtered = if (selectedUrls.isEmpty()) items else items.filter { it.feedUrl in selectedUrls }
+        return filtered.filter { it.audioUrl.isNotEmpty() }
+    }
+
+    fun setCurrentAudioItem(item: RssItem) {
+        currentAudioItemIndex = filteredAudioItems().indexOfFirst { it.id == item.id }
+    }
+
+    fun skipToNext() {
+        val audioItems = filteredAudioItems()
+        val nextIdx = (currentAudioItemIndex + 1).coerceAtMost(audioItems.size - 1)
+        if (nextIdx != currentAudioItemIndex && nextIdx >= 0) {
+            currentAudioItemIndex = nextIdx
+            launchAudio(audioItems[nextIdx].audioUrl)
+        }
+    }
+
+    fun skipToPrevious() {
+        val audioItems = filteredAudioItems()
+        val prevIdx = (currentAudioItemIndex - 1).coerceAtLeast(0)
+        if (prevIdx != currentAudioItemIndex && prevIdx >= 0) {
+            currentAudioItemIndex = prevIdx
+            launchAudio(audioItems[prevIdx].audioUrl)
+        }
+    }
+
+    private fun launchAudio(url: String) {
+        if (url.isEmpty()) return
+        runCatching {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("rss_filter_prefs", Context.MODE_PRIVATE)
