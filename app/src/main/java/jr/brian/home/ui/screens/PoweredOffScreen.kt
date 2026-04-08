@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -110,6 +112,7 @@ fun PoweredOffScreen(
 
     val rssViewModel: RssViewModel = hiltViewModel()
     val nowPlaying by rssViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val rssVolume by rssViewModel.volume.collectAsStateWithLifecycle()
 
     var showInfo by remember { mutableStateOf(false) }
     var batteryPercentage by remember { mutableStateOf(0) }
@@ -310,6 +313,30 @@ fun PoweredOffScreen(
 //                        Spacer(modifier = Modifier.height(8.dp))
 //                    }
                     DualVolumeControls(isVisible = showInfo, tintColor = uiColor)
+                    if (nowPlaying != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = "RSS Volume",
+                                tint = uiColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Slider(
+                                value = rssVolume,
+                                onValueChange = { rssViewModel.setVolume(it) },
+                                modifier = Modifier.weight(1f),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = uiColor,
+                                    activeTrackColor = uiColor,
+                                    inactiveTrackColor = uiColor.copy(alpha = 0.25f)
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
