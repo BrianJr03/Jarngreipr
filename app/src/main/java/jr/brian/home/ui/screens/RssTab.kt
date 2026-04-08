@@ -83,6 +83,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import jr.brian.home.data.NowPlayingManager
@@ -132,15 +133,23 @@ fun RssTab(
     }
 
     val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by viewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by viewModel.duration.collectAsStateWithLifecycle()
     var showNowPlayingDialog by remember { mutableStateOf(false) }
 
     nowPlaying?.let { info ->
         if (showNowPlayingDialog) {
             NowPlayingDialog(
                 info = info,
+                volume = nowPlayingVolume,
+                currentPosition = nowPlayingPosition,
+                duration = nowPlayingDuration,
                 onPlayPause = { viewModel.togglePlayPause() },
                 onPrevious = { viewModel.skipToPrevious() },
                 onNext = { viewModel.skipToNext() },
+                onVolumeChange = { viewModel.setVolume(it) },
+                onSeek = { viewModel.seekTo(it) },
                 onDismiss = { showNowPlayingDialog = false }
             )
         }
@@ -775,11 +784,25 @@ internal fun NowPlayingBubble(
 @Composable
 internal fun NowPlayingDialog(
     info: NowPlayingManager.NowPlayingInfo,
+    volume: Float,
+    currentPosition: Long,
+    duration: Long,
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onSeek: (Long) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var isSeeking by remember { mutableStateOf(false) }
+    var seekValue by remember { mutableStateOf(0f) }
+
+    val progressFraction = if (!isSeeking) {
+        if (duration > 0L) currentPosition.toFloat() / duration.toFloat() else 0f
+    } else {
+        seekValue
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -791,7 +814,7 @@ internal fun NowPlayingDialog(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -835,6 +858,47 @@ internal fun NowPlayingDialog(
                             maxLines = 1,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Progress bar
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    androidx.compose.material3.Slider(
+                        value = progressFraction,
+                        onValueChange = { value ->
+                            isSeeking = true
+                            seekValue = value
+                        },
+                        onValueChangeFinished = {
+                            if (duration > 0L) onSeek((seekValue * duration).toLong())
+                            isSeeking = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.SliderDefaults.colors(
+                            thumbColor = ThemePrimaryColor,
+                            activeTrackColor = ThemePrimaryColor,
+                            inactiveTrackColor = ThemePrimaryColor.copy(alpha = 0.25f)
+                        )
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val displayPosition = if (isSeeking && duration > 0L) {
+                            (seekValue * duration).toLong()
+                        } else {
+                            currentPosition
+                        }
+                        Text(
+                            text = formatMs(displayPosition),
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = formatMs(duration),
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 11.sp
                         )
                     }
                 }
@@ -891,9 +955,40 @@ internal fun NowPlayingDialog(
                         )
                     }
                 }
+
+                // Volume slider
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = "Volume",
+                        tint = ThemePrimaryColor.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    androidx.compose.material3.Slider(
+                        value = volume,
+                        onValueChange = onVolumeChange,
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.SliderDefaults.colors(
+                            thumbColor = ThemePrimaryColor,
+                            activeTrackColor = ThemePrimaryColor,
+                            inactiveTrackColor = ThemePrimaryColor.copy(alpha = 0.25f)
+                        )
+                    )
+                }
             }
         }
     }
+}
+
+private fun formatMs(ms: Long): String {
+    val totalSec = (ms / 1000).coerceAtLeast(0L)
+    val min = totalSec / 60
+    val sec = totalSec % 60
+    return "%d:%02d".format(min, sec)
 }
 
 private fun stripHtml(html: String): String {
