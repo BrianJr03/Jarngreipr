@@ -2,6 +2,8 @@ package jr.brian.home.data
 
 import android.util.Xml
 import jr.brian.home.data.database.RssFeedDao
+import java.text.SimpleDateFormat
+import java.util.Locale
 import jr.brian.home.data.database.RssFeedEntity
 import jr.brian.home.data.database.RssItemEntity
 import jr.brian.home.model.rss.RssFeed
@@ -205,6 +207,7 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
                                         link = currentLink,
                                         description = currentDescription,
                                         pubDate = currentPubDate,
+                                        pubDateTimestamp = parsePubDate(currentPubDate),
                                         imageUrl = resolvedImage,
                                         videoUrl = currentVideoUrl,
                                         audioUrl = currentAudioUrl
@@ -230,6 +233,24 @@ class RssRepository(private val rssFeedDao: RssFeedDao) {
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun parsePubDate(pubDate: String): Long {
+        if (pubDate.isBlank()) return 0L
+        val formats = listOf(
+            "EEE, dd MMM yyyy HH:mm:ss Z",
+            "EEE, dd MMM yyyy HH:mm:ss z",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+            "yyyy-MM-dd"
+        )
+        for (fmt in formats) {
+            try {
+                return SimpleDateFormat(fmt, Locale.US).parse(pubDate)?.time ?: continue
+            } catch (_: Exception) {}
+        }
+        return 0L
     }
 
     private fun extractFirstImageFromHtml(html: String): String {

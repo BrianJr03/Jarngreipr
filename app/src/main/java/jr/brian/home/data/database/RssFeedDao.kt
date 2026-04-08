@@ -24,10 +24,10 @@ interface RssFeedDao {
     @Query("DELETE FROM rss_feeds WHERE url = :url")
     suspend fun deleteFeed(url: String)
 
-    @Query("SELECT * FROM rss_items ORDER BY pubDate DESC")
+    @Query("SELECT * FROM rss_items ORDER BY pubDateTimestamp DESC, pubDate DESC")
     fun getAllItems(): Flow<List<RssItemEntity>>
 
-    @Query("SELECT * FROM rss_items WHERE feedUrl = :feedUrl ORDER BY pubDate DESC")
+    @Query("SELECT * FROM rss_items WHERE feedUrl = :feedUrl ORDER BY pubDateTimestamp DESC, pubDate DESC")
     fun getItemsForFeed(feedUrl: String): Flow<List<RssItemEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

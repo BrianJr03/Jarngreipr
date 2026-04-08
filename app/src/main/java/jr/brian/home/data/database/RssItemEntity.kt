@@ -11,6 +11,7 @@ data class RssItemEntity(
     val link: String,
     val description: String,
     val pubDate: String,
+    val pubDateTimestamp: Long = 0L,
     val imageUrl: String = "",
     val videoUrl: String = "",
     val audioUrl: String = ""

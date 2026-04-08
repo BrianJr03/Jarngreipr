@@ -1412,6 +1412,7 @@
     <string name="rss_settings_error_dismiss">Dismiss</string>
     <string name="rss_settings_feed_refresh_cd">Refresh feed</string>
     <string name="rss_settings_feed_delete_cd">Remove feed</string>
+    <string name="rss_settings_copy_url_cd">Copy feed URL</string>
     <string name="rss_settings_interval_manual">Manual only</string>
     <string name="rss_settings_interval_15m">15 minutes</string>
     <string name="rss_settings_interval_30m">30 minutes</string>
