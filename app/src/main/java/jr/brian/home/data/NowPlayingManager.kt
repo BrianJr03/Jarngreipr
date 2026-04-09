@@ -152,11 +152,18 @@ class NowPlayingManager @Inject constructor(
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             saveCurrentPosition()
-            val idx = controller?.currentMediaItemIndex ?: return
+            val ctrl = controller ?: return
+            val idx = ctrl.currentMediaItemIndex
             val item = currentQueue.getOrNull(idx)
             _currentItemId.value = item?.id
             _currentFeedUrl.value = item?.feedUrl
-            _currentPosition.value = 0L
+            val savedPos = item?.id?.let { savedPositions[it] }?.takeIf { it > 0L }
+            if (savedPos != null) {
+                ctrl.seekTo(savedPos)
+                _currentPosition.value = savedPos
+            } else {
+                _currentPosition.value = 0L
+            }
             _duration.value = 0L
         }
 

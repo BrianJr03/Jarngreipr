@@ -122,7 +122,7 @@ fun RssTab(
         else feedFiltered.mapValues { (_, items) ->
             items.filter { item ->
                 item.title.contains(searchQuery, ignoreCase = true) ||
-                item.description.contains(searchQuery, ignoreCase = true)
+                        item.description.contains(searchQuery, ignoreCase = true)
             }
         }.filterValues { it.isNotEmpty() }
     }
@@ -130,14 +130,19 @@ fun RssTab(
     val currentlyPlayingFeedUrl: String? by viewModel.currentlyPlayingFeedUrl.collectAsStateWithLifecycle()
     val currentlyPlayingItemId: String? by viewModel.currentlyPlayingItemId.collectAsStateWithLifecycle()
 
-    val filteredFeeds = remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl, filteredItemsByFeed) {
-        val base = if (selectedFeedUrls.isEmpty()) uiState.feeds
-        else uiState.feeds.filter { it.url in selectedFeedUrls }
-        val withItems = base.filter { it.url in filteredItemsByFeed }
-        val playingUrl = currentlyPlayingFeedUrl ?: return@remember withItems
-        val playing = withItems.find { it.url == playingUrl } ?: return@remember withItems
-        listOf(playing) + withItems.filter { it.url != playingUrl }
+    val currentlyPlayingItem = remember(uiState.items, currentlyPlayingItemId) {
+        currentlyPlayingItemId?.let { id -> uiState.items.find { it.id == id } }
     }
+
+    val filteredFeeds =
+        remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl, filteredItemsByFeed) {
+            val base = if (selectedFeedUrls.isEmpty()) uiState.feeds
+            else uiState.feeds.filter { it.url in selectedFeedUrls }
+            val withItems = base.filter { it.url in filteredItemsByFeed }
+            val playingUrl = currentlyPlayingFeedUrl ?: return@remember withItems
+            val playing = withItems.find { it.url == playingUrl } ?: return@remember withItems
+            listOf(playing) + withItems.filter { it.url != playingUrl }
+        }
 
     LaunchedEffect(selectedFeedUrls) {
         if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0) {
@@ -418,6 +423,47 @@ fun RssTab(
                         ),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
+                        currentlyPlayingItem?.let { playingItem ->
+                            stickyHeader(key = "now_playing_header") {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(OledBackgroundColor)
+                                        .padding(horizontal = 4.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(ThemePrimaryColor, CircleShape)
+                                    )
+                                    Text(
+                                        text = "Now Playing",
+                                        color = ThemePrimaryColor,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            item(key = "now_playing_pinned") {
+                                RssItemCard(
+                                    item = playingItem,
+                                    isCurrentlyPlaying = true,
+                                    modifier = Modifier.animateItem(),
+                                    useDMYDateFormat = uiState.useDMYDateFormat,
+                                    use24HourClock = uiState.use24HourClock,
+                                    onClick = { showNowPlayingDialog = true },
+                                    onVideoClick = {
+                                        if (playingItem.videoUrl.isNotEmpty()) {
+                                            playingVideoUrl = playingItem.videoUrl
+                                        }
+                                    },
+                                    onAudioClick = { showNowPlayingDialog = true }
+                                )
+                            }
+                        }
+
                         filteredFeeds.forEach { feed ->
                             val feedItems = filteredItemsByFeed[feed.url]
                             if (!feedItems.isNullOrEmpty()) {
@@ -443,14 +489,19 @@ fun RssTab(
                                         useDMYDateFormat = uiState.useDMYDateFormat,
                                         use24HourClock = uiState.use24HourClock,
                                         onClick = {
-                                            if (item.link.isNotEmpty()) {
-                                                runCatching {
+                                            when {
+                                                item.id == currentlyPlayingItemId -> showNowPlayingDialog =
+                                                    true
+
+                                                item.link.isNotEmpty() -> runCatching {
                                                     CustomTabsIntent.Builder()
                                                         .build()
                                                         .launchUrl(context, Uri.parse(item.link))
                                                 }
-                                            } else if (item.audioUrl.isNotEmpty()) {
-                                                viewModel.playAudio(item)
+
+                                                item.audioUrl.isNotEmpty() -> viewModel.playAudio(
+                                                    item
+                                                )
                                             }
                                         },
                                         onVideoClick = {
@@ -459,7 +510,9 @@ fun RssTab(
                                             }
                                         },
                                         onAudioClick = {
-                                            if (item.audioUrl.isNotEmpty()) {
+                                            if (item.id == currentlyPlayingItemId) {
+                                                showNowPlayingDialog = true
+                                            } else if (item.audioUrl.isNotEmpty()) {
                                                 viewModel.playAudio(item)
                                             }
                                         }
@@ -496,11 +549,11 @@ private fun FeedSectionHeader(
         Box(
             modifier = Modifier
                 .size(6.dp)
-                .background(if (isPlaying) animatedColor() else ThemePrimaryColor, CircleShape)
+                .background(ThemePrimaryColor, CircleShape)
         )
         Text(
             text = feed.title,
-            color = if (isPlaying) animatedColor() else ThemePrimaryColor,
+            color = ThemePrimaryColor,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
