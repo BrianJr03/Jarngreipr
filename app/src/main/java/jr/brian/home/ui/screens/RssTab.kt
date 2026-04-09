@@ -424,6 +424,12 @@ fun RssTab(
                                 stickyHeader(key = "header_${feed.url}") {
                                     FeedSectionHeader(
                                         feed = feed,
+                                        isPlaying = feed.url == currentlyPlayingFeedUrl,
+                                        onClick = {
+                                            if (feed.url == currentlyPlayingFeedUrl) {
+                                                showNowPlayingDialog = true
+                                            }
+                                        },
                                         modifier = Modifier.animateItem()
                                     )
                                 }
@@ -472,11 +478,17 @@ fun RssTab(
 }
 
 @Composable
-private fun FeedSectionHeader(feed: RssFeed, modifier: Modifier = Modifier) {
+private fun FeedSectionHeader(
+    feed: RssFeed,
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(OledBackgroundColor)
+            .then(if (isPlaying) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -484,11 +496,11 @@ private fun FeedSectionHeader(feed: RssFeed, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .size(6.dp)
-                .background(ThemePrimaryColor, CircleShape)
+                .background(if (isPlaying) animatedColor() else ThemePrimaryColor, CircleShape)
         )
         Text(
             text = feed.title,
-            color = ThemePrimaryColor,
+            color = if (isPlaying) animatedColor() else ThemePrimaryColor,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
@@ -546,6 +558,7 @@ private fun RssItemCard(
                     url = mediaUrl,
                     isVideo = !hasImage,
                     isAudio = hasAudio && !hasVideo,
+                    isCurrentlyPlaying = isCurrentlyPlaying,
                     onVideoClick = onVideoClick,
                     onAudioClick = onAudioClick
                 )
@@ -638,6 +651,7 @@ private fun MediaThumbnail(
     url: String,
     isVideo: Boolean,
     isAudio: Boolean,
+    isCurrentlyPlaying: Boolean = false,
     onVideoClick: () -> Unit,
     onAudioClick: () -> Unit
 ) {
@@ -690,6 +704,10 @@ private fun MediaThumbnail(
         }
 
         if (isAudio) {
+            val thumbnailAudioColor = animatedColor(
+                firstSeen = isCurrentlyPlaying,
+                fallbackColor = Color.White.copy(alpha = 0.9f)
+            )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -700,7 +718,7 @@ private fun MediaThumbnail(
                 Icon(
                     imageVector = Icons.Default.Headphones,
                     contentDescription = stringResource(R.string.rss_tab_play_audio_cd),
-                    tint = Color.White.copy(alpha = 0.9f),
+                    tint = thumbnailAudioColor,
                     modifier = Modifier.size(44.dp)
                 )
             }
