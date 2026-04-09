@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Timer
@@ -95,6 +96,8 @@ fun RssSettingsScreen(
     viewModel: RssViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val savedPositionCount by viewModel.savedPositionCount.collectAsStateWithLifecycle()
+    var savedPositionsSizeBytes by remember { mutableStateOf(viewModel.getPlaytimesFileSizeBytes()) }
     var showAddFeedDialog by remember { mutableStateOf(false) }
     var displayExpanded by remember { mutableStateOf(false) }
 
@@ -350,6 +353,16 @@ fun RssSettingsScreen(
                             }
                         }
                     }
+                    item(key = "playtimes") {
+                        PlaytimesRow(
+                            count = savedPositionCount,
+                            fileSizeBytes = savedPositionsSizeBytes,
+                            onClear = {
+                                viewModel.clearPlayTimes()
+                                savedPositionsSizeBytes = 0L
+                            }
+                        )
+                    }
                     item(key = "feed_list") {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             localFeeds.forEachIndexed { listPos, feed ->
@@ -603,6 +616,75 @@ private fun FeedCard(
                         contentDescription = stringResource(R.string.rss_settings_copy_url_cd),
                         tint = Color.White.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaytimesRow(
+    count: Int,
+    fileSizeBytes: Long,
+    onClear: () -> Unit
+) {
+    val sizeLabel = when {
+        fileSizeBytes <= 0L -> if (count == 0) "0 B" else "< 1 KB"
+        fileSizeBytes < 1024L -> "$fileSizeBytes B"
+        else -> "${fileSizeBytes / 1024L} KB"
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(brush = subtleCardGradient(false), shape = RoundedCornerShape(16.dp))
+            .border(
+                width = 1.dp,
+                brush = borderBrush(isFocused = false),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = ThemePrimaryColor,
+                    modifier = Modifier.size(20.dp)
+                )
+                Column {
+                    Text(
+                        text = "Saved playtimes",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = if (count == 0) "None saved" else "$count items · $sizeLabel",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+            if (count > 0) {
+                IconButton(
+                    onClick = onClear,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Clear saved playtimes",
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

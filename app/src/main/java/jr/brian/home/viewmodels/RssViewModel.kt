@@ -30,12 +30,22 @@ class RssViewModel @Inject constructor(
     val volume = nowPlayingManager.volume
     val currentPosition = nowPlayingManager.currentPosition
     val duration = nowPlayingManager.duration
+    val savedPositionCount = nowPlayingManager.savedPositionCount
 
     fun togglePlayPause() = nowPlayingManager.togglePlayPause()
     fun skipToNext() = nowPlayingManager.skipToNext()
     fun skipToPrevious() = nowPlayingManager.skipToPrevious()
     fun setVolume(v: Float) = nowPlayingManager.setVolume(v)
     fun seekTo(positionMs: Long) = nowPlayingManager.seekTo(positionMs)
+    fun clearPlayTimes() = nowPlayingManager.clearSavedPositions()
+
+    fun getPlaytimesFileSizeBytes(): Long {
+        val file = java.io.File(
+            context.applicationInfo.dataDir,
+            "shared_prefs/${NowPlayingManager.PLAY_TIME_PREFS}.xml"
+        )
+        return if (file.exists()) file.length() else 0L
+    }
 
     fun playAudio(item: RssItem) {
         val selectedUrls = _uiState.value.selectedFeedUrls

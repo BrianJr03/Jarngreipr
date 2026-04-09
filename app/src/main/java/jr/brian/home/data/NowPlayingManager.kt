@@ -2,7 +2,9 @@ package jr.brian.home.data
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -56,6 +58,29 @@ class NowPlayingManager @Inject constructor(
 
     private var currentQueue: List<RssItem> = emptyList()
 
+    private val savedPositions = HashMap<String, Long>()
+    private val playTimePrefs: SharedPreferences =
+        context.getSharedPreferences(PLAY_TIME_PREFS, Context.MODE_PRIVATE)
+
+    private val _savedPositionCount = MutableStateFlow(0)
+    val savedPositionCount: StateFlow<Int> = _savedPositionCount.asStateFlow()
+
+    private fun saveCurrentPosition() {
+        val itemId = _currentItemId.value ?: return
+        val pos = _currentPosition.value
+        if (pos > 0L) {
+            savedPositions[itemId] = pos
+            playTimePrefs.edit { putLong(itemId, pos) }
+            _savedPositionCount.value = savedPositions.size
+        }
+    }
+
+    fun clearSavedPositions() {
+        savedPositions.clear()
+        playTimePrefs.edit { clear() }
+        _savedPositionCount.value = 0
+    }
+
     private var controller: MediaController? = null
     private val controllerFuture: ListenableFuture<MediaController>
     private var pendingPlay: (() -> Unit)? = null
@@ -64,6 +89,10 @@ class NowPlayingManager @Inject constructor(
     private var pollingJob: Job? = null
 
     init {
+        @Suppress("UNCHECKED_CAST")
+        playTimePrefs.all.forEach { (k, v) -> (v as? Long)?.let { savedPositions[k] = it } }
+        _savedPositionCount.value = savedPositions.size
+
         val sessionToken = SessionToken(
             context,
             ComponentName(context, RssPlaybackService::class.java)
@@ -83,10 +112,15 @@ class NowPlayingManager @Inject constructor(
     private fun startPositionPolling() {
         pollingJob?.cancel()
         pollingJob = scope.launch {
+            var tickCount = 0
             while (true) {
                 controller?.let { ctrl ->
                     _currentPosition.value = ctrl.currentPosition.coerceAtLeast(0L)
                     _duration.value = if (ctrl.duration == C.TIME_UNSET) 0L else ctrl.duration
+                }
+                if (++tickCount >= 2) {
+                    saveCurrentPosition()
+                    tickCount = 0
                 }
                 delay(500L)
             }
@@ -101,7 +135,10 @@ class NowPlayingManager @Inject constructor(
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _nowPlaying.value = _nowPlaying.value?.copy(isPlaying = isPlaying)
-            if (isPlaying) startPositionPolling() else stopPositionPolling()
+            if (isPlaying) startPositionPolling() else {
+                saveCurrentPosition()
+                stopPositionPolling()
+            }
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -114,6 +151,7 @@ class NowPlayingManager @Inject constructor(
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            saveCurrentPosition()
             val idx = controller?.currentMediaItemIndex ?: return
             val item = currentQueue.getOrNull(idx)
             _currentItemId.value = item?.id
@@ -135,10 +173,13 @@ class NowPlayingManager @Inject constructor(
     }
 
     fun play(audioItems: List<RssItem>, startIndex: Int) {
+        saveCurrentPosition()
         currentQueue = audioItems
         val item = audioItems.getOrNull(startIndex)
         _currentItemId.value = item?.id
         _currentFeedUrl.value = item?.feedUrl
+
+        val startPositionMs = item?.id?.let { savedPositions[it] } ?: C.TIME_UNSET
 
         val mediaItems = audioItems.map { rssItem ->
             MediaItem.Builder()
@@ -152,12 +193,12 @@ class NowPlayingManager @Inject constructor(
         }
         val ctrl = controller
         if (ctrl != null) {
-            ctrl.setMediaItems(mediaItems, startIndex, C.TIME_UNSET)
+            ctrl.setMediaItems(mediaItems, startIndex, startPositionMs)
             ctrl.prepare()
             ctrl.play()
         } else {
             pendingPlay = {
-                controller?.setMediaItems(mediaItems, startIndex, C.TIME_UNSET)
+                controller?.setMediaItems(mediaItems, startIndex, startPositionMs)
                 controller?.prepare()
                 controller?.play()
             }
@@ -191,5 +232,9 @@ class NowPlayingManager @Inject constructor(
         stopPositionPolling()
         scope.cancel()
         MediaController.releaseFuture(controllerFuture)
+    }
+
+    companion object {
+        const val PLAY_TIME_PREFS = "rss_playtime_prefs"
     }
 }
