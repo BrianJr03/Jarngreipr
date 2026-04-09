@@ -2,12 +2,16 @@ package jr.brian.home.ui.screens
 
 import android.net.Uri
 import android.text.Html
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +34,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -46,48 +57,44 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.data.NowPlayingManager
 import jr.brian.home.model.rss.RssFeed
 import jr.brian.home.model.rss.RssItem
+import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.util.animatedColor
 import jr.brian.home.viewmodels.RssViewModel
-import androidx.compose.foundation.basicMarquee
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
-import jr.brian.home.data.NowPlayingManager
-import androidx.browser.customtabs.CustomTabsIntent
 
 @Composable
 fun RssTab(
@@ -99,26 +106,37 @@ fun RssTab(
     val listState = rememberLazyListState()
 
     var showFilterMenu by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var isKeyboardVisible by remember { mutableStateOf(false) }
+    val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val selectedFeedUrls = uiState.selectedFeedUrls
 
     val itemsByFeed = remember(uiState.items) {
         uiState.items.groupBy { it.feedUrl }
     }
 
-    val filteredItemsByFeed = remember(itemsByFeed, selectedFeedUrls) {
-        if (selectedFeedUrls.isEmpty()) itemsByFeed
+    val filteredItemsByFeed = remember(itemsByFeed, selectedFeedUrls, searchQuery) {
+        val feedFiltered = if (selectedFeedUrls.isEmpty()) itemsByFeed
         else itemsByFeed.filterKeys { it in selectedFeedUrls }
+        if (searchQuery.isBlank()) feedFiltered
+        else feedFiltered.mapValues { (_, items) ->
+            items.filter { item ->
+                item.title.contains(searchQuery, ignoreCase = true) ||
+                item.description.contains(searchQuery, ignoreCase = true)
+            }
+        }.filterValues { it.isNotEmpty() }
     }
 
     val currentlyPlayingFeedUrl: String? by viewModel.currentlyPlayingFeedUrl.collectAsStateWithLifecycle()
     val currentlyPlayingItemId: String? by viewModel.currentlyPlayingItemId.collectAsStateWithLifecycle()
 
-    val filteredFeeds = remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl) {
+    val filteredFeeds = remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl, filteredItemsByFeed) {
         val base = if (selectedFeedUrls.isEmpty()) uiState.feeds
         else uiState.feeds.filter { it.url in selectedFeedUrls }
-        val playingUrl = currentlyPlayingFeedUrl ?: return@remember base
-        val playing = base.find { it.url == playingUrl } ?: return@remember base
-        listOf(playing) + base.filter { it.url != playingUrl }
+        val withItems = base.filter { it.url in filteredItemsByFeed }
+        val playingUrl = currentlyPlayingFeedUrl ?: return@remember withItems
+        val playing = withItems.find { it.url == playingUrl } ?: return@remember withItems
+        listOf(playing) + withItems.filter { it.url != playingUrl }
     }
 
     LaunchedEffect(selectedFeedUrls) {
@@ -321,6 +339,63 @@ fun RssTab(
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(22.dp)
                         )
+                    }
+
+                    IconButton(onClick = { isKeyboardVisible = !isKeyboardVisible }) {
+                        Icon(
+                            imageVector = Icons.Default.Keyboard,
+                            contentDescription = if (isKeyboardVisible) "Hide search" else "Search feeds",
+                            tint = if (isKeyboardVisible || searchQuery.isNotEmpty()) ThemePrimaryColor
+                            else Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isKeyboardVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    QwertyKeyboard(
+                        searchQuery = searchQuery,
+                        showFlipLayoutButton = false,
+                        showVolControl = false,
+                        showSettings = false,
+                        showController = false,
+                        showAtKey = false,
+                        keyboardFocusRequesters = keyboardFocusRequesters,
+                        onQueryChange = { searchQuery = it },
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    if (searchQuery.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Filtering by: \"$searchQuery\"",
+                                color = ThemePrimaryColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear search",
+                                    tint = Color.White.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -986,9 +1061,11 @@ internal fun NowPlayingDialog(
 
 private fun formatMs(ms: Long): String {
     val totalSec = (ms / 1000).coerceAtLeast(0L)
-    val min = totalSec / 60
+    val hours = totalSec / 3600
+    val min = (totalSec % 3600) / 60
     val sec = totalSec % 60
-    return "%d:%02d".format(min, sec)
+    return if (hours > 0) "%d:%02d:%02d".format(hours, min, sec)
+    else "%d:%02d".format(min, sec)
 }
 
 private fun stripHtml(html: String): String {

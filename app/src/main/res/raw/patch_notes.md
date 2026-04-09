@@ -1,10 +1,5 @@
-**RSS Now Playing**
-- Now Playing Card appears when playing RSS audio
-- Press for Pause/Play and Previous/Next controls
+**RSS Tab**
+- Playtimes on RSS Feeds are now saved. You can start, pause, and resume from the same point, even after reboot!
+- Filter RSS Feeds via Search
 
-**Quick Fixes**
-- Greatly improves RSS audio/video playback
-- No longer opens tabs, plays audio/video directly in app 
-- App Drawer no longer "jumps" when scrolling to the top
-
-2.3.3
+2.3.4
