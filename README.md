@@ -4,7 +4,7 @@
 ![Latest Release Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/latest/total?style=flat-square)
 ![Version](https://img.shields.io/github/v/release/BrianJr03/Jarngreipr)
 ![Android](https://img.shields.io/badge/Android-13%2B-green)
-![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg)
+<!-- ![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg) -->
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U6U21UGZT3)
 
