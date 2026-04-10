@@ -25,6 +25,10 @@ class GridSettingsManager(context: Context) {
     val unlimitedMode: Boolean
         get() = _unlimitedMode
 
+    private var _notificationShadeEnabled by mutableStateOf(loadNotificationShadeEnabled())
+    val notificationShadeEnabled: Boolean
+        get() = _notificationShadeEnabled
+
     fun setTotalAppsCount(count: Int) {
         _totalAppsCount = count
     }
@@ -38,6 +42,18 @@ class GridSettingsManager(context: Context) {
 
     private fun loadUnlimitedMode(): Boolean {
         return prefs.getBoolean(KEY_UNLIMITED_MODE, true) // Default to unlimited
+    }
+
+    private fun loadNotificationShadeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_SHADE_ENABLED, true)
+    }
+
+    fun setNotificationShadeEnabled(enabled: Boolean) {
+        _notificationShadeEnabled = enabled
+        prefs.edit().apply {
+            putBoolean(KEY_NOTIFICATION_SHADE_ENABLED, enabled)
+            apply()
+        }
     }
 
     fun setUnlimitedMode(enabled: Boolean) {
@@ -125,6 +141,7 @@ class GridSettingsManager(context: Context) {
         private const val KEY_COLUMN_COUNT = "column_count"
         private const val KEY_ROW_COUNT = "row_count"
         private const val KEY_UNLIMITED_MODE = "unlimited_mode"
+        private const val KEY_NOTIFICATION_SHADE_ENABLED = "notification_shade_enabled"
         const val DEFAULT_COLUMN_COUNT = 4
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7

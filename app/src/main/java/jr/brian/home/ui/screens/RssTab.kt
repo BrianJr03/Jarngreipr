@@ -66,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -88,12 +89,15 @@ import jr.brian.home.model.rss.RssItem
 import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.util.animatedColor
+import jr.brian.home.ui.util.rememberTopFlingTrigger
 import jr.brian.home.viewmodels.RssViewModel
 
 @Composable
@@ -173,7 +177,13 @@ fun RssTab(
     val nowPlayingVolume by viewModel.volume.collectAsStateWithLifecycle()
     val nowPlayingPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val nowPlayingDuration by viewModel.duration.collectAsStateWithLifecycle()
+    val gridSettingsManager = LocalGridSettingsManager.current
     var showNowPlayingDialog by remember { mutableStateOf(false) }
+    var showNotificationShade by remember { mutableStateOf(false) }
+
+    val topFlingTrigger = rememberTopFlingTrigger(listState) {
+        if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true
+    }
 
     nowPlaying?.let { info ->
         if (showNowPlayingDialog) {
@@ -192,6 +202,7 @@ fun RssTab(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -456,7 +467,9 @@ fun RssTab(
                 else -> {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(topFlingTrigger),
                         contentPadding = PaddingValues(
                             start = 12.dp,
                             end = 12.dp,
@@ -602,6 +615,21 @@ fun RssTab(
                 }
             }
         }
+    }
+
+    NotificationShade(
+        visible = showNotificationShade,
+        nowPlaying = nowPlaying,
+        currentPosition = nowPlayingPosition,
+        duration = nowPlayingDuration,
+        volume = nowPlayingVolume,
+        onPlayPause = { viewModel.togglePlayPause() },
+        onPrevious = { viewModel.skipToPrevious() },
+        onNext = { viewModel.skipToNext() },
+        onVolumeChange = { viewModel.setVolume(it) },
+        onSeek = { viewModel.seekTo(it) },
+        onDismiss = { showNotificationShade = false }
+    )
     }
 }
 

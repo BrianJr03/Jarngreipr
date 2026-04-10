@@ -74,8 +74,11 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberTopFlingTrigger
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
@@ -92,6 +95,7 @@ fun AppsAndWidgetsTab(
     viewModel: WidgetViewModel,
     modifier: Modifier = Modifier,
     powerViewModel: PowerViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
@@ -184,6 +188,16 @@ fun AppsAndWidgetsTab(
         onFlingAtBottom = onShowAppDrawer
     )
 
+    var showNotificationShade by remember { mutableStateOf(false) }
+    val topFlingTrigger = rememberTopFlingTrigger(
+        gridState = gridState,
+        onFlingAtTop = { if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true }
+    )
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+
     val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
     val isPressedState = remember { mutableStateOf(false) }
@@ -212,8 +226,9 @@ fun AppsAndWidgetsTab(
 
     BackHandler(enabled = isPoweredOff) {}
 
+    Box(modifier = modifier.fillMaxSize().nestedScroll(topFlingTrigger)) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .then(if (!isBottomFlingDisabled) Modifier.nestedScroll(bottomFlingTrigger) else Modifier)
             .scale(pressScale)
@@ -333,6 +348,21 @@ fun AppsAndWidgetsTab(
             )
         }
 
+    }
+
+    NotificationShade(
+        visible = showNotificationShade,
+        nowPlaying = nowPlaying,
+        currentPosition = nowPlayingPosition,
+        duration = nowPlayingDuration,
+        volume = nowPlayingVolume,
+        onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+        onPrevious = { nowPlayingViewModel.skipToPrevious() },
+        onNext = { nowPlayingViewModel.skipToNext() },
+        onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+        onSeek = { nowPlayingViewModel.seekTo(it) },
+        onDismiss = { showNotificationShade = false }
+    )
     }
 
     dockAppSelectionDialogState.item?.let { position ->

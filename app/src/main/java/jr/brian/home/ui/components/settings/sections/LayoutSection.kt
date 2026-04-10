@@ -30,6 +30,7 @@ import jr.brian.home.ui.components.settings.ThorSettingsItem
 import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_APP_DRAWER_FAB
@@ -53,6 +54,7 @@ fun LayoutSection(
     val pageTypeManager = LocalPageTypeManager.current
     val appPositionManager = LocalAppPositionManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
+    val gridSettingsManager = LocalGridSettingsManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
     val appDrawerFilterByPage by powerSettingsManager.appDrawerFilterByPage.collectAsStateWithLifecycle()
@@ -166,6 +168,13 @@ fun LayoutSection(
             description = stringResource(R.string.settings_layout_app_drawer_filter_by_page_description),
             checked = appDrawerFilterByPage,
             onCheckedChange = { powerSettingsManager.setAppDrawerFilterByPage(it) }
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_notification_shade),
+            description = stringResource(R.string.settings_layout_notification_shade_description),
+            checked = gridSettingsManager.notificationShadeEnabled,
+            onCheckedChange = { gridSettingsManager.setNotificationShadeEnabled(it) }
         )
     }
 }
