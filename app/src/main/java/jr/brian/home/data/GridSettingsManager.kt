@@ -29,6 +29,10 @@ class GridSettingsManager(context: Context) {
     val notificationShadeEnabled: Boolean
         get() = _notificationShadeEnabled
 
+    private var _tabTransitionAnimationName by mutableStateOf(loadTabTransitionAnimationName())
+    val tabTransitionAnimationName: String
+        get() = _tabTransitionAnimationName
+
     fun setTotalAppsCount(count: Int) {
         _totalAppsCount = count
     }
@@ -41,17 +45,29 @@ class GridSettingsManager(context: Context) {
     }
 
     private fun loadUnlimitedMode(): Boolean {
-        return prefs.getBoolean(KEY_UNLIMITED_MODE, true) // Default to unlimited
+        return prefs.getBoolean(KEY_UNLIMITED_MODE, true)
     }
 
     private fun loadNotificationShadeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_NOTIFICATION_SHADE_ENABLED, true)
+        return prefs.getBoolean(KEY_NOTIFICATION_SHADE_ENABLED, false)
     }
 
     fun setNotificationShadeEnabled(enabled: Boolean) {
         _notificationShadeEnabled = enabled
         prefs.edit().apply {
             putBoolean(KEY_NOTIFICATION_SHADE_ENABLED, enabled)
+            apply()
+        }
+    }
+
+    private fun loadTabTransitionAnimationName(): String {
+        return prefs.getString(KEY_TAB_TRANSITION_ANIMATION, "") ?: ""
+    }
+
+    fun setTabTransitionAnimationName(name: String) {
+        _tabTransitionAnimationName = name
+        prefs.edit().apply {
+            putString(KEY_TAB_TRANSITION_ANIMATION, name)
             apply()
         }
     }
@@ -142,6 +158,7 @@ class GridSettingsManager(context: Context) {
         private const val KEY_ROW_COUNT = "row_count"
         private const val KEY_UNLIMITED_MODE = "unlimited_mode"
         private const val KEY_NOTIFICATION_SHADE_ENABLED = "notification_shade_enabled"
+        private const val KEY_TAB_TRANSITION_ANIMATION = "tab_transition_animation"
         const val DEFAULT_COLUMN_COUNT = 4
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7

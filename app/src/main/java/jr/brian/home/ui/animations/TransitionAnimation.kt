@@ -1,19 +1,14 @@
 package jr.brian.home.ui.animations
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerScope
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
+import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.sin
-import kotlin.math.PI
-
 
 
 // ─────────────────────────────────────────────────────────────────────────────

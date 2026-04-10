@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -490,15 +491,23 @@ private fun NowPlayingWidget(
                 modifier = Modifier
                     .size(48.dp)
                     .background(uiColor.copy(alpha = 0.15f), CircleShape)
-                    .clickable(onClick = onPlayPause),
+                    .then(if (!info.isBuffering) Modifier.clickable(onClick = onPlayPause) else Modifier),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (info.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (info.isPlaying) "Pause" else "Play",
-                    tint = uiColor,
-                    modifier = Modifier.size(26.dp)
-                )
+                if (info.isBuffering) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = uiColor,
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (info.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (info.isPlaying) "Pause" else "Play",
+                        tint = uiColor,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
             Box(
                 modifier = Modifier

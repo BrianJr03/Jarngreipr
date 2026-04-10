@@ -54,6 +54,7 @@ import jr.brian.home.ui.navigation.faqScreen
 import jr.brian.home.ui.navigation.addJingleScreen
 import jr.brian.home.ui.navigation.jinglesScreen
 import jr.brian.home.ui.navigation.rssSettingsScreen
+import jr.brian.home.ui.navigation.transitionAnimationScreen
 import jr.brian.home.ui.navigation.trackpadScreen
 import jr.brian.home.ui.navigation.romSearchScreen
 import jr.brian.home.ui.navigation.konfettiEditorScreen
@@ -361,6 +362,10 @@ fun MainContent(
                 )
 
                 rssSettingsScreen(
+                    navController = navController
+                )
+
+                transitionAnimationScreen(
                     navController = navController
                 )
             }

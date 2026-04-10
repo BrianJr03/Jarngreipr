@@ -22,6 +22,7 @@ object Routes {
     const val ROM_SEARCH = "rom_search"
     const val TRACKPAD = "trackpad"
     const val RSS_SETTINGS = "rss_settings"
+    const val TAB_TRANSITION_ANIMATIONS = "tab_transition_animations"
     const val ADD_JINGLE = "add_jingle/{folderUri}/{createPack}?existingPackPath={existingPackPath}&existingPackName={existingPackName}"
     const val WIDGET_PICKER = "widget_picker/{pageIndex}"
 

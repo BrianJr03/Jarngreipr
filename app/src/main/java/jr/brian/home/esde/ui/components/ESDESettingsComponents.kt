@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -256,7 +257,8 @@ fun ToggleSetting(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit = {},
     showToggle: Boolean = true,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    icon: ImageVector? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -282,6 +284,16 @@ fun ToggleSetting(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -323,7 +335,8 @@ fun ToggleSetting(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit = {},
     showToggle: Boolean = true,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    icon: ImageVector? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -349,6 +362,15 @@ fun ToggleSetting(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,

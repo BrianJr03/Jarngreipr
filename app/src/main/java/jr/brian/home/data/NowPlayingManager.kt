@@ -35,7 +35,8 @@ class NowPlayingManager @Inject constructor(
     data class NowPlayingInfo(
         val title: String,
         val artist: String? = null,
-        val isPlaying: Boolean = false
+        val isPlaying: Boolean = false,
+        val isBuffering: Boolean = false
     )
 
     private val _nowPlaying = MutableStateFlow<NowPlayingInfo?>(null)
@@ -105,7 +106,8 @@ class NowPlayingManager @Inject constructor(
                     pendingPlay?.invoke()
                     pendingPlay = null
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }, ContextCompat.getMainExecutor(context))
     }
 
@@ -146,12 +148,22 @@ class NowPlayingManager @Inject constructor(
             _nowPlaying.value = NowPlayingInfo(
                 title = title,
                 artist = mediaMetadata.artist?.toString(),
-                isPlaying = controller?.isPlaying == true
+                isPlaying = controller?.isPlaying == true,
+                isBuffering = controller?.playbackState == Player.STATE_BUFFERING
             )
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            saveCurrentPosition()
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+                val completedId = _currentItemId.value
+                if (completedId != null) {
+                    savedPositions.remove(completedId)
+                    playTimePrefs.edit { remove(completedId) }
+                    _savedPositionCount.value = savedPositions.size
+                }
+            } else {
+                saveCurrentPosition()
+            }
             val ctrl = controller ?: return
             val idx = ctrl.currentMediaItemIndex
             val item = currentQueue.getOrNull(idx)
@@ -168,6 +180,23 @@ class NowPlayingManager @Inject constructor(
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_BUFFERING ->
+                    _nowPlaying.value = _nowPlaying.value?.copy(isBuffering = true)
+
+                Player.STATE_READY ->
+                    _nowPlaying.value = _nowPlaying.value?.copy(isBuffering = false)
+
+                else -> {}
+            }
+            if (playbackState == Player.STATE_ENDED) {
+                val completedId = _currentItemId.value
+                if (completedId != null) {
+                    savedPositions.remove(completedId)
+                    playTimePrefs.edit { remove(completedId) }
+                    _savedPositionCount.value = savedPositions.size
+                }
+            }
             if (playbackState == Player.STATE_IDLE) {
                 _nowPlaying.value = null
                 _currentItemId.value = null
@@ -186,6 +215,13 @@ class NowPlayingManager @Inject constructor(
         val item = audioItems.getOrNull(startIndex)
         _currentItemId.value = item?.id
         _currentFeedUrl.value = item?.feedUrl
+
+        // Immediately signal buffering so UI updates before any listener fires
+        _nowPlaying.value = NowPlayingInfo(
+            title = item?.title ?: "",
+            isPlaying = false,
+            isBuffering = true
+        )
 
         val startPositionMs = item?.id?.let { savedPositions[it] } ?: C.TIME_UNSET
 

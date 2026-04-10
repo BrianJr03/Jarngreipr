@@ -51,6 +51,8 @@ import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.ui.animations.allAnimationPresets
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.model.PageType
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
@@ -100,6 +102,7 @@ fun LauncherPagerScreen(
     val scope = rememberCoroutineScope()
 
     val homeTabManager = LocalHomeTabManager.current
+    val gridSettingsManager = LocalGridSettingsManager.current
     val hapticFeedback = LocalHapticFeedback.current
     val pageTypeManager = LocalPageTypeManager.current
     val pageCountManager = LocalPageCountManager.current
@@ -277,25 +280,37 @@ fun LauncherPagerScreen(
                 label = "pagerAlpha"
             )
 
+            val transitionPreset = remember(gridSettingsManager.tabTransitionAnimationName) {
+                val name = gridSettingsManager.tabTransitionAnimationName
+                if (name.isEmpty()) null
+                else allAnimationPresets.find { it.name == name }
+            }
+
+            val visibleAppsByPage = remember(homeUiState.allApps, hiddenAppsByPage, pageTypes) {
+                pageTypes.indices.associateWith { page ->
+                    val hidden = hiddenAppsByPage[page] ?: emptySet()
+                    homeUiState.allApps.filter { app -> app.packageName !in hidden }
+                }
+            }
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = pagerAlpha },
-                beyondViewportPageCount = 1,
+                beyondViewportPageCount = 2,
                 userScrollEnabled = pagerVisible,
             ) { page ->
                 val pageType =
                     if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB
 
+                val transitionModifier = transitionPreset?.modifier?.invoke(pagerState, page)
+                    ?: Modifier
+
+                Box(modifier = Modifier.fillMaxSize().then(transitionModifier)) {
                 when (pageType) {
                     PageType.APPS_TAB -> {
-                        val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
-                        val visibleApps = remember(homeUiState.allApps, hiddenApps) {
-                            homeUiState.allApps.filter { app ->
-                                app.packageName !in hiddenApps
-                            }
-                        }
+                        val visibleApps = visibleAppsByPage[page] ?: homeUiState.allApps
 
                         key(globalIconRefreshManager?.refreshCounter) {
                             AppsTab(
@@ -409,12 +424,7 @@ fun LauncherPagerScreen(
 
 
                         if (widgetPage != null) {
-                            val hiddenApps = hiddenAppsByPage[page] ?: emptySet()
-                            val visibleApps = remember(homeUiState.allApps, hiddenApps) {
-                                homeUiState.allApps.filter { app ->
-                                    app.packageName !in hiddenApps
-                                }
-                            }
+                            val visibleApps = visibleAppsByPage[page] ?: homeUiState.allApps
 
                             key(globalIconRefreshManager?.refreshCounter) {
                                 AppDrawerTab(
@@ -456,6 +466,7 @@ fun LauncherPagerScreen(
                         }
                     }
                 }
+                } // end Box
             }
 
             AnimatedVisibility(
@@ -505,12 +516,7 @@ fun LauncherPagerScreen(
 
             if (showAppDrawerSheet) {
                 val currentPage = pagerState.currentPage
-                val hiddenApps = hiddenAppsByPage[currentPage] ?: emptySet()
-                val filteredApps = remember(homeUiState.allApps, hiddenApps, currentPage) {
-                    homeUiState.allApps.filter { app ->
-                        app.packageName !in hiddenApps
-                    }
-                }
+                val filteredApps = visibleAppsByPage[currentPage] ?: homeUiState.allApps
                 val drawerApps = if (appDrawerFilterByPage) filteredApps else homeUiState.allApps
                 ModalBottomSheet(
                     onDismissRequest = { closeAppDrawerSheet() },

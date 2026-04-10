@@ -1444,6 +1444,17 @@
     <string name="rss_tab_empty_hint">Add feeds in Settings → RSS</string>
     <string name="rss_tab_no_articles">No articles yet</string>
     <string name="rss_tab_refresh_now">Refresh Now</string>
+    <string name="rss_tab_mixed">Mixed</string>
+    <string name="rss_tab_now_playing">Now Playing</string>
+    <string name="rss_tab_hide_search_cd">Hide search</string>
+    <string name="rss_tab_search_feeds_cd">Search feeds</string>
+    <string name="rss_tab_filtering_by">Filtering by: \"%1$s\"</string>
+    <string name="rss_tab_clear_search_cd">Clear search</string>
+    <string name="rss_tab_previous_cd">Previous</string>
+    <string name="rss_tab_next_cd">Next</string>
+    <string name="rss_tab_play_cd">Play</string>
+    <string name="rss_tab_pause_cd">Pause</string>
+    <string name="rss_tab_volume_cd">Volume</string>
 
     <string name="faq_section_rss">RSS / Now Playing</string>
     <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>
