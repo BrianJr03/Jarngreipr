@@ -106,6 +106,7 @@ fun RssTab(
     val listState = rememberLazyListState()
 
     var showFilterMenu by remember { mutableStateOf(false) }
+    val isMixedMode by viewModel.isMixedMode.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     var isKeyboardVisible by remember { mutableStateOf(false) }
     val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
@@ -132,6 +133,19 @@ fun RssTab(
 
     val currentlyPlayingItem = remember(uiState.items, currentlyPlayingItemId) {
         currentlyPlayingItemId?.let { id -> uiState.items.find { it.id == id } }
+    }
+
+    val mixedItems = remember(filteredItemsByFeed, isMixedMode) {
+        if (!isMixedMode) emptyList()
+        else {
+            val lists = filteredItemsByFeed.values.toList()
+            val maxSize = lists.maxOfOrNull { it.size } ?: 0
+            buildList {
+                for (i in 0 until maxSize) {
+                    lists.forEach { feedItems -> feedItems.getOrNull(i)?.let { add(it) } }
+                }
+            }.sortedByDescending { parsePubDateMillis(it.pubDate) }
+        }
     }
 
     val filteredFeeds =
@@ -257,7 +271,7 @@ fun RssTab(
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
                                     contentDescription = stringResource(R.string.rss_tab_filter_cd),
-                                    tint = if (selectedFeedUrls.isEmpty()) Color.White.copy(alpha = 0.7f)
+                                    tint = if (selectedFeedUrls.isEmpty() && !isMixedMode) Color.White.copy(alpha = 0.7f)
                                     else ThemePrimaryColor,
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -275,14 +289,14 @@ fun RssTab(
                                     text = {
                                         Text(
                                             text = stringResource(R.string.rss_tab_all_feeds),
-                                            color = if (selectedFeedUrls.isEmpty()) ThemePrimaryColor
+                                            color = if (selectedFeedUrls.isEmpty() && !isMixedMode) ThemePrimaryColor
                                             else Color.White,
                                             fontSize = 14.sp,
-                                            fontWeight = if (selectedFeedUrls.isEmpty()) FontWeight.Bold
+                                            fontWeight = if (selectedFeedUrls.isEmpty() && !isMixedMode) FontWeight.Bold
                                             else FontWeight.Normal
                                         )
                                     },
-                                    leadingIcon = if (selectedFeedUrls.isEmpty()) {
+                                    leadingIcon = if (selectedFeedUrls.isEmpty() && !isMixedMode) {
                                         {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
@@ -292,7 +306,34 @@ fun RssTab(
                                             )
                                         }
                                     } else null,
-                                    onClick = { viewModel.setSelectedFeedUrls(emptySet()) }
+                                    onClick = {
+                                        viewModel.setMixedMode(false)
+                                        viewModel.setSelectedFeedUrls(emptySet())
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = "Mixed",
+                                            color = if (isMixedMode) ThemePrimaryColor else Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isMixedMode) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    leadingIcon = if (isMixedMode) {
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = ThemePrimaryColor,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    } else null,
+                                    onClick = {
+                                        viewModel.setMixedMode(true)
+                                        showFilterMenu = false
+                                    }
                                 )
                                 HorizontalDivider(
                                     color = Color.White.copy(alpha = 0.08f),
@@ -324,6 +365,7 @@ fun RssTab(
                                             }
                                         } else null,
                                         onClick = {
+                                            viewModel.setMixedMode(false)
                                             val next = if (isSelected) {
                                                 selectedFeedUrls - feed.url
                                             } else {
@@ -464,62 +506,95 @@ fun RssTab(
                             }
                         }
 
-                        filteredFeeds.forEach { feed ->
-                            val feedItems = filteredItemsByFeed[feed.url]
-                            if (!feedItems.isNullOrEmpty()) {
-                                stickyHeader(key = "header_${feed.url}") {
-                                    FeedSectionHeader(
-                                        feed = feed,
-                                        isPlaying = feed.url == currentlyPlayingFeedUrl,
-                                        onClick = {
-                                            if (feed.url == currentlyPlayingFeedUrl) {
-                                                showNowPlayingDialog = true
+                        if (isMixedMode) {
+                            items(
+                                items = mixedItems,
+                                key = { "mixed_${it.feedUrl}_${it.id}" }
+                            ) { item ->
+                                RssItemCard(
+                                    item = item,
+                                    isCurrentlyPlaying = item.id == currentlyPlayingItemId,
+                                    modifier = Modifier.animateItem(),
+                                    useDMYDateFormat = uiState.useDMYDateFormat,
+                                    use24HourClock = uiState.use24HourClock,
+                                    onClick = {
+                                        when {
+                                            item.id == currentlyPlayingItemId -> showNowPlayingDialog = true
+                                            item.link.isNotEmpty() -> runCatching {
+                                                CustomTabsIntent.Builder()
+                                                    .build()
+                                                    .launchUrl(context, Uri.parse(item.link))
                                             }
-                                        },
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                items(
-                                    items = feedItems,
-                                    key = { "${feed.url}_${it.id}" }) { item ->
-                                    RssItemCard(
-                                        item = item,
-                                        isCurrentlyPlaying = item.id == currentlyPlayingItemId,
-                                        modifier = Modifier.animateItem(),
-                                        useDMYDateFormat = uiState.useDMYDateFormat,
-                                        use24HourClock = uiState.use24HourClock,
-                                        onClick = {
-                                            when {
-                                                item.id == currentlyPlayingItemId -> showNowPlayingDialog =
-                                                    true
-
-                                                item.link.isNotEmpty() -> runCatching {
-                                                    CustomTabsIntent.Builder()
-                                                        .build()
-                                                        .launchUrl(context, Uri.parse(item.link))
-                                                }
-
-                                                item.audioUrl.isNotEmpty() -> viewModel.playAudio(
-                                                    item
-                                                )
-                                            }
-                                        },
-                                        onVideoClick = {
-                                            if (item.videoUrl.isNotEmpty()) {
-                                                playingVideoUrl = item.videoUrl
-                                            }
-                                        },
-                                        onAudioClick = {
-                                            if (item.id == currentlyPlayingItemId) {
-                                                showNowPlayingDialog = true
-                                            } else if (item.audioUrl.isNotEmpty()) {
-                                                viewModel.playAudio(item)
-                                            }
+                                            item.audioUrl.isNotEmpty() -> viewModel.playAudio(item)
                                         }
-                                    )
-                                }
-                                item(key = "spacer_${feed.url}") {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    },
+                                    onVideoClick = {
+                                        if (item.videoUrl.isNotEmpty()) playingVideoUrl = item.videoUrl
+                                    },
+                                    onAudioClick = {
+                                        if (item.id == currentlyPlayingItemId) showNowPlayingDialog = true
+                                        else if (item.audioUrl.isNotEmpty()) viewModel.playAudio(item)
+                                    }
+                                )
+                            }
+                        } else {
+                            filteredFeeds.forEach { feed ->
+                                val feedItems = filteredItemsByFeed[feed.url]
+                                if (!feedItems.isNullOrEmpty()) {
+                                    stickyHeader(key = "header_${feed.url}") {
+                                        FeedSectionHeader(
+                                            feed = feed,
+                                            isPlaying = feed.url == currentlyPlayingFeedUrl,
+                                            onClick = {
+                                                if (feed.url == currentlyPlayingFeedUrl) {
+                                                    showNowPlayingDialog = true
+                                                }
+                                            },
+                                            modifier = Modifier.animateItem()
+                                        )
+                                    }
+                                    items(
+                                        items = feedItems,
+                                        key = { "${feed.url}_${it.id}" }) { item ->
+                                        RssItemCard(
+                                            item = item,
+                                            isCurrentlyPlaying = item.id == currentlyPlayingItemId,
+                                            modifier = Modifier.animateItem(),
+                                            useDMYDateFormat = uiState.useDMYDateFormat,
+                                            use24HourClock = uiState.use24HourClock,
+                                            onClick = {
+                                                when {
+                                                    item.id == currentlyPlayingItemId -> showNowPlayingDialog =
+                                                        true
+
+                                                    item.link.isNotEmpty() -> runCatching {
+                                                        CustomTabsIntent.Builder()
+                                                            .build()
+                                                            .launchUrl(context, Uri.parse(item.link))
+                                                    }
+
+                                                    item.audioUrl.isNotEmpty() -> viewModel.playAudio(
+                                                        item
+                                                    )
+                                                }
+                                            },
+                                            onVideoClick = {
+                                                if (item.videoUrl.isNotEmpty()) {
+                                                    playingVideoUrl = item.videoUrl
+                                                }
+                                            },
+                                            onAudioClick = {
+                                                if (item.id == currentlyPlayingItemId) {
+                                                    showNowPlayingDialog = true
+                                                } else if (item.audioUrl.isNotEmpty()) {
+                                                    viewModel.playAudio(item)
+                                                }
+                                            }
+                                        )
+                                    }
+                                    item(key = "spacer_${feed.url}") {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
                                 }
                             }
                         }
@@ -1144,16 +1219,30 @@ private fun stripHtml(html: String): String {
     return Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
 }
 
+private val pubDateFormats = listOf(
+    "EEE, dd MMM yyyy HH:mm:ss Z",
+    "EEE, dd MMM yyyy HH:mm:ss z",
+    "yyyy-MM-dd'T'HH:mm:ssZ",
+    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+    "yyyy-MM-dd'T'HH:mm:ssz",
+    "dd MMM yyyy HH:mm:ss Z"
+)
+
+private fun parsePubDateMillis(raw: String): Long {
+    if (raw.isBlank()) return 0L
+    for (fmt in pubDateFormats) {
+        runCatching {
+            val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.ENGLISH)
+            sdf.isLenient = false
+            return sdf.parse(raw.trim())!!.time
+        }
+    }
+    return 0L
+}
+
 private fun formatPubDate(raw: String, useDMY: Boolean, use24Hour: Boolean): String {
     if (raw.isBlank()) return ""
-    val inputFormats = listOf(
-        "EEE, dd MMM yyyy HH:mm:ss Z",
-        "EEE, dd MMM yyyy HH:mm:ss z",
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ssz",
-        "dd MMM yyyy HH:mm:ss Z"
-    )
+    val inputFormats = pubDateFormats
     val datePattern = if (useDMY) "d/M/yyyy" else "M/d/yyyy"
     val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
     val output =

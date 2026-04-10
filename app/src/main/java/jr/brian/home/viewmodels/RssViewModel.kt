@@ -64,6 +64,14 @@ class RssViewModel @Inject constructor(
 
     private val _selectedFeedUrls = MutableStateFlow(loadSelectedFeedUrls())
 
+    private val _isMixedMode = MutableStateFlow(prefs.getBoolean(KEY_IS_MIXED_MODE, false))
+    val isMixedMode = _isMixedMode.asStateFlow()
+
+    fun setMixedMode(mixed: Boolean) {
+        _isMixedMode.value = mixed
+        prefs.edit { putBoolean(KEY_IS_MIXED_MODE, mixed) }
+    }
+
     init {
         observeFeeds()
         startAutoRefreshTicker()
@@ -197,5 +205,6 @@ class RssViewModel @Inject constructor(
         private const val KEY_SELECTED_FEED_URLS = "selected_feed_urls"
         private const val KEY_USE_DMY_DATE_FORMAT = "use_dmy_date_format"
         private const val KEY_USE_24_HOUR_CLOCK = "use_24_hour_clock"
+        private const val KEY_IS_MIXED_MODE = "is_mixed_mode"
     }
 }
