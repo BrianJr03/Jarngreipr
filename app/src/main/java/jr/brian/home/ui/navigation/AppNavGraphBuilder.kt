@@ -42,6 +42,7 @@ import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
 import jr.brian.home.ui.screens.RssSettingsScreen
+import jr.brian.home.ui.screens.TransitionAnimationScreen
 import jr.brian.home.ui.screens.TrackpadScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
@@ -327,6 +328,10 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToRssSettings = {
                     showScreen = false
                     navController.navigate(Routes.RSS_SETTINGS)
+                },
+                onNavigateToTransitionAnimations = {
+                    showScreen = false
+                    navController.navigate(Routes.TAB_TRANSITION_ANIMATIONS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -614,6 +619,23 @@ fun NavGraphBuilder.esdeSettingsScreen(
             onDismiss = {},
             onSetupComplete = {}
         )
+    }
+}
+
+fun NavGraphBuilder.transitionAnimationScreen(
+    navController: NavHostController
+) {
+    composable(Routes.TAB_TRANSITION_ANIMATIONS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            TransitionAnimationScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 

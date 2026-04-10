@@ -169,6 +169,7 @@ fun SettingsScreen(
     onNavigateToJingles: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
     onNavigateToRssSettings: () -> Unit = {},
+    onNavigateToTransitionAnimations: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -242,6 +243,7 @@ fun SettingsScreen(
                     onWhatsNewClick = { whatsNewDialogState.show(Unit) },
                     onNavigateToRomSearch = onNavigateToRomSearch,
                     onNavigateToRssSettings = onNavigateToRssSettings,
+                    onNavigateToTransitionAnimations = onNavigateToTransitionAnimations,
                     onCheckForUpdates = {
                         if (!isCheckingForUpdates) {
                             isCheckingForUpdates = true
@@ -398,6 +400,7 @@ private fun SettingsContent(
     onNavigateToJingles: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
     onNavigateToRssSettings: () -> Unit = {},
+    onNavigateToTransitionAnimations: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -542,7 +545,8 @@ private fun SettingsContent(
                             isThorDevice = isThorDevice,
                             allAppsUnfiltered = allAppsUnfiltered,
                             onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
-                            onNavigateToDockSettings = onNavigateToDockSettings
+                            onNavigateToDockSettings = onNavigateToDockSettings,
+                            onNavigateToTransitionAnimations = onNavigateToTransitionAnimations
                         )
                     }
                     if (sectionMatchesQuery(SECTION_MUSIC)) item(key = SECTION_MUSIC) {
@@ -645,7 +649,8 @@ private fun SettingsContent(
                                         isThorDevice = isThorDevice,
                                         allAppsUnfiltered = allAppsUnfiltered,
                                         onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
-                                        onNavigateToDockSettings = onNavigateToDockSettings
+                                        onNavigateToDockSettings = onNavigateToDockSettings,
+                                        onNavigateToTransitionAnimations = onNavigateToTransitionAnimations
                                     )
                                     SECTION_MUSIC -> MusicSection(
                                         isExpanded = true,
