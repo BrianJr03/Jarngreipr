@@ -181,6 +181,7 @@ class NowPlayingManager @Inject constructor(
 
     fun play(audioItems: List<RssItem>, startIndex: Int) {
         saveCurrentPosition()
+        _currentPosition.value = 0L
         currentQueue = audioItems
         val item = audioItems.getOrNull(startIndex)
         _currentItemId.value = item?.id
