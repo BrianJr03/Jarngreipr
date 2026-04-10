@@ -68,8 +68,11 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberTopFlingTrigger
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
@@ -88,6 +91,7 @@ fun AppsTab(
     pageIndex: Int = 0,
     totalPages: Int = 1,
     powerViewModel: PowerViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
@@ -176,6 +180,16 @@ fun AppsTab(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
     )
+
+    var showNotificationShade by remember { mutableStateOf(false) }
+    val topFlingTrigger = rememberTopFlingTrigger(
+        gridState = gridState,
+        onFlingAtTop = { if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true }
+    )
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
 
     LaunchedEffect(isScrolling, hasScrollableContent) {
         onScrollStateChanged(isScrolling, hasScrollableContent)
@@ -390,6 +404,7 @@ fun AppsTab(
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize().nestedScroll(topFlingTrigger)) {
     Box(
         modifier =
             Modifier
@@ -527,6 +542,21 @@ fun AppsTab(
         }
 
         }
+
+    NotificationShade(
+        visible = showNotificationShade,
+        nowPlaying = nowPlaying,
+        currentPosition = nowPlayingPosition,
+        duration = nowPlayingDuration,
+        volume = nowPlayingVolume,
+        onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+        onPrevious = { nowPlayingViewModel.skipToPrevious() },
+        onNext = { nowPlayingViewModel.skipToNext() },
+        onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+        onSeek = { nowPlayingViewModel.seekTo(it) },
+        onDismiss = { showNotificationShade = false }
+    )
+    }
 
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {
