@@ -398,6 +398,8 @@
     <string name="settings_layout_app_drawer_filter_by_page_description">Only show apps visible on the current tab when opening the app drawer.</string>
     <string name="settings_layout_notification_shade">Notification Shade</string>
     <string name="settings_layout_notification_shade_description">Pull down from the top of any tab to reveal the Now Playing shade.</string>
+    <string name="settings_layout_icon_snap">Icon Snapping</string>
+    <string name="settings_layout_icon_snap_description">Snap icons to align with other icons when dragging.</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>

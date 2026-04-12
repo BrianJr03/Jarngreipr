@@ -43,6 +43,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
@@ -78,7 +79,9 @@ fun FreePositionedAppsLayout(
     val customIconManager = LocalCustomIconManager.current
     val folderManager = LocalFolderManager.current
     val floatyModeManager = LocalFloatyModeManager.current
+    val gridSettingsManager = LocalGridSettingsManager.current
 
+    val snapEnabled = gridSettingsManager.iconSnapEnabled
     val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
     val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -178,6 +181,7 @@ fun FreePositionedAppsLayout(
                     customIconManager = customIconManager,
                     onOffsetChanged = { x, y ->
                         if (isFloaty) return@FolderItem
+
                         val dragResult = dragDropHandler.processDragForFolder(
                             dragX = x,
                             dragY = y,
@@ -187,7 +191,8 @@ fun FreePositionedAppsLayout(
                             apps = apps,
                             positions = positions,
                             folders = folders,
-                            draggingFolderId = folder.id
+                            draggingFolderId = folder.id,
+                            snapEnabled = snapEnabled
                         )
 
                         alignmentState = dragResult.alignmentState
@@ -292,7 +297,8 @@ fun FreePositionedAppsLayout(
                             apps = apps,
                             positions = positions,
                             folders = folders,
-                            excludePackageName = app.packageName
+                            excludePackageName = app.packageName,
+                            snapEnabled = snapEnabled
                         )
 
                         alignmentState = dragResult.alignmentState
