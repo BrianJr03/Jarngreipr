@@ -1,5 +1,18 @@
 **RSS Tab**
-- Playtimes on RSS Feeds are now saved. You can start, pause, and resume from the same point, even after reboot!
-- Filter RSS Feeds via Search
+- You can now see a Mixed feed
+- Various small fixes
 
-2.3.4
+**Notification Shade**
+- Want to swipe down from the screen for quick controls? Use Notification Shade
+  - Quickly see time and battery
+  - Quick controls for Now Playing RSS Feed
+  - Settings → Layout → Notification Shade
+
+**Tab Transition Animations**
+- Set Tab Transition Animations to change the look and feel!
+- Settings → Layout → Tab Transition Animation
+
+**Disable snapping in Free Position Mode
+- Settings →  Layout →  Icon Snapping
+
+2.3.5

@@ -127,6 +127,13 @@ fun LayoutSection(
             onCheckedChange = { gridSettingsManager.setNotificationShadeEnabled(it) }
         )
 
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_icon_snap),
+            description = stringResource(R.string.settings_layout_icon_snap_description),
+            checked = gridSettingsManager.iconSnapEnabled,
+            onCheckedChange = { gridSettingsManager.setIconSnapEnabled(it) }
+        )
+
         VisibilitySettingsItem()
 
         val appsTabs = pageTypes.mapIndexedNotNull { index, type ->

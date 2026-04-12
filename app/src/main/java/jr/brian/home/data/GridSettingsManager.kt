@@ -33,6 +33,10 @@ class GridSettingsManager(context: Context) {
     val tabTransitionAnimationName: String
         get() = _tabTransitionAnimationName
 
+    private var _iconSnapEnabled by mutableStateOf(loadIconSnapEnabled())
+    val iconSnapEnabled: Boolean
+        get() = _iconSnapEnabled
+
     fun setTotalAppsCount(count: Int) {
         _totalAppsCount = count
     }
@@ -62,6 +66,18 @@ class GridSettingsManager(context: Context) {
 
     private fun loadTabTransitionAnimationName(): String {
         return prefs.getString(KEY_TAB_TRANSITION_ANIMATION, "") ?: ""
+    }
+
+    private fun loadIconSnapEnabled(): Boolean {
+        return prefs.getBoolean(KEY_ICON_SNAP_ENABLED, true)
+    }
+
+    fun setIconSnapEnabled(enabled: Boolean) {
+        _iconSnapEnabled = enabled
+        prefs.edit().apply {
+            putBoolean(KEY_ICON_SNAP_ENABLED, enabled)
+            apply()
+        }
     }
 
     fun setTabTransitionAnimationName(name: String) {
@@ -159,6 +175,7 @@ class GridSettingsManager(context: Context) {
         private const val KEY_UNLIMITED_MODE = "unlimited_mode"
         private const val KEY_NOTIFICATION_SHADE_ENABLED = "notification_shade_enabled"
         private const val KEY_TAB_TRANSITION_ANIMATION = "tab_transition_animation"
+        private const val KEY_ICON_SNAP_ENABLED = "icon_snap_enabled"
         const val DEFAULT_COLUMN_COUNT = 4
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7

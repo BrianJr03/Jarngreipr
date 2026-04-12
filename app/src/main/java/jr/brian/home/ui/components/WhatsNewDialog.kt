@@ -479,11 +479,14 @@ private fun MarkdownHeader3(line: String) {
 
 @Composable
 private fun MarkdownBulletPoint(line: String) {
+    val leadingSpaces = line.length - line.trimStart().length
+    val indentLevel = leadingSpaces / 2
     Row(
         modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
+            .padding(start = (indentLevel * 16).dp)
     ) {
         Text(
-            text = "• ",
+            text = if (indentLevel > 0) "◦ " else "• ",
             style = MaterialTheme.typography.bodyLarge,
             color = ThemePrimaryColor
         )

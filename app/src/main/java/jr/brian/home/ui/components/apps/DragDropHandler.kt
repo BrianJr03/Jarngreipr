@@ -43,24 +43,29 @@ class DragDropHandler(
         apps: List<AppInfo>,
         positions: Map<String, AppPosition>,
         folders: List<Folder>,
-        excludePackageName: String
+        excludePackageName: String,
+        snapEnabled: Boolean = true
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
         // Calculate alignment guides
-        val alignment = calculateAlignmentGuides(
-            draggingIndex = draggingIndex,
-            dragX = dragX,
-            dragY = dragY,
-            iconSize = iconSize,
-            containerSize = containerSize,
-            snapThreshold = snapThreshold,
-            apps = apps,
-            positions = positions,
-            density = density,
-            borderPadding = borderPadding,
-            folders = folders
-        )
+        val alignment = if (snapEnabled) {
+            calculateAlignmentGuides(
+                draggingIndex = draggingIndex,
+                dragX = dragX,
+                dragY = dragY,
+                iconSize = iconSize,
+                containerSize = containerSize,
+                snapThreshold = snapThreshold,
+                apps = apps,
+                positions = positions,
+                density = density,
+                borderPadding = borderPadding,
+                folders = folders
+            )
+        } else {
+            AlignmentState()
+        }
 
         // Apply snapping
         val snappedX = alignment.snappedX ?: dragX
@@ -74,17 +79,21 @@ class DragDropHandler(
         val constrainedY = snappedY.coerceIn(borderPadding, maxY)
 
         // Check for collisions and adjust position
-        val allItems = getAllItemRects(apps, positions, folders, density)
-        val (finalX, finalY) = findNonOverlappingPosition(
-            targetX = constrainedX,
-            targetY = constrainedY,
-            targetSize = iconSizePx,
-            excludeId = excludePackageName,
-            allItems = allItems,
-            containerWidth = containerSize.width.toFloat(),
-            containerHeight = contentHeight,
-            borderPadding = borderPadding
-        )
+        val (finalX, finalY) = if (snapEnabled) {
+            val allItems = getAllItemRects(apps, positions, folders, density)
+            findNonOverlappingPosition(
+                targetX = constrainedX,
+                targetY = constrainedY,
+                targetSize = iconSizePx,
+                excludeId = excludePackageName,
+                allItems = allItems,
+                containerWidth = containerSize.width.toFloat(),
+                containerHeight = contentHeight,
+                borderPadding = borderPadding
+            )
+        } else {
+            constrainedX to constrainedY
+        }
 
         return DragResult(finalX, finalY, alignment)
     }
@@ -102,25 +111,30 @@ class DragDropHandler(
         apps: List<AppInfo>,
         positions: Map<String, AppPosition>,
         folders: List<Folder>,
-        draggingFolderId: String
+        draggingFolderId: String,
+        snapEnabled: Boolean = true
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
         // Calculate alignment guides
-        val alignment = calculateAlignmentGuides(
-            draggingIndex = -1,
-            dragX = dragX,
-            dragY = dragY,
-            iconSize = iconSize,
-            containerSize = containerSize,
-            snapThreshold = snapThreshold,
-            apps = apps,
-            positions = positions,
-            density = density,
-            borderPadding = borderPadding,
-            folders = folders,
-            draggingFolderId = draggingFolderId
-        )
+        val alignment = if (snapEnabled) {
+            calculateAlignmentGuides(
+                draggingIndex = -1,
+                dragX = dragX,
+                dragY = dragY,
+                iconSize = iconSize,
+                containerSize = containerSize,
+                snapThreshold = snapThreshold,
+                apps = apps,
+                positions = positions,
+                density = density,
+                borderPadding = borderPadding,
+                folders = folders,
+                draggingFolderId = draggingFolderId
+            )
+        } else {
+            AlignmentState()
+        }
 
         // Apply snapping
         val snappedX = alignment.snappedX ?: dragX
@@ -134,17 +148,21 @@ class DragDropHandler(
         val constrainedY = snappedY.coerceIn(borderPadding, maxY)
 
         // Check for collisions and adjust position
-        val allItems = getAllItemRects(apps, positions, folders, density)
-        val (finalX, finalY) = findNonOverlappingPosition(
-            targetX = constrainedX,
-            targetY = constrainedY,
-            targetSize = iconSizePx,
-            excludeId = draggingFolderId,
-            allItems = allItems,
-            containerWidth = containerSize.width.toFloat(),
-            containerHeight = contentHeight,
-            borderPadding = borderPadding
-        )
+        val (finalX, finalY) = if (snapEnabled) {
+            val allItems = getAllItemRects(apps, positions, folders, density)
+            findNonOverlappingPosition(
+                targetX = constrainedX,
+                targetY = constrainedY,
+                targetSize = iconSizePx,
+                excludeId = draggingFolderId,
+                allItems = allItems,
+                containerWidth = containerSize.width.toFloat(),
+                containerHeight = contentHeight,
+                borderPadding = borderPadding
+            )
+        } else {
+            constrainedX to constrainedY
+        }
 
         return DragResult(finalX, finalY, alignment)
     }
