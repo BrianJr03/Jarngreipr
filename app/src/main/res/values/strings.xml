@@ -1465,7 +1465,7 @@
     <string name="shade_wifi">Wi-Fi</string>
     <string name="shade_bluetooth">Bluetooth</string>
     <string name="shade_notifications">Notifications</string>
-    <string name="shade_nothing_playing">Nothing playing</string>
+    <string name="shade_nothing_playing">Nothing Playing</string>
     <string name="shade_previous_cd">Previous</string>
     <string name="shade_next_cd">Next</string>
     <string name="shade_play_cd">Play</string>
