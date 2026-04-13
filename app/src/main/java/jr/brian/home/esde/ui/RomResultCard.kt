@@ -100,7 +100,6 @@ internal fun RomResultCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onFocused: () -> Unit = {},
-    autoFocus: Boolean = false,
     focusRequester: FocusRequester = remember { FocusRequester() },
     onToggleKeyboard: () -> Unit = {},
     mediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
@@ -133,15 +132,6 @@ internal fun RomResultCard(
 
     val shouldFlip = flipEnabled && !flipDisabledForGame && !(isDiscPlatform  && mediaType == RomSearchCardMediaType.PhysicalMedia)
     val flipRotation = animatedFlip(isFocused = isFocusedDelayed && shouldFlip, durationMillis = 1200)
-
-    LaunchedEffect(autoFocus) {
-        if (autoFocus) {
-            try {
-                focusRequester.requestFocus()
-            } catch (_: Exception) {
-            }
-        }
-    }
 
     val shouldSpin = focusAnimationEnabled && !isFocusAnimationDisabled &&
             mediaType == RomSearchCardMediaType.PhysicalMedia && isDiscPlatform

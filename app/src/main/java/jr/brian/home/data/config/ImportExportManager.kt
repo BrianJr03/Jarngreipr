@@ -246,6 +246,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 folderUri = f.bgMusicManager.folderUri,
                 fileUri = f.bgMusicManager.singleFileUri,
                 volume = f.bgMusicManager.vol
+            ),
+            romSearch = RomSearchConfig(
+                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible
             )
         )
     }
@@ -455,6 +458,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             mode = runCatching { BgMusicManager.Mode.valueOf(bgMusic.mode) }.getOrElse { BgMusicManager.Mode.SINGLE_FILE },
             volume = bgMusic.volume
         )
+
+        f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
     }
 
     private fun applySystemConfig(config: SystemConfig) {
