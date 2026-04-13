@@ -2,6 +2,9 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -67,7 +70,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
-import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
@@ -107,7 +110,8 @@ fun AppsTab(
     onNavigateToTrackpad: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
-    onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
+    onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> },
+    dismissShadeSignal: Int = 0
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -185,6 +189,10 @@ fun AppsTab(
     )
 
     var showNotificationShade by remember { mutableStateOf(false) }
+    var showAllNotifications by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
+
     val topFlingTrigger = rememberTopFlingTrigger(
         gridState = gridState,
         onFlingAtTop = { if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true }
@@ -193,7 +201,7 @@ fun AppsTab(
     val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
     val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
     val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
-    val notificationCountManager = LocalNotificationCountManager.current
+    val notificationCountManager = LocalNotificationManager.current
     val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
 
     LaunchedEffect(isScrolling, hasScrollableContent) {
@@ -563,8 +571,24 @@ fun AppsTab(
         onSettingsClick = { showNotificationShade = false; onSettingsClick() },
         notifications = notifications,
         onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
-        onClearAllNotifications = { AppNotificationListenerService.cancelAll() }
+        onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
+        onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+        initialTabPage = notificationCountManager.shadeTabPage,
+        onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
     )
+
+    AnimatedVisibility(
+        visible = showAllNotifications,
+        enter = slideInVertically(tween(300)) { it } + fadeIn(tween(300)),
+        exit = slideOutVertically(tween(250)) { it } + fadeOut(tween(200))
+    ) {
+        AllNotificationsScreen(
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAll = { AppNotificationListenerService.cancelAll() },
+            onDismiss = { showAllNotifications = false }
+        )
+    }
     }
 
     dockAppSelectionDialogState.item?.let { position ->

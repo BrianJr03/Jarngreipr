@@ -180,7 +180,6 @@ class BgMusicManager @Inject constructor(
 
     fun startPlayback() {
         stopPlayback()
-        if (!requestAudioFocus()) return
         isIntendedToPlay = true
         when (mode) {
             Mode.FOLDER -> startFolderPlayback()
@@ -257,6 +256,7 @@ class BgMusicManager @Inject constructor(
 
         mediaPlayer = buildFolderPlayer(uri).also { player ->
             player.setOnPreparedListener { mp ->
+                if (!requestAudioFocus()) return@setOnPreparedListener
                 mp.start()
                 // Start pre-buffering the next track now that playback is live
                 prebufferNextFolderTrack()
@@ -335,6 +335,7 @@ class BgMusicManager @Inject constructor(
 
         mediaPlayer = buildSingleFilePlayer(uri).also { primary ->
             primary.setOnPreparedListener { mp ->
+                if (!requestAudioFocus()) return@setOnPreparedListener
                 // Build and prepare the looper before primary starts so it
                 // is ready to be chained immediately after prepare.
                 val looper = buildSingleFilePlayer(uri).also { next ->

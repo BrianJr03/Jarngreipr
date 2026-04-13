@@ -7,8 +7,9 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import dagger.hilt.android.AndroidEntryPoint
-import jr.brian.home.data.NotificationCountManager
+import jr.brian.home.data.NotificationManager
 import jr.brian.home.data.NotificationItem
+import jr.brian.home.data.NowPlayingManager
 import javax.inject.Inject
 
 /**
@@ -22,12 +23,16 @@ import javax.inject.Inject
 class AppNotificationListenerService : NotificationListenerService() {
     
     @Inject
-    lateinit var notificationCountManager: NotificationCountManager
+    lateinit var notificationManager: NotificationManager
+
+    @Inject
+    lateinit var nowPlayingManager: NowPlayingManager
 
     override fun onListenerConnected() {
         super.onListenerConnected()
         instance = this
         refreshAll()
+        nowPlayingManager.refreshSystemMedia()
     }
 
     override fun onListenerDisconnected() {
@@ -54,6 +59,8 @@ class AppNotificationListenerService : NotificationListenerService() {
             for (sbn in active) {
                 if (sbn.isOngoing) continue
                 if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) continue
+                if (sbn.notification.category == Notification.CATEGORY_TRANSPORT) continue
+                if (sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)) continue
 
                 val pkg = sbn.packageName
                 val appLabel = try {
@@ -77,7 +84,7 @@ class AppNotificationListenerService : NotificationListenerService() {
             }
 
             items.sortByDescending { it.postTime }
-            notificationCountManager.updateActiveNotifications(items)
+            notificationManager.updateActiveNotifications(items)
         } catch (_: Exception) {
             // Silently fail - notification access might not be granted
         }

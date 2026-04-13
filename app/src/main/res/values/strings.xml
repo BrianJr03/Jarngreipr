@@ -388,7 +388,22 @@
     <string name="settings_wallpaper_icon_description">Wallpaper icon</string>
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
     <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance_subtitle">Theme &amp; Icons</string>
     <string name="settings_section_layout">Layout</string>
+    <string name="settings_section_layout_subtitle">Grid &amp; Dock</string>
+    <string name="settings_section_music">Music</string>
+    <string name="settings_section_music_subtitle">Background Audio</string>
+    <string name="settings_section_rss">RSS</string>
+    <string name="settings_section_rss_subtitle">News Feeds</string>
+    <string name="settings_section_esde">ES-DE</string>
+    <string name="settings_section_esde_subtitle">Emulation Display</string>
+    <string name="settings_section_extras_subtitle">Extras! Extras!</string>
+    <string name="settings_section_system_subtitle">Updates &amp; Tools</string>
+    <string name="settings_section_support_subtitle">FAQs</string>
+    <string name="settings_no_results">No settings match \"%s\"</string>
+    <string name="settings_clear_search_cd">Clear search</string>
+    <string name="settings_show_keyboard_cd">Show keyboard</string>
+    <string name="settings_hide_keyboard_cd">Hide keyboard</string>
     <string name="settings_layout_scroll_title">Disable Scroll</string>
     <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
     <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
@@ -1437,7 +1452,7 @@
 
     <!-- RSS Tab -->
     <string name="rss_tab_title">RSS</string>
-    <string name="rss_tab_refresh_cd">Refresh all</string>
+    <string name="rss_tab_refresh_cd">Refresh</string>
     <string name="rss_tab_filter_cd">Filter feeds</string>
     <string name="rss_tab_all_feeds">All Feeds</string>
     <string name="rss_tab_settings_cd">Settings</string>
@@ -1450,9 +1465,10 @@
     <string name="rss_tab_no_articles">No articles yet</string>
     <string name="rss_tab_refresh_now">Refresh Now</string>
     <string name="rss_tab_mixed">Mixed</string>
+    <string name="rss_tab_history">History</string>
     <string name="rss_tab_now_playing">Now Playing</string>
     <string name="rss_tab_hide_search_cd">Hide search</string>
-    <string name="rss_tab_search_feeds_cd">Search feeds</string>
+    <string name="rss_tab_search_feeds_cd">Search</string>
     <string name="rss_tab_filtering_by">Filtering by: \"%1$s\"</string>
     <string name="rss_tab_clear_search_cd">Clear search</string>
     <string name="rss_tab_previous_cd">Previous</string>
@@ -1460,6 +1476,10 @@
     <string name="rss_tab_play_cd">Play</string>
     <string name="rss_tab_pause_cd">Pause</string>
     <string name="rss_tab_volume_cd">Volume</string>
+    <string name="volume_percentage">%d%%</string>
+    <string name="rss_tab_audio_only">Audio Only</string>
+    <string name="rss_tab_audio_only_cd">Toggle audio only</string>
+    <string name="rss_tab_options_cd">More options</string>
 
     <!-- Notification Shade -->
     <string name="shade_wifi">Wi-Fi</string>
@@ -1472,6 +1492,8 @@
     <string name="shade_pause_cd">Pause</string>
     <string name="shade_volume_cd">Volume</string>
     <string name="shade_dismiss_cd">Dismiss</string>
+    <string name="shade_all_notifications">All Notifications</string>
+    <string name="shade_no_notifications">No notifications</string>
 
     <string name="faq_section_rss">RSS / Now Playing</string>
     <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>

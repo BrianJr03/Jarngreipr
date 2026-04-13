@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens.rss
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -167,6 +168,38 @@ internal fun NowPlayingDialog(
                     }
                 }
 
+                AnimatedVisibility(visible = !info.isSystemMedia) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = stringResource(R.string.rss_tab_volume_cd),
+                            tint = ThemePrimaryColor.copy(alpha = 0.7f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Slider(
+                            value = volume,
+                            onValueChange = onVolumeChange,
+                            modifier = Modifier.weight(1f),
+                            colors = SliderDefaults.colors(
+                                thumbColor = ThemePrimaryColor,
+                                activeTrackColor = ThemePrimaryColor,
+                                inactiveTrackColor = ThemePrimaryColor.copy(alpha = 0.25f)
+                            )
+                        )
+                        Text(
+                            text = stringResource(R.string.volume_percentage,
+                                (volume * 100).toInt()),
+                            color = ThemePrimaryColor.copy(alpha = 0.7f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -226,29 +259,6 @@ internal fun NowPlayingDialog(
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.VolumeUp,
-                        contentDescription = stringResource(R.string.rss_tab_volume_cd),
-                        tint = ThemePrimaryColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Slider(
-                        value = volume,
-                        onValueChange = onVolumeChange,
-                        modifier = Modifier.weight(1f),
-                        colors = SliderDefaults.colors(
-                            thumbColor = ThemePrimaryColor,
-                            activeTrackColor = ThemePrimaryColor,
-                            inactiveTrackColor = ThemePrimaryColor.copy(alpha = 0.25f)
-                        )
-                    )
                 }
             }
         }
