@@ -203,6 +203,24 @@ class BgMusicManager @Inject constructor(
         nextMediaPlayer?.setVolume(ev, ev)
     }
 
+    fun restoreSettings(
+        folderUri: String?,
+        fileUri: String?,
+        mode: Mode,
+        volume: Float
+    ) {
+        this.folderUri = folderUri
+        this.singleFileUri = fileUri
+        this.mode = mode
+        this.vol = volume.coerceIn(0f, 1f)
+        prefs.edit {
+            if (folderUri != null) putString(KEY_FOLDER_URI, folderUri) else remove(KEY_FOLDER_URI)
+            if (fileUri != null) putString(KEY_SINGLE_FILE_URI, fileUri) else remove(KEY_SINGLE_FILE_URI)
+            putString(KEY_MODE, mode.name)
+            putFloat(KEY_VOLUME, this@BgMusicManager.vol)
+        }
+    }
+
     fun release() {
         runCatching { context.unregisterReceiver(screenReceiver) }
         stopPlayback()

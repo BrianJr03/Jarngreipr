@@ -833,6 +833,16 @@
     <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
     <string name="back_button_shortcut_volume_controls">@string/common_volume_controls</string>
 
+    <!-- Backup & Restore -->
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_description">Save your config to a JSON file</string>
+    <string name="settings_restore_title">Restore</string>
+    <string name="settings_restore_description">Load config from a JSON file</string>
+    <string name="settings_backup_success">Config backed up successfully</string>
+    <string name="settings_backup_error">Failed to back up config</string>
+    <string name="settings_restore_success">Config restored successfully</string>
+    <string name="settings_restore_error">Failed to restore: invalid or incompatible file</string>
+
     <!-- Notification Access -->
     <string name="settings_notification_badge_title">Notification Badges</string>
     <string name="settings_notification_badge_description">Show notification counts on app icons</string>

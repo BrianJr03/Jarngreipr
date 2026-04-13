@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.ESDESetupHelper
@@ -55,6 +57,7 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
+import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
@@ -72,6 +75,9 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var managers: ManagerContainer
+
+    @Inject
+    lateinit var importExportManager: ImportExportManager
 
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
@@ -112,6 +118,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
+                CompositionLocalProvider(
+                    LocalImportExportManager provides importExportManager
+                ) {
                     val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
@@ -202,6 +211,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     GameKonfettiOverlay(esdeViewModel = esdeViewModel)
+                }
                 }
             }
         }
