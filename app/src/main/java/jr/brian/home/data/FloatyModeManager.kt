@@ -131,6 +131,11 @@ class FloatyModeManager(context: Context) {
         prefs.edit { putBoolean(KEY_APP_DRAWER_BUBBLE_POP_ENABLED, enabled) }
     }
     
+    fun restoreEnabledTabs(tabs: Set<Int>) {
+        enabledTabs = tabs
+        saveEnabledTabs(tabs)
+    }
+
     /** Resets the easter egg state; user must tap version 7x again. */
     fun reset() {
         isFloatyModeActive = false
