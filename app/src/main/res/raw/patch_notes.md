@@ -13,7 +13,7 @@
 - Set Tab Transition Animations to change the look and feel!
 - Settings → Layout → Tab Transition Animation
 
-**Disable snapping in Free Position Mode
+**Disable snapping in Free Position Mode**
 - Settings → Layout → Icon Snapping
 
 **RSS Tab**
