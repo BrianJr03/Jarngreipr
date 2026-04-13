@@ -214,6 +214,12 @@ class DockManager(context: Context) {
         saveDockApps(currentDockApps)
     }
 
+    fun setDockApps(apps: List<String>) {
+        val clamped = apps.take(MAX_DOCK_APPS)
+        _dockApps.value = clamped
+        saveDockApps(clamped)
+    }
+
     private fun saveDockApps(apps: List<String>) {
         prefs.edit().apply {
             putInt(KEY_DOCK_SLOT_COUNT, apps.size)

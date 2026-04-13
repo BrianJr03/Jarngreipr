@@ -48,28 +48,24 @@ class DragDropHandler(
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
-        // Calculate alignment guides
-        val alignment = if (snapEnabled) {
-            calculateAlignmentGuides(
-                draggingIndex = draggingIndex,
-                dragX = dragX,
-                dragY = dragY,
-                iconSize = iconSize,
-                containerSize = containerSize,
-                snapThreshold = snapThreshold,
-                apps = apps,
-                positions = positions,
-                density = density,
-                borderPadding = borderPadding,
-                folders = folders
-            )
-        } else {
-            AlignmentState()
-        }
+        // Always calculate alignment guides for visual display
+        val alignment = calculateAlignmentGuides(
+            draggingIndex = draggingIndex,
+            dragX = dragX,
+            dragY = dragY,
+            iconSize = iconSize,
+            containerSize = containerSize,
+            snapThreshold = snapThreshold,
+            apps = apps,
+            positions = positions,
+            density = density,
+            borderPadding = borderPadding,
+            folders = folders
+        )
 
-        // Apply snapping
-        val snappedX = alignment.snappedX ?: dragX
-        val snappedY = alignment.snappedY ?: dragY
+        // Only apply snapping to position when snapEnabled
+        val snappedX = if (snapEnabled) alignment.snappedX ?: dragX else dragX
+        val snappedY = if (snapEnabled) alignment.snappedY ?: dragY else dragY
 
         // Apply container constraints
         val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
@@ -116,29 +112,25 @@ class DragDropHandler(
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
-        // Calculate alignment guides
-        val alignment = if (snapEnabled) {
-            calculateAlignmentGuides(
-                draggingIndex = -1,
-                dragX = dragX,
-                dragY = dragY,
-                iconSize = iconSize,
-                containerSize = containerSize,
-                snapThreshold = snapThreshold,
-                apps = apps,
-                positions = positions,
-                density = density,
-                borderPadding = borderPadding,
-                folders = folders,
-                draggingFolderId = draggingFolderId
-            )
-        } else {
-            AlignmentState()
-        }
+        // Always calculate alignment guides for visual display
+        val alignment = calculateAlignmentGuides(
+            draggingIndex = -1,
+            dragX = dragX,
+            dragY = dragY,
+            iconSize = iconSize,
+            containerSize = containerSize,
+            snapThreshold = snapThreshold,
+            apps = apps,
+            positions = positions,
+            density = density,
+            borderPadding = borderPadding,
+            folders = folders,
+            draggingFolderId = draggingFolderId
+        )
 
-        // Apply snapping
-        val snappedX = alignment.snappedX ?: dragX
-        val snappedY = alignment.snappedY ?: dragY
+        // Only apply snapping to position when snapEnabled
+        val snappedX = if (snapEnabled) alignment.snappedX ?: dragX else dragX
+        val snappedY = if (snapEnabled) alignment.snappedY ?: dragY else dragY
 
         // Apply container constraints
         val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding

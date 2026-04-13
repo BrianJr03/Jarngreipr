@@ -55,6 +55,7 @@ import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.PlatformImageFolderType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
@@ -155,6 +156,7 @@ class RomSearchResultsActivity : ComponentActivity() {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
+        romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -285,7 +287,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                                                 if (image != null && name != null) name to image.uri else null
                                             }
                                             .toMap()
-                                    jr.brian.home.esde.model.PlatformImageFolderType.Default ->
+                                    PlatformImageFolderType.Default ->
                                         rootDoc.listFiles()
                                             .filter { it.isFile }
                                             .mapNotNull { file ->
@@ -573,6 +575,11 @@ class RomSearchResultsActivity : ComponentActivity() {
                                 color = if (romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
                                 modifier = Modifier.fillMaxSize()
                             ) {
+                                LaunchedEffect(Unit) {
+                                    filteredGames.firstOrNull()?.let { game ->
+                                        viewModel.updateFocusedGame(game)
+                                    }
+                                }
                                 RomResultsGrid(
                                     games = filteredGames,
                                     isLoading = isLoading,
@@ -631,14 +638,15 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
                                     },
                                     onToggleHintAndKeyboard = {
-                                        romSearchStateHolder.hintAndKbVisible.value =
-                                            !romSearchStateHolder.hintAndKbVisible.value
+                                        val newVisible = !romSearchStateHolder.hintAndKbVisible.value
+                                        romSearchStateHolder.hintAndKbVisible.value = newVisible
+                                        esdePrefs.setRomSearchHintsKbVisible(newVisible)
                                     },
                                     onAndroidAppInfo = { game ->
                                         val pkg = game.path.trimEnd('/').removeSuffix(".app")
                                         val intent =
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                data = Uri.parse("package:$pkg")
+                                                data = "package:$pkg".toUri()
                                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                             }
                                         context.startActivity(intent)
