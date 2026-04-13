@@ -71,7 +71,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -542,7 +541,6 @@ private fun SettingsContent(
                         LayoutSection(
                             isExpanded = true,
                             onToggle = {},
-                            isThorDevice = isThorDevice,
                             allAppsUnfiltered = allAppsUnfiltered,
                             onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                             onNavigateToDockSettings = onNavigateToDockSettings,
@@ -646,7 +644,6 @@ private fun SettingsContent(
                                     SECTION_LAYOUT -> LayoutSection(
                                         isExpanded = true,
                                         onToggle = { expandedSection = null },
-                                        isThorDevice = isThorDevice,
                                         allAppsUnfiltered = allAppsUnfiltered,
                                         onNavigateToBackButtonShortcut = onNavigateToBackButtonShortcut,
                                         onNavigateToDockSettings = onNavigateToDockSettings,

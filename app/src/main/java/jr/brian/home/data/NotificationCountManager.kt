@@ -15,6 +15,15 @@ import javax.inject.Singleton
 private const val PREFS_NAME = "notification_badge_prefs"
 private const val KEY_BADGES_VISIBLE = "badges_visible"
 
+data class NotificationItem(
+    val key: String,
+    val packageName: String,
+    val appLabel: String,
+    val title: String?,
+    val text: String?,
+    val postTime: Long
+)
+
 /**
  * Manager class that tracks notification counts per app package.
  * Works in conjunction with AppNotificationListenerService to receive updates.
@@ -42,6 +51,9 @@ class NotificationCountManager @Inject constructor(
     
     private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()
+
+    private val _activeNotifications = MutableStateFlow<List<NotificationItem>>(emptyList())
+    val activeNotifications: StateFlow<List<NotificationItem>> = _activeNotifications.asStateFlow()
     
     /**
      * Get the notification count for a specific package.
@@ -70,6 +82,15 @@ class NotificationCountManager @Inject constructor(
      */
     fun updateAllCounts(counts: Map<String, Int>) {
         _notificationCounts.value = counts.filterValues { it > 0 }
+    }
+
+    /**
+     * Update the full list of active notifications (with content) and derive counts from them.
+     */
+    fun updateActiveNotifications(items: List<NotificationItem>) {
+        _activeNotifications.value = items
+        val counts = items.groupBy { it.packageName }.mapValues { it.value.size }
+        _notificationCounts.value = counts
     }
     
     /**
