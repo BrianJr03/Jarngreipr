@@ -14,7 +14,7 @@
 - Settings → Layout → Tab Transition Animation
 
 **Disable snapping in Free Position Mode
-- Settings →  Layout →  Icon Snapping
+- Settings → Layout → Icon Snapping
 
 **RSS Tab**
 - You can now see a Mixed feed
