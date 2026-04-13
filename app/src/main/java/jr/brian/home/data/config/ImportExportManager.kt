@@ -3,7 +3,6 @@ package jr.brian.home.data.config
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.util.UnstableApi
-import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
 import jr.brian.home.data.FabPosition
@@ -20,21 +19,16 @@ import jr.brian.home.ui.theme.managers.WallpaperType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-import android.content.Context
 
 @OptIn(UnstableApi::class)
 @Singleton
-class ImportExportManager @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val managers: ManagerContainer
-) {
+class ImportExportManager @Inject constructor(private val managers: ManagerContainer) {
     private val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = true
@@ -120,15 +114,20 @@ class ImportExportManager @Inject constructor(
         )
     }
 
-    private fun buildPositionsByPage(app: jr.brian.home.data.AppManagers, maxPages: Int): Map<String, PagePositionConfig> {
+    private fun buildPositionsByPage(
+        app: jr.brian.home.data.AppManagers,
+        maxPages: Int
+    ): Map<String, PagePositionConfig> {
         val result = mutableMapOf<String, PagePositionConfig>()
         for (page in 0 until maxPages) {
             val positions = app.appPositionManager.getPositions(page)
             val freeMode = app.appPositionManager.isFreeModeByPage.value[page] ?: false
             val dragLocked = app.appPositionManager.isDragLockedByPage.value[page] ?: true
             val scrollDisabled = app.appPositionManager.isScrollDisabledByPage.value[page] ?: false
-            val bottomFlingDisabled = app.appPositionManager.isBottomFlingDisabledByPage.value[page] ?: false
-            val hasNonDefaultState = positions.isNotEmpty() || freeMode || !dragLocked || scrollDisabled || bottomFlingDisabled
+            val bottomFlingDisabled =
+                app.appPositionManager.isBottomFlingDisabledByPage.value[page] ?: false
+            val hasNonDefaultState =
+                positions.isNotEmpty() || freeMode || !dragLocked || scrollDisabled || bottomFlingDisabled
             if (hasNonDefaultState) {
                 result[page.toString()] = PagePositionConfig(
                     freeMode = freeMode,
@@ -144,7 +143,10 @@ class ImportExportManager @Inject constructor(
         return result
     }
 
-    private suspend fun buildFoldersByKey(app: jr.brian.home.data.AppManagers, maxPages: Int): Map<String, List<FolderItemConfig>> {
+    private suspend fun buildFoldersByKey(
+        app: jr.brian.home.data.AppManagers,
+        maxPages: Int
+    ): Map<String, List<FolderItemConfig>> {
         val result = mutableMapOf<String, List<FolderItemConfig>>()
         val tabTypes = listOf(FolderManager.TAB_TYPE_APPS, FolderManager.TAB_TYPE_WIDGETS)
         for (page in 0 until maxPages) {
@@ -336,7 +338,15 @@ class ImportExportManager @Inject constructor(
             app.appPositionManager.setScrollDisabled(page, pageConfig.scrollDisabled)
             app.appPositionManager.setBottomFlingDisabled(page, pageConfig.bottomFlingDisabled)
             pageConfig.items.forEach { (pkg, item) ->
-                app.appPositionManager.savePosition(page, AppPosition(pkg, item.x, item.y, item.iconSize))
+                app.appPositionManager.savePosition(
+                    pageIndex = page,
+                    position = AppPosition(
+                        packageName = pkg,
+                        x = item.x,
+                        y = item.y,
+                        iconSize = item.iconSize
+                    )
+                )
             }
         }
 
@@ -379,7 +389,12 @@ class ImportExportManager @Inject constructor(
         }
         config.widgetPageApps.forEach { (pageStr, wpc) ->
             val p = pageStr.toIntOrNull() ?: return@forEach
-            wpc.visibleApps.forEach { pkg -> page.widgetPageAppManager.addVisibleApp(p, pkg) }
+            wpc.visibleApps.forEach { pkg ->
+                page.widgetPageAppManager.addVisibleApp(
+                    pageIndex = p,
+                    packageName = pkg
+                )
+            }
             if (wpc.appsFirst) page.widgetPageAppManager.toggleSectionOrder(p)
         }
     }
@@ -449,8 +464,6 @@ class ImportExportManager @Inject constructor(
         }
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
     }
-
-    // ── JSON / Stream helpers ────────────────────────────────────────────────
 
     fun encodeToJson(config: JarngreiprConfig): String =
         json.encodeToString(config)
