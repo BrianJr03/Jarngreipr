@@ -397,9 +397,12 @@
     <string name="settings_layout_app_drawer_filter_by_page">Filter App Drawer by Tab</string>
     <string name="settings_layout_app_drawer_filter_by_page_description">Only show apps visible on the current tab when opening the app drawer.</string>
     <string name="settings_layout_notification_shade">Notification Shade</string>
+    <string name="settings_layout_notification_tab_transition_animation">Tab Transition Animations</string>
     <string name="settings_layout_notification_shade_description">Pull down from the top of any tab to reveal the Now Playing shade.</string>
     <string name="settings_layout_icon_snap">Icon Snapping</string>
     <string name="settings_layout_icon_snap_description">Snap icons to align with other icons when dragging.</string>
+    <string name="settings_layout_bottom_fling_app_drawer">Bottom Swipe App Drawer</string>
+    <string name="settings_layout_bottom_fling_app_drawer_description">Swipe up from the bottom of a tab to open the app drawer.</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>
@@ -1457,6 +1460,18 @@
     <string name="rss_tab_play_cd">Play</string>
     <string name="rss_tab_pause_cd">Pause</string>
     <string name="rss_tab_volume_cd">Volume</string>
+
+    <!-- Notification Shade -->
+    <string name="shade_wifi">Wi-Fi</string>
+    <string name="shade_bluetooth">Bluetooth</string>
+    <string name="shade_notifications">Notifications</string>
+    <string name="shade_nothing_playing">Nothing playing</string>
+    <string name="shade_previous_cd">Previous</string>
+    <string name="shade_next_cd">Next</string>
+    <string name="shade_play_cd">Play</string>
+    <string name="shade_pause_cd">Pause</string>
+    <string name="shade_volume_cd">Volume</string>
+    <string name="shade_dismiss_cd">Dismiss</string>
 
     <string name="faq_section_rss">RSS / Now Playing</string>
     <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>

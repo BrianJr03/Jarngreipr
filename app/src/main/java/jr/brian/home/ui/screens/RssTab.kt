@@ -63,7 +63,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
+import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.screens.rss.EmptyRssState
 import jr.brian.home.ui.screens.rss.RssListKeys
@@ -167,6 +169,8 @@ fun RssTab(
     val nowPlayingPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
     val nowPlayingDuration by viewModel.duration.collectAsStateWithLifecycle()
     val gridSettingsManager = LocalGridSettingsManager.current
+    val notificationCountManager = LocalNotificationCountManager.current
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
     var showNowPlayingDialog by remember { mutableStateOf(false) }
     var showNotificationShade by remember { mutableStateOf(false) }
 
@@ -643,7 +647,11 @@ fun RssTab(
             onNext = { viewModel.skipToNext() },
             onVolumeChange = { viewModel.setVolume(it) },
             onSeek = { viewModel.seekTo(it) },
-            onDismiss = { showNotificationShade = false }
+            onDismiss = { showNotificationShade = false },
+            onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAllNotifications = { AppNotificationListenerService.cancelAll() }
         )
     }
 }

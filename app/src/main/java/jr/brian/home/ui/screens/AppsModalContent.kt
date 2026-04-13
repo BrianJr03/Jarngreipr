@@ -705,7 +705,7 @@ private fun ModalAppSelectionContent(
         isHeaderVisible = isHeaderVisible,
         contentPadding = PaddingValues(
             top = 10.dp,
-            bottom = 20.dp,
+            bottom = 16.dp,
         ),
         equalizeMargins = true,
         verticalSpacing = 24.dp

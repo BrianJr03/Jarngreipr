@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,7 +38,6 @@ import jr.brian.home.util.SettingsScreenUtil.EXPANDED_THOR
 fun LayoutSection(
     isExpanded: Boolean,
     onToggle: () -> Unit,
-    isThorDevice: Boolean,
     allAppsUnfiltered: List<AppInfo>,
     onNavigateToBackButtonShortcut: () -> Unit,
     onNavigateToDockSettings: () -> Unit = {},
@@ -95,22 +93,27 @@ fun LayoutSection(
             totalAppsCount = allAppsUnfiltered.size
         )
 
-        if (isThorDevice) {
-            ThorSettingsItem(
-                isExpanded = expandedItem == EXPANDED_THOR,
-                onExpandChanged = {
-                    expandedItem = if (it) EXPANDED_THOR else null
-                }
-            )
-        }
-
         ToggleSetting(
-            title = "Tab Transition Animations",
+            title = stringResource(R.string.settings_layout_notification_tab_transition_animation),
             description = "Current: $transitionAnimationLabel",
             checked = false,
             showToggle = false,
             onClick = { onNavigateToTransitionAnimations() },
             icon = Icons.Default.Animation
+        )
+
+        ThorSettingsItem(
+            isExpanded = expandedItem == EXPANDED_THOR,
+            onExpandChanged = {
+                expandedItem = if (it) EXPANDED_THOR else null
+            }
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_bottom_fling_app_drawer),
+            description = stringResource(R.string.settings_layout_bottom_fling_app_drawer_description),
+            checked = gridSettingsManager.bottomFlingAppDrawerEnabled,
+            onCheckedChange = { gridSettingsManager.setBottomFlingAppDrawerEnabled(it) }
         )
 
         ToggleSetting(
@@ -121,17 +124,17 @@ fun LayoutSection(
         )
 
         ToggleSetting(
-            title = stringResource(R.string.settings_layout_notification_shade),
-            description = stringResource(R.string.settings_layout_notification_shade_description),
-            checked = gridSettingsManager.notificationShadeEnabled,
-            onCheckedChange = { gridSettingsManager.setNotificationShadeEnabled(it) }
-        )
-
-        ToggleSetting(
             title = stringResource(R.string.settings_layout_icon_snap),
             description = stringResource(R.string.settings_layout_icon_snap_description),
             checked = gridSettingsManager.iconSnapEnabled,
             onCheckedChange = { gridSettingsManager.setIconSnapEnabled(it) }
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_notification_shade),
+            description = stringResource(R.string.settings_layout_notification_shade_description),
+            checked = gridSettingsManager.notificationShadeEnabled,
+            onCheckedChange = { gridSettingsManager.setNotificationShadeEnabled(it) }
         )
 
         VisibilitySettingsItem()
@@ -139,6 +142,7 @@ fun LayoutSection(
         val appsTabs = pageTypes.mapIndexedNotNull { index, type ->
             if (type == PageType.APPS_TAB) index else null
         }
+
         if (appsTabs.isNotEmpty()) {
             CollapsibleSection(title = stringResource(R.string.settings_layout_scroll_per_tab)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -148,7 +152,12 @@ fun LayoutSection(
                             title = "Tab ${tabNumber + 1}",
                             description = stringResource(R.string.settings_layout_scroll_description),
                             checked = isDisabled,
-                            onCheckedChange = { appPositionManager.setScrollDisabled(pageIndex, it) }
+                            onCheckedChange = {
+                                appPositionManager.setScrollDisabled(
+                                    pageIndex,
+                                    it
+                                )
+                            }
                         )
                     }
                 }
@@ -168,7 +177,12 @@ fun LayoutSection(
                             title = "Tab ${tabNumber + 1}",
                             description = stringResource(R.string.settings_layout_bottom_fling_description),
                             checked = isDisabled,
-                            onCheckedChange = { appPositionManager.setBottomFlingDisabled(pageIndex, it) }
+                            onCheckedChange = {
+                                appPositionManager.setBottomFlingDisabled(
+                                    pageIndex,
+                                    it
+                                )
+                            }
                         )
                     }
                 }

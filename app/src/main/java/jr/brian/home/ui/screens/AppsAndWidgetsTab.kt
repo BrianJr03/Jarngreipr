@@ -74,7 +74,9 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
+import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberTopFlingTrigger
@@ -181,7 +183,8 @@ fun AppsAndWidgetsTab(
     }
 
     val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
-    val isBottomFlingDisabled = bottomFlingDisabledByPage[pagerPageIndex] ?: false
+    val isBottomFlingDisabled = !(gridSettingsManager.bottomFlingAppDrawerEnabled) ||
+        (bottomFlingDisabledByPage[pagerPageIndex] ?: false)
 
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
@@ -197,6 +200,8 @@ fun AppsAndWidgetsTab(
     val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
     val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
     val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+    val notificationCountManager = LocalNotificationCountManager.current
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
 
     val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
@@ -361,7 +366,11 @@ fun AppsAndWidgetsTab(
         onNext = { nowPlayingViewModel.skipToNext() },
         onVolumeChange = { nowPlayingViewModel.setVolume(it) },
         onSeek = { nowPlayingViewModel.seekTo(it) },
-        onDismiss = { showNotificationShade = false }
+        onDismiss = { showNotificationShade = false },
+        onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+        notifications = notifications,
+        onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+        onClearAllNotifications = { AppNotificationListenerService.cancelAll() }
     )
     }
 

@@ -37,6 +37,10 @@ class GridSettingsManager(context: Context) {
     val iconSnapEnabled: Boolean
         get() = _iconSnapEnabled
 
+    private var _bottomFlingAppDrawerEnabled by mutableStateOf(loadBottomFlingAppDrawerEnabled())
+    val bottomFlingAppDrawerEnabled: Boolean
+        get() = _bottomFlingAppDrawerEnabled
+
     fun setTotalAppsCount(count: Int) {
         _totalAppsCount = count
     }
@@ -76,6 +80,18 @@ class GridSettingsManager(context: Context) {
         _iconSnapEnabled = enabled
         prefs.edit().apply {
             putBoolean(KEY_ICON_SNAP_ENABLED, enabled)
+            apply()
+        }
+    }
+
+    private fun loadBottomFlingAppDrawerEnabled(): Boolean {
+        return prefs.getBoolean(KEY_BOTTOM_FLING_APP_DRAWER_ENABLED, true)
+    }
+
+    fun setBottomFlingAppDrawerEnabled(enabled: Boolean) {
+        _bottomFlingAppDrawerEnabled = enabled
+        prefs.edit().apply {
+            putBoolean(KEY_BOTTOM_FLING_APP_DRAWER_ENABLED, enabled)
             apply()
         }
     }
@@ -176,6 +192,7 @@ class GridSettingsManager(context: Context) {
         private const val KEY_NOTIFICATION_SHADE_ENABLED = "notification_shade_enabled"
         private const val KEY_TAB_TRANSITION_ANIMATION = "tab_transition_animation"
         private const val KEY_ICON_SNAP_ENABLED = "icon_snap_enabled"
+        private const val KEY_BOTTOM_FLING_APP_DRAWER_ENABLED = "bottom_fling_app_drawer_enabled"
         const val DEFAULT_COLUMN_COUNT = 4
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7
