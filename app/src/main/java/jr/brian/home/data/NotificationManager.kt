@@ -2,6 +2,7 @@ package jr.brian.home.data
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
@@ -14,6 +15,7 @@ import javax.inject.Singleton
 
 private const val PREFS_NAME = "notification_badge_prefs"
 private const val KEY_BADGES_VISIBLE = "badges_visible"
+private const val KEY_SHADE_TAB_PAGE = "shade_tab_page"
 
 data class NotificationItem(
     val key: String,
@@ -32,10 +34,13 @@ data class NotificationItem(
  * via Hilt into both UI components and the NotificationListenerService.
  */
 @Singleton
-class NotificationCountManager @Inject constructor(
+class NotificationManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     var badgesVisible by mutableStateOf(loadBadgesVisible())
+        private set
+
+    var shadeTabPage by mutableIntStateOf(loadShadeTabPage())
         private set
 
     private fun loadBadgesVisible(): Boolean {
@@ -43,10 +48,21 @@ class NotificationCountManager @Inject constructor(
             .getBoolean(KEY_BADGES_VISIBLE, true)
     }
 
+    private fun loadShadeTabPage(): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_SHADE_TAB_PAGE, 0)
+    }
+
     fun toggleBadgesVisible() {
         badgesVisible = !badgesVisible
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit { putBoolean(KEY_BADGES_VISIBLE, badgesVisible) }
+    }
+
+    fun saveShadeTabPage(page: Int) {
+        shadeTabPage = page
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putInt(KEY_SHADE_TAB_PAGE, page) }
     }
     
     private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())

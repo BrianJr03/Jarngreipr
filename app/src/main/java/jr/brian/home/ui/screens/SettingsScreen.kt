@@ -581,7 +581,7 @@ private fun SettingsContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No settings match \"$searchQuery\"",
+                                text = stringResource(R.string.settings_no_results, searchQuery),
                                 color = Color.White.copy(alpha = 0.5f),
                                 fontSize = 14.sp
                             )
@@ -738,16 +738,41 @@ private fun SettingsSectionGrid(
     onSectionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sections = remember {
+    val appearanceTitle = stringResource(R.string.settings_section_appearance)
+    val appearanceSubtitle = stringResource(R.string.settings_section_appearance_subtitle)
+    val layoutTitle = stringResource(R.string.settings_section_layout)
+    val layoutSubtitle = stringResource(R.string.settings_section_layout_subtitle)
+    val musicTitle = stringResource(R.string.settings_section_music)
+    val musicSubtitle = stringResource(R.string.settings_section_music_subtitle)
+    val rssTitle = stringResource(R.string.settings_section_rss)
+    val rssSubtitle = stringResource(R.string.settings_section_rss_subtitle)
+    val esdeTitle = stringResource(R.string.settings_section_esde)
+    val esdeSubtitle = stringResource(R.string.settings_section_esde_subtitle)
+    val extrasTitle = stringResource(R.string.settings_section_extras)
+    val extrasSubtitle = stringResource(R.string.settings_section_extras_subtitle)
+    val systemTitle = stringResource(R.string.settings_section_system)
+    val systemSubtitle = stringResource(R.string.settings_section_system_subtitle)
+    val supportTitle = stringResource(R.string.settings_section_support)
+    val supportSubtitle = stringResource(R.string.settings_section_support_subtitle)
+    val sections = remember(
+        appearanceTitle, appearanceSubtitle,
+        layoutTitle, layoutSubtitle,
+        musicTitle, musicSubtitle,
+        rssTitle, rssSubtitle,
+        esdeTitle, esdeSubtitle,
+        extrasTitle, extrasSubtitle,
+        systemTitle, systemSubtitle,
+        supportTitle, supportSubtitle
+    ) {
         listOf(
-            SectionInfo(SECTION_APPEARANCE, "Appearance", "Theme & Icons", Icons.Default.Palette),
-            SectionInfo(SECTION_LAYOUT, "Layout", "Grid & Dock", Icons.Default.GridView),
-            SectionInfo(SECTION_MUSIC, "Music", "Background Audio", Icons.Default.MusicNote),
-            SectionInfo(SECTION_RSS, "RSS", "News Feeds", Icons.Default.RssFeed),
-            SectionInfo(SECTION_ESDE, "ES-DE", "Emulation Display", Icons.Default.SportsEsports),
-            SectionInfo(SECTION_EXTRAS, "Extras", "Extras! Extras!", Icons.Default.AutoAwesome),
-            SectionInfo(SECTION_SYSTEM, "System", "Updates & Tools", Icons.Default.Tune),
-            SectionInfo(SECTION_SUPPORT, "Support", "FAQ & Links", Icons.Default.Help),
+            SectionInfo(SECTION_APPEARANCE, appearanceTitle, appearanceSubtitle, Icons.Default.Palette),
+            SectionInfo(SECTION_LAYOUT, layoutTitle, layoutSubtitle, Icons.Default.GridView),
+            SectionInfo(SECTION_MUSIC, musicTitle, musicSubtitle, Icons.Default.MusicNote),
+            SectionInfo(SECTION_RSS, rssTitle, rssSubtitle, Icons.Default.RssFeed),
+            SectionInfo(SECTION_ESDE, esdeTitle, esdeSubtitle, Icons.Default.SportsEsports),
+            SectionInfo(SECTION_EXTRAS, extrasTitle, extrasSubtitle, Icons.Default.AutoAwesome),
+            SectionInfo(SECTION_SYSTEM, systemTitle, systemSubtitle, Icons.Default.Tune),
+            SectionInfo(SECTION_SUPPORT, supportTitle, supportSubtitle, Icons.Default.Help),
         )
     }
 
@@ -967,7 +992,7 @@ private fun SettingsSearchBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Clear,
-                    contentDescription = "Clear search",
+                    contentDescription = stringResource(R.string.settings_clear_search_cd),
                     tint = Color.White.copy(alpha = 0.6f),
                     modifier = Modifier.size(18.dp)
                 )
@@ -979,7 +1004,7 @@ private fun SettingsSearchBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Keyboard,
-                contentDescription = if (isKeyboardVisible) "Hide keyboard" else "Show keyboard",
+                contentDescription = stringResource(if (isKeyboardVisible) R.string.settings_hide_keyboard_cd else R.string.settings_show_keyboard_cd),
                 tint = if (isKeyboardVisible) ThemePrimaryColor else Color.White.copy(alpha = 0.7f),
                 modifier = Modifier.size(20.dp)
             )

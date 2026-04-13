@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.SettingItem
-import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.util.SettingsTag
 
 @Composable
@@ -91,7 +91,7 @@ fun SystemSection(
             tag = SettingsTag.EXPERIMENTAL
         )
 
-        val notificationCountManager = LocalNotificationCountManager.current
+        val notificationCountManager = LocalNotificationManager.current
         SettingItem(
             title = stringResource(id = R.string.settings_notification_badge_title),
             description = stringResource(id = R.string.settings_notification_badge_description),

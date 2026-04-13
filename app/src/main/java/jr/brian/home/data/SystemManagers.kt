@@ -15,17 +15,17 @@ import javax.inject.Singleton
 @Singleton
 data class SystemManagers @Inject constructor(
     /** Tracks notification counts per app (requires notification access) */
-    val notificationCountManager: NotificationCountManager,
-    
+    val notificationManager: NotificationManager,
+
     /** Integrates with Shizuku for privileged operations */
     val shizukuManager: ShizukuManager,
-    
+
     /** Checks for launcher updates */
     val appUpdateManager: AppUpdateManager,
-    
+
     /** Manages first-time user onboarding flow */
     val onboardingManager: OnboardingManager,
-    
+
     /** Tracks whether to show "What's New" dialog after updates */
     val whatsNewManager: WhatsNewManager,
 

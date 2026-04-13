@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 
 /**
  * A badge that shows the notification count for an app.
@@ -44,7 +44,7 @@ fun BoxScope.NotificationBadge(
     offsetX: Dp = 0.dp,
     offsetY: Dp = 0.dp
 ) {
-    val notificationCountManager = LocalNotificationCountManager.current
+    val notificationCountManager = LocalNotificationManager.current
     val notificationCounts by notificationCountManager.notificationCounts.collectAsStateWithLifecycle()
     val count = notificationCounts[packageName] ?: 0
 

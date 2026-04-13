@@ -72,6 +72,38 @@ class RssViewModel @Inject constructor(
         prefs.edit { putBoolean(KEY_IS_MIXED_MODE, mixed) }
     }
 
+    private val _isAudioOnly = MutableStateFlow(prefs.getBoolean(KEY_IS_AUDIO_ONLY, false))
+    val isAudioOnly = _isAudioOnly.asStateFlow()
+
+    fun setAudioOnly(audioOnly: Boolean) {
+        _isAudioOnly.value = audioOnly
+        prefs.edit { putBoolean(KEY_IS_AUDIO_ONLY, audioOnly) }
+    }
+
+    private val _isHistoryMode = MutableStateFlow(prefs.getBoolean(KEY_IS_HISTORY_MODE, false))
+    val isHistoryMode = _isHistoryMode.asStateFlow()
+
+    private val _historyItemIds = MutableStateFlow(loadHistoryItemIds())
+    val historyItemIds = _historyItemIds.asStateFlow()
+
+    fun setHistoryMode(enabled: Boolean) {
+        _isHistoryMode.value = enabled
+        prefs.edit { putBoolean(KEY_IS_HISTORY_MODE, enabled) }
+    }
+
+    fun recordItemClick(itemId: String) {
+        val updated = (_historyItemIds.value.toMutableList().also { it.remove(itemId) })
+            .apply { add(0, itemId) }
+            .take(HISTORY_MAX_SIZE)
+        _historyItemIds.value = updated
+        prefs.edit { putString(KEY_HISTORY_ITEM_IDS, updated.joinToString(",")) }
+    }
+
+    private fun loadHistoryItemIds(): List<String> {
+        val raw = prefs.getString(KEY_HISTORY_ITEM_IDS, "") ?: ""
+        return if (raw.isBlank()) emptyList() else raw.split(",").filter { it.isNotBlank() }
+    }
+
     init {
         observeFeeds()
         startAutoRefreshTicker()
@@ -206,5 +238,9 @@ class RssViewModel @Inject constructor(
         private const val KEY_USE_DMY_DATE_FORMAT = "use_dmy_date_format"
         private const val KEY_USE_24_HOUR_CLOCK = "use_24_hour_clock"
         private const val KEY_IS_MIXED_MODE = "is_mixed_mode"
+        private const val KEY_IS_AUDIO_ONLY = "is_audio_only"
+        private const val KEY_IS_HISTORY_MODE = "is_history_mode"
+        private const val KEY_HISTORY_ITEM_IDS = "history_item_ids"
+        private const val HISTORY_MAX_SIZE = 15
     }
 }
