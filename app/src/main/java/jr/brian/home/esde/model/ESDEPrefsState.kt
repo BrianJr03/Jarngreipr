@@ -244,7 +244,8 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesEnabled: Boolean = false,
     val romSearchPlatformImagesFolderUri: String? = null,
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
-    val romSearchDetailImageHeightDp: Int = 240
+    val romSearchDetailImageHeightDp: Int = 240,
+    val romSearchHintsKbVisible: Boolean = true
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

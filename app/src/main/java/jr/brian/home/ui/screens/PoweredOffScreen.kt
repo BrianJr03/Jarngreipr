@@ -339,6 +339,12 @@ fun PoweredOffScreen(
                                     inactiveTrackColor = uiColor.copy(alpha = 0.25f)
                                 )
                             )
+                            Text(
+                                text = stringResource(R.string.volume_percentage, (rssVolume * 100).toInt()),
+                                color = uiColor.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                         Spacer(modifier = Modifier.height(72.dp))
                     }

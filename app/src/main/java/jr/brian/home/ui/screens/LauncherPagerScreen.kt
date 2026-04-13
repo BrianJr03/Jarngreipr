@@ -128,6 +128,7 @@ fun LauncherPagerScreen(
 
     var resizePageIndex by remember { mutableIntStateOf(0) }
     var showResizeScreen by remember { mutableStateOf(false) }
+    var dismissShadeSignal by remember { mutableIntStateOf(0) }
     var showAppDrawerSheet by remember { mutableStateOf(false) }
     var isAppDrawerGameInProgress by remember { mutableStateOf(false) }
     var currentTabIsScrolling by remember { mutableStateOf(false) }
@@ -196,6 +197,7 @@ fun LauncherPagerScreen(
             .collect { page ->
                 hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onCurrentPageChanged(page)
+                dismissShadeSignal++
             }
     }
 
@@ -350,7 +352,8 @@ fun LauncherPagerScreen(
                                 onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                     currentTabIsScrolling = isScrolling
                                     currentTabHasScrollableContent = hasScrollableContent
-                                }
+                                },
+                                dismissShadeSignal = dismissShadeSignal
                             )
                         }
                     }
@@ -406,7 +409,8 @@ fun LauncherPagerScreen(
                                     onScrollStateChanged = { isScrolling, hasScrollableContent ->
                                         currentTabIsScrolling = isScrolling
                                         currentTabHasScrollableContent = hasScrollableContent
-                                    }
+                                    },
+                                    dismissShadeSignal = dismissShadeSignal
                                 )
                             }
                         }
@@ -414,7 +418,8 @@ fun LauncherPagerScreen(
 
                     PageType.RSS_TAB -> {
                         RssTab(
-                            onSettingsClick = onNavigateToRssSettings
+                            onSettingsClick = onNavigateToRssSettings,
+                            dismissShadeSignal = dismissShadeSignal
                         )
                     }
 

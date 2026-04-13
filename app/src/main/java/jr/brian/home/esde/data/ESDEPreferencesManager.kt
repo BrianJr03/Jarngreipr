@@ -121,6 +121,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -481,7 +482,8 @@ class ESDEPreferencesManager(context: Context) {
             romSearchPlatformImagesFolderType = prefs.getString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE, null)
                 ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
                 ?: PlatformImageFolderType.Default,
-            romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240)
+            romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
+            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true)
         )
     }
 
@@ -980,6 +982,11 @@ class ESDEPreferencesManager(context: Context) {
     fun setRomSearchDetailImageHeightDp(heightDp: Int) {
         _state.value = _state.value.copy(romSearchDetailImageHeightDp = heightDp)
         prefs.edit { putInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, heightDp) }
+    }
+
+    fun setRomSearchHintsKbVisible(visible: Boolean) {
+        _state.value = _state.value.copy(romSearchHintsKbVisible = visible)
+        prefs.edit { putBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, visible) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

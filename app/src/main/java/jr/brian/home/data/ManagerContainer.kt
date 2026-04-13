@@ -23,7 +23,7 @@ import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
-import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -117,7 +117,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalBgMusicManager provides feature.bgMusicManager,
         
         // System Integration
-        LocalNotificationCountManager provides system.notificationCountManager,
+        LocalNotificationManager provides system.notificationManager,
         LocalShizukuManager provides system.shizukuManager,
         LocalAppUpdateManager provides system.appUpdateManager,
         LocalOnboardingManager provides system.onboardingManager,

@@ -200,6 +200,42 @@ class AppVisibilityManager(context: Context) {
         }
     }
 
+    fun setHiddenApps(pageIndex: Int, apps: Set<String>) {
+        saveHiddenAppsForPage(pageIndex, apps)
+    }
+
+    fun updateShowAppNames(value: Boolean) {
+        showAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowHomeScreenAppNames(value: Boolean) {
+        showHomeScreenAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowFolderNames(value: Boolean) {
+        showFolderNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_FOLDER_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowSettingsBackButton(value: Boolean) {
+        showSettingsBackButton = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_SETTINGS_BACK_BUTTON, value)
+            apply()
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"

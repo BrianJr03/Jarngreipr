@@ -2,6 +2,7 @@ package jr.brian.home.data
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
@@ -14,6 +15,16 @@ import javax.inject.Singleton
 
 private const val PREFS_NAME = "notification_badge_prefs"
 private const val KEY_BADGES_VISIBLE = "badges_visible"
+private const val KEY_SHADE_TAB_PAGE = "shade_tab_page"
+
+data class NotificationItem(
+    val key: String,
+    val packageName: String,
+    val appLabel: String,
+    val title: String?,
+    val text: String?,
+    val postTime: Long
+)
 
 /**
  * Manager class that tracks notification counts per app package.
@@ -23,10 +34,13 @@ private const val KEY_BADGES_VISIBLE = "badges_visible"
  * via Hilt into both UI components and the NotificationListenerService.
  */
 @Singleton
-class NotificationCountManager @Inject constructor(
+class NotificationManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     var badgesVisible by mutableStateOf(loadBadgesVisible())
+        private set
+
+    var shadeTabPage by mutableIntStateOf(loadShadeTabPage())
         private set
 
     private fun loadBadgesVisible(): Boolean {
@@ -34,14 +48,28 @@ class NotificationCountManager @Inject constructor(
             .getBoolean(KEY_BADGES_VISIBLE, true)
     }
 
+    private fun loadShadeTabPage(): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_SHADE_TAB_PAGE, 0)
+    }
+
     fun toggleBadgesVisible() {
         badgesVisible = !badgesVisible
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit { putBoolean(KEY_BADGES_VISIBLE, badgesVisible) }
     }
+
+    fun saveShadeTabPage(page: Int) {
+        shadeTabPage = page
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putInt(KEY_SHADE_TAB_PAGE, page) }
+    }
     
     private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()
+
+    private val _activeNotifications = MutableStateFlow<List<NotificationItem>>(emptyList())
+    val activeNotifications: StateFlow<List<NotificationItem>> = _activeNotifications.asStateFlow()
     
     /**
      * Get the notification count for a specific package.
@@ -70,6 +98,15 @@ class NotificationCountManager @Inject constructor(
      */
     fun updateAllCounts(counts: Map<String, Int>) {
         _notificationCounts.value = counts.filterValues { it > 0 }
+    }
+
+    /**
+     * Update the full list of active notifications (with content) and derive counts from them.
+     */
+    fun updateActiveNotifications(items: List<NotificationItem>) {
+        _activeNotifications.value = items
+        val counts = items.groupBy { it.packageName }.mapValues { it.value.size }
+        _notificationCounts.value = counts
     }
     
     /**

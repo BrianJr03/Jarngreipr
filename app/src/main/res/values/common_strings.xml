@@ -22,6 +22,7 @@
     <string name="common_center">Center</string>
     <string name="common_select_folder">Select Folder</string>
     <string name="common_clear_all">Clear All</string>
+    <string name="common_see_all">See All</string>
 
     <!-- Common shortcut strings -->
     <string name="common_quick_delete">Quick Delete</string>
