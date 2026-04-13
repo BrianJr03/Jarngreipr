@@ -15,7 +15,6 @@ data class JarngreiprConfig(
 ) {
     companion object {
         const val CONFIG_VERSION = 1
-        const val FILE_NAME = "jarngreipr-config.json"
     }
 }
 
@@ -134,7 +133,8 @@ data class FeatureConfig(
     val gameKonfetti: GameKonfettiConfig = GameKonfettiConfig(),
     val floatyMode: FloatyModeConfig = FloatyModeConfig(),
     val jingles: JinglesConfig = JinglesConfig(),
-    val bgMusic: BgMusicConfig = BgMusicConfig()
+    val bgMusic: BgMusicConfig = BgMusicConfig(),
+    val romSearch: RomSearchConfig = RomSearchConfig()
 )
 
 @Serializable
@@ -195,6 +195,11 @@ data class BgMusicConfig(
     val folderUri: String? = null,
     val fileUri: String? = null,
     val volume: Float = 0.5f
+)
+
+@Serializable
+data class RomSearchConfig(
+    val hintsKbVisible: Boolean = true
 )
 
 @Serializable

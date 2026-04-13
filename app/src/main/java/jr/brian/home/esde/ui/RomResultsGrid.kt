@@ -192,6 +192,9 @@ internal fun RomResultsGrid(
 //            }
 
             else -> {
+                LaunchedEffect(Unit) {
+                    moveFocus(1)
+                }
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(NUM_COLS),
                     state = listState,
@@ -251,7 +254,6 @@ internal fun RomResultsGrid(
 
                         RomResultCard(
                             game = game,
-                            autoFocus = index == 0 && focusedIndex == 0,
                             focusRequester = focusRequester,
                             mediaType = getGameMediaType(game) ?: cardMediaType,
                             focusAnimationEnabled = focusAnimationEnabled,
