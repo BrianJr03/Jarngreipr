@@ -367,8 +367,7 @@ fun AppDrawerTab(
                     esdeSetupDialogState.show(SetupStep.Welcome)
                 },
                 onNavigateToSystemApps = onNavigateToSystemApps,
-                onNavigateToRomSearch = onNavigateToRomSearch,
-                onNavigateToTrackpad = onNavigateToTrackpad
+                onNavigateToRomSearch = onNavigateToRomSearch
             )
         }
 

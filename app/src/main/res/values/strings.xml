@@ -1046,7 +1046,7 @@
     <string name="wallpaper_saved_video">Saved Video</string>
     <string name="wallpaper_saved_video_description">Video used for quick wallpaper switching</string>
     <string name="wallpaper_not_set">Not set</string>
-    <string name="header_wallpaper_toggle">Toggle wallpaper</string>
+    <string name="header_wallpaper_toggle">Toggle Wallpaper</string>
     <string name="esde_settings_section_power">Power Events</string>
     <string name="esde_settings_power_events">Control Power on Game Events</string>
     <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string>

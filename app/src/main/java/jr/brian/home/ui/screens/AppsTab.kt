@@ -367,8 +367,7 @@ fun AppsTab(
                 esdeSetupDialogState.show(SetupStep.Welcome)
             },
             onNavigateToSystemApps = onNavigateToSystemApps,
-            onNavigateToRomSearch = onNavigateToRomSearch,
-            onNavigateToTrackpad = onNavigateToTrackpad
+            onNavigateToRomSearch = onNavigateToRomSearch
         )
     }
 
@@ -573,6 +572,13 @@ fun AppsTab(
         onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
         onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
         onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+        onPowerClick = { powerViewModel.togglePower() },
+        onTabsClick = { showNotificationShade = false; homeTabDialogState.show() },
+        onMenuClick = { showNotificationShade = false; appDrawerOptionsDialogState.show() },
+        onQuickDeleteClick = onShowBottomSheet,
+        onDockSettingsClick = { showNotificationShade = false; onNavigateToDockSettings() },
+        onNavigateToSystemApps = { showNotificationShade = false; onNavigateToSystemApps() },
+        onNavigateToRomSearch = { showNotificationShade = false; onNavigateToRomSearch() },
         initialTabPage = notificationCountManager.shadeTabPage,
         onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
     )

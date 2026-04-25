@@ -47,24 +47,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.data.NotificationItem
 import jr.brian.home.data.NowPlayingManager
+import jr.brian.home.ui.CompactDrawerOptionsContent
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.util.getSimpleBatteryInfo
 import java.text.SimpleDateFormat
@@ -90,8 +91,19 @@ fun NotificationShade(
     onDismiss: () -> Unit,
     onSettingsClick: () -> Unit = {},
     onDismissNotification: (String) -> Unit = {},
+    onNotificationClick: (NotificationItem) -> Unit = {},
     onClearAllNotifications: () -> Unit = {},
     onSeeAllNotifications: () -> Unit = {},
+    onPowerClick: () -> Unit = {},
+    onTabsClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {},
+    onQuickDeleteClick: () -> Unit = {},
+    onDockSettingsClick: () -> Unit = {},
+    onESDESetupClick: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onCreateFolderClick: (() -> Unit)? = null,
+    showDrawerOptionsPage: Boolean = true,
     initialTabPage: Int = 0,
     onTabPageChange: (Int) -> Unit = {}
 ) {
@@ -144,8 +156,19 @@ fun NotificationShade(
                 onSettingsClick = onSettingsClick,
                 notifications = notifications,
                 onDismissNotification = onDismissNotification,
+                onNotificationClick = onNotificationClick,
                 onClearAllNotifications = onClearAllNotifications,
                 onSeeAllNotifications = onSeeAllNotifications,
+                onPowerClick = onPowerClick,
+                onTabsClick = onTabsClick,
+                onMenuClick = onMenuClick,
+                onQuickDeleteClick = onQuickDeleteClick,
+                onDockSettingsClick = onDockSettingsClick,
+                onESDESetupClick = onESDESetupClick,
+                onNavigateToSystemApps = onNavigateToSystemApps,
+                onNavigateToRomSearch = onNavigateToRomSearch,
+                onCreateFolderClick = onCreateFolderClick,
+                showDrawerOptionsPage = showDrawerOptionsPage,
                 initialTabPage = initialTabPage,
                 onTabPageChange = onTabPageChange
             )
@@ -169,8 +192,19 @@ private fun ShadeCard(
     onSettingsClick: () -> Unit,
     notifications: List<NotificationItem>,
     onDismissNotification: (String) -> Unit,
+    onNotificationClick: (NotificationItem) -> Unit,
     onClearAllNotifications: () -> Unit,
     onSeeAllNotifications: () -> Unit,
+    onPowerClick: () -> Unit,
+    onTabsClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onQuickDeleteClick: () -> Unit,
+    onDockSettingsClick: () -> Unit,
+    onESDESetupClick: () -> Unit,
+    onNavigateToSystemApps: () -> Unit,
+    onNavigateToRomSearch: () -> Unit,
+    onCreateFolderClick: (() -> Unit)?,
+    showDrawerOptionsPage: Boolean,
     initialTabPage: Int,
     onTabPageChange: (Int) -> Unit
 ) {
@@ -182,6 +216,7 @@ private fun ShadeCard(
     var batteryPercentage by remember { mutableIntStateOf(0) }
     var isCharging by remember { mutableStateOf(false) }
     var currentTime by remember { mutableStateOf("") }
+
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -212,14 +247,16 @@ private fun ShadeCard(
         }
     }
 
-    val pagerState = rememberPagerState(initialPage = initialTabPage, pageCount = { 2 })
+    val pageCount = if (showDrawerOptionsPage) 3 else 2
+    val pagerState = rememberPagerState(initialPage = initialTabPage, pageCount = { pageCount })
 
     LaunchedEffect(pagerState.currentPage) {
         onTabPageChange(pagerState.currentPage)
     }
     var page0HeightPx by remember { mutableIntStateOf(0) }
     var page1HeightPx by remember { mutableIntStateOf(0) }
-    val pagerHeightDp = with(density) { maxOf(page0HeightPx, page1HeightPx).toDp() }
+    var page2HeightPx by remember { mutableIntStateOf(0) }
+    val pagerHeightDp = with(density) { maxOf(page0HeightPx, page1HeightPx, page2HeightPx).toDp() }
 
     LaunchedEffect(Unit) {
         val (pct, charging) = context.getSimpleBatteryInfo()
@@ -255,7 +292,7 @@ private fun ShadeCard(
                 onDismiss = onDismiss
             )
 
-            ShadePagerIndicator(currentPage = pagerState.currentPage)
+            ShadePagerIndicator(currentPage = pagerState.currentPage, pageCount = pageCount)
 
             HorizontalPager(
                 state = pagerState,
@@ -272,6 +309,7 @@ private fun ShadeCard(
                             when (page) {
                                 0 -> if (size.height > 0) page0HeightPx = size.height
                                 1 -> if (size.height > 0) page1HeightPx = size.height
+                                2 -> if (size.height > 0) page2HeightPx = size.height
                             }
                         }
                 ) {
@@ -279,6 +317,7 @@ private fun ShadeCard(
                         0 -> ActionsAndNotificationsPage(
                             notifications = notifications,
                             onDismissNotification = onDismissNotification,
+                            onNotificationClick = onNotificationClick,
                             onClearAllNotifications = onClearAllNotifications,
                             onSeeAllNotifications = onSeeAllNotifications,
                         )
@@ -293,6 +332,19 @@ private fun ShadeCard(
                             onNext = onNext,
                             onVolumeChange = onVolumeChange,
                             onSeek = onSeek
+                        )
+
+                        2 -> CompactDrawerOptionsContent(
+                            onDismiss = onDismiss,
+                            onPowerClick = onPowerClick,
+                            onTabsClick = onTabsClick,
+                            onMenuClick = onMenuClick,
+                            onQuickDeleteClick = onQuickDeleteClick,
+                            onCreateFolderClick = onCreateFolderClick,
+                            onDockSettingsClick = onDockSettingsClick,
+                            onESDESetupClick = onESDESetupClick,
+                            onNavigateToSystemApps = onNavigateToSystemApps,
+                            onNavigateToRomSearch = onNavigateToRomSearch
                         )
                     }
                 }
@@ -368,12 +420,12 @@ private fun ShadeHeader(
 }
 
 @Composable
-private fun ShadePagerIndicator(currentPage: Int) {
+private fun ShadePagerIndicator(currentPage: Int, pageCount: Int) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         modifier = Modifier.fillMaxWidth()
     ) {
-        repeat(2) { index ->
+        repeat(pageCount) { index ->
             Box(
                 modifier = Modifier
                     .size(

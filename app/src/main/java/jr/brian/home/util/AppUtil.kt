@@ -2,10 +2,21 @@ package jr.brian.home.util
 
 import android.app.ActivityOptions
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+
+fun Context.findActivity(): ComponentActivity {
+    var ctx = this
+    while (ctx is ContextWrapper) {
+        if (ctx is ComponentActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    error("No ComponentActivity found in context chain")
+}
 
 fun launchApp(
     context: Context,

@@ -23,7 +23,8 @@ data class NotificationItem(
     val appLabel: String,
     val title: String?,
     val text: String?,
-    val postTime: Long
+    val postTime: Long,
+    val contentIntent: android.app.PendingIntent? = null
 )
 
 /**

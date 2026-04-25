@@ -1,6 +1,5 @@
 package jr.brian.home.ui.components
 
-import androidx.activity.ComponentActivity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -82,6 +81,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalOledModeManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.util.findActivity
 import jr.brian.home.ui.theme.managers.WallpaperType
 
 @OptIn(UnstableApi::class)
@@ -122,7 +122,7 @@ fun QwertyKeyboard(
     )
 
     val jinglesManager = LocalJinglesManager.current
-    val esdeViewModel: ESDEViewModel = hiltViewModel(context as ComponentActivity)
+    val esdeViewModel: ESDEViewModel = hiltViewModel(context.findActivity())
     val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
 
     val qwertyRow1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')

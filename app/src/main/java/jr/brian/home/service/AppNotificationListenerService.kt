@@ -78,7 +78,8 @@ class AppNotificationListenerService : NotificationListenerService() {
                         appLabel = appLabel,
                         title = title,
                         text = text,
-                        postTime = sbn.postTime
+                        postTime = sbn.postTime,
+                        contentIntent = sbn.notification.contentIntent
                     )
                 )
             }

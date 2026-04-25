@@ -49,6 +49,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 internal fun ActionsAndNotificationsPage(
     notifications: List<NotificationItem>,
     onDismissNotification: (String) -> Unit,
+    onNotificationClick: (NotificationItem) -> Unit,
     onClearAllNotifications: () -> Unit,
     onSeeAllNotifications: () -> Unit
 ) {
@@ -62,6 +63,7 @@ internal fun ActionsAndNotificationsPage(
             ShadeNotificationsSection(
                 notifications = notifications,
                 onDismissNotification = onDismissNotification,
+                onNotificationClick = onNotificationClick,
                 onClearAllNotifications = onClearAllNotifications,
                 onSeeAllNotifications = onSeeAllNotifications
             )
@@ -125,6 +127,7 @@ private fun ShadeActionTilesRow() {
 private fun ShadeNotificationsSection(
     notifications: List<NotificationItem>,
     onDismissNotification: (String) -> Unit,
+    onNotificationClick: (NotificationItem) -> Unit,
     onClearAllNotifications: () -> Unit,
     onSeeAllNotifications: () -> Unit
 ) {
@@ -164,7 +167,8 @@ private fun ShadeNotificationsSection(
         previewNotifications.forEach { item ->
             NotificationRow(
                 item = item,
-                onDismiss = { onDismissNotification(item.key) }
+                onDismiss = { onDismissNotification(item.key) },
+                onClick = { onNotificationClick(item) }
             )
         }
     }
@@ -232,6 +236,7 @@ private fun ActionTile(
 internal fun NotificationRow(
     item: NotificationItem,
     onDismiss: () -> Unit,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -240,6 +245,13 @@ internal fun NotificationRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(Color.White.copy(alpha = 0.05f))
+            .then(
+                if (onClick != null) Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                ) else Modifier
+            )
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

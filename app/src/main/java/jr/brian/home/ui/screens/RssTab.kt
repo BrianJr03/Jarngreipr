@@ -475,6 +475,7 @@ fun RssTab(
             onSeek = { viewModel.seekTo(it) },
             onDismiss = { showNotificationShade = false },
             onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+            showDrawerOptionsPage = false,
             notifications = notifications,
             onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
             onClearAllNotifications = { AppNotificationListenerService.cancelAll() },

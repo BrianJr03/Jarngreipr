@@ -378,8 +378,20 @@ fun AppsAndWidgetsTab(
         onSettingsClick = { showNotificationShade = false; onSettingsClick() },
         notifications = notifications,
         onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+        onNotificationClick = { item ->
+            try { item.contentIntent?.send() } catch (_: Exception) {}
+            showNotificationShade = false
+        },
         onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
         onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+        onPowerClick = { powerViewModel.togglePower() },
+        onTabsClick = { showNotificationShade = false; homeTabDialogState.show() },
+        onMenuClick = { showNotificationShade = false; addOptionsDialogState.show() },
+        onQuickDeleteClick = onShowBottomSheet,
+        onDockSettingsClick = { showNotificationShade = false; onNavigateToDockSettings() },
+        onNavigateToSystemApps = { showNotificationShade = false; onNavigateToSystemApps() },
+        onNavigateToRomSearch = { showNotificationShade = false; onNavigateToRomSearch() },
+        onCreateFolderClick = null,
         initialTabPage = notificationCountManager.shadeTabPage,
         onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
     )
@@ -512,8 +524,7 @@ fun AppsAndWidgetsTab(
                 esdeSetupDialogState.show(SetupStep.Welcome)
             },
             onNavigateToSystemApps = onNavigateToSystemApps,
-            onNavigateToRomSearch = onNavigateToRomSearch,
-            onNavigateToTrackpad = onNavigateToTrackpad
+            onNavigateToRomSearch = onNavigateToRomSearch
         )
     }
 
