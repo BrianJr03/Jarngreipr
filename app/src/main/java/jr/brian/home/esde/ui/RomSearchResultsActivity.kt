@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.Settings
-import android.view.KeyEvent as AndroidKeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -19,13 +18,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,12 +47,20 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.spatial.Subspace
+import androidx.xr.compose.subspace.SpatialPanel
+import androidx.xr.compose.subspace.SpatialRow
+import androidx.xr.compose.subspace.layout.SubspaceModifier
+import androidx.xr.compose.subspace.layout.height
+import androidx.xr.compose.subspace.layout.width
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.R
 import jr.brian.home.data.ManagerCompositionLocalProvider
@@ -61,16 +73,17 @@ import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
-import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import android.view.KeyEvent as AndroidKeyEvent
 
 @AndroidEntryPoint
 class RomSearchResultsActivity : ComponentActivity() {
@@ -126,7 +139,11 @@ class RomSearchResultsActivity : ComponentActivity() {
 
         romLauncher.pendingGameLaunch?.let { (game, ctx) ->
             val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
-            romLauncher.launchGame(game, ctx, managers.ui.appDisplayPreferenceManager.getAppDisplayPreference(pkg))
+            romLauncher.launchGame(
+                game,
+                ctx,
+                managers.ui.appDisplayPreferenceManager.getAppDisplayPreference(pkg)
+            )
         }
         romLauncher.pendingGameLaunch = null
         pendingFolderChangeSystem = null
@@ -232,6 +249,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
                     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
                     val localAppDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+                    val focusedGame by romSearchStateHolder.focusedGame.collectAsStateWithLifecycle()
+                    val isSpatialEnabled = LocalSpatialCapabilities.current.isSpatialUiEnabled
 
                     LaunchedEffect(Unit) {
                         viewModel.dismissSignal.collect { dismiss() }
@@ -262,44 +281,63 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val platformImagesFolderType = esdeState.romSearchPlatformImagesFolderType
 
                     var platformImageMap by remember { mutableStateOf(emptyMap<String, Uri>()) }
-                    LaunchedEffect(platformImagesEnabled, platformImagesFolderUri, platformImagesFolderType) {
+                    LaunchedEffect(
+                        platformImagesEnabled,
+                        platformImagesFolderUri,
+                        platformImagesFolderType
+                    ) {
                         if (!platformImagesEnabled || platformImagesFolderUri == null) {
                             platformImageMap = emptyMap()
                             return@LaunchedEffect
                         }
-                        val map = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            runCatching {
-                                val treeUri = platformImagesFolderUri.toUri()
-                                val rootDoc = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, treeUri)
-                                    ?: return@runCatching emptyMap()
-                                when (platformImagesFolderType) {
-                                    jr.brian.home.esde.model.PlatformImageFolderType.Smart ->
-                                        rootDoc.listFiles()
-                                            .filter { it.isDirectory }
-                                            .mapNotNull { dir ->
-                                                val image = dir.listFiles().firstOrNull { file ->
-                                                    file.isFile && file.name?.let { n ->
-                                                        val ext = n.substringAfterLast(".", "").lowercase()
-                                                        ext in setOf("png", "jpg", "jpeg", "gif", "webp")
-                                                    } == true
+                        val map =
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                runCatching {
+                                    val treeUri = platformImagesFolderUri.toUri()
+                                    val rootDoc =
+                                        androidx.documentfile.provider.DocumentFile.fromTreeUri(
+                                            context,
+                                            treeUri
+                                        )
+                                            ?: return@runCatching emptyMap()
+                                    when (platformImagesFolderType) {
+                                        jr.brian.home.esde.model.PlatformImageFolderType.Smart ->
+                                            rootDoc.listFiles()
+                                                .filter { it.isDirectory }
+                                                .mapNotNull { dir ->
+                                                    val image =
+                                                        dir.listFiles().firstOrNull { file ->
+                                                            file.isFile && file.name?.let { n ->
+                                                                val ext =
+                                                                    n.substringAfterLast(".", "")
+                                                                        .lowercase()
+                                                                ext in setOf(
+                                                                    "png",
+                                                                    "jpg",
+                                                                    "jpeg",
+                                                                    "gif",
+                                                                    "webp"
+                                                                )
+                                                            } == true
+                                                        }
+                                                    val name = dir.name?.lowercase()
+                                                    if (image != null && name != null) name to image.uri else null
                                                 }
-                                                val name = dir.name?.lowercase()
-                                                if (image != null && name != null) name to image.uri else null
-                                            }
-                                            .toMap()
-                                    PlatformImageFolderType.Default ->
-                                        rootDoc.listFiles()
-                                            .filter { it.isFile }
-                                            .mapNotNull { file ->
-                                                val name = file.name
-                                                    ?.substringBeforeLast(".")
-                                                    ?.lowercase()
-                                                if (name != null) name to file.uri else null
-                                            }
-                                            .toMap()
-                                }
-                            }.getOrDefault(emptyMap())
-                        }
+                                                .toMap()
+
+                                        PlatformImageFolderType.Default ->
+                                            rootDoc.listFiles()
+                                                .filter { it.isFile }
+                                                .mapNotNull { file ->
+                                                    val name = file.name
+                                                        ?.substringBeforeLast(".")
+                                                        ?.lowercase()
+                                                    if (name != null) name to file.uri else null
+                                                }
+                                                .toMap()
+                                    }
+                                }.getOrDefault(emptyMap())
+                            }
                         platformImageMap = map
                     }
 
@@ -323,18 +361,19 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val allPlatforms = remember(allGames) {
                         allGames.map { it.systemName }.distinct().sorted()
                     }
-                    val platformSuggestions = remember(platformSearch, allPlatforms, allGames, hiddenGames) {
-                        platformSearch?.let { text ->
-                            val candidates = if (text.isBlank()) allPlatforms
-                            else allPlatforms.filter { it.contains(text, ignoreCase = true) }
-                            candidates.filter { platform ->
-                                allGames.any { game ->
-                                    game.systemName.equals(platform, ignoreCase = true) &&
-                                            hiddenGameKey(game) !in hiddenGames
+                    val platformSuggestions =
+                        remember(platformSearch, allPlatforms, allGames, hiddenGames) {
+                            platformSearch?.let { text ->
+                                val candidates = if (text.isBlank()) allPlatforms
+                                else allPlatforms.filter { it.contains(text, ignoreCase = true) }
+                                candidates.filter { platform ->
+                                    allGames.any { game ->
+                                        game.systemName.equals(platform, ignoreCase = true) &&
+                                                hiddenGameKey(game) !in hiddenGames
+                                    }
                                 }
-                            }
-                        } ?: emptyList()
-                    }
+                            } ?: emptyList()
+                        }
                     val selectedPlatform = remember(platformSearch, allPlatforms) {
                         allPlatforms.firstOrNull { it.equals(platformSearch, ignoreCase = true) }
                     }
@@ -501,201 +540,363 @@ class RomSearchResultsActivity : ComponentActivity() {
                         if (queryTrimmed.isNotBlank()) focusResetCounter++
                     }
 
-                    AnimatedVisibility(
-                        visible = isVisible,
-                        enter = fadeIn(tween(animDurationEnter)) +
-                                scaleIn(tween(animDurationEnter), initialScale = 0.92f),
-                        exit = fadeOut(tween(animDurationExit)) +
-                                scaleOut(tween(animDurationExit), targetScale = 0.92f)
-                    ) {
+                    LaunchedEffect(filteredGames) {
+                        filteredGames.firstOrNull()?.let { viewModel.updateFocusedGame(it) }
+                    }
+
+                    var xrActivePanelIndex by remember { mutableIntStateOf(1) }
+                    val xrDetailScrollState = rememberScrollState()
+                    val xrPlatformListState = rememberLazyListState()
+                    val xrPlatformItems = remember(allPlatforms, romSearchShowAllAndroidApps) {
+                        buildList<String?> {
+                            add(null)
+                            if (romSearchShowAllAndroidApps) add("android")
+                            addAll(allPlatforms)
+                        }
+                    }
+                    var xrPlatformNavIndex by remember { mutableIntStateOf(0) }
+
+                    LaunchedEffect(focusedGame?.path) {
+                        if (isSpatialEnabled) xrDetailScrollState.scrollTo(0)
+                    }
+                    LaunchedEffect(xrActivePanelIndex) {
+                        if (!isSpatialEnabled) return@LaunchedEffect
+                        if (xrActivePanelIndex == 2) {
+                            xrPlatformNavIndex = when {
+                                isAndroidMode -> if (romSearchShowAllAndroidApps) 1 else 0
+                                selectedPlatform != null -> xrPlatformItems.indexOfFirst {
+                                    it != null && it.equals(selectedPlatform, ignoreCase = true)
+                                }.coerceAtLeast(0)
+                                else -> 0
+                            }
+                        }
+                    }
+                    LaunchedEffect(xrPlatformNavIndex) {
+                        if (isSpatialEnabled) xrPlatformListState.animateScrollToItem(xrPlatformNavIndex.coerceAtLeast(0))
+                    }
+
+                    val gridContent: @Composable () -> Unit = {
+                        Surface(
+                            color = if (romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .then(if (isSpatialEnabled && xrActivePanelIndex == 1) Modifier.border(1.dp, ThemeAccentColor.copy(alpha = 0.35f)) else Modifier)
+                        ) {
+                            RomResultsGrid(
+                                games = filteredGames,
+                                isLoading = isLoading,
+                                focusResetKey = focusResetCounter,
+                                isHiddenMode = isHiddenMode,
+                                backgroundTransparent = romSearchUseWallpaper,
+                                cardMediaType = cardMediaType,
+                                focusAnimationEnabled = focusAnimationEnabled,
+                                focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
+                                isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
+                                onToggleGameDiscSpin = { game ->
+                                    val key = gameKey(game)
+                                    if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(
+                                        key
+                                    )
+                                    else esdePrefs.disableFocusAnimation(key)
+                                },
+                                getGameMediaType = { game ->
+                                    gameMediaMap[gameKey(game)]
+                                        ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                                },
+                                onSetGameMediaType = { game, type ->
+                                    if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
+                                    else esdePrefs.setGameMediaType(gameKey(game), type)
+                                },
+                                modifier = Modifier.fillMaxSize(),
+                                onLaunchGame = { game ->
+                                    romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                    val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                        ?: game.emulatorPackage ?: game.path
+                                    romLauncher.launchGame(
+                                        game,
+                                        context,
+                                        localAppDisplayPreferenceManager.getAppDisplayPreference(pkg)
+                                    )
+                                },
+                                onSaveEmulator = { game, pkg, cmd ->
+                                    esdePrefs.setGameEmulator(gameKey(game), pkg)
+                                    cmd?.let { esdePrefs.setGameLaunchCommand(gameKey(game), it) }
+                                },
+                                hasSavedEmulator = { game ->
+                                    esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
+                                            esdePrefs.getGameEmulator(gameKey(game)) != null
+                                },
+                                onGameFocused = { game ->
+                                    viewModel.updateFocusedGame(game)
+                                    game?.let {
+                                        managers.feature.jinglesManager.onGameSelected(
+                                            File(it.path).name
+                                        )
+                                    }
+                                },
+                                onHideGame = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
+                                onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
+                                onUnhideAllGames = { games ->
+                                    esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
+                                },
+                                onToggleHintAndKeyboard = {
+                                    val newVisible = !romSearchStateHolder.hintAndKbVisible.value
+                                    romSearchStateHolder.hintAndKbVisible.value = newVisible
+                                    esdePrefs.setRomSearchHintsKbVisible(newVisible)
+                                },
+                                onAndroidAppInfo = { game ->
+                                    val pkg = game.path.trimEnd('/').removeSuffix(".app")
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = "package:$pkg".toUri()
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                    context.startActivity(intent)
+                                },
+                                isRetroArchGame = { game ->
+                                    val saved = esdePrefs.getGameEmulator(gameKey(game))
+                                    (saved
+                                        ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
+                                },
+                                hasSavedCore = { game ->
+                                    esdePrefs.getGameCore(gameKey(game)) != null
+                                },
+                                onCoreSelected = { game, _, corePath ->
+                                    esdePrefs.setGameCore(gameKey(game), corePath)
+                                    val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                        ?: game.emulatorPackage ?: game.path
+                                    romLauncher.launchGame(
+                                        game,
+                                        context,
+                                        localAppDisplayPreferenceManager.getAppDisplayPreference(pkg)
+                                    )
+                                },
+                                onChangeFolder = { game ->
+                                    pendingFolderChangeSystem = game.systemName
+                                    val romPath =
+                                        resolveRomPath(game, esdePrefs.state.value.romsPaths)
+                                    val hint = romPath?.let {
+                                        val dir = File(it).parent ?: "/storage/emulated/0"
+                                        "content://com.android.externalstorage.documents/document/${
+                                            Uri.encode("primary:${dir.removePrefix("/storage/emulated/0/")}")
+                                        }".toUri()
+                                    }
+                                    safTreeLauncher.launch(hint)
+                                },
+                            )
+                        }
+                    }
+
+                    if (isSpatialEnabled) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .onPreviewKeyEvent { keyEvent ->
-                                    // When navigating the dropdown, a DPAD press returns focus to the grid
-                                    // without consuming — let the grid handle the actual movement.
                                     if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                    val isDpad = keyEvent.nativeKeyEvent.keyCode in listOf(
-                                        AndroidKeyEvent.KEYCODE_DPAD_UP,
-                                        AndroidKeyEvent.KEYCODE_DPAD_DOWN,
-                                        AndroidKeyEvent.KEYCODE_DPAD_LEFT,
-                                        AndroidKeyEvent.KEYCODE_DPAD_RIGHT
-                                    )
-                                    if (isDpad && dropdownFocusedIndex >= 0) {
-                                        dropdownFocusedIndex = -1
-                                        false // don't consume — grid handles the move
-                                    } else false
-                                }
-                                .onKeyEvent { keyEvent ->
-                                    if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
-                                    val isShoulderOrTrigger =
-                                        keyEvent.nativeKeyEvent.keyCode in listOf(
-                                            AndroidKeyEvent.KEYCODE_BUTTON_L1,
-                                            AndroidKeyEvent.KEYCODE_BUTTON_L2,
-                                            AndroidKeyEvent.KEYCODE_BUTTON_R1,
-                                            AndroidKeyEvent.KEYCODE_BUTTON_R2
-                                        )
-                                    // Shoulder/trigger always opens the platform dropdown,
-                                    // overwriting whatever is in the text field.
-                                    if (isShoulderOrTrigger && !dropdownVisible) {
-                                        viewModel.updateQuery("@")
-                                        return@onKeyEvent true
-                                    }
-                                    if (!dropdownVisible) return@onKeyEvent false
-                                    val maxIdx = dropdownItems.lastIndex
-                                    when (keyEvent.nativeKeyEvent.keyCode) {
-                                        AndroidKeyEvent.KEYCODE_BUTTON_L1,
-                                        AndroidKeyEvent.KEYCODE_BUTTON_L2 -> {
-                                            dropdownFocusedIndex = if (dropdownFocusedIndex < 0) 0
-                                            else (dropdownFocusedIndex - 1).coerceAtLeast(0)
+                                    val kc = keyEvent.nativeKeyEvent.keyCode
+                                    when {
+                                        kc == AndroidKeyEvent.KEYCODE_BUTTON_L1 ||
+                                        kc == AndroidKeyEvent.KEYCODE_BUTTON_L2 -> {
+                                            xrActivePanelIndex = (xrActivePanelIndex - 1).coerceAtLeast(0)
                                             true
                                         }
-
-                                        AndroidKeyEvent.KEYCODE_BUTTON_R1,
-                                        AndroidKeyEvent.KEYCODE_BUTTON_R2 -> {
-                                            dropdownFocusedIndex = if (dropdownFocusedIndex < 0) 0
-                                            else (dropdownFocusedIndex + 1).coerceAtMost(maxIdx)
+                                        kc == AndroidKeyEvent.KEYCODE_BUTTON_R1 ||
+                                        kc == AndroidKeyEvent.KEYCODE_BUTTON_R2 -> {
+                                            xrActivePanelIndex = (xrActivePanelIndex + 1).coerceAtMost(2)
                                             true
                                         }
-
-                                        AndroidKeyEvent.KEYCODE_BUTTON_A -> {
-                                            val idx = dropdownFocusedIndex
-                                            if (idx in dropdownItems.indices) {
-                                                viewModel.updateQuery("@${dropdownItems[idx]} ")
-                                                dropdownFocusedIndex = -1
-                                                true
-                                            } else false
+                                        xrActivePanelIndex == 0 && kc == AndroidKeyEvent.KEYCODE_DPAD_UP -> {
+                                            scope.launch { xrDetailScrollState.animateScrollBy(-200f) }
+                                            true
                                         }
-
+                                        xrActivePanelIndex == 0 && kc == AndroidKeyEvent.KEYCODE_DPAD_DOWN -> {
+                                            scope.launch { xrDetailScrollState.animateScrollBy(200f) }
+                                            true
+                                        }
+                                        xrActivePanelIndex == 2 && kc == AndroidKeyEvent.KEYCODE_DPAD_UP -> {
+                                            xrPlatformNavIndex = (xrPlatformNavIndex - 1).coerceAtLeast(0)
+                                            true
+                                        }
+                                        xrActivePanelIndex == 2 && kc == AndroidKeyEvent.KEYCODE_DPAD_DOWN -> {
+                                            xrPlatformNavIndex = (xrPlatformNavIndex + 1).coerceAtMost(xrPlatformItems.lastIndex)
+                                            true
+                                        }
+                                        xrActivePanelIndex == 2 && (kc == AndroidKeyEvent.KEYCODE_BUTTON_A || kc == AndroidKeyEvent.KEYCODE_DPAD_CENTER) -> {
+                                            val item = xrPlatformItems.getOrNull(xrPlatformNavIndex)
+                                            viewModel.updateQuery(if (item == null) "" else "@$item ")
+                                            true
+                                        }
                                         else -> false
                                     }
                                 }
                         ) {
-                            Surface(
-                                color = if (romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                LaunchedEffect(Unit) {
-                                    filteredGames.firstOrNull()?.let { game ->
-                                        viewModel.updateFocusedGame(game)
+                            Subspace {
+                                SpatialRow {
+                                    SpatialPanel(SubspaceModifier.width(420.dp).height(720.dp)) {
+                                        XrFocusedGamePanel(
+                                            game = focusedGame,
+                                            currentMediaType = focusedGame?.let { g ->
+                                                gameMediaMap[gameKey(g)]?.let {
+                                                    runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull()
+                                                }
+                                            },
+                                            globalMediaType = cardMediaType,
+                                            isXrActive = xrActivePanelIndex == 0,
+                                            scrollState = xrDetailScrollState,
+                                            onLaunchGame = { game ->
+                                                romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                                val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                                    ?: game.emulatorPackage ?: game.path
+                                                romLauncher.launchGame(
+                                                    game,
+                                                    context,
+                                                    localAppDisplayPreferenceManager.getAppDisplayPreference(pkg)
+                                                )
+                                            },
+                                            onSaveEmulator = { game, pkg, cmd ->
+                                                esdePrefs.setGameEmulator(gameKey(game), pkg)
+                                                cmd?.let { esdePrefs.setGameLaunchCommand(gameKey(game), it) }
+                                            },
+                                            onCoreSelected = { game, _, corePath ->
+                                                esdePrefs.setGameCore(gameKey(game), corePath)
+                                                val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                                    ?: game.emulatorPackage ?: game.path
+                                                romLauncher.launchGame(
+                                                    game,
+                                                    context,
+                                                    localAppDisplayPreferenceManager.getAppDisplayPreference(pkg)
+                                                )
+                                            },
+                                            onHide = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
+                                            isRetroArchGame = { game ->
+                                                val saved = esdePrefs.getGameEmulator(gameKey(game))
+                                                (saved ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
+                                            },
+                                            hasSavedCore = { game ->
+                                                esdePrefs.getGameCore(gameKey(game)) != null
+                                            },
+                                            hasSavedEmulator = { game ->
+                                                esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
+                                                        esdePrefs.getGameEmulator(gameKey(game)) != null
+                                            }
+                                        )
+                                    }
+                                    SpatialPanel(SubspaceModifier.width(840.dp).height(720.dp)) {
+                                        gridContent()
+                                    }
+                                    SpatialPanel(SubspaceModifier.width(300.dp).height(720.dp)) {
+                                        XrPlatformListPanel(
+                                            platforms = allPlatforms,
+                                            showAndroidApps = romSearchShowAllAndroidApps,
+                                            selectedPlatform = selectedPlatform,
+                                            isAndroidMode = isAndroidMode,
+                                            isXrActive = xrActivePanelIndex == 2,
+                                            xrFocusedIndex = xrPlatformNavIndex,
+                                            listState = xrPlatformListState,
+                                            onPlatformSelected = { platform ->
+                                                if (platform == null) viewModel.updateQuery("")
+                                                else viewModel.updateQuery("@$platform ")
+                                            }
+                                        )
                                     }
                                 }
-                                RomResultsGrid(
-                                    games = filteredGames,
-                                    isLoading = isLoading,
-                                    focusResetKey = focusResetCounter,
-                                    isHiddenMode = isHiddenMode,
-                                    backgroundTransparent = romSearchUseWallpaper,
-                                    cardMediaType = cardMediaType,
-                                    focusAnimationEnabled = focusAnimationEnabled,
-                                    focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
-                                    isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
-                                    onToggleGameDiscSpin = { game ->
-                                        val key = gameKey(game)
-                                        if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(
-                                            key
-                                        )
-                                        else esdePrefs.disableFocusAnimation(key)
-                                    },
-                                    getGameMediaType = { game ->
-                                        gameMediaMap[gameKey(game)]
-                                            ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
-                                    },
-                                    onSetGameMediaType = { game, type ->
-                                        if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
-                                        else esdePrefs.setGameMediaType(gameKey(game), type)
-                                    },
-                                    modifier = Modifier.fillMaxSize(),
-                                    onLaunchGame = { game ->
-                                        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
-                                        val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
-                                        romLauncher.launchGame(game, context, localAppDisplayPreferenceManager.getAppDisplayPreference(pkg))
-                                    },
-                                    onSaveEmulator = { game, pkg, cmd ->
-                                        esdePrefs.setGameEmulator(gameKey(game), pkg)
-                                        cmd?.let {
-                                            esdePrefs.setGameLaunchCommand(
-                                                gameKey(game),
-                                                it
-                                            )
-                                        }
-                                    },
-                                    hasSavedEmulator = { game ->
-                                        esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
-                                                esdePrefs.getGameEmulator(gameKey(game)) != null
-                                    },
-                                    onGameFocused = { game ->
-                                        viewModel.updateFocusedGame(game)
-                                        game?.let {
-                                            managers.feature.jinglesManager.onGameSelected(
-                                                File(it.path).name
-                                            )
-                                        }
-                                    },
-                                    onHideGame = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
-                                    onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
-                                    onUnhideAllGames = { games ->
-                                        esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
-                                    },
-                                    onToggleHintAndKeyboard = {
-                                        val newVisible = !romSearchStateHolder.hintAndKbVisible.value
-                                        romSearchStateHolder.hintAndKbVisible.value = newVisible
-                                        esdePrefs.setRomSearchHintsKbVisible(newVisible)
-                                    },
-                                    onAndroidAppInfo = { game ->
-                                        val pkg = game.path.trimEnd('/').removeSuffix(".app")
-                                        val intent =
-                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                data = "package:$pkg".toUri()
-                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            }
-                                        context.startActivity(intent)
-                                    },
-                                    isRetroArchGame = { game ->
-                                        val saved = esdePrefs.getGameEmulator(gameKey(game))
-                                        (saved
-                                            ?: game.emulatorPackage)?.startsWith("com.retroarch") == true
-                                    },
-                                    hasSavedCore = { game ->
-                                        esdePrefs.getGameCore(gameKey(game)) != null
-                                    },
-                                    onCoreSelected = { game, _, corePath ->
-                                        esdePrefs.setGameCore(gameKey(game), corePath)
-                                        val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
-                                        romLauncher.launchGame(game, context, localAppDisplayPreferenceManager.getAppDisplayPreference(pkg))
-                                    },
-                                    onChangeFolder = { game ->
-                                        pendingFolderChangeSystem = game.systemName
-                                        val romPath =
-                                            resolveRomPath(game, esdePrefs.state.value.romsPaths)
-                                        val hint = romPath?.let {
-                                            val dir = File(it).parent ?: "/storage/emulated/0"
-                                            "content://com.android.externalstorage.documents/document/${
-                                                Uri.encode("primary:${dir.removePrefix("/storage/emulated/0/")}")
-                                            }".toUri()
-                                        }
-                                        safTreeLauncher.launch(hint)
-                                    },
-                                )
                             }
-
-                            if (dropdownVisible) {
-                                PlatformSuggestionsDropdown(
-                                    platforms = platformSuggestions,
-                                    showAllApps = romSearchShowAllAndroidApps,
-                                    focusedIndex = dropdownFocusedIndex,
-                                    autoFilter = esdeState.romSearchPlatformAutoFilter,
-                                    onPlatformSelected = { platform ->
-                                        viewModel.updateQuery("@$platform ")
-                                        if (!esdeState.romSearchPlatformAutoFilter) {
+                        }
+                    } else {
+                        AnimatedVisibility(
+                            visible = isVisible,
+                            enter = fadeIn(tween(animDurationEnter)) +
+                                    scaleIn(tween(animDurationEnter), initialScale = 0.92f),
+                            exit = fadeOut(tween(animDurationExit)) +
+                                    scaleOut(tween(animDurationExit), targetScale = 0.92f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .onPreviewKeyEvent { keyEvent ->
+                                        // When navigating the dropdown, a DPAD press returns focus to the grid
+                                        // without consuming — let the grid handle the actual movement.
+                                        if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                        val isDpad = keyEvent.nativeKeyEvent.keyCode in listOf(
+                                            AndroidKeyEvent.KEYCODE_DPAD_UP,
+                                            AndroidKeyEvent.KEYCODE_DPAD_DOWN,
+                                            AndroidKeyEvent.KEYCODE_DPAD_LEFT,
+                                            AndroidKeyEvent.KEYCODE_DPAD_RIGHT
+                                        )
+                                        if (isDpad && dropdownFocusedIndex >= 0) {
                                             dropdownFocusedIndex = -1
+                                            false
+                                        } else false
+                                    }
+                                    .onKeyEvent { keyEvent ->
+                                        if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
+                                        val isShoulderOrTrigger =
+                                            keyEvent.nativeKeyEvent.keyCode in listOf(
+                                                AndroidKeyEvent.KEYCODE_BUTTON_L1,
+                                                AndroidKeyEvent.KEYCODE_BUTTON_L2,
+                                                AndroidKeyEvent.KEYCODE_BUTTON_R1,
+                                                AndroidKeyEvent.KEYCODE_BUTTON_R2
+                                            )
+                                        if (isShoulderOrTrigger && !dropdownVisible) {
+                                            viewModel.updateQuery("@")
+                                            return@onKeyEvent true
                                         }
-                                    },
-                                    onPlatformFocused = { platform -> autoFilterPlatform = platform },
-                                    platformImagesEnabled = platformImagesEnabled,
-                                    getPlatformImage = { platform -> platformImageMap[platform.lowercase()] },
-                                    modifier = Modifier.align(Alignment.BottomCenter)
-                                )
+                                        if (!dropdownVisible) return@onKeyEvent false
+                                        val maxIdx = dropdownItems.lastIndex
+                                        when (keyEvent.nativeKeyEvent.keyCode) {
+                                            AndroidKeyEvent.KEYCODE_BUTTON_L1,
+                                            AndroidKeyEvent.KEYCODE_BUTTON_L2 -> {
+                                                dropdownFocusedIndex =
+                                                    if (dropdownFocusedIndex < 0) 0
+                                                    else (dropdownFocusedIndex - 1).coerceAtLeast(0)
+                                                true
+                                            }
+
+                                            AndroidKeyEvent.KEYCODE_BUTTON_R1,
+                                            AndroidKeyEvent.KEYCODE_BUTTON_R2 -> {
+                                                dropdownFocusedIndex =
+                                                    if (dropdownFocusedIndex < 0) 0
+                                                    else (dropdownFocusedIndex + 1).coerceAtMost(
+                                                        maxIdx
+                                                    )
+                                                true
+                                            }
+
+                                            AndroidKeyEvent.KEYCODE_BUTTON_A -> {
+                                                val idx = dropdownFocusedIndex
+                                                if (idx in dropdownItems.indices) {
+                                                    viewModel.updateQuery("@${dropdownItems[idx]} ")
+                                                    dropdownFocusedIndex = -1
+                                                    true
+                                                } else false
+                                            }
+
+                                            else -> false
+                                        }
+                                    }
+                            ) {
+                                gridContent()
+
+                                if (dropdownVisible) {
+                                    PlatformSuggestionsDropdown(
+                                        platforms = platformSuggestions,
+                                        showAllApps = romSearchShowAllAndroidApps,
+                                        focusedIndex = dropdownFocusedIndex,
+                                        autoFilter = esdeState.romSearchPlatformAutoFilter,
+                                        onPlatformSelected = { platform ->
+                                            viewModel.updateQuery("@$platform ")
+                                            if (!esdeState.romSearchPlatformAutoFilter) {
+                                                dropdownFocusedIndex = -1
+                                            }
+                                        },
+                                        onPlatformFocused = { platform ->
+                                            autoFilterPlatform = platform
+                                        },
+                                        platformImagesEnabled = platformImagesEnabled,
+                                        getPlatformImage = { platform -> platformImageMap[platform.lowercase()] },
+                                        modifier = Modifier.align(Alignment.BottomCenter)
+                                    )
+                                }
                             }
                         }
                     }

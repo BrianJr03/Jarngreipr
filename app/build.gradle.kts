@@ -144,6 +144,9 @@ dependencies {
     implementation(libs.ping)
     implementation(libs.ping.nearby)
 
+    // Jetpack XR
+    implementation(libs.androidx.xr.compose)
+
     // AndroidX TV
     implementation(libs.androidx.tv.foundation) {
         exclude(group = "androidx.compose.foundation")

@@ -30,6 +30,7 @@ konfettiCompose = "2.0.5"
 appcompat = "1.7.1"
 browser = "1.8.0"
 androidx-tv-foundation = "1.0.0-alpha11"
+xrCompose = "1.0.0-alpha11"
 
 [libraries]
 colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
@@ -79,6 +80,7 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv-foundation" }
+androidx-xr-compose = { group = "androidx.xr.compose", name = "compose", version.ref = "xrCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

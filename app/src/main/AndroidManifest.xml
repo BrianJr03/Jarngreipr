@@ -45,6 +45,7 @@
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
         tools:ignore="CoarseFineLocation" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCENE_UNDERSTANDING" />
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <queries>
