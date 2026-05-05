@@ -154,7 +154,7 @@ fun AppsModalContent(
                 available: Velocity
             ): Velocity {
                 if (preventNestedScroll.value) {
-                    return available.times(100f)
+                    return available
                 }
                 return super.onPostFling(consumed, available)
             }
@@ -172,7 +172,7 @@ fun AppsModalContent(
                         preventNestedScroll.value = false
                         scheduledJob.value = null
                     }
-                    return available.times(100f)
+                    return available
                 }
                 return super.onPostScroll(consumed, available, source)
             }
@@ -705,7 +705,7 @@ private fun ModalAppSelectionContent(
         isHeaderVisible = isHeaderVisible,
         contentPadding = PaddingValues(
             top = 10.dp,
-            bottom = 20.dp,
+            bottom = 16.dp,
         ),
         equalizeMargins = true,
         verticalSpacing = 24.dp

@@ -217,6 +217,17 @@ class FolderManager @Inject constructor(
         }
     }
 
+    suspend fun setAllFolders(
+        pageIndex: Int,
+        tabType: String,
+        folders: List<Folder>
+    ) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
+        context.folderDataStore.edit { preferences ->
+            preferences[key] = json.encodeToString(folders.map { it.toData() })
+        }
+    }
+
     @Serializable
     private data class FolderData(
         val id: String,

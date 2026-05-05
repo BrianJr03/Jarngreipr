@@ -2,6 +2,9 @@ package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -65,6 +68,8 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -72,8 +77,13 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.service.AppNotificationListenerService
+import jr.brian.home.ui.components.NotificationShade
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberTopFlingTrigger
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
@@ -85,10 +95,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppsAndWidgetsTab(
     pageIndex: Int,
+    pagerPageIndex: Int = pageIndex,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
     modifier: Modifier = Modifier,
     powerViewModel: PowerViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
@@ -108,11 +120,13 @@ fun AppsAndWidgetsTab(
     onScrollStateChanged: (
         isScrolling: Boolean,
         hasScrollableContent: Boolean
-    ) -> Unit = { _, _ -> }
+    ) -> Unit = { _, _ -> },
+    dismissShadeSignal: Int = 0
 ) {
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
@@ -172,10 +186,30 @@ fun AppsAndWidgetsTab(
         }
     }
 
+    val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
+    val isBottomFlingDisabled = !(gridSettingsManager.bottomFlingAppDrawerEnabled) ||
+        (bottomFlingDisabledByPage[pagerPageIndex] ?: false)
+
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
     )
+
+    var showNotificationShade by remember { mutableStateOf(false) }
+    var showAllNotifications by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
+
+    val topFlingTrigger = rememberTopFlingTrigger(
+        gridState = gridState,
+        onFlingAtTop = { if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true }
+    )
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+    val notificationCountManager = LocalNotificationManager.current
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
 
     val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
@@ -205,10 +239,11 @@ fun AppsAndWidgetsTab(
 
     BackHandler(enabled = isPoweredOff) {}
 
+    Box(modifier = modifier.fillMaxSize().nestedScroll(topFlingTrigger)) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(bottomFlingTrigger)
+            .then(if (!isBottomFlingDisabled) Modifier.nestedScroll(bottomFlingTrigger) else Modifier)
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -328,6 +363,41 @@ fun AppsAndWidgetsTab(
 
     }
 
+    NotificationShade(
+        visible = showNotificationShade,
+        nowPlaying = nowPlaying,
+        currentPosition = nowPlayingPosition,
+        duration = nowPlayingDuration,
+        volume = nowPlayingVolume,
+        onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+        onPrevious = { nowPlayingViewModel.skipToPrevious() },
+        onNext = { nowPlayingViewModel.skipToNext() },
+        onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+        onSeek = { nowPlayingViewModel.seekTo(it) },
+        onDismiss = { showNotificationShade = false },
+        onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+        notifications = notifications,
+        onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+        onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
+        onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+        initialTabPage = notificationCountManager.shadeTabPage,
+        onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
+    )
+
+    AnimatedVisibility(
+        visible = showAllNotifications,
+        enter = slideInVertically(tween(300)) { it } + fadeIn(tween(300)),
+        exit = slideOutVertically(tween(250)) { it } + fadeOut(tween(200))
+    ) {
+        AllNotificationsScreen(
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAll = { AppNotificationListenerService.cancelAll() },
+            onDismiss = { showAllNotifications = false }
+        )
+    }
+    }
+
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {
             val availableApps = allApps.filter { app ->
@@ -392,6 +462,7 @@ fun AppsAndWidgetsTab(
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
+        val appVisibilityManager = LocalAppVisibilityManager.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
@@ -410,7 +481,12 @@ fun AppsAndWidgetsTab(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                pageTypeManager.reorderPages(newOrder)
+                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+            }
         )
     }
 

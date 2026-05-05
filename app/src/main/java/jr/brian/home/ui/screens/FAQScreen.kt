@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +62,7 @@ private const val SECTION_GENERAL = "general"
 private const val SECTION_THEMING = "theming"
 private const val SECTION_JINGLES = "jingles"
 private const val SECTION_ROM_SEARCH = "rom_search"
+private const val SECTION_RSS = "rss"
 
 @Composable
 fun FAQScreen(
@@ -177,6 +179,21 @@ fun FAQScreen(
                                 question = stringResource(R.string.faq_rom_search_emulator_question),
                                 answer = stringResource(R.string.faq_rom_search_emulator_answer)
                             )
+                        }
+                    }
+
+                    item(key = SECTION_RSS) {
+                        CollapsibleSettingsSection(
+                            title = stringResource(R.string.faq_section_rss),
+                            icon = Icons.Default.RssFeed,
+                            isExpanded = expandedSection == SECTION_RSS,
+                            onToggle = { toggleSection(SECTION_RSS) }
+                        ) {
+                            FAQCard(
+                                question = stringResource(R.string.faq_rss_nowplaying_question),
+                                answer = stringResource(R.string.faq_rss_nowplaying_answer)
+                            )
+                            RssAdbFAQCard()
                         }
                     }
 
@@ -337,6 +354,60 @@ private fun CopyableRow(
                     modifier = Modifier.size(16.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RssAdbFAQCard() {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    fun copyText(text: String) {
+        scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", text)))
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(brush = subtleCardGradient(isFocused = false), shape = RoundedCornerShape(16.dp))
+            .border(
+                width = 1.dp,
+                brush = borderBrush(
+                    isFocused = true,
+                    colors = listOf(
+                        ThemePrimaryColor.copy(alpha = 0.3f),
+                        ThemeSecondaryColor.copy(alpha = 0.3f)
+                    )
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(20.dp)
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.faq_rss_adb_question),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = ThemePrimaryColor,
+                lineHeight = 24.sp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.faq_rss_adb_answer),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.White.copy(alpha = 0.85f),
+                lineHeight = 22.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            CopyableRow(
+                label = "Grant command (run after connecting)",
+                value = stringResource(R.string.faq_rss_adb_command),
+                onCopy = { copyText(it) }
+            )
         }
     }
 }

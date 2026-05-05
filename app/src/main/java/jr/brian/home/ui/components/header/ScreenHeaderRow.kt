@@ -40,6 +40,7 @@ import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -95,6 +96,7 @@ fun ScreenHeaderRow(
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
     val pageTypeManager = LocalPageTypeManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
     val onboardingManager = LocalOnboardingManager.current
@@ -182,7 +184,12 @@ fun ScreenHeaderRow(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                pageTypeManager.reorderPages(newOrder)
+                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+            }
         )
     }
 

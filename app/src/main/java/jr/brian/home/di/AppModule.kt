@@ -29,8 +29,10 @@ import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.data.WhatsNewManager
+import jr.brian.home.data.RssRepository
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
+import jr.brian.home.data.database.RssFeedDao
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Singleton
 
@@ -175,13 +177,33 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "jarngreipr_database"
-        ).build()
+        )
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideCustomIconDao(database: AppDatabase): CustomIconDao {
         return database.customIconDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRssFeedDao(database: AppDatabase): RssFeedDao {
+        return database.rssFeedDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRssRepository(rssFeedDao: RssFeedDao): RssRepository {
+        return RssRepository(rssFeedDao)
     }
 
     @Provides

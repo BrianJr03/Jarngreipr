@@ -37,6 +37,20 @@ class AppDisplayPreferenceManager(context: Context) {
         }
     }
 
+    fun getAllPreferences(): Map<String, String> {
+        return prefs.all
+            .filterKeys { it.startsWith(KEY_PREFIX) }
+            .mapKeys { it.key.removePrefix(KEY_PREFIX) }
+            .mapValues { it.value as? String ?: DisplayPreference.CURRENT_DISPLAY.name }
+    }
+
+    fun restoreAllPreferences(preferences: Map<String, String>) {
+        val editor = prefs.edit()
+        prefs.all.keys.filter { it.startsWith(KEY_PREFIX) }.forEach { editor.remove(it) }
+        preferences.forEach { (pkg, prefName) -> editor.putString(KEY_PREFIX + pkg, prefName) }
+        editor.apply()
+    }
+
     enum class DisplayPreference {
         CURRENT_DISPLAY,
         PRIMARY_DISPLAY

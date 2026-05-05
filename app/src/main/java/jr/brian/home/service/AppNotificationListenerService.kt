@@ -1,12 +1,15 @@
 package jr.brian.home.service
 
+import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import dagger.hilt.android.AndroidEntryPoint
-import jr.brian.home.data.NotificationCountManager
+import jr.brian.home.data.NotificationManager
+import jr.brian.home.data.NotificationItem
+import jr.brian.home.data.NowPlayingManager
 import javax.inject.Inject
 
 /**
@@ -20,49 +23,84 @@ import javax.inject.Inject
 class AppNotificationListenerService : NotificationListenerService() {
     
     @Inject
-    lateinit var notificationCountManager: NotificationCountManager
-    
+    lateinit var notificationManager: NotificationManager
+
+    @Inject
+    lateinit var nowPlayingManager: NowPlayingManager
+
     override fun onListenerConnected() {
         super.onListenerConnected()
-        refreshNotificationCounts()
+        instance = this
+        refreshAll()
+        nowPlayingManager.refreshSystemMedia()
     }
-    
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        instance = null
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        refreshNotificationCounts()
+        refreshAll()
     }
-    
+
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
-        refreshNotificationCounts()
+        refreshAll()
     }
-    
-    /**
-     * Refresh all notification counts by querying active notifications.
-     */
-    private fun refreshNotificationCounts() {
+
+    private fun refreshAll() {
         try {
-            val activeNotifications = activeNotifications ?: return
-            val counts = mutableMapOf<String, Int>()
-            
-            for (notification in activeNotifications) {
-                // Skip ongoing notifications (like music players, ongoing downloads, etc.)
-                if (notification.isOngoing) continue
-                
-                // Skip group summary notifications to avoid double counting
-                if (notification.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY != 0) continue
-                
-                val packageName = notification.packageName
-                counts[packageName] = (counts[packageName] ?: 0) + 1
+            val active = activeNotifications ?: return
+            val pm = applicationContext.packageManager
+            val items = mutableListOf<NotificationItem>()
+
+            for (sbn in active) {
+                if (sbn.isOngoing) continue
+                if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) continue
+                if (sbn.notification.category == Notification.CATEGORY_TRANSPORT) continue
+                if (sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)) continue
+
+                val pkg = sbn.packageName
+                val appLabel = try {
+                    pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+                } catch (_: Exception) { pkg }
+
+                val extras = sbn.notification.extras
+                val title = extras.getString(Notification.EXTRA_TITLE)
+                val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+
+                items.add(
+                    NotificationItem(
+                        key = sbn.key,
+                        packageName = pkg,
+                        appLabel = appLabel,
+                        title = title,
+                        text = text,
+                        postTime = sbn.postTime
+                    )
+                )
             }
-            
-            notificationCountManager.updateAllCounts(counts)
-        } catch (e: Exception) {
+
+            items.sortByDescending { it.postTime }
+            notificationManager.updateActiveNotifications(items)
+        } catch (_: Exception) {
             // Silently fail - notification access might not be granted
         }
     }
-    
+
     companion object {
+        private var instance: AppNotificationListenerService? = null
+
+        fun cancel(key: String) {
+            instance?.cancelNotification(key)
+        }
+
+        fun cancelAll() {
+            instance?.cancelAllNotifications()
+        }
+
         /**
          * Check if notification listener permission is granted.
          */
@@ -74,7 +112,7 @@ class AppNotificationListenerService : NotificationListenerService() {
             )
             return enabledListeners?.contains(componentName.flattenToString()) == true
         }
-        
+
         /**
          * Get the intent to open notification access settings.
          */

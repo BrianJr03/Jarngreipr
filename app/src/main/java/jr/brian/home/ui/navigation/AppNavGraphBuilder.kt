@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
@@ -40,6 +41,8 @@ import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
+import jr.brian.home.ui.screens.RssSettingsScreen
+import jr.brian.home.ui.screens.TransitionAnimationScreen
 import jr.brian.home.ui.screens.TrackpadScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
@@ -54,7 +57,9 @@ import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.home.viewmodels.RssViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import androidx.core.net.toUri
 
 @UnstableApi
 fun NavGraphBuilder.launcherScreen(
@@ -147,6 +152,9 @@ fun NavGraphBuilder.launcherScreen(
             },
             onNavigateToRomSearch = {
                 navController.navigate(Routes.ROM_SEARCH)
+            },
+            onNavigateToRssSettings = {
+                navController.navigate(Routes.RSS_SETTINGS)
             },
             onNavigateToTrackpad = {
                 navController.navigate(Routes.TRACKPAD)
@@ -316,6 +324,14 @@ fun NavGraphBuilder.settingsScreen(
                 onNavigateToRomSearch = {
                     showScreen = false
                     navController.navigate(Routes.ROM_SEARCH)
+                },
+                onNavigateToRssSettings = {
+                    showScreen = false
+                    navController.navigate(Routes.RSS_SETTINGS)
+                },
+                onNavigateToTransitionAnimations = {
+                    showScreen = false
+                    navController.navigate(Routes.TAB_TRANSITION_ANIMATIONS)
                 },
                 onDismiss = {
                     showScreen = false
@@ -606,6 +622,23 @@ fun NavGraphBuilder.esdeSettingsScreen(
     }
 }
 
+fun NavGraphBuilder.transitionAnimationScreen(
+    navController: NavHostController
+) {
+    composable(Routes.TAB_TRANSITION_ANIMATIONS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            TransitionAnimationScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
 fun NavGraphBuilder.marqueePressShortcutScreen(
     navController: NavHostController,
     mainViewModel: MainViewModel
@@ -732,6 +765,28 @@ fun NavGraphBuilder.trackpadScreen(
     }
 }
 
+fun NavGraphBuilder.rssSettingsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.RSS_SETTINGS) { backStackEntry ->
+        var showScreen by remember { mutableStateOf(true) }
+        val launcherEntry = remember(backStackEntry) {
+            navController.getBackStackEntry(Routes.LAUNCHER)
+        }
+        val viewModel: RssViewModel = hiltViewModel(launcherEntry)
+
+        SlideInVertically(showScreen) {
+            RssSettingsScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
 fun NavGraphBuilder.addJingleScreen(
     navController: NavHostController
 ) {
@@ -745,7 +800,7 @@ fun NavGraphBuilder.addJingleScreen(
         )
     ) { backStackEntry ->
         val encodedUri = backStackEntry.arguments?.getString("folderUri") ?: return@composable
-        val folderUri = Uri.parse(Uri.decode(encodedUri))
+        val folderUri = Uri.decode(encodedUri).toUri()
         val createPack = backStackEntry.arguments?.getBoolean("createPack") ?: false
         val existingPackPath = backStackEntry.arguments?.getString("existingPackPath")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
         val existingPackName = backStackEntry.arguments?.getString("existingPackName")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }

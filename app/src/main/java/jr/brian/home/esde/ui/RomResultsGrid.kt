@@ -32,7 +32,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -71,7 +70,6 @@ import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -137,16 +135,6 @@ internal fun RomResultsGrid(
         focusRequesters[focusedIndex]?.requestFocus()
     }
 
-    // Focus first item once both games and apps have finished loading.
-    LaunchedEffect(isLoading, displayedGames.isNotEmpty()) {
-        if (!isLoading && displayedGames.isNotEmpty()) {
-            repeat(3) {
-                delay(500)
-                runCatching { focusRequesters[0]?.requestFocus() }
-            }
-        }
-    }
-
     // Caller-controlled reset: jumps to index 0 when a new filter/search is applied.
     // Does NOT fire when clearing the query (caller keeps the key stable then).
     LaunchedEffect(focusResetKey) {
@@ -192,16 +180,19 @@ internal fun RomResultsGrid(
                 )
             }
 
-            !isHiddenMode && displayedGames.isEmpty() -> {
-                Text(
-                    text = stringResource(R.string.rom_search_no_results),
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.White.copy(alpha = 0.5f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+//            !isHiddenMode && displayedGames.isEmpty() -> {
+//                Text(
+//                    text = stringResource(R.string.rom_search_no_results),
+//                    modifier = Modifier.align(Alignment.Center),
+//                    color = Color.White.copy(alpha = 0.5f),
+//                    style = MaterialTheme.typography.bodyMedium
+//                )
+//            }
 
             else -> {
+                LaunchedEffect(Unit) {
+                    moveFocus(1)
+                }
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(NUM_COLS),
                     state = listState,
@@ -261,7 +252,6 @@ internal fun RomResultsGrid(
 
                         RomResultCard(
                             game = game,
-                            autoFocus = index == 0 && focusedIndex == 0,
                             focusRequester = focusRequester,
                             mediaType = getGameMediaType(game) ?: cardMediaType,
                             focusAnimationEnabled = focusAnimationEnabled,
@@ -393,7 +383,7 @@ private fun HiddenModeHeader(
     onPlatformToggle: (String) -> Unit,
     onUnhideAll: () -> Unit
 ) {
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),

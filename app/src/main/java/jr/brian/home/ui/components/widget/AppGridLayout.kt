@@ -50,7 +50,7 @@ fun AppGridLayout(
     verticalSpacing: Dp = 24.dp,
     contentPadding: PaddingValues = PaddingValues(
         horizontal = 8.dp,
-        vertical = if (isHeaderVisible) 8.dp else 20.dp,
+        vertical = if (isHeaderVisible) 8.dp else 16.dp,
     ),
     equalizeMargins: Boolean = false,
     isHomeScreen: Boolean = false,
