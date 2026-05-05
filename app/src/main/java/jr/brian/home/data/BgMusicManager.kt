@@ -44,8 +44,13 @@ class BgMusicManager @Inject constructor(
         private set
 
     private var isDucked = false
+    private var isMuted = false
 
-    private fun effectiveVolume() = if (isDucked) vol * DUCK_FACTOR else vol
+    private fun effectiveVolume() = when {
+        isMuted -> 0f
+        isDucked -> vol * DUCK_FACTOR
+        else -> vol
+    }
 
     fun duck() {
         if (isDucked) return
@@ -58,8 +63,9 @@ class BgMusicManager @Inject constructor(
     fun unDuck() {
         if (!isDucked) return
         isDucked = false
-        mediaPlayer?.setVolume(vol, vol)
-        nextMediaPlayer?.setVolume(vol, vol)
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
     }
 
     var folderUri by mutableStateOf(prefs.getString(KEY_FOLDER_URI, null))
@@ -119,7 +125,7 @@ class BgMusicManager @Inject constructor(
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_SCREEN_OFF -> pausePlayback()
-                Intent.ACTION_SCREEN_ON -> resumePlayback()
+                Intent.ACTION_SCREEN_ON -> if (isIntendedToPlay) resumePlayback()
             }
         }
     }
@@ -174,7 +180,6 @@ class BgMusicManager @Inject constructor(
 
     fun startPlayback() {
         stopPlayback()
-        if (!requestAudioFocus()) return
         isIntendedToPlay = true
         when (mode) {
             Mode.FOLDER -> startFolderPlayback()
@@ -192,14 +197,28 @@ class BgMusicManager @Inject constructor(
     }
 
     fun setMuted(muted: Boolean) {
-        mediaPlayer?.setVolume(
-            if (muted) 0f else effectiveVolume(),
-            if (muted) 0f else effectiveVolume()
-        )
-        nextMediaPlayer?.setVolume(
-            if (muted) 0f else effectiveVolume(),
-            if (muted) 0f else effectiveVolume()
-        )
+        isMuted = muted
+        val ev = effectiveVolume()
+        mediaPlayer?.setVolume(ev, ev)
+        nextMediaPlayer?.setVolume(ev, ev)
+    }
+
+    fun restoreSettings(
+        folderUri: String?,
+        fileUri: String?,
+        mode: Mode,
+        volume: Float
+    ) {
+        this.folderUri = folderUri
+        this.singleFileUri = fileUri
+        this.mode = mode
+        this.vol = volume.coerceIn(0f, 1f)
+        prefs.edit {
+            if (folderUri != null) putString(KEY_FOLDER_URI, folderUri) else remove(KEY_FOLDER_URI)
+            if (fileUri != null) putString(KEY_SINGLE_FILE_URI, fileUri) else remove(KEY_SINGLE_FILE_URI)
+            putString(KEY_MODE, mode.name)
+            putFloat(KEY_VOLUME, this@BgMusicManager.vol)
+        }
     }
 
     fun release() {
@@ -214,7 +233,7 @@ class BgMusicManager @Inject constructor(
     fun resumePlayback() {
         if (mediaPlayer != null) {
             mediaPlayer?.runCatching { start() }
-        } else {
+        } else if (isIntendedToPlay) {
             resumeIfConfigured()
         }
     }
@@ -255,6 +274,7 @@ class BgMusicManager @Inject constructor(
 
         mediaPlayer = buildFolderPlayer(uri).also { player ->
             player.setOnPreparedListener { mp ->
+                if (!requestAudioFocus()) return@setOnPreparedListener
                 mp.start()
                 // Start pre-buffering the next track now that playback is live
                 prebufferNextFolderTrack()
@@ -333,6 +353,7 @@ class BgMusicManager @Inject constructor(
 
         mediaPlayer = buildSingleFilePlayer(uri).also { primary ->
             primary.setOnPreparedListener { mp ->
+                if (!requestAudioFocus()) return@setOnPreparedListener
                 // Build and prepare the looper before primary starts so it
                 // is ready to be chained immediately after prepare.
                 val looper = buildSingleFilePlayer(uri).also { next ->

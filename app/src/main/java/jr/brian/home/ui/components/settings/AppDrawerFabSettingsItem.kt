@@ -72,6 +72,7 @@ fun AppDrawerFabSettingsItem(
     val isFabEnabled by fabManager.isFabEnabled.collectAsStateWithLifecycle()
     val currentFabColor by fabManager.fabColor.collectAsStateWithLifecycle()
     val fabVisiblePages by fabManager.fabVisiblePages.collectAsStateWithLifecycle()
+    val fabExplicitPages by fabManager.fabExplicitPages.collectAsStateWithLifecycle()
     val fabPosition by fabManager.fabPosition.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
@@ -360,9 +361,7 @@ fun AppDrawerFabSettingsItem(
                             ) {
                                 for (pageIndex in 0 until pageCount) {
                                     val isPageVisible =
-                                        fabVisiblePages.isEmpty() || fabVisiblePages.contains(
-                                            pageIndex
-                                        )
+                                        !fabExplicitPages || fabVisiblePages.contains(pageIndex)
                                     PageVisibilityOption(
                                         pageIndex = pageIndex,
                                         isVisible = isPageVisible,

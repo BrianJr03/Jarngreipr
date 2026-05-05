@@ -163,6 +163,23 @@ class AppVisibilityManager(context: Context) {
         return packageName in getHiddenApps(pageIndex)
     }
 
+    fun reorderHiddenApps(newOrderFromOld: List<Int>) {
+        val oldMap = _hiddenAppsByPage.value
+        val newMap = mutableMapOf<Int, Set<String>>()
+        newOrderFromOld.forEachIndexed { newIndex, oldIndex ->
+            val hiddenAtOld = oldMap[oldIndex]
+            if (hiddenAtOld != null) newMap[newIndex] = hiddenAtOld
+        }
+        _hiddenAppsByPage.value = newMap
+        prefs.edit().apply {
+            for (i in 0 until 10) remove("${KEY_HIDDEN_APPS}_$i")
+            newMap.forEach { (pageIndex, hiddenApps) ->
+                putString("${KEY_HIDDEN_APPS}_$pageIndex", hiddenApps.joinToString(SEPARATOR))
+            }
+            apply()
+        }
+    }
+
     private fun saveHiddenAppsForPage(pageIndex: Int, hiddenApps: Set<String>) {
         val currentMap = _hiddenAppsByPage.value.toMutableMap()
         if (hiddenApps.isEmpty()) {
@@ -179,6 +196,42 @@ class AppVisibilityManager(context: Context) {
             } else {
                 putString(key, hiddenApps.joinToString(SEPARATOR))
             }
+            apply()
+        }
+    }
+
+    fun setHiddenApps(pageIndex: Int, apps: Set<String>) {
+        saveHiddenAppsForPage(pageIndex, apps)
+    }
+
+    fun updateShowAppNames(value: Boolean) {
+        showAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowHomeScreenAppNames(value: Boolean) {
+        showHomeScreenAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowFolderNames(value: Boolean) {
+        showFolderNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_FOLDER_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowSettingsBackButton(value: Boolean) {
+        showSettingsBackButton = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_SETTINGS_BACK_BUTTON, value)
             apply()
         }
     }

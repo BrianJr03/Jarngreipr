@@ -69,6 +69,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -405,6 +406,7 @@ fun AppDrawerTab(
             val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
             val pageCountManager = LocalPageCountManager.current
             val pageTypeManager = LocalPageTypeManager.current
+            val appVisibilityManager = LocalAppVisibilityManager.current
             val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
 
             HomeTabSelectionDialog(
@@ -422,7 +424,12 @@ fun AppDrawerTab(
                     pageCountManager.addPage()
                 },
                 pageTypes = pageTypes,
-                onNavigateToSearch = onNavigateToSearch
+                onNavigateToSearch = onNavigateToSearch,
+                onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                    appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                    pageTypeManager.reorderPages(newOrder)
+                    homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                }
             )
         }
 

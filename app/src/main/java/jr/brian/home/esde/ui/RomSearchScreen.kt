@@ -174,7 +174,10 @@ fun RomSearchScreen(
                             showSettings = true,
                             showController = false,
                             onOpenRomSearchSettings = { showSettings = true },
-                            onNavigateToSearch = onNavigateToSearch,
+                            onNavigateToSearch = {
+                                viewModel.dismiss()
+                                onNavigateToSearch()
+                            },
                             onAtClick = { viewModel.updateQuery("$query@") },
                             onReopenResults = { launchResultsActivity(context) },
                             modifier = Modifier

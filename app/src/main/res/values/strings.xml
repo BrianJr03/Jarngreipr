@@ -388,10 +388,36 @@
     <string name="settings_wallpaper_icon_description">Wallpaper icon</string>
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
     <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance_subtitle">Theme &amp; Icons</string>
     <string name="settings_section_layout">Layout</string>
+    <string name="settings_section_layout_subtitle">Grid &amp; Dock</string>
+    <string name="settings_section_music">Music</string>
+    <string name="settings_section_music_subtitle">Background Audio</string>
+    <string name="settings_section_rss">RSS</string>
+    <string name="settings_section_rss_subtitle">News Feeds</string>
+    <string name="settings_section_esde">ES-DE</string>
+    <string name="settings_section_esde_subtitle">Emulation Display</string>
+    <string name="settings_section_extras_subtitle">Extras! Extras!</string>
+    <string name="settings_section_system_subtitle">Updates &amp; Tools</string>
+    <string name="settings_section_support_subtitle">FAQs</string>
+    <string name="settings_no_results">No settings match \"%s\"</string>
+    <string name="settings_clear_search_cd">Clear search</string>
+    <string name="settings_show_keyboard_cd">Show keyboard</string>
+    <string name="settings_hide_keyboard_cd">Hide keyboard</string>
     <string name="settings_layout_scroll_title">Disable Scroll</string>
     <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
     <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
+    <string name="settings_layout_bottom_fling_per_tab">Bottom Fling Per Tab</string>
+    <string name="settings_layout_bottom_fling_description">Open app drawer by flinging to the bottom on this tab.</string>
+    <string name="settings_layout_app_drawer_filter_by_page">Filter App Drawer by Tab</string>
+    <string name="settings_layout_app_drawer_filter_by_page_description">Only show apps visible on the current tab when opening the app drawer.</string>
+    <string name="settings_layout_notification_shade">Notification Shade</string>
+    <string name="settings_layout_notification_tab_transition_animation">Tab Transition Animations</string>
+    <string name="settings_layout_notification_shade_description">Pull down from the top of any tab to reveal the Now Playing shade.</string>
+    <string name="settings_layout_icon_snap">Icon Snapping</string>
+    <string name="settings_layout_icon_snap_description">Snap icons to align with other icons when dragging.</string>
+    <string name="settings_layout_bottom_fling_app_drawer">Bottom Swipe App Drawer</string>
+    <string name="settings_layout_bottom_fling_app_drawer_description">Swipe up from the bottom of a tab to open the app drawer.</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
     <string name="settings_whats_new_title">What\'s New</string>
@@ -521,6 +547,8 @@
     <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
     <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
+    <string name="home_tab_page_type_rss_tab">RSS Tab</string>
+    <string name="home_tab_page_type_rss_tab_description">A tab for browsing RSS feeds.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
@@ -805,6 +833,16 @@
     <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
     <string name="back_button_shortcut_volume_controls">@string/common_volume_controls</string>
 
+    <!-- Backup & Restore -->
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_description">Save your config to a JSON file</string>
+    <string name="settings_restore_title">Restore</string>
+    <string name="settings_restore_description">Load config from a JSON file</string>
+    <string name="settings_backup_success">Config backed up successfully</string>
+    <string name="settings_backup_error">Failed to back up config</string>
+    <string name="settings_restore_success">Config restored successfully</string>
+    <string name="settings_restore_error">Failed to restore: invalid or incompatible file</string>
+
     <!-- Notification Access -->
     <string name="settings_notification_badge_title">Notification Badges</string>
     <string name="settings_notification_badge_description">Show notification counts on app icons</string>
@@ -895,8 +933,8 @@
     <string name="esde_setup_warning_scripts_missing">Warning: Required scripts are missing from this folder.\n\nWithout these, the app cannot receive game information from ES-DE.\n\nContinue anyway?</string>
 
     <!-- ESDE Settings Screen -->
-    <string name="esde_settings_title">ES-DE Settings</string>
-    <string name="esde_settings_description">Configure ES-DE wallpaper and effects</string>
+    <string name="esde_settings_title">Frontend Settings</string>
+    <string name="esde_settings_description">Rom Search, Jingles and more!</string>
     <string name="esde_settings_section_animation">Animation</string>
     <string name="esde_settings_section_effects">Visual Effects</string>
     <string name="esde_settings_section_video">Video</string>
@@ -1388,4 +1426,89 @@
     <string name="music_options_mute_all">Mute All Music</string>
     <string name="music_options_unmute_all">Unmute All Music</string>
     <string name="music_options_resume_bg">Resume Background Music</string>
+
+    <!-- RSS Settings Screen -->
+    <string name="rss_settings_title">RSS Feeds</string>
+    <string name="rss_settings_refresh_all_cd">Refresh all feeds</string>
+    <string name="rss_settings_add_feed_cd">Add feed</string>
+    <string name="rss_settings_save_cd">Save</string>
+    <string name="rss_settings_display_section">Display</string>
+    <string name="rss_settings_date_format">Date format</string>
+    <string name="rss_settings_date_dmy">D/M/YYYY</string>
+    <string name="rss_settings_date_mdy">M/D/YYYY</string>
+    <string name="rss_settings_time_format">Time format</string>
+    <string name="rss_settings_time_24h">24h</string>
+    <string name="rss_settings_time_12h">12h</string>
+    <string name="rss_settings_empty_title">No RSS feeds added yet</string>
+    <string name="rss_settings_empty_hint">Tap + to add your first feed</string>
+    <string name="rss_settings_error_dismiss">Dismiss</string>
+    <string name="rss_settings_feed_refresh_cd">Refresh feed</string>
+    <string name="rss_settings_feed_delete_cd">Remove feed</string>
+    <string name="rss_settings_copy_url_cd">Copy feed URL</string>
+    <string name="rss_settings_interval_manual">Manual only</string>
+    <string name="rss_settings_interval_15m">15 minutes</string>
+    <string name="rss_settings_interval_30m">30 minutes</string>
+    <string name="rss_settings_interval_1h">1 hour</string>
+    <string name="rss_settings_interval_2h">2 hours</string>
+    <string name="rss_settings_interval_6h">6 hours</string>
+    <string name="rss_settings_interval_12h">12 hours</string>
+    <string name="rss_settings_dialog_title">Add RSS Feed</string>
+    <string name="rss_settings_dialog_url_placeholder">https://example.com/feed.xml</string>
+    <string name="rss_settings_dialog_url_label">Feed URL</string>
+    <string name="rss_settings_dialog_paste_cd">Paste</string>
+    <string name="rss_settings_dialog_hint">Supports RSS 2.0 and Atom feeds</string>
+    <string name="rss_settings_dialog_cancel">Cancel</string>
+    <string name="rss_settings_dialog_add">Add Feed</string>
+
+    <!-- RSS Tab -->
+    <string name="rss_tab_title">RSS</string>
+    <string name="rss_tab_refresh_cd">Refresh</string>
+    <string name="rss_tab_filter_cd">Filter feeds</string>
+    <string name="rss_tab_all_feeds">All Feeds</string>
+    <string name="rss_tab_settings_cd">Settings</string>
+    <string name="rss_tab_video_available">Video available</string>
+    <string name="rss_tab_play_video_cd">Play video</string>
+    <string name="rss_tab_play_audio_cd">Play audio</string>
+    <string name="rss_tab_listen">Listen</string>
+    <string name="rss_tab_empty_title">No RSS feeds</string>
+    <string name="rss_tab_empty_hint">Add feeds in Settings → RSS</string>
+    <string name="rss_tab_no_articles">No articles yet</string>
+    <string name="rss_tab_refresh_now">Refresh Now</string>
+    <string name="rss_tab_mixed">Mixed</string>
+    <string name="rss_tab_history">History</string>
+    <string name="rss_tab_now_playing">Now Playing</string>
+    <string name="rss_tab_hide_search_cd">Hide search</string>
+    <string name="rss_tab_search_feeds_cd">Search</string>
+    <string name="rss_tab_filtering_by">Filtering by: \"%1$s\"</string>
+    <string name="rss_tab_clear_search_cd">Clear search</string>
+    <string name="rss_tab_previous_cd">Previous</string>
+    <string name="rss_tab_next_cd">Next</string>
+    <string name="rss_tab_play_cd">Play</string>
+    <string name="rss_tab_pause_cd">Pause</string>
+    <string name="rss_tab_volume_cd">Volume</string>
+    <string name="volume_percentage">%d%%</string>
+    <string name="rss_tab_audio_only">Audio Only</string>
+    <string name="rss_tab_audio_only_cd">Toggle audio only</string>
+    <string name="rss_tab_options_cd">More options</string>
+
+    <!-- Notification Shade -->
+    <string name="shade_wifi">Wi-Fi</string>
+    <string name="shade_bluetooth">Bluetooth</string>
+    <string name="shade_notifications">Notifications</string>
+    <string name="shade_nothing_playing">Nothing Playing</string>
+    <string name="shade_previous_cd">Previous</string>
+    <string name="shade_next_cd">Next</string>
+    <string name="shade_play_cd">Play</string>
+    <string name="shade_pause_cd">Pause</string>
+    <string name="shade_volume_cd">Volume</string>
+    <string name="shade_dismiss_cd">Dismiss</string>
+    <string name="shade_all_notifications">All Notifications</string>
+    <string name="shade_no_notifications">No notifications</string>
+
+    <string name="faq_section_rss">RSS / Now Playing</string>
+    <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>
+    <string name="faq_rss_nowplaying_answer">The Now Playing bubble reads media metadata from other apps via Android\'s notification listener. It requires Notification Access to be granted once.\n\nGo to Settings → Apps → Special app access → Notification access and enable it for this app.\n\nIf you\'re sideloading and can\'t reach that screen, you can grant it with a single ADB command — no PC required if you use Termux.</string>
+    <string name="faq_rss_adb_question">How do I grant Notification Access via ADB (no PC needed)?</string>
+    <string name="faq_rss_adb_answer">You can run ADB commands directly on your Android device using Termux from F-Droid (not the Play Store version).\n\n1. Install Termux from f-droid.org\n2. Open Termux and run: pkg update &amp;&amp; pkg install android-tools\n3. Go to Settings → Developer Options → enable Wireless Debugging\n4. Tap "Pair device with pairing code" — note the IP, pairing port, and code shown\n5. In Termux: adb pair IP:PAIRPORT then enter the code when prompted\n6. Then: adb connect IP:DEBUGPORT (the debug port shown on the main Wireless Debugging screen)\n7. Finally run the command below\n\nNotification access persists across reinstalls of this app.</string>
+    <string name="faq_rss_adb_command">adb shell cmd notification allow_listener jr.brian.home/jr.brian.home.service.AppNotificationListenerService</string>
 </resources>
