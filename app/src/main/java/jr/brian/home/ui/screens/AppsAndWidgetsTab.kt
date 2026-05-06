@@ -39,8 +39,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.navigation.NavHostController
 import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.model.rom.toPinnedRomInfo
 import jr.brian.home.model.widget.WidgetInfo
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.home.ui.animations.onPressScaleAndOffset
@@ -52,10 +56,14 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
+import jr.brian.home.ui.components.dialog.RomCustomIconPickerDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.SyncLogoPositionLock
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -87,6 +95,7 @@ import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -139,6 +148,31 @@ fun AppsAndWidgetsTab(
     SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val pinnedRomManager = LocalPinnedRomManager.current
+    val hasExternalDisplay = rememberHasExternalDisplay()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val pinnedRoms by pinnedRomManager.getPinnedRoms(pageIndex, TAB_TYPE_WIDGETS)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    var romForOptions by remember { mutableStateOf<PinnedRomInfo?>(null) }
+    var romForCustomIcon by remember { mutableStateOf<PinnedRomInfo?>(null) }
+    var showRomCustomIconPicker by remember { mutableStateOf(false) }
+    var romPageDisplayPreference by remember(pinnedRoms.firstOrNull()?.key) {
+        mutableStateOf(
+            pinnedRoms.firstOrNull()?.let {
+                appDisplayPreferenceManager.getAppDisplayPreference(it.key)
+            } ?: DisplayPreference.CURRENT_DISPLAY
+        )
+    }
+
+    val pendingRomForPin by romSearchViewModel.pendingRomForPin.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingRomForPin) {
+        val pending = pendingRomForPin ?: return@LaunchedEffect
+        if (pending.first == pageIndex) {
+            romSearchViewModel.clearPendingRomForPin()
+            pinnedRomManager.addPinnedRom(pageIndex, pending.second.toPinnedRomInfo(), TAB_TYPE_WIDGETS)
+        }
+    }
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
@@ -322,7 +356,27 @@ fun AppsAndWidgetsTab(
                     swapModeEnabled = true
                     swapSourceWidgetId = widgetId
                 },
-                onFolderClick = folderContentsDialogState::show
+                onFolderClick = folderContentsDialogState::show,
+                pinnedRoms = pinnedRoms,
+                onRomClick = { rom ->
+                    romSearchViewModel.requestRomLaunch(rom)
+                    val intent = android.content.Intent(
+                        context,
+                        jr.brian.home.esde.ui.RomSearchResultsActivity::class.java
+                    ).apply {
+                        addFlags(
+                            android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                        )
+                    }
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(rom.key)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(context, rom.key, displayPreference, intent)
+                },
+                onRomLongClick = { rom -> romForOptions = rom }
             )
         }
 
@@ -437,7 +491,64 @@ fun AppsAndWidgetsTab(
             isEditModeActive = editModeEnabled,
             isEmpty = isTabEmpty,
             isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
-            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() }
+            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() },
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            },
+            onCustomIcon = if (pinnedRoms.isNotEmpty()) {
+                {
+                    if (pinnedRoms.size == 1) {
+                        romForCustomIcon = pinnedRoms.first()
+                    } else {
+                        showRomCustomIconPicker = true
+                    }
+                }
+            } else null,
+            currentRomDisplayPreference = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) romPageDisplayPreference else null,
+            onRomDisplayPreferenceChange = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) { pref ->
+                romPageDisplayPreference = pref
+                pinnedRoms.forEach { appDisplayPreferenceManager.setAppDisplayPreference(it.key, pref) }
+            } else null
+        )
+    }
+
+    if (showRomCustomIconPicker) {
+        RomCustomIconPickerDialog(
+            roms = pinnedRoms,
+            onRomSelected = { rom ->
+                romForCustomIcon = rom
+                showRomCustomIconPicker = false
+            },
+            onDismiss = { showRomCustomIconPicker = false }
+        )
+    }
+
+    romForCustomIcon?.let { rom ->
+        CustomIconDialog(
+            packageName = rom.key,
+            appLabel = rom.name,
+            onDismiss = { romForCustomIcon = null }
+        )
+    }
+
+    romForOptions?.let { rom ->
+        PinnedRomOptionsDialog(
+            rom = rom,
+            onDismiss = { romForOptions = null },
+            hasExternalDisplay = hasExternalDisplay,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(rom.key),
+            onDisplayPreferenceChange = { pref ->
+                appDisplayPreferenceManager.setAppDisplayPreference(rom.key, pref)
+            },
+            onMediaTypeSelected = { type ->
+                pinnedRomManager.updatePinnedRom(pageIndex, rom.copy(displayMediaType = type), TAB_TYPE_WIDGETS)
+                romForOptions = null
+            },
+            onRemove = {
+                pinnedRomManager.removePinnedRom(pageIndex, rom.key, TAB_TYPE_WIDGETS)
+                romForOptions = null
+            }
         )
     }
 
@@ -531,7 +642,11 @@ fun AppsAndWidgetsTab(
             onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps,
-            tabType = TAB_TYPE_WIDGETS
+            tabType = TAB_TYPE_WIDGETS,
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            }
         )
     }
 

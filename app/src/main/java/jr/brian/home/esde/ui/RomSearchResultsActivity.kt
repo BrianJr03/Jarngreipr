@@ -60,6 +60,7 @@ import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.util.resolveRomPath
+import jr.brian.home.model.rom.toGameInfo
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.ui.theme.LauncherTheme
@@ -223,7 +224,25 @@ class RomSearchResultsActivity : ComponentActivity() {
                         }
                     }
 
-                    LaunchedEffect(Unit) { isVisible = true }
+                    val localAppDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+
+                    LaunchedEffect(Unit) {
+                        val pending = romSearchStateHolder.pendingRomToLaunch.value
+                        if (pending != null) {
+                            romSearchStateHolder.pendingRomToLaunch.value = null
+                            val game = pending.toGameInfo()
+                            val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                ?: game.emulatorPackage ?: game.path
+                            romLauncher.launchGame(
+                                game, context,
+                                localAppDisplayPreferenceManager.getAppDisplayPreference(pending.key)
+                            )
+                            signalGameLaunch()
+                            finish()
+                        } else {
+                            isVisible = true
+                        }
+                    }
 
                     val query by viewModel.query.collectAsStateWithLifecycle()
                     val queryTrimmed = query.trim()
@@ -231,7 +250,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val allGames by viewModel.allGames.collectAsStateWithLifecycle()
                     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
                     val homeUiState by mainViewModel.uiState.collectAsStateWithLifecycle()
-                    val localAppDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
 
                     LaunchedEffect(Unit) {
                         viewModel.dismissSignal.collect { dismiss() }
@@ -607,9 +625,18 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier.fillMaxSize(),
                                     onLaunchGame = { game ->
-                                        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
-                                        val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
-                                        romLauncher.launchGame(game, context, localAppDisplayPreferenceManager.getAppDisplayPreference(pkg))
+                                        if (romSearchStateHolder.isSelectMode.value) {
+                                            romSearchStateHolder.pendingRomForPin.value =
+                                                romSearchStateHolder.pendingSelectPageIndex.value to game
+                                            romSearchStateHolder.isSelectMode.value = false
+                                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                            dismiss()
+                                        } else {
+                                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                            val pkg = esdePrefs.getGameEmulator(gameKey(game))
+                                                ?: game.emulatorPackage ?: game.path
+                                            romLauncher.launchGame(game, context, localAppDisplayPreferenceManager.getAppDisplayPreference(pkg))
+                                        }
                                     },
                                     onSaveEmulator = { game, pkg, cmd ->
                                         esdePrefs.setGameEmulator(gameKey(game), pkg)
