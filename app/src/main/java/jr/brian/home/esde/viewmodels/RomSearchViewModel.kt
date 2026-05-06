@@ -8,6 +8,7 @@ import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.RomListParser
+import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,21 @@ class RomSearchViewModel @Inject constructor(
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
     val hintAndKbVisible: StateFlow<Boolean> = store.hintAndKbVisible.asStateFlow()
     val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
+    val pendingRomForPin: StateFlow<Pair<Int, GameInfo>?> = store.pendingRomForPin.asStateFlow()
+    val stateHolder: RomSearchStateHolder = store
+
+    fun enterSelectMode(pageIndex: Int) {
+        store.isSelectMode.value = true
+        store.pendingSelectPageIndex.value = pageIndex
+    }
+
+    fun clearPendingRomForPin() {
+        store.pendingRomForPin.value = null
+    }
+
+    fun requestRomLaunch(rom: PinnedRomInfo) {
+        store.pendingRomToLaunch.value = rom
+    }
 
     private val esdeRootPath: String?
         get() = File(setupPreferences.scriptsPath).parentFile?.absolutePath

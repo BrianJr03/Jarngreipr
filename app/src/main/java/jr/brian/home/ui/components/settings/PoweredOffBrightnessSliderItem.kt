@@ -97,6 +97,8 @@ fun PoweredOffBrightnessSliderItem() {
                         fontSize = if (isFocused) 18.sp else 16.sp,
                         fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
                     )
+                    
+                    Spacer(Modifier.weight(1f))
 
                     Text(
                         text = "$currentBrightness%",

@@ -23,9 +23,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,7 +77,8 @@ fun CreateFolderDialog(
     onDismiss: () -> Unit,
     pageIndex: Int = 0,
     allApps: List<AppInfo> = apps,
-    tabType: String = TAB_TYPE_APPS
+    tabType: String = TAB_TYPE_APPS,
+    onAddRom: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -226,6 +229,19 @@ fun CreateFolderDialog(
                     )
                 }
 
+                if (onAddRom != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ActionButton(
+                        text = stringResource(R.string.add_rom),
+                        icon = Icons.Default.VideogameAsset,
+                        onClick = {
+                            onDismiss()
+                            onAddRom()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LazyColumn(
@@ -327,7 +343,8 @@ private fun AppSelectionItem(
 private fun ActionButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -350,11 +367,25 @@ private fun ActionButton(
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
+            )
+        }
     }
 }

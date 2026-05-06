@@ -35,16 +35,20 @@ import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.ItemRect
 import jr.brian.home.model.floaty.BubbleBurst
 import jr.brian.home.model.floaty.FloatingAppInit
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.components.konfetti.KonfettiPresets
+import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberHasExternalDisplay
@@ -68,7 +72,10 @@ fun FreePositionedAppsLayout(
     allApps: List<AppInfo> = apps,
     bubblePopEnabled: Boolean = false,
     floatyObstacleSpec: FloatyObstacleSpec? = null,
-    onBubblePop: (AppInfo) -> Unit = {}
+    onBubblePop: (AppInfo) -> Unit = {},
+    pinnedRoms: List<PinnedRomInfo> = emptyList(),
+    onRomClick: (PinnedRomInfo) -> Unit = {},
+    onRomRemove: (PinnedRomInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -92,6 +99,9 @@ fun FreePositionedAppsLayout(
     }
     val scrollState = remember(pageIndex) { ScrollState(0) }
 
+    val pinnedRomManager = LocalPinnedRomManager.current
+    var romForOptions by remember { mutableStateOf<PinnedRomInfo?>(null) }
+
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
     val renameDialogState = rememberDialogState<AppInfo>()
@@ -102,6 +112,7 @@ fun FreePositionedAppsLayout(
     val positions = appPositionManager.getPositions(pageIndex)
 
     var draggingAppIndex by remember(pageIndex) { mutableIntStateOf(-1) }
+    var draggingRomKey by remember(pageIndex) { mutableStateOf<String?>(null) }
     var alignmentState by remember(pageIndex) { mutableStateOf(AlignmentState()) }
     val snapThreshold = with(density) { 12.dp.toPx() } // Distance to trigger snapping
     val borderPadding = with(density) { 4.dp.toPx() } // 4dp border constraint
@@ -150,7 +161,8 @@ fun FreePositionedAppsLayout(
             positions = positions,
             containerSize = containerSize,
             density = density,
-            positionCalculator = positionCalculator
+            positionCalculator = positionCalculator,
+            pinnedRoms = pinnedRoms
         ).also { currentContentHeight = it }
 
         Box(
@@ -225,12 +237,19 @@ fun FreePositionedAppsLayout(
                 )
             }
 
-            // Pre-calculate all existing positioned items (apps with saved positions + folders)
-            val existingPositionedItems = positionCalculator.getExistingPositionedItems(
-                apps = apps,
-                positions = positions,
-                folders = folders
-            )
+            // Pre-calculate all existing positioned items (apps with saved positions + folders + ROMs)
+            val existingPositionedItems = buildList {
+                addAll(positionCalculator.getExistingPositionedItems(
+                    apps = apps,
+                    positions = positions,
+                    folders = folders
+                ))
+                pinnedRoms.forEach { rom ->
+                    val pos = positions[rom.key] ?: return@forEach
+                    val iconSizePx = with(density) { pos.iconSize.dp.toPx() }
+                    add(ItemRect(rom.key, pos.x, pos.y, iconSizePx, iconSizePx))
+                }
+            }
 
             apps.forEachIndexed { index, app ->
                 val position = positions[app.packageName]
@@ -368,6 +387,78 @@ fun FreePositionedAppsLayout(
                     )
                 }
             }
+            pinnedRoms.forEach { rom ->
+                val position = positions[rom.key]
+                val romIconSize = position?.iconSize ?: ROM_DEFAULT_ICON_SIZE
+                val (savedX, savedY) = if (position != null) {
+                    Pair(position.x, position.y)
+                } else {
+                    val iconSizePx = with(density) { romIconSize.dp.toPx() }
+                    val nonOverlapping = positionCalculator.calculateDefaultPosition(
+                        index = apps.size + pinnedRoms.indexOf(rom),
+                        iconSizePx = iconSizePx,
+                        existingItems = existingPositionedItems,
+                        containerWidth = containerSize.width.toFloat(),
+                        contentHeight = contentHeight
+                    )
+                    appPositionManager.savePosition(
+                        pageIndex,
+                        AppPosition(
+                            packageName = rom.key,
+                            x = nonOverlapping.first,
+                            y = nonOverlapping.second,
+                            iconSize = romIconSize
+                        )
+                    )
+                    nonOverlapping
+                }
+
+                key(rom.key) {
+                    FreePositionedRomItem(
+                        rom = rom,
+                        offsetX = savedX,
+                        offsetY = savedY,
+                        iconSize = romIconSize,
+                        isDraggingEnabled = !isDragLocked,
+                        onOffsetChanged = { x, y ->
+                            val dragResult = dragDropHandler.processDragForRom(
+                                dragX = x,
+                                dragY = y,
+                                draggingRomKey = rom.key,
+                                iconSize = romIconSize,
+                                containerSize = containerSize,
+                                contentHeight = contentHeight,
+                                apps = apps,
+                                positions = positions,
+                                folders = folders,
+                                pinnedRoms = pinnedRoms,
+                                snapEnabled = snapEnabled
+                            )
+                            alignmentState = dragResult.alignmentState
+                            appPositionManager.savePosition(
+                                pageIndex,
+                                AppPosition(
+                                    packageName = rom.key,
+                                    x = dragResult.finalX,
+                                    y = dragResult.finalY,
+                                    iconSize = romIconSize
+                                )
+                            )
+                        },
+                        onDragStart = {
+                            draggingAppIndex = -1
+                            draggingRomKey = rom.key
+                        },
+                        onDragEnd = {
+                            draggingRomKey = null
+                            alignmentState = AlignmentState()
+                        },
+                        onClick = { onRomClick(rom) },
+                        onLongClick = { romForOptions = rom }
+                    )
+                }
+            }
+
             bubbleBursts.forEach { burst ->
                 key(burst.id) {
                     KonfettiView(
@@ -396,6 +487,40 @@ fun FreePositionedAppsLayout(
             widgetPageAppManager.removeVisibleApp(pageIndex, packageName)
         }
     )
+
+    romForOptions?.let { rom ->
+        val currentSize = positions[rom.key]?.iconSize ?: ROM_DEFAULT_ICON_SIZE
+        PinnedRomOptionsDialog(
+            rom = rom,
+            onDismiss = { romForOptions = null },
+            currentIconSize = currentSize,
+            onIconSizeChange = { newSize ->
+                val pos = positions[rom.key]
+                appPositionManager.savePosition(
+                    pageIndex,
+                    AppPosition(
+                        packageName = rom.key,
+                        x = pos?.x ?: 0f,
+                        y = pos?.y ?: 0f,
+                        iconSize = newSize
+                    )
+                )
+            },
+            hasExternalDisplay = hasExternalDisplay,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(rom.key),
+            onDisplayPreferenceChange = { pref ->
+                appDisplayPreferenceManager.setAppDisplayPreference(rom.key, pref)
+            },
+            onMediaTypeSelected = { type ->
+                pinnedRomManager.updatePinnedRom(pageIndex, rom.copy(displayMediaType = type))
+                romForOptions = null
+            },
+            onRemove = {
+                onRomRemove(rom)
+                romForOptions = null
+            }
+        )
+    }
 }
 
 @Composable

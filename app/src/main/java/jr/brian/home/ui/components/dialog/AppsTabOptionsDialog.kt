@@ -21,7 +21,10 @@ import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
@@ -64,7 +68,10 @@ fun AppsTabOptionsDialog(
     onToggleDragLock: (lockOnly: Boolean?) -> Unit = {},
     title: String = stringResource(R.string.app_drawer_options_title),
     isLogoPositionLocked: Boolean = false,
-    onToggleMarqueePositionLock: (() -> Unit)? = null
+    onToggleMarqueePositionLock: (() -> Unit)? = null,
+    onAddRom: (() -> Unit)? = null,
+    currentRomDisplayPreference: DisplayPreference? = null,
+    onRomDisplayPreferenceChange: ((DisplayPreference) -> Unit)? = null
 ) {
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -182,20 +189,62 @@ fun AppsTabOptionsDialog(
                     }
                 }
 
-                if (onToggleMarqueePositionLock != null) {
-                    GridOptionButton(
+                if (onAddRom != null || onToggleMarqueePositionLock != null) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        title = if (isLogoPositionLocked) {
-                            stringResource(R.string.marquee_position_unlock)
-                        } else {
-                            stringResource(R.string.marquee_position_lock)
-                        },
-                        icon = if (isLogoPositionLocked) Icons.Default.LockOpen else Icons.Default.Lock,
-                        onClick = {
-                            onDismiss()
-                            onToggleMarqueePositionLock()
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (onAddRom != null) {
+                            GridOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.add_rom),
+                                icon = Icons.Default.VideogameAsset,
+                                onClick = {
+                                    onDismiss()
+                                    onAddRom()
+                                }
+                            )
                         }
-                    )
+
+                        if (onToggleMarqueePositionLock != null) {
+                            GridOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = if (isLogoPositionLocked) {
+                                    stringResource(R.string.marquee_position_unlock)
+                                } else {
+                                    stringResource(R.string.marquee_position_lock)
+                                },
+                                icon = if (isLogoPositionLocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                                onClick = {
+                                    onDismiss()
+                                    onToggleMarqueePositionLock()
+                                }
+                            )
+                        }
+                    }
+                }
+
+
+                if (onRomDisplayPreferenceChange != null && currentRomDisplayPreference != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.app_options_launch_primary_descr),
+                            icon = Icons.Default.Tv,
+                            isSelected = currentRomDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+                            onClick = { onRomDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY) }
+                        )
+                        GridOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.app_options_launch_external_descr),
+                            icon = Icons.Default.PhoneAndroid,
+                            isSelected = currentRomDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+                            onClick = { onRomDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY) }
+                        )
+                    }
                 }
             }
         }
@@ -207,22 +256,24 @@ private fun GridOptionButton(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
+    val highlighted = isFocused || isSelected
 
     Box(
         modifier = modifier
-            .scale(animatedFocusedScale(isFocused))
+            .scale(animatedFocusedScale(highlighted))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
-                brush = cardGradient(isFocused = isFocused),
+                brush = cardGradient(isFocused = highlighted),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = if (isFocused) 3.dp else 2.dp,
-                brush = borderBrush(isFocused = isFocused),
+                width = if (highlighted) 3.dp else 2.dp,
+                brush = borderBrush(isFocused = highlighted),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))

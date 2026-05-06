@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import kotlin.math.max
 
 /**
@@ -30,7 +31,8 @@ object ContentHeightCalculator {
         positions: Map<String, AppPosition>,
         containerSize: IntSize,
         density: Density,
-        positionCalculator: PositionCalculator
+        positionCalculator: PositionCalculator,
+        pinnedRoms: List<PinnedRomInfo> = emptyList()
     ): Float {
         var calculatedMaxY = 0f
 
@@ -49,6 +51,16 @@ object ContentHeightCalculator {
             val iconSize = position?.iconSize ?: 64f
             val iconSizePx = with(density) { iconSize.dp.toPx() }
             val y = position?.y ?: defaultY
+            val bottom = y + iconSizePx
+            if (bottom > calculatedMaxY) calculatedMaxY = bottom
+        }
+
+        // Calculate max Y from pinned ROMs
+        pinnedRoms.forEach { rom ->
+            val position = positions[rom.key]
+            val iconSize = position?.iconSize ?: ROM_DEFAULT_ICON_SIZE
+            val iconSizePx = with(density) { iconSize.dp.toPx() }
+            val y = position?.y ?: 0f
             val bottom = y + iconSizePx
             if (bottom > calculatedMaxY) calculatedMaxY = bottom
         }

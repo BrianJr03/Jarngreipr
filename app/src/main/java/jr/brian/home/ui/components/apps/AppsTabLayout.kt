@@ -27,6 +27,7 @@ import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.ui.components.widget.AppGridLayout
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -62,7 +63,10 @@ fun AppsTabContent(
     folders: List<Folder> = emptyList(),
     onFolderClick: (Folder) -> Unit = {},
     gridState: LazyGridState = rememberLazyGridState(),
-    scrollEnabled: Boolean = true
+    scrollEnabled: Boolean = true,
+    pinnedRoms: List<PinnedRomInfo> = emptyList(),
+    onRomClick: (PinnedRomInfo) -> Unit = {},
+    onRomRemove: (PinnedRomInfo) -> Unit = {}
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -124,6 +128,9 @@ fun AppsTabContent(
                 isDragLocked = isDragLocked,
                 pageIndex = pageIndex,
                 allApps = allApps,
+                pinnedRoms = pinnedRoms,
+                onRomClick = onRomClick,
+                onRomRemove = onRomRemove,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxSize()
