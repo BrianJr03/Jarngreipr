@@ -421,11 +421,14 @@ fun FreePositionedAppsLayout(
                         iconSize = romIconSize,
                         isDraggingEnabled = !isDragLocked,
                         onOffsetChanged = { x, y ->
+                            val currentRomIconSize =
+                                appPositionManager.getPosition(pageIndex, rom.key)?.iconSize
+                                    ?: ROM_DEFAULT_ICON_SIZE
                             val dragResult = dragDropHandler.processDragForRom(
                                 dragX = x,
                                 dragY = y,
                                 draggingRomKey = rom.key,
-                                iconSize = romIconSize,
+                                iconSize = currentRomIconSize,
                                 containerSize = containerSize,
                                 contentHeight = contentHeight,
                                 apps = apps,
@@ -441,7 +444,7 @@ fun FreePositionedAppsLayout(
                                     packageName = rom.key,
                                     x = dragResult.finalX,
                                     y = dragResult.finalY,
-                                    iconSize = romIconSize
+                                    iconSize = currentRomIconSize
                                 )
                             )
                         },

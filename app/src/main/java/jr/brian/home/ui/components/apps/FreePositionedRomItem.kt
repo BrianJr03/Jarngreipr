@@ -1,6 +1,7 @@
 package jr.brian.home.ui.components.apps
 
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -125,6 +126,10 @@ private fun RomIconImage(
         ?: rom.resolveDisplayPath()?.let { File(it).takeIf { f -> f.exists() } }
     val iconSizePx = with(density) { iconSize.dp.roundToPx() }
 
+    val updatedOnDragStart by rememberUpdatedState(onDragStart)
+    val updatedOnDragEnd by rememberUpdatedState(onDragEnd)
+    val updatedOnDragDelta by rememberUpdatedState(onDragDelta)
+
     Box(
         modifier = Modifier
             .size(iconSize.dp)
@@ -133,12 +138,12 @@ private fun RomIconImage(
                 if (isDraggingEnabled) {
                     Modifier.pointerInput(Unit) {
                         detectDragGestures(
-                            onDragStart = { onDragStart() },
-                            onDragEnd = { onDragEnd() },
-                            onDragCancel = { onDragEnd() }
+                            onDragStart = { updatedOnDragStart() },
+                            onDragEnd = { updatedOnDragEnd() },
+                            onDragCancel = { updatedOnDragEnd() }
                         ) { change, dragAmount ->
                             change.consume()
-                            onDragDelta(dragAmount.x, dragAmount.y)
+                            updatedOnDragDelta(dragAmount.x, dragAmount.y)
                         }
                     }
                 } else Modifier
