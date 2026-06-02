@@ -655,6 +655,14 @@
     <string name="folder_icon_description">Folder containing %1$d apps</string>
     <string name="folder_empty">Empty folder</string>
     <string name="folder_delete">Delete folder</string>
+    <string name="folder_background_title">Folder Background</string>
+    <string name="folder_background_button_description">Change folder background</string>
+    <string name="folder_background_pick_color">Pick a color</string>
+    <string name="folder_background_choose_png">Choose PNG</string>
+    <string name="folder_background_choose_gif">Choose GIF</string>
+    <string name="folder_background_remove">Remove background</string>
+    <string name="folder_background_image_error">Unable to load image</string>
+    <string name="folder_background_color_description">Background color</string>
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>

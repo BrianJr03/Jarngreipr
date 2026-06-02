@@ -191,6 +191,8 @@ fun FreePositionedAppsLayout(
                     iconSize = position.iconSize,
                     isFocusable = false,
                     customIconManager = customIconManager,
+                    backgroundColorArgb = folder.backgroundColorArgb,
+                    backgroundImagePath = folder.backgroundImagePath,
                     onOffsetChanged = { x, y ->
                         if (isFloaty) return@FolderItem
 

@@ -116,6 +116,8 @@ fun FreePositionedDialogsManager(
                 folderId = folder.id,
                 pageIndex = pageIndex,
                 allApps = allApps,
+                backgroundColorArgb = folder.backgroundColorArgb,
+                backgroundImagePath = folder.backgroundImagePath,
                 onDismiss = folderDialogState::dismiss
             )
         }

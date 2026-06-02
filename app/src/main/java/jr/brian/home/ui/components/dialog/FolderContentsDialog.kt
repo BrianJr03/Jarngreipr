@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -91,8 +92,13 @@ fun FolderContentsDialog(
     pageIndex: Int,
     allApps: List<AppInfo> = apps,
     tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS,
+    backgroundColorArgb: Int? = null,
+    backgroundImagePath: String? = null,
     onDismiss: () -> Unit
 ) {
+    var currentBackgroundColorArgb by remember(folderId) { mutableStateOf(backgroundColorArgb) }
+    var currentBackgroundImagePath by remember(folderId) { mutableStateOf(backgroundImagePath) }
+    val backgroundDialogState = rememberDialogState<Unit>()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val customIconManager = LocalCustomIconManager.current
@@ -185,6 +191,18 @@ fun FolderContentsDialog(
                     )
 
                     Row {
+                        IconButton(
+                            onClick = { backgroundDialogState.show() },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = stringResource(R.string.folder_background_button_description),
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
                         IconButton(
                             onClick = { editAppsDialogState.show() },
                             modifier = Modifier.size(40.dp)
@@ -382,6 +400,22 @@ fun FolderContentsDialog(
             packageName = app.packageName,
             appLabel = app.label,
             onDismiss = { appForRename = null }
+        )
+    }
+
+    if (backgroundDialogState.isVisible) {
+        FolderBackgroundDialog(
+            folderId = folderId,
+            folderName = editableName,
+            pageIndex = pageIndex,
+            tabType = tabType,
+            currentColorArgb = currentBackgroundColorArgb,
+            currentImagePath = currentBackgroundImagePath,
+            onBackgroundChanged = { argb, path ->
+                currentBackgroundColorArgb = argb
+                currentBackgroundImagePath = path
+            },
+            onDismiss = backgroundDialogState::dismiss
         )
     }
 }

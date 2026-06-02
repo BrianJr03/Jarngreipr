@@ -51,6 +51,11 @@ class MusicManager(
         context.applicationContext.getSharedPreferences(JINGLES_PREFS, Context.MODE_PRIVATE)
     private var isMuted: Boolean = sharedPrefs.getBoolean(KEY_MUTED, false)
 
+    // Tracks whether the player was paused specifically due to mute being enabled.
+    // This prevents resumeMusic(), onActivityVisible(), and audio focus restore from
+    // accidentally restarting playback while the user still has mute on.
+    private var isMutePaused: Boolean = false
+
     private val mutePrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == KEY_MUTED) {
             val newMuted = sharedPrefs.getBoolean(KEY_MUTED, false)
@@ -61,9 +66,20 @@ class MusicManager(
                     if (newMuted) {
                         volumeFadeRunnable?.let { handler.removeCallbacks(it) }
                         volumeFadeRunnable = null
-                        musicPlayer?.setVolume(0f, 0f)
+                        // Pause the player so screen recorders capture silence,
+                        // rather than just zeroing the software gain.
+                        val wasPlaying = musicPlayer?.isPlaying == true
+                        musicPlayer?.pause()
+                        if (wasPlaying) {
+                            isMutePaused = true
+                        }
                     } else {
-                        fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                        // Only restart if we were the ones who paused it for mute
+                        if (isMutePaused) {
+                            isMutePaused = false
+                            musicPlayer?.start()
+                            fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                        }
                     }
                 } catch (_: IllegalStateException) {
                     Log.w(TAG, "Could not apply mute from prefs - player released")
@@ -139,7 +155,10 @@ class MusicManager(
                 Log.d(TAG, "Audio focus gained")
                 hasAudioFocus = true
                 if (wasPausedByAudioFocusLoss && isMusicEnabled()) {
-                    resumeMusic()
+                    // Don't resume if still muted — isMutePaused will handle it
+                    if (!isMuted) {
+                        resumeMusic()
+                    }
                     wasPausedByAudioFocusLoss = false
                 } else if (isMusicDucked) {
                     restoreMusicVolume()
@@ -381,11 +400,18 @@ class MusicManager(
             return
         }
 
-        // Resume music if it was playing before visibility was lost
+        // Resume music if it was playing before visibility was lost,
+        // but only if the user hasn't muted since then.
         if (wasMusicPlayingBeforeInvisible) {
             Log.d(TAG, "Resuming music (was playing before invisible)")
             wasMusicPlayingBeforeInvisible = false
             wasPausedByAudioFocusLoss = false
+
+            if (isMuted) {
+                // User muted while the activity was invisible; don't restart.
+                Log.d(TAG, "Muted - skipping resume on activity visible")
+                return
+            }
 
             // Restart the music source that was playing
             if (currentMusicSource != null) {
@@ -398,8 +424,12 @@ class MusicManager(
         } else if (wasPausedByAudioFocusLoss) {
             // Music was interrupted by another app (e.g., Spotify) while activity was visible
             // Now that the user has returned, try to reclaim audio focus and resume
-            Log.d(TAG, "Resuming music after audio focus loss (activity now visible)")
-            tryResumeAfterAudioFocusLoss()
+            if (!isMuted) {
+                Log.d(TAG, "Resuming music after audio focus loss (activity now visible)")
+                tryResumeAfterAudioFocusLoss()
+            } else {
+                Log.d(TAG, "Muted - skipping audio focus loss resume on activity visible")
+            }
         }
     }
 
@@ -410,8 +440,9 @@ class MusicManager(
         if (!isMusicEnabled()) return
 
         // If music was paused because another app took audio focus (e.g., Spotify via widget),
-        // try to reclaim focus and resume now that the user has interacted with our app again
-        if (wasPausedByAudioFocusLoss) {
+        // try to reclaim focus and resume now that the user has interacted with our app again.
+        // Skip if still muted.
+        if (wasPausedByAudioFocusLoss && !isMuted) {
             Log.d(TAG, "Attempting to resume music after audio focus loss (onResume)")
             tryResumeAfterAudioFocusLoss()
         }
@@ -450,6 +481,7 @@ class MusicManager(
         currentMusicSource = null
         currentPlaylist = emptyList()
         isMusicPlaying = false
+        isMutePaused = false
 
         // Abandon audio focus
         abandonAudioFocus()
@@ -467,6 +499,11 @@ class MusicManager(
     }
 
     override fun resumeMusic() {
+        // Don't resume if the player was paused because of mute
+        if (isMutePaused) {
+            Log.d(TAG, "resumeMusic() skipped - player paused due to mute")
+            return
+        }
         musicPlayer?.let { player ->
             if (!player.isPlaying) {
                 Log.d(TAG, "Resuming music via user control")
@@ -584,6 +621,7 @@ class MusicManager(
         targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
+        isMutePaused = false
 
         // Play first track
         playTrack(playlist[0])
@@ -608,6 +646,7 @@ class MusicManager(
             isMusicDucked = false
             wasMusicPausedForVideo = false
             isMusicPlaying = false
+            isMutePaused = false
             targetVolume = getNormalVolume()
             abandonAudioFocus()
             bgMusicManager.unDuck()
@@ -652,6 +691,7 @@ class MusicManager(
         targetVolume = getNormalVolume()
         isMusicDucked = false
         wasMusicPausedForVideo = false
+        isMutePaused = false
 
         // Fade out and release old player independently
         if (oldPlayer != null && oldPlayer.isPlaying) {
@@ -761,8 +801,12 @@ class MusicManager(
                 setOnPreparedListener { mp ->
                     Log.d(TAG, "Track prepared, starting playback")
                     if (isMuted) {
-                        mp.setVolume(0f, 0f)
+                        // Start then immediately pause so the player is ready to resume
+                        // when unmuted, without sending any audio to the mixer.
                         mp.start()
+                        mp.pause()
+                        isMutePaused = true
+                        Log.d(TAG, "Track prepared while muted - paused immediately")
                     } else {
                         mp.start()
                         // Fade in from 0 to target volume
@@ -846,6 +890,12 @@ class MusicManager(
         Log.d(TAG, "Resuming music after video")
         wasMusicPausedForVideo = false
 
+        // Don't resume if muted
+        if (isMuted) {
+            Log.d(TAG, "Muted - skipping resume after video")
+            return
+        }
+
         musicPlayer?.start()
         fadeVolume(0f, getNormalVolume(), DUCK_FADE_DURATION)
     }
@@ -854,15 +904,26 @@ class MusicManager(
         val clampedVolume = volume.coerceIn(0f, 1f)
         Log.d(TAG, "Setting volume to ${clampedVolume * 100}%")
 
-        // Cancel any existing fade that would override this manual volume setting
         volumeFadeRunnable?.let { handler.removeCallbacks(it) }
         volumeFadeRunnable = null
 
         targetVolume = clampedVolume
         currentVolume = clampedVolume
 
+        if (isMuted) return
+
         try {
-            musicPlayer?.setVolume(clampedVolume, clampedVolume)
+            if (clampedVolume == 0f) {
+                val wasPlaying = musicPlayer?.isPlaying == true
+                musicPlayer?.pause()
+                if (wasPlaying) isMutePaused = true
+            } else {
+                if (isMutePaused) {
+                    isMutePaused = false
+                    musicPlayer?.start()
+                }
+                musicPlayer?.setVolume(clampedVolume, clampedVolume)
+            }
         } catch (_: IllegalStateException) {
             Log.w(TAG, "Could not set volume - player released")
         }
@@ -875,9 +936,20 @@ class MusicManager(
             if (muted) {
                 volumeFadeRunnable?.let { handler.removeCallbacks(it) }
                 volumeFadeRunnable = null
-                musicPlayer?.setVolume(0f, 0f)
+                // Pause the player so screen recorders capture silence,
+                // rather than just zeroing the software gain.
+                val wasPlaying = musicPlayer?.isPlaying == true
+                musicPlayer?.pause()
+                if (wasPlaying) {
+                    isMutePaused = true
+                }
             } else {
-                fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                // Only restart if we were the ones who paused it for mute
+                if (isMutePaused) {
+                    isMutePaused = false
+                    musicPlayer?.start()
+                    fadeVolume(0f, targetVolume, CROSS_FADE_DURATION)
+                }
             }
         } catch (_: IllegalStateException) {
             Log.w(TAG, "Could not set mute - player released")
@@ -1004,7 +1076,6 @@ class MusicManager(
 
         val sortedFiles = audioFiles.sortedBy { it.absolutePath }
         val shuffledFiles = sortedFiles.shuffled()
-
 
         return shuffledFiles
     }

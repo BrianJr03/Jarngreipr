@@ -660,6 +660,8 @@ fun AppsAndWidgetsTab(
                 pageIndex = pageIndex,
                 allApps = allApps,
                 tabType = TAB_TYPE_WIDGETS,
+                backgroundColorArgb = folder.backgroundColorArgb,
+                backgroundImagePath = folder.backgroundImagePath,
                 onDismiss = folderContentsDialogState::dismiss
             )
         }
