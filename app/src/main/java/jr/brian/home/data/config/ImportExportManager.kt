@@ -160,7 +160,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                             apps = folder.appPackageNames,
                             x = folder.position.x,
                             y = folder.position.y,
-                            iconSize = folder.position.iconSize
+                            iconSize = folder.position.iconSize,
+                            backgroundColorArgb = folder.backgroundColorArgb,
+                            backgroundImagePath = folder.backgroundImagePath
                         )
                     }
                 }
@@ -369,7 +371,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                     id = fc.id,
                     name = fc.name,
                     appPackageNames = fc.apps,
-                    position = AppPosition(fc.id, fc.x, fc.y, fc.iconSize)
+                    position = AppPosition(fc.id, fc.x, fc.y, fc.iconSize),
+                    backgroundColorArgb = fc.backgroundColorArgb,
+                    backgroundImagePath = fc.backgroundImagePath
                 )
             }
             app.folderManager.setAllFolders(page, tabType, folders)

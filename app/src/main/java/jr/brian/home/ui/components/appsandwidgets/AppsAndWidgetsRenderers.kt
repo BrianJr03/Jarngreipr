@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.widget.AppItem
@@ -75,6 +76,24 @@ fun LazyGridScope.renderWidgetItems(
                     onSwapModeEnabled(widget.widgetId)
                 },
                 editModeEnabled = editModeEnabled
+            )
+        }
+    }
+}
+
+fun LazyGridScope.renderRomItems(
+    pinnedRoms: List<PinnedRomInfo>,
+    onRomClick: (PinnedRomInfo) -> Unit,
+    onRomLongClick: (PinnedRomInfo) -> Unit
+) {
+    if (pinnedRoms.isEmpty()) return
+
+    pinnedRoms.forEach { rom ->
+        item(key = "rom_${rom.key}") {
+            RomGridItem(
+                rom = rom,
+                onClick = { onRomClick(rom) },
+                onLongClick = { onRomLongClick(rom) }
             )
         }
     }

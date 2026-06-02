@@ -31,6 +31,7 @@ import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.theme.managers.LocalShizukuManager
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
@@ -115,6 +116,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalFloatyModeManager provides feature.floatyModeManager,
         LocalJinglesManager provides feature.jinglesManager,
         LocalBgMusicManager provides feature.bgMusicManager,
+        LocalPinnedRomManager provides feature.pinnedRomManager,
         
         // System Integration
         LocalNotificationManager provides system.notificationManager,

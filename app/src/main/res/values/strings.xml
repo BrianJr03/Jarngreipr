@@ -41,6 +41,17 @@
     <string name="faq_rom_search_what_answer">ROM Search reads your ES-DE game library and lets you launch games directly from the home screen. Tap the controller icon to open it, then type a game name, system (e.g. @psp), or genre to filter results.</string>
     <string name="faq_rom_search_emulator_question">My emulator isn\'t supported — what do I do?</string>
     <string name="faq_rom_search_emulator_answer">Not every emulator is supported on day one. When picking an emulator for a game, use the \"Choose App\" option at the bottom of the list to launch with any installed app as a workaround. If you\'d like full support added, please open a GitHub issue at github.com/BrianJr03/Jarngreipr.</string>
+    <string name="add_rom">Add ROM</string>
+    <string name="rom_remove_from_page">Remove from page</string>
+    <string name="rom_options_choose_media">Choose media</string>
+    <string name="rom_media_auto">Auto</string>
+    <string name="rom_media_covers">Covers</string>
+    <string name="rom_media_marquee">Marquee</string>
+    <string name="rom_media_screenshots">Screenshots</string>
+    <string name="rom_media_fanart">Fanart</string>
+    <string name="rom_media_title_screens">Title Screens</string>
+    <string name="rom_media_mix_images">Mix Images</string>
+    <string name="rom_media_physical_media">Physical Media</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
@@ -644,6 +655,14 @@
     <string name="folder_icon_description">Folder containing %1$d apps</string>
     <string name="folder_empty">Empty folder</string>
     <string name="folder_delete">Delete folder</string>
+    <string name="folder_background_title">Folder Background</string>
+    <string name="folder_background_button_description">Change folder background</string>
+    <string name="folder_background_pick_color">Pick a color</string>
+    <string name="folder_background_choose_png">Choose PNG</string>
+    <string name="folder_background_choose_gif">Choose GIF</string>
+    <string name="folder_background_remove">Remove background</string>
+    <string name="folder_background_image_error">Unable to load image</string>
+    <string name="folder_background_color_description">Background color</string>
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>

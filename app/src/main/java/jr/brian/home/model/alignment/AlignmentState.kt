@@ -8,6 +8,7 @@ import jr.brian.home.model.GuideType
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -31,10 +32,12 @@ fun calculateAlignmentGuides(
     positions: Map<String, AppPosition>,
     borderPadding: Float,
     folders: List<Folder> = emptyList(),
-    draggingFolderId: String? = null
+    draggingFolderId: String? = null,
+    pinnedRoms: List<PinnedRomInfo> = emptyList(),
+    draggingRomKey: String? = null
 ): AlignmentState {
-    // Return early if nothing is being dragged (no app index and no folder id) or container not ready
-    if ((draggingIndex < 0 && draggingFolderId == null) || containerSize.width == 0) {
+    // Return early if nothing is being dragged or container not ready
+    if ((draggingIndex < 0 && draggingFolderId == null && draggingRomKey == null) || containerSize.width == 0) {
         return AlignmentState()
     }
 
@@ -345,6 +348,93 @@ fun calculateAlignmentGuides(
                         isHorizontal = false
                     )
                 )
+            }
+        }
+    }
+
+    // Check alignment with pinned ROMs
+    pinnedRoms.forEach { rom ->
+        if (rom.key == draggingRomKey) return@forEach
+        val position = positions[rom.key] ?: return@forEach
+        val romIconSizePx = with(density) { position.iconSize.dp.toPx() }
+        val romX = position.x
+        val romY = position.y
+        val romCenterX = romX + romIconSizePx / 2
+        val romCenterY = romY + romIconSizePx / 2
+        val romRight = romX + romIconSizePx
+        val romBottom = romY + romIconSizePx
+
+        if (abs(draggingCenterX - romCenterX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, romCenterX))
+            if (snappedX == null) snappedX = romCenterX - iconSizePx / 2
+        } else if (abs(dragX - romX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, romX))
+            if (snappedX == null) snappedX = romX
+        } else if (abs(draggingRight - romRight) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, romRight))
+            if (snappedX == null) snappedX = romRight - iconSizePx
+        } else if (abs(dragX - romRight) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, romRight))
+            if (snappedX == null) snappedX = romRight
+        } else if (abs(draggingRight - romX) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.VERTICAL, romX))
+            if (snappedX == null) snappedX = romX - iconSizePx
+        }
+
+        if (abs(draggingCenterY - romCenterY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, romCenterY))
+            if (snappedY == null) snappedY = romCenterY - iconSizePx / 2
+        } else if (abs(dragY - romY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, romY))
+            if (snappedY == null) snappedY = romY
+        } else if (abs(draggingBottom - romBottom) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, romBottom))
+            if (snappedY == null) snappedY = romBottom - iconSizePx
+        } else if (abs(dragY - romBottom) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, romBottom))
+            if (snappedY == null) snappedY = romBottom
+        } else if (abs(draggingBottom - romY) < snapThreshold) {
+            guides.add(AlignmentGuide(GuideType.HORIZONTAL, romY))
+            if (snappedY == null) snappedY = romY - iconSizePx
+        }
+
+        val distanceThreshold = with(density) { 200.dp.toPx() }
+
+        val hDist = when {
+            draggingRight < romX -> romX - draggingRight
+            dragX > romRight -> dragX - romRight
+            else -> null
+        }
+        if (hDist != null && hDist > 0 && hDist < distanceThreshold) {
+            val vOverlap = min(draggingBottom, romBottom) - max(dragY, romY)
+            if (vOverlap > 0) {
+                distances.add(DistanceMeasurement(
+                    startX = if (draggingRight < romX) draggingRight else dragX,
+                    startY = max(dragY, romY) + vOverlap / 2,
+                    endX = if (draggingRight < romX) romX else romRight,
+                    endY = max(dragY, romY) + vOverlap / 2,
+                    distance = with(density) { hDist.toDp().value },
+                    isHorizontal = true
+                ))
+            }
+        }
+
+        val vDist = when {
+            draggingBottom < romY -> romY - draggingBottom
+            dragY > romBottom -> dragY - romBottom
+            else -> null
+        }
+        if (vDist != null && vDist > 0 && vDist < distanceThreshold) {
+            val hOverlap = min(draggingRight, romRight) - max(dragX, romX)
+            if (hOverlap > 0) {
+                distances.add(DistanceMeasurement(
+                    startX = max(dragX, romX) + hOverlap / 2,
+                    startY = if (draggingBottom < romY) draggingBottom else dragY,
+                    endX = max(dragX, romX) + hOverlap / 2,
+                    endY = if (draggingBottom < romY) romY else romBottom,
+                    distance = with(density) { vDist.toDp().value },
+                    isHorizontal = false
+                ))
             }
         }
     }

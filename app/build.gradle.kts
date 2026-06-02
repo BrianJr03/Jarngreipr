@@ -10,14 +10,14 @@ plugins {
 
 android {
     namespace = "jr.brian.home"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "jr.brian.home"
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
-        versionName = "2.3.5"
+        versionName = "2.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
