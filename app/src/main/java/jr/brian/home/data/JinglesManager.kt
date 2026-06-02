@@ -131,32 +131,78 @@ class JinglesManager @Inject constructor(
     private var player: ExoPlayer? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var currentPlayJob: Job? = null
+
     @Volatile
     private var currentGameFilename: String? = null
+
+    // Whether the player was paused specifically because mute was enabled.
+    // Guards against onGameSelected or any other trigger restarting audio
+    // while the user still has mute on.
+    @Volatile
+    private var isMutePaused: Boolean = false
 
     init {
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         scope.launch { reloadIndices() }
         scope.launch(Dispatchers.Main) {
             initPlayer()
-            player?.volume = if (_isMuted.value) 0f else _volume.value
+            // Apply initial mute state — pause immediately if muted so the
+            // player is ready but silent from the first frame.
+            if (_isMuted.value) {
+                player?.pause()
+                isMutePaused = true
+            } else {
+                player?.volume = _volume.value
+            }
         }
     }
 
-
+    /**
+     * Mutes or unmutes jingle playback by pausing/resuming the ExoPlayer rather
+     * than zeroing the software gain. This ensures screen recorders capture silence
+     * instead of the raw audio stream at zero gain.
+     */
     fun setMuted(muted: Boolean) {
+        if (_isMuted.value == muted) return
         _isMuted.value = muted
         prefs.edit { putBoolean(KEY_MUTED, muted) }
         scope.launch(Dispatchers.Main) {
-            player?.volume = if (muted) 0f else _volume.value
+            val p = player ?: return@launch
+            if (muted) {
+                // Pause so no audio reaches the mixer.
+                val wasPlaying = p.isPlaying
+                p.pause()
+                if (wasPlaying) isMutePaused = true
+            } else {
+                // Only resume if we were the ones who paused it for mute.
+                if (isMutePaused) {
+                    isMutePaused = false
+                    p.volume = _volume.value
+                    p.play()
+                }
+            }
         }
     }
 
     fun setVolume(volume: Float) {
         _volume.value = volume
         prefs.edit { putFloat(KEY_VOLUME, volume) }
-        if (!_isMuted.value) {
-            scope.launch(Dispatchers.Main) { player?.volume = volume }
+        if (_isMuted.value) return
+        scope.launch(Dispatchers.Main) {
+            val p = player ?: return@launch
+            if (volume == 0f) {
+                val wasPlaying = p.isPlaying
+                p.pause()
+                if (wasPlaying) isMutePaused = true
+            } else {
+                if (isMutePaused) {
+                    isMutePaused = false
+                    p.volume = volume
+                    p.play()
+                } else {
+                    p.volume = volume
+                }
+            }
         }
     }
 
@@ -316,6 +362,7 @@ class JinglesManager @Inject constructor(
         currentPlayJob?.cancel()
         scope.launch(Dispatchers.Main) {
             player?.stop()
+            isMutePaused = false
             bgMusicManager.unDuck()
         }
     }
@@ -331,6 +378,7 @@ class JinglesManager @Inject constructor(
         currentPlayJob?.cancel()
         scope.launch(Dispatchers.Main) {
             player?.stop()
+            isMutePaused = false
             bgMusicManager.unDuck()
         }
     }
@@ -342,6 +390,7 @@ class JinglesManager @Inject constructor(
             loudnessEnhancer = null
             player?.release()
             player = null
+            isMutePaused = false
             bgMusicManager.unDuck()
         }
     }
@@ -619,7 +668,7 @@ class JinglesManager @Inject constructor(
      *
      * Reading [snapshot] without a lock is intentional: [@Volatile] guarantees
      * we always see the latest fully-constructed snapshot reference.
-     * */
+     */
     private suspend fun findMatch(
         gameFilename: String
     ): Pair<JingleSource, JingleEntry>? {
@@ -781,9 +830,19 @@ class JinglesManager @Inject constructor(
             p.clearMediaItems()
             p.setMediaItem(MediaItem.fromUri(url))
             p.prepare()
-            p.volume = if (_isMuted.value) 0f else _volume.value
-            bgMusicManager.duck()
-            p.play()
+
+            if (_isMuted.value) {
+                // Prepare but don't play — keep isMutePaused so setMuted(false)
+                // knows to resume rather than silently dropping this jingle.
+                // ExoPlayer in STATE_READY with play-when-ready=false emits no audio.
+                p.playWhenReady = false
+                isMutePaused = true
+            } else {
+                p.volume = _volume.value
+                p.playWhenReady = true
+                bgMusicManager.duck()
+                p.play()
+            }
         }
     }
 

@@ -44,10 +44,14 @@ class BgMusicManager @Inject constructor(
         private set
 
     private var isDucked = false
+
+    // Whether the player was paused specifically because mute was enabled.
+    // Guards against resumePlayback(), screen-on, or audio focus gain
+    // accidentally restarting audio while the user still has mute on.
     private var isMuted = false
+    private var isMutePaused = false
 
     private fun effectiveVolume() = when {
-        isMuted -> 0f
         isDucked -> vol * DUCK_FACTOR
         else -> vol
     }
@@ -55,17 +59,23 @@ class BgMusicManager @Inject constructor(
     fun duck() {
         if (isDucked) return
         isDucked = true
-        val ev = effectiveVolume()
-        mediaPlayer?.setVolume(ev, ev)
-        nextMediaPlayer?.setVolume(ev, ev)
+        // Only apply volume change if not muted (players are paused when muted)
+        if (!isMuted) {
+            val ev = effectiveVolume()
+            mediaPlayer?.setVolume(ev, ev)
+            nextMediaPlayer?.setVolume(ev, ev)
+        }
     }
 
     fun unDuck() {
         if (!isDucked) return
         isDucked = false
-        val ev = effectiveVolume()
-        mediaPlayer?.setVolume(ev, ev)
-        nextMediaPlayer?.setVolume(ev, ev)
+        // Only apply volume change if not muted
+        if (!isMuted) {
+            val ev = effectiveVolume()
+            mediaPlayer?.setVolume(ev, ev)
+            nextMediaPlayer?.setVolume(ev, ev)
+        }
     }
 
     var folderUri by mutableStateOf(prefs.getString(KEY_FOLDER_URI, null))
@@ -99,7 +109,8 @@ class BgMusicManager @Inject constructor(
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> duck()
             AudioManager.AUDIOFOCUS_GAIN -> {
                 unDuck()
-                if (isIntendedToPlay) resumePlayback()
+                // Don't resume if muted — isMutePaused will gate it
+                if (isIntendedToPlay && !isMuted) resumePlayback()
             }
         }
     }
@@ -125,7 +136,8 @@ class BgMusicManager @Inject constructor(
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_SCREEN_OFF -> pausePlayback()
-                Intent.ACTION_SCREEN_ON -> if (isIntendedToPlay) resumePlayback()
+                // Don't resume on screen-on if muted
+                Intent.ACTION_SCREEN_ON -> if (isIntendedToPlay && !isMuted) resumePlayback()
             }
         }
     }
@@ -173,14 +185,26 @@ class BgMusicManager @Inject constructor(
     fun setVolume(v: Float) {
         vol = v.coerceIn(0f, 1f)
         prefs.edit { putFloat(KEY_VOLUME, vol) }
-        val ev = effectiveVolume()
-        mediaPlayer?.setVolume(ev, ev)
-        nextMediaPlayer?.setVolume(ev, ev)
+        if (isMuted) return
+        if (vol == 0f) {
+            val wasPlaying = mediaPlayer?.isPlaying == true
+            mediaPlayer?.runCatching { if (isPlaying) pause() }
+            if (wasPlaying) isMutePaused = true
+        } else {
+            if (isMutePaused) {
+                isMutePaused = false
+                mediaPlayer?.runCatching { start() }
+            }
+            val ev = effectiveVolume()
+            mediaPlayer?.setVolume(ev, ev)
+            nextMediaPlayer?.setVolume(ev, ev)
+        }
     }
 
     fun startPlayback() {
         stopPlayback()
         isIntendedToPlay = true
+        // If muted, set up the players but don't actually start them
         when (mode) {
             Mode.FOLDER -> startFolderPlayback()
             Mode.SINGLE_FILE -> startSingleFilePlayback()
@@ -189,6 +213,7 @@ class BgMusicManager @Inject constructor(
 
     fun stopPlayback() {
         isIntendedToPlay = false
+        isMutePaused = false
         mediaPlayer?.runCatching { if (isPlaying) stop(); release() }
         nextMediaPlayer?.runCatching { release() }
         mediaPlayer = null
@@ -196,11 +221,34 @@ class BgMusicManager @Inject constructor(
         abandonAudioFocus()
     }
 
+    /**
+     * Mutes or unmutes playback by pausing/resuming the player rather than
+     * zeroing the software gain. This ensures screen recorders capture silence
+     * instead of the raw audio stream at zero gain.
+     */
     fun setMuted(muted: Boolean) {
+        if (isMuted == muted) return
         isMuted = muted
-        val ev = effectiveVolume()
-        mediaPlayer?.setVolume(ev, ev)
-        nextMediaPlayer?.setVolume(ev, ev)
+
+        if (muted) {
+            // Pause the active player so no audio reaches the mixer
+            val wasPlaying = mediaPlayer?.isPlaying == true
+            mediaPlayer?.runCatching { if (isPlaying) pause() }
+            if (wasPlaying) {
+                isMutePaused = true
+            }
+        } else {
+            // Only resume if we were the ones who paused it for mute
+            if (isMutePaused && isIntendedToPlay) {
+                isMutePaused = false
+                mediaPlayer?.runCatching { start() }
+                val ev = effectiveVolume()
+                mediaPlayer?.setVolume(ev, ev)
+                nextMediaPlayer?.setVolume(ev, ev)
+            } else {
+                isMutePaused = false
+            }
+        }
     }
 
     fun restoreSettings(
@@ -231,6 +279,9 @@ class BgMusicManager @Inject constructor(
     }
 
     fun resumePlayback() {
+        // Don't resume if the player is paused because of mute
+        if (isMutePaused) return
+
         if (mediaPlayer != null) {
             mediaPlayer?.runCatching { start() }
         } else if (isIntendedToPlay) {
@@ -240,6 +291,9 @@ class BgMusicManager @Inject constructor(
 
     /** Called on app start to resume playback if a source is configured. */
     fun resumeIfConfigured() {
+        // Don't resume if muted
+        if (isMuted) return
+
         val hasSource = when (mode) {
             Mode.FOLDER -> folderUri != null
             Mode.SINGLE_FILE -> singleFileUri != null
@@ -275,9 +329,17 @@ class BgMusicManager @Inject constructor(
         mediaPlayer = buildFolderPlayer(uri).also { player ->
             player.setOnPreparedListener { mp ->
                 if (!requestAudioFocus()) return@setOnPreparedListener
-                mp.start()
-                // Start pre-buffering the next track now that playback is live
-                prebufferNextFolderTrack()
+                if (isMuted) {
+                    // Start then immediately pause — keeps player in a valid,
+                    // resumable state without sending any audio to the mixer.
+                    mp.start()
+                    mp.pause()
+                    isMutePaused = true
+                } else {
+                    mp.start()
+                    // Start pre-buffering the next track now that playback is live
+                    prebufferNextFolderTrack()
+                }
             }
             player.prepareAsync()
         }
@@ -321,7 +383,8 @@ class BgMusicManager @Inject constructor(
                     nextMediaPlayer = null
                     if (playlist.isNotEmpty()) {
                         currentIndex = (currentIndex + 1) % playlist.size
-                        prebufferNextFolderTrack()
+                        // Only pre-buffer if not muted (no point buffering if paused)
+                        if (!isMuted) prebufferNextFolderTrack()
                     }
                 }
 
@@ -354,16 +417,25 @@ class BgMusicManager @Inject constructor(
         mediaPlayer = buildSingleFilePlayer(uri).also { primary ->
             primary.setOnPreparedListener { mp ->
                 if (!requestAudioFocus()) return@setOnPreparedListener
-                // Build and prepare the looper before primary starts so it
-                // is ready to be chained immediately after prepare.
-                val looper = buildSingleFilePlayer(uri).also { next ->
-                    next.setOnPreparedListener { preparedNext ->
-                        mp.setNextMediaPlayer(preparedNext)
+
+                if (isMuted) {
+                    // Start then immediately pause — keeps player resumable
+                    // without sending any audio to the mixer.
+                    mp.start()
+                    mp.pause()
+                    isMutePaused = true
+                } else {
+                    // Build and prepare the looper before primary starts so it
+                    // is ready to be chained immediately after prepare.
+                    val looper = buildSingleFilePlayer(uri).also { next ->
+                        next.setOnPreparedListener { preparedNext ->
+                            mp.setNextMediaPlayer(preparedNext)
+                        }
+                        next.prepareAsync()
                     }
-                    next.prepareAsync()
+                    nextMediaPlayer = looper
+                    mp.start()
                 }
-                nextMediaPlayer = looper
-                mp.start()
             }
             primary.prepareAsync()
         }
@@ -386,14 +458,16 @@ class BgMusicManager @Inject constructor(
                     mediaPlayer = nextMediaPlayer
                     nextMediaPlayer = null
 
-                    // Buffer a fresh player for the upcoming loop
-                    val next = buildSingleFilePlayer(uri).also { fresh ->
-                        fresh.setOnPreparedListener { preparedFresh ->
-                            mediaPlayer?.setNextMediaPlayer(preparedFresh)
+                    // Only buffer next if not muted
+                    if (!isMuted) {
+                        val next = buildSingleFilePlayer(uri).also { fresh ->
+                            fresh.setOnPreparedListener { preparedFresh ->
+                                mediaPlayer?.setNextMediaPlayer(preparedFresh)
+                            }
+                            fresh.prepareAsync()
                         }
-                        fresh.prepareAsync()
+                        nextMediaPlayer = next
                     }
-                    nextMediaPlayer = next
                 }
 
                 setOnErrorListener { _, _, _ -> true }

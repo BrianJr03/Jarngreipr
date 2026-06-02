@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.widget.WidgetInfo
 import jr.brian.home.ui.components.header.ScreenHeaderRow
 import jr.brian.home.viewmodels.PowerViewModel
@@ -60,7 +61,10 @@ fun TabContent(
     onSwapModeDisabled: () -> Unit,
     onEditModeToggle: () -> Unit,
     onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit
+    onFolderClick: (Folder) -> Unit,
+    pinnedRoms: List<PinnedRomInfo> = emptyList(),
+    onRomClick: (PinnedRomInfo) -> Unit = {},
+    onRomLongClick: (PinnedRomInfo) -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -101,7 +105,10 @@ fun TabContent(
             swapSourceWidgetId = swapSourceWidgetId,
             onSwapComplete = onSwapModeDisabled,
             onSwapModeEnabled = onSwapModeEnabled,
-            onFolderClick = onFolderClick
+            onFolderClick = onFolderClick,
+            pinnedRoms = pinnedRoms,
+            onRomClick = onRomClick,
+            onRomLongClick = onRomLongClick
         )
     }
 }
@@ -187,7 +194,10 @@ fun WidgetsAndAppsGrid(
     swapSourceWidgetId: Int?,
     onSwapComplete: () -> Unit,
     onSwapModeEnabled: (Int) -> Unit,
-    onFolderClick: (Folder) -> Unit
+    onFolderClick: (Folder) -> Unit,
+    pinnedRoms: List<PinnedRomInfo> = emptyList(),
+    onRomClick: (PinnedRomInfo) -> Unit = {},
+    onRomLongClick: (PinnedRomInfo) -> Unit = {}
 ) {
     LazyVerticalGrid(
         state = gridState,
@@ -199,9 +209,9 @@ fun WidgetsAndAppsGrid(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val sections = if (appsFirst) {
-            listOf("apps" to displayedApps, "folders" to folders, "widgets" to widgets)
+            listOf("apps" to displayedApps, "folders" to folders, "widgets" to widgets, "roms" to pinnedRoms)
         } else {
-            listOf("widgets" to widgets, "apps" to displayedApps, "folders" to folders)
+            listOf("widgets" to widgets, "apps" to displayedApps, "folders" to folders, "roms" to pinnedRoms)
         }
 
         sections.forEach { (sectionType, _) ->
@@ -232,6 +242,12 @@ fun WidgetsAndAppsGrid(
                     onSwapComplete = onSwapComplete,
                     onSwapModeEnabled = onSwapModeEnabled,
                     editModeEnabled = editModeEnabled
+                )
+
+                "roms" -> renderRomItems(
+                    pinnedRoms = pinnedRoms,
+                    onRomClick = onRomClick,
+                    onRomLongClick = onRomLongClick
                 )
             }
         }

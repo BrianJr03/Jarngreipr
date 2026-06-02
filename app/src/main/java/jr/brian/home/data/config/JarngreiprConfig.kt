@@ -1,5 +1,6 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
 
@@ -71,7 +72,8 @@ data class SearchLayoutConfig(
 data class AppConfig(
     val visibility: AppVisibilityConfig = AppVisibilityConfig(),
     val positions: Map<String, PagePositionConfig> = emptyMap(),
-    val folders: Map<String, List<FolderItemConfig>> = emptyMap()
+    val folders: Map<String, List<FolderItemConfig>> = emptyMap(),
+    val pinnedRoms: Map<String, List<PinnedRomInfo>> = emptyMap()
 )
 
 @Serializable
@@ -108,7 +110,9 @@ data class FolderItemConfig(
     val apps: List<String>,
     val x: Float,
     val y: Float,
-    val iconSize: Float = 64f
+    val iconSize: Float = 64f,
+    val backgroundColorArgb: Int? = null,
+    val backgroundImagePath: String? = null
 )
 
 @Serializable
