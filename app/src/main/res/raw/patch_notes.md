@@ -1,23 +1,12 @@
-**Backup and Restore**
-- You can now do a full backup (and restoration) of all app settings
-  - App, Folder, Widget positions and much more
-  - Settings → System → Backup
+**Add your ROMS to Home Tabs (experimental)**
+- New Add ROM option added in the options dialog
+- You can add any ROM from your ES-DE library
+- Access this by pressing the menu button on a tab
 
-**Notification Shade**
-- Want to swipe down from the screen for quick controls? Use Notification Shade
-  - Quickly see time and battery
-  - Quick controls for Now Playing RSS Feed
-  - Settings → Layout → Notification Shade
+**Folder Customization**
+- You can now choose a background color or custom background image for folders
 
-**Tab Transition Animations**
-- Set Tab Transition Animations to change the look and feel!
-- Settings → Layout → Tab Transition Animation
+**Quick Fixes**
+- Audio from background music is will not play in screen recordings when volume is muted/at 0
 
-**Disable snapping in Free Position Mode**
-- Settings → Layout → Icon Snapping
-
-**RSS Tab**
-- You can now see a Mixed feed
-- Various small fixes
-
-2.3.5
+2.4
