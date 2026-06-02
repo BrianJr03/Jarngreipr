@@ -110,7 +110,9 @@ data class FolderItemConfig(
     val apps: List<String>,
     val x: Float,
     val y: Float,
-    val iconSize: Float = 64f
+    val iconSize: Float = 64f,
+    val backgroundColorArgb: Int? = null,
+    val backgroundImagePath: String? = null
 )
 
 @Serializable

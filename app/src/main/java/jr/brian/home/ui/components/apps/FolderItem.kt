@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,18 +33,25 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import java.io.File
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -59,6 +67,8 @@ fun FolderItem(
     isDraggingEnabled: Boolean = true,
     customIconManager: CustomIconManager? = null,
     folderName: String = stringResource(R.string.folder_default_name),
+    backgroundColorArgb: Int? = null,
+    backgroundImagePath: String? = null,
     onClick: () -> Unit,
     onOffsetChanged: (Float, Float) -> Unit,
     onDragEnd: () -> Unit = {},
@@ -84,7 +94,10 @@ fun FolderItem(
                     .size(iconSize.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        color = OledCardColor.copy(alpha = 0.9f)
+                        color = resolveFolderBackgroundColor(
+                            backgroundColorArgb = backgroundColorArgb,
+                            hasImage = backgroundImagePath != null
+                        )
                     )
                     .border(
                         width = 2.dp,
@@ -131,6 +144,8 @@ fun FolderItem(
                     .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
+                FolderBackgroundImageLayer(backgroundImagePath = backgroundImagePath)
+
                 when (previewApps.size) {
                     0 -> {
                         Text(
@@ -257,4 +272,48 @@ fun FolderItem(
             }
         }
     }
+}
+
+@Composable
+internal fun resolveFolderBackgroundColor(
+    backgroundColorArgb: Int?,
+    hasImage: Boolean
+): Color = when {
+    hasImage -> Color.Transparent
+    backgroundColorArgb != null -> Color(backgroundColorArgb)
+    else -> OledCardColor.copy(alpha = 0.9f)
+}
+
+@Composable
+internal fun BoxScope.FolderBackgroundImageLayer(
+    backgroundImagePath: String?
+) {
+    if (backgroundImagePath == null) return
+    val file = remember(backgroundImagePath) { File(backgroundImagePath) }
+    if (!file.exists()) return
+
+    val context = LocalContext.current
+    val isGif = backgroundImagePath.endsWith(".gif", ignoreCase = true)
+    val imageLoader = remember(isGif) {
+        if (isGif) {
+            ImageLoader.Builder(context)
+                .components { add(ImageDecoderDecoder.Factory()) }
+                .build()
+        } else {
+            ImageLoader(context)
+        }
+    }
+
+    AsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(file)
+            .crossfade(!isGif)
+            .memoryCacheKey("folder_bg_$backgroundImagePath")
+            .placeholderMemoryCacheKey("folder_bg_$backgroundImagePath")
+            .build(),
+        imageLoader = imageLoader,
+        contentDescription = stringResource(R.string.folder_background_color_description),
+        modifier = Modifier.matchParentSize(),
+        contentScale = ContentScale.Crop
+    )
 }

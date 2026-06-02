@@ -715,6 +715,8 @@ fun AppsTab(
                 folderId = folder.id,
                 pageIndex = pageIndex,
                 allApps = appsUnfiltered,
+                backgroundColorArgb = folder.backgroundColorArgb,
+                backgroundImagePath = folder.backgroundImagePath,
                 onDismiss = folderContentsDialogState::dismiss
             )
         }
