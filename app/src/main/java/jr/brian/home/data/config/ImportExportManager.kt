@@ -57,7 +57,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 notificationShadeEnabled = ui.gridSettingsManager.notificationShadeEnabled,
                 tabTransitionAnimationName = ui.gridSettingsManager.tabTransitionAnimationName,
                 iconSnapEnabled = ui.gridSettingsManager.iconSnapEnabled,
-                bottomFlingAppDrawerEnabled = ui.gridSettingsManager.bottomFlingAppDrawerEnabled
+                bottomFlingAppDrawerEnabled = ui.gridSettingsManager.bottomFlingAppDrawerEnabled,
+                shadeBackgroundColorArgb = ui.gridSettingsManager.shadeBackgroundColorArgb
             ),
             appDisplayPreferences = ui.appDisplayPreferenceManager.getAllPreferences(),
             powerSettings = PowerSettingsConfig(
@@ -280,6 +281,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setTabTransitionAnimationName(config.gridSettings.tabTransitionAnimationName)
         ui.gridSettingsManager.setIconSnapEnabled(config.gridSettings.iconSnapEnabled)
         ui.gridSettingsManager.setBottomFlingAppDrawerEnabled(config.gridSettings.bottomFlingAppDrawerEnabled)
+        ui.gridSettingsManager.setShadeBackgroundColorArgb(config.gridSettings.shadeBackgroundColorArgb)
 
         ui.appDisplayPreferenceManager.restoreAllPreferences(config.appDisplayPreferences)
 

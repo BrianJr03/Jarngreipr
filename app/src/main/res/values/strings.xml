@@ -1523,6 +1523,12 @@
     <string name="shade_dismiss_cd">Dismiss</string>
     <string name="shade_all_notifications">All Notifications</string>
     <string name="shade_no_notifications">No notifications</string>
+    <string name="shade_customize">Customize</string>
+    <string name="shade_background_color">Background Color</string>
+    <string name="shade_background_color_description">Choose a background color for the notification shade.</string>
+    <string name="shade_change_color">Change Color</string>
+    <string name="shade_reset_color">Reset to Default</string>
+    <string name="shade_pick_color">Pick a Color</string>
 
     <string name="faq_section_rss">RSS / Now Playing</string>
     <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>
