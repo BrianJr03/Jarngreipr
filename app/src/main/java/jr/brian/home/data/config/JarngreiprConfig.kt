@@ -38,7 +38,8 @@ data class GridSettingsConfig(
     val notificationShadeEnabled: Boolean = false,
     val tabTransitionAnimationName: String = "",
     val iconSnapEnabled: Boolean = true,
-    val bottomFlingAppDrawerEnabled: Boolean = true
+    val bottomFlingAppDrawerEnabled: Boolean = true,
+    val shadeBackgroundColorArgb: Long = 0xFF111111L
 )
 
 @Serializable

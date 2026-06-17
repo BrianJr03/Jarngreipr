@@ -72,6 +72,7 @@ import java.util.Date
 import java.util.Locale
 
 private const val DISMISS_THRESHOLD = -120f
+private const val SHADE_PAGE_COUNT = 3
 
 @Composable
 fun NotificationShade(
@@ -82,6 +83,8 @@ fun NotificationShade(
     nowPlaying: NowPlayingManager.NowPlayingInfo?,
     modifier: Modifier = Modifier,
     notifications: List<NotificationItem> = emptyList(),
+    backgroundColorArgb: Long = 0xFF111111L,
+    onBackgroundColorChange: (Long) -> Unit = {},
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -147,7 +150,9 @@ fun NotificationShade(
                 onClearAllNotifications = onClearAllNotifications,
                 onSeeAllNotifications = onSeeAllNotifications,
                 initialTabPage = initialTabPage,
-                onTabPageChange = onTabPageChange
+                onTabPageChange = onTabPageChange,
+                backgroundColorArgb = backgroundColorArgb,
+                onBackgroundColorChange = onBackgroundColorChange
             )
         }
     }
@@ -172,7 +177,9 @@ private fun ShadeCard(
     onClearAllNotifications: () -> Unit,
     onSeeAllNotifications: () -> Unit,
     initialTabPage: Int,
-    onTabPageChange: (Int) -> Unit
+    onTabPageChange: (Int) -> Unit,
+    backgroundColorArgb: Long,
+    onBackgroundColorChange: (Long) -> Unit
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -212,14 +219,17 @@ private fun ShadeCard(
         }
     }
 
-    val pagerState = rememberPagerState(initialPage = initialTabPage, pageCount = { 2 })
+    val pagerState = rememberPagerState(initialPage = initialTabPage, pageCount = { SHADE_PAGE_COUNT })
 
     LaunchedEffect(pagerState.currentPage) {
         onTabPageChange(pagerState.currentPage)
     }
     var page0HeightPx by remember { mutableIntStateOf(0) }
     var page1HeightPx by remember { mutableIntStateOf(0) }
-    val pagerHeightDp = with(density) { maxOf(page0HeightPx, page1HeightPx).toDp() }
+    var page2HeightPx by remember { mutableIntStateOf(0) }
+    val pagerHeightDp = with(density) {
+        maxOf(page0HeightPx, page1HeightPx, page2HeightPx).toDp()
+    }
 
     LaunchedEffect(Unit) {
         val (pct, charging) = context.getSimpleBatteryInfo()
@@ -239,7 +249,7 @@ private fun ShadeCard(
             }
             .nestedScroll(nestedScrollConnection)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF111111))
+            .background(Color(backgroundColorArgb))
     ) {
         Column(
             modifier = Modifier
@@ -272,6 +282,7 @@ private fun ShadeCard(
                             when (page) {
                                 0 -> if (size.height > 0) page0HeightPx = size.height
                                 1 -> if (size.height > 0) page1HeightPx = size.height
+                                2 -> if (size.height > 0) page2HeightPx = size.height
                             }
                         }
                 ) {
@@ -293,6 +304,11 @@ private fun ShadeCard(
                             onNext = onNext,
                             onVolumeChange = onVolumeChange,
                             onSeek = onSeek
+                        )
+
+                        2 -> ShadeCustomizePage(
+                            backgroundColorArgb = backgroundColorArgb,
+                            onBackgroundColorChange = onBackgroundColorChange
                         )
                     }
                 }
@@ -373,7 +389,7 @@ private fun ShadePagerIndicator(currentPage: Int) {
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         modifier = Modifier.fillMaxWidth()
     ) {
-        repeat(2) { index ->
+        repeat(SHADE_PAGE_COUNT) { index ->
             Box(
                 modifier = Modifier
                     .size(

@@ -670,7 +670,9 @@ fun AppsTab(
             onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
             onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
             initialTabPage = notificationCountManager.shadeTabPage,
-            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
+            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
+            backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
+            onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) }
         )
 
         AnimatedVisibility(

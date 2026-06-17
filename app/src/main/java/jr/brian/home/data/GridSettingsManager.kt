@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -40,6 +41,10 @@ class GridSettingsManager(context: Context) {
     private var _bottomFlingAppDrawerEnabled by mutableStateOf(loadBottomFlingAppDrawerEnabled())
     val bottomFlingAppDrawerEnabled: Boolean
         get() = _bottomFlingAppDrawerEnabled
+
+    private var _shadeBackgroundColorArgb by mutableLongStateOf(loadShadeBackgroundColorArgb())
+    val shadeBackgroundColorArgb: Long
+        get() = _shadeBackgroundColorArgb
 
     fun setTotalAppsCount(count: Int) {
         _totalAppsCount = count
@@ -92,6 +97,18 @@ class GridSettingsManager(context: Context) {
         _bottomFlingAppDrawerEnabled = enabled
         prefs.edit().apply {
             putBoolean(KEY_BOTTOM_FLING_APP_DRAWER_ENABLED, enabled)
+            apply()
+        }
+    }
+
+    private fun loadShadeBackgroundColorArgb(): Long {
+        return prefs.getLong(KEY_SHADE_BACKGROUND_COLOR_ARGB, DEFAULT_SHADE_BACKGROUND_COLOR_ARGB)
+    }
+
+    fun setShadeBackgroundColorArgb(argb: Long) {
+        _shadeBackgroundColorArgb = argb
+        prefs.edit().apply {
+            putLong(KEY_SHADE_BACKGROUND_COLOR_ARGB, argb)
             apply()
         }
     }
@@ -193,6 +210,8 @@ class GridSettingsManager(context: Context) {
         private const val KEY_TAB_TRANSITION_ANIMATION = "tab_transition_animation"
         private const val KEY_ICON_SNAP_ENABLED = "icon_snap_enabled"
         private const val KEY_BOTTOM_FLING_APP_DRAWER_ENABLED = "bottom_fling_app_drawer_enabled"
+        private const val KEY_SHADE_BACKGROUND_COLOR_ARGB = "shade_background_color_argb"
+        const val DEFAULT_SHADE_BACKGROUND_COLOR_ARGB = 0xFF111111L
         const val DEFAULT_COLUMN_COUNT = 4
         const val MIN_COLUMNS = 1
         const val MAX_COLUMNS = 7
