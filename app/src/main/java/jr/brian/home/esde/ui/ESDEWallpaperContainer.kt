@@ -77,6 +77,13 @@ import java.io.File
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
+private val MARQUEE_VIDEO_EXTENSIONS = setOf("mp4", "mkv", "avi", "wmv", "mov", "webm")
+
+private fun String.isMarqueeVideoPath(): Boolean {
+    val lower = substringAfterLast('.', "").lowercase()
+    return lower in MARQUEE_VIDEO_EXTENSIONS
+}
+
 @kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ESDEWallpaperContainer(
@@ -582,6 +589,16 @@ private fun MarqueeImage(
 ) {
     if (marqueePath == null) return
 
+    if (marqueePath.isMarqueeVideoPath()) {
+        MarqueeVideo(
+            videoPath = marqueePath,
+            modifier = modifier,
+            onClick = onClick,
+            onLongClick = onLongClick
+        )
+        return
+    }
+
     val context = LocalContext.current
     val imageLoader = LocalESDEImageLoader.current
 
@@ -722,5 +739,95 @@ private fun VideoBackground(
         modifier = modifier
             .fillMaxSize()
             .then(blurModifier)
+    )
+}
+
+@kotlin.OptIn(ExperimentalFoundationApi::class)
+@OptIn(UnstableApi::class)
+@Composable
+private fun MarqueeVideo(
+    videoPath: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
+) {
+    val context = LocalContext.current
+
+    val videoUri = remember(videoPath) {
+        when {
+            videoPath.startsWith("content://") -> videoPath.toUri()
+            else -> Uri.fromFile(File(videoPath))
+        }
+    }
+
+    val exoPlayer = remember(videoPath) {
+        ExoPlayer.Builder(context).build().apply {
+            try {
+                setMediaItem(MediaItem.fromUri(videoUri))
+                repeatMode = Player.REPEAT_MODE_ALL
+                volume = 0f
+                prepare()
+                playWhenReady = true
+            } catch (e: Exception) {
+                android.util.Log.e("MarqueeVideo", "Failed to load video: $videoPath", e)
+            }
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> exoPlayer.play()
+                Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    DisposableEffect(videoPath) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
+    val haptic = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        update = { playerView ->
+            playerView.player = exoPlayer
+        },
+        modifier = modifier
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {},
+                onDoubleClick = { onClick?.invoke() },
+                onLongClick = { onLongClick?.invoke() }
+            )
     )
 }

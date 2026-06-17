@@ -620,7 +620,7 @@ class ESDEViewModel @Inject constructor(
             if (customLogosDir.exists() && customLogosDir.isDirectory) {
                 // Try exact system name first, then fall back to parent system
                 for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                    for (ext in LOGO_EXTENSIONS) {
                         val customLogo = File(customLogosDir, "$name.$ext")
                         if (customLogo.exists()) {
                             Log.d(TAG, "Found custom system logo: ${customLogo.absolutePath}")
@@ -631,12 +631,12 @@ class ESDEViewModel @Inject constructor(
             }
         }
 
-        // e.g. downloaded_media/system_logos/n64.svg
+        // e.g. downloaded_media/system_logos/n64.svg or n64.mp4
         val userLogosDir = File(mediaPath, "system_logos")
         if (userLogosDir.exists() && userLogosDir.isDirectory) {
             // Try exact system name first, then fall back to parent system
             for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                for (ext in LOGO_EXTENSIONS) {
                     val userLogo = File(userLogosDir, "$name.$ext")
                     if (userLogo.exists()) {
                         Log.d(TAG, "Found user system logo: ${userLogo.absolutePath}")
@@ -755,7 +755,7 @@ class ESDEViewModel @Inject constructor(
 
         // Try the primary selected media folder first
         for (name in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+            for (ext in LOGO_EXTENSIONS) {
                 checkFile("$name/$primaryFolder/$nameOnly.$ext")?.let { return it }
                 // Also check for .scummvm suffix (for ScummVM games)
                 checkFile("$name/$primaryFolder/$nameOnly.scummvm.$ext")?.let { return it }
@@ -765,7 +765,7 @@ class ESDEViewModel @Inject constructor(
         // If not found and using non-default folder, fall back to marquees
         if (overlayMediaType != OverlayMediaType.Marquees) {
             for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                for (ext in LOGO_EXTENSIONS) {
                     checkFile("$name/$FOLDER_MARQUEES/$nameOnly.$ext")?.let { return it }
                     checkFile("$name/$FOLDER_MARQUEES/$nameOnly.scummvm.$ext")?.let { return it }
                 }
@@ -775,7 +775,7 @@ class ESDEViewModel @Inject constructor(
         // Fall back to wheel directories
         for (dir in MARQUEE_FALLBACK_DIRS) {
             for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
+                for (ext in LOGO_EXTENSIONS) {
                     checkFile("$name/$dir/$nameOnly.$ext")?.let { return it }
                     checkFile("$name/$dir/$nameOnly.scummvm.$ext")?.let { return it }
                 }
@@ -940,5 +940,6 @@ class ESDEViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "ESDEViewModel"
+        private val LOGO_EXTENSIONS: List<String> = IMAGE_EXTENSIONS_WITH_SVG + VIDEO_EXTENSIONS
     }
 }
