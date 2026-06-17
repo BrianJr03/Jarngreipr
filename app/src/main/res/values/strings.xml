@@ -426,7 +426,11 @@
     <string name="settings_layout_notification_tab_transition_animation">Tab Transition Animations</string>
     <string name="settings_layout_notification_shade_description">Pull down from the top of any tab to reveal the Now Playing shade.</string>
     <string name="settings_layout_icon_snap">Icon Snapping</string>
-    <string name="settings_layout_icon_snap_description">Snap icons to align with other icons when dragging.</string>
+    <string name="settings_layout_icon_snap_description">Snap icons when dragging in free positioning mode.</string>
+    <string name="settings_layout_snap_mode">Snap Mode</string>
+    <string name="settings_layout_snap_mode_description">Snap to nearby icon edges, or to a fixed grid for border-symmetric layouts.</string>
+    <string name="settings_layout_snap_mode_icon">Icons</string>
+    <string name="settings_layout_snap_mode_grid">Grid</string>
     <string name="settings_layout_bottom_fling_app_drawer">Bottom Swipe App Drawer</string>
     <string name="settings_layout_bottom_fling_app_drawer_description">Swipe up from the bottom of a tab to open the app drawer.</string>
     <string name="settings_section_support">Support</string>
@@ -1523,6 +1527,19 @@
     <string name="shade_dismiss_cd">Dismiss</string>
     <string name="shade_all_notifications">All Notifications</string>
     <string name="shade_no_notifications">No notifications</string>
+    <string name="shade_customize">Customize</string>
+    <string name="shade_background_color">Background Color</string>
+    <string name="shade_background_color_description">Choose a background color for the notification shade.</string>
+    <string name="shade_change_color">Change Color</string>
+    <string name="shade_reset_color">Reset to Default</string>
+    <string name="shade_pick_color">Pick a Color</string>
+    <string name="shade_pick_accent_color">Pick an Accent Color</string>
+    <string name="shade_accent_color">Accent Color</string>
+    <string name="shade_accent_color_description">Tint the header, indicators, and icons.</string>
+    <string name="shade_corner_radius">Corner Radius</string>
+    <string name="shade_background_opacity">Background Opacity</string>
+    <string name="shade_slider_hint_title">Tap to Unlock</string>
+    <string name="shade_slider_hint_description">These sliders are locked by default to prevent accidental changes. Tap a slider once to unlock it, then drag to adjust.</string>
 
     <string name="faq_section_rss">RSS / Now Playing</string>
     <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>

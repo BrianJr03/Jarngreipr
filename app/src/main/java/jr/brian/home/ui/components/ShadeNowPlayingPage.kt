@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -128,13 +127,6 @@ private fun ActiveNowPlayingContent(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        PlayerArtworkCard(
-            nowPlaying = nowPlaying,
-            onPlayPause = onPlayPause,
-            onPrevious = onPrevious,
-            onNext = onNext
-        )
-
         ShadeSeekBar(
             progressFraction = progressFraction,
             isSeeking = isSeeking,
@@ -157,6 +149,13 @@ private fun ActiveNowPlayingContent(
                 onVolumeChange = onVolumeChange
             )
         }
+
+        PlayerArtworkCard(
+            nowPlaying = nowPlaying,
+            onPlayPause = onPlayPause,
+            onPrevious = onPrevious,
+            onNext = onNext
+        )
     }
 }
 
@@ -400,7 +399,7 @@ private fun ShadeSeekBar(
     onValueChangeFinished: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Slider(
+        AutoLockingSlider(
             value = progressFraction,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
@@ -448,7 +447,7 @@ private fun ShadeVolumeRow(
             tint = ThemePrimaryColor.copy(alpha = 0.6f),
             modifier = Modifier.size(16.dp)
         )
-        Slider(
+        AutoLockingSlider(
             value = volume,
             onValueChange = onVolumeChange,
             modifier = Modifier.weight(1f),
