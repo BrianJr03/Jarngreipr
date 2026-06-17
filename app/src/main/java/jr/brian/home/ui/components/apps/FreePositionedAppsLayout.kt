@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.AppPositionManager
+import jr.brian.home.data.SnapMode
 import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
@@ -88,7 +89,7 @@ fun FreePositionedAppsLayout(
     val floatyModeManager = LocalFloatyModeManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
 
-    val snapEnabled = gridSettingsManager.iconSnapEnabled
+    val snapMode = gridSettingsManager.effectiveSnapMode
     val longPressToastMsg = stringResource(R.string.app_drawer_long_press_app_msg)
     val folders by folderManager.getFolders(pageIndex).collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -170,6 +171,10 @@ fun FreePositionedAppsLayout(
                 .fillMaxWidth()
                 .height(with(density) { contentHeight.toDp() })
         ) {
+            if (!isFloaty && !isDragLocked && snapMode == SnapMode.GRID) {
+                SnapGridOverlay(borderPaddingPx = borderPadding)
+            }
+
             if (!isFloaty) {
                 AlignmentOverlay(alignmentState = alignmentState)
             }
@@ -206,7 +211,7 @@ fun FreePositionedAppsLayout(
                             positions = positions,
                             folders = folders,
                             draggingFolderId = folder.id,
-                            snapEnabled = snapEnabled
+                            snapMode = snapMode
                         )
 
                         alignmentState = dragResult.alignmentState
@@ -319,7 +324,7 @@ fun FreePositionedAppsLayout(
                             positions = positions,
                             folders = folders,
                             excludePackageName = app.packageName,
-                            snapEnabled = snapEnabled
+                            snapMode = snapMode
                         )
 
                         alignmentState = dragResult.alignmentState
@@ -437,7 +442,7 @@ fun FreePositionedAppsLayout(
                                 positions = positions,
                                 folders = folders,
                                 pinnedRoms = pinnedRoms,
-                                snapEnabled = snapEnabled
+                                snapMode = snapMode
                             )
                             alignmentState = dragResult.alignmentState
                             appPositionManager.savePosition(

@@ -57,7 +57,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 notificationShadeEnabled = ui.gridSettingsManager.notificationShadeEnabled,
                 tabTransitionAnimationName = ui.gridSettingsManager.tabTransitionAnimationName,
                 iconSnapEnabled = ui.gridSettingsManager.iconSnapEnabled,
-                bottomFlingAppDrawerEnabled = ui.gridSettingsManager.bottomFlingAppDrawerEnabled
+                snapMode = ui.gridSettingsManager.snapMode.name,
+                bottomFlingAppDrawerEnabled = ui.gridSettingsManager.bottomFlingAppDrawerEnabled,
+                shadeBackgroundColorArgb = ui.gridSettingsManager.shadeBackgroundColorArgb,
+                shadeCornerRadiusDp = ui.gridSettingsManager.shadeCornerRadiusDp,
+                shadeBackgroundAlpha = ui.gridSettingsManager.shadeBackgroundAlpha,
+                shadeAccentColorArgb = ui.gridSettingsManager.shadeAccentColorArgb
             ),
             appDisplayPreferences = ui.appDisplayPreferenceManager.getAllPreferences(),
             powerSettings = PowerSettingsConfig(
@@ -279,7 +284,17 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setNotificationShadeEnabled(config.gridSettings.notificationShadeEnabled)
         ui.gridSettingsManager.setTabTransitionAnimationName(config.gridSettings.tabTransitionAnimationName)
         ui.gridSettingsManager.setIconSnapEnabled(config.gridSettings.iconSnapEnabled)
+        runCatching {
+            val mode = jr.brian.home.data.SnapMode.valueOf(config.gridSettings.snapMode)
+            if (mode != jr.brian.home.data.SnapMode.OFF) {
+                ui.gridSettingsManager.setSnapMode(mode)
+            }
+        }
         ui.gridSettingsManager.setBottomFlingAppDrawerEnabled(config.gridSettings.bottomFlingAppDrawerEnabled)
+        ui.gridSettingsManager.setShadeBackgroundColorArgb(config.gridSettings.shadeBackgroundColorArgb)
+        ui.gridSettingsManager.setShadeCornerRadiusDp(config.gridSettings.shadeCornerRadiusDp)
+        ui.gridSettingsManager.setShadeBackgroundAlpha(config.gridSettings.shadeBackgroundAlpha)
+        ui.gridSettingsManager.setShadeAccentColorArgb(config.gridSettings.shadeAccentColorArgb)
 
         ui.appDisplayPreferenceManager.restoreAllPreferences(config.appDisplayPreferences)
 

@@ -670,7 +670,15 @@ fun AppsTab(
             onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
             onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
             initialTabPage = notificationCountManager.shadeTabPage,
-            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) }
+            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
+            backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
+            onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) },
+            cornerRadiusDp = gridSettingsManager.shadeCornerRadiusDp,
+            onCornerRadiusChange = { gridSettingsManager.setShadeCornerRadiusDp(it) },
+            backgroundAlpha = gridSettingsManager.shadeBackgroundAlpha,
+            onBackgroundAlphaChange = { gridSettingsManager.setShadeBackgroundAlpha(it) },
+            accentColorArgb = gridSettingsManager.shadeAccentColorArgb,
+            onAccentColorChange = { gridSettingsManager.setShadeAccentColorArgb(it) }
         )
 
         AnimatedVisibility(
