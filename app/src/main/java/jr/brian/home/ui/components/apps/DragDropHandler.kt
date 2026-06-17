@@ -3,6 +3,8 @@ package jr.brian.home.ui.components.apps
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import jr.brian.home.data.SNAP_GRID_STEP
+import jr.brian.home.data.SnapMode
 import jr.brian.home.model.ItemRect
 import jr.brian.home.model.alignment.AlignmentState
 import jr.brian.home.model.alignment.calculateAlignmentGuides
@@ -12,6 +14,7 @@ import jr.brian.home.model.app.Folder
 import jr.brian.home.model.getAllItemRects
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.util.findNonOverlappingPosition
+import kotlin.math.roundToInt
 
 /**
  * Handles drag and drop position calculations including alignment, snapping,
@@ -22,19 +25,14 @@ class DragDropHandler(
     private val snapThreshold: Float,
     private val borderPadding: Float
 ) {
-    /**
-     * Result of processing a drag operation.
-     */
+    private val gridStepPx: Float = with(density) { SNAP_GRID_STEP.toPx() }
+
     data class DragResult(
         val finalX: Float,
         val finalY: Float,
         val alignmentState: AlignmentState
     )
 
-    /**
-     * Process a drag operation for an app, calculating the final position
-     * with alignment, snapping, constraints, and collision detection.
-     */
     fun processDragForApp(
         dragX: Float,
         dragY: Float,
@@ -46,38 +44,36 @@ class DragDropHandler(
         positions: Map<String, AppPosition>,
         folders: List<Folder>,
         excludePackageName: String,
-        snapEnabled: Boolean = true
+        snapMode: SnapMode = SnapMode.ICON
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
-        // Always calculate alignment guides for visual display
-        val alignment = calculateAlignmentGuides(
-            draggingIndex = draggingIndex,
-            dragX = dragX,
-            dragY = dragY,
-            iconSize = iconSize,
-            containerSize = containerSize,
-            snapThreshold = snapThreshold,
-            apps = apps,
-            positions = positions,
-            density = density,
-            borderPadding = borderPadding,
-            folders = folders
+        val alignment = if (snapMode == SnapMode.ICON) {
+            calculateAlignmentGuides(
+                draggingIndex = draggingIndex,
+                dragX = dragX,
+                dragY = dragY,
+                iconSize = iconSize,
+                containerSize = containerSize,
+                snapThreshold = snapThreshold,
+                apps = apps,
+                positions = positions,
+                density = density,
+                borderPadding = borderPadding,
+                folders = folders
+            )
+        } else {
+            AlignmentState()
+        }
+
+        val snappedX = computeSnappedX(snapMode, alignment, dragX, iconSizePx)
+        val snappedY = computeSnappedY(snapMode, alignment, dragY, iconSizePx)
+
+        val (constrainedX, constrainedY) = applyContainerConstraints(
+            snappedX, snappedY, iconSizePx, containerSize, contentHeight
         )
 
-        // Only apply snapping to position when snapEnabled
-        val snappedX = if (snapEnabled) alignment.snappedX ?: dragX else dragX
-        val snappedY = if (snapEnabled) alignment.snappedY ?: dragY else dragY
-
-        // Apply container constraints
-        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
-        val maxY = contentHeight - iconSizePx - borderPadding
-
-        val constrainedX = snappedX.coerceIn(borderPadding, maxX)
-        val constrainedY = snappedY.coerceIn(borderPadding, maxY)
-
-        // Check for collisions and adjust position
-        val (finalX, finalY) = if (snapEnabled) {
+        val (finalX, finalY) = if (snapMode != SnapMode.OFF) {
             val allItems = getAllItemRects(apps, positions, folders, density)
             findNonOverlappingPosition(
                 targetX = constrainedX,
@@ -96,10 +92,6 @@ class DragDropHandler(
         return DragResult(finalX, finalY, alignment)
     }
 
-    /**
-     * Process a drag operation for a folder, calculating the final position
-     * with alignment, snapping, constraints, and collision detection.
-     */
     fun processDragForFolder(
         dragX: Float,
         dragY: Float,
@@ -110,39 +102,37 @@ class DragDropHandler(
         positions: Map<String, AppPosition>,
         folders: List<Folder>,
         draggingFolderId: String,
-        snapEnabled: Boolean = true
+        snapMode: SnapMode = SnapMode.ICON
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
-        // Always calculate alignment guides for visual display
-        val alignment = calculateAlignmentGuides(
-            draggingIndex = -1,
-            dragX = dragX,
-            dragY = dragY,
-            iconSize = iconSize,
-            containerSize = containerSize,
-            snapThreshold = snapThreshold,
-            apps = apps,
-            positions = positions,
-            density = density,
-            borderPadding = borderPadding,
-            folders = folders,
-            draggingFolderId = draggingFolderId
+        val alignment = if (snapMode == SnapMode.ICON) {
+            calculateAlignmentGuides(
+                draggingIndex = -1,
+                dragX = dragX,
+                dragY = dragY,
+                iconSize = iconSize,
+                containerSize = containerSize,
+                snapThreshold = snapThreshold,
+                apps = apps,
+                positions = positions,
+                density = density,
+                borderPadding = borderPadding,
+                folders = folders,
+                draggingFolderId = draggingFolderId
+            )
+        } else {
+            AlignmentState()
+        }
+
+        val snappedX = computeSnappedX(snapMode, alignment, dragX, iconSizePx)
+        val snappedY = computeSnappedY(snapMode, alignment, dragY, iconSizePx)
+
+        val (constrainedX, constrainedY) = applyContainerConstraints(
+            snappedX, snappedY, iconSizePx, containerSize, contentHeight
         )
 
-        // Only apply snapping to position when snapEnabled
-        val snappedX = if (snapEnabled) alignment.snappedX ?: dragX else dragX
-        val snappedY = if (snapEnabled) alignment.snappedY ?: dragY else dragY
-
-        // Apply container constraints
-        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
-        val maxY = contentHeight - iconSizePx - borderPadding
-
-        val constrainedX = snappedX.coerceIn(borderPadding, maxX)
-        val constrainedY = snappedY.coerceIn(borderPadding, maxY)
-
-        // Check for collisions and adjust position
-        val (finalX, finalY) = if (snapEnabled) {
+        val (finalX, finalY) = if (snapMode != SnapMode.OFF) {
             val allItems = getAllItemRects(apps, positions, folders, density)
             findNonOverlappingPosition(
                 targetX = constrainedX,
@@ -172,36 +162,38 @@ class DragDropHandler(
         positions: Map<String, AppPosition>,
         folders: List<Folder>,
         pinnedRoms: List<PinnedRomInfo>,
-        snapEnabled: Boolean = true
+        snapMode: SnapMode = SnapMode.ICON
     ): DragResult {
         val iconSizePx = with(density) { iconSize.dp.toPx() }
 
-        val alignment = calculateAlignmentGuides(
-            draggingIndex = -1,
-            dragX = dragX,
-            dragY = dragY,
-            iconSize = iconSize,
-            containerSize = containerSize,
-            snapThreshold = snapThreshold,
-            apps = apps,
-            positions = positions,
-            density = density,
-            borderPadding = borderPadding,
-            folders = folders,
-            draggingRomKey = draggingRomKey,
-            pinnedRoms = pinnedRoms
+        val alignment = if (snapMode == SnapMode.ICON) {
+            calculateAlignmentGuides(
+                draggingIndex = -1,
+                dragX = dragX,
+                dragY = dragY,
+                iconSize = iconSize,
+                containerSize = containerSize,
+                snapThreshold = snapThreshold,
+                apps = apps,
+                positions = positions,
+                density = density,
+                borderPadding = borderPadding,
+                folders = folders,
+                draggingRomKey = draggingRomKey,
+                pinnedRoms = pinnedRoms
+            )
+        } else {
+            AlignmentState()
+        }
+
+        val snappedX = computeSnappedX(snapMode, alignment, dragX, iconSizePx)
+        val snappedY = computeSnappedY(snapMode, alignment, dragY, iconSizePx)
+
+        val (constrainedX, constrainedY) = applyContainerConstraints(
+            snappedX, snappedY, iconSizePx, containerSize, contentHeight
         )
 
-        val snappedX = if (snapEnabled) alignment.snappedX ?: dragX else dragX
-        val snappedY = if (snapEnabled) alignment.snappedY ?: dragY else dragY
-
-        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
-        val maxY = contentHeight - iconSizePx - borderPadding
-
-        val constrainedX = snappedX.coerceIn(borderPadding, maxX)
-        val constrainedY = snappedY.coerceIn(borderPadding, maxY)
-
-        val (finalX, finalY) = if (snapEnabled) {
+        val (finalX, finalY) = if (snapMode != SnapMode.OFF) {
             val allItems = buildList {
                 addAll(getAllItemRects(apps, positions, folders, density))
                 pinnedRoms.forEach { rom ->
@@ -227,4 +219,39 @@ class DragDropHandler(
 
         return DragResult(finalX, finalY, alignment)
     }
+
+    private fun computeSnappedX(snapMode: SnapMode, alignment: AlignmentState, dragX: Float, iconSizePx: Float): Float =
+        when (snapMode) {
+            SnapMode.ICON -> alignment.snappedX ?: dragX
+            SnapMode.GRID -> snapToGridCentered(dragX, iconSizePx)
+            SnapMode.OFF -> dragX
+        }
+
+    private fun computeSnappedY(snapMode: SnapMode, alignment: AlignmentState, dragY: Float, iconSizePx: Float): Float =
+        when (snapMode) {
+            SnapMode.ICON -> alignment.snappedY ?: dragY
+            SnapMode.GRID -> snapToGridCentered(dragY, iconSizePx)
+            SnapMode.OFF -> dragY
+        }
+
+    private fun snapToGridCentered(coord: Float, iconSizePx: Float): Float {
+        val center = coord + iconSizePx / 2f
+        val centerOffset = center - borderPadding
+        val cellIndex = (centerOffset / gridStepPx - 0.5f).roundToInt()
+        val snappedCenter = borderPadding + (cellIndex + 0.5f) * gridStepPx
+        return snappedCenter - iconSizePx / 2f
+    }
+
+    private fun applyContainerConstraints(
+        x: Float,
+        y: Float,
+        iconSizePx: Float,
+        containerSize: IntSize,
+        contentHeight: Float
+    ): Pair<Float, Float> {
+        val maxX = containerSize.width.toFloat() - iconSizePx - borderPadding
+        val maxY = contentHeight - iconSizePx - borderPadding
+        return x.coerceIn(borderPadding, maxX) to y.coerceIn(borderPadding, maxY)
+    }
+
 }

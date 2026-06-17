@@ -437,7 +437,13 @@ fun AppsAndWidgetsTab(
         initialTabPage = notificationCountManager.shadeTabPage,
         onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
         backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
-        onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) }
+        onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) },
+        cornerRadiusDp = gridSettingsManager.shadeCornerRadiusDp,
+        onCornerRadiusChange = { gridSettingsManager.setShadeCornerRadiusDp(it) },
+        backgroundAlpha = gridSettingsManager.shadeBackgroundAlpha,
+        onBackgroundAlphaChange = { gridSettingsManager.setShadeBackgroundAlpha(it) },
+        accentColorArgb = gridSettingsManager.shadeAccentColorArgb,
+        onAccentColorChange = { gridSettingsManager.setShadeAccentColorArgb(it) }
     )
 
     AnimatedVisibility(

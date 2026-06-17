@@ -677,16 +677,27 @@ class ESDEViewModel @Inject constructor(
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
+        val parentDir = File(gameFilename).parent
+        val systemNames = listOf(systemName, mediaSystemName).distinct()
+
+        fun candidateFiles(folder: String, ext: String): List<File> {
+            val files = mutableListOf<File>()
+            for (name in systemNames) {
+                if (parentDir != null) {
+                    files += File(mediaPath, "$name/$folder/$parentDir/$nameOnly.$ext")
+                }
+                files += File(mediaPath, "$name/$folder/$nameOnly.$ext")
+            }
+            return files
+        }
 
         // Handle "All" type by randomly selecting from all available media types
         if (preferredType == GameImageType.All) {
             val allImages = mutableListOf<File>()
             for (type in GameImageType.randomizableTypes()) {
-                for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    for (ext in IMAGE_EXTENSIONS) {
-                        val file = File(mediaPath, "$name/${type.folderName}/$nameOnly.$ext")
-                        if (file.exists()) allImages.add(file)
-                    }
+                val folder = type.folderName ?: continue
+                for (ext in IMAGE_EXTENSIONS) {
+                    allImages += candidateFiles(folder, ext).filter { it.exists() }
                 }
             }
             return if (allImages.isNotEmpty()) allImages.random().absolutePath else null
@@ -694,12 +705,8 @@ class ESDEViewModel @Inject constructor(
 
         val preferredFolder = preferredType.folderName
         if (preferredFolder != null) {
-            // Try both exact system name and parent system
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS) {
-                    val file = File(mediaPath, "$name/$preferredFolder/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
+            for (ext in IMAGE_EXTENSIONS) {
+                candidateFiles(preferredFolder, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
             }
         }
 
@@ -707,19 +714,13 @@ class ESDEViewModel @Inject constructor(
             .filter { it != preferredFolder }
 
         for (mediaType in fallbackTypes) {
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS) {
-                    val file = File(mediaPath, "$name/$mediaType/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
+            for (ext in IMAGE_EXTENSIONS) {
+                candidateFiles(mediaType, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
             }
         }
 
-        for (name in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS) {
-                val wheelFile = File(mediaPath, "$name/$FOLDER_WHEEL_3D/$nameOnly.$ext")
-                if (wheelFile.exists()) return wheelFile.absolutePath
-            }
+        for (ext in IMAGE_EXTENSIONS) {
+            candidateFiles(FOLDER_WHEEL_3D, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
         }
 
         return null
@@ -742,6 +743,8 @@ class ESDEViewModel @Inject constructor(
         }
 
         val nameOnly = File(gameFilename).nameWithoutExtension
+        val parentDir = File(gameFilename).parent
+        val systemNames = listOf(systemName, mediaSystemName).distinct()
 
         // Get the selected overlay media type from preferences
         val overlayMediaType = prefsState.overlayMediaType
@@ -753,33 +756,32 @@ class ESDEViewModel @Inject constructor(
             return if (f.exists()) f.absolutePath else null
         }
 
-        // Try the primary selected media folder first
-        for (name in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in LOGO_EXTENSIONS) {
-                checkFile("$name/$primaryFolder/$nameOnly.$ext")?.let { return it }
-                // Also check for .scummvm suffix (for ScummVM games)
-                checkFile("$name/$primaryFolder/$nameOnly.scummvm.$ext")?.let { return it }
+        fun lookupMarquee(folder: String): String? {
+            for (name in systemNames) {
+                for (ext in LOGO_EXTENSIONS) {
+                    if (parentDir != null) {
+                        checkFile("$name/$folder/$parentDir/$nameOnly.$ext")?.let { return it }
+                        checkFile("$name/$folder/$parentDir/$nameOnly.scummvm.$ext")?.let { return it }
+                    }
+                    checkFile("$name/$folder/$nameOnly.$ext")?.let { return it }
+                    // Also check for .scummvm suffix (for ScummVM games)
+                    checkFile("$name/$folder/$nameOnly.scummvm.$ext")?.let { return it }
+                }
             }
+            return null
         }
+
+        // Try the primary selected media folder first
+        lookupMarquee(primaryFolder)?.let { return it }
 
         // If not found and using non-default folder, fall back to marquees
         if (overlayMediaType != OverlayMediaType.Marquees) {
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in LOGO_EXTENSIONS) {
-                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.$ext")?.let { return it }
-                    checkFile("$name/$FOLDER_MARQUEES/$nameOnly.scummvm.$ext")?.let { return it }
-                }
-            }
+            lookupMarquee(FOLDER_MARQUEES)?.let { return it }
         }
 
         // Fall back to wheel directories
         for (dir in MARQUEE_FALLBACK_DIRS) {
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in LOGO_EXTENSIONS) {
-                    checkFile("$name/$dir/$nameOnly.$ext")?.let { return it }
-                    checkFile("$name/$dir/$nameOnly.scummvm.$ext")?.let { return it }
-                }
-            }
+            lookupMarquee(dir)?.let { return it }
         }
 
         return null

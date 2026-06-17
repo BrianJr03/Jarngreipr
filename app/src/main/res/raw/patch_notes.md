@@ -1,12 +1,17 @@
-**Add your ROMS to Home Tabs (experimental)**
-- New Add ROM option added in the options dialog
-- You can add any ROM from your ES-DE library
-- Access this by pressing the menu button on a tab
+**Notification Shade Customization**
+- Customize color, shape and more!
 
-**Folder Customization**
-- You can now choose a background color or custom background image for folders
+**Grid based icon snapping**
+- When dragging apps with this (and Free Positioning) enabled, apps will snap in grid spaces
+- Settings -> Layout -> Snap Mode
+- Must have Icon Snapping enabled as well
+
+**ES-DE: Logo Updates**
+- You can now use WEBP files or videos as the logo (marquee) for ES-DE wallpaper
+- Settings -> ES-DE -> Custom Paths
+- For System Logos Folder: n64.mp4, n3ds.webp naming format is accepted
 
 **Quick Fixes**
-- Audio from background music is will not play in screen recordings when volume is muted/at 0
+- Multi-disc games (.m3u) now show their background image and logo on the wallpaper instead of a black screen
 
-2.4
+2.5 

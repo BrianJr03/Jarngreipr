@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,6 +59,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -85,6 +89,12 @@ fun NotificationShade(
     notifications: List<NotificationItem> = emptyList(),
     backgroundColorArgb: Long = 0xFF111111L,
     onBackgroundColorChange: (Long) -> Unit = {},
+    cornerRadiusDp: Int = 20,
+    onCornerRadiusChange: (Int) -> Unit = {},
+    backgroundAlpha: Float = 1f,
+    onBackgroundAlphaChange: (Float) -> Unit = {},
+    accentColorArgb: Long = 0L,
+    onAccentColorChange: (Long) -> Unit = {},
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -152,7 +162,13 @@ fun NotificationShade(
                 initialTabPage = initialTabPage,
                 onTabPageChange = onTabPageChange,
                 backgroundColorArgb = backgroundColorArgb,
-                onBackgroundColorChange = onBackgroundColorChange
+                onBackgroundColorChange = onBackgroundColorChange,
+                cornerRadiusDp = cornerRadiusDp,
+                onCornerRadiusChange = onCornerRadiusChange,
+                backgroundAlpha = backgroundAlpha,
+                onBackgroundAlphaChange = onBackgroundAlphaChange,
+                accentColorArgb = accentColorArgb,
+                onAccentColorChange = onAccentColorChange
             )
         }
     }
@@ -179,8 +195,15 @@ private fun ShadeCard(
     initialTabPage: Int,
     onTabPageChange: (Int) -> Unit,
     backgroundColorArgb: Long,
-    onBackgroundColorChange: (Long) -> Unit
+    onBackgroundColorChange: (Long) -> Unit,
+    cornerRadiusDp: Int,
+    onCornerRadiusChange: (Int) -> Unit,
+    backgroundAlpha: Float,
+    onBackgroundAlphaChange: (Float) -> Unit,
+    accentColorArgb: Long,
+    onAccentColorChange: (Long) -> Unit
 ) {
+    val resolvedAccentColor = if (accentColorArgb == 0L) ThemePrimaryColor else Color(accentColorArgb)
     val context = LocalContext.current
     val density = LocalDensity.current
     val onDismissState = rememberUpdatedState(onDismiss)
@@ -192,14 +215,18 @@ private fun ShadeCard(
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y > 0f) {
-                    dragOffsetYState.floatValue = (dragOffsetYState.floatValue + available.y).coerceAtMost(60f)
-                    return available
+                if (dragOffsetYState.floatValue > 0f && available.y < 0f) {
+                    val consume = available.y.coerceAtLeast(-dragOffsetYState.floatValue)
+                    dragOffsetYState.floatValue += consume
+                    return Offset(0f, consume)
                 }
                 return Offset.Zero
             }
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0f) {
+                    dragOffsetYState.floatValue = (dragOffsetYState.floatValue + available.y).coerceAtMost(60f)
+                }
                 if (available.y < 0f) {
                     dragOffsetYState.floatValue += available.y
                 }
@@ -230,6 +257,8 @@ private fun ShadeCard(
     val pagerHeightDp = with(density) {
         maxOf(page0HeightPx, page1HeightPx, page2HeightPx).toDp()
     }
+    val maxPageHeight = (LocalConfiguration.current.screenHeightDp - 120)
+        .coerceAtLeast(300).dp
 
     LaunchedEffect(Unit) {
         val (pct, charging) = context.getSimpleBatteryInfo()
@@ -248,8 +277,8 @@ private fun ShadeCard(
                 translationY = dragOffsetY.coerceAtLeast(0f)
             }
             .nestedScroll(nestedScrollConnection)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(backgroundColorArgb))
+            .clip(RoundedCornerShape(cornerRadiusDp.dp))
+            .background(Color(backgroundColorArgb).copy(alpha = backgroundAlpha))
     ) {
         Column(
             modifier = Modifier
@@ -261,11 +290,15 @@ private fun ShadeCard(
                 batteryPercentage = batteryPercentage,
                 isCharging = isCharging,
                 currentTime = currentTime,
+                accentColor = resolvedAccentColor,
                 onSettingsClick = onSettingsClick,
                 onDismiss = onDismiss
             )
 
-            ShadePagerIndicator(currentPage = pagerState.currentPage)
+            ShadePagerIndicator(
+                currentPage = pagerState.currentPage,
+                accentColor = resolvedAccentColor
+            )
 
             HorizontalPager(
                 state = pagerState,
@@ -275,9 +308,12 @@ private fun ShadeCard(
                     .fillMaxWidth()
                     .then(if (pagerHeightDp > 0.dp) Modifier.height(pagerHeightDp) else Modifier)
             ) { page ->
+                val pageScrollState = rememberScrollState()
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(max = maxPageHeight)
+                        .verticalScroll(pageScrollState)
                         .onSizeChanged { size ->
                             when (page) {
                                 0 -> if (size.height > 0) page0HeightPx = size.height
@@ -308,7 +344,14 @@ private fun ShadeCard(
 
                         2 -> ShadeCustomizePage(
                             backgroundColorArgb = backgroundColorArgb,
-                            onBackgroundColorChange = onBackgroundColorChange
+                            onBackgroundColorChange = onBackgroundColorChange,
+                            cornerRadiusDp = cornerRadiusDp,
+                            onCornerRadiusChange = onCornerRadiusChange,
+                            backgroundAlpha = backgroundAlpha,
+                            onBackgroundAlphaChange = onBackgroundAlphaChange,
+                            accentColorArgb = accentColorArgb,
+                            onAccentColorChange = onAccentColorChange,
+                            accentColor = resolvedAccentColor
                         )
                     }
                 }
@@ -324,6 +367,7 @@ private fun ShadeHeader(
     batteryPercentage: Int,
     isCharging: Boolean,
     currentTime: String,
+    accentColor: Color,
     onSettingsClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -334,6 +378,7 @@ private fun ShadeHeader(
         HeaderIconButton(
             icon = Icons.Default.Settings,
             contentDescription = stringResource(R.string.common_settings),
+            tint = accentColor,
             onClick = onSettingsClick
         )
         Spacer(Modifier.weight(1f))
@@ -342,21 +387,21 @@ private fun ShadeHeader(
             Icon(
                 imageVector = Icons.Default.BatteryChargingFull,
                 contentDescription = null,
-                tint = ThemePrimaryColor,
+                tint = accentColor,
                 modifier = Modifier.size(15.dp)
             )
             Spacer(Modifier.width(2.dp))
         }
         Text(
             text = "$batteryPercentage%",
-            color = ThemePrimaryColor,
+            color = accentColor,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
         Spacer(Modifier.width(8.dp))
         Text(
             text = currentTime,
-            color = ThemePrimaryColor,
+            color = accentColor,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -384,7 +429,7 @@ private fun ShadeHeader(
 }
 
 @Composable
-private fun ShadePagerIndicator(currentPage: Int) {
+private fun ShadePagerIndicator(currentPage: Int, accentColor: Color) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         modifier = Modifier.fillMaxWidth()
@@ -398,7 +443,7 @@ private fun ShadePagerIndicator(currentPage: Int) {
                     )
                     .clip(CircleShape)
                     .background(
-                        if (currentPage == index) ThemePrimaryColor
+                        if (currentPage == index) accentColor
                         else Color.White.copy(alpha = 0.2f)
                     )
             )
@@ -421,6 +466,7 @@ private fun ShadePill(modifier: Modifier = Modifier) {
 internal fun HeaderIconButton(
     icon: ImageVector,
     contentDescription: String = "",
+    tint: Color = ThemePrimaryColor,
     onClick: () -> Unit
 ) {
     Box(
@@ -438,7 +484,7 @@ internal fun HeaderIconButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = ThemePrimaryColor,
+            tint = tint,
             modifier = Modifier.size(14.dp)
         )
     }
