@@ -34,6 +34,8 @@ import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
+import jr.brian.home.esde.util.findFirstMedia
+import jr.brian.home.esde.util.mediaCandidatePaths
 import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
@@ -676,54 +678,25 @@ class ESDEViewModel @Inject constructor(
             return null
         }
 
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
         val systemNames = listOf(systemName, mediaSystemName).distinct()
 
-        fun candidateFiles(folder: String, ext: String): List<File> {
-            val files = mutableListOf<File>()
-            for (name in systemNames) {
-                if (parentDir != null) {
-                    files += File(mediaPath, "$name/$folder/$parentDir/$nameOnly.$ext")
-                }
-                files += File(mediaPath, "$name/$folder/$nameOnly.$ext")
-            }
-            return files
-        }
-
-        // Handle "All" type by randomly selecting from all available media types
         if (preferredType == GameImageType.All) {
-            val allImages = mutableListOf<File>()
-            for (type in GameImageType.randomizableTypes()) {
-                val folder = type.folderName ?: continue
-                for (ext in IMAGE_EXTENSIONS) {
-                    allImages += candidateFiles(folder, ext).filter { it.exists() }
+            val existing = GameImageType.randomizableTypes()
+                .mapNotNull { it.folderName }
+                .flatMap { folder ->
+                    mediaCandidatePaths(mediaPath, systemNames, folder, gameFilename, IMAGE_EXTENSIONS)
+                        .filter { it.exists() }
+                        .toList()
                 }
-            }
-            return if (allImages.isNotEmpty()) allImages.random().absolutePath else null
+            return existing.randomOrNull()?.absolutePath
         }
 
         val preferredFolder = preferredType.folderName
-        if (preferredFolder != null) {
-            for (ext in IMAGE_EXTENSIONS) {
-                candidateFiles(preferredFolder, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
-            }
-        }
+        val folders = listOfNotNull(preferredFolder) +
+            GAME_IMAGE_FALLBACKS.filter { it != preferredFolder } +
+            FOLDER_WHEEL_3D
 
-        val fallbackTypes = GAME_IMAGE_FALLBACKS
-            .filter { it != preferredFolder }
-
-        for (mediaType in fallbackTypes) {
-            for (ext in IMAGE_EXTENSIONS) {
-                candidateFiles(mediaType, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
-            }
-        }
-
-        for (ext in IMAGE_EXTENSIONS) {
-            candidateFiles(FOLDER_WHEEL_3D, ext).firstOrNull { it.exists() }?.let { return it.absolutePath }
-        }
-
-        return null
+        return findFirstMedia(mediaPath, systemNames, folders.distinct(), gameFilename, IMAGE_EXTENSIONS)
     }
 
     private fun getGameMarqueePath(systemName: String, gameFilename: String): String? {
@@ -742,91 +715,28 @@ class ESDEViewModel @Inject constructor(
             }
         }
 
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
         val systemNames = listOf(systemName, mediaSystemName).distinct()
-
-        // Get the selected overlay media type from preferences
         val overlayMediaType = prefsState.overlayMediaType
-        val primaryFolder = overlayMediaType.folderName
+        val folders = buildList {
+            add(overlayMediaType.folderName)
+            if (overlayMediaType != OverlayMediaType.Marquees) add(FOLDER_MARQUEES)
+            addAll(MARQUEE_FALLBACK_DIRS)
+        }.distinct()
 
-        // Helper to check file existence for a given folder path
-        fun checkFile(path: String): String? {
-            val f = File(mediaPath, path)
-            return if (f.exists()) f.absolutePath else null
-        }
-
-        fun lookupMarquee(folder: String): String? {
-            for (name in systemNames) {
-                for (ext in LOGO_EXTENSIONS) {
-                    if (parentDir != null) {
-                        checkFile("$name/$folder/$parentDir/$nameOnly.$ext")?.let { return it }
-                        checkFile("$name/$folder/$parentDir/$nameOnly.scummvm.$ext")?.let { return it }
-                    }
-                    checkFile("$name/$folder/$nameOnly.$ext")?.let { return it }
-                    // Also check for .scummvm suffix (for ScummVM games)
-                    checkFile("$name/$folder/$nameOnly.scummvm.$ext")?.let { return it }
-                }
-            }
-            return null
-        }
-
-        // Try the primary selected media folder first
-        lookupMarquee(primaryFolder)?.let { return it }
-
-        // If not found and using non-default folder, fall back to marquees
-        if (overlayMediaType != OverlayMediaType.Marquees) {
-            lookupMarquee(FOLDER_MARQUEES)?.let { return it }
-        }
-
-        // Fall back to wheel directories
-        for (dir in MARQUEE_FALLBACK_DIRS) {
-            lookupMarquee(dir)?.let { return it }
-        }
-
-        return null
+        return findFirstMedia(
+            mediaPath,
+            systemNames,
+            folders,
+            gameFilename,
+            LOGO_EXTENSIONS,
+            suffixVariants = listOf("", ".scummvm")
+        )
     }
 
     private fun getGameVideoPath(systemName: String, gameFilename: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
-        val mediaSystemName = getMediaSystemName(systemName)
-
-        for (name in listOf(systemName, mediaSystemName).distinct()) {
-            val videoDir = File(mediaPath, "$name/$FOLDER_VIDEOS")
-
-            if (!videoDir.exists() || !videoDir.isDirectory) {
-                Log.d(TAG, "Video directory does not exist: ${videoDir.absolutePath}")
-                continue
-            }
-
-            for (ext in VIDEO_EXTENSIONS) {
-                val file = File(videoDir, "$nameOnly.$ext")
-                if (file.exists()) {
-                    return file.absolutePath
-                }
-            }
-
-            val subfolderPath = extractSubfolderPath(gameFilename)
-            if (subfolderPath != null) {
-                val subDir = File(videoDir, subfolderPath)
-                if (subDir.exists() && subDir.isDirectory) {
-                    for (ext in VIDEO_EXTENSIONS) {
-                        val file = File(subDir, "$nameOnly.$ext")
-                        if (file.exists()) {
-                            return file.absolutePath
-                        }
-                    }
-                }
-            }
-        }
-
-        return null
-    }
-
-    private fun extractSubfolderPath(fullPath: String): String? {
-        val beforeFilename = fullPath.substringBeforeLast("/", "")
-        return beforeFilename.ifEmpty { null }
+        val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
+        return findFirstMedia(mediaPath, systemNames, listOf(FOLDER_VIDEOS), gameFilename, VIDEO_EXTENSIONS)
     }
 
     private fun findInCustomImagesFolder(

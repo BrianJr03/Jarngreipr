@@ -1,17 +1,5 @@
-**Notification Shade Customization**
-- Customize color, shape and more!
+**Fixes**
+- Multi-disc games using ES-DE's "directories interpreted as files" convention (`.m3u`, `.cue`, `.gdi`, `.ps3`, etc.) now display their scraped background, logo, and video instead of a black screen
+- Fix applies to both the in-app ROM browser and the live wallpaper that reacts to ES-DE's selection events
 
-**Grid based icon snapping**
-- When dragging apps with this (and Free Positioning) enabled, apps will snap in grid spaces
-- Settings -> Layout -> Snap Mode
-- Must have Icon Snapping enabled as well
-
-**ES-DE: Logo Updates**
-- You can now use WEBP files or videos as the logo (marquee) for ES-DE wallpaper
-- Settings -> ES-DE -> Custom Paths
-- For System Logos Folder: n64.mp4, n3ds.webp naming format is accepted
-
-**Quick Fixes**
-- Multi-disc games (.m3u) now show their background image and logo on the wallpaper instead of a black screen
-
-2.5 
+2.5.1
