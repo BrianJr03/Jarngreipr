@@ -320,88 +320,24 @@ object RomListParser {
         return null
     }
 
-    private fun resolvePhysicalMediaPath(systemName: String, gameFilename: String, mediaPath: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
-        val mediaSystemName = getMediaSystemName(systemName)
+    private fun resolvePhysicalMediaPath(systemName: String, gameFilename: String, mediaPath: String): String? =
+        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(FOLDER_PHYSICALMEDIA), gameFilename, IMAGE_EXTENSIONS)
 
-        for (sysName in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS) {
-                if (parentDir != null) {
-                    val file = File(mediaPath, "$sysName/$FOLDER_PHYSICALMEDIA/$parentDir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
-                val file = File(mediaPath, "$sysName/$FOLDER_PHYSICALMEDIA/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
-            }
-        }
-        return null
-    }
+    private fun resolveMediaPath(systemName: String, gameFilename: String, mediaPath: String, folder: String): String? =
+        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(folder), gameFilename, IMAGE_EXTENSIONS)
 
-    private fun resolveMediaPath(systemName: String, gameFilename: String, mediaPath: String, folder: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
-        val mediaSystemName = getMediaSystemName(systemName)
+    private fun resolveArtworkPath(systemName: String, gameFilename: String, mediaPath: String): String? =
+        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(FOLDER_COVERS), gameFilename, IMAGE_EXTENSIONS)
 
-        for (sysName in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS) {
-                if (parentDir != null) {
-                    val file = File(mediaPath, "$sysName/$folder/$parentDir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
-                val file = File(mediaPath, "$sysName/$folder/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
-            }
-        }
-        return null
-    }
+    private fun resolveMarqueePath(systemName: String, gameFilename: String, mediaPath: String): String? =
+        findFirstMedia(
+            mediaPath,
+            mediaSystemNames(systemName),
+            listOf(FOLDER_MARQUEES) + MARQUEE_FALLBACK_DIRS,
+            gameFilename,
+            IMAGE_EXTENSIONS_WITH_SVG
+        )
 
-    private fun resolveArtworkPath(systemName: String, gameFilename: String, mediaPath: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
-        val mediaSystemName = getMediaSystemName(systemName)
-
-        for (sysName in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS) {
-                if (parentDir != null) {
-                    val file = File(mediaPath, "$sysName/$FOLDER_COVERS/$parentDir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
-                val file = File(mediaPath, "$sysName/$FOLDER_COVERS/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
-            }
-        }
-        return null
-    }
-
-    private fun resolveMarqueePath(systemName: String, gameFilename: String, mediaPath: String): String? {
-        val nameOnly = File(gameFilename).nameWithoutExtension
-        val parentDir = File(gameFilename).parent
-        val mediaSystemName = getMediaSystemName(systemName)
-
-        for (sysName in listOf(systemName, mediaSystemName).distinct()) {
-            for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                if (parentDir != null) {
-                    val file = File(mediaPath, "$sysName/$FOLDER_MARQUEES/$parentDir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
-                val file = File(mediaPath, "$sysName/$FOLDER_MARQUEES/$nameOnly.$ext")
-                if (file.exists()) return file.absolutePath
-            }
-        }
-
-        for (dir in MARQUEE_FALLBACK_DIRS) {
-            for (sysName in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS_WITH_SVG) {
-                    if (parentDir != null) {
-                        val file = File(mediaPath, "$sysName/$dir/$parentDir/$nameOnly.$ext")
-                        if (file.exists()) return file.absolutePath
-                    }
-                    val file = File(mediaPath, "$sysName/$dir/$nameOnly.$ext")
-                    if (file.exists()) return file.absolutePath
-                }
-            }
-        }
-        return null
-    }
+    private fun mediaSystemNames(systemName: String): List<String> =
+        listOf(systemName, getMediaSystemName(systemName)).distinct()
 }
