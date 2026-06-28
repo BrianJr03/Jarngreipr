@@ -45,6 +45,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
+import jr.brian.home.canvas.ui.UnifiedCanvasTab
 import jr.brian.home.data.FabPosition
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.PageCountManager
@@ -468,6 +469,19 @@ fun LauncherPagerScreen(
                                     onNavigateToTrackpad = onNavigateToTrackpad,
                                 )
                             }
+                        }
+                    }
+
+                    PageType.UNIFIED_CANVAS -> {
+                        key(globalIconRefreshManager?.refreshCounter) {
+                            UnifiedCanvasTab(
+                                pageIndex = page,
+                                apps = homeUiState.allAppsUnfiltered,
+                                onNavigateToRssSettings = onNavigateToRssSettings,
+                                onNavigateToRomSearch = onNavigateToRomSearch,
+                                dismissShadeSignal = dismissShadeSignal,
+                                widgetViewModel = widgetViewModel
+                            )
                         }
                     }
                 }

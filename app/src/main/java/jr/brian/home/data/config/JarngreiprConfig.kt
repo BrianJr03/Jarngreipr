@@ -1,5 +1,6 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
@@ -15,7 +16,8 @@ data class JarngreiprConfig(
     val system: SystemConfig = SystemConfig()
 ) {
     companion object {
-        const val CONFIG_VERSION = 1
+        // v2: added page.canvasLayouts for Unified Canvas pages.
+        const val CONFIG_VERSION = 2
     }
 }
 
@@ -125,7 +127,9 @@ data class PageConfig(
     val pageCount: Int = 1,
     val pageTypes: List<String> = listOf("APPS_TAB"),
     val homeTabIndex: Int = 0,
-    val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap()
+    val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap(),
+    /** Per-page Unified Canvas layouts, keyed by pageIndex.toString(). */
+    val canvasLayouts: Map<String, CanvasLayout> = emptyMap()
 )
 
 @Serializable
