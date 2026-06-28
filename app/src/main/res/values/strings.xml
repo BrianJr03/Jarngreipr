@@ -601,6 +601,9 @@
     <string name="canvas_edit_mode_on">On</string>
     <string name="canvas_edit_mode_off_hint">Long-press a tile to remove it.</string>
     <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
+    <string name="canvas_tidy_label">Tidy</string>
+    <string name="canvas_tidy_button">Tidy now</string>
+    <string name="canvas_tidy_hint">Closes the gaps left by moves, deletes, and resizes. Nothing else compacts automatically.</string>
     <string name="canvas_widget_picker_title">Add a widget</string>
     <string name="canvas_widget_picker_loading">Loading widgets…</string>
     <string name="canvas_widget_picker_empty">No widgets available on this device.</string>
@@ -610,6 +613,7 @@
     <string name="canvas_resize_widget_cols">Width (columns)</string>
     <string name="canvas_resize_widget_rows">Height (rows)</string>
     <string name="canvas_resize_widget_hint">Tap a widget in Edit Mode to resize it.</string>
+    <string name="canvas_resize_handle_description">Drag to resize, or focus and select to open the resize dialog.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
