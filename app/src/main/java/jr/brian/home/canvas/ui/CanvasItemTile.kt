@@ -299,10 +299,14 @@ private fun CanvasWidgetTile(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp))
                 .background(OledCardColor.copy(alpha = 0.85f))
-                .border(
-                    width = if (editMode) 3.dp else 2.dp,
-                    color = if (editMode) ThemePrimaryColor else ThemePrimaryColor.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(12.dp)
+                .then(
+                    if (editMode) {
+                        Modifier.border(
+                            width = 3.dp,
+                            color = ThemePrimaryColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    } else Modifier
                 )
         ) {
             if (appWidgetHost != null && providerInfo != null) {

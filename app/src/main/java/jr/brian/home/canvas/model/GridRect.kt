@@ -1,10 +1,13 @@
 package jr.brian.home.canvas.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * A rectangular region of grid cells: top-left at [col]/[row], extending [colSpan]
  * cells right and [rowSpan] cells down. Edges are half-open: [right] and [bottom]
  * are exclusive.
  */
+@Serializable
 data class GridRect(
     val col: Int,
     val row: Int,

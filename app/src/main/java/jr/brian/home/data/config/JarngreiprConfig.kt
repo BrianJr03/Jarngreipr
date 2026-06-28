@@ -17,7 +17,10 @@ data class JarngreiprConfig(
 ) {
     companion object {
         // v2: added page.canvasLayouts for Unified Canvas pages.
-        const val CONFIG_VERSION = 2
+        // v3: CanvasLayout split into shared content + per-orientation
+        //     arrangements; v2 blobs decode with empty arrangements and are
+        //     auto-repaired by CanvasLayoutManager.repair on apply.
+        const val CONFIG_VERSION = 3
     }
 }
 

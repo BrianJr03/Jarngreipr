@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -53,9 +56,9 @@ fun CanvasEditDialog(
     onTidy: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var orientation by remember(layout.orientation) { mutableStateOf(layout.orientation) }
-    var columns by remember(layout.columns) { mutableStateOf(layout.columns) }
-    var rows by remember(layout.rows) { mutableStateOf(layout.rows) }
+    var orientation by remember(layout.activeOrientation) { mutableStateOf(layout.activeOrientation) }
+    var columns by remember(layout.verticalColumns) { mutableStateOf(layout.verticalColumns) }
+    var rows by remember(layout.horizontalRows) { mutableStateOf(layout.horizontalRows) }
     var editMode by remember(layout.editMode) { mutableStateOf(layout.editMode) }
 
     DimmedDialog(
@@ -71,6 +74,7 @@ fun CanvasEditDialog(
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
+                .heightIn(max = 560.dp)
                 .border(
                     width = 1.dp,
                     brush = borderBrush(isFocused = true),
@@ -78,7 +82,9 @@ fun CanvasEditDialog(
                 )
         ) {
             Column(
-                modifier = Modifier.padding(28.dp),
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(28.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Text(
@@ -86,6 +92,14 @@ fun CanvasEditDialog(
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
+                )
+
+                EditModeToggle(
+                    enabled = editMode,
+                    onToggle = {
+                        editMode = it
+                        onEditModeChanged(it)
+                    }
                 )
 
                 OrientationToggle(
@@ -111,14 +125,6 @@ fun CanvasEditDialog(
                     onValueChange = {
                         rows = it
                         onGridChanged(columns, rows)
-                    }
-                )
-
-                EditModeToggle(
-                    enabled = editMode,
-                    onToggle = {
-                        editMode = it
-                        onEditModeChanged(it)
                     }
                 )
 
@@ -207,12 +213,14 @@ private fun OrientationToggle(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OrientationChip(
-                label = stringResource(R.string.canvas_orientation_vertical),
-                isSelected = selected == CanvasScrollOrientation.VERTICAL,
-                onClick = { onSelected(CanvasScrollOrientation.VERTICAL) },
-                modifier = Modifier.weight(1f)
-            )
+            // Vertical scroll is hidden for now — horizontal is the only
+            // supported orientation while we tune the vertical mode UX.
+            // OrientationChip(
+            //     label = stringResource(R.string.canvas_orientation_vertical),
+            //     isSelected = selected == CanvasScrollOrientation.VERTICAL,
+            //     onClick = { onSelected(CanvasScrollOrientation.VERTICAL) },
+            //     modifier = Modifier.weight(1f)
+            // )
             OrientationChip(
                 label = stringResource(R.string.canvas_orientation_horizontal),
                 isSelected = selected == CanvasScrollOrientation.HORIZONTAL,

@@ -71,6 +71,16 @@ private val CanvasOuterPadding = 8.dp
 private val CanvasCellSpacing = 8.dp
 private val CanvasResizeHandleSize = 28.dp
 
+/**
+ * Upper bound on a single cell's edge length, applied to both orientations.
+ * On wide viewports (landscape phone, tablet, TV) the per-cell size that
+ * `(viewport - padding) / crossAxisCount` would produce balloons well past
+ * what any tile actually needs — a 56dp icon ends up alone in a 400dp cell.
+ * Capping here keeps tiles at a consistent visual size and the grid is
+ * centered in the cross-axis when the cap leaves headroom.
+ */
+private val CanvasMaxCellSize = 96.dp
+
 /** Extra cells of empty push-axis space rendered past the furthest item. */
 private const val CanvasPushAxisHeadroom = 1
 
@@ -93,26 +103,24 @@ private const val CanvasPushAxisHeadroom = 1
  * Tapping the handle (also focus-navigable) opens [CanvasResizeDialog] for
  * D-pad/gamepad accessibility via [onRequestResizeDialog].
  *
- * Reuses [CanvasItemTile] for every variant and [CanvasAddItemTile] for the
- * trailing "+" tile.
+ * Reuses [CanvasItemTile] for every variant. Items are added from the top-bar
+ * `+` button (see [jr.brian.home.canvas.ui.UnifiedCanvasTab]); no inline add
+ * tile is rendered in the grid.
  */
 @Composable
 fun CanvasGridLayout(
     state: CanvasUiState,
     onTap: (ResolvedCanvasItem) -> Unit,
     onLongPress: (ResolvedCanvasItem) -> Unit,
-    onAddItem: () -> Unit,
     onResizeWidget: (CanvasItem.WidgetItem) -> Unit,
     onCommitLayout: (LayoutSnapshot) -> Unit,
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null
 ) {
-    val pushDirection = PushDirection.from(state.layout.orientation)
-    val crossAxisCount = when (pushDirection) {
-        PushDirection.DOWN -> state.layout.columns
-        PushDirection.RIGHT -> state.layout.rows
-    }.coerceAtLeast(1)
+    val pushDirection = PushDirection.from(state.layout.activeOrientation)
+    val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
+    val activeArrangement = state.layout.activeArrangement
     val editMode = state.layout.editMode
     val scrollState = rememberScrollState()
     val scrollModifier = when (pushDirection) {
@@ -134,39 +142,44 @@ fun CanvasGridLayout(
 
     val tileRects = state.resolvedItems.associate { resolved ->
         val id = resolved.raw.id
+        val baselineRect = activeArrangement[id] ?: FallbackRect
         val rect = when {
-            activeGesture == null -> resolved.raw.normalizedRect()
+            activeGesture == null -> baselineRect
             activeGesture.mode == CanvasGestureState.Mode.Move && id == activeGesture.draggedId ->
                 activeGesture.baselineRect
             else ->
-                activeGesture.previewSnapshot.placements[id] ?: resolved.raw.normalizedRect()
+                activeGesture.previewSnapshot.placements[id] ?: baselineRect
         }
         id to rect
     }
     val layoutAnchorRects: Collection<GridRect> =
-        activeGesture?.previewSnapshot?.placements?.values
-            ?: state.resolvedItems.map { it.raw.normalizedRect() }
-    val addCell = firstFreeCell(layoutAnchorRects, crossAxisCount, pushDirection)
-    val addRect = GridRect(addCell.col, addCell.row, 1, 1)
-    val pushAxisCells = (
-        (layoutAnchorRects.maxOfOrNull { it.pushEnd(pushDirection) } ?: 0)
-            .coerceAtLeast(addRect.pushEnd(pushDirection))
-        ) + CanvasPushAxisHeadroom
+        activeGesture?.previewSnapshot?.placements?.values ?: activeArrangement.values
+    val pushAxisCells =
+        (layoutAnchorRects.maxOfOrNull { it.pushEnd(pushDirection) } ?: 0) +
+            CanvasPushAxisHeadroom
 
     BoxWithConstraints(modifier = modifier.then(scrollModifier)) {
         val crossViewport: Dp = when (pushDirection) {
             PushDirection.DOWN -> maxWidth
             PushDirection.RIGHT -> maxHeight
         }
-        val cellSize: Dp = ((crossViewport - CanvasOuterPadding * 2
+        val fittedCellSize: Dp = ((crossViewport - CanvasOuterPadding * 2
             - CanvasCellSpacing * (crossAxisCount - 1)) / crossAxisCount)
             .coerceAtLeast(0.dp)
+        val cellSize: Dp = fittedCellSize.coerceAtMost(CanvasMaxCellSize)
+        val crossContentExtent: Dp = CanvasOuterPadding * 2 +
+            cellSize * crossAxisCount +
+            CanvasCellSpacing * (crossAxisCount - 1).coerceAtLeast(0)
         val pushExtent: Dp = CanvasOuterPadding * 2 +
             cellSize * pushAxisCells +
             CanvasCellSpacing * (pushAxisCells - 1).coerceAtLeast(0)
         val canvasSizeModifier = when (pushDirection) {
-            PushDirection.DOWN -> Modifier.fillMaxWidth().height(pushExtent)
-            PushDirection.RIGHT -> Modifier.fillMaxHeight().width(pushExtent)
+            PushDirection.DOWN -> Modifier.width(crossContentExtent).height(pushExtent)
+            PushDirection.RIGHT -> Modifier.height(crossContentExtent).width(pushExtent)
+        }
+        val canvasAlignment = when (pushDirection) {
+            PushDirection.DOWN -> Alignment.TopCenter
+            PushDirection.RIGHT -> Alignment.CenterStart
         }
 
         val density = LocalDensity.current
@@ -175,7 +188,7 @@ fun CanvasGridLayout(
         )
         val cellSizePxState = rememberUpdatedState(with(density) { cellSize.toPx() })
 
-        Box(modifier = canvasSizeModifier) {
+        Box(modifier = canvasSizeModifier.align(canvasAlignment)) {
             if (activeGesture != null) {
                 val ghostRect = activeGesture.previewSnapshot.placements[activeGesture.draggedId]
                 if (ghostRect != null) {
@@ -194,7 +207,7 @@ fun CanvasGridLayout(
             state.resolvedItems.forEach { resolved ->
                 key(resolved.raw.id) {
                     val itemId = resolved.raw.id
-                    val rect = tileRects[itemId] ?: resolved.raw.normalizedRect()
+                    val rect = tileRects[itemId] ?: FallbackRect
                     val isDragging = activeGesture != null && activeGesture.draggedId == itemId
                     val isMoveDragging =
                         isDragging && activeGesture.mode == CanvasGestureState.Mode.Move
@@ -271,15 +284,6 @@ fun CanvasGridLayout(
                 }
             }
 
-            CanvasTileSlot(
-                rect = addRect,
-                cellSize = cellSize,
-                spacing = CanvasCellSpacing,
-                outerPadding = CanvasOuterPadding,
-                animationLabel = "__canvas_add__"
-            ) {
-                CanvasAddItemTile(onTap = onAddItem)
-            }
         }
     }
 }
@@ -520,12 +524,7 @@ private fun DropTargetGhost() {
     )
 }
 
-private fun CanvasItem.normalizedRect(): GridRect = GridRect(
-    col.coerceAtLeast(0),
-    row.coerceAtLeast(0),
-    colSpan.coerceAtLeast(1),
-    rowSpan.coerceAtLeast(1)
-)
+private val FallbackRect = GridRect(0, 0, 1, 1)
 
 private fun GridRect.pushEnd(dir: PushDirection): Int = when (dir) {
     PushDirection.DOWN -> bottom
@@ -553,28 +552,3 @@ private fun minSpansFor(
     return minColSpan.coerceAtLeast(1) to minRowSpan.coerceAtLeast(1)
 }
 
-/**
- * Lowest cross-axis-first free 1×1 cell along the push axis, used to anchor
- * the trailing "+" tile. Skips cells occupied by any existing rect.
- */
-private fun firstFreeCell(
-    rects: Collection<GridRect>,
-    crossAxisCount: Int,
-    dir: PushDirection
-): GridCell {
-    val occupied = rects.toList()
-    var push = 0
-    val limit = 10_000
-    while (push <= limit) {
-        for (cross in 0 until crossAxisCount) {
-            val col = if (dir == PushDirection.DOWN) cross else push
-            val row = if (dir == PushDirection.DOWN) push else cross
-            val candidate = GridRect(col, row, 1, 1)
-            if (occupied.none { it.overlaps(candidate) }) {
-                return GridCell(col, row)
-            }
-        }
-        push++
-    }
-    return GridCell(0, 0)
-}

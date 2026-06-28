@@ -9,6 +9,7 @@
 - **Tidy** action in the canvas edit dialog: closes the gaps left by moves, deletes, and resizes. Gaps no longer auto-fill — Tidy is the only path that compacts the layout.
 
 **Fixes**
+- **Unified Canvas — items added in one scroll orientation now appear in the other.** Vertical and horizontal grids each keep their own independent layout over a shared set of items, so adding, removing, moving, or resizing in one orientation no longer hides items from the other. Existing layouts are migrated on first launch — your current positions are preserved, and items previously missing from one orientation come back.
 - Multi-disc games using ES-DE's "directories interpreted as files" convention (`.m3u`, `.cue`, `.gdi`, `.ps3`, etc.) now display their scraped background, logo, and video instead of a black screen
 - Fix applies to both the in-app ROM browser and the live wallpaper that reacts to ES-DE's selection events
 

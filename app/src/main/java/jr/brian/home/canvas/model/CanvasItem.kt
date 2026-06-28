@@ -4,30 +4,27 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * A placeable item on a Unified Canvas page.
+ * A placeable entity on a Unified Canvas page.
  *
- * Every variant carries a stable [id] (unique within a [CanvasLayout]) and its grid
- * placement (top-left [col]/[row] plus [colSpan]/[rowSpan]). The variant payload is
- * a *reference* to an entity owned by another manager — never a duplicate of that
- * entity's data — so icon-pack changes, custom names, folder edits, etc. flow
- * through automatically.
+ * Items carry only their stable [id] and a *reference* to an entity owned by
+ * another manager (app package / folder id / rom key / widget id / rss
+ * launcher) — never a duplicate of that entity's data, so icon-pack changes,
+ * custom names, folder edits, etc. flow through automatically.
+ *
+ * Items are orientation-agnostic content. Their placement (col / row / colSpan
+ * / rowSpan) lives in [CanvasLayout.verticalArrangement] and
+ * [CanvasLayout.horizontalArrangement] — one map per scroll orientation — so
+ * the two orientations can keep independent grids over the same shared
+ * content set.
  */
 @Serializable
 sealed class CanvasItem {
     abstract val id: String
-    abstract val col: Int
-    abstract val row: Int
-    abstract val colSpan: Int
-    abstract val rowSpan: Int
 
     @Serializable
     @SerialName("app")
     data class AppItem(
         override val id: String,
-        override val col: Int,
-        override val row: Int,
-        override val colSpan: Int = 1,
-        override val rowSpan: Int = 1,
         val packageName: String
     ) : CanvasItem()
 
@@ -35,10 +32,6 @@ sealed class CanvasItem {
     @SerialName("folder")
     data class FolderItem(
         override val id: String,
-        override val col: Int,
-        override val row: Int,
-        override val colSpan: Int = 1,
-        override val rowSpan: Int = 1,
         val folderId: String
     ) : CanvasItem()
 
@@ -46,10 +39,6 @@ sealed class CanvasItem {
     @SerialName("rom")
     data class RomItem(
         override val id: String,
-        override val col: Int,
-        override val row: Int,
-        override val colSpan: Int = 1,
-        override val rowSpan: Int = 1,
         val romKey: String
     ) : CanvasItem()
 
@@ -57,37 +46,25 @@ sealed class CanvasItem {
     @SerialName("widget")
     data class WidgetItem(
         override val id: String,
-        override val col: Int,
-        override val row: Int,
-        override val colSpan: Int = 2,
-        override val rowSpan: Int = 2,
         val widgetId: Int
     ) : CanvasItem()
 
     @Serializable
     @SerialName("rss_launcher")
     data class RssLauncherItem(
-        override val id: String,
-        override val col: Int,
-        override val row: Int,
-        override val colSpan: Int = 1,
-        override val rowSpan: Int = 1
+        override val id: String
     ) : CanvasItem()
 }
 
 /**
- * Variant-preserving copy of a [CanvasItem] with new placement/size.
- * Needed because `.copy()` isn't available on the sealed base type.
+ * Default 1×1 / 2×2 span used when an item is first placed into an arrangement
+ * (or when a migrated item needs an auto-placement). Widgets default to 2×2;
+ * everything else to 1×1. Users can resize per-orientation afterwards.
  */
-fun CanvasItem.withPlacement(
-    col: Int = this.col,
-    row: Int = this.row,
-    colSpan: Int = this.colSpan,
-    rowSpan: Int = this.rowSpan
-): CanvasItem = when (this) {
-    is CanvasItem.AppItem -> copy(col = col, row = row, colSpan = colSpan, rowSpan = rowSpan)
-    is CanvasItem.FolderItem -> copy(col = col, row = row, colSpan = colSpan, rowSpan = rowSpan)
-    is CanvasItem.RomItem -> copy(col = col, row = row, colSpan = colSpan, rowSpan = rowSpan)
-    is CanvasItem.WidgetItem -> copy(col = col, row = row, colSpan = colSpan, rowSpan = rowSpan)
-    is CanvasItem.RssLauncherItem -> copy(col = col, row = row, colSpan = colSpan, rowSpan = rowSpan)
+fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
+    is CanvasItem.WidgetItem -> 2 to 2
+    is CanvasItem.AppItem,
+    is CanvasItem.FolderItem,
+    is CanvasItem.RomItem,
+    is CanvasItem.RssLauncherItem -> 1 to 1
 }

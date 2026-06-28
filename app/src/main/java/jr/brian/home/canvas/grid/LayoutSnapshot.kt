@@ -2,7 +2,6 @@ package jr.brian.home.canvas.grid
 
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.GridRect
-import jr.brian.home.canvas.model.withPlacement
 
 /**
  * Grid dimensions and push axis for a single canvas page. The cross axis is
@@ -18,8 +17,8 @@ data class GridConfig(
 }
 
 /**
- * Pure value snapshot of a layout — what the solver operates on. Carries grid
- * config plus a map of item id → placement.
+ * Pure value snapshot of one orientation's grid — what the solver operates on.
+ * Carries grid config plus a map of item id → placement.
  */
 data class LayoutSnapshot(
     val config: GridConfig,
@@ -35,22 +34,27 @@ data class SolveResult(
     val movedIds: Set<String>
 )
 
+/**
+ * Snapshot of the currently-rendered orientation. Solver gestures see only the
+ * active arrangement — moves/resizes never perturb the inactive one.
+ */
 fun CanvasLayout.toSnapshot(): LayoutSnapshot {
-    val direction = PushDirection.from(orientation)
-    val crossAxis = when (direction) {
-        PushDirection.DOWN -> columns
-        PushDirection.RIGHT -> rows
-    }
-    val placements = items.associate {
-        it.id to GridRect(it.col, it.row, it.colSpan, it.rowSpan)
-    }
-    return LayoutSnapshot(GridConfig(crossAxis, direction), placements)
+    val direction = PushDirection.from(activeOrientation)
+    return LayoutSnapshot(
+        config = GridConfig(activeCrossAxis, direction),
+        placements = activeArrangement
+    )
 }
 
+/**
+ * Write [snapshot]'s placements back into the active orientation's arrangement,
+ * leaving the other orientation untouched. Items in this layout with no
+ * placement in [snapshot] keep their existing rect (defensive — solver always
+ * returns all placements, but this keeps invariant preservation explicit).
+ */
 fun CanvasLayout.withSnapshot(snapshot: LayoutSnapshot): CanvasLayout {
-    val updated = items.map { item ->
-        val rect = snapshot.placements[item.id] ?: return@map item
-        item.withPlacement(rect.col, rect.row, rect.colSpan, rect.rowSpan)
-    }
-    return copy(items = updated)
+    val existing = activeArrangement
+    val updated = existing.toMutableMap()
+    snapshot.placements.forEach { (id, rect) -> updated[id] = rect }
+    return withArrangement(activeOrientation, updated)
 }
