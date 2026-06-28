@@ -5,10 +5,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.canvas.data.CanvasTabType
+import jr.brian.home.canvas.grid.GridSolver
+import jr.brian.home.canvas.grid.LayoutSnapshot
+import jr.brian.home.canvas.grid.toSnapshot
+import jr.brian.home.canvas.grid.withSnapshot
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.CanvasUiState
+import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.PinnedRomManager
@@ -130,6 +135,57 @@ class CanvasViewModel @Inject constructor(
     /** Move an item in the layout list, used by drag-to-reposition. */
     fun reorderItems(fromIndex: Int, toIndex: Int) {
         boundPage()?.let { canvasLayoutManager.reorderItems(it, fromIndex, toIndex) }
+    }
+
+    /**
+     * Replace the current page's item placements with [snapshot]. Used by the
+     * solver-driven drag/resize gestures to commit a multi-item layout update
+     * atomically (one push to persistence per gesture, not per neighbor).
+     * Preserves the layout's orientation, grid dimensions, and edit-mode flag.
+     */
+    fun commitLayoutSnapshot(snapshot: LayoutSnapshot) {
+        val pageIndex = boundPage() ?: return
+        val current = canvasLayoutManager.getLayout(pageIndex)
+        canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(snapshot))
+    }
+
+    /**
+     * Resize [id] to ([colSpan], [rowSpan]) via [GridSolver.solveResize], pushing
+     * any overlapped neighbors along the push axis (cascading). Honors the given
+     * minimum spans (use widget-derived mins for [CanvasItem.WidgetItem]; 1×1 for
+     * other variants). Persists the resulting placement atomically. No-op if the
+     * item isn't on the current page.
+     */
+    fun resizeItemWithSolver(
+        id: String,
+        colSpan: Int,
+        rowSpan: Int,
+        minColSpan: Int = 1,
+        minRowSpan: Int = 1
+    ) {
+        val pageIndex = boundPage() ?: return
+        val current = canvasLayoutManager.getLayout(pageIndex)
+        val item = current.items.firstOrNull { it.id == id } ?: return
+        val baseline = current.toSnapshot()
+        val newRect = GridRect(item.col, item.row, colSpan, rowSpan)
+        val result = GridSolver.solveResize(baseline, id, newRect, minColSpan, minRowSpan)
+        canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(result.snapshot))
+    }
+
+    /**
+     * Pull every item toward the grid origin along the push axis via
+     * [GridSolver.compact], closing the gaps left by previous moves, deletes,
+     * or shrinks. This is the **only** path that closes gaps — the move/resize
+     * solvers preserve them — so users explicitly opt into compaction from the
+     * canvas edit menu. Items animate to their new cells through the layout's
+     * standard spring on commit.
+     */
+    fun compactLayout() {
+        val pageIndex = boundPage() ?: return
+        val current = canvasLayoutManager.getLayout(pageIndex)
+        if (current.items.isEmpty()) return
+        val compacted = GridSolver.compact(current.toSnapshot())
+        canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(compacted))
     }
 
     fun setOrientation(orientation: CanvasScrollOrientation) {

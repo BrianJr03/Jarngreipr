@@ -100,7 +100,7 @@ fun UnifiedCanvasTab(
     val rssSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var pickWidgetVisible by remember { mutableStateOf(false) }
-    var widgetToResize by remember { mutableStateOf<CanvasItem.WidgetItem?>(null) }
+    var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -130,7 +130,15 @@ fun UnifiedCanvasTab(
                 onLongPress = { pendingRemoval = it },
                 onAddItem = { addDialogVisible = true },
                 onReorder = { from, to -> viewModel.reorderItems(from, to) },
-                onResizeWidget = { widget -> widgetToResize = widget },
+                onResizeWidget = { widget ->
+                    // Legacy widget-overlay tap path. Min spans default to 1×1; the
+                    // corner resize handle path provides precise widget mins.
+                    resizeRequest = CanvasResizeRequest(widget, 1, 1)
+                },
+                onCommitLayout = { snapshot -> viewModel.commitLayoutSnapshot(snapshot) },
+                onRequestResizeDialog = { item, minC, minR ->
+                    resizeRequest = CanvasResizeRequest(item, minC, minR)
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 8.dp),
@@ -204,13 +212,21 @@ fun UnifiedCanvasTab(
         )
     }
 
-    widgetToResize?.let { widget ->
-        CanvasResizeWidgetDialog(
-            widget = widget,
+    resizeRequest?.let { req ->
+        CanvasResizeDialog(
+            item = req.item,
+            minColSpan = req.minColSpan,
+            minRowSpan = req.minRowSpan,
             onResize = { cols, rows ->
-                viewModel.resizeItem(widget.id, colSpan = cols, rowSpan = rows)
+                viewModel.resizeItemWithSolver(
+                    id = req.item.id,
+                    colSpan = cols,
+                    rowSpan = rows,
+                    minColSpan = req.minColSpan,
+                    minRowSpan = req.minRowSpan
+                )
             },
-            onDismiss = { widgetToResize = null }
+            onDismiss = { resizeRequest = null }
         )
     }
 
@@ -252,6 +268,10 @@ fun UnifiedCanvasTab(
             onOrientationChanged = viewModel::setOrientation,
             onGridChanged = viewModel::setGrid,
             onEditModeChanged = viewModel::setEditMode,
+            onTidy = {
+                viewModel.compactLayout()
+                editDialogVisible = false
+            },
             onDismiss = { editDialogVisible = false }
         )
     }
@@ -422,3 +442,15 @@ private fun newRssLauncher(indexHint: Int): CanvasItem.RssLauncherItem =
         col = 0,
         row = indexHint
     )
+
+/**
+ * Bundles a target item with its resolved minimum spans so the resize dialog
+ * can clamp the steppers. Widget mins come from
+ * [android.appwidget.AppWidgetProviderInfo] via the corner-handle path;
+ * non-widgets and the legacy widget-overlay path default to 1×1.
+ */
+private data class CanvasResizeRequest(
+    val item: CanvasItem,
+    val minColSpan: Int,
+    val minRowSpan: Int
+)

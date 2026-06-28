@@ -314,11 +314,14 @@ private fun CanvasWidgetTile(
                     update = { it.requestLayout() }
                 )
                 if (editMode) {
+                    // Absorb taps so the widget's own click handlers don't fire while
+                    // editing. Resize is via the corner handle (touch + D-pad);
+                    // [onEditTap] is retained for source compat but unused.
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(ThemePrimaryColor.copy(alpha = 0.15f))
-                            .clickable { onEditTap() }
+                            .clickable { }
                     )
                 }
             } else {

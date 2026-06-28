@@ -4,6 +4,9 @@
 - Add apps, folders, ROMs, widgets, and an RSS launcher tile from one picker; long-press to drag tiles to a new spot or release in place to remove
 - Real widget rendering via the system AppWidgetHost; widgets keep their multi-cell spans
 - Canvas layouts survive backup/restore via Settings → Import/Export
+- **Canvas grid rewrite**: tiles now live at absolute (col, row) coordinates instead of flowing in list order. Drag and resize push overlapped neighbors into the nearest free cells along the scroll axis, cascading deterministically — same gesture, same result, every time. Backing off a drag or resize mid-gesture returns displaced neighbors to where they started.
+- **Resize handle on every tile** in Edit Mode (bottom-right corner). Drag the handle to resize; tap (or focus + select on D-pad/gamepad) to open the stepper dialog. Widgets honor their declared minimum size and can't be shrunk below it.
+- **Tidy** action in the canvas edit dialog: closes the gaps left by moves, deletes, and resizes. Gaps no longer auto-fill — Tidy is the only path that compacts the layout.
 
 **Fixes**
 - Multi-disc games using ES-DE's "directories interpreted as files" convention (`.m3u`, `.cue`, `.gdi`, `.ps3`, etc.) now display their scraped background, logo, and video instead of a black screen

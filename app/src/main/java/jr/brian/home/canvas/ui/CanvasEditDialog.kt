@@ -50,6 +50,7 @@ fun CanvasEditDialog(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
+    onTidy: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var orientation by remember(layout.orientation) { mutableStateOf(layout.orientation) }
@@ -120,8 +121,33 @@ fun CanvasEditDialog(
                         onEditModeChanged(it)
                     }
                 )
+
+                TidyControl(onTidy = onTidy)
             }
         }
+    }
+}
+
+@Composable
+private fun TidyControl(onTidy: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.canvas_tidy_label),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        OrientationChip(
+            label = stringResource(R.string.canvas_tidy_button),
+            isSelected = false,
+            onClick = onTidy,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = stringResource(R.string.canvas_tidy_hint),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 12.sp
+        )
     }
 }
 

@@ -46,18 +46,30 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 /**
- * Steppers for a widget's [CanvasItem.WidgetItem.colSpan]/[rowSpan]. Clamped to
- * [CanvasLayout.MIN_AXIS]/[MAX_AXIS]. Calls [onResize] on every change so the
- * grid reflects the new size live; [onDismiss] when the user closes.
+ * Stepper dialog for resizing any [CanvasItem] (apps, folders, ROMs, RSS,
+ * widgets). Each click on a +/- button calls [onResize] with the new
+ * (colSpan, rowSpan); the caller routes that through the solver so
+ * overlapped neighbors are pushed deterministically along the push axis.
+ *
+ * [minColSpan]/[minRowSpan] enforce minimums — widgets pass their
+ * AppWidgetProviderInfo-derived cell mins so they can't be shrunk below
+ * the size the widget itself declared. Other variants use 1×1.
+ *
+ * Focusable +/- buttons make the dialog the D-pad/gamepad path for resize;
+ * touch users get the same interaction.
  */
 @Composable
-fun CanvasResizeWidgetDialog(
-    widget: CanvasItem.WidgetItem,
+fun CanvasResizeDialog(
+    item: CanvasItem,
     onResize: (colSpan: Int, rowSpan: Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    minColSpan: Int = 1,
+    minRowSpan: Int = 1,
+    maxColSpan: Int = CanvasLayout.MAX_AXIS,
+    maxRowSpan: Int = CanvasLayout.MAX_AXIS
 ) {
-    var cols by remember(widget.id) { mutableStateOf(widget.colSpan) }
-    var rows by remember(widget.id) { mutableStateOf(widget.rowSpan) }
+    var cols by remember(item.id) { mutableStateOf(item.colSpan) }
+    var rows by remember(item.id) { mutableStateOf(item.rowSpan) }
 
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -97,6 +109,8 @@ fun CanvasResizeWidgetDialog(
                 SpanStepper(
                     label = stringResource(R.string.canvas_resize_widget_cols),
                     value = cols,
+                    minValue = minColSpan.coerceAtLeast(CanvasLayout.MIN_AXIS),
+                    maxValue = maxColSpan,
                     onValueChange = {
                         cols = it
                         onResize(cols, rows)
@@ -105,6 +119,8 @@ fun CanvasResizeWidgetDialog(
                 SpanStepper(
                     label = stringResource(R.string.canvas_resize_widget_rows),
                     value = rows,
+                    minValue = minRowSpan.coerceAtLeast(CanvasLayout.MIN_AXIS),
+                    maxValue = maxRowSpan,
                     onValueChange = {
                         rows = it
                         onResize(cols, rows)
@@ -119,6 +135,8 @@ fun CanvasResizeWidgetDialog(
 private fun SpanStepper(
     label: String,
     value: Int,
+    minValue: Int,
+    maxValue: Int,
     onValueChange: (Int) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -135,9 +153,9 @@ private fun SpanStepper(
         ) {
             StepperButton(
                 icon = Icons.Default.KeyboardArrowDown,
-                enabled = value > CanvasLayout.MIN_AXIS,
+                enabled = value > minValue,
                 onClick = {
-                    if (value > CanvasLayout.MIN_AXIS) onValueChange(value - 1)
+                    if (value > minValue) onValueChange(value - 1)
                 }
             )
             Text(
@@ -150,9 +168,9 @@ private fun SpanStepper(
             )
             StepperButton(
                 icon = Icons.Default.KeyboardArrowUp,
-                enabled = value < CanvasLayout.MAX_AXIS,
+                enabled = value < maxValue,
                 onClick = {
-                    if (value < CanvasLayout.MAX_AXIS) onValueChange(value + 1)
+                    if (value < maxValue) onValueChange(value + 1)
                 }
             )
         }
