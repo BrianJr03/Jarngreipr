@@ -11,6 +11,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCanvasLayoutManager
 import jr.brian.home.ui.theme.managers.LocalControlPadManager
 import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -105,6 +106,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalPageTypeManager provides page.pageTypeManager,
         LocalHomeTabManager provides page.homeTabManager,
         LocalWidgetPageAppManager provides page.widgetPageAppManager,
+        LocalCanvasLayoutManager provides page.canvasLayoutManager,
         
         // Feature Management
         LocalDockManager provides feature.dockManager,

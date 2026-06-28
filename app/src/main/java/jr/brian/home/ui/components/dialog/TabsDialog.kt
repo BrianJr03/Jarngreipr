@@ -195,6 +195,7 @@ fun TabsDialog(
                         PageType.APPS_AND_WIDGETS_TAB -> stringResource(R.string.home_tab_page_type_apps_and_widgets_tab)
                         PageType.APP_DRAWER_TAB -> stringResource(R.string.home_tab_page_type_app_drawer_tab)
                         PageType.RSS_TAB -> stringResource(R.string.home_tab_page_type_rss_tab)
+                        PageType.UNIFIED_CANVAS -> stringResource(R.string.home_tab_page_type_unified_canvas)
                     }
 
                     val isHomeTab = if (totalPages == 1) {

@@ -3,6 +3,8 @@ package jr.brian.home.data.config
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.util.UnstableApi
+import jr.brian.home.canvas.data.CanvasTabType
+import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
 import jr.brian.home.data.FabPosition
@@ -153,7 +155,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         maxPages: Int
     ): Map<String, List<FolderItemConfig>> {
         val result = mutableMapOf<String, List<FolderItemConfig>>()
-        val tabTypes = listOf(FolderManager.TAB_TYPE_APPS, FolderManager.TAB_TYPE_WIDGETS)
+        val tabTypes = listOf(
+            FolderManager.TAB_TYPE_APPS,
+            FolderManager.TAB_TYPE_WIDGETS,
+            CanvasTabType.VALUE
+        )
         for (page in 0 until maxPages) {
             for (tabType in tabTypes) {
                 val folders = app.folderManager.getFolders(page, tabType).first()
@@ -180,11 +186,15 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         val page = managers.page
         val pageTypes = page.pageTypeManager.pageTypes.value
         val widgetPageApps = buildWidgetPageApps(page, pageTypes.size)
+        val canvasLayouts = page.canvasLayoutManager.layoutsByPage.value
+            .filterValues { it.items.isNotEmpty() || it != CanvasLayout() }
+            .mapKeys { it.key.toString() }
         return PageConfig(
             pageCount = pageTypes.size,
             pageTypes = pageTypes.map { it.name },
             homeTabIndex = page.homeTabManager.homeTabIndex.value,
-            widgetPageApps = widgetPageApps
+            widgetPageApps = widgetPageApps,
+            canvasLayouts = canvasLayouts
         )
     }
 
@@ -370,7 +380,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             }
         }
 
-        val tabTypes = listOf(FolderManager.TAB_TYPE_APPS, FolderManager.TAB_TYPE_WIDGETS)
+        val tabTypes = listOf(
+            FolderManager.TAB_TYPE_APPS,
+            FolderManager.TAB_TYPE_WIDGETS,
+            CanvasTabType.VALUE
+        )
         for (page in 0 until PageCountRange.MAX) {
             for (tabType in tabTypes) {
                 app.folderManager.setAllFolders(page, tabType, emptyList())
@@ -418,6 +432,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 )
             }
             if (wpc.appsFirst) page.widgetPageAppManager.toggleSectionOrder(p)
+        }
+
+        page.canvasLayoutManager.clearAll()
+        config.canvasLayouts.forEach { (pageStr, layout) ->
+            pageStr.toIntOrNull()?.let { idx ->
+                page.canvasLayoutManager.replaceLayout(idx, layout)
+            }
         }
     }
 

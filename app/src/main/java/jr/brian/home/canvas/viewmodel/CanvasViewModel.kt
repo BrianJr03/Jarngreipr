@@ -1,0 +1,221 @@
+package jr.brian.home.canvas.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jr.brian.home.canvas.data.CanvasLayoutManager
+import jr.brian.home.canvas.data.CanvasTabType
+import jr.brian.home.canvas.model.CanvasItem
+import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.canvas.model.CanvasScrollOrientation
+import jr.brian.home.canvas.model.CanvasUiState
+import jr.brian.home.canvas.model.ResolvedCanvasItem
+import jr.brian.home.data.FolderManager
+import jr.brian.home.data.PinnedRomManager
+import jr.brian.home.model.app.AppInfo
+import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
+class CanvasViewModel @Inject constructor(
+    private val canvasLayoutManager: CanvasLayoutManager,
+    private val folderManager: FolderManager,
+    private val pinnedRomManager: PinnedRomManager
+) : ViewModel() {
+
+    private val _pageIndex = MutableStateFlow(UNBOUND_PAGE)
+    private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
+
+    private val foldersFlow = _pageIndex.flatMapLatest { idx ->
+        if (idx < 0) flowOf(emptyList())
+        else folderManager.getFolders(idx, CanvasTabType.VALUE)
+    }
+
+    private val romsFlow = _pageIndex.flatMapLatest { idx ->
+        if (idx < 0) flowOf(emptyList())
+        else pinnedRomManager.getPinnedRoms(idx, CanvasTabType.VALUE)
+    }
+
+    /** Live canvas-owned folders for the currently bound page. */
+    val canvasFolders: StateFlow<List<Folder>> = foldersFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Live canvas-owned ROMs for the currently bound page. */
+    val canvasRoms: StateFlow<List<PinnedRomInfo>> = romsFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * Every ROM the user has pinned anywhere in the app, deduplicated by key.
+     * Used by the canvas picker so existing ROMs can be re-pinned to the canvas
+     * without going back through ES-DE search.
+     */
+    val allPinnedRoms: StateFlow<List<PinnedRomInfo>> = pinnedRomManager.allPinnedRoms
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * Re-pin [rom] to the current canvas page (under [CanvasTabType.VALUE]) and add
+     * a matching [CanvasItem.RomItem] to the layout if it isn't already there.
+     */
+    fun pinRomToCanvas(rom: PinnedRomInfo) {
+        val pageIndex = boundPage() ?: return
+        pinnedRomManager.addPinnedRom(pageIndex, rom, CanvasTabType.VALUE)
+        val layout = canvasLayoutManager.getLayout(pageIndex)
+        val alreadyOnCanvas = layout.items
+            .filterIsInstance<CanvasItem.RomItem>()
+            .any { it.romKey == rom.key }
+        if (!alreadyOnCanvas) {
+            canvasLayoutManager.addItem(
+                pageIndex,
+                CanvasItem.RomItem(
+                    id = "rom-${rom.key}",
+                    col = 0,
+                    row = layout.items.size,
+                    romKey = rom.key
+                )
+            )
+        }
+    }
+
+    val uiState: StateFlow<CanvasUiState> = combine(
+        _pageIndex,
+        canvasLayoutManager.layoutsByPage,
+        _apps,
+        foldersFlow,
+        romsFlow
+    ) { pageIndex, layouts, apps, folders, roms ->
+        val layout = if (pageIndex >= 0) layouts[pageIndex] ?: CanvasLayout() else CanvasLayout()
+        CanvasUiState(
+            pageIndex = pageIndex,
+            layout = layout,
+            resolvedItems = resolveAll(layout.items, apps, folders, roms)
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, CanvasUiState())
+
+    fun setPageIndex(pageIndex: Int) {
+        _pageIndex.value = pageIndex
+    }
+
+    fun setApps(apps: List<AppInfo>) {
+        _apps.value = apps
+    }
+
+    fun addItem(item: CanvasItem) {
+        boundPage()?.let { canvasLayoutManager.addItem(it, item) }
+    }
+
+    fun moveItem(id: String, col: Int, row: Int) {
+        boundPage()?.let { canvasLayoutManager.moveItem(it, id, col, row) }
+    }
+
+    fun resizeItem(id: String, colSpan: Int, rowSpan: Int) {
+        boundPage()?.let { canvasLayoutManager.resizeItem(it, id, colSpan, rowSpan) }
+    }
+
+    fun removeItem(id: String) {
+        boundPage()?.let { canvasLayoutManager.removeItem(it, id) }
+    }
+
+    /** Move an item in the layout list, used by drag-to-reposition. */
+    fun reorderItems(fromIndex: Int, toIndex: Int) {
+        boundPage()?.let { canvasLayoutManager.reorderItems(it, fromIndex, toIndex) }
+    }
+
+    fun setOrientation(orientation: CanvasScrollOrientation) {
+        boundPage()?.let { canvasLayoutManager.setOrientation(it, orientation) }
+    }
+
+    fun setGrid(columns: Int, rows: Int) {
+        boundPage()?.let { canvasLayoutManager.setGrid(it, columns, rows) }
+    }
+
+    fun setEditMode(enabled: Boolean) {
+        boundPage()?.let { canvasLayoutManager.setEditMode(it, enabled) }
+    }
+
+    init {
+        // Reactive folder sync: any canvas-owned folder that appears in FolderManager
+        // (created by CreateFolderDialog) auto-gets a CanvasItem.FolderItem on the
+        // current canvas page. Removing the FolderItem also deletes the folder
+        // entity (see `removeItem`), so this loop won't immediately re-add it.
+        viewModelScope.launch {
+            canvasFolders.collect { folders ->
+                val pageIndex = boundPage() ?: return@collect
+                val layout = canvasLayoutManager.getLayout(pageIndex)
+                val referenced = layout.items
+                    .filterIsInstance<CanvasItem.FolderItem>()
+                    .map { it.folderId }
+                    .toSet()
+                folders.filter { it.id !in referenced }
+                    .forEachIndexed { offset, folder ->
+                        canvasLayoutManager.addItem(
+                            pageIndex,
+                            CanvasItem.FolderItem(
+                                id = "folder-${folder.id}",
+                                col = 0,
+                                row = layout.items.size + offset,
+                                folderId = folder.id
+                            )
+                        )
+                    }
+            }
+        }
+    }
+
+    /**
+     * Remove an item from the canvas. For folders, this also deletes the
+     * underlying folder entity so the reactive sync doesn't immediately re-add
+     * a FolderItem for it.
+     */
+    fun removeItemAndCleanup(item: CanvasItem) {
+        val pageIndex = boundPage() ?: return
+        if (item is CanvasItem.FolderItem) {
+            viewModelScope.launch {
+                folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
+            }
+        }
+        canvasLayoutManager.removeItem(pageIndex, item.id)
+    }
+
+    private fun boundPage(): Int? = _pageIndex.value.takeIf { it >= 0 }
+
+    private fun resolveAll(
+        items: List<CanvasItem>,
+        apps: List<AppInfo>,
+        folders: List<Folder>,
+        roms: List<PinnedRomInfo>
+    ): List<ResolvedCanvasItem> {
+        val appsByPkg = apps.associateBy { it.packageName }
+        val foldersById = folders.associateBy { it.id }
+        val romsByKey = roms.associateBy { it.key }
+        return items.map { item ->
+            when (item) {
+                is CanvasItem.AppItem ->
+                    ResolvedCanvasItem.App(item, appsByPkg[item.packageName])
+                is CanvasItem.FolderItem ->
+                    ResolvedCanvasItem.Folder(item, foldersById[item.folderId])
+                is CanvasItem.RomItem ->
+                    ResolvedCanvasItem.Rom(item, romsByKey[item.romKey])
+                is CanvasItem.WidgetItem ->
+                    ResolvedCanvasItem.Widget(item)
+                is CanvasItem.RssLauncherItem ->
+                    ResolvedCanvasItem.RssLauncher(item)
+            }
+        }
+    }
+
+    companion object {
+        private const val UNBOUND_PAGE = -1
+    }
+}

@@ -564,6 +564,52 @@
     <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
     <string name="home_tab_page_type_rss_tab">RSS Tab</string>
     <string name="home_tab_page_type_rss_tab_description">A tab for browsing RSS feeds.</string>
+    <string name="home_tab_page_type_unified_canvas">Unified Canvas</string>
+    <string name="home_tab_page_type_unified_canvas_description">One continuous grid that holds apps, folders, ROMs, and widgets together.</string>
+    <string name="home_tab_unified_canvas_placeholder">Canvas</string>
+
+    <!-- Unified Canvas tab -->
+    <string name="canvas_add_item_tile">Add</string>
+    <string name="canvas_widget_placeholder_description">Widget tile</string>
+    <string name="canvas_widget_id_label">Widget #%1$d</string>
+    <string name="canvas_rss_launcher_tile">RSS</string>
+    <string name="canvas_missing_item_description">Missing entity</string>
+    <string name="canvas_edit_layout">Edit layout</string>
+    <string name="canvas_add_item">Add item</string>
+    <string name="canvas_add_item_dialog_title">Add to canvas</string>
+    <string name="canvas_add_app_option">Add an app</string>
+    <string name="canvas_add_folder_option">Add a folder</string>
+    <string name="canvas_add_rom_option">Add a ROM</string>
+    <string name="canvas_add_widget_option">Add a widget</string>
+    <string name="canvas_add_rss_launcher_option">Add RSS launcher</string>
+    <string name="canvas_picker_coming_soon">%1$s picker is coming in a future update</string>
+    <string name="canvas_edit_dialog_title">Edit canvas</string>
+    <string name="canvas_orientation_label">Scroll orientation</string>
+    <string name="canvas_orientation_vertical">Vertical</string>
+    <string name="canvas_orientation_horizontal">Horizontal</string>
+    <string name="canvas_columns_label">Columns</string>
+    <string name="canvas_rows_label">Rows</string>
+    <string name="canvas_remove_item_title">Remove from canvas</string>
+    <string name="canvas_remove_item_message">Remove this item from the canvas?</string>
+    <string name="canvas_remove_confirm">Remove</string>
+    <string name="canvas_remove_cancel">Cancel</string>
+    <string name="canvas_rom_picker_title">Pin a ROM to canvas</string>
+    <string name="canvas_rom_picker_empty">No ROMs pinned yet. Pin a ROM from the ROM search screen first, then come back to add it here.</string>
+    <string name="canvas_rom_picker_browse">Browse all ROMs</string>
+    <string name="canvas_edit_mode_label">Edit mode</string>
+    <string name="canvas_edit_mode_off">Off</string>
+    <string name="canvas_edit_mode_on">On</string>
+    <string name="canvas_edit_mode_off_hint">Long-press a tile to remove it.</string>
+    <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
+    <string name="canvas_widget_picker_title">Add a widget</string>
+    <string name="canvas_widget_picker_loading">Loading widgets…</string>
+    <string name="canvas_widget_picker_empty">No widgets available on this device.</string>
+    <string name="canvas_widget_host_unavailable">Widget host not ready yet. Try again in a moment.</string>
+    <string name="canvas_resize_widget_title">Resize widget</string>
+    <string name="canvas_resize_widget_subtitle">%1$d × %2$d cells</string>
+    <string name="canvas_resize_widget_cols">Width (columns)</string>
+    <string name="canvas_resize_widget_rows">Height (rows)</string>
+    <string name="canvas_resize_widget_hint">Tap a widget in Edit Mode to resize it.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
