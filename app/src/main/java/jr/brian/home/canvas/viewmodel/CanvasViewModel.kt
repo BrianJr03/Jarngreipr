@@ -85,8 +85,6 @@ class CanvasViewModel @Inject constructor(
                 pageIndex,
                 CanvasItem.RomItem(
                     id = "rom-${rom.key}",
-                    col = 0,
-                    row = layout.items.size,
                     romKey = rom.key
                 )
             )
@@ -118,6 +116,12 @@ class CanvasViewModel @Inject constructor(
 
     fun addItem(item: CanvasItem) {
         boundPage()?.let { canvasLayoutManager.addItem(it, item) }
+    }
+
+    fun addItem(item: CanvasItem, colSpan: Int, rowSpan: Int) {
+        boundPage()?.let {
+            canvasLayoutManager.addItem(it, item, colSpan = colSpan, rowSpan = rowSpan)
+        }
     }
 
     fun moveItem(id: String, col: Int, row: Int) {
@@ -165,27 +169,21 @@ class CanvasViewModel @Inject constructor(
     ) {
         val pageIndex = boundPage() ?: return
         val current = canvasLayoutManager.getLayout(pageIndex)
-        val item = current.items.firstOrNull { it.id == id } ?: return
         val baseline = current.toSnapshot()
-        val newRect = GridRect(item.col, item.row, colSpan, rowSpan)
+        val existing = baseline.placements[id] ?: return
+        val newRect = GridRect(existing.col, existing.row, colSpan, rowSpan)
         val result = GridSolver.solveResize(baseline, id, newRect, minColSpan, minRowSpan)
         canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(result.snapshot))
     }
 
     /**
-     * Pull every item toward the grid origin along the push axis via
-     * [GridSolver.compact], closing the gaps left by previous moves, deletes,
-     * or shrinks. This is the **only** path that closes gaps — the move/resize
-     * solvers preserve them — so users explicitly opt into compaction from the
-     * canvas edit menu. Items animate to their new cells through the layout's
-     * standard spring on commit.
+     * Pull items in the active orientation toward the grid origin, closing
+     * gaps left by previous moves/deletes/shrinks. The inactive orientation is
+     * untouched. This is the **only** path that closes gaps — solvers preserve
+     * them — so users explicitly opt in from the canvas edit menu.
      */
     fun compactLayout() {
-        val pageIndex = boundPage() ?: return
-        val current = canvasLayoutManager.getLayout(pageIndex)
-        if (current.items.isEmpty()) return
-        val compacted = GridSolver.compact(current.toSnapshot())
-        canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(compacted))
+        boundPage()?.let { canvasLayoutManager.compactLayout(it) }
     }
 
     fun setOrientation(orientation: CanvasScrollOrientation) {
@@ -214,13 +212,11 @@ class CanvasViewModel @Inject constructor(
                     .map { it.folderId }
                     .toSet()
                 folders.filter { it.id !in referenced }
-                    .forEachIndexed { offset, folder ->
+                    .forEach { folder ->
                         canvasLayoutManager.addItem(
                             pageIndex,
                             CanvasItem.FolderItem(
                                 id = "folder-${folder.id}",
-                                col = 0,
-                                row = layout.items.size + offset,
                                 folderId = folder.id
                             )
                         )

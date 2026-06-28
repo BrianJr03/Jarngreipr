@@ -15,8 +15,6 @@ class CanvasItemSerializationTest {
     fun `AppItem round trips through JSON`() {
         val original: CanvasItem = CanvasItem.AppItem(
             id = "a-1",
-            col = 0,
-            row = 1,
             packageName = "com.example.app"
         )
         val encoded = json.encodeToString(original)
@@ -28,8 +26,6 @@ class CanvasItemSerializationTest {
     fun `FolderItem round trips through JSON`() {
         val original: CanvasItem = CanvasItem.FolderItem(
             id = "f-1",
-            col = 2,
-            row = 3,
             folderId = "folder-uuid-1"
         )
         val encoded = json.encodeToString(original)
@@ -41,8 +37,6 @@ class CanvasItemSerializationTest {
     fun `RomItem round trips through JSON`() {
         val original: CanvasItem = CanvasItem.RomItem(
             id = "r-1",
-            col = 1,
-            row = 0,
             romKey = "snes/super-mario.smc"
         )
         val encoded = json.encodeToString(original)
@@ -51,53 +45,59 @@ class CanvasItemSerializationTest {
     }
 
     @Test
-    fun `WidgetItem round trips through JSON and preserves spans`() {
+    fun `WidgetItem round trips through JSON`() {
         val original: CanvasItem = CanvasItem.WidgetItem(
             id = "w-1",
-            col = 0,
-            row = 4,
-            colSpan = 3,
-            rowSpan = 2,
             widgetId = 42
         )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<CanvasItem>(encoded)
         assertEquals(original, decoded)
         assertTrue(decoded is CanvasItem.WidgetItem)
-        assertEquals(3, decoded.colSpan)
-        assertEquals(2, decoded.rowSpan)
     }
 
     @Test
     fun `RssLauncherItem round trips through JSON`() {
-        val original: CanvasItem = CanvasItem.RssLauncherItem(
-            id = "rss-1",
-            col = 3,
-            row = 5
-        )
+        val original: CanvasItem = CanvasItem.RssLauncherItem(id = "rss-1")
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<CanvasItem>(encoded)
         assertEquals(original, decoded)
     }
 
     @Test
-    fun `CanvasLayout with heterogeneous items round trips`() {
+    fun `CanvasLayout with heterogeneous items and arrangements round trips`() {
         val original = CanvasLayout(
-            orientation = CanvasScrollOrientation.HORIZONTAL,
-            columns = 4,
-            rows = 3,
+            activeOrientation = CanvasScrollOrientation.HORIZONTAL,
+            verticalColumns = 4,
+            horizontalRows = 3,
             items = listOf(
-                CanvasItem.AppItem("a", 0, 0, packageName = "com.a"),
-                CanvasItem.FolderItem("f", 1, 0, folderId = "fld"),
-                CanvasItem.RomItem("r", 2, 0, romKey = "sys/game"),
-                CanvasItem.WidgetItem("w", 0, 1, colSpan = 2, rowSpan = 2, widgetId = 7),
-                CanvasItem.RssLauncherItem("rss", 3, 0)
+                CanvasItem.AppItem("a", packageName = "com.a"),
+                CanvasItem.FolderItem("f", folderId = "fld"),
+                CanvasItem.RomItem("r", romKey = "sys/game"),
+                CanvasItem.WidgetItem("w", widgetId = 7),
+                CanvasItem.RssLauncherItem("rss")
+            ),
+            verticalArrangement = mapOf(
+                "a" to GridRect(0, 0, 1, 1),
+                "f" to GridRect(1, 0, 1, 1),
+                "r" to GridRect(2, 0, 1, 1),
+                "w" to GridRect(0, 1, 2, 2),
+                "rss" to GridRect(3, 0, 1, 1)
+            ),
+            horizontalArrangement = mapOf(
+                "a" to GridRect(0, 0, 1, 1),
+                "f" to GridRect(0, 1, 1, 1),
+                "r" to GridRect(0, 2, 1, 1),
+                "w" to GridRect(1, 0, 2, 2),
+                "rss" to GridRect(3, 0, 1, 1)
             )
         )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<CanvasLayout>(encoded)
         assertEquals(original, decoded)
         assertEquals(5, decoded.items.size)
+        assertEquals(5, decoded.verticalArrangement.size)
+        assertEquals(5, decoded.horizontalArrangement.size)
     }
 
     @Test
@@ -106,16 +106,18 @@ class CanvasItemSerializationTest {
         val encoded = json.encodeToString(empty)
         val decoded = json.decodeFromString<CanvasLayout>(encoded)
         assertEquals(empty, decoded)
-        assertEquals(CanvasScrollOrientation.VERTICAL, decoded.orientation)
+        assertEquals(CanvasScrollOrientation.HORIZONTAL, decoded.activeOrientation)
         assertEquals(CanvasLayout.CURRENT_VERSION, decoded.version)
+        assertTrue(decoded.verticalArrangement.isEmpty())
+        assertTrue(decoded.horizontalArrangement.isEmpty())
     }
 
     @Test
     fun `polymorphic discriminator is preserved across variants`() {
         val items: List<CanvasItem> = listOf(
-            CanvasItem.AppItem("a", 0, 0, packageName = "com.a"),
-            CanvasItem.WidgetItem("w", 1, 1, widgetId = 9),
-            CanvasItem.RssLauncherItem("rss", 2, 2)
+            CanvasItem.AppItem("a", packageName = "com.a"),
+            CanvasItem.WidgetItem("w", widgetId = 9),
+            CanvasItem.RssLauncherItem("rss")
         )
         val encoded = json.encodeToString(items)
         val decoded = json.decodeFromString<List<CanvasItem>>(encoded)
@@ -123,5 +125,52 @@ class CanvasItemSerializationTest {
         assertNotNull(decoded.firstOrNull { it is CanvasItem.AppItem })
         assertNotNull(decoded.firstOrNull { it is CanvasItem.WidgetItem })
         assertNotNull(decoded.firstOrNull { it is CanvasItem.RssLauncherItem })
+    }
+
+    @Test
+    fun `validateInvariant throws when an item lacks a placement in either arrangement`() {
+        val missingVertical = CanvasLayout(
+            items = listOf(CanvasItem.AppItem("a", packageName = "com.a")),
+            verticalArrangement = emptyMap(),
+            horizontalArrangement = mapOf("a" to GridRect(0, 0, 1, 1))
+        )
+        runCatching { missingVertical.validateInvariant() }
+            .onSuccess { error("expected throw for missing vertical placement") }
+
+        val missingHorizontal = CanvasLayout(
+            items = listOf(CanvasItem.AppItem("a", packageName = "com.a")),
+            verticalArrangement = mapOf("a" to GridRect(0, 0, 1, 1)),
+            horizontalArrangement = emptyMap()
+        )
+        runCatching { missingHorizontal.validateInvariant() }
+            .onSuccess { error("expected throw for missing horizontal placement") }
+
+        val orphan = CanvasLayout(
+            items = emptyList(),
+            verticalArrangement = mapOf("ghost" to GridRect(0, 0, 1, 1)),
+            horizontalArrangement = emptyMap()
+        )
+        runCatching { orphan.validateInvariant() }
+            .onSuccess { error("expected throw for orphan arrangement entry") }
+    }
+
+    @Test
+    fun `validateInvariant passes for a fully aligned layout`() {
+        val ok = CanvasLayout(
+            items = listOf(
+                CanvasItem.AppItem("a", packageName = "com.a"),
+                CanvasItem.WidgetItem("w", widgetId = 1)
+            ),
+            verticalArrangement = mapOf(
+                "a" to GridRect(0, 0, 1, 1),
+                "w" to GridRect(0, 1, 2, 2)
+            ),
+            horizontalArrangement = mapOf(
+                "a" to GridRect(0, 0, 1, 1),
+                "w" to GridRect(1, 0, 2, 2)
+            )
+        )
+        ok.validateInvariant()
+        assertTrue(ok.satisfiesInvariant())
     }
 }

@@ -61,6 +61,8 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 @Composable
 fun CanvasResizeDialog(
     item: CanvasItem,
+    currentColSpan: Int,
+    currentRowSpan: Int,
     onResize: (colSpan: Int, rowSpan: Int) -> Unit,
     onDismiss: () -> Unit,
     minColSpan: Int = 1,
@@ -68,8 +70,8 @@ fun CanvasResizeDialog(
     maxColSpan: Int = CanvasLayout.MAX_AXIS,
     maxRowSpan: Int = CanvasLayout.MAX_AXIS
 ) {
-    var cols by remember(item.id) { mutableStateOf(item.colSpan) }
-    var rows by remember(item.id) { mutableStateOf(item.rowSpan) }
+    var cols by remember(item.id) { mutableStateOf(currentColSpan) }
+    var rows by remember(item.id) { mutableStateOf(currentRowSpan) }
 
     DimmedDialog(
         onDismissRequest = onDismiss,

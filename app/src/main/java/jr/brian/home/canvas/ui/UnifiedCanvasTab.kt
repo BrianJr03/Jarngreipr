@@ -3,6 +3,7 @@ package jr.brian.home.canvas.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,7 +107,8 @@ fun UnifiedCanvasTab(
         Column(modifier = Modifier.fillMaxSize()) {
             CanvasTopBar(
                 onAddClick = { addDialogVisible = true },
-                onEditClick = { editDialogVisible = true }
+                onEditClick = { editDialogVisible = true },
+                onEditLongPress = { viewModel.setEditMode(!uiState.layout.editMode) }
             )
             CanvasGrid(
                 state = uiState,
@@ -128,7 +130,6 @@ fun UnifiedCanvasTab(
                     )
                 },
                 onLongPress = { pendingRemoval = it },
-                onAddItem = { addDialogVisible = true },
                 onReorder = { from, to -> viewModel.reorderItems(from, to) },
                 onResizeWidget = { widget ->
                     // Legacy widget-overlay tap path. Min spans default to 1×1; the
@@ -172,7 +173,7 @@ fun UnifiedCanvasTab(
                     context = context,
                     onPickApp = { pickAppVisible = true },
                     onAddRssLauncher = {
-                        viewModel.addItem(newRssLauncher(uiState.resolvedItems.size))
+                        viewModel.addItem(newRssLauncher())
                     },
                     onAddFolder = { createFolderVisible = true },
                     onAddRom = { pickRomVisible = true },
@@ -198,14 +199,12 @@ fun UnifiedCanvasTab(
             onWidgetPicked = { widgetId, providerInfo ->
                 val (cols, rows) = providerInfo.spanForCanvas()
                 viewModel.addItem(
-                    CanvasItem.WidgetItem(
+                    item = CanvasItem.WidgetItem(
                         id = "widget-$widgetId",
-                        col = 0,
-                        row = uiState.resolvedItems.size,
-                        colSpan = cols,
-                        rowSpan = rows,
                         widgetId = widgetId
-                    )
+                    ),
+                    colSpan = cols,
+                    rowSpan = rows
                 )
             },
             onDismiss = { pickWidgetVisible = false }
@@ -213,8 +212,11 @@ fun UnifiedCanvasTab(
     }
 
     resizeRequest?.let { req ->
+        val currentRect = uiState.layout.activeArrangement[req.item.id]
         CanvasResizeDialog(
             item = req.item,
+            currentColSpan = currentRect?.colSpan ?: req.minColSpan,
+            currentRowSpan = currentRect?.rowSpan ?: req.minRowSpan,
             minColSpan = req.minColSpan,
             minRowSpan = req.minRowSpan,
             onResize = { cols, rows ->
@@ -279,11 +281,13 @@ fun UnifiedCanvasTab(
     if (pickAppVisible) {
         AppSelectionDialog(
             apps = apps,
-            onAppSelected = { app ->
-                viewModel.addItem(newAppItem(app, uiState.resolvedItems.size))
+            onAppSelected = {},
+            onDismiss = { pickAppVisible = false },
+            multiSelect = true,
+            onMultiSelectConfirm = { picked ->
+                picked.forEach { viewModel.addItem(newAppItem(it)) }
                 pickAppVisible = false
-            },
-            onDismiss = { pickAppVisible = false }
+            }
         )
     }
 
@@ -308,7 +312,8 @@ fun UnifiedCanvasTab(
 @Composable
 private fun CanvasTopBar(
     onAddClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onEditLongPress: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -325,16 +330,19 @@ private fun CanvasTopBar(
         TopBarIconButton(
             icon = Icons.Default.GridView,
             contentDescription = stringResource(R.string.canvas_edit_layout),
-            onClick = onEditClick
+            onClick = onEditClick,
+            onLongClick = onEditLongPress
         )
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun TopBarIconButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     Box(
@@ -352,7 +360,7 @@ private fun TopBarIconButton(
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
@@ -428,19 +436,15 @@ private fun launchPinnedRom(
     launchApp(context, rom.key, displayPreference, intent)
 }
 
-private fun newAppItem(app: AppInfo, indexHint: Int): CanvasItem.AppItem =
+private fun newAppItem(app: AppInfo): CanvasItem.AppItem =
     CanvasItem.AppItem(
         id = "app-${app.packageName}-${UUID.randomUUID()}",
-        col = 0,
-        row = indexHint,
         packageName = app.packageName
     )
 
-private fun newRssLauncher(indexHint: Int): CanvasItem.RssLauncherItem =
+private fun newRssLauncher(): CanvasItem.RssLauncherItem =
     CanvasItem.RssLauncherItem(
-        id = "rss-${UUID.randomUUID()}",
-        col = 0,
-        row = indexHint
+        id = "rss-${UUID.randomUUID()}"
     )
 
 /**

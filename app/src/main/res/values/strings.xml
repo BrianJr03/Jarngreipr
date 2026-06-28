@@ -583,6 +583,9 @@
     <string name="canvas_add_widget_option">Add a widget</string>
     <string name="canvas_add_rss_launcher_option">Add RSS launcher</string>
     <string name="canvas_picker_coming_soon">%1$s picker is coming in a future update</string>
+    <string name="canvas_picker_selected_count">%1$d selected</string>
+    <string name="canvas_picker_done">Done</string>
+    <string name="canvas_picker_cancel">Cancel</string>
     <string name="canvas_edit_dialog_title">Edit canvas</string>
     <string name="canvas_orientation_label">Scroll orientation</string>
     <string name="canvas_orientation_vertical">Vertical</string>

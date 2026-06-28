@@ -12,6 +12,7 @@ import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
+import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.PinnedRomManager
@@ -83,6 +84,15 @@ class CanvasViewModelTest {
     private fun appInfo(pkg: String, label: String = pkg) =
         AppInfo(label = label, packageName = pkg, icon = mockDrawable)
 
+    private fun layoutOf(vararg items: CanvasItem): CanvasLayout {
+        val placement = mapOf(*items.mapIndexed { i, item -> item.id to GridRect(0, i, 1, 1) }.toTypedArray())
+        return CanvasLayout(
+            items = items.toList(),
+            verticalArrangement = placement,
+            horizontalArrangement = placement
+        )
+    }
+
     @Test
     fun `initial state is unbound with empty defaults`() = runTest {
         val vm = newVm()
@@ -92,16 +102,14 @@ class CanvasViewModelTest {
             val state = expectMostRecentItem()
             assertEquals(-1, state.pageIndex)
             assertTrue(state.resolvedItems.isEmpty())
-            assertEquals(CanvasScrollOrientation.VERTICAL, state.layout.orientation)
+            assertEquals(CanvasScrollOrientation.HORIZONTAL, state.layout.activeOrientation)
         }
     }
 
     @Test
     fun `setPageIndex switches to that page's layout`() = runTest {
-        val layout = CanvasLayout(
-            orientation = CanvasScrollOrientation.HORIZONTAL,
-            items = listOf(CanvasItem.AppItem("a", 0, 0, packageName = "com.x"))
-        )
+        val layout = layoutOf(CanvasItem.AppItem("a", packageName = "com.x"))
+            .copy(activeOrientation = CanvasScrollOrientation.HORIZONTAL)
         layoutsByPage.value = mapOf(2 to layout)
 
         val vm = newVm()
@@ -111,7 +119,7 @@ class CanvasViewModelTest {
         vm.uiState.test {
             val state = expectMostRecentItem()
             assertEquals(2, state.pageIndex)
-            assertEquals(CanvasScrollOrientation.HORIZONTAL, state.layout.orientation)
+            assertEquals(CanvasScrollOrientation.HORIZONTAL, state.layout.activeOrientation)
             assertEquals(1, state.resolvedItems.size)
         }
     }
@@ -119,9 +127,7 @@ class CanvasViewModelTest {
     @Test
     fun `app items resolve to AppInfo when package is present`() = runTest {
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                items = listOf(CanvasItem.AppItem("a", 0, 0, packageName = "com.x"))
-            )
+            0 to layoutOf(CanvasItem.AppItem("a", packageName = "com.x"))
         )
 
         val vm = newVm()
@@ -139,9 +145,7 @@ class CanvasViewModelTest {
     @Test
     fun `app items resolve to null info when package is missing`() = runTest {
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                items = listOf(CanvasItem.AppItem("a", 0, 0, packageName = "com.gone"))
-            )
+            0 to layoutOf(CanvasItem.AppItem("a", packageName = "com.gone"))
         )
 
         val vm = newVm()
@@ -166,9 +170,7 @@ class CanvasViewModelTest {
         )
         foldersForPage.value = listOf(folder)
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                items = listOf(CanvasItem.FolderItem("fi", 0, 0, folderId = "fld-1"))
-            )
+            0 to layoutOf(CanvasItem.FolderItem("fi", folderId = "fld-1"))
         )
 
         val vm = newVm()
@@ -193,9 +195,7 @@ class CanvasViewModelTest {
         )
         romsForPage.value = listOf(rom)
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                items = listOf(CanvasItem.RomItem("r1", 1, 0, romKey = "snes/mario"))
-            )
+            0 to layoutOf(CanvasItem.RomItem("r1", romKey = "snes/mario"))
         )
 
         val vm = newVm()
@@ -213,11 +213,9 @@ class CanvasViewModelTest {
     @Test
     fun `widget and rss launcher items resolve to passthrough variants`() = runTest {
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                items = listOf(
-                    CanvasItem.WidgetItem("w", 0, 0, widgetId = 42),
-                    CanvasItem.RssLauncherItem("rss", 1, 0)
-                )
+            0 to layoutOf(
+                CanvasItem.WidgetItem("w", widgetId = 42),
+                CanvasItem.RssLauncherItem("rss")
             )
         )
 
@@ -239,7 +237,7 @@ class CanvasViewModelTest {
         vm.setPageIndex(5)
         advanceUntilIdle()
 
-        val item = CanvasItem.AppItem("a", 0, 0, packageName = "com.x")
+        val item = CanvasItem.AppItem("a", packageName = "com.x")
         vm.addItem(item)
         vm.moveItem("a", col = 1, row = 2)
         vm.resizeItem("a", colSpan = 3, rowSpan = 4)
@@ -260,7 +258,7 @@ class CanvasViewModelTest {
         val vm = newVm()
         advanceUntilIdle()
 
-        vm.addItem(CanvasItem.AppItem("a", 0, 0, packageName = "com.x"))
+        vm.addItem(CanvasItem.AppItem("a", packageName = "com.x"))
         vm.moveItem("a", 1, 2)
         vm.removeItem("a")
 
@@ -297,8 +295,8 @@ class CanvasViewModelTest {
 
     @Test
     fun `reactive folder sync skips folders already referenced by layout`() = runTest {
-        every { canvasLayoutManager.getLayout(0) } returns CanvasLayout(
-            items = listOf(CanvasItem.FolderItem("fi", 0, 0, folderId = "fld-existing"))
+        every { canvasLayoutManager.getLayout(0) } returns layoutOf(
+            CanvasItem.FolderItem("fi", folderId = "fld-existing")
         )
 
         val vm = newVm()
@@ -326,12 +324,7 @@ class CanvasViewModelTest {
         vm.setPageIndex(2)
         advanceUntilIdle()
 
-        val folderItem = CanvasItem.FolderItem(
-            id = "folder-x",
-            col = 0,
-            row = 0,
-            folderId = "fld-x"
-        )
+        val folderItem = CanvasItem.FolderItem(id = "folder-x", folderId = "fld-x")
         vm.removeItemAndCleanup(folderItem)
         advanceUntilIdle()
 
@@ -366,8 +359,8 @@ class CanvasViewModelTest {
 
     @Test
     fun `pinRomToCanvas skips adding RomItem when already on canvas`() = runTest {
-        every { canvasLayoutManager.getLayout(0) } returns CanvasLayout(
-            items = listOf(CanvasItem.RomItem("ri", 0, 0, romKey = "snes/mario"))
+        every { canvasLayoutManager.getLayout(0) } returns layoutOf(
+            CanvasItem.RomItem("ri", romKey = "snes/mario")
         )
         val rom = PinnedRomInfo(
             key = "snes/mario",
@@ -392,35 +385,23 @@ class CanvasViewModelTest {
     }
 
     @Test
-    fun `reorderItems delegates to CanvasLayoutManager with bound page`() = runTest {
-        val vm = newVm()
-        vm.setPageIndex(7)
-        advanceUntilIdle()
-
-        vm.reorderItems(fromIndex = 1, toIndex = 4)
-
-        verify { canvasLayoutManager.reorderItems(7, 1, 4) }
-    }
-
-    @Test
     fun `layout updates after bind are reflected in uiState`() = runTest {
         val vm = newVm()
         vm.setPageIndex(0)
         advanceUntilIdle()
 
         layoutsByPage.value = mapOf(
-            0 to CanvasLayout(
-                columns = 3,
-                rows = 5,
-                items = listOf(CanvasItem.RssLauncherItem("rss", 0, 0))
+            0 to layoutOf(CanvasItem.RssLauncherItem("rss")).copy(
+                verticalColumns = 3,
+                horizontalRows = 5
             )
         )
         advanceUntilIdle()
 
         vm.uiState.test {
             val state = expectMostRecentItem()
-            assertEquals(3, state.layout.columns)
-            assertEquals(5, state.layout.rows)
+            assertEquals(3, state.layout.verticalColumns)
+            assertEquals(5, state.layout.horizontalRows)
             assertEquals(1, state.resolvedItems.size)
         }
     }
