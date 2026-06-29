@@ -13,11 +13,11 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.CanvasUiState
-import jr.brian.home.canvas.model.EsdeArtType
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.PinnedRomManager
+import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -45,19 +45,31 @@ class CanvasViewModel @Inject constructor(
     /**
      * Add a display-only ES-DE art tile to the current canvas page. The tile
      * binds reactively to
-     * [jr.brian.home.esde.util.LocalEsdeWallpaperState] at render time — no
-     * system / game binding is stored on the item itself. Placement is
-     * auto-computed into both arrangements via the standard
-     * [canvasLayoutManager.addItem] path.
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState]'s `currentGame` at
+     * render time and renders [imageType] for that game. Placement is
+     * auto-computed into both arrangements via [canvasLayoutManager.addItem].
      */
-    fun addEsdeArtItem(artType: EsdeArtType) {
+    fun addEsdeArtItem(imageType: GameImageType) {
         val pageIndex = boundPage() ?: return
         canvasLayoutManager.addItem(
             pageIndex = pageIndex,
             item = CanvasItem.EsdeArtItem(
-                id = "esde-${artType.name.lowercase()}-${UUID.randomUUID()}",
-                artType = artType
+                id = "esde-${imageType.name.lowercase()}-${UUID.randomUUID()}",
+                imageType = imageType
             )
+        )
+    }
+
+    /**
+     * Change [imageType] on an existing ES-DE Display tile. Routed through
+     * [canvasLayoutManager.addItem] with the same id, which replaces the
+     * item in place and preserves its per-orientation placements.
+     */
+    fun updateEsdeArtItemImageType(id: String, imageType: GameImageType) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.EsdeArtItem(id = id, imageType = imageType)
         )
     }
 

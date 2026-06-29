@@ -102,6 +102,7 @@ fun UnifiedCanvasTab(
     val scope = rememberCoroutineScope()
     var pickWidgetVisible by remember { mutableStateOf(false) }
     var pickEsdeArtVisible by remember { mutableStateOf(false) }
+    var esdeArtRetypeTarget by remember { mutableStateOf<ResolvedCanvasItem.EsdeArt?>(null) }
     var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
 
     // Hoisted so the floating add icon can fade based on grid scroll.
@@ -125,7 +126,8 @@ fun UnifiedCanvasTab(
                             displayPreference = appDisplayPreferenceManager
                                 .getAppDisplayPreference(rom.key)
                         )
-                    }
+                    },
+                    onChangeEsdeArtType = { esdeArt -> esdeArtRetypeTarget = esdeArt }
                 )
             },
             onLongPress = { pendingRemoval = it },
@@ -202,9 +204,22 @@ fun UnifiedCanvasTab(
     }
 
     if (pickEsdeArtVisible) {
-        CanvasEsdeArtPickerDialog(
-            onConfirm = { artType -> viewModel.addEsdeArtItem(artType) },
+        CanvasEsdeArtChooserDialog(
+            initialType = jr.brian.home.esde.model.GameImageType.Fanart,
+            titleRes = R.string.canvas_esde_picker_title,
+            onConfirm = { imageType -> viewModel.addEsdeArtItem(imageType) },
             onDismiss = { pickEsdeArtVisible = false }
+        )
+    }
+
+    esdeArtRetypeTarget?.let { target ->
+        CanvasEsdeArtChooserDialog(
+            initialType = target.raw.resolvedImageType,
+            titleRes = R.string.canvas_esde_chooser_title,
+            onConfirm = { imageType ->
+                viewModel.updateEsdeArtItemImageType(target.raw.id, imageType)
+            },
+            onDismiss = { esdeArtRetypeTarget = null }
         )
     }
 
@@ -392,7 +407,8 @@ private fun handleTap(
     resolved: ResolvedCanvasItem,
     onOpenRss: () -> Unit,
     onOpenFolder: (ResolvedCanvasItem.Folder) -> Unit,
-    onLaunchRom: (PinnedRomInfo) -> Unit
+    onLaunchRom: (PinnedRomInfo) -> Unit,
+    onChangeEsdeArtType: (ResolvedCanvasItem.EsdeArt) -> Unit
 ) {
     when (resolved) {
         is ResolvedCanvasItem.App -> resolved.info?.let { launchApp(context, it.packageName) }
@@ -402,9 +418,7 @@ private fun handleTap(
         is ResolvedCanvasItem.Widget -> {
             // Widget interaction lives in Phase J.
         }
-        is ResolvedCanvasItem.EsdeArt -> {
-            // v1: display-only. Tap-to-launch lives behind brief §B5 stretch.
-        }
+        is ResolvedCanvasItem.EsdeArt -> onChangeEsdeArtType(resolved)
     }
 }
 

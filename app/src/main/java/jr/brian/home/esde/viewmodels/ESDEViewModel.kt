@@ -22,7 +22,13 @@ import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.data.ESDECleanupHelper
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_COVERS
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_FANART
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_PHYSICALMEDIA
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_SCREENSHOTS
+import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_TITLESCREENS
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_VIDEOS
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_WHEEL_3D
 import jr.brian.home.esde.util.ESDEMediaConstants.GAME_IMAGE_FALLBACKS
@@ -30,10 +36,12 @@ import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.IMAGE_EXTENSIONS_WITH_SVG
 import jr.brian.home.esde.util.ESDEMediaConstants.MARQUEE_FALLBACK_DIRS
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_IMAGE_FALLBACKS
+import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
+import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
 import jr.brian.home.esde.util.mediaCandidatePaths
 import jr.brian.home.esde.model.WallpaperState
@@ -231,7 +239,9 @@ class ESDEViewModel @Inject constructor(
             gameDescription = null,
             blurLevel = prefs.state.value.systemBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.systemBackgroundDimmingFloat,
-            isShowingGameBackground = false
+            isShowingGameBackground = false,
+            currentGame = null,
+            currentSystemName = systemName
         )
 
         musicController.onSystemChanged(systemName)
@@ -272,7 +282,9 @@ class ESDEViewModel @Inject constructor(
             gameDescription = gameDescription,
             blurLevel = prefs.state.value.gameBlurLevel.toFloat(),
             dimmingLevel = prefs.state.value.gameBackgroundDimmingFloat,
-            isShowingGameBackground = true
+            isShowingGameBackground = true,
+            currentGame = buildGameInfo(systemName, gameFilename),
+            currentSystemName = null
         )
 
         musicController.onGameSelected(systemName, gameFilename)
@@ -484,6 +496,50 @@ class ESDEViewModel @Inject constructor(
             dimmingLevel = dimmingLevel,
             isScreensaverActive = true,
             isShowingGameBackground = true
+        )
+    }
+
+    /**
+     * Build a [GameInfo] populated with per-type media paths for the
+     * currently-focused game. Mirrors [RomListParser]'s resolve calls so
+     * canvas tiles can render any [GameImageType] via
+     * [jr.brian.home.esde.util.imagePathFor] without depending on the global
+     * `gameImageType` pref or duplicating media-search logic.
+     *
+     * Only the path fields are filled — name/metadata are absent. The canvas
+     * tile renderer treats this purely as a path bundle.
+     */
+    private fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
+        val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
+        fun media(folder: String) = findFirstMedia(
+            mediaPath = mediaPath,
+            systemNames = systemNames,
+            folders = listOf(folder),
+            gameFilename = gameFilename,
+            extensions = IMAGE_EXTENSIONS
+        )
+        // Prefer the scraped name from gamelist.xml; fall back to the file
+        // stem so the canvas placeholder never shows a raw path/extension.
+        val displayName = esdeRootPath?.let { root ->
+            GamelistParser.getGameName(root, systemName, gameFilename)
+        } ?: File(gameFilename).nameWithoutExtension
+        return GameInfo(
+            path = gameFilename,
+            name = displayName,
+            systemName = systemName,
+            artworkPath = media(FOLDER_COVERS),
+            physicalMediaPath = media(FOLDER_PHYSICALMEDIA),
+            marqueeImagePath = findFirstMedia(
+                mediaPath = mediaPath,
+                systemNames = systemNames,
+                folders = listOf(FOLDER_MARQUEES) + MARQUEE_FALLBACK_DIRS,
+                gameFilename = gameFilename,
+                extensions = IMAGE_EXTENSIONS_WITH_SVG
+            ),
+            screenshotPath = media(FOLDER_SCREENSHOTS),
+            fanartPath = media(FOLDER_FANART),
+            titlescreenPath = media(FOLDER_TITLESCREENS),
+            miximagePath = media(FOLDER_MIXIMAGES)
         )
     }
 
