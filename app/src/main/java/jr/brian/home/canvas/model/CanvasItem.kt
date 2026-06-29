@@ -54,6 +54,29 @@ sealed class CanvasItem {
     data class RssLauncherItem(
         override val id: String
     ) : CanvasItem()
+
+    /**
+     * Display-only tile that mirrors the currently-displayed ES-DE art.
+     *
+     * The item carries only [artType] — there is no system / game binding.
+     * The renderer reads
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState] and renders either
+     * `state.logoPath` (LOGO) or `state.currentImagePath` (BACKGROUND),
+     * recomposing automatically as ES-DE events update that state via
+     * `ESDEViewModel.updateForSystem` / `updateForGame`.
+     */
+    @Serializable
+    @SerialName("esde_art")
+    data class EsdeArtItem(
+        override val id: String,
+        val artType: EsdeArtType
+    ) : CanvasItem()
+}
+
+@Serializable
+enum class EsdeArtType {
+    LOGO,
+    BACKGROUND
 }
 
 /**
@@ -63,6 +86,7 @@ sealed class CanvasItem {
  */
 fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
     is CanvasItem.WidgetItem -> 2 to 2
+    is CanvasItem.EsdeArtItem -> 2 to 2
     is CanvasItem.AppItem,
     is CanvasItem.FolderItem,
     is CanvasItem.RomItem,

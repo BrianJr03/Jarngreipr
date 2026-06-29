@@ -65,6 +65,31 @@ class CanvasItemSerializationTest {
     }
 
     @Test
+    fun `EsdeArtItem (LOGO) round trips through JSON`() {
+        val original: CanvasItem = CanvasItem.EsdeArtItem(
+            id = "esde-logo-1",
+            artType = EsdeArtType.LOGO
+        )
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<CanvasItem>(encoded)
+        assertEquals(original, decoded)
+        assertTrue(decoded is CanvasItem.EsdeArtItem)
+        assertEquals(EsdeArtType.LOGO, (decoded as CanvasItem.EsdeArtItem).artType)
+    }
+
+    @Test
+    fun `EsdeArtItem (BACKGROUND) round trips through JSON`() {
+        val original: CanvasItem = CanvasItem.EsdeArtItem(
+            id = "esde-bg-2",
+            artType = EsdeArtType.BACKGROUND
+        )
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<CanvasItem>(encoded)
+        assertEquals(original, decoded)
+        assertEquals(EsdeArtType.BACKGROUND, (decoded as CanvasItem.EsdeArtItem).artType)
+    }
+
+    @Test
     fun `CanvasLayout with heterogeneous items and arrangements round trips`() {
         val original = CanvasLayout(
             activeOrientation = CanvasScrollOrientation.HORIZONTAL,

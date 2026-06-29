@@ -1,6 +1,8 @@
 package jr.brian.home.canvas.ui
 
 import android.appwidget.AppWidgetHost
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import jr.brian.home.canvas.grid.LayoutSnapshot
@@ -27,7 +29,8 @@ fun CanvasGrid(
     onCommitLayout: (LayoutSnapshot) -> Unit,
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
-    appWidgetHost: AppWidgetHost? = null
+    appWidgetHost: AppWidgetHost? = null,
+    scrollState: ScrollState = rememberScrollState()
 ) {
     CanvasGridLayout(
         state = state,
@@ -37,6 +40,7 @@ fun CanvasGrid(
         onCommitLayout = onCommitLayout,
         onRequestResizeDialog = onRequestResizeDialog,
         modifier = modifier,
-        appWidgetHost = appWidgetHost
+        appWidgetHost = appWidgetHost,
+        scrollState = scrollState
     )
 }

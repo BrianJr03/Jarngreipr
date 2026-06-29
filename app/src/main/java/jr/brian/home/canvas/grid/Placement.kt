@@ -7,13 +7,18 @@ import jr.brian.home.canvas.model.GridRect
  * Lowest cross-axis-first free cell that can hold a [colSpan] × [rowSpan]
  * rect, scanning along the push axis from the origin. Used to anchor new
  * items into an arrangement deterministically.
+ *
+ * [reservedRects] are treated exactly like [occupied]: candidates that
+ * overlap them are skipped, so auto-placement never lands on a UI-reserved
+ * cell (e.g. the floating add-icon corner).
  */
 fun firstFreeRect(
     occupied: Collection<GridRect>,
     crossAxisCount: Int,
     pushDirection: PushDirection,
     colSpan: Int = 1,
-    rowSpan: Int = 1
+    rowSpan: Int = 1,
+    reservedRects: Collection<GridRect> = emptyList()
 ): GridRect {
     val cellSpan = when (pushDirection) {
         PushDirection.DOWN -> colSpan
@@ -21,6 +26,7 @@ fun firstFreeRect(
     }
     val maxCross = (crossAxisCount - cellSpan).coerceAtLeast(0)
     val occupiedList = occupied.toList()
+    val reservedList = reservedRects.toList()
     var push = 0
     val limit = 100_000
     while (push <= limit) {
@@ -29,7 +35,9 @@ fun firstFreeRect(
                 PushDirection.DOWN -> GridRect(cross, push, colSpan, rowSpan)
                 PushDirection.RIGHT -> GridRect(push, cross, colSpan, rowSpan)
             }
-            if (occupiedList.none { it.overlaps(rect) }) return rect
+            if (occupiedList.none { it.overlaps(rect) } &&
+                reservedList.none { it.overlaps(rect) }
+            ) return rect
         }
         push++
     }

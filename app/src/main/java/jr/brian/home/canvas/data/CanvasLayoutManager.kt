@@ -97,7 +97,8 @@ class CanvasLayoutManager(context: Context) {
                 crossAxisCount = layout.verticalColumns,
                 pushDirection = PushDirection.DOWN,
                 preferredCell = atCellInActive
-                    .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.VERTICAL }
+                    .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.VERTICAL },
+                reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.VERTICAL)
             )
             val horizontal = layout.horizontalArrangement.placeIfAbsent(
                 itemId = item.id,
@@ -106,7 +107,8 @@ class CanvasLayoutManager(context: Context) {
                 crossAxisCount = layout.horizontalRows,
                 pushDirection = PushDirection.RIGHT,
                 preferredCell = atCellInActive
-                    .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.HORIZONTAL }
+                    .takeIf { !isReplace && layout.activeOrientation == CanvasScrollOrientation.HORIZONTAL },
+                reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.HORIZONTAL)
             )
 
             layout.copy(
@@ -337,7 +339,8 @@ private fun Map<String, GridRect>.placeIfAbsent(
     rowSpan: Int,
     crossAxisCount: Int,
     pushDirection: PushDirection,
-    preferredCell: GridCell?
+    preferredCell: GridCell?,
+    reservedRects: Collection<GridRect> = emptyList()
 ): Map<String, GridRect> {
     if (containsKey(itemId)) return this
     val occupied = values
@@ -348,10 +351,29 @@ private fun Map<String, GridRect>.placeIfAbsent(
             colSpan = colSpan,
             rowSpan = rowSpan
         )
-        if (occupied.none { it.overlaps(candidate) }) candidate
-        else firstFreeRect(occupied, crossAxisCount, pushDirection, colSpan, rowSpan)
+        val collidesOccupied = occupied.any { it.overlaps(candidate) }
+        val collidesReserved = reservedRects.any { it.overlaps(candidate) }
+        if (!collidesOccupied && !collidesReserved) candidate
+        else firstFreeRect(occupied, crossAxisCount, pushDirection, colSpan, rowSpan, reservedRects)
     } else {
-        firstFreeRect(occupied, crossAxisCount, pushDirection, colSpan, rowSpan)
+        firstFreeRect(occupied, crossAxisCount, pushDirection, colSpan, rowSpan, reservedRects)
     }
     return toMutableMap().also { it[itemId] = rect }
 }
+
+/**
+ * The UI-reserved cells for [orientation] — the floating add-icon corner.
+ * Returned for the active orientation only; the inactive one stays empty so
+ * the brief's invariant about not perturbing the inactive arrangement still
+ * holds, and stored placements aren't retroactively invalidated. Horizontal
+ * mode returns empty: its icon position is scroll-dependent, and auto-place
+ * naturally fills from col 0 (well away from the right-edge icon).
+ */
+internal fun reservedRectsFor(layout: CanvasLayout, orientation: CanvasScrollOrientation): List<GridRect> =
+    when (orientation) {
+        CanvasScrollOrientation.VERTICAL -> {
+            val col = (layout.verticalColumns - 1).coerceAtLeast(0)
+            listOf(GridRect(col, 0, 1, 1))
+        }
+        CanvasScrollOrientation.HORIZONTAL -> emptyList()
+    }
