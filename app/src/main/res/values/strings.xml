@@ -586,15 +586,11 @@
     <string name="canvas_add_widget_option">Add a widget</string>
     <string name="canvas_add_rss_launcher_option">Add RSS launcher</string>
     <string name="canvas_add_esde_display_option">ES-DE Display</string>
-    <string name="canvas_esde_art_logo_description">Current ES-DE logo</string>
-    <string name="canvas_esde_art_background_description">Current ES-DE background art</string>
-    <string name="canvas_esde_art_waiting_logo">Waiting for ES-DE logo</string>
-    <string name="canvas_esde_art_waiting_background">Waiting for ES-DE background</string>
+    <string name="canvas_esde_art_tile_description">ES-DE game art</string>
     <string name="canvas_esde_picker_title">ES-DE Display</string>
-    <string name="canvas_esde_picker_art_type_label">Art type</string>
-    <string name="canvas_esde_picker_art_type_logo">Logo</string>
-    <string name="canvas_esde_picker_art_type_background">Background</string>
+    <string name="canvas_esde_picker_image_type_label">Image type</string>
     <string name="canvas_esde_picker_confirm">Add</string>
+    <string name="canvas_esde_chooser_title">Change image type</string>
     <string name="canvas_picker_coming_soon">%1$s picker is coming in a future update</string>
     <string name="canvas_picker_selected_count">%1$d selected</string>
     <string name="canvas_picker_done">Done</string>
@@ -1084,6 +1080,7 @@
     <string name="esde_settings_game_image_fanart">@string/common_fanart</string>
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
+    <string name="esde_settings_game_image_physicalmedia">Physical Media</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
     <string name="esde_settings_game_image_marquee">Marquee</string>
     <string name="esde_settings_game_image_description">Description</string>

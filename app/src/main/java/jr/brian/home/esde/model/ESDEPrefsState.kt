@@ -19,6 +19,7 @@ enum class SystemImageType(val folderName: String?) {
     }
 }
 
+@kotlinx.serialization.Serializable
 enum class GameImageType(val folderName: String?) {
     None(null),
     All(null),
@@ -26,6 +27,7 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
+    PhysicalMedia("physicalmedia"),
     Marquee("marquees"),
     MixImages("miximages"),
     Description(null);

@@ -30,30 +30,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.canvas.model.EsdeArtType
+import jr.brian.home.esde.model.GameImageType
+import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 /**
- * Single-step picker for the ES-DE Display tile. Asks **only** Logo vs
- * Background — the tile binds to the live wallpaper state via
- * [jr.brian.home.esde.util.LocalEsdeWallpaperState], so there is no system
- * or game to choose.
+ * Single chooser for the ES-DE Display tile's [GameImageType] — used both
+ * when adding a new tile and when re-typing an existing one. Reuses
+ * [GameImageTypeSelector] (already chip-styled and focusable) so the picker
+ * surface is consistent with ES-DE settings.
  *
- * Tapping Add fires [onConfirm] and then [onDismiss], so the dialog always
- * closes on a successful selection (the bug-class the previous design hit
- * was a stuck second step waiting on a non-empty systems list).
+ * Confirm always fires [onConfirm] then [onDismiss], so the dialog always
+ * closes on a successful selection.
  */
 @Composable
-fun CanvasEsdeArtPickerDialog(
-    onConfirm: (artType: EsdeArtType) -> Unit,
+fun CanvasEsdeArtChooserDialog(
+    initialType: GameImageType,
+    titleRes: Int,
+    onConfirm: (GameImageType) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var artType by remember { mutableStateOf(EsdeArtType.LOGO) }
+    var selected by remember(initialType) { mutableStateOf(initialType) }
 
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -75,19 +76,19 @@ fun CanvasEsdeArtPickerDialog(
                 )
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.canvas_esde_picker_title),
+                    text = stringResource(titleRes),
                     color = Color.White,
-                    fontSize = 22.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                ArtTypeChips(
-                    selected = artType,
-                    onSelected = { artType = it }
+                GameImageTypeSelector(
+                    selectedType = selected,
+                    onTypeSelected = { selected = it }
                 )
 
                 Row(
@@ -103,83 +104,15 @@ fun CanvasEsdeArtPickerDialog(
                     HeaderActionButton(
                         label = stringResource(R.string.canvas_esde_picker_confirm),
                         isPrimary = true,
-                        enabled = true,
+                        enabled = selected.folderName != null,
                         onClick = {
-                            onConfirm(artType)
+                            onConfirm(selected)
                             onDismiss()
                         }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ArtTypeChips(
-    selected: EsdeArtType,
-    onSelected: (EsdeArtType) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = stringResource(R.string.canvas_esde_picker_art_type_label),
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ArtTypeChip(
-                label = stringResource(R.string.canvas_esde_picker_art_type_logo),
-                isSelected = selected == EsdeArtType.LOGO,
-                onClick = { onSelected(EsdeArtType.LOGO) },
-                modifier = Modifier.weight(1f)
-            )
-            ArtTypeChip(
-                label = stringResource(R.string.canvas_esde_picker_art_type_background),
-                isSelected = selected == EsdeArtType.BACKGROUND,
-                onClick = { onSelected(EsdeArtType.BACKGROUND) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ArtTypeChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    Box(
-        modifier = modifier
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = cardGradient(isFocused = isFocused || isSelected),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = if (isSelected || isFocused) 3.dp else 2.dp,
-                brush = borderBrush(isFocused = isSelected || isFocused),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .focusable()
-            .padding(vertical = 14.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            color = if (isSelected) ThemePrimaryColor else Color.White,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 

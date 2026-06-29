@@ -1,5 +1,6 @@
 package jr.brian.home.canvas.model
 
+import jr.brian.home.esde.model.GameImageType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -56,21 +57,40 @@ sealed class CanvasItem {
     ) : CanvasItem()
 
     /**
-     * Display-only tile that mirrors the currently-displayed ES-DE art.
+     * Display-only tile that mirrors the currently-focused ES-DE game's art
+     * for the chosen [imageType]. The renderer reads
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState]'s `currentGame` and
+     * resolves the path via `imagePathFor(resolvedImageType)`, recomposing
+     * automatically as ES-DE events update that state.
      *
-     * The item carries only [artType] — there is no system / game binding.
-     * The renderer reads
-     * [jr.brian.home.esde.util.LocalEsdeWallpaperState] and renders either
-     * `state.logoPath` (LOGO) or `state.currentImagePath` (BACKGROUND),
-     * recomposing automatically as ES-DE events update that state via
-     * `ESDEViewModel.updateForSystem` / `updateForGame`.
+     * Migration: `imageType` is nullable so blobs written before this brief
+     * (which only carried [artType] LOGO/BACKGROUND) still deserialize.
+     * [resolvedImageType] folds the two together — new writes only set
+     * [imageType]; legacy writes are interpreted via [artType]. Once the
+     * persisted store has been re-saved at least once on this version, the
+     * `artType` field can be dropped.
      */
     @Serializable
     @SerialName("esde_art")
     data class EsdeArtItem(
         override val id: String,
-        val artType: EsdeArtType
-    ) : CanvasItem()
+        val imageType: GameImageType? = null,
+        @Deprecated("Use imageType. Kept for one-release migration of older saves.")
+        val artType: EsdeArtType? = null
+    ) : CanvasItem() {
+        /**
+         * The image type this tile should render. Prefers the new
+         * [imageType] field; falls back to migrating the legacy
+         * [artType] (LOGO → Marquee, BACKGROUND → Fanart, missing → Fanart).
+         */
+        @Suppress("DEPRECATION")
+        val resolvedImageType: GameImageType
+            get() = imageType ?: when (artType) {
+                EsdeArtType.LOGO -> GameImageType.Marquee
+                EsdeArtType.BACKGROUND -> GameImageType.Fanart
+                null -> GameImageType.Fanart
+            }
+    }
 }
 
 @Serializable

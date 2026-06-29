@@ -1,5 +1,6 @@
 package jr.brian.home.canvas.model
 
+import jr.brian.home.esde.model.GameImageType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -65,28 +66,68 @@ class CanvasItemSerializationTest {
     }
 
     @Test
-    fun `EsdeArtItem (LOGO) round trips through JSON`() {
+    fun `EsdeArtItem with imageType round trips through JSON`() {
         val original: CanvasItem = CanvasItem.EsdeArtItem(
-            id = "esde-logo-1",
-            artType = EsdeArtType.LOGO
+            id = "esde-cover-1",
+            imageType = GameImageType.Covers
         )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<CanvasItem>(encoded)
         assertEquals(original, decoded)
         assertTrue(decoded is CanvasItem.EsdeArtItem)
-        assertEquals(EsdeArtType.LOGO, (decoded as CanvasItem.EsdeArtItem).artType)
+        val esde = decoded as CanvasItem.EsdeArtItem
+        assertEquals(GameImageType.Covers, esde.imageType)
+        assertEquals(GameImageType.Covers, esde.resolvedImageType)
     }
 
     @Test
-    fun `EsdeArtItem (BACKGROUND) round trips through JSON`() {
+    fun `EsdeArtItem with PhysicalMedia round trips through JSON`() {
         val original: CanvasItem = CanvasItem.EsdeArtItem(
-            id = "esde-bg-2",
-            artType = EsdeArtType.BACKGROUND
+            id = "esde-disc-1",
+            imageType = GameImageType.PhysicalMedia
         )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<CanvasItem>(encoded)
         assertEquals(original, decoded)
-        assertEquals(EsdeArtType.BACKGROUND, (decoded as CanvasItem.EsdeArtItem).artType)
+        assertEquals(
+            GameImageType.PhysicalMedia,
+            (decoded as CanvasItem.EsdeArtItem).resolvedImageType
+        )
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `legacy artType LOGO migrates to Marquee via resolvedImageType`() {
+        // v1 saved blob — only artType was present.
+        val legacyJson = """{"type":"esde_art","id":"old-logo","artType":"LOGO"}"""
+        val decoded = json.decodeFromString<CanvasItem>(legacyJson)
+        assertTrue(decoded is CanvasItem.EsdeArtItem)
+        val esde = decoded as CanvasItem.EsdeArtItem
+        assertEquals(null, esde.imageType)
+        assertEquals(EsdeArtType.LOGO, esde.artType)
+        assertEquals(GameImageType.Marquee, esde.resolvedImageType)
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `legacy artType BACKGROUND migrates to Fanart via resolvedImageType`() {
+        val legacyJson = """{"type":"esde_art","id":"old-bg","artType":"BACKGROUND"}"""
+        val decoded = json.decodeFromString<CanvasItem>(legacyJson)
+        assertTrue(decoded is CanvasItem.EsdeArtItem)
+        val esde = decoded as CanvasItem.EsdeArtItem
+        assertEquals(EsdeArtType.BACKGROUND, esde.artType)
+        assertEquals(GameImageType.Fanart, esde.resolvedImageType)
+    }
+
+    @Test
+    fun `EsdeArtItem with neither field defaults to Fanart`() {
+        // Defensive: a malformed/old blob with no type info at all.
+        val legacyJson = """{"type":"esde_art","id":"orphan"}"""
+        val decoded = json.decodeFromString<CanvasItem>(legacyJson)
+        assertEquals(
+            GameImageType.Fanart,
+            (decoded as CanvasItem.EsdeArtItem).resolvedImageType
+        )
     }
 
     @Test
