@@ -116,13 +116,13 @@ fun CanvasGridLayout(
     onCommitLayout: (LayoutSnapshot) -> Unit,
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
-    appWidgetHost: AppWidgetHost? = null
+    appWidgetHost: AppWidgetHost? = null,
+    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
 ) {
     val pushDirection = PushDirection.from(state.layout.activeOrientation)
     val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
     val activeArrangement = state.layout.activeArrangement
     val editMode = state.layout.editMode
-    val scrollState = rememberScrollState()
     val scrollModifier = when (pushDirection) {
         PushDirection.DOWN -> Modifier.verticalScroll(scrollState)
         PushDirection.RIGHT -> Modifier.horizontalScroll(scrollState)

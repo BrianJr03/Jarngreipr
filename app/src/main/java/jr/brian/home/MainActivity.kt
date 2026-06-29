@@ -47,6 +47,7 @@ import jr.brian.home.esde.data.ScriptManager
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
@@ -193,20 +194,28 @@ class MainActivity : ComponentActivity() {
                         currentPageIndex = currentPageIndex,
                         dockTopY = dockTopY,
                         content = {
-                            MainContent(
-                                triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                onMarqueePressShortcutHandled = {
-                                    triggerMarqueePressShortcut = false
-                                },
-                                navigateToThemeShare = navigateToThemeShare,
-                                onNavigateToThemeShareHandled = { navigateToThemeShare = false },
-                                onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
-                                onCurrentPageChanged = { currentPageIndex = it },
-                                onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                onDockPositioned = { y -> dockTopY = y },
-                                hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
-                                        (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
-                            )
+                            // Live wallpaper state available to canvas tiles
+                            // (and any other consumer) without a second
+                            // ViewModel or event listener. Reads recompose on
+                            // each ES-DE event because the value changes.
+                            CompositionLocalProvider(
+                                LocalEsdeWallpaperState provides wallpaperState
+                            ) {
+                                MainContent(
+                                    triggerMarqueePressShortcut = triggerMarqueePressShortcut,
+                                    onMarqueePressShortcutHandled = {
+                                        triggerMarqueePressShortcut = false
+                                    },
+                                    navigateToThemeShare = navigateToThemeShare,
+                                    onNavigateToThemeShareHandled = { navigateToThemeShare = false },
+                                    onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
+                                    onCurrentPageChanged = { currentPageIndex = it },
+                                    onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                    onDockPositioned = { y -> dockTopY = y },
+                                    hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
+                                            (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
+                                )
+                            }
                         }
                     )
 

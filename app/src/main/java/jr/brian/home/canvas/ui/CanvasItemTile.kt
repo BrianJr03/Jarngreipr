@@ -118,6 +118,13 @@ fun CanvasItemTile(
             modifier = baseModifier,
             editMode = editMode
         )
+        is ResolvedCanvasItem.EsdeArt -> EsdeArtTile(
+            resolved = resolved,
+            onTap = onTap,
+            onLongPress = effectiveLongPress,
+            modifier = baseModifier,
+            editMode = editMode
+        )
     }
 }
 

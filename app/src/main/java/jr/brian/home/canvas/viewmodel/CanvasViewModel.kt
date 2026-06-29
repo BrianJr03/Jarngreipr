@@ -13,6 +13,7 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.CanvasUiState
+import jr.brian.home.canvas.model.EsdeArtType
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,6 +41,25 @@ class CanvasViewModel @Inject constructor(
     private val folderManager: FolderManager,
     private val pinnedRomManager: PinnedRomManager
 ) : ViewModel() {
+
+    /**
+     * Add a display-only ES-DE art tile to the current canvas page. The tile
+     * binds reactively to
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState] at render time — no
+     * system / game binding is stored on the item itself. Placement is
+     * auto-computed into both arrangements via the standard
+     * [canvasLayoutManager.addItem] path.
+     */
+    fun addEsdeArtItem(artType: EsdeArtType) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.EsdeArtItem(
+                id = "esde-${artType.name.lowercase()}-${UUID.randomUUID()}",
+                artType = artType
+            )
+        )
+    }
 
     private val _pageIndex = MutableStateFlow(UNBOUND_PAGE)
     private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
@@ -263,6 +284,8 @@ class CanvasViewModel @Inject constructor(
                     ResolvedCanvasItem.Widget(item)
                 is CanvasItem.RssLauncherItem ->
                     ResolvedCanvasItem.RssLauncher(item)
+                is CanvasItem.EsdeArtItem ->
+                    ResolvedCanvasItem.EsdeArt(item)
             }
         }
     }

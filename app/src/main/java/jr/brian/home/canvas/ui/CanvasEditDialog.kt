@@ -7,19 +7,16 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,102 +33,68 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedDialog
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
+/**
+ * Inner controls for editing a canvas page (edit-mode toggle, orientation,
+ * column/row steppers, tidy). Lives standalone so the unified canvas dialog
+ * can host it as a sub-view; the old standalone `CanvasEditDialog` surface
+ * is gone (one dialog now, see [CanvasMainDialog]).
+ */
 @Composable
-fun CanvasEditDialog(
+fun ColumnScope.EditCanvasContent(
     layout: CanvasLayout,
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
-    onTidy: () -> Unit,
-    onDismiss: () -> Unit
+    onTidy: () -> Unit
 ) {
     var orientation by remember(layout.activeOrientation) { mutableStateOf(layout.activeOrientation) }
     var columns by remember(layout.verticalColumns) { mutableStateOf(layout.verticalColumns) }
     var rows by remember(layout.horizontalRows) { mutableStateOf(layout.horizontalRows) }
     var editMode by remember(layout.editMode) { mutableStateOf(layout.editMode) }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .heightIn(max = 560.dp)
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush(isFocused = true),
-                    shape = RoundedCornerShape(24.dp)
-                )
-        ) {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(28.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.canvas_edit_dialog_title),
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                EditModeToggle(
-                    enabled = editMode,
-                    onToggle = {
-                        editMode = it
-                        onEditModeChanged(it)
-                    }
-                )
-
-                OrientationToggle(
-                    selected = orientation,
-                    onSelected = {
-                        orientation = it
-                        onOrientationChanged(it)
-                    }
-                )
-
-                AxisStepper(
-                    label = stringResource(R.string.canvas_columns_label),
-                    value = columns,
-                    onValueChange = {
-                        columns = it
-                        onGridChanged(columns, rows)
-                    }
-                )
-
-                AxisStepper(
-                    label = stringResource(R.string.canvas_rows_label),
-                    value = rows,
-                    onValueChange = {
-                        rows = it
-                        onGridChanged(columns, rows)
-                    }
-                )
-
-                TidyControl(onTidy = onTidy)
-            }
+    EditModeToggle(
+        enabled = editMode,
+        onToggle = {
+            editMode = it
+            onEditModeChanged(it)
         }
-    }
+    )
+
+    OrientationToggle(
+        selected = orientation,
+        onSelected = {
+            orientation = it
+            onOrientationChanged(it)
+        }
+    )
+
+    AxisStepper(
+        label = stringResource(R.string.canvas_columns_label),
+        value = columns,
+        onValueChange = {
+            columns = it
+            onGridChanged(columns, rows)
+        }
+    )
+
+    AxisStepper(
+        label = stringResource(R.string.canvas_rows_label),
+        value = rows,
+        onValueChange = {
+            rows = it
+            onGridChanged(columns, rows)
+        }
+    )
+
+    TidyControl(onTidy = onTidy)
 }
 
 @Composable
@@ -174,15 +137,15 @@ private fun EditModeToggle(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OrientationChip(
-                label = stringResource(R.string.canvas_edit_mode_off),
-                isSelected = !enabled,
-                onClick = { onToggle(false) },
-                modifier = Modifier.weight(1f)
-            )
-            OrientationChip(
                 label = stringResource(R.string.canvas_edit_mode_on),
                 isSelected = enabled,
                 onClick = { onToggle(true) },
+                modifier = Modifier.weight(1f)
+            )
+            OrientationChip(
+                label = stringResource(R.string.canvas_edit_mode_off),
+                isSelected = !enabled,
+                onClick = { onToggle(false) },
                 modifier = Modifier.weight(1f)
             )
         }

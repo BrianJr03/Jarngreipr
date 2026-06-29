@@ -1,18 +1,18 @@
 package jr.brian.home.canvas.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
@@ -91,7 +92,6 @@ fun UnifiedCanvasTab(
     LaunchedEffect(apps) { viewModel.setApps(apps) }
 
     var addDialogVisible by remember { mutableStateOf(false) }
-    var editDialogVisible by remember { mutableStateOf(false) }
     var pickAppVisible by remember { mutableStateOf(false) }
     var createFolderVisible by remember { mutableStateOf(false) }
     var pickRomVisible by remember { mutableStateOf(false) }
@@ -101,51 +101,55 @@ fun UnifiedCanvasTab(
     val rssSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var pickWidgetVisible by remember { mutableStateOf(false) }
+    var pickEsdeArtVisible by remember { mutableStateOf(false) }
     var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
 
+    // Hoisted so the floating add icon can fade based on grid scroll.
+    val canvasScrollState = rememberScrollState()
+
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            CanvasTopBar(
-                onAddClick = { addDialogVisible = true },
-                onEditClick = { editDialogVisible = true },
-                onEditLongPress = { viewModel.setEditMode(!uiState.layout.editMode) }
-            )
-            CanvasGrid(
-                state = uiState,
-                onTap = {
-                    handleTap(
-                        context = context,
-                        resolved = it,
-                        onOpenRss = { rssSheetVisible = true },
-                        onOpenFolder = { folder -> folderToOpen = folder },
-                        onLaunchRom = { rom ->
-                            launchPinnedRom(
-                                context = context,
-                                rom = rom,
-                                romSearchViewModel = romSearchViewModel,
-                                displayPreference = appDisplayPreferenceManager
-                                    .getAppDisplayPreference(rom.key)
-                            )
-                        }
-                    )
-                },
-                onLongPress = { pendingRemoval = it },
-                onReorder = { from, to -> viewModel.reorderItems(from, to) },
-                onResizeWidget = { widget ->
-                    // Legacy widget-overlay tap path. Min spans default to 1×1; the
-                    // corner resize handle path provides precise widget mins.
-                    resizeRequest = CanvasResizeRequest(widget, 1, 1)
-                },
-                onCommitLayout = { snapshot -> viewModel.commitLayoutSnapshot(snapshot) },
-                onRequestResizeDialog = { item, minC, minR ->
-                    resizeRequest = CanvasResizeRequest(item, minC, minR)
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 8.dp),
-                appWidgetHost = appWidgetHost
-            )
-        }
+        CanvasGrid(
+            state = uiState,
+            scrollState = canvasScrollState,
+            onTap = {
+                handleTap(
+                    context = context,
+                    resolved = it,
+                    onOpenRss = { rssSheetVisible = true },
+                    onOpenFolder = { folder -> folderToOpen = folder },
+                    onLaunchRom = { rom ->
+                        launchPinnedRom(
+                            context = context,
+                            rom = rom,
+                            romSearchViewModel = romSearchViewModel,
+                            displayPreference = appDisplayPreferenceManager
+                                .getAppDisplayPreference(rom.key)
+                        )
+                    }
+                )
+            },
+            onLongPress = { pendingRemoval = it },
+            onReorder = { from, to -> viewModel.reorderItems(from, to) },
+            onResizeWidget = { widget ->
+                // Legacy widget-overlay tap path. Min spans default to 1×1; the
+                // corner resize handle path provides precise widget mins.
+                resizeRequest = CanvasResizeRequest(widget, 1, 1)
+            },
+            onCommitLayout = { snapshot -> viewModel.commitLayoutSnapshot(snapshot) },
+            onRequestResizeDialog = { item, minC, minR ->
+                resizeRequest = CanvasResizeRequest(item, minC, minR)
+            },
+            modifier = Modifier.fillMaxSize(),
+            appWidgetHost = appWidgetHost
+        )
+        FloatingAddIcon(
+            scrollState = canvasScrollState,
+            onClick = { addDialogVisible = true },
+            onLongClick = { viewModel.setEditMode(!uiState.layout.editMode) },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp)
+        )
     }
 
     if (rssSheetVisible) {
@@ -166,20 +170,24 @@ fun UnifiedCanvasTab(
     }
 
     if (addDialogVisible) {
-        CanvasAddItemDialog(
+        CanvasMainDialog(
+            layout = uiState.layout,
             onChoice = { choice ->
                 handleAddChoice(
                     choice = choice,
                     context = context,
                     onPickApp = { pickAppVisible = true },
-                    onAddRssLauncher = {
-                        viewModel.addItem(newRssLauncher())
-                    },
+                    onAddRssLauncher = { viewModel.addItem(newRssLauncher()) },
                     onAddFolder = { createFolderVisible = true },
                     onAddRom = { pickRomVisible = true },
-                    onAddWidget = { pickWidgetVisible = true }
+                    onAddWidget = { pickWidgetVisible = true },
+                    onAddEsdeDisplay = { pickEsdeArtVisible = true }
                 )
             },
+            onOrientationChanged = viewModel::setOrientation,
+            onGridChanged = viewModel::setGrid,
+            onEditModeChanged = viewModel::setEditMode,
+            onTidy = { viewModel.compactLayout() },
             onDismiss = { addDialogVisible = false }
         )
     }
@@ -190,6 +198,13 @@ fun UnifiedCanvasTab(
             onRomSelected = { rom -> viewModel.pinRomToCanvas(rom) },
             onBrowseRoms = onNavigateToRomSearch,
             onDismiss = { pickRomVisible = false }
+        )
+    }
+
+    if (pickEsdeArtVisible) {
+        CanvasEsdeArtPickerDialog(
+            onConfirm = { artType -> viewModel.addEsdeArtItem(artType) },
+            onDismiss = { pickEsdeArtVisible = false }
         )
     }
 
@@ -264,20 +279,6 @@ fun UnifiedCanvasTab(
         )
     }
 
-    if (editDialogVisible) {
-        CanvasEditDialog(
-            layout = uiState.layout,
-            onOrientationChanged = viewModel::setOrientation,
-            onGridChanged = viewModel::setGrid,
-            onEditModeChanged = viewModel::setEditMode,
-            onTidy = {
-                viewModel.compactLayout()
-                editDialogVisible = false
-            },
-            onDismiss = { editDialogVisible = false }
-        )
-    }
-
     if (pickAppVisible) {
         AppSelectionDialog(
             apps = apps,
@@ -309,31 +310,40 @@ fun UnifiedCanvasTab(
     }
 }
 
+/**
+ * The canvas's single top-bar entry point: a floating add icon pinned at
+ * top-right. Fades while the grid is scrolling so it doesn't obscure
+ * content during gestures; snaps to full opacity when focused (D-pad /
+ * gamepad) or pressed so it's never unreachable. Long-press toggles edit
+ * mode as a power-user shortcut — same control surface is reachable via the
+ * dialog's Edit Canvas option.
+ */
 @Composable
-private fun CanvasTopBar(
-    onAddClick: () -> Unit,
-    onEditClick: () -> Unit,
-    onEditLongPress: () -> Unit
+private fun FloatingAddIcon(
+    scrollState: ScrollState,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TopBarIconButton(
-            icon = Icons.Default.Add,
-            contentDescription = stringResource(R.string.canvas_add_item),
-            onClick = onAddClick
-        )
-        TopBarIconButton(
-            icon = Icons.Default.GridView,
-            contentDescription = stringResource(R.string.canvas_edit_layout),
-            onClick = onEditClick,
-            onLongClick = onEditLongPress
-        )
+    var isFocused by remember { mutableStateOf(false) }
+    val targetAlpha = when {
+        isFocused -> 1f
+        scrollState.isScrollInProgress -> 0.15f
+        else -> 1f
     }
+    val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = 200),
+        label = "canvas-add-icon-alpha"
+    )
+    TopBarIconButton(
+        icon = Icons.Default.Add,
+        contentDescription = stringResource(R.string.canvas_add_item),
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier.alpha(alpha),
+        onFocusedChanged = { isFocused = it }
+    )
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -342,14 +352,19 @@ private fun TopBarIconButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    onFocusedChanged: (Boolean) -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(44.dp)
             .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged {
+                isFocused = it.isFocused
+                onFocusedChanged(it.isFocused)
+            }
             .background(
                 brush = cardGradient(isFocused = isFocused),
                 shape = RoundedCornerShape(12.dp)
@@ -387,6 +402,9 @@ private fun handleTap(
         is ResolvedCanvasItem.Widget -> {
             // Widget interaction lives in Phase J.
         }
+        is ResolvedCanvasItem.EsdeArt -> {
+            // v1: display-only. Tap-to-launch lives behind brief §B5 stretch.
+        }
     }
 }
 
@@ -397,7 +415,8 @@ private fun handleAddChoice(
     onAddRssLauncher: () -> Unit,
     onAddFolder: () -> Unit,
     onAddRom: () -> Unit,
-    onAddWidget: () -> Unit
+    onAddWidget: () -> Unit,
+    onAddEsdeDisplay: () -> Unit
 ) {
     when (choice) {
         CanvasAddChoice.APP -> onPickApp()
@@ -405,6 +424,7 @@ private fun handleAddChoice(
         CanvasAddChoice.FOLDER -> onAddFolder()
         CanvasAddChoice.ROM -> onAddRom()
         CanvasAddChoice.WIDGET -> onAddWidget()
+        CanvasAddChoice.ESDE_DISPLAY -> onAddEsdeDisplay()
     }
 }
 

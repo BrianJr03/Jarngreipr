@@ -36,4 +36,14 @@ sealed class ResolvedCanvasItem {
     data class RssLauncher(
         override val raw: CanvasItem.RssLauncherItem
     ) : ResolvedCanvasItem()
+
+    /**
+     * ES-DE art tile. Display-only and event-driven — the renderer reads the
+     * current path live from
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState], so the resolved
+     * data carries no extra fields beyond the raw item.
+     */
+    data class EsdeArt(
+        override val raw: CanvasItem.EsdeArtItem
+    ) : ResolvedCanvasItem()
 }
