@@ -476,9 +476,28 @@ fun LauncherPagerScreen(
                         key(globalIconRefreshManager?.refreshCounter) {
                             UnifiedCanvasTab(
                                 pageIndex = page,
+                                pagerState = pagerState,
+                                totalPages = totalPages,
                                 apps = homeUiState.allAppsUnfiltered,
                                 onNavigateToRssSettings = onNavigateToRssSettings,
                                 onNavigateToRomSearch = onNavigateToRomSearch,
+                                onSettingsClick = onSettingsClick,
+                                onNavigateToSearch = onNavigateToSearch,
+                                onDeletePage = { pagerPageIndex ->
+                                    scope.launch {
+                                        deleteTab(
+                                            totalPages = totalPages,
+                                            pagerPageIndex = pagerPageIndex,
+                                            pagerState = pagerState,
+                                            pageTypeManager = pageTypeManager,
+                                            pageCountManager = pageCountManager,
+                                            homeTabManager = homeTabManager,
+                                            onDeleteWidgetPage = { widgetPageIndex ->
+                                                widgetViewModel.deletePage(widgetPageIndex)
+                                            }
+                                        )
+                                    }
+                                },
                                 dismissShadeSignal = dismissShadeSignal,
                                 widgetViewModel = widgetViewModel
                             )

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.RssFeed
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Widgets
@@ -49,12 +51,21 @@ import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.IconBox
 import jr.brian.home.ui.components.dialog.DimmedDialog
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.ui.components.header.PageIndicators
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.util.rememberDialogState
 
 /**
  * Add-action choices surfaced by [CanvasMainDialog]'s options list. Mirrors
@@ -79,11 +90,16 @@ private enum class CanvasDialogMode { Options, Edit }
 @Composable
 fun CanvasMainDialog(
     layout: CanvasLayout,
+    pagerState: PagerState,
+    totalPages: Int,
     onChoice: (CanvasAddChoice) -> Unit,
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
     onTidy: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    onNavigateToSearch: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var mode by rememberSaveable { mutableStateOf(CanvasDialogMode.Options) }
@@ -119,6 +135,17 @@ fun CanvasMainDialog(
                         onChoice = { choice ->
                             onChoice(choice)
                             onDismiss()
+                        },
+                        pagerState = pagerState,
+                        totalPages = totalPages,
+                        onSettingsClick = {
+                            onSettingsClick()
+                            onDismiss()
+                        },
+                        onDeletePage = onDeletePage,
+                        onNavigateToSearch = {
+                            onNavigateToSearch()
+                            onDismiss()
                         }
                     )
                     CanvasDialogMode.Edit -> EditBody(
@@ -141,14 +168,19 @@ fun CanvasMainDialog(
 @Composable
 private fun OptionsBody(
     onEditCanvasClick: () -> Unit,
-    onChoice: (CanvasAddChoice) -> Unit
+    onChoice: (CanvasAddChoice) -> Unit,
+    pagerState: PagerState,
+    totalPages: Int,
+    onSettingsClick: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    onNavigateToSearch: () -> Unit
 ) {
-    Text(
-        text = stringResource(R.string.canvas_dialog_title),
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+    OptionsHeaderRow(
+        pagerState = pagerState,
+        totalPages = totalPages,
+        onSettingsClick = onSettingsClick,
+        onDeletePage = onDeletePage,
+        onNavigateToSearch = onNavigateToSearch
     )
     CompactOptionRow(
         icon = Icons.Default.Tune,
@@ -164,6 +196,77 @@ private fun OptionsBody(
             isPrimary = false,
             onClick = { onChoice(tile.choice) }
         )
+    }
+}
+
+@Composable
+private fun OptionsHeaderRow(
+    pagerState: PagerState,
+    totalPages: Int,
+    onSettingsClick: () -> Unit,
+    onDeletePage: (Int) -> Unit,
+    onNavigateToSearch: () -> Unit
+) {
+    val homeTabManager = LocalHomeTabManager.current
+    val pageCountManager = LocalPageCountManager.current
+    val pageTypeManager = LocalPageTypeManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+    val homeTabDialogState = rememberDialogState<Unit>()
+
+    if (homeTabDialogState.isVisible) {
+        HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = totalPages,
+            onTabSelected = { index -> homeTabManager.setHomeTabIndex(index) },
+            onDismiss = homeTabDialogState::dismiss,
+            onDeletePage = onDeletePage,
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
+                pageTypeManager.reorderPages(newOrder)
+                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+            }
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.canvas_dialog_title),
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        Box(
+            modifier = Modifier.clickable { homeTabDialogState.show() }
+        ) {
+            PageIndicators(
+                homeTabIndex = currentHomeTabIndex,
+                totalPages = totalPages,
+                pagerState = pagerState
+            )
+        }
+        IconBox(onClick = onSettingsClick) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.keyboard_label_settings),
+                tint = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
