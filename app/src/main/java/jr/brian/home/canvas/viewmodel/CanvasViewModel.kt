@@ -7,6 +7,7 @@ import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.grid.GridSolver
 import jr.brian.home.canvas.grid.LayoutSnapshot
+import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.grid.toSnapshot
 import jr.brian.home.canvas.grid.withSnapshot
 import jr.brian.home.canvas.model.CanvasItem
@@ -205,7 +206,14 @@ class CanvasViewModel @Inject constructor(
         val baseline = current.toSnapshot()
         val existing = baseline.placements[id] ?: return
         val newRect = GridRect(existing.col, existing.row, colSpan, rowSpan)
-        val result = GridSolver.solveResize(baseline, id, newRect, minColSpan, minRowSpan)
+        val result = GridSolver.solveResize(
+            baseline = baseline,
+            itemId = id,
+            newRect = newRect,
+            minColSpan = minColSpan,
+            minRowSpan = minRowSpan,
+            reservedRects = reservedRectsForActive(current)
+        )
         canvasLayoutManager.replaceLayout(pageIndex, current.withSnapshot(result.snapshot))
     }
 

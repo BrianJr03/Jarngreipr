@@ -19,42 +19,53 @@ object GridSolver {
      * are pushed along the push axis (cascading deterministically). The item's
      * size is preserved. The target origin is clamped so the rect stays within
      * the cross-axis bound.
+     *
+     * [reservedRects] are immovable obstacles (e.g. the inline "+" tile). The
+     * anchor is pushed past them and so are any displaced neighbors, so nothing
+     * — anchor or cascade — can land on a reserved cell.
      */
     fun solveMove(
         baseline: LayoutSnapshot,
         itemId: String,
-        target: GridCell
+        target: GridCell,
+        reservedRects: Collection<GridRect> = emptyList()
     ): SolveResult {
         val current = baseline.placements[itemId] ?: return SolveResult(baseline, emptySet())
         val moved = clampOrigin(current.withOrigin(target.col, target.row), baseline.config)
-        return resolve(baseline, itemId, moved, current)
+        return resolve(baseline, itemId, moved, current, reservedRects)
     }
 
     /**
      * Resize [itemId] to [newRect], honoring [minColSpan]/[minRowSpan] and the
      * cross-axis bound. Overlapped neighbors are pushed along the push axis.
+     * [reservedRects] are immovable — the resized rect is bumped past them.
      */
     fun solveResize(
         baseline: LayoutSnapshot,
         itemId: String,
         newRect: GridRect,
         minColSpan: Int = 1,
-        minRowSpan: Int = 1
+        minRowSpan: Int = 1,
+        reservedRects: Collection<GridRect> = emptyList()
     ): SolveResult {
         require(minColSpan >= 1 && minRowSpan >= 1) {
             "min span must be >= 1; got col=$minColSpan, row=$minRowSpan"
         }
         val current = baseline.placements[itemId]
         val resized = clampToBounds(newRect, baseline.config, minColSpan, minRowSpan)
-        return resolve(baseline, itemId, resized, current)
+        return resolve(baseline, itemId, resized, current, reservedRects)
     }
 
     /**
      * Pull items toward the grid origin along the push axis, preserving their
-     * cross-axis column and relative order. The only operation allowed to
+     * cross-axis column and relative order. [reservedRects] act as immovable
+     * obstacles — pulled items hop past them. The only operation allowed to
      * close gaps — invoke from explicit user "Tidy / Compact" action only.
      */
-    fun compact(snapshot: LayoutSnapshot): LayoutSnapshot {
+    fun compact(
+        snapshot: LayoutSnapshot,
+        reservedRects: Collection<GridRect> = emptyList()
+    ): LayoutSnapshot {
         val dir = snapshot.config.pushDirection
         val sorted = snapshot.placements.entries.sortedWith(
             compareBy(
@@ -64,8 +75,9 @@ object GridSolver {
             )
         )
         val placed = LinkedHashMap<String, GridRect>()
+        val reservedList = reservedRects.toList()
         for ((id, rect) in sorted) {
-            placed[id] = pullToOrigin(rect, placed.values, dir)
+            placed[id] = pullToOrigin(rect, placed.values, reservedList, dir)
         }
         return snapshot.copy(placements = placed)
     }
@@ -74,10 +86,14 @@ object GridSolver {
         baseline: LayoutSnapshot,
         anchorId: String,
         anchorRect: GridRect,
-        originalRect: GridRect?
+        originalRect: GridRect?,
+        reservedRects: Collection<GridRect>
     ): SolveResult {
         val grid = OccupancyGrid(baseline.config, baseline.placements)
-        grid.place(anchorId, anchorRect)
+        val dir = baseline.config.pushDirection
+        val reservedList = reservedRects.toList()
+        val bumpedAnchor = avoidReserved(anchorRect, reservedList, dir)
+        grid.place(anchorId, bumpedAnchor)
 
         val moved = mutableSetOf<String>()
         val queue = ArrayDeque<String>()
@@ -92,15 +108,38 @@ object GridSolver {
             val displacerRect = grid.rectOf(displacerId) ?: continue
 
             for ((id, rect) in grid.overlapping(displacerRect, excludeId = displacerId)) {
-                val pushed = pushPast(rect, displacerRect, baseline.config.pushDirection)
+                val pushed = avoidReserved(pushPast(rect, displacerRect, dir), reservedList, dir)
                 grid.place(id, pushed)
                 moved.add(id)
                 queue.addLast(id)
             }
         }
 
-        if (originalRect != null && anchorRect != originalRect) moved.add(anchorId)
+        if (originalRect != null && bumpedAnchor != originalRect) moved.add(anchorId)
         return SolveResult(baseline.copy(placements = grid.snapshot()), moved)
+    }
+
+    /**
+     * Iteratively push [rect] past every reserved rect it overlaps along [dir]
+     * until it overlaps none. Reserved rects don't move, so re-checking after
+     * each shove is necessary in case the shove lands the rect on a different
+     * reserved obstacle (vanishingly rare with today's 1×1 reservation, but
+     * cheap and correct).
+     */
+    private fun avoidReserved(
+        rect: GridRect,
+        reserved: List<GridRect>,
+        dir: PushDirection
+    ): GridRect {
+        if (reserved.isEmpty()) return rect
+        var result = rect
+        var safety = 0
+        val limit = reserved.size * 8 + 16
+        while (safety++ < limit) {
+            val hit = reserved.firstOrNull { it.overlaps(result) } ?: return result
+            result = pushPast(result, hit, dir)
+        }
+        return result
     }
 
     private fun clampOrigin(rect: GridRect, config: GridConfig): GridRect = when (config.pushDirection) {
@@ -157,6 +196,7 @@ object GridSolver {
     private fun pullToOrigin(
         rect: GridRect,
         placed: Collection<GridRect>,
+        reserved: Collection<GridRect>,
         dir: PushDirection
     ): GridRect {
         var pos = 0
@@ -166,7 +206,9 @@ object GridSolver {
                 PushDirection.DOWN -> rect.withOrigin(rect.col, pos)
                 PushDirection.RIGHT -> rect.withOrigin(pos, rect.row)
             }
-            if (placed.none { it.overlaps(candidate) }) return candidate
+            if (placed.none { it.overlaps(candidate) } &&
+                reserved.none { it.overlaps(candidate) }
+            ) return candidate
             pos++
         }
         error("compact runaway for rect=$rect")

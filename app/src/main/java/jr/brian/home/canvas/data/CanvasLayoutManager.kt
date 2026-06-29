@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import jr.brian.home.canvas.grid.GridSolver
 import jr.brian.home.canvas.grid.PushDirection
 import jr.brian.home.canvas.grid.firstFreeRect
+import jr.brian.home.canvas.grid.reservedRectsFor
 import jr.brian.home.canvas.grid.toSnapshot
 import jr.brian.home.canvas.grid.withSnapshot
 import jr.brian.home.canvas.model.CanvasItem
@@ -54,7 +55,7 @@ class CanvasLayoutManager(context: Context) {
     fun setGrid(pageIndex: Int, columns: Int, rows: Int) {
         val c = columns.coerceIn(CanvasLayout.MIN_AXIS, CanvasLayout.MAX_AXIS)
         val r = rows.coerceIn(CanvasLayout.MIN_AXIS, CanvasLayout.MAX_AXIS)
-        update(pageIndex) { it.copy(verticalColumns = c, horizontalRows = r) }
+        update(pageIndex) { reconcileReserved(it.copy(verticalColumns = c, horizontalRows = r)) }
     }
 
     fun setEditMode(pageIndex: Int, enabled: Boolean) {
@@ -167,7 +168,10 @@ class CanvasLayoutManager(context: Context) {
     fun compactLayout(pageIndex: Int) {
         update(pageIndex) { layout ->
             if (layout.activeArrangement.isEmpty()) return@update layout
-            val compacted = GridSolver.compact(layout.toSnapshot())
+            val compacted = GridSolver.compact(
+                snapshot = layout.toSnapshot(),
+                reservedRects = reservedRectsFor(layout, layout.activeOrientation)
+            )
             layout.withSnapshot(compacted)
         }
     }
@@ -221,15 +225,21 @@ class CanvasLayoutManager(context: Context) {
     /**
      * Cold-load every page once at construction. Pages whose stored JSON is in
      * a legacy (v1) shape are migrated in place and the migrated v2 blob is
-     * written back so subsequent loads are zero-cost.
+     * written back so subsequent loads are zero-cost. Every loaded layout is
+     * also passed through [reconcileReserved] so items that pre-date the "+"
+     * reservation (or that were placed before the reservation extended to the
+     * horizontal arrangement) are bumped out of the reserved corner; if that
+     * relocates anything we persist the corrected layout.
      */
     private fun loadAndMigrateAll(): Map<Int, CanvasLayout> {
         val result = mutableMapOf<Int, CanvasLayout>()
         for (pageIndex in 0 until MAX_PAGES) {
             val raw = prefs.getString(layoutKey(pageIndex), null) ?: continue
             val (layout, wroteMigration) = loadOrMigrate(raw) ?: continue
-            result[pageIndex] = layout
-            if (wroteMigration) persist(pageIndex, layout)
+            val reconciled = reconcileReserved(layout)
+            val mustPersist = wroteMigration || reconciled != layout
+            result[pageIndex] = reconciled
+            if (mustPersist) persist(pageIndex, reconciled)
         }
         return result
     }
@@ -333,6 +343,63 @@ private object BuildAssert {
     }
 }
 
+/**
+ * Bump any item whose placement overlaps the orientation's reserved rect(s)
+ * (today: the inline "+" cell) into the next free slot the auto-placer would
+ * choose, in both arrangements. Idempotent: a layout that already respects
+ * its reservations returns equal-to-itself, so callers can compare references
+ * to decide whether to re-persist. Same input → same output (deterministic).
+ */
+private fun reconcileReserved(layout: CanvasLayout): CanvasLayout {
+    val vertical = relocateOverlaps(
+        arrangement = layout.verticalArrangement,
+        crossAxisCount = layout.verticalColumns,
+        pushDirection = PushDirection.DOWN,
+        reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.VERTICAL)
+    )
+    val horizontal = relocateOverlaps(
+        arrangement = layout.horizontalArrangement,
+        crossAxisCount = layout.horizontalRows,
+        pushDirection = PushDirection.RIGHT,
+        reservedRects = reservedRectsFor(layout, CanvasScrollOrientation.HORIZONTAL)
+    )
+    if (vertical === layout.verticalArrangement && horizontal === layout.horizontalArrangement) {
+        return layout
+    }
+    return layout.copy(
+        verticalArrangement = vertical,
+        horizontalArrangement = horizontal
+    )
+}
+
+private fun relocateOverlaps(
+    arrangement: Map<String, GridRect>,
+    crossAxisCount: Int,
+    pushDirection: PushDirection,
+    reservedRects: List<GridRect>
+): Map<String, GridRect> {
+    if (reservedRects.isEmpty()) return arrangement
+    if (arrangement.none { (_, rect) -> reservedRects.any { it.overlaps(rect) } }) {
+        return arrangement
+    }
+    val result = LinkedHashMap<String, GridRect>(arrangement.size)
+    for ((id, rect) in arrangement) {
+        if (reservedRects.any { it.overlaps(rect) }) {
+            result[id] = firstFreeRect(
+                occupied = result.values,
+                crossAxisCount = crossAxisCount,
+                pushDirection = pushDirection,
+                colSpan = rect.colSpan,
+                rowSpan = rect.rowSpan,
+                reservedRects = reservedRects
+            )
+        } else {
+            result[id] = rect
+        }
+    }
+    return result
+}
+
 private fun Map<String, GridRect>.placeIfAbsent(
     itemId: String,
     colSpan: Int,
@@ -361,19 +428,3 @@ private fun Map<String, GridRect>.placeIfAbsent(
     return toMutableMap().also { it[itemId] = rect }
 }
 
-/**
- * The UI-reserved cells for [orientation] — the floating add-icon corner.
- * Returned for the active orientation only; the inactive one stays empty so
- * the brief's invariant about not perturbing the inactive arrangement still
- * holds, and stored placements aren't retroactively invalidated. Horizontal
- * mode returns empty: its icon position is scroll-dependent, and auto-place
- * naturally fills from col 0 (well away from the right-edge icon).
- */
-internal fun reservedRectsFor(layout: CanvasLayout, orientation: CanvasScrollOrientation): List<GridRect> =
-    when (orientation) {
-        CanvasScrollOrientation.VERTICAL -> {
-            val col = (layout.verticalColumns - 1).coerceAtLeast(0)
-            listOf(GridRect(col, 0, 1, 1))
-        }
-        CanvasScrollOrientation.HORIZONTAL -> emptyList()
-    }

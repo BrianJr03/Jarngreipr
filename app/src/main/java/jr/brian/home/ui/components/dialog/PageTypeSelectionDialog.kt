@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +58,7 @@ fun PageTypeSelectionDialog(
             shape = RoundedCornerShape(24.dp),
             modifier = modifier
                 .fillMaxWidth(0.9f)
+                .verticalScroll(rememberScrollState())
                 .border(
                     width = 1.dp,
                     brush = borderBrush(isFocused = true),

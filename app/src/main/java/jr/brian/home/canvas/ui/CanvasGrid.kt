@@ -28,6 +28,8 @@ fun CanvasGrid(
     onResizeWidget: (CanvasItem.WidgetItem) -> Unit,
     onCommitLayout: (LayoutSnapshot) -> Unit,
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
+    onAddClick: () -> Unit,
+    onAddLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: ScrollState = rememberScrollState()
@@ -39,6 +41,8 @@ fun CanvasGrid(
         onResizeWidget = onResizeWidget,
         onCommitLayout = onCommitLayout,
         onRequestResizeDialog = onRequestResizeDialog,
+        onAddClick = onAddClick,
+        onAddLongClick = onAddLongClick,
         modifier = modifier,
         appWidgetHost = appWidgetHost,
         scrollState = scrollState

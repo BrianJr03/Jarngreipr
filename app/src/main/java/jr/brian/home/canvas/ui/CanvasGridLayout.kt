@@ -6,12 +6,15 @@ import android.appwidget.AppWidgetProviderInfo
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -27,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -56,6 +60,7 @@ import jr.brian.home.R
 import jr.brian.home.canvas.grid.GridSolver
 import jr.brian.home.canvas.grid.LayoutSnapshot
 import jr.brian.home.canvas.grid.PushDirection
+import jr.brian.home.canvas.grid.reservedRectsForActive
 import jr.brian.home.canvas.grid.toSnapshot
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasUiState
@@ -115,6 +120,8 @@ fun CanvasGridLayout(
     onResizeWidget: (CanvasItem.WidgetItem) -> Unit,
     onCommitLayout: (LayoutSnapshot) -> Unit,
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
+    onAddClick: () -> Unit,
+    onAddLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
@@ -123,6 +130,8 @@ fun CanvasGridLayout(
     val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
     val activeArrangement = state.layout.activeArrangement
     val editMode = state.layout.editMode
+    val reservedRects = reservedRectsForActive(state.layout)
+    val addTileRect = reservedRects.firstOrNull()
     val scrollModifier = when (pushDirection) {
         PushDirection.DOWN -> Modifier.verticalScroll(scrollState)
         PushDirection.RIGHT -> Modifier.horizontalScroll(scrollState)
@@ -152,8 +161,9 @@ fun CanvasGridLayout(
         }
         id to rect
     }
-    val layoutAnchorRects: Collection<GridRect> =
+    val itemRects: Collection<GridRect> =
         activeGesture?.previewSnapshot?.placements?.values ?: activeArrangement.values
+    val layoutAnchorRects: Collection<GridRect> = itemRects + reservedRects
     val pushAxisCells =
         (layoutAnchorRects.maxOfOrNull { it.pushEnd(pushDirection) } ?: 0) +
             CanvasPushAxisHeadroom
@@ -188,7 +198,13 @@ fun CanvasGridLayout(
         )
         val cellSizePxState = rememberUpdatedState(with(density) { cellSize.toPx() })
 
-        Box(modifier = canvasSizeModifier.align(canvasAlignment)) {
+        Box(
+            modifier = canvasSizeModifier
+                .align(canvasAlignment)
+                .pointerInput(onAddClick) {
+                    detectTapGestures(onLongPress = { onAddClick() })
+                }
+        ) {
             if (activeGesture != null) {
                 val ghostRect = activeGesture.previewSnapshot.placements[activeGesture.draggedId]
                 if (ghostRect != null) {
@@ -201,6 +217,18 @@ fun CanvasGridLayout(
                     ) {
                         DropTargetGhost()
                     }
+                }
+            }
+
+            if (addTileRect != null) {
+                CanvasTileSlot(
+                    rect = addTileRect,
+                    cellSize = cellSize,
+                    spacing = CanvasCellSpacing,
+                    outerPadding = CanvasOuterPadding,
+                    animationLabel = "__canvas_add_tile__"
+                ) {
+                    AddTile(onClick = onAddClick, onLongClick = onAddLongClick)
                 }
             }
 
@@ -331,7 +359,12 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.handleMo
             val targetRect = current.baselineRect.withOrigin(target.col, target.row)
             // Solver re-run only on cell-boundary crossings, per §0.
             if (targetRect != current.targetRect) {
-                val result = GridSolver.solveMove(current.baseline, itemId, target)
+                val result = GridSolver.solveMove(
+                    baseline = current.baseline,
+                    itemId = itemId,
+                    target = target,
+                    reservedRects = reservedRectsForActive(latestState.value.layout)
+                )
                 setGestureState(
                     current.copy(previewSnapshot = result.snapshot, targetRect = targetRect)
                 )
@@ -392,11 +425,12 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.handleRe
             setGestureState(
                 if (newRect != current.targetRect) {
                     val result = GridSolver.solveResize(
-                        current.baseline,
-                        itemId,
-                        newRect,
-                        current.minColSpan,
-                        current.minRowSpan
+                        baseline = current.baseline,
+                        itemId = itemId,
+                        newRect = newRect,
+                        minColSpan = current.minColSpan,
+                        minRowSpan = current.minRowSpan,
+                        reservedRects = reservedRectsForActive(latestState.value.layout)
                     )
                     current.copy(
                         previewSnapshot = result.snapshot,
@@ -510,6 +544,40 @@ private fun CanvasTileSlot(
     ) {
         content()
         overlay?.invoke(this)
+    }
+}
+
+/**
+ * Inline "+" tile rendered at the orientation's reserved cell. Scrolls with the
+ * grid like any other occupant. Pure click target — no drag, no resize, no
+ * persisted entry in [CanvasUiState.resolvedItems]. When this cell scrolls
+ * off-screen the long-press-empty-canvas gesture still opens the add dialog.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AddTile(onClick: () -> Unit, onLongClick: () -> Unit) {
+    var isFocused by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .clip(RoundedCornerShape(14.dp))
+            .background(ThemePrimaryColor.copy(alpha = if (isFocused) 0.22f else 0.12f))
+            .border(
+                width = if (isFocused) 3.dp else 2.dp,
+                color = ThemePrimaryColor.copy(alpha = if (isFocused) 0.95f else 0.55f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .focusable()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = stringResource(R.string.canvas_add_item),
+            tint = ThemePrimaryColor
+        )
     }
 }
 

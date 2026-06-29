@@ -1,24 +1,16 @@
 package jr.brian.home.canvas.ui
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.focusable
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -28,21 +20,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 import jr.brian.home.R
 import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasItem
+import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.canvas.viewmodel.CanvasViewModel
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -50,18 +37,21 @@ import jr.brian.home.esde.ui.RomSearchResultsActivity
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.rom.PinnedRomInfo
-import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.service.AppNotificationListenerService
+import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.components.dialog.AppSelectionDialog
 import jr.brian.home.ui.components.dialog.ConfirmationDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.screens.AllNotificationsScreen
 import jr.brian.home.ui.screens.RssTab
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
+import jr.brian.home.ui.util.topEdgePullDown
 import jr.brian.home.util.launchApp
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
 
@@ -73,17 +63,25 @@ import kotlinx.coroutines.launch
 @Composable
 fun UnifiedCanvasTab(
     pageIndex: Int,
+    pagerState: PagerState,
+    totalPages: Int,
     modifier: Modifier = Modifier,
     apps: List<AppInfo> = emptyList(),
     onNavigateToRssSettings: () -> Unit = {},
     onNavigateToRomSearch: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
+    onDeletePage: (Int) -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
     dismissShadeSignal: Int = 0,
     viewModel: CanvasViewModel = hiltViewModel(key = "canvas-page-$pageIndex"),
     romSearchViewModel: RomSearchViewModel = hiltViewModel(),
-    widgetViewModel: WidgetViewModel = hiltViewModel()
+    widgetViewModel: WidgetViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val gridSettingsManager = LocalGridSettingsManager.current
+    val notificationCountManager = LocalNotificationManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val allPinnedRoms by viewModel.allPinnedRoms.collectAsStateWithLifecycle()
     val appWidgetHost = widgetViewModel.getAppWidgetHost()
@@ -108,7 +106,29 @@ fun UnifiedCanvasTab(
     // Hoisted so the floating add icon can fade based on grid scroll.
     val canvasScrollState = rememberScrollState()
 
-    Box(modifier = modifier.fillMaxSize()) {
+    var showNotificationShade by remember { mutableStateOf(false) }
+    var showAllNotifications by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
+
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
+
+    val isHorizontalOrientation =
+        uiState.layout.activeOrientation == CanvasScrollOrientation.HORIZONTAL
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .topEdgePullDown(
+                enabled = gridSettingsManager.notificationShadeEnabled && !showNotificationShade,
+                isAtTop = { isHorizontalOrientation || canvasScrollState.value == 0 },
+                onTrigger = { showNotificationShade = true }
+            )
+    ) {
         CanvasGrid(
             state = uiState,
             scrollState = canvasScrollState,
@@ -141,17 +161,56 @@ fun UnifiedCanvasTab(
             onRequestResizeDialog = { item, minC, minR ->
                 resizeRequest = CanvasResizeRequest(item, minC, minR)
             },
+            onAddClick = { addDialogVisible = true },
+            onAddLongClick = { viewModel.setEditMode(!uiState.layout.editMode) },
             modifier = Modifier.fillMaxSize(),
             appWidgetHost = appWidgetHost
         )
-        FloatingAddIcon(
-            scrollState = canvasScrollState,
-            onClick = { addDialogVisible = true },
-            onLongClick = { viewModel.setEditMode(!uiState.layout.editMode) },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(12.dp)
+
+        NotificationShade(
+            visible = showNotificationShade,
+            nowPlaying = nowPlaying,
+            currentPosition = nowPlayingPosition,
+            duration = nowPlayingDuration,
+            volume = nowPlayingVolume,
+            onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+            onPrevious = { nowPlayingViewModel.skipToPrevious() },
+            onNext = { nowPlayingViewModel.skipToNext() },
+            onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+            onSeek = { nowPlayingViewModel.seekTo(it) },
+            onDismiss = { showNotificationShade = false },
+            onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
+            onSeeAllNotifications = {
+                showNotificationShade = false
+                showAllNotifications = true
+            },
+            initialTabPage = notificationCountManager.shadeTabPage,
+            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
+            backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
+            onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) },
+            cornerRadiusDp = gridSettingsManager.shadeCornerRadiusDp,
+            onCornerRadiusChange = { gridSettingsManager.setShadeCornerRadiusDp(it) },
+            backgroundAlpha = gridSettingsManager.shadeBackgroundAlpha,
+            onBackgroundAlphaChange = { gridSettingsManager.setShadeBackgroundAlpha(it) },
+            accentColorArgb = gridSettingsManager.shadeAccentColorArgb,
+            onAccentColorChange = { gridSettingsManager.setShadeAccentColorArgb(it) }
         )
+
+        AnimatedVisibility(
+            visible = showAllNotifications,
+            enter = slideInVertically(tween(300)) { it } + fadeIn(tween(300)),
+            exit = slideOutVertically(tween(250)) { it } + fadeOut(tween(200))
+        ) {
+            AllNotificationsScreen(
+                notifications = notifications,
+                onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+                onClearAll = { AppNotificationListenerService.cancelAll() },
+                onDismiss = { showAllNotifications = false }
+            )
+        }
     }
 
     if (rssSheetVisible) {
@@ -174,6 +233,8 @@ fun UnifiedCanvasTab(
     if (addDialogVisible) {
         CanvasMainDialog(
             layout = uiState.layout,
+            pagerState = pagerState,
+            totalPages = totalPages,
             onChoice = { choice ->
                 handleAddChoice(
                     choice = choice,
@@ -190,6 +251,9 @@ fun UnifiedCanvasTab(
             onGridChanged = viewModel::setGrid,
             onEditModeChanged = viewModel::setEditMode,
             onTidy = { viewModel.compactLayout() },
+            onSettingsClick = onSettingsClick,
+            onDeletePage = onDeletePage,
+            onNavigateToSearch = onNavigateToSearch,
             onDismiss = { addDialogVisible = false }
         )
     }
@@ -321,83 +385,6 @@ fun UnifiedCanvasTab(
                 pendingRemoval = null
             },
             onDismiss = { pendingRemoval = null }
-        )
-    }
-}
-
-/**
- * The canvas's single top-bar entry point: a floating add icon pinned at
- * top-right. Fades while the grid is scrolling so it doesn't obscure
- * content during gestures; snaps to full opacity when focused (D-pad /
- * gamepad) or pressed so it's never unreachable. Long-press toggles edit
- * mode as a power-user shortcut — same control surface is reachable via the
- * dialog's Edit Canvas option.
- */
-@Composable
-private fun FloatingAddIcon(
-    scrollState: ScrollState,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    val targetAlpha = when {
-        isFocused -> 1f
-        scrollState.isScrollInProgress -> 0.15f
-        else -> 1f
-    }
-    val alpha by animateFloatAsState(
-        targetValue = targetAlpha,
-        animationSpec = tween(durationMillis = 200),
-        label = "canvas-add-icon-alpha"
-    )
-    TopBarIconButton(
-        icon = Icons.Default.Add,
-        contentDescription = stringResource(R.string.canvas_add_item),
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier.alpha(alpha),
-        onFocusedChanged = { isFocused = it }
-    )
-}
-
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Composable
-private fun TopBarIconButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    contentDescription: String,
-    onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
-    onFocusedChanged: (Boolean) -> Unit = {}
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    Box(
-        modifier = modifier
-            .size(44.dp)
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged {
-                isFocused = it.isFocused
-                onFocusedChanged(it.isFocused)
-            }
-            .background(
-                brush = cardGradient(isFocused = isFocused),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = if (isFocused) 3.dp else 2.dp,
-                brush = borderBrush(isFocused = isFocused),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .focusable(),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = ThemePrimaryColor
         )
     }
 }
