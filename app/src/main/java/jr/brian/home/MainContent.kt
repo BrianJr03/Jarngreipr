@@ -30,6 +30,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
@@ -88,6 +89,7 @@ import androidx.compose.ui.graphics.Color as GraphicsColor
 @UnstableApi
 @Composable
 fun MainContent(
+    romSearchStateHolder: RomSearchStateHolder,
     hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
@@ -188,6 +190,13 @@ fun MainContent(
         if (navigateToThemeShare) {
             navController.navigate(Routes.THEME_SHARE)
             onNavigateToThemeShareHandled()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showSearchKeyboardSignal.collect {
+            romSearchStateHolder.openedFromFrontend.value = true
+            navController.navigate(Routes.ROM_SEARCH)
         }
     }
 

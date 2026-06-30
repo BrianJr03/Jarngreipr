@@ -214,6 +214,7 @@ class MainActivity : ComponentActivity() {
                                 LocalEsdeWallpaperState provides wallpaperState
                             ) {
                                 MainContent(
+                                    romSearchStateHolder = romSearchStateHolder,
                                     triggerMarqueePressShortcut = triggerMarqueePressShortcut,
                                     onMarqueePressShortcutHandled = {
                                         triggerMarqueePressShortcut = false

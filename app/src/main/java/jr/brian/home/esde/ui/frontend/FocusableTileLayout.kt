@@ -28,7 +28,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.esde.model.FrontendLayout
 import kotlin.math.abs
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private val DEFAULT_ROW_TILE_WIDTH = 240.dp
 private const val FOCUS_RESET_RETRIES = 3
@@ -135,40 +133,49 @@ private fun <T> GridLayout(
     var focusedIndex by remember(initialIndex) { mutableIntStateOf(initialIndex) }
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
 
-    LaunchedEffect(focusedIndex) {
-        focusRequesters[focusedIndex]?.requestFocus()
-    }
-    LaunchedEffect(focusResetKey) {
-        if (items.isNotEmpty()) {
-            focusedIndex = initialIndex
-            repeat(FOCUS_RESET_RETRIES) {
-                delay(FOCUS_RESET_RETRY_DELAY_MS)
-                runCatching { focusRequesters[initialIndex]?.requestFocus() }
-            }
-        }
-    }
-
     val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
     val headerOffset = if (header != null) 1 else 0
 
-    fun moveFocus(delta: Int) {
-        val next = (focusedIndex + delta).coerceIn(0, items.lastIndex)
-        if (next == focusedIndex) return
-        focusedIndex = next
-        scope.launch {
-            val info = gridState.layoutInfo
+    var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
+    var isRapidScroll by remember { mutableStateOf(false) }
+
+    LaunchedEffect(focusedIndex) {
+        val now = SystemClock.uptimeMillis()
+        isRapidScroll = lastFocusChangeMs != 0L &&
+                (now - lastFocusChangeMs) < RAPID_SCROLL_WINDOW_MS
+        lastFocusChangeMs = now
+        focusRequesters[focusedIndex]?.requestFocus()
+
+        val info = gridState.layoutInfo
+        val target = info.visibleItemsInfo.firstOrNull { it.index == focusedIndex + headerOffset }
+        if (isRapidScroll || target == null) {
+            gridState.scrollToItem(focusedIndex + headerOffset)
+        } else {
             val start = info.viewportStartOffset + info.beforeContentPadding
             val end = info.viewportEndOffset - info.afterContentPadding
-            val target = info.visibleItemsInfo.firstOrNull { it.index == next + headerOffset }
             when {
-                target == null -> gridState.animateScrollToItem(next + headerOffset)
                 target.offset.y < start ->
                     gridState.animateScrollBy(-(start - target.offset.y).toFloat())
                 target.offset.y + target.size.height > end ->
                     gridState.animateScrollBy((target.offset.y + target.size.height - end).toFloat())
             }
         }
+    }
+    LaunchedEffect(focusResetKey) {
+        if (items.isEmpty()) return@LaunchedEffect
+        focusedIndex = initialIndex
+        lastFocusChangeMs = 0L
+        isRapidScroll = false
+        repeat(FOCUS_RESET_RETRIES) {
+            delay(FOCUS_RESET_RETRY_DELAY_MS)
+            runCatching { focusRequesters[initialIndex]?.requestFocus() }
+        }
+    }
+
+    fun moveFocus(delta: Int) {
+        val next = (focusedIndex + delta).coerceIn(0, items.lastIndex)
+        if (next == focusedIndex) return
+        focusedIndex = next
     }
 
     LazyVerticalGrid(
@@ -230,7 +237,6 @@ private fun <T> RowLayout(
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
 
     val rowState = rememberLazyListState(initialFirstVisibleItemIndex = initialVirtualIndex)
-    val scope = rememberCoroutineScope()
     val headerOffset = if (header != null) 1 else 0
 
     var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
@@ -247,16 +253,15 @@ private fun <T> RowLayout(
         centerOnFocused(rowState, focusedIndex + headerOffset, snap = isRapidScroll)
     }
     LaunchedEffect(focusResetKey) {
-        if (realCount > 0) {
-            focusedIndex = initialVirtualIndex
-            lastFocusChangeMs = 0L
-            isRapidScroll = false
-            repeat(FOCUS_RESET_RETRIES) {
-                delay(FOCUS_RESET_RETRY_DELAY_MS)
-                runCatching { focusRequesters[initialVirtualIndex]?.requestFocus() }
-            }
-            centerOnFocused(rowState, initialVirtualIndex + headerOffset)
+        if (realCount == 0) return@LaunchedEffect
+        focusedIndex = initialVirtualIndex
+        lastFocusChangeMs = 0L
+        isRapidScroll = false
+        repeat(FOCUS_RESET_RETRIES) {
+            delay(FOCUS_RESET_RETRY_DELAY_MS)
+            runCatching { focusRequesters[initialVirtualIndex]?.requestFocus() }
         }
+        centerOnFocused(rowState, initialVirtualIndex + headerOffset)
     }
 
     fun moveFocus(delta: Int) {

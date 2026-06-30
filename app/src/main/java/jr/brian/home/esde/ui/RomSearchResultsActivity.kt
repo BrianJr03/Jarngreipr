@@ -68,6 +68,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.util.launchFrontend
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -75,6 +76,10 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class RomSearchResultsActivity : ComponentActivity() {
+    companion object {
+        const val EXTRA_FROM_FRONTEND = "from_frontend"
+    }
+
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -89,6 +94,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
+    private var fromFrontend = false
 
     private val safTreeLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -134,6 +140,9 @@ class RomSearchResultsActivity : ComponentActivity() {
     }
 
     override fun finish() {
+        if (fromFrontend && !gameLaunched) {
+            launchFrontend(this)
+        }
         super.finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
@@ -151,6 +160,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
@@ -530,6 +540,11 @@ class RomSearchResultsActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .onPreviewKeyEvent { keyEvent ->
+                                    if (keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BUTTON_Y
+                                    ) {
+                                        return@onPreviewKeyEvent true
+                                    }
                                     // When navigating the dropdown, a DPAD press returns focus to the grid
                                     // without consuming — let the grid handle the actual movement.
                                     if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
