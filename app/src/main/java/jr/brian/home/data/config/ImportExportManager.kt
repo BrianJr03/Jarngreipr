@@ -265,7 +265,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 volume = f.bgMusicManager.vol
             ),
             romSearch = RomSearchConfig(
-                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible
+                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible,
+                frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled
             )
         )
     }
@@ -500,6 +502,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         )
 
         f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
+        f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
     }
 
     private fun applySystemConfig(config: SystemConfig) {

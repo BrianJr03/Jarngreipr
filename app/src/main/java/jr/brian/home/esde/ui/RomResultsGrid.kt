@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -152,15 +153,22 @@ internal fun RomResultsGrid(
         if (next == focusedIndex) return
         focusedIndex = next
         coroutineScope.launch {
-            val visibleItems = listState.layoutInfo.visibleItemsInfo
             // In hidden mode the grid has a header item at slot 0, so data indices are offset by 1.
             val gridIndex = if (isHiddenMode) next + 1 else next
-            val isVisible = visibleItems.any { it.index == gridIndex }
-            if (!isVisible) {
-                listState.animateScrollToItem(
-                    index = gridIndex,
-                    scrollOffset = 0
-                )
+            val layoutInfo = listState.layoutInfo
+            val effectiveStart = layoutInfo.viewportStartOffset + layoutInfo.beforeContentPadding
+            val effectiveEnd = layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
+            val info = layoutInfo.visibleItemsInfo.firstOrNull { it.index == gridIndex }
+            when {
+                info == null -> listState.animateScrollToItem(gridIndex)
+                info.offset.y < effectiveStart -> {
+                    val px = effectiveStart - info.offset.y
+                    listState.animateScrollBy(-px.toFloat())
+                }
+                info.offset.y + info.size.height > effectiveEnd -> {
+                    val px = info.offset.y + info.size.height - effectiveEnd
+                    listState.animateScrollBy(px.toFloat())
+                }
             }
         }
     }
@@ -221,7 +229,7 @@ internal fun RomResultsGrid(
                                 else -> false
                             }
                         },
-                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 48.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -250,6 +258,7 @@ internal fun RomResultsGrid(
                             onDispose { focusRequesters.remove(index) }
                         }
 
+                        Box(modifier = Modifier.padding(12.dp)) {
                         RomResultCard(
                             game = game,
                             focusRequester = focusRequester,
@@ -299,6 +308,7 @@ internal fun RomResultsGrid(
                             },
                             onToggleKeyboard = onToggleHintAndKeyboard
                         )
+                        }
                     }
                 }
             }

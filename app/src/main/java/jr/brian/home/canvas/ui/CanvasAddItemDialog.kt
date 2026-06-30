@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +57,7 @@ import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
@@ -68,6 +71,7 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.ui.util.rememberDialogState
 import kotlinx.coroutines.launch
 
@@ -109,6 +113,7 @@ fun CanvasMainDialog(
 ) {
     val initialMode = if (startInEdit) CanvasDialogMode.Edit else CanvasDialogMode.Options
     var mode by rememberSaveable { mutableStateOf(initialMode) }
+    val context = LocalContext.current
     DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -157,6 +162,10 @@ fun CanvasMainDialog(
                         onNavigateToSearch = {
                             onNavigateToSearch()
                             onDismiss()
+                        },
+                        onLaunchFrontend = {
+                            launchFrontend(context)
+                            onDismiss()
                         }
                     )
                     CanvasDialogMode.Edit -> EditBody(
@@ -187,8 +196,11 @@ private fun OptionsBody(
     totalPages: Int,
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
-    onNavigateToSearch: () -> Unit
+    onNavigateToSearch: () -> Unit,
+    onLaunchFrontend: () -> Unit
 ) {
+    val esdePrefsState by LocalESDEPreferencesManager.current.state.collectAsStateWithLifecycle()
+
     OptionsHeaderRow(
         pagerState = pagerState,
         totalPages = totalPages,
@@ -208,6 +220,14 @@ private fun OptionsBody(
             )
         }
     )
+    if (esdePrefsState.frontendEnabled) {
+        CompactOptionRow(
+            icon = Icons.Default.Tv,
+            labelRes = R.string.canvas_launch_frontend_option,
+            isPrimary = true,
+            onClick = onLaunchFrontend
+        )
+    }
     HairlineSeparator()
     CANVAS_ADD_TILES.forEach { tile ->
         CompactOptionRow(
