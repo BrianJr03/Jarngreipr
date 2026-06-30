@@ -1,9 +1,7 @@
 package jr.brian.home.esde.ui.frontend
 
-import android.view.KeyEvent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,34 +11,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +37,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.LocalESDEImageLoader
@@ -57,9 +45,6 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.derivedStateOf
 
 internal data class SystemTile(val systemName: String)
 
@@ -75,7 +60,9 @@ private val TILE_INSET = 12.dp
 internal fun SystemGrid(
     systems: List<SystemTile>,
     isLoading: Boolean,
+    layout: FrontendLayout,
     modifier: Modifier = Modifier,
+    initialRealIndex: Int = 0,
     onSystemFocused: (SystemTile) -> Unit = {},
     onSystemSelected: (SystemTile) -> Unit = {}
 ) {
@@ -93,98 +80,29 @@ internal fun SystemGrid(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            else -> SystemTileGrid(
-                systems = systems,
-                onSystemFocused = onSystemFocused,
-                onSystemSelected = onSystemSelected
-            )
-        }
-    }
-}
-
-@Composable
-private fun SystemTileGrid(
-    systems: List<SystemTile>,
-    onSystemFocused: (SystemTile) -> Unit,
-    onSystemSelected: (SystemTile) -> Unit
-) {
-    val listState = rememberLazyGridState()
-    val coroutineScope = rememberCoroutineScope()
-    var focusedIndex by remember { mutableIntStateOf(0) }
-    val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
-
-    LaunchedEffect(focusedIndex) {
-        focusRequesters[focusedIndex]?.requestFocus()
-    }
-
-    val systemKey by remember(systems) {
-        derivedStateOf { systems.joinToString("|") { it.systemName } }
-    }
-    LaunchedEffect(systemKey) {
-        if (systems.isNotEmpty()) {
-            focusedIndex = 0
-            focusRequesters[0]?.requestFocus()
-            onSystemFocused(systems[0])
-        }
-    }
-
-    fun moveFocus(delta: Int) {
-        val next = (focusedIndex + delta).coerceIn(0, systems.lastIndex)
-        if (next == focusedIndex) return
-        focusedIndex = next
-        coroutineScope.launch {
-            val layoutInfo = listState.layoutInfo
-            val effectiveStart = layoutInfo.viewportStartOffset + layoutInfo.beforeContentPadding
-            val effectiveEnd = layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
-            val info = layoutInfo.visibleItemsInfo.firstOrNull { it.index == next }
-            when {
-                info == null -> listState.animateScrollToItem(next)
-                info.offset.y < effectiveStart -> {
-                    val px = effectiveStart - info.offset.y
-                    listState.animateScrollBy(-px.toFloat())
+            else -> {
+                val systemKey by remember(systems) {
+                    derivedStateOf { systems.joinToString("|") { it.systemName } }
                 }
-                info.offset.y + info.size.height > effectiveEnd -> {
-                    val px = info.offset.y + info.size.height - effectiveEnd
-                    listState.animateScrollBy(px.toFloat())
+                FocusableTileLayout(
+                    items = systems,
+                    layout = layout,
+                    columns = NUM_COLS,
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 32.dp),
+                    initialRealIndex = initialRealIndex,
+                    focusResetKey = systemKey,
+                    onItemFocused = { tile -> tile?.let(onSystemFocused) },
+                    itemKey = { _, tile -> tile.systemName }
+                ) { _, tile, focusRequester, isFocused, onFocused ->
+                    SystemTileCard(
+                        tile = tile,
+                        isFocused = isFocused,
+                        focusRequester = focusRequester,
+                        onFocused = onFocused,
+                        onSelected = { onSystemSelected(tile) }
+                    )
                 }
             }
-        }
-    }
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(NUM_COLS),
-        state = listState,
-        modifier = Modifier
-            .fillMaxSize()
-            .onKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                when (event.nativeKeyEvent.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_RIGHT -> { moveFocus(1); true }
-                    KeyEvent.KEYCODE_DPAD_LEFT -> { moveFocus(-1); true }
-                    KeyEvent.KEYCODE_DPAD_DOWN -> { moveFocus(NUM_COLS); true }
-                    KeyEvent.KEYCODE_DPAD_UP -> { moveFocus(-NUM_COLS); true }
-                    else -> false
-                }
-            },
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        itemsIndexed(systems, key = { _, tile -> tile.systemName }) { index, tile ->
-            val focusRequester = remember { FocusRequester() }
-            DisposableEffect(index) {
-                focusRequesters[index] = focusRequester
-                onDispose { focusRequesters.remove(index) }
-            }
-            SystemTileCard(
-                tile = tile,
-                focusRequester = focusRequester,
-                onFocused = {
-                    if (focusedIndex != index) focusedIndex = index
-                    onSystemFocused(tile)
-                },
-                onSelected = { onSystemSelected(tile) }
-            )
         }
     }
 }
@@ -192,11 +110,11 @@ private fun SystemTileGrid(
 @Composable
 private fun SystemTileCard(
     tile: SystemTile,
-    focusRequester: FocusRequester,
+    isFocused: Boolean,
+    focusRequester: androidx.compose.ui.focus.FocusRequester,
     onFocused: () -> Unit,
     onSelected: () -> Unit
 ) {
-    var isFocused by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
     val shape = RoundedCornerShape(8.dp)
 
@@ -214,10 +132,7 @@ private fun SystemTileCard(
                 .clip(shape)
                 .background(OledCardColor)
                 .focusRequester(focusRequester)
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                    if (it.isFocused) onFocused()
-                }
+                .onFocusChanged { if (it.isFocused) onFocused() }
                 .clickable { onSelected() }
         ) {
             SystemTileContent(tile = tile)
@@ -274,5 +189,3 @@ private fun SystemTileTextFallback(systemName: String) {
         )
     }
 }
-
-

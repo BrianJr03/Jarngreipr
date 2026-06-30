@@ -10,6 +10,7 @@ import jr.brian.home.data.DockSize
 import jr.brian.home.data.FabPosition
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
@@ -267,7 +268,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             romSearch = RomSearchConfig(
                 hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible,
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
-                secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled
+                secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
+                systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
+                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name
             )
         )
     }
@@ -504,6 +507,10 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
+        runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
+            ?.let { f.esdePreferencesManager.setSystemLayout(it) }
+        runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
+            ?.let { f.esdePreferencesManager.setGameLayout(it) }
     }
 
     private fun applySystemConfig(config: SystemConfig) {

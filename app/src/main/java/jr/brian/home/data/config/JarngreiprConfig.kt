@@ -217,7 +217,9 @@ data class BgMusicConfig(
 data class RomSearchConfig(
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
-    val secondaryMediaEnabled: Boolean = true
+    val secondaryMediaEnabled: Boolean = true,
+    val systemLayout: String = "Grid",
+    val gameLayout: String = "Grid"
 )
 
 @Serializable

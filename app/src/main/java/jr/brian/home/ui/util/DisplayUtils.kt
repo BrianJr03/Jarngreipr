@@ -7,6 +7,7 @@ import android.hardware.display.DisplayManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.esde.ui.FrontEndActivity
 import jr.brian.home.esde.ui.RomSearchResultsActivity
 
 /**
@@ -16,11 +17,22 @@ import jr.brian.home.esde.ui.RomSearchResultsActivity
 const val PRIMARY_DISPLAY_ID = 0
 
 /**
- * Fires [RomSearchResultsActivity] with no [RomSearchResultsActivity.EXTRA_START_ROUTE],
- * so the activity falls through to its default route (Systems when the frontend toggle
- * is on, Search when it's off). Always targets the top display.
+ * Fires [FrontEndActivity] (Systems → Games browse experience). Always targets the
+ * top display.
  */
 fun launchFrontend(context: Context) {
+    val intent = Intent(context, FrontEndActivity::class.java).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+    }
+    val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
+    context.startActivity(intent, options.toBundle())
+}
+
+/**
+ * Fires the standalone ROM search activity (original pre-frontend search experience).
+ * Used as a search affordance from within the frontend.
+ */
+fun launchRomSearchActivity(context: Context) {
     val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
     }

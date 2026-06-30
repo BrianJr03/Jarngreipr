@@ -68,8 +68,10 @@ import coil.compose.AsyncImage
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
@@ -86,6 +88,7 @@ private const val NUM_COLS = 4
 internal fun RomResultsGrid(
     games: List<GameInfo>,
     isLoading: Boolean,
+    layout: FrontendLayout = FrontendLayout.Grid,
     modifier: Modifier = Modifier,
     isHiddenMode: Boolean = false,
     backgroundTransparent: Boolean = false,
@@ -109,16 +112,14 @@ internal fun RomResultsGrid(
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
-    focusResetKey: Any? = Unit
+    focusResetKey: Any? = Unit,
+    initialRealIndex: Int = 0
 ) {
     val context = LocalContext.current
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
-
-    val listState = rememberLazyGridState()
-    val coroutineScope = rememberCoroutineScope()
 
     val hiddenPlatforms = remember(games, isHiddenMode) {
         if (isHiddenMode) games.map { it.systemName }.distinct().sorted() else emptyList()
@@ -127,50 +128,6 @@ internal fun RomResultsGrid(
         if (isHiddenMode && hiddenPlatformFilter != null) {
             games.filter { it.systemName.equals(hiddenPlatformFilter, ignoreCase = true) }
         } else games
-    }
-
-    var focusedIndex by remember { mutableIntStateOf(0) }
-    val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
-
-    LaunchedEffect(focusedIndex) {
-        focusRequesters[focusedIndex]?.requestFocus()
-    }
-
-    // Caller-controlled reset: jumps to index 0 when a new filter/search is applied.
-    // Does NOT fire when clearing the query (caller keeps the key stable then).
-    LaunchedEffect(focusResetKey) {
-        if (displayedGames.isNotEmpty()) {
-            focusedIndex = 0
-            repeat(3) {
-                delay(80)
-                runCatching { focusRequesters[0]?.requestFocus() }
-            }
-        }
-    }
-
-    fun moveFocus(delta: Int) {
-        val next = (focusedIndex + delta).coerceIn(0, displayedGames.size - 1)
-        if (next == focusedIndex) return
-        focusedIndex = next
-        coroutineScope.launch {
-            // In hidden mode the grid has a header item at slot 0, so data indices are offset by 1.
-            val gridIndex = if (isHiddenMode) next + 1 else next
-            val layoutInfo = listState.layoutInfo
-            val effectiveStart = layoutInfo.viewportStartOffset + layoutInfo.beforeContentPadding
-            val effectiveEnd = layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
-            val info = layoutInfo.visibleItemsInfo.firstOrNull { it.index == gridIndex }
-            when {
-                info == null -> listState.animateScrollToItem(gridIndex)
-                info.offset.y < effectiveStart -> {
-                    val px = effectiveStart - info.offset.y
-                    listState.animateScrollBy(-px.toFloat())
-                }
-                info.offset.y + info.size.height > effectiveEnd -> {
-                    val px = info.offset.y + info.size.height - effectiveEnd
-                    listState.animateScrollBy(px.toFloat())
-                }
-            }
-        }
     }
 
     Box(
@@ -188,77 +145,36 @@ internal fun RomResultsGrid(
                 )
             }
 
-//            !isHiddenMode && displayedGames.isEmpty() -> {
-//                Text(
-//                    text = stringResource(R.string.rom_search_no_results),
-//                    modifier = Modifier.align(Alignment.Center),
-//                    color = Color.White.copy(alpha = 0.5f),
-//                    style = MaterialTheme.typography.bodyMedium
-//                )
-//            }
-
             else -> {
-                LaunchedEffect(Unit) {
-                    moveFocus(1)
-                }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(NUM_COLS),
-                    state = listState,
+                val hiddenHeader: (@Composable () -> Unit)? = if (isHiddenMode) {
+                    {
+                        HiddenModeHeader(
+                            platforms = hiddenPlatforms,
+                            activePlatform = hiddenPlatformFilter,
+                            visibleCount = displayedGames.size,
+                            onPlatformToggle = { platform ->
+                                hiddenPlatformFilter =
+                                    if (hiddenPlatformFilter == platform) null else platform
+                            },
+                            onUnhideAll = { onUnhideAllGames(displayedGames) }
+                        )
+                    }
+                } else null
+                FocusableTileLayout(
+                    items = displayedGames,
+                    layout = layout,
+                    columns = NUM_COLS,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(if (backgroundTransparent) Color.Transparent else OledBackgroundColor)
-                        .onKeyEvent { keyEvent ->
-                            if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
-                            when (keyEvent.nativeKeyEvent.keyCode) {
-                                KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                                    moveFocus(1); true
-                                }
-
-                                KeyEvent.KEYCODE_DPAD_LEFT -> {
-                                    moveFocus(-1); true
-                                }
-
-                                KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                    moveFocus(NUM_COLS); true
-                                }
-
-                                KeyEvent.KEYCODE_DPAD_UP -> {
-                                    moveFocus(-NUM_COLS); true
-                                }
-
-                                else -> false
-                            }
-                        },
+                        .background(if (backgroundTransparent) Color.Transparent else OledBackgroundColor),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 48.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (isHiddenMode) {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            HiddenModeHeader(
-                                platforms = hiddenPlatforms,
-                                activePlatform = hiddenPlatformFilter,
-                                visibleCount = displayedGames.size,
-                                onPlatformToggle = { platform ->
-                                    hiddenPlatformFilter =
-                                        if (hiddenPlatformFilter == platform) null else platform
-                                },
-                                onUnhideAll = { onUnhideAllGames(displayedGames) }
-                            )
-                        }
-                    }
-                    itemsIndexed(
-                        displayedGames,
-                        key = { _, game -> "${game.systemName}/${game.path}" }
-                    ) { index, game ->
-                        val focusRequester = remember { FocusRequester() }
-
-                        DisposableEffect(index) {
-                            focusRequesters[index] = focusRequester
-                            onDispose { focusRequesters.remove(index) }
-                        }
-
-                        Box(modifier = Modifier.padding(12.dp)) {
+                    initialRealIndex = initialRealIndex,
+                    focusResetKey = focusResetKey,
+                    onItemFocused = { game -> onGameFocused(game) },
+                    header = hiddenHeader,
+                    itemKey = { _, game -> "${game.systemName}/${game.path}" }
+                ) { _, game, focusRequester, _, onFocused ->
+                    Box(modifier = Modifier.padding(12.dp)) {
                         RomResultCard(
                             game = game,
                             focusRequester = focusRequester,
@@ -300,15 +216,9 @@ internal fun RomResultsGrid(
                                 if (isAndroid) onAndroidAppInfo(game)
                                 else selectedGame = game
                             },
-                            onFocused = {
-                                if (focusedIndex != index) {
-                                    focusedIndex = index
-                                }
-                                onGameFocused(game)
-                            },
+                            onFocused = onFocused,
                             onToggleKeyboard = onToggleHintAndKeyboard
                         )
-                        }
                     }
                 }
             }

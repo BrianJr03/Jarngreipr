@@ -249,7 +249,9 @@ data class ESDEPrefsState(
     val romSearchDetailImageHeightDp: Int = 240,
     val romSearchHintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
-    val secondaryMediaEnabled: Boolean = true
+    val secondaryMediaEnabled: Boolean = true,
+    val systemLayout: FrontendLayout = FrontendLayout.Grid,
+    val gameLayout: FrontendLayout = FrontendLayout.Grid
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

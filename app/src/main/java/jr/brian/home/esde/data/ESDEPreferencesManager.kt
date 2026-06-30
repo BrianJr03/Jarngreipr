@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
@@ -122,7 +123,9 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
@@ -487,7 +490,13 @@ class ESDEPreferencesManager(context: Context) {
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
             romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true),
             frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
-            secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true)
+            secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
+            systemLayout = prefs.getString(KEY_SYSTEM_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid,
+            gameLayout = prefs.getString(KEY_GAME_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid
         )
     }
 
@@ -1001,6 +1010,16 @@ class ESDEPreferencesManager(context: Context) {
     fun setSecondaryMediaEnabled(enabled: Boolean) {
         _state.value = _state.value.copy(secondaryMediaEnabled = enabled)
         prefs.edit { putBoolean(KEY_SECONDARY_MEDIA_ENABLED, enabled) }
+    }
+
+    fun setSystemLayout(layout: FrontendLayout) {
+        _state.value = _state.value.copy(systemLayout = layout)
+        prefs.edit { putString(KEY_SYSTEM_LAYOUT, layout.name) }
+    }
+
+    fun setGameLayout(layout: FrontendLayout) {
+        _state.value = _state.value.copy(gameLayout = layout)
+        prefs.edit { putString(KEY_GAME_LAYOUT, layout.name) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

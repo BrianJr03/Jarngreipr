@@ -11,6 +11,7 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.ui.RomGameLauncher
@@ -32,6 +33,7 @@ internal fun FrontendRomGrid(
     focusAnimationDisabledGames: Set<String>,
     gameMediaMap: Map<String, String>,
     focusResetKey: Any?,
+    layout: FrontendLayout,
     esdePrefs: ESDEPreferencesManager,
     viewModel: RomSearchResultsViewModel,
     romSearchStateHolder: RomSearchStateHolder,
@@ -40,14 +42,25 @@ internal fun FrontendRomGrid(
     romLauncher: RomGameLauncher,
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
     onChangeFolder: (GameInfo) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * Owning system for the current games view. Non-null only when the caller
+     * filters to a single system (Games route); null in Search where games
+     * span systems. When non-null, the focused game's path is recorded in
+     * [RomSearchStateHolder.lastFocusedGameBySystem] so back-navigation can
+     * restore focus.
+     */
+    system: String? = null,
+    initialRealIndex: Int = 0
 ) {
     val context = LocalContext.current
 
     RomResultsGrid(
         games = games,
         isLoading = isLoading,
+        layout = layout,
         focusResetKey = focusResetKey,
+        initialRealIndex = initialRealIndex,
         isHiddenMode = isHiddenMode,
         backgroundTransparent = backgroundTransparent,
         cardMediaType = cardMediaType,
@@ -99,6 +112,11 @@ internal fun FrontendRomGrid(
             if (game != null) {
                 managers.feature.jinglesManager.onGameSelected(File(game.path).name)
                 frontendSelectionStateHolder.selectGame(game)
+                if (system != null) {
+                    val updated = romSearchStateHolder.lastFocusedGameBySystem.value +
+                            (system to game.path)
+                    romSearchStateHolder.lastFocusedGameBySystem.value = updated
+                }
             }
         },
         onHideGame = { game -> esdePrefs.hideGame(hiddenGameKey(game)) },
