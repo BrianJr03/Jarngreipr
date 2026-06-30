@@ -5,6 +5,7 @@ import android.view.KeyEvent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +30,11 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -132,6 +135,7 @@ private fun <T> GridLayout(
 ) {
     var focusedIndex by remember(initialIndex) { mutableIntStateOf(initialIndex) }
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
+    val containerFocus = remember { FocusRequester() }
 
     val gridState = rememberLazyGridState()
     val headerOffset = if (header != null) 1 else 0
@@ -166,6 +170,8 @@ private fun <T> GridLayout(
         focusedIndex = initialIndex
         lastFocusChangeMs = 0L
         isRapidScroll = false
+        withFrameNanos { }
+        runCatching { containerFocus.requestFocus() }
         repeat(FOCUS_RESET_RETRIES) {
             delay(FOCUS_RESET_RETRY_DELAY_MS)
             runCatching { focusRequesters[initialIndex]?.requestFocus() }
@@ -183,6 +189,8 @@ private fun <T> GridLayout(
         state = gridState,
         modifier = modifier
             .fillMaxSize()
+            .focusRequester(containerFocus)
+            .focusable()
             .gridDpadHandler(columns, ::moveFocus),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(itemSpacing),
@@ -235,6 +243,7 @@ private fun <T> RowLayout(
 
     var focusedIndex by remember(initialVirtualIndex) { mutableIntStateOf(initialVirtualIndex) }
     val focusRequesters = remember { mutableMapOf<Int, FocusRequester>() }
+    val containerFocus = remember { FocusRequester() }
 
     val rowState = rememberLazyListState(initialFirstVisibleItemIndex = initialVirtualIndex)
     val headerOffset = if (header != null) 1 else 0
@@ -257,6 +266,8 @@ private fun <T> RowLayout(
         focusedIndex = initialVirtualIndex
         lastFocusChangeMs = 0L
         isRapidScroll = false
+        withFrameNanos { }
+        runCatching { containerFocus.requestFocus() }
         repeat(FOCUS_RESET_RETRIES) {
             delay(FOCUS_RESET_RETRY_DELAY_MS)
             runCatching { focusRequesters[initialVirtualIndex]?.requestFocus() }
@@ -278,6 +289,8 @@ private fun <T> RowLayout(
             state = rowState,
             modifier = Modifier
                 .fillMaxSize()
+                .focusRequester(containerFocus)
+                .focusable()
                 .rowDpadHandler(::moveFocus),
             contentPadding = PaddingValues(horizontal = sidePadding),
             horizontalArrangement = Arrangement.spacedBy(itemSpacing),
