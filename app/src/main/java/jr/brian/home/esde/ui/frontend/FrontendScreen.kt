@@ -232,7 +232,18 @@ private fun GamesRoute(
         modifier = Modifier
             .fillMaxSize()
             .onPreviewKeyEvent { keyEvent ->
-                keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_Y
+                if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (keyEvent.nativeKeyEvent.keyCode) {
+                    AndroidKeyEvent.KEYCODE_BUTTON_Y -> true
+                    // Hack: catch back at the preview stage so neither the focus
+                    // animation nor any descendant can swallow the first press.
+                    AndroidKeyEvent.KEYCODE_BUTTON_B,
+                    AndroidKeyEvent.KEYCODE_BACK -> {
+                        viewModel.navigateTo(FrontendRoute.Systems)
+                        true
+                    }
+                    else -> false
+                }
             }
     ) {
         FrontendRomGrid(
