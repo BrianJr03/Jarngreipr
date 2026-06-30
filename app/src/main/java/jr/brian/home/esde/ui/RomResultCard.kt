@@ -2,12 +2,7 @@ package jr.brian.home.esde.ui
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.EaseInOutCubic
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -35,16 +30,19 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -72,26 +70,9 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.themePrimaryColor
 import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
+import kotlin.math.cos
+import kotlin.math.sin
 import android.view.KeyEvent as AndroidKeyEvent
-
-@Composable
-private fun glowPulseAlpha(isFocused: Boolean): Float {
-    return if (isFocused) {
-        val infiniteTransition = rememberInfiniteTransition(label = "glow_pulse")
-        val pulse by infiniteTransition.animateFloat(
-            initialValue = 0.6f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(900, easing = EaseInOutCubic),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "glowPulse"
-        )
-        pulse
-    } else {
-        1f
-    }
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -173,44 +154,12 @@ internal fun RomResultCard(
 
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
-
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isFocused) 1f else 0f,
-        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
-        label = "glowAlpha"
-    )
-
-    val glowRadius by animateDpAsState(
-        targetValue = if (isFocused) 2.dp else 0.dp,
-        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
-        label = "glowRadius"
-    )
-
-    val glowPulse = glowPulseAlpha(isFocused)
     val primary = themePrimaryColor()
 
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
-            .then(if (hasImage) Modifier.scale(scale) else Modifier)
-            .drawBehind {
-                if (glowAlpha > 0f && hasImage) {
-                    val pulse = if (isFocused) glowPulse else 1f
-                    val radius = (size.maxDimension / 1.7f) + glowRadius.toPx()
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                primary.copy(alpha = 1.3f * glowAlpha * pulse),
-                                Color.Transparent
-                            ),
-                            center = Offset(size.width / 2f, size.height / 2f),
-                            radius = radius
-                        ),
-                        radius = radius,
-                        center = Offset(size.width / 2f, size.height / 2f)
-                    )
-                }
-            }
+            .scale(scale)
             .then(
                 if (!hasImage && isFocused) Modifier.animatedGradientBorder(
                     colors = listOf(primary, themeSecondaryColor()),
@@ -275,7 +224,8 @@ internal fun RomResultCard(
                             .then(if (shouldSpin) Modifier.rotate(discRotation) else Modifier)
                             .then(if (shouldFlip) Modifier.graphicsLayer {
                                 rotationY = flipRotation
-                            } else Modifier),
+                            } else Modifier)
+                            .shapeFollowingFocusOutline(isFocused, primary),
                         contentScale = ContentScale.Fit
                     )
                 } else if (appIcon != null) {
@@ -339,5 +289,39 @@ internal fun RomResultCard(
                 }
             }
         }
+    }
+}
+
+private val FocusOutlineThickness = 2.dp
+private const val FocusOutlineCopies = 12
+
+@Composable
+private fun Modifier.shapeFollowingFocusOutline(
+    isFocused: Boolean,
+    focusColor: Color
+): Modifier {
+    val layer = rememberGraphicsLayer()
+    val alpha by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
+        label = "focusOutlineAlpha"
+    )
+    return drawWithContent {
+        layer.record { this@drawWithContent.drawContent() }
+        if (alpha > 0f) {
+            layer.colorFilter = ColorFilter.tint(focusColor, BlendMode.SrcIn)
+            layer.alpha = alpha
+            val radius = FocusOutlineThickness.toPx()
+            val step = (2.0 * Math.PI / FocusOutlineCopies).toFloat()
+            for (i in 0 until FocusOutlineCopies) {
+                val theta = i * step
+                translate(left = cos(theta) * radius, top = sin(theta) * radius) {
+                    drawLayer(layer)
+                }
+            }
+            layer.colorFilter = null
+            layer.alpha = 1f
+        }
+        drawLayer(layer)
     }
 }

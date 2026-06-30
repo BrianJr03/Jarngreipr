@@ -1,6 +1,7 @@
 package jr.brian.home
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
@@ -36,18 +37,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.ESDESetupHelper
+import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.ScriptManager
 import jr.brian.home.esde.model.FrontendSelection
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.ui.FrontEndActivity
 import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.viewmodels.ESDEViewModel
@@ -86,10 +91,10 @@ class MainActivity : ComponentActivity() {
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
     @Inject
-    lateinit var romSearchStateHolder: jr.brian.home.esde.data.RomSearchStateHolder
+    lateinit var romSearchStateHolder: RomSearchStateHolder
 
     @Inject
-    lateinit var frontendSelectionStateHolder: jr.brian.home.esde.data.FrontendSelectionStateHolder
+    lateinit var frontendSelectionStateHolder: FrontendSelectionStateHolder
 
     @Inject
     lateinit var esdePreferencesManager: ESDEPreferencesManager
@@ -205,10 +210,6 @@ class MainActivity : ComponentActivity() {
                         currentPageIndex = currentPageIndex,
                         dockTopY = dockTopY,
                         content = {
-                            // Live wallpaper state available to canvas tiles
-                            // (and any other consumer) without a second
-                            // ViewModel or event listener. Reads recompose on
-                            // each ES-DE event because the value changes.
                             CompositionLocalProvider(
                                 LocalEsdeWallpaperState provides wallpaperState
                             ) {
@@ -239,6 +240,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        launchFrontendIfEnabled()
     }
 
     override fun onStart() {
@@ -283,6 +289,7 @@ class MainActivity : ComponentActivity() {
 
     private fun launchFrontendIfEnabled() {
         if (!esdePreferencesManager.state.value.frontendEnabled) return
+        if (FrontEndActivity.isRunning) return
         launchFrontend(this)
     }
 
@@ -328,11 +335,14 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ObserveFrontendSelection(esdeViewModel: ESDEViewModel) {
+        val jinglesManager = LocalJinglesManager.current
         LaunchedEffect(Unit) {
             frontendSelectionStateHolder.selection.collect { selection ->
                 when (selection) {
-                    is FrontendSelection.System ->
+                    is FrontendSelection.System -> {
+                        jinglesManager.stop()
                         esdeViewModel.updateForSystem(selection.systemName)
+                    }
                     is FrontendSelection.Game ->
                         esdeViewModel.updateForGame(selection.systemName, selection.gameFilename)
                     null -> Unit

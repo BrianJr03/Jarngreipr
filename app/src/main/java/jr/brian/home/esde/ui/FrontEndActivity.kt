@@ -107,12 +107,28 @@ class FrontEndActivity : ComponentActivity() {
         overridePendingTransition(0, 0)
     }
 
+    override fun onStart() {
+        super.onStart()
+        isRunning = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        isRunning = false
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         if (gameLaunched) {
             romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
         }
         viewModel.clearState()
+    }
+
+    companion object {
+        @Volatile
+        var isRunning: Boolean = false
+            private set
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
