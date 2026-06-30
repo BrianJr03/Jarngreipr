@@ -136,6 +136,29 @@ class FloatyModeManager(context: Context) {
         saveEnabledTabs(tabs)
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldTabs = enabledTabs
+        if (oldTabs.isEmpty()) return
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newTabs = oldTabs.mapNotNull { oldToNew[it] }.toSet()
+        enabledTabs = newTabs
+        saveEnabledTabs(newTabs)
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldTabs = enabledTabs
+        if (oldTabs.isEmpty()) return
+        val newTabs = oldTabs.mapNotNull { idx ->
+            when {
+                idx < pageIndex -> idx
+                idx > pageIndex -> idx - 1
+                else -> null
+            }
+        }.toSet()
+        enabledTabs = newTabs
+        saveEnabledTabs(newTabs)
+    }
+
     /** Resets the easter egg state; user must tap version 7x again. */
     fun reset() {
         isFloatyModeActive = false

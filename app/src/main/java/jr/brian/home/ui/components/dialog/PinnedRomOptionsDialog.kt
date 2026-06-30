@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +57,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.rom.resolveDisplayPath
@@ -74,7 +76,10 @@ fun PinnedRomOptionsDialog(
     onIconSizeChange: ((Float) -> Unit)? = null,
     hasExternalDisplay: Boolean = false,
     currentDisplayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY,
-    onDisplayPreferenceChange: (DisplayPreference) -> Unit = {}
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit = {},
+    currentContentScale: EsdeContentScale? = null,
+    onContentScaleChange: ((EsdeContentScale) -> Unit)? = null,
+    onEditCanvas: (() -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) {
@@ -99,6 +104,13 @@ fun PinnedRomOptionsDialog(
 
                 AnimatedVisibility(visible = !showResizeMode, enter = fadeIn(), exit = fadeOut()) {
                     Column(modifier = Modifier.fillMaxWidth()) {
+                        if (onEditCanvas != null) {
+                            RomEditCanvasRow(onClick = {
+                                onDismiss()
+                                onEditCanvas()
+                            })
+                            Spacer(Modifier.height(4.dp))
+                        }
                         HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
                         Spacer(Modifier.height(4.dp))
                         RomMediaTypeList(rom = rom, onMediaTypeSelected = { type ->
@@ -123,6 +135,18 @@ fun PinnedRomOptionsDialog(
 //                                }
 //                            )
 //                        }
+                        if (currentContentScale != null && onContentScaleChange != null) {
+                            Spacer(Modifier.height(4.dp))
+                            HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
+                            Spacer(Modifier.height(8.dp))
+                            RomContentScaleSection(
+                                current = currentContentScale,
+                                onSelected = { scale ->
+                                    onContentScaleChange(scale)
+                                    onDismiss()
+                                }
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
                         HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
                         Spacer(Modifier.height(4.dp))
@@ -338,6 +362,59 @@ private fun DisplayPreferenceTile(
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+        )
+    }
+}
+
+@Composable
+private fun RomEditCanvasRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Tune,
+            contentDescription = null,
+            tint = ThemePrimaryColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(R.string.canvas_edit_canvas_option),
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun RomContentScaleSection(
+    current: EsdeContentScale,
+    onSelected: (EsdeContentScale) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.canvas_esde_picker_scale_label),
+        color = Color.White.copy(alpha = 0.7f),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+    )
+    EsdeContentScale.entries.forEach { scale ->
+        val label = stringResource(
+            when (scale) {
+                EsdeContentScale.FIT -> R.string.canvas_esde_picker_scale_fit
+                EsdeContentScale.CROP -> R.string.canvas_esde_picker_scale_crop
+            }
+        )
+        RomMediaTypeRow(
+            label = label,
+            isSelected = scale == current,
+            onClick = { onSelected(scale) }
         )
     }
 }

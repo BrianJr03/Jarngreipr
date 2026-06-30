@@ -120,6 +120,27 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         return _fabVisiblePages.value.contains(pageIndex)
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        if (!_fabExplicitPages.value) return
+        val oldPages = _fabVisiblePages.value
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newPages = oldPages.mapNotNull { oldToNew[it] }.toSet()
+        setFabVisiblePages(newPages)
+    }
+
+    fun removePage(pageIndex: Int) {
+        if (!_fabExplicitPages.value) return
+        val oldPages = _fabVisiblePages.value
+        val newPages = oldPages.mapNotNull { idx ->
+            when {
+                idx < pageIndex -> idx
+                idx > pageIndex -> idx - 1
+                else -> null
+            }
+        }.toSet()
+        setFabVisiblePages(newPages)
+    }
+
     companion object {
         private const val PREFS_NAME = "app_drawer_fab_prefs"
         private const val KEY_FAB_COLOR = "fab_color"

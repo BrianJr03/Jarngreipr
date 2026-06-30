@@ -9,7 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +34,8 @@ fun AppIconImage(
     modifier: Modifier = Modifier,
     customIconManager: CustomIconManager? = null,
     contentScale: ContentScale = ContentScale.Fit,
-    shape: Shape? = null
+    shape: Shape? = null,
+    filterQuality: FilterQuality = DrawScope.DefaultFilterQuality
 ) {
     val iconShapeManager = LocalIconShapeManager.current
     val resolvedShape = shape ?: iconShapeManager.iconShape.toComposeShape()
@@ -78,7 +81,8 @@ fun AppIconImage(
                 imageLoader = if (isGif) gifImageLoader else ImageLoader(context),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
-                contentScale = contentScale
+                contentScale = contentScale,
+                filterQuality = filterQuality
             )
         } else {
             AsyncImage(
@@ -90,7 +94,8 @@ fun AppIconImage(
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
-                contentScale = contentScale
+                contentScale = contentScale,
+                filterQuality = filterQuality
             )
         }
     }

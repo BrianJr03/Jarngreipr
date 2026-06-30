@@ -210,6 +210,41 @@ class CanvasLayoutManager(context: Context) {
         prefs.edit().clear().apply()
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldLayouts = _layoutsByPage.value
+        val newLayouts = mutableMapOf<Int, CanvasLayout>()
+        oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+            oldLayouts[oldIndex]?.let { newLayouts[newIndex] = it }
+        }
+        _layoutsByPage.value = newLayouts
+        prefs.edit().apply {
+            oldLayouts.keys.forEach { remove(layoutKey(it)) }
+            newLayouts.forEach { (idx, layout) ->
+                putString(layoutKey(idx), json.encodeToString(layout))
+            }
+            apply()
+        }
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldLayouts = _layoutsByPage.value
+        val newLayouts = mutableMapOf<Int, CanvasLayout>()
+        oldLayouts.forEach { (idx, layout) ->
+            when {
+                idx < pageIndex -> newLayouts[idx] = layout
+                idx > pageIndex -> newLayouts[idx - 1] = layout
+            }
+        }
+        _layoutsByPage.value = newLayouts
+        prefs.edit().apply {
+            oldLayouts.keys.forEach { remove(layoutKey(it)) }
+            newLayouts.forEach { (idx, layout) ->
+                putString(layoutKey(idx), json.encodeToString(layout))
+            }
+            apply()
+        }
+    }
+
     private inline fun update(pageIndex: Int, transform: (CanvasLayout) -> CanvasLayout) {
         val current = _layoutsByPage.value[pageIndex] ?: CanvasLayout()
         val updated = transform(current)

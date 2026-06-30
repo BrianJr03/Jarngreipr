@@ -163,18 +163,37 @@ class AppVisibilityManager(context: Context) {
         return packageName in getHiddenApps(pageIndex)
     }
 
-    fun reorderHiddenApps(newOrderFromOld: List<Int>) {
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
         val oldMap = _hiddenAppsByPage.value
         val newMap = mutableMapOf<Int, Set<String>>()
-        newOrderFromOld.forEachIndexed { newIndex, oldIndex ->
+        oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
             val hiddenAtOld = oldMap[oldIndex]
             if (hiddenAtOld != null) newMap[newIndex] = hiddenAtOld
         }
         _hiddenAppsByPage.value = newMap
         prefs.edit().apply {
-            for (i in 0 until 10) remove("${KEY_HIDDEN_APPS}_$i")
+            oldMap.keys.forEach { remove("${KEY_HIDDEN_APPS}_$it") }
             newMap.forEach { (pageIndex, hiddenApps) ->
                 putString("${KEY_HIDDEN_APPS}_$pageIndex", hiddenApps.joinToString(SEPARATOR))
+            }
+            apply()
+        }
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldMap = _hiddenAppsByPage.value
+        val newMap = mutableMapOf<Int, Set<String>>()
+        oldMap.forEach { (idx, hidden) ->
+            when {
+                idx < pageIndex -> newMap[idx] = hidden
+                idx > pageIndex -> newMap[idx - 1] = hidden
+            }
+        }
+        _hiddenAppsByPage.value = newMap
+        prefs.edit().apply {
+            oldMap.keys.forEach { remove("${KEY_HIDDEN_APPS}_$it") }
+            newMap.forEach { (idx, hidden) ->
+                putString("${KEY_HIDDEN_APPS}_$idx", hidden.joinToString(SEPARATOR))
             }
             apply()
         }

@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,6 +36,7 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.util.LocalESDEImageLoader
@@ -68,9 +70,11 @@ import java.io.File
  * Recomposes live as ES-DE events change either `currentGame` or the
  * system-level paths on `wallpaperState`.
  *
- * `ContentScale.Fit` + 8dp padding for `Marquee` (logos centered on a
- * transparent inner area); `ContentScale.Crop` for the rest. Tap behavior
- * mirrors `BaseTile`: plain `clickable` in edit mode so the outer slot's
+ * Scaling follows [EsdeContentScale]: `FIT` renders with `ContentScale.Fit`
+ * + 8dp padding (logos centered on a transparent inner area); `CROP` uses
+ * `ContentScale.Crop` with no padding. Tiles without a stored choice default
+ * to `Marquee → FIT, others → CROP` — matching the original hardcoded rule.
+ * Tap behavior mirrors `BaseTile`: plain `clickable` in edit mode so the outer slot's
  * long-press drag detector fires; `combinedClickable` outside edit mode so
  * long-press still opens the remove dialog. The card background is the
  * standard 0.85-alpha OledCardColor.
@@ -89,6 +93,7 @@ fun EsdeArtTile(
     val imageLoader = LocalESDEImageLoader.current
     val state = LocalEsdeWallpaperState.current
     val imageType = resolved.raw.resolvedImageType
+    val contentScale = resolved.raw.resolvedContentScale
 
     val path: String? = state.currentGame?.imagePathFor(imageType)
         ?: when (imageType) {
@@ -101,7 +106,10 @@ fun EsdeArtTile(
     val clickModifier = if (editMode) {
         Modifier.clickable(onClick = onTap)
     } else {
-        Modifier.combinedClickable(onClick = onTap, onLongClick = onLongPress)
+        Modifier.combinedClickable(
+            onClick = onTap,
+            onLongClick = onLongPress
+        )
     }
 
     val shape = RoundedCornerShape(12.dp)
@@ -137,13 +145,14 @@ fun EsdeArtTile(
                 model = ImageRequest.Builder(context).data(imageData).crossfade(true).build(),
                 imageLoader = imageLoader,
                 contentDescription = stringResource(R.string.canvas_esde_art_tile_description),
-                contentScale = when (imageType) {
-                    GameImageType.Marquee -> ContentScale.Fit
-                    else -> ContentScale.Crop
+                contentScale = when (contentScale) {
+                    EsdeContentScale.FIT -> ContentScale.Fit
+                    EsdeContentScale.CROP -> ContentScale.Crop
                 },
+                filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (imageType == GameImageType.Marquee) 8.dp else 0.dp)
+                    .padding(if (contentScale == EsdeContentScale.FIT) 8.dp else 0.dp)
             )
         } else {
             // Gradient empty state — overlay the focused entity's name so the
@@ -151,18 +160,17 @@ fun EsdeArtTile(
             // game is focused, system name when browsing systems, nothing at
             // cold boot.
             val title = state.currentGame?.name ?: state.currentSystemName
-            if (!title.isNullOrBlank()) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                )
-            }
+            Text(
+                text = title ?: stringResource(R.string.settings_wallpaper_esde),
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+            )
+
         }
     }
 }

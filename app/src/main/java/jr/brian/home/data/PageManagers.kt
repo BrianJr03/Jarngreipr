@@ -29,5 +29,8 @@ data class PageManagers @Inject constructor(
     val widgetPageAppManager: WidgetPageAppManager,
 
     /** Per-page layouts for Unified Canvas pages */
-    val canvasLayoutManager: CanvasLayoutManager
+    val canvasLayoutManager: CanvasLayoutManager,
+
+    /** Fan-out coordinator for pager-tab reorder / removal */
+    val pageOrderCoordinator: PageOrderCoordinator
 )

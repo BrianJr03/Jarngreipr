@@ -30,19 +30,28 @@ import jr.brian.home.R
 import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasScrollOrientation
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
+import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.canvas.viewmodel.CanvasViewModel
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.esde.ui.RomSearchResultsActivity
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.model.rom.toPinnedRomInfo
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.components.dialog.AppSelectionDialog
 import jr.brian.home.ui.components.dialog.ConfirmationDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
+import jr.brian.home.ui.components.dialog.RenameAppDialog
+import jr.brian.home.ui.components.settings.displayName
+import jr.brian.home.ui.util.rememberHasExternalDisplay
+import jr.brian.home.util.openAppInfo
 import jr.brian.home.ui.screens.AllNotificationsScreen
 import jr.brian.home.ui.screens.RssTab
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -51,6 +60,7 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.util.topEdgePullDown
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -89,7 +99,18 @@ fun UnifiedCanvasTab(
     LaunchedEffect(pageIndex) { viewModel.setPageIndex(pageIndex) }
     LaunchedEffect(apps) { viewModel.setApps(apps) }
 
+    val pendingRomForPin by romSearchViewModel.pendingRomForPin
+        .collectAsStateWithLifecycle()
+    LaunchedEffect(pendingRomForPin) {
+        val pending = pendingRomForPin ?: return@LaunchedEffect
+        if (pending.first == pageIndex) {
+            romSearchViewModel.clearPendingRomForPin()
+            viewModel.pinRomToCanvas(pending.second.toPinnedRomInfo())
+        }
+    }
+
     var addDialogVisible by remember { mutableStateOf(false) }
+    var addDialogStartInEdit by remember { mutableStateOf(false) }
     var pickAppVisible by remember { mutableStateOf(false) }
     var createFolderVisible by remember { mutableStateOf(false) }
     var pickRomVisible by remember { mutableStateOf(false) }
@@ -102,6 +123,11 @@ fun UnifiedCanvasTab(
     var pickEsdeArtVisible by remember { mutableStateOf(false) }
     var esdeArtRetypeTarget by remember { mutableStateOf<ResolvedCanvasItem.EsdeArt?>(null) }
     var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
+    var appOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.App?>(null) }
+    var romOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.Rom?>(null) }
+    var customIconTarget by remember { mutableStateOf<AppInfo?>(null) }
+    var renameTarget by remember { mutableStateOf<AppInfo?>(null) }
+    val hasExternalDisplay = rememberHasExternalDisplay()
 
     // Hoisted so the floating add icon can fade based on grid scroll.
     val canvasScrollState = rememberScrollState()
@@ -134,8 +160,15 @@ fun UnifiedCanvasTab(
             scrollState = canvasScrollState,
             onTap = {
                 handleTap(
-                    context = context,
                     resolved = it,
+                    onLaunchApp = { app ->
+                        launchApp(
+                            context = context,
+                            packageName = app.packageName,
+                            displayPreference = appDisplayPreferenceManager
+                                .getAppDisplayPreference(app.packageName)
+                        )
+                    },
                     onOpenRss = { rssSheetVisible = true },
                     onOpenFolder = { folder -> folderToOpen = folder },
                     onLaunchRom = { rom ->
@@ -150,7 +183,27 @@ fun UnifiedCanvasTab(
                     onChangeEsdeArtType = { esdeArt -> esdeArtRetypeTarget = esdeArt }
                 )
             },
-            onLongPress = { pendingRemoval = it },
+            onLongPress = { resolved ->
+                when {
+                    resolved is ResolvedCanvasItem.App && resolved.info != null ->
+                        appOptionsTarget = resolved
+                    resolved is ResolvedCanvasItem.Rom && resolved.info != null ->
+                        romOptionsTarget = resolved
+                    else -> pendingRemoval = resolved
+                }
+            },
+            onDoubleTap = { resolved ->
+                if (resolved is ResolvedCanvasItem.App) {
+                    resolved.info?.let { app ->
+                        launchAppOnOppositeDisplay(
+                            context = context,
+                            packageName = app.packageName,
+                            currentPreference = appDisplayPreferenceManager
+                                .getAppDisplayPreference(app.packageName)
+                        )
+                    }
+                }
+            },
             onReorder = { from, to -> viewModel.reorderItems(from, to) },
             onResizeWidget = { widget ->
                 // Legacy widget-overlay tap path. Min spans default to 1×1; the
@@ -235,6 +288,7 @@ fun UnifiedCanvasTab(
             layout = uiState.layout,
             pagerState = pagerState,
             totalPages = totalPages,
+            startInEdit = addDialogStartInEdit,
             onChoice = { choice ->
                 handleAddChoice(
                     choice = choice,
@@ -254,7 +308,10 @@ fun UnifiedCanvasTab(
             onSettingsClick = onSettingsClick,
             onDeletePage = onDeletePage,
             onNavigateToSearch = onNavigateToSearch,
-            onDismiss = { addDialogVisible = false }
+            onDismiss = {
+                addDialogVisible = false
+                addDialogStartInEdit = false
+            }
         )
     }
 
@@ -262,16 +319,21 @@ fun UnifiedCanvasTab(
         CanvasRomPickerDialog(
             roms = allPinnedRoms,
             onRomSelected = { rom -> viewModel.pinRomToCanvas(rom) },
-            onBrowseRoms = onNavigateToRomSearch,
+            onBrowseRoms = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            },
             onDismiss = { pickRomVisible = false }
         )
     }
 
     if (pickEsdeArtVisible) {
+        val defaultType = GameImageType.Fanart
         CanvasEsdeArtChooserDialog(
-            initialType = jr.brian.home.esde.model.GameImageType.Fanart,
+            initialType = defaultType,
+            initialContentScale = defaultEsdeContentScaleFor(defaultType),
             titleRes = R.string.canvas_esde_picker_title,
-            onConfirm = { imageType -> viewModel.addEsdeArtItem(imageType) },
+            onConfirm = { imageType, scale -> viewModel.addEsdeArtItem(imageType, scale) },
             onDismiss = { pickEsdeArtVisible = false }
         )
     }
@@ -279,9 +341,10 @@ fun UnifiedCanvasTab(
     esdeArtRetypeTarget?.let { target ->
         CanvasEsdeArtChooserDialog(
             initialType = target.raw.resolvedImageType,
+            initialContentScale = target.raw.resolvedContentScale,
             titleRes = R.string.canvas_esde_chooser_title,
-            onConfirm = { imageType ->
-                viewModel.updateEsdeArtItemImageType(target.raw.id, imageType)
+            onConfirm = { imageType, scale ->
+                viewModel.updateEsdeArtItem(target.raw.id, imageType, scale)
             },
             onDismiss = { esdeArtRetypeTarget = null }
         )
@@ -387,18 +450,99 @@ fun UnifiedCanvasTab(
             onDismiss = { pendingRemoval = null }
         )
     }
+
+    val onEditCanvas: () -> Unit = {
+        addDialogStartInEdit = true
+        addDialogVisible = true
+    }
+
+    romOptionsTarget?.let { target ->
+        val rom = target.info ?: run {
+            romOptionsTarget = null
+            return@let
+        }
+        PinnedRomOptionsDialog(
+            rom = rom,
+            onDismiss = { romOptionsTarget = null },
+            onMediaTypeSelected = { mediaType ->
+                viewModel.updateRomMediaType(rom, mediaType)
+            },
+            onRemove = {
+                viewModel.removeCanvasRom(target.raw)
+            },
+            currentContentScale = target.raw.resolvedContentScale,
+            onContentScaleChange = { scale ->
+                viewModel.updateRomContentScale(target.raw.id, scale)
+            },
+            onEditCanvas = {
+                romOptionsTarget = null
+                onEditCanvas()
+            }
+        )
+    }
+
+    appOptionsTarget?.let { target ->
+        val app = target.info ?: run {
+            appOptionsTarget = null
+            return@let
+        }
+        CanvasAppOptionsDialog(
+            app = app,
+            currentDisplayPreference = appDisplayPreferenceManager
+                .getAppDisplayPreference(app.packageName),
+            hasExternalDisplay = hasExternalDisplay,
+            onDismiss = { appOptionsTarget = null },
+            onAppInfoClick = { openAppInfo(context, app.packageName) },
+            onDisplayPreferenceChange = { preference ->
+                appDisplayPreferenceManager
+                    .setAppDisplayPreference(app.packageName, preference)
+            },
+            onRemoveFromCanvas = {
+                viewModel.removeItemAndCleanup(target.raw)
+                appOptionsTarget = null
+            },
+            onCustomIconClick = {
+                customIconTarget = app
+                appOptionsTarget = null
+            },
+            onRenameClick = {
+                renameTarget = app
+                appOptionsTarget = null
+            },
+            onEditCanvas = {
+                appOptionsTarget = null
+                onEditCanvas()
+            }
+        )
+    }
+
+    customIconTarget?.let { app ->
+        CustomIconDialog(
+            packageName = app.packageName,
+            appLabel = app.displayName(),
+            onDismiss = { customIconTarget = null }
+        )
+    }
+
+    renameTarget?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { renameTarget = null }
+        )
+    }
 }
 
 private fun handleTap(
-    context: android.content.Context,
     resolved: ResolvedCanvasItem,
+    onLaunchApp: (AppInfo) -> Unit,
     onOpenRss: () -> Unit,
     onOpenFolder: (ResolvedCanvasItem.Folder) -> Unit,
     onLaunchRom: (PinnedRomInfo) -> Unit,
     onChangeEsdeArtType: (ResolvedCanvasItem.EsdeArt) -> Unit
 ) {
     when (resolved) {
-        is ResolvedCanvasItem.App -> resolved.info?.let { launchApp(context, it.packageName) }
+        is ResolvedCanvasItem.App -> resolved.info?.let(onLaunchApp)
         is ResolvedCanvasItem.RssLauncher -> onOpenRss()
         is ResolvedCanvasItem.Folder -> if (resolved.folder != null) onOpenFolder(resolved)
         is ResolvedCanvasItem.Rom -> resolved.info?.let(onLaunchRom)
@@ -467,6 +611,17 @@ private fun newRssLauncher(): CanvasItem.RssLauncherItem =
     CanvasItem.RssLauncherItem(
         id = "rss-${UUID.randomUUID()}"
     )
+
+/**
+ * Default Fit/Crop choice presented when no tile-specific value exists yet.
+ * Mirrors the legacy hardcoded EsdeArtTile rule so a freshly-added tile renders
+ * the same way the pre-toggle code would have rendered it.
+ */
+private fun defaultEsdeContentScaleFor(type: GameImageType): EsdeContentScale =
+    when (type) {
+        GameImageType.Marquee -> EsdeContentScale.FIT
+        else -> EsdeContentScale.CROP
+    }
 
 /**
  * Bundles a target item with its resolved minimum spans so the resize dialog

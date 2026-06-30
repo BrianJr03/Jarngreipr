@@ -7,7 +7,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -48,6 +51,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasItem
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
@@ -60,6 +64,20 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import java.io.File
+
+/**
+ * Tiles drawn shorter than this hide their text label and let the icon/art
+ * consume the whole cell. The canvas's `CanvasMaxCellSize` is 96.dp, so 1×1
+ * cells fall under this threshold and keep their labels; anything 2 rows or
+ * taller hides the label and grows the content edge-to-edge.
+ */
+private val SmallTileLabelThreshold = 110.dp
+
+/**
+ * Vertical space reserved for the label row (11sp text + 4dp spacer + slack).
+ * Subtracted from the tile's max height when computing the icon's square side.
+ */
+private val LabelReserveHeight = 22.dp
 
 /**
  * Render a [ResolvedCanvasItem] inside a single grid cell. Long-press triggers
@@ -75,7 +93,8 @@ fun CanvasItemTile(
     suppressTileLongPress: Boolean = false,
     editMode: Boolean = false,
     isDropTarget: Boolean = false,
-    onResizeWidget: (CanvasItem.WidgetItem) -> Unit = {}
+    onResizeWidget: (CanvasItem.WidgetItem) -> Unit = {},
+    onDoubleTap: () -> Unit = {}
 ) {
     val effectiveLongPress: () -> Unit = if (suppressTileLongPress) ({}) else onLongPress
     val baseModifier = modifier.then(if (isDropTarget) dropTargetHighlight() else Modifier)
@@ -85,6 +104,7 @@ fun CanvasItemTile(
             fallbackPackage = resolved.raw.packageName,
             onTap = onTap,
             onLongPress = effectiveLongPress,
+            onDoubleTap = onDoubleTap,
             modifier = baseModifier,
             editMode = editMode
         )
@@ -99,6 +119,7 @@ fun CanvasItemTile(
         is ResolvedCanvasItem.Rom -> CanvasRomTile(
             rom = resolved.info,
             fallbackKey = resolved.raw.romKey,
+            contentScale = resolved.raw.resolvedContentScale,
             onTap = onTap,
             onLongPress = effectiveLongPress,
             modifier = baseModifier,
@@ -148,6 +169,7 @@ private fun CanvasAppTile(
     fallbackPackage: String,
     onTap: () -> Unit,
     onLongPress: () -> Unit,
+    onDoubleTap: () -> Unit,
     modifier: Modifier = Modifier,
     editMode: Boolean = false
 ) {
@@ -156,20 +178,37 @@ private fun CanvasAppTile(
     BaseTile(
         onTap = onTap,
         onLongPress = onLongPress,
+        onDoubleTap = onDoubleTap,
         modifier = modifier,
         editMode = editMode
     ) {
         if (app != null) {
-            AppIconImage(
-                defaultIcon = app.icon,
-                packageName = app.packageName,
-                contentDescription = stringResource(R.string.app_icon_description, app.label),
-                customIconManager = customIconManager,
-                modifier = Modifier.size(56.dp)
-            )
-            if (visibility.showHomeScreenAppNames) {
-                Spacer(Modifier.height(4.dp))
-                TileLabel(app.label)
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val showLabel = visibility.showHomeScreenAppNames &&
+                    maxHeight <= SmallTileLabelThreshold
+                val labelReserve = if (showLabel) LabelReserveHeight else 0.dp
+                val iconSide = minOf(maxWidth, maxHeight - labelReserve)
+                    .coerceAtLeast(0.dp)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    AppIconImage(
+                        defaultIcon = app.icon,
+                        packageName = app.packageName,
+                        contentDescription = stringResource(
+                            R.string.app_icon_description, app.label
+                        ),
+                        customIconManager = customIconManager,
+                        modifier = Modifier.size(iconSide),
+                        filterQuality = FilterQuality.High
+                    )
+                    if (showLabel) {
+                        Spacer(Modifier.height(4.dp))
+                        TileLabel(app.label)
+                    }
+                }
             }
         } else {
             MissingTile(label = fallbackPackage, icon = Icons.Default.Apps)
@@ -194,10 +233,23 @@ private fun CanvasFolderTile(
         editMode = editMode
     ) {
         if (folder != null) {
-            FolderPreviewBox(folder = folder)
-            if (visibility.showFolderNames) {
-                Spacer(Modifier.height(4.dp))
-                TileLabel(folder.name)
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val showLabel = visibility.showFolderNames &&
+                    maxHeight <= SmallTileLabelThreshold
+                val labelReserve = if (showLabel) LabelReserveHeight else 0.dp
+                val boxSide = minOf(maxWidth, maxHeight - labelReserve)
+                    .coerceAtLeast(0.dp)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    FolderPreviewBox(folder = folder, side = boxSide)
+                    if (showLabel) {
+                        Spacer(Modifier.height(4.dp))
+                        TileLabel(folder.name)
+                    }
+                }
             }
         } else {
             MissingTile(label = fallbackId, icon = Icons.Default.Apps)
@@ -206,10 +258,13 @@ private fun CanvasFolderTile(
 }
 
 @Composable
-private fun FolderPreviewBox(folder: Folder) {
+private fun FolderPreviewBox(folder: Folder, side: androidx.compose.ui.unit.Dp) {
+    // Count text scales with the box (~32% of side) so a 200dp folder reads as
+    // boldly as a 56dp one. Clamp so it never collapses or runs off the edge.
+    val countFontSize = (side.value * 0.32f).coerceIn(14f, 64f).sp
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(side)
             .clip(RoundedCornerShape(12.dp))
             .background(OledCardColor.copy(alpha = 0.9f))
             .border(2.dp, ThemePrimaryColor.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
@@ -219,7 +274,7 @@ private fun FolderPreviewBox(folder: Folder) {
         Text(
             text = folder.appPackageNames.size.toString(),
             color = Color.White,
-            fontSize = 18.sp,
+            fontSize = countFontSize,
             fontWeight = FontWeight.Bold
         )
     }
@@ -230,6 +285,7 @@ private fun FolderPreviewBox(folder: Folder) {
 private fun CanvasRomTile(
     rom: PinnedRomInfo?,
     fallbackKey: String,
+    contentScale: EsdeContentScale,
     onTap: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
@@ -247,34 +303,52 @@ private fun CanvasRomTile(
             val artwork = rom.resolveDisplayPath()
                 ?.let { File(it) }
                 ?.takeIf { it.exists() }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (artwork != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(artwork)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = stringResource(R.string.rom_search_icon_description),
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.VideogameAsset,
-                        contentDescription = stringResource(R.string.rom_search_icon_description),
-                        tint = ThemePrimaryColor,
-                        modifier = Modifier.size(34.dp)
-                    )
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val showLabel = visibility.showHomeScreenAppNames &&
+                    maxHeight <= SmallTileLabelThreshold
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (artwork != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(artwork)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = stringResource(
+                                    R.string.rom_search_icon_description
+                                ),
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = when (contentScale) {
+                                    EsdeContentScale.FIT -> ContentScale.Fit
+                                    EsdeContentScale.CROP -> ContentScale.Crop
+                                },
+                                filterQuality = FilterQuality.High
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.VideogameAsset,
+                                contentDescription = stringResource(
+                                    R.string.rom_search_icon_description
+                                ),
+                                tint = ThemePrimaryColor,
+                                modifier = Modifier.fillMaxSize(0.6f)
+                            )
+                        }
+                    }
+                    if (showLabel) {
+                        Spacer(Modifier.height(4.dp))
+                        TileLabel(rom.name)
+                    }
                 }
-            }
-            if (visibility.showHomeScreenAppNames) {
-                Spacer(Modifier.height(4.dp))
-                TileLabel(rom.name)
             }
         } else {
             MissingTile(label = fallbackKey, icon = Icons.Default.VideogameAsset)
@@ -368,51 +442,82 @@ private fun CanvasRssLauncherTile(
     modifier: Modifier = Modifier,
     editMode: Boolean = false
 ) {
+    val rssLabel = stringResource(R.string.canvas_rss_launcher_tile)
     BaseTile(
         onTap = onTap,
         onLongPress = onLongPress,
         modifier = modifier,
         editMode = editMode
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(OledCardColor.copy(alpha = 0.9f))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.6f), RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.RssFeed,
-                contentDescription = stringResource(R.string.canvas_rss_launcher_tile),
-                tint = ThemePrimaryColor,
-                modifier = Modifier.size(32.dp)
-            )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val showLabel = maxHeight <= SmallTileLabelThreshold
+            val labelReserve = if (showLabel) LabelReserveHeight else 0.dp
+            val boxSide = minOf(maxWidth, maxHeight - labelReserve).coerceAtLeast(0.dp)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(boxSide)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(OledCardColor.copy(alpha = 0.9f))
+                        .border(
+                            2.dp,
+                            ThemePrimaryColor.copy(alpha = 0.6f),
+                            RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RssFeed,
+                        contentDescription = rssLabel,
+                        tint = ThemePrimaryColor,
+                        modifier = Modifier.fillMaxSize(0.55f)
+                    )
+                }
+                if (showLabel) {
+                    Spacer(Modifier.height(4.dp))
+                    TileLabel(rssLabel)
+                }
+            }
         }
-        Spacer(Modifier.height(4.dp))
-        TileLabel(stringResource(R.string.canvas_rss_launcher_tile))
     }
 }
 
 @Composable
 private fun MissingTile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Box(
-        modifier = Modifier
-            .size(56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.Red.copy(alpha = 0.15f))
-            .border(2.dp, Color.Red.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = stringResource(R.string.canvas_missing_item_description),
-            tint = Color.Red.copy(alpha = 0.8f),
-            modifier = Modifier.size(28.dp)
-        )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val showLabel = maxHeight <= SmallTileLabelThreshold
+        val labelReserve = if (showLabel) LabelReserveHeight else 0.dp
+        val boxSide = minOf(maxWidth, maxHeight - labelReserve).coerceAtLeast(0.dp)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(boxSide)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Red.copy(alpha = 0.15f))
+                    .border(2.dp, Color.Red.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = stringResource(R.string.canvas_missing_item_description),
+                    tint = Color.Red.copy(alpha = 0.8f),
+                    modifier = Modifier.fillMaxSize(0.5f)
+                )
+            }
+            if (showLabel) {
+                Spacer(Modifier.height(4.dp))
+                TileLabel(label, color = Color.White.copy(alpha = 0.6f))
+            }
+        }
     }
-    Spacer(Modifier.height(4.dp))
-    TileLabel(label, color = Color.White.copy(alpha = 0.6f))
 }
 
 @Composable
@@ -436,6 +541,7 @@ private fun BaseTile(
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
     editMode: Boolean = false,
+    onDoubleTap: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -445,7 +551,11 @@ private fun BaseTile(
     val clickModifier = if (editMode) {
         Modifier.clickable(onClick = onTap)
     } else {
-        Modifier.combinedClickable(onClick = onTap, onLongClick = onLongPress)
+        Modifier.combinedClickable(
+            onClick = onTap,
+            onLongClick = onLongPress,
+            onDoubleClick = onDoubleTap
+        )
     }
     Column(
         modifier = modifier
@@ -472,26 +582,44 @@ fun CanvasAddItemTile(
         onLongPress = onTap,
         modifier = modifier
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(OledCardColor.copy(alpha = 0.6f))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "+",
-                color = ThemePrimaryColor,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val showLabel = maxHeight <= SmallTileLabelThreshold
+            val labelReserve = if (showLabel) LabelReserveHeight else 0.dp
+            val boxSide = minOf(maxWidth, maxHeight - labelReserve).coerceAtLeast(0.dp)
+            val plusFontSize = (boxSide.value * 0.5f).coerceIn(20f, 96f).sp
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(boxSide)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(OledCardColor.copy(alpha = 0.6f))
+                        .border(
+                            2.dp,
+                            ThemePrimaryColor.copy(alpha = 0.4f),
+                            RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "+",
+                        color = ThemePrimaryColor,
+                        fontSize = plusFontSize,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                if (showLabel) {
+                    Spacer(Modifier.height(4.dp))
+                    TileLabel(
+                        stringResource(R.string.canvas_add_item_tile),
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(4.dp))
-        TileLabel(
-            stringResource(R.string.canvas_add_item_tile),
-            color = Color.White.copy(alpha = 0.6f)
-        )
     }
 }
 

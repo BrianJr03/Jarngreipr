@@ -32,12 +32,14 @@ fun CanvasGrid(
     onAddLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
-    scrollState: ScrollState = rememberScrollState()
+    scrollState: ScrollState = rememberScrollState(),
+    onDoubleTap: (ResolvedCanvasItem) -> Unit = {}
 ) {
     CanvasGridLayout(
         state = state,
         onTap = onTap,
         onLongPress = onLongPress,
+        onDoubleTap = onDoubleTap,
         onResizeWidget = onResizeWidget,
         onCommitLayout = onCommitLayout,
         onRequestResizeDialog = onRequestResizeDialog,
