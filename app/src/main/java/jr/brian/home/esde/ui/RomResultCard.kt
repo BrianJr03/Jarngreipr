@@ -1,13 +1,12 @@
 package jr.brian.home.esde.ui
 
-import android.view.HapticFeedbackConstants
-import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -30,19 +29,13 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -60,6 +53,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.ui.frontend.FrontendTokens
+import jr.brian.home.esde.ui.frontend.emitFocusHapticIfReady
+import jr.brian.home.esde.ui.frontend.focusFloatPhase
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFlip
@@ -70,8 +66,6 @@ import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.themePrimaryColor
 import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
-import kotlin.math.cos
-import kotlin.math.sin
 import android.view.KeyEvent as AndroidKeyEvent
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -155,10 +149,22 @@ internal fun RomResultCard(
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
     val primary = themePrimaryColor()
+    val focusProgress by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = FrontendTokens.Motion.FocusMs,
+            easing = FrontendTokens.Motion.Easing
+        ),
+        label = "romCardFocus"
+    )
+    val floatPhase = focusFloatPhase(isFocused)
 
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
+            .graphicsLayer {
+                translationY = (-FOCUS_LIFT.toPx() + FrontendTokens.FloatAmplitude.toPx() * floatPhase) * focusProgress
+            }
             .scale(scale)
             .then(
                 if (!hasImage && isFocused) Modifier.animatedGradientBorder(
@@ -169,10 +175,11 @@ internal fun RomResultCard(
                 else Modifier
             )
             .clip(shape)
+            .then(if (!hasImage) Modifier.background(Color.DarkGray) else Modifier)
             .onFocusChanged {
                 isFocused = it.isFocused
                 if (it.isFocused) {
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    view.emitFocusHapticIfReady()
                     onFocused()
                 }
             }
@@ -194,6 +201,8 @@ internal fun RomResultCard(
                 }
             }
             .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
@@ -224,8 +233,7 @@ internal fun RomResultCard(
                             .then(if (shouldSpin) Modifier.rotate(discRotation) else Modifier)
                             .then(if (shouldFlip) Modifier.graphicsLayer {
                                 rotationY = flipRotation
-                            } else Modifier)
-                            .shapeFollowingFocusOutline(isFocused, primary),
+                            } else Modifier),
                         contentScale = ContentScale.Fit
                     )
                 } else if (appIcon != null) {
@@ -247,7 +255,7 @@ internal fun RomResultCard(
                 } else {
                     AnimatedGameTitle(
                         name = game.name,
-                        fontSize = 10.sp,
+                        fontSize = 14.sp,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(horizontal = 8.dp),
@@ -292,36 +300,4 @@ internal fun RomResultCard(
     }
 }
 
-private val FocusOutlineThickness = 2.dp
-private const val FocusOutlineCopies = 12
-
-@Composable
-private fun Modifier.shapeFollowingFocusOutline(
-    isFocused: Boolean,
-    focusColor: Color
-): Modifier {
-    val layer = rememberGraphicsLayer()
-    val alpha by animateFloatAsState(
-        targetValue = if (isFocused) 1f else 0f,
-        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
-        label = "focusOutlineAlpha"
-    )
-    return drawWithContent {
-        layer.record { this@drawWithContent.drawContent() }
-        if (alpha > 0f) {
-            layer.colorFilter = ColorFilter.tint(focusColor, BlendMode.SrcIn)
-            layer.alpha = alpha
-            val radius = FocusOutlineThickness.toPx()
-            val step = (2.0 * Math.PI / FocusOutlineCopies).toFloat()
-            for (i in 0 until FocusOutlineCopies) {
-                val theta = i * step
-                translate(left = cos(theta) * radius, top = sin(theta) * radius) {
-                    drawLayer(layer)
-                }
-            }
-            layer.colorFilter = null
-            layer.alpha = 1f
-        }
-        drawLayer(layer)
-    }
-}
+private val FOCUS_LIFT = FrontendTokens.Spacing.M

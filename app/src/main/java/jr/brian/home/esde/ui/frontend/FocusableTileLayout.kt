@@ -1,6 +1,10 @@
 package jr.brian.home.esde.ui.frontend
 
+import android.os.SystemClock
 import android.view.KeyEvent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,26 +22,36 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.home.esde.model.FrontendLayout
+import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val DEFAULT_ROW_TILE_WIDTH = 240.dp
 private const val FOCUS_RESET_RETRIES = 3
 private const val FOCUS_RESET_RETRY_DELAY_MS = 80L
+
+private const val ROW_FALLOFF_STEP = 0.15f
+private const val ROW_FALLOFF_FLOOR = 0.6f
+
+private const val RAPID_SCROLL_WINDOW_MS = 100L
 
 /**
  * Row mode renders this many virtual slots so focus can advance indefinitely in
@@ -219,15 +233,24 @@ private fun <T> RowLayout(
     val scope = rememberCoroutineScope()
     val headerOffset = if (header != null) 1 else 0
 
+    var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
+    var isRapidScroll by remember { mutableStateOf(false) }
+
     // Centre the focused tile horizontally on every focus change. Also covers the seed:
     // initialVirtualIndex change triggers this once on first composition.
     LaunchedEffect(focusedIndex) {
+        val now = SystemClock.uptimeMillis()
+        isRapidScroll = lastFocusChangeMs != 0L &&
+                (now - lastFocusChangeMs) < RAPID_SCROLL_WINDOW_MS
+        lastFocusChangeMs = now
         focusRequesters[focusedIndex]?.requestFocus()
-        centerOnFocused(rowState, focusedIndex + headerOffset)
+        centerOnFocused(rowState, focusedIndex + headerOffset, snap = isRapidScroll)
     }
     LaunchedEffect(focusResetKey) {
         if (realCount > 0) {
             focusedIndex = initialVirtualIndex
+            lastFocusChangeMs = 0L
+            isRapidScroll = false
             repeat(FOCUS_RESET_RETRIES) {
                 delay(FOCUS_RESET_RETRY_DELAY_MS)
                 runCatching { focusRequesters[initialVirtualIndex]?.requestFocus() }
@@ -263,7 +286,28 @@ private fun <T> RowLayout(
                 key = { virtualIndex -> virtualIndex + headerOffset }
             ) { virtualIndex ->
                 val item = items[virtualIndex % realCount]
-                Box(modifier = Modifier.width(rowItemWidth)) {
+                val targetFalloff by remember(virtualIndex) {
+                    derivedStateOf {
+                        val distance = abs(virtualIndex - focusedIndex)
+                        (1f - ROW_FALLOFF_STEP * distance).coerceAtLeast(ROW_FALLOFF_FLOOR)
+                    }
+                }
+                val falloff by animateFloatAsState(
+                    targetValue = targetFalloff,
+                    animationSpec = if (isRapidScroll) snap() else tween(
+                        durationMillis = FrontendTokens.Motion.FocusMs,
+                        easing = FrontendTokens.Motion.Easing
+                    ),
+                    label = "rowFalloff"
+                )
+                Box(
+                    modifier = Modifier
+                        .width(rowItemWidth)
+                        .graphicsLayer {
+                            scaleX = falloff
+                            scaleY = falloff
+                        }
+                ) {
                     FocusableTileItem(
                         index = virtualIndex,
                         item = item,
@@ -281,24 +325,30 @@ private fun <T> RowLayout(
 
 private suspend fun centerOnFocused(
     rowState: androidx.compose.foundation.lazy.LazyListState,
-    layoutIndex: Int
+    layoutIndex: Int,
+    snap: Boolean = false
 ) {
     val info = rowState.layoutInfo
     val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2
     val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
-    if (target != null) {
-        val itemCenter = target.offset + target.size / 2
-        rowState.animateScrollBy((itemCenter - viewportCenter).toFloat())
+    if (target == null) {
+        rowState.scrollToItem(layoutIndex)
         return
     }
-    // Not laid out yet (initial composition, big restoration jump): bring it in,
-    // re-measure, then centre.
-    rowState.scrollToItem(layoutIndex)
-    val after = rowState.layoutInfo
-    val afterCenter = (after.viewportStartOffset + after.viewportEndOffset) / 2
-    after.visibleItemsInfo.firstOrNull { it.index == layoutIndex }?.let {
-        rowState.animateScrollBy(((it.offset + it.size / 2) - afterCenter).toFloat())
+    val itemCenter = target.offset + target.size / 2
+    val delta = (itemCenter - viewportCenter).toFloat()
+    if (abs(delta) < 1f) return
+    if (snap) {
+        rowState.scrollToItem(layoutIndex)
+        return
     }
+    rowState.animateScrollBy(
+        value = delta,
+        animationSpec = tween(
+            durationMillis = FrontendTokens.Motion.FocusMs,
+            easing = FrontendTokens.Motion.Easing
+        )
+    )
 }
 
 @Composable
@@ -316,16 +366,16 @@ private fun <T> FocusableTileItem(
         focusRequesters[index] = focusRequester
         onDispose { focusRequesters.remove(index) }
     }
-    // Re-claim focus when this item composes (or recomposes after scrolling into view)
-    // while it is the currently-focused index. Catches the case where the focused
-    // virtual slot lives off-screen at the time focusedIndex changed and the top-level
-    // LaunchedEffect couldn't grab the requester yet.
-    LaunchedEffect(index, focusedIndex) {
-        if (index == focusedIndex) {
+    val isFocused = focusedIndex == index
+    // Re-claim focus when this item gains focus state (covers the case where the focused
+    // virtual slot lived off-screen at the time focusedIndex changed and the top-level
+    // LaunchedEffect couldn't grab the requester yet). Keyed on isFocused so it only
+    // re-launches for the 2 items whose focus state actually flipped.
+    LaunchedEffect(index, isFocused) {
+        if (isFocused) {
             runCatching { focusRequester.requestFocus() }
         }
     }
-    val isFocused = focusedIndex == index
     val onFocused: () -> Unit = {
         if (focusedIndex != index) onFocusedIndexChange(index)
         onItemFocused(item)

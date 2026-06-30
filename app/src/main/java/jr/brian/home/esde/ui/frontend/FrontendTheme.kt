@@ -1,8 +1,18 @@
 package jr.brian.home.esde.ui.frontend
 
+import android.os.SystemClock
+import android.view.HapticFeedbackConstants
+import android.view.View
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,10 +55,13 @@ object FrontendTokens {
         const val ScrollMs = 320
         const val RouteMs = 360
         const val EntranceStaggerStepMs = 40
+        const val FloatPeriodMs = 1800
 
         const val FocusSpringDamping = Spring.DampingRatioNoBouncy
         const val FocusSpringStiffness = Spring.StiffnessMedium
     }
+
+    val FloatAmplitude = 3.dp
 
     object Type {
         val TileTitle = TextStyle(
@@ -69,5 +82,34 @@ object FrontendTokens {
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
         )
+    }
+}
+
+@Composable
+internal fun focusFloatPhase(active: Boolean): Float {
+    if (!active) return 0f
+    val phase by rememberInfiniteTransition(label = "focusFloat").animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = FrontendTokens.Motion.FloatPeriodMs,
+                easing = FrontendTokens.Motion.Easing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "focusFloatPhase"
+    )
+    return phase
+}
+
+private var lastFocusHapticMs = 0L
+private const val FOCUS_HAPTIC_MIN_INTERVAL_MS = 150L
+
+internal fun View.emitFocusHapticIfReady() {
+    val now = SystemClock.uptimeMillis()
+    if (now - lastFocusHapticMs >= FOCUS_HAPTIC_MIN_INTERVAL_MS) {
+        lastFocusHapticMs = now
+        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
     }
 }
