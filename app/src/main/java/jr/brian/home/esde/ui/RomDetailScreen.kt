@@ -146,7 +146,7 @@ internal fun RomDetailScreen(
     }
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        runCatching { focusRequester.requestFocus() }
     }
 
     BackHandler(onBack = onDismiss)
@@ -155,7 +155,7 @@ internal fun RomDetailScreen(
         color = OledBackgroundColor,
         modifier = Modifier
             .fillMaxSize()
-            .focusRequester(focusRequester)
+            .then(if (isHidden) Modifier.focusRequester(focusRequester) else Modifier)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
@@ -271,7 +271,10 @@ internal fun RomDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isHidden) {
-                    TextButton(onClick = onChangeCore) {
+                    TextButton(
+                        onClick = onChangeCore,
+                        modifier = Modifier.focusRequester(focusRequester)
+                    ) {
                         Text(
                             stringResource(R.string.rom_detail_change_core),
                             color = ThemeAccentColor

@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jr.brian.home.esde.model.FrontendLayout
@@ -143,6 +144,9 @@ private fun <T> GridLayout(
     var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
     var isRapidScroll by remember { mutableStateOf(false) }
 
+    val density = LocalDensity.current
+    val verticalSpacingPx = with(density) { itemSpacing.roundToPx() }
+
     LaunchedEffect(focusedIndex) {
         val now = SystemClock.uptimeMillis()
         isRapidScroll = lastFocusChangeMs != 0L &&
@@ -150,18 +154,37 @@ private fun <T> GridLayout(
         lastFocusChangeMs = now
         focusRequesters[focusedIndex]?.requestFocus()
 
+        val layoutIndex = focusedIndex + headerOffset
         val info = gridState.layoutInfo
-        val target = info.visibleItemsInfo.firstOrNull { it.index == focusedIndex + headerOffset }
-        if (isRapidScroll || target == null) {
-            gridState.scrollToItem(focusedIndex + headerOffset)
-        } else {
-            val start = info.viewportStartOffset + info.beforeContentPadding
-            val end = info.viewportEndOffset - info.afterContentPadding
-            when {
+        val start = info.viewportStartOffset + info.beforeContentPadding
+        val end = info.viewportEndOffset - info.afterContentPadding
+        val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
+
+        when {
+            isRapidScroll -> gridState.scrollToItem(layoutIndex)
+            target != null -> when {
                 target.offset.y < start ->
                     gridState.animateScrollBy(-(start - target.offset.y).toFloat())
                 target.offset.y + target.size.height > end ->
                     gridState.animateScrollBy((target.offset.y + target.size.height - end).toFloat())
+            }
+            else -> {
+                val sample = info.visibleItemsInfo.firstOrNull()
+                if (sample != null && columns > 0) {
+                    val rowPitch = sample.size.height + verticalSpacingPx
+                    val firstRow = (sample.index - headerOffset) / columns
+                    val targetRow = (layoutIndex - headerOffset) / columns
+                    val estTop = sample.offset.y + (targetRow - firstRow) * rowPitch
+                    val delta = when {
+                        estTop < start -> (estTop - start).toFloat()
+                        estTop + sample.size.height > end ->
+                            (estTop + sample.size.height - end).toFloat()
+                        else -> 0f
+                    }
+                    if (delta != 0f) gridState.animateScrollBy(delta)
+                } else {
+                    gridState.animateScrollToItem(layoutIndex)
+                }
             }
         }
     }
