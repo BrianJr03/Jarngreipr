@@ -121,6 +121,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
@@ -483,7 +485,9 @@ class ESDEPreferencesManager(context: Context) {
                 ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
                 ?: PlatformImageFolderType.Default,
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
-            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true)
+            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true),
+            frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
+            secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true)
         )
     }
 
@@ -987,6 +991,16 @@ class ESDEPreferencesManager(context: Context) {
     fun setRomSearchHintsKbVisible(visible: Boolean) {
         _state.value = _state.value.copy(romSearchHintsKbVisible = visible)
         prefs.edit { putBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, visible) }
+    }
+
+    fun setFrontendEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(frontendEnabled = enabled)
+        prefs.edit { putBoolean(KEY_FRONTEND_ENABLED, enabled) }
+    }
+
+    fun setSecondaryMediaEnabled(enabled: Boolean) {
+        _state.value = _state.value.copy(secondaryMediaEnabled = enabled)
+        prefs.edit { putBoolean(KEY_SECONDARY_MEDIA_ENABLED, enabled) }
     }
 
     fun disableFocusAnimation(gameKey: String) {

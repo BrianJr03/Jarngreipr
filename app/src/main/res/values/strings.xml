@@ -34,6 +34,15 @@
     <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
     <string name="rom_search_experimental_got_it">Got it</string>
+    <string name="frontend_no_systems">No systems found</string>
+    <string name="frontend_open_search">Search</string>
+    <string name="frontend_open_search_hint">Search  •  Y</string>
+    <string name="frontend_enable_title">Enable frontend</string>
+    <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
+    <string name="frontend_launch_cd">Launch frontend</string>
+    <string name="canvas_launch_frontend_option">Launch Frontend</string>
+    <string name="secondary_media_title">Also read RetroHrai! artwork</string>
+    <string name="secondary_media_description">When ES-DE has no art for a game or system, fall back to /storage/emulated/0/RetroHrai!/media. ES-DE art still wins when both exist. Changes apply on the next library reload.</string>
     <string name="rom_emulator_choose_app">Choose App\u2026</string>
     <string name="rom_emulator_choose_app_title">Choose an App</string>
     <string name="faq_section_rom_search">ROM Search</string>

@@ -107,4 +107,6 @@ object ESDEPreferencesConstants {
     const val KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE = "rom_search_platform_images_folder_type"
     const val KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP = "rom_search_detail_image_height_dp"
     const val KEY_ROM_SEARCH_HINTS_KB_VISIBLE = "rom_search_hints_kb_visible"
+    const val KEY_FRONTEND_ENABLED = "frontend_enabled"
+    const val KEY_SECONDARY_MEDIA_ENABLED = "secondary_media_enabled"
 }

@@ -377,6 +377,10 @@ private fun MarqueeDisplay(game: GameInfo?) {
 private fun launchResultsActivity(context: Context) {
     val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        putExtra(
+            RomSearchResultsActivity.EXTRA_START_ROUTE,
+            RomSearchResultsActivity.START_ROUTE_SEARCH
+        )
     }
     val options = ActivityOptions.makeBasic()
     options.launchDisplayId = PRIMARY_DISPLAY_ID

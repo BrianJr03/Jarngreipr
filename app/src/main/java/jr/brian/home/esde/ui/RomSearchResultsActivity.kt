@@ -20,11 +20,13 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.ui.frontend.FrontendScreen
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.viewmodels.MainViewModel
@@ -47,6 +49,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
+    private val romSearchViewModel: RomSearchViewModel by viewModels()
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
@@ -120,6 +123,8 @@ class RomSearchResultsActivity : ComponentActivity() {
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
         romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
+        romSearchStateHolder.currentRoute.value = startRouteFromIntent()
+        romSearchViewModel.loadGames()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -165,5 +170,17 @@ class RomSearchResultsActivity : ComponentActivity() {
     private fun signalGameLaunch() {
         gameLaunched = true
         managers.feature.jinglesManager.onGameLaunched()
+    }
+
+    private fun startRouteFromIntent(): FrontendRoute {
+        val extra = intent?.getStringExtra(EXTRA_START_ROUTE)
+        val frontendEnabled = esdePrefs.state.value.frontendEnabled
+        return if (extra == START_ROUTE_SEARCH || !frontendEnabled) FrontendRoute.Search
+        else FrontendRoute.Systems
+    }
+
+    companion object {
+        const val EXTRA_START_ROUTE = "jr.brian.home.esde.EXTRA_START_ROUTE"
+        const val START_ROUTE_SEARCH = "search"
     }
 }

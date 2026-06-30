@@ -24,5 +24,5 @@ class RomSearchStateHolder @Inject constructor() {
     val pendingRomForPin = MutableStateFlow<Pair<Int, GameInfo>?>(null)
     val pendingRomToLaunch = MutableStateFlow<PinnedRomInfo?>(null)
 
-    val currentRoute = MutableStateFlow<FrontendRoute>(FrontendRoute.Search)
+    val currentRoute = MutableStateFlow<FrontendRoute>(FrontendRoute.Systems)
 }
