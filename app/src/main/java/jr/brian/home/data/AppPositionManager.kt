@@ -157,6 +157,114 @@ class AppPositionManager(context: Context) {
         }
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldPositions = _positionsByPage.toMap()
+        val oldFreeMode = _isFreeModeByPage.value
+        val oldDragLocked = _isDragLockedByPage.value
+        val oldScrollDisabled = _isScrollDisabledByPage.value
+        val oldBottomFling = _isBottomFlingDisabledByPage.value
+
+        val newPositions = mutableMapOf<Int, SnapshotStateMap<String, AppPosition>>()
+        val newFreeMode = mutableMapOf<Int, Boolean>()
+        val newDragLocked = mutableMapOf<Int, Boolean>()
+        val newScrollDisabled = mutableMapOf<Int, Boolean>()
+        val newBottomFling = mutableMapOf<Int, Boolean>()
+
+        oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+            oldPositions[oldIndex]?.let { newPositions[newIndex] = it }
+            oldFreeMode[oldIndex]?.let { newFreeMode[newIndex] = it }
+            oldDragLocked[oldIndex]?.let { newDragLocked[newIndex] = it }
+            oldScrollDisabled[oldIndex]?.let { newScrollDisabled[newIndex] = it }
+            oldBottomFling[oldIndex]?.let { newBottomFling[newIndex] = it }
+        }
+
+        replacePageState(
+            oldPageIndices = oldPositions.keys + oldFreeMode.keys + oldDragLocked.keys +
+                oldScrollDisabled.keys + oldBottomFling.keys,
+            newPositions = newPositions,
+            newFreeMode = newFreeMode,
+            newDragLocked = newDragLocked,
+            newScrollDisabled = newScrollDisabled,
+            newBottomFling = newBottomFling
+        )
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldPositions = _positionsByPage.toMap()
+        val oldFreeMode = _isFreeModeByPage.value
+        val oldDragLocked = _isDragLockedByPage.value
+        val oldScrollDisabled = _isScrollDisabledByPage.value
+        val oldBottomFling = _isBottomFlingDisabledByPage.value
+
+        val newPositions = mutableMapOf<Int, SnapshotStateMap<String, AppPosition>>()
+        val newFreeMode = mutableMapOf<Int, Boolean>()
+        val newDragLocked = mutableMapOf<Int, Boolean>()
+        val newScrollDisabled = mutableMapOf<Int, Boolean>()
+        val newBottomFling = mutableMapOf<Int, Boolean>()
+
+        fun <V> shiftInto(src: Map<Int, V>, dst: MutableMap<Int, V>) {
+            src.forEach { (idx, v) ->
+                when {
+                    idx < pageIndex -> dst[idx] = v
+                    idx > pageIndex -> dst[idx - 1] = v
+                }
+            }
+        }
+
+        shiftInto(oldPositions, newPositions)
+        shiftInto(oldFreeMode, newFreeMode)
+        shiftInto(oldDragLocked, newDragLocked)
+        shiftInto(oldScrollDisabled, newScrollDisabled)
+        shiftInto(oldBottomFling, newBottomFling)
+
+        replacePageState(
+            oldPageIndices = oldPositions.keys + oldFreeMode.keys + oldDragLocked.keys +
+                oldScrollDisabled.keys + oldBottomFling.keys,
+            newPositions = newPositions,
+            newFreeMode = newFreeMode,
+            newDragLocked = newDragLocked,
+            newScrollDisabled = newScrollDisabled,
+            newBottomFling = newBottomFling
+        )
+    }
+
+    private fun replacePageState(
+        oldPageIndices: Set<Int>,
+        newPositions: Map<Int, SnapshotStateMap<String, AppPosition>>,
+        newFreeMode: Map<Int, Boolean>,
+        newDragLocked: Map<Int, Boolean>,
+        newScrollDisabled: Map<Int, Boolean>,
+        newBottomFling: Map<Int, Boolean>
+    ) {
+        _positionsByPage.clear()
+        newPositions.forEach { (idx, positions) -> _positionsByPage[idx] = positions }
+        _isFreeModeByPage.value = newFreeMode
+        _isDragLockedByPage.value = newDragLocked
+        _isScrollDisabledByPage.value = newScrollDisabled
+        _isBottomFlingDisabledByPage.value = newBottomFling
+
+        prefs.edit().apply {
+            oldPageIndices.forEach { idx ->
+                remove("${KEY_POSITIONS}_$idx")
+                remove("${KEY_FREE_MODE}_$idx")
+                remove("${KEY_DRAG_LOCKED}_$idx")
+                remove("${KEY_SCROLL_DISABLED}_$idx")
+                remove("${KEY_BOTTOM_FLING_DISABLED}_$idx")
+            }
+            newPositions.forEach { (idx, positions) ->
+                val positionsJson = positions.values.joinToString(SEPARATOR_APPS) { p ->
+                    "${p.packageName}$SEPARATOR_COORDS${p.x}$SEPARATOR_COORDS${p.y}$SEPARATOR_COORDS${p.iconSize}"
+                }
+                putString("${KEY_POSITIONS}_$idx", positionsJson)
+            }
+            newFreeMode.forEach { (idx, v) -> putBoolean("${KEY_FREE_MODE}_$idx", v) }
+            newDragLocked.forEach { (idx, v) -> putBoolean("${KEY_DRAG_LOCKED}_$idx", v) }
+            newScrollDisabled.forEach { (idx, v) -> putBoolean("${KEY_SCROLL_DISABLED}_$idx", v) }
+            newBottomFling.forEach { (idx, v) -> putBoolean("${KEY_BOTTOM_FLING_DISABLED}_$idx", v) }
+            apply()
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "app_position_prefs"
         private const val KEY_POSITIONS = "positions"

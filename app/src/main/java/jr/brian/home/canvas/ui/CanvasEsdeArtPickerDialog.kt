@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -50,11 +53,13 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 @Composable
 fun CanvasEsdeArtChooserDialog(
     initialType: GameImageType,
+    initialContentScale: EsdeContentScale,
     titleRes: Int,
-    onConfirm: (GameImageType) -> Unit,
+    onConfirm: (GameImageType, EsdeContentScale) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selected by remember(initialType) { mutableStateOf(initialType) }
+    var selectedScale by remember(initialContentScale) { mutableStateOf(initialContentScale) }
 
     DimmedDialog(
         onDismissRequest = onDismiss,
@@ -91,6 +96,11 @@ fun CanvasEsdeArtChooserDialog(
                     onTypeSelected = { selected = it }
                 )
 
+                EsdeContentScaleSelector(
+                    selected = selectedScale,
+                    onSelected = { selectedScale = it }
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
@@ -106,13 +116,87 @@ fun CanvasEsdeArtChooserDialog(
                         isPrimary = true,
                         enabled = selected.folderName != null,
                         onClick = {
-                            onConfirm(selected)
+                            onConfirm(selected, selectedScale)
                             onDismiss()
                         }
                     )
                 }
             }
         }
+    }
+}
+
+/**
+ * Two-chip Fit/Crop toggle, styled to match `GameImageTypeChip` so the chooser
+ * dialog reads as one coherent row of options.
+ */
+@Composable
+private fun EsdeContentScaleSelector(
+    selected: EsdeContentScale,
+    onSelected: (EsdeContentScale) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.canvas_esde_picker_scale_label),
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            EsdeContentScale.entries.forEach { scale ->
+                EsdeContentScaleChip(
+                    label = stringResource(
+                        when (scale) {
+                            EsdeContentScale.FIT -> R.string.canvas_esde_picker_scale_fit
+                            EsdeContentScale.CROP -> R.string.canvas_esde_picker_scale_crop
+                        }
+                    ),
+                    isSelected = scale == selected,
+                    onClick = { onSelected(scale) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EsdeContentScaleChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier
+            .widthIn(min = 80.dp)
+            .height(40.dp)
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                color = when {
+                    isSelected -> ThemePrimaryColor.copy(alpha = 0.7f)
+                    isFocused -> ThemePrimaryColor.copy(alpha = 0.3f)
+                    else -> Color.White.copy(alpha = 0.1f)
+                },
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = if (isSelected || isFocused) 1.dp else 0.dp,
+                color = if (isSelected) ThemePrimaryColor else Color.White.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }
 

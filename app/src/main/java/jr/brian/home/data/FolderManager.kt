@@ -303,6 +303,57 @@ class FolderManager @Inject constructor(
         }
     }
 
+    suspend fun reorderPages(
+        oldIndicesInNewOrder: Map<Int, Int>,
+        tabType: String = TAB_TYPE_APPS
+    ) {
+        context.folderDataStore.edit { preferences ->
+            val oldEntries = mutableMapOf<Int, String>()
+            preferences.asMap().forEach { (prefKey, value) ->
+                val pageIndex = extractPageIndex(prefKey.name, tabType) ?: return@forEach
+                (value as? String)?.let { oldEntries[pageIndex] = it }
+            }
+            oldEntries.keys.forEach { idx ->
+                preferences.remove(stringPreferencesKey(getStorageKey(idx, tabType)))
+            }
+            oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+                oldEntries[oldIndex]?.let { value ->
+                    preferences[stringPreferencesKey(getStorageKey(newIndex, tabType))] = value
+                }
+            }
+        }
+    }
+
+    suspend fun removePage(
+        pageIndex: Int,
+        tabType: String = TAB_TYPE_APPS
+    ) {
+        context.folderDataStore.edit { preferences ->
+            val oldEntries = mutableMapOf<Int, String>()
+            preferences.asMap().forEach { (prefKey, value) ->
+                val idx = extractPageIndex(prefKey.name, tabType) ?: return@forEach
+                (value as? String)?.let { oldEntries[idx] = it }
+            }
+            oldEntries.keys.forEach { idx ->
+                preferences.remove(stringPreferencesKey(getStorageKey(idx, tabType)))
+            }
+            oldEntries.forEach { (idx, value) ->
+                val newIdx = when {
+                    idx < pageIndex -> idx
+                    idx > pageIndex -> idx - 1
+                    else -> return@forEach
+                }
+                preferences[stringPreferencesKey(getStorageKey(newIdx, tabType))] = value
+            }
+        }
+    }
+
+    private fun extractPageIndex(keyName: String, tabType: String): Int? {
+        val prefix = if (tabType == TAB_TYPE_APPS) "folders_page_" else "folders_${tabType}_page_"
+        if (!keyName.startsWith(prefix)) return null
+        return keyName.removePrefix(prefix).toIntOrNull()
+    }
+
     @Serializable
     private data class FolderData(
         val id: String,

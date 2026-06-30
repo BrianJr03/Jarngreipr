@@ -40,8 +40,17 @@ sealed class CanvasItem {
     @SerialName("rom")
     data class RomItem(
         override val id: String,
-        val romKey: String
-    ) : CanvasItem()
+        val romKey: String,
+        val contentScale: EsdeContentScale? = null
+    ) : CanvasItem() {
+        /**
+         * Fit/Crop choice for the ROM tile's artwork. Defaults to [EsdeContentScale.CROP]
+         * when unset — box art and screenshots fill the tile under crop, which is what
+         * the canvas rendered before this field existed.
+         */
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: EsdeContentScale.CROP
+    }
 
     @Serializable
     @SerialName("widget")
@@ -75,6 +84,7 @@ sealed class CanvasItem {
     data class EsdeArtItem(
         override val id: String,
         val imageType: GameImageType? = null,
+        val contentScale: EsdeContentScale? = null,
         @Deprecated("Use imageType. Kept for one-release migration of older saves.")
         val artType: EsdeArtType? = null
     ) : CanvasItem() {
@@ -90,6 +100,19 @@ sealed class CanvasItem {
                 EsdeArtType.BACKGROUND -> GameImageType.Fanart
                 null -> GameImageType.Fanart
             }
+
+        /**
+         * The fit/crop choice to render with. When unset (legacy items, or new
+         * items written before the user picked one), defaults to the rule that
+         * matches the pre-toggle hardcoded behavior: marquee logos sit on
+         * transparent space and read best with Fit; every other art type fills
+         * the tile under Crop.
+         */
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: when (resolvedImageType) {
+                GameImageType.Marquee -> EsdeContentScale.FIT
+                else -> EsdeContentScale.CROP
+            }
     }
 }
 
@@ -97,6 +120,12 @@ sealed class CanvasItem {
 enum class EsdeArtType {
     LOGO,
     BACKGROUND
+}
+
+@Serializable
+enum class EsdeContentScale {
+    FIT,
+    CROP
 }
 
 /**

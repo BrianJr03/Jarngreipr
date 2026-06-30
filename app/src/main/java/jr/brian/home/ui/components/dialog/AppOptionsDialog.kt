@@ -42,7 +42,8 @@ fun AppOptionsDialog(
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     isInDock: Boolean = false,
-    onRemoveFromDock: () -> Unit = {}
+    onRemoveFromDock: () -> Unit = {},
+    onEditCanvas: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -97,7 +98,8 @@ fun AppOptionsDialog(
                 onCustomIconClick = onCustomIconClick,
                 onRenameClick = onRenameClick,
                 isInDock = isInDock,
-                onRemoveFromDock = onRemoveFromDock
+                onRemoveFromDock = onRemoveFromDock,
+                onEditCanvas = onEditCanvas
             )
         },
         confirmButton = {}

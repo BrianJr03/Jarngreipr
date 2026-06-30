@@ -1,5 +1,8 @@
 package jr.brian.home.canvas.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,10 +40,14 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
+import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
+import jr.brian.home.ui.components.dialog.WallpaperOptionsSection
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.util.MediaPickerLauncher
 
 /**
  * Inner controls for editing a canvas page (edit-mode toggle, orientation,
@@ -53,48 +61,98 @@ fun ColumnScope.EditCanvasContent(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
-    onTidy: () -> Unit
+    onTidy: () -> Unit,
+    onDismiss: () -> Unit = {}
 ) {
     var orientation by remember(layout.activeOrientation) { mutableStateOf(layout.activeOrientation) }
     var columns by remember(layout.verticalColumns) { mutableStateOf(layout.verticalColumns) }
     var rows by remember(layout.horizontalRows) { mutableStateOf(layout.horizontalRows) }
     var editMode by remember(layout.editMode) { mutableStateOf(layout.editMode) }
 
-    EditModeToggle(
-        enabled = editMode,
-        onToggle = {
-            editMode = it
-            onEditModeChanged(it)
+    var isWallpaperExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val wallpaperManager = LocalWallpaperManager.current
+    val setupPreferences = remember { SetupPreferences(context) }
+    val mediaPickerLauncher = MediaPickerLauncher(
+        onResult = {
+            isWallpaperExpanded = false
+            onDismiss()
         }
     )
 
-    OrientationToggle(
-        selected = orientation,
-        onSelected = {
-            orientation = it
-            onOrientationChanged(it)
-        }
-    )
+    AnimatedVisibility(
+        visible = !isWallpaperExpanded,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            WallpaperControl(onChangeClick = { isWallpaperExpanded = true })
 
-    AxisStepper(
-        label = stringResource(R.string.canvas_columns_label),
-        value = columns,
-        onValueChange = {
-            columns = it
-            onGridChanged(columns, rows)
-        }
-    )
+            EditModeToggle(
+                enabled = editMode,
+                onToggle = {
+                    editMode = it
+                    onEditModeChanged(it)
+                }
+            )
 
-    AxisStepper(
-        label = stringResource(R.string.canvas_rows_label),
-        value = rows,
-        onValueChange = {
-            rows = it
-            onGridChanged(columns, rows)
-        }
-    )
+            OrientationToggle(
+                selected = orientation,
+                onSelected = {
+                    orientation = it
+                    onOrientationChanged(it)
+                }
+            )
 
-    TidyControl(onTidy = onTidy)
+            AxisStepper(
+                label = stringResource(R.string.canvas_columns_label),
+                value = columns,
+                onValueChange = {
+                    columns = it
+                    onGridChanged(columns, rows)
+                }
+            )
+
+            AxisStepper(
+                label = stringResource(R.string.canvas_rows_label),
+                value = rows,
+                onValueChange = {
+                    rows = it
+                    onGridChanged(columns, rows)
+                }
+            )
+
+            TidyControl(onTidy = onTidy)
+        }
+    }
+
+    WallpaperOptionsSection(
+        isVisible = isWallpaperExpanded,
+        wallpaperManager = wallpaperManager,
+        setupPreferences = setupPreferences,
+        mediaPickerLauncher = mediaPickerLauncher,
+        onBack = { isWallpaperExpanded = false },
+        onDismiss = onDismiss,
+        onESDESetupClick = {}
+    )
+}
+
+@Composable
+private fun WallpaperControl(onChangeClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.canvas_wallpaper_label),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        OrientationChip(
+            label = stringResource(R.string.canvas_change_wallpaper),
+            isSelected = false,
+            onClick = onChangeClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable

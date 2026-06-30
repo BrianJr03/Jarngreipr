@@ -14,6 +14,7 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.CanvasUiState
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
@@ -50,27 +51,36 @@ class CanvasViewModel @Inject constructor(
      * render time and renders [imageType] for that game. Placement is
      * auto-computed into both arrangements via [canvasLayoutManager.addItem].
      */
-    fun addEsdeArtItem(imageType: GameImageType) {
+    fun addEsdeArtItem(imageType: GameImageType, contentScale: EsdeContentScale) {
         val pageIndex = boundPage() ?: return
         canvasLayoutManager.addItem(
             pageIndex = pageIndex,
             item = CanvasItem.EsdeArtItem(
                 id = "esde-${imageType.name.lowercase()}-${UUID.randomUUID()}",
-                imageType = imageType
+                imageType = imageType,
+                contentScale = contentScale
             )
         )
     }
 
     /**
-     * Change [imageType] on an existing ES-DE Display tile. Routed through
-     * [canvasLayoutManager.addItem] with the same id, which replaces the
-     * item in place and preserves its per-orientation placements.
+     * Replace an existing ES-DE Display tile's [imageType] and [contentScale]
+     * in place. Routed through [canvasLayoutManager.addItem] with the same id,
+     * which preserves the tile's per-orientation placements.
      */
-    fun updateEsdeArtItemImageType(id: String, imageType: GameImageType) {
+    fun updateEsdeArtItem(
+        id: String,
+        imageType: GameImageType,
+        contentScale: EsdeContentScale
+    ) {
         val pageIndex = boundPage() ?: return
         canvasLayoutManager.addItem(
             pageIndex = pageIndex,
-            item = CanvasItem.EsdeArtItem(id = id, imageType = imageType)
+            item = CanvasItem.EsdeArtItem(
+                id = id,
+                imageType = imageType,
+                contentScale = contentScale
+            )
         )
     }
 
@@ -107,6 +117,48 @@ class CanvasViewModel @Inject constructor(
      * Re-pin [rom] to the current canvas page (under [CanvasTabType.VALUE]) and add
      * a matching [CanvasItem.RomItem] to the layout if it isn't already there.
      */
+    /**
+     * Update the ROM's `displayMediaType` in [PinnedRomManager] under the canvas
+     * tab type. Re-renders the tile via [PinnedRomInfo.resolveDisplayPath]. The
+     * canvas tile placement isn't touched.
+     */
+    fun updateRomMediaType(rom: PinnedRomInfo, mediaType: String?) {
+        val pageIndex = boundPage() ?: return
+        pinnedRomManager.updatePinnedRom(
+            pageIndex = pageIndex,
+            updatedRom = rom.copy(displayMediaType = mediaType),
+            tabType = CanvasTabType.VALUE
+        )
+    }
+
+    /**
+     * Unpin [romKey] from the canvas page (so it stops appearing in the pinned-ROM
+     * list) and remove the matching [CanvasItem.RomItem] from the layout. The
+     * paired unpin + tile-remove is the "Remove" action on the canvas ROM dialog.
+     */
+    fun removeCanvasRom(item: CanvasItem.RomItem) {
+        val pageIndex = boundPage() ?: return
+        pinnedRomManager.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)
+        canvasLayoutManager.removeItem(pageIndex, item.id)
+    }
+
+    /**
+     * Replace an existing canvas ROM tile's [contentScale] in place, preserving
+     * its [CanvasItem.RomItem.id] and `romKey` so per-orientation placements
+     * survive. No-op if the item isn't on the current page or isn't a ROM.
+     */
+    fun updateRomContentScale(id: String, contentScale: EsdeContentScale) {
+        val pageIndex = boundPage() ?: return
+        val layout = canvasLayoutManager.getLayout(pageIndex)
+        val existing = layout.items
+            .filterIsInstance<CanvasItem.RomItem>()
+            .firstOrNull { it.id == id } ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = existing.copy(contentScale = contentScale)
+        )
+    }
+
     fun pinRomToCanvas(rom: PinnedRomInfo) {
         val pageIndex = boundPage() ?: return
         pinnedRomManager.addPinnedRom(pageIndex, rom, CanvasTabType.VALUE)

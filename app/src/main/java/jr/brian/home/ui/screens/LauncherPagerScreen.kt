@@ -47,9 +47,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import jr.brian.home.canvas.ui.UnifiedCanvasTab
 import jr.brian.home.data.FabPosition
-import jr.brian.home.data.HomeTabManager
-import jr.brian.home.data.PageCountManager
-import jr.brian.home.data.PageTypeManager
+import jr.brian.home.data.PageOrderCoordinator
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.allAnimationPresets
@@ -65,7 +63,7 @@ import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
-import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -106,7 +104,7 @@ fun LauncherPagerScreen(
     val gridSettingsManager = LocalGridSettingsManager.current
     val hapticFeedback = LocalHapticFeedback.current
     val pageTypeManager = LocalPageTypeManager.current
-    val pageCountManager = LocalPageCountManager.current
+    val pageOrderCoordinator = LocalPageOrderCoordinator.current
     val wallpaperManager = LocalWallpaperManager.current
     val currentWallpaper = wallpaperManager.currentWallpaper
     val appDrawerFabManager = LocalAppDrawerFabManager.current
@@ -333,9 +331,7 @@ fun LauncherPagerScreen(
                                             totalPages = totalPages,
                                             pagerPageIndex = pagerPageIndex,
                                             pagerState = pagerState,
-                                            pageTypeManager = pageTypeManager,
-                                            pageCountManager = pageCountManager,
-                                            homeTabManager = homeTabManager,
+                                            pageOrderCoordinator = pageOrderCoordinator,
                                             onDeleteWidgetPage = { widgetPageIndex ->
                                                 widgetViewModel.deletePage(widgetPageIndex)
                                             }
@@ -388,9 +384,7 @@ fun LauncherPagerScreen(
                                                 totalPages = totalPages,
                                                 pagerPageIndex = pagerPageIndex,
                                                 pagerState = pagerState,
-                                                pageTypeManager = pageTypeManager,
-                                                pageCountManager = pageCountManager,
-                                                homeTabManager = homeTabManager,
+                                                pageOrderCoordinator = pageOrderCoordinator,
                                                 onDeleteWidgetPage = { widgetPageIndex ->
                                                     widgetViewModel.deletePage(
                                                         widgetPageIndex
@@ -448,9 +442,7 @@ fun LauncherPagerScreen(
                                                 totalPages = totalPages,
                                                 pagerPageIndex = pagerPageIndex,
                                                 pagerState = pagerState,
-                                                pageTypeManager = pageTypeManager,
-                                                pageCountManager = pageCountManager,
-                                                homeTabManager = homeTabManager,
+                                                pageOrderCoordinator = pageOrderCoordinator,
                                                 onDeleteWidgetPage = { widgetPageIndex ->
                                                     widgetViewModel.deletePage(
                                                         widgetPageIndex
@@ -489,9 +481,7 @@ fun LauncherPagerScreen(
                                             totalPages = totalPages,
                                             pagerPageIndex = pagerPageIndex,
                                             pagerState = pagerState,
-                                            pageTypeManager = pageTypeManager,
-                                            pageCountManager = pageCountManager,
-                                            homeTabManager = homeTabManager,
+                                            pageOrderCoordinator = pageOrderCoordinator,
                                             onDeleteWidgetPage = { widgetPageIndex ->
                                                 widgetViewModel.deletePage(widgetPageIndex)
                                             }
@@ -617,31 +607,13 @@ private suspend fun deleteTab(
     totalPages: Int,
     pagerPageIndex: Int,
     pagerState: PagerState,
-    pageTypeManager: PageTypeManager,
-    pageCountManager: PageCountManager,
-    homeTabManager: HomeTabManager,
-    onDeleteWidgetPage: (Int) -> Unit
+    pageOrderCoordinator: PageOrderCoordinator,
+    onDeleteWidgetPage: suspend (Int) -> Unit
 ) {
-    val pageTypes = pageTypeManager.pageTypes.value
-    val pageType = pageTypes.getOrNull(pagerPageIndex)
-    val currentHomeTabIndex = homeTabManager.homeTabIndex.value
-
-    if (pageType != PageType.APPS_TAB) {
-        val widgetPageIndex = getAppAndWidgetTabIndex(
-            pagerPageIndex,
-            pageTypes
-        )
-        onDeleteWidgetPage(widgetPageIndex)
-    }
-
-    pageTypeManager.removePage(pagerPageIndex)
-    pageCountManager.removePage()
-
-    if (pagerPageIndex == currentHomeTabIndex) {
-        homeTabManager.setHomeTabIndex(0)
-    } else if (pagerPageIndex < currentHomeTabIndex) {
-        homeTabManager.setHomeTabIndex(currentHomeTabIndex - 1)
-    }
+    pageOrderCoordinator.removePage(
+        pagerPageIndex = pagerPageIndex,
+        onDeleteWidgetPage = onDeleteWidgetPage
+    )
 
     val newTotalPages = totalPages - 1
     if (newTotalPages > 0 && pagerState.currentPage >= newTotalPages) {

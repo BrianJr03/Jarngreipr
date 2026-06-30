@@ -76,7 +76,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
@@ -581,9 +581,10 @@ fun AppsAndWidgetsTab(
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
-        val appVisibilityManager = LocalAppVisibilityManager.current
+        val pageOrderCoordinator = LocalPageOrderCoordinator.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+        val coroutineScope = rememberCoroutineScope()
 
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
@@ -602,9 +603,13 @@ fun AppsAndWidgetsTab(
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch,
             onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
-                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
-                pageTypeManager.reorderPages(newOrder)
-                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
             }
         )
     }

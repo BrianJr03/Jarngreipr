@@ -64,6 +64,22 @@ class NotificationManager @Inject constructor(
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit { putInt(KEY_SHADE_TAB_PAGE, page) }
     }
+
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newShade = oldToNew[shadeTabPage] ?: 0
+        if (newShade != shadeTabPage) saveShadeTabPage(newShade)
+    }
+
+    fun removePage(pageIndex: Int) {
+        val current = shadeTabPage
+        val newShade = when {
+            current == pageIndex -> 0
+            current > pageIndex -> current - 1
+            else -> current
+        }
+        if (newShade != current) saveShadeTabPage(newShade)
+    }
     
     private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()

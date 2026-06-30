@@ -98,4 +98,65 @@ class WidgetPageAppManager(private val context: Context) {
         }
         }
     }
+
+    suspend fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        context.widgetPageAppDataStore.edit { preferences ->
+            val oldVisible = mutableMapOf<Int, String>()
+            val oldAppsFirst = mutableMapOf<Int, Boolean>()
+            preferences.asMap().forEach { (key, value) ->
+                extractIndex(key.name, VISIBLE_APPS_PREFIX)?.let { idx ->
+                    (value as? String)?.let { oldVisible[idx] = it }
+                }
+                extractIndex(key.name, APPS_FIRST_PREFIX)?.let { idx ->
+                    (value as? Boolean)?.let { oldAppsFirst[idx] = it }
+                }
+            }
+            (oldVisible.keys + oldAppsFirst.keys).forEach { idx ->
+                preferences.remove(visibleAppsKey(idx))
+                preferences.remove(sectionOrderKey(idx))
+            }
+            oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+                oldVisible[oldIndex]?.let { preferences[visibleAppsKey(newIndex)] = it }
+                oldAppsFirst[oldIndex]?.let { preferences[sectionOrderKey(newIndex)] = it }
+            }
+        }
+    }
+
+    suspend fun removePage(pageIndex: Int) {
+        context.widgetPageAppDataStore.edit { preferences ->
+            val oldVisible = mutableMapOf<Int, String>()
+            val oldAppsFirst = mutableMapOf<Int, Boolean>()
+            preferences.asMap().forEach { (key, value) ->
+                extractIndex(key.name, VISIBLE_APPS_PREFIX)?.let { idx ->
+                    (value as? String)?.let { oldVisible[idx] = it }
+                }
+                extractIndex(key.name, APPS_FIRST_PREFIX)?.let { idx ->
+                    (value as? Boolean)?.let { oldAppsFirst[idx] = it }
+                }
+            }
+            (oldVisible.keys + oldAppsFirst.keys).forEach { idx ->
+                preferences.remove(visibleAppsKey(idx))
+                preferences.remove(sectionOrderKey(idx))
+            }
+            fun newIndexFor(oldIdx: Int): Int? = when {
+                oldIdx < pageIndex -> oldIdx
+                oldIdx > pageIndex -> oldIdx - 1
+                else -> null
+            }
+            oldVisible.forEach { (oldIdx, v) ->
+                newIndexFor(oldIdx)?.let { preferences[visibleAppsKey(it)] = v }
+            }
+            oldAppsFirst.forEach { (oldIdx, v) ->
+                newIndexFor(oldIdx)?.let { preferences[sectionOrderKey(it)] = v }
+            }
+        }
+    }
+
+    private fun extractIndex(keyName: String, prefix: String): Int? {
+        if (!keyName.startsWith(prefix)) return null
+        return keyName.removePrefix(prefix).toIntOrNull()
+    }
 }
+
+private const val VISIBLE_APPS_PREFIX = "visible_apps_page_"
+private const val APPS_FIRST_PREFIX = "apps_first_page_"

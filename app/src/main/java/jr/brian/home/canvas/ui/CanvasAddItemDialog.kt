@@ -28,11 +28,14 @@ import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,11 +64,12 @@ import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.PageIndicators
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.util.rememberDialogState
+import kotlinx.coroutines.launch
 
 /**
  * Add-action choices surfaced by [CanvasMainDialog]'s options list. Mirrors
@@ -100,9 +104,11 @@ fun CanvasMainDialog(
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    startInEdit: Boolean = false
 ) {
-    var mode by rememberSaveable { mutableStateOf(CanvasDialogMode.Options) }
+    val initialMode = if (startInEdit) CanvasDialogMode.Edit else CanvasDialogMode.Options
+    var mode by rememberSaveable { mutableStateOf(initialMode) }
     DimmedDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -131,6 +137,11 @@ fun CanvasMainDialog(
             ) {
                 when (mode) {
                     CanvasDialogMode.Options -> OptionsBody(
+                        editMode = layout.editMode,
+                        onEditModeChanged = { enabled ->
+                            onEditModeChanged(enabled)
+                            if (enabled) onDismiss()
+                        },
                         onEditCanvasClick = { mode = CanvasDialogMode.Edit },
                         onChoice = { choice ->
                             onChoice(choice)
@@ -157,7 +168,8 @@ fun CanvasMainDialog(
                         onTidy = {
                             onTidy()
                             onDismiss()
-                        }
+                        },
+                        onDismiss = onDismiss
                     )
                 }
             }
@@ -167,6 +179,8 @@ fun CanvasMainDialog(
 
 @Composable
 private fun OptionsBody(
+    editMode: Boolean,
+    onEditModeChanged: (Boolean) -> Unit,
     onEditCanvasClick: () -> Unit,
     onChoice: (CanvasAddChoice) -> Unit,
     pagerState: PagerState,
@@ -186,7 +200,13 @@ private fun OptionsBody(
         icon = Icons.Default.Tune,
         labelRes = R.string.canvas_edit_canvas_option,
         isPrimary = true,
-        onClick = onEditCanvasClick
+        onClick = onEditCanvasClick,
+        trailing = {
+            EditModeSwitch(
+                checked = editMode,
+                onCheckedChange = onEditModeChanged
+            )
+        }
     )
     HairlineSeparator()
     CANVAS_ADD_TILES.forEach { tile ->
@@ -210,10 +230,11 @@ private fun OptionsHeaderRow(
     val homeTabManager = LocalHomeTabManager.current
     val pageCountManager = LocalPageCountManager.current
     val pageTypeManager = LocalPageTypeManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
+    val pageOrderCoordinator = LocalPageOrderCoordinator.current
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val homeTabDialogState = rememberDialogState<Unit>()
+    val coroutineScope = rememberCoroutineScope()
 
     if (homeTabDialogState.isVisible) {
         HomeTabSelectionDialog(
@@ -229,9 +250,13 @@ private fun OptionsHeaderRow(
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch,
             onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
-                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
-                pageTypeManager.reorderPages(newOrder)
-                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
             }
         )
     }
@@ -277,7 +302,8 @@ private fun EditBody(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
-    onTidy: () -> Unit
+    onTidy: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     EditBodyHeader(onBack = onBack)
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -286,7 +312,8 @@ private fun EditBody(
             onOrientationChanged = onOrientationChanged,
             onGridChanged = onGridChanged,
             onEditModeChanged = onEditModeChanged,
-            onTidy = onTidy
+            onTidy = onTidy,
+            onDismiss = onDismiss
         )
     }
 }
@@ -349,7 +376,8 @@ private fun CompactOptionRow(
     icon: ImageVector,
     labelRes: Int,
     isPrimary: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     Row(
@@ -386,9 +414,28 @@ private fun CompactOptionRow(
             fontSize = 15.sp,
             fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = if (trailing != null) Modifier.weight(1f) else Modifier
         )
+        trailing?.invoke()
     }
+}
+
+@Composable
+private fun EditModeSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = ThemePrimaryColor,
+            checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
+            uncheckedThumbColor = Color.Gray,
+            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+        )
+    )
 }
 
 private data class AddOptionTileSpec(

@@ -590,7 +590,10 @@
     <string name="canvas_esde_picker_title">ES-DE Display</string>
     <string name="canvas_esde_picker_image_type_label">Image type</string>
     <string name="canvas_esde_picker_confirm">Add</string>
-    <string name="canvas_esde_chooser_title">Change image type</string>
+    <string name="canvas_esde_picker_scale_label">Image scaling</string>
+    <string name="canvas_esde_picker_scale_fit">Fit</string>
+    <string name="canvas_esde_picker_scale_crop">Crop</string>
+    <string name="canvas_esde_chooser_title">Edit ES-DE display</string>
     <string name="canvas_picker_coming_soon">%1$s picker is coming in a future update</string>
     <string name="canvas_picker_selected_count">%1$d selected</string>
     <string name="canvas_picker_done">Done</string>
@@ -615,6 +618,8 @@
     <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
     <string name="canvas_tidy_label">Tidy</string>
     <string name="canvas_tidy_button">Tidy now</string>
+    <string name="canvas_wallpaper_label">Wallpaper</string>
+    <string name="canvas_change_wallpaper">Change wallpaper</string>
     <string name="canvas_tidy_hint">Closes the gaps left by moves, deletes, and resizes. Nothing else compacts automatically.</string>
     <string name="canvas_widget_picker_title">Add a widget</string>
     <string name="canvas_widget_picker_loading">Loading widgets…</string>

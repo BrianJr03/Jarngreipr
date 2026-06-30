@@ -27,6 +27,7 @@ import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
@@ -107,6 +108,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalHomeTabManager provides page.homeTabManager,
         LocalWidgetPageAppManager provides page.widgetPageAppManager,
         LocalCanvasLayoutManager provides page.canvasLayoutManager,
+        LocalPageOrderCoordinator provides page.pageOrderCoordinator,
         
         // Feature Management
         LocalDockManager provides feature.dockManager,

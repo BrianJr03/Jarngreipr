@@ -124,7 +124,8 @@ fun CanvasGridLayout(
     onAddLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
-    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
+    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
+    onDoubleTap: (ResolvedCanvasItem) -> Unit = {}
 ) {
     val pushDirection = PushDirection.from(state.layout.activeOrientation)
     val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
@@ -303,6 +304,7 @@ fun CanvasGridLayout(
                             resolved = resolved,
                             onTap = { onTap(resolved) },
                             onLongPress = { onLongPress(resolved) },
+                            onDoubleTap = { onDoubleTap(resolved) },
                             appWidgetHost = appWidgetHost,
                             suppressTileLongPress = editMode,
                             editMode = editMode,
