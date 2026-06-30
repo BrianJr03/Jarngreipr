@@ -10,11 +10,12 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.ManagerContainer
@@ -40,13 +43,16 @@ import jr.brian.home.esde.ui.PlatformSuggestionsDropdown
 import jr.brian.home.esde.ui.RomGameLauncher
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
+import jr.brian.home.R
 import jr.brian.home.model.rom.toGameInfo
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.delay
 
 private const val ANIM_ENTER_MS = 220
 private const val ANIM_EXIT_MS = 180
+private const val ANDROID_APPS_SYSTEM = "androidapps"
 
 @Composable
 internal fun FrontendScreen(
@@ -180,7 +186,14 @@ private fun FrontendRouteHost(
             onChangeFolder = onChangeFolder
         )
 
-        is FrontendRoute.Systems -> SystemsRouteStub()
+        is FrontendRoute.Systems -> SystemsRoute(
+            allGames = allGames,
+            isLoading = isLoading,
+            hiddenGames = esdeState.hiddenGames,
+            viewModel = viewModel,
+            romSearchStateHolder = romSearchStateHolder,
+            frontendSelectionStateHolder = frontendSelectionStateHolder
+        )
     }
 }
 
@@ -283,12 +296,6 @@ private fun SearchRoute(
         filteredGames.firstOrNull()?.let { viewModel.updateFocusedGame(it) }
     }
 
-    val firstAvailableSystem by remember(allGames) {
-        derivedStateOf {
-            allGames.map { it.systemName }.distinct().sorted().firstOrNull()
-        }
-    }
-
     BackHandler {
         if (queryTrimmed.isNotEmpty()) {
             viewModel.clearState()
@@ -306,13 +313,7 @@ private fun SearchRoute(
                 dropdownFocusedIndex = dropdownFocusedIndex,
                 dropdownItems = dropdownItems,
                 onSetDropdownIndex = { dropdownFocusedIndex = it },
-                onUpdateQuery = viewModel::updateQuery,
-                onOpenGamesForFirstSystem = {
-                    // TODO(phase2): replace with system tile selection
-                    firstAvailableSystem?.let { system ->
-                        viewModel.navigateTo(FrontendRoute.Games(system))
-                    }
-                }
+                onUpdateQuery = viewModel::updateQuery
             )
     ) {
         Surface(
@@ -398,7 +399,7 @@ private fun GamesRoute(
     val focusResetKey = remember(system) { system }
 
     BackHandler {
-        viewModel.navigateTo(FrontendRoute.Search)
+        viewModel.navigateTo(FrontendRoute.Systems)
     }
 
     Surface(
@@ -430,10 +431,73 @@ private fun GamesRoute(
 }
 
 @Composable
-private fun SystemsRouteStub() {
-    // Phase 2: replace with the system tile grid.
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text(text = "", color = Color.Transparent)
+private fun SystemsRoute(
+    allGames: List<GameInfo>,
+    isLoading: Boolean,
+    hiddenGames: Set<String>,
+    viewModel: RomSearchResultsViewModel,
+    romSearchStateHolder: RomSearchStateHolder,
+    frontendSelectionStateHolder: FrontendSelectionStateHolder
+) {
+    val systems = rememberSystemTiles(allGames = allGames, hiddenGames = hiddenGames)
+
+    BackHandler {
+        romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+        romSearchStateHolder.dismissSignal.tryEmit(Unit)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
+                if (keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_Y) {
+                    viewModel.navigateTo(FrontendRoute.Search)
+                    true
+                } else false
+            }
+    ) {
+        SystemGrid(
+            systems = systems,
+            isLoading = isLoading,
+            onSystemFocused = { tile ->
+                frontendSelectionStateHolder.selectSystem(tile.systemName)
+            },
+            onSystemSelected = { tile ->
+                viewModel.navigateTo(FrontendRoute.Games(tile.systemName))
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        SearchAffordanceHint(modifier = Modifier.align(Alignment.BottomEnd))
+    }
+}
+
+@Composable
+private fun rememberSystemTiles(
+    allGames: List<GameInfo>,
+    hiddenGames: Set<String>
+): List<SystemTile> = remember(allGames, hiddenGames) {
+    allGames
+        .asSequence()
+        .filter { hiddenGameKey(it) !in hiddenGames }
+        .filter { !it.systemName.equals(ANDROID_APPS_SYSTEM, ignoreCase = true) }
+        .groupBy { it.systemName }
+        .map { (name, _) -> SystemTile(systemName = name) }
+        .sortedBy { it.systemName.lowercase() }
+}
+
+@Composable
+private fun SearchAffordanceHint(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .padding(16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.frontend_open_search_hint),
+            color = ThemeAccentColor.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 
@@ -501,8 +565,7 @@ private fun Modifier.searchKeyEvents(
     dropdownFocusedIndex: Int,
     dropdownItems: List<String>,
     onSetDropdownIndex: (Int) -> Unit,
-    onUpdateQuery: (String) -> Unit,
-    onOpenGamesForFirstSystem: () -> Unit
+    onUpdateQuery: (String) -> Unit
 ): Modifier = this
     .onPreviewKeyEvent { keyEvent ->
         if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -515,11 +578,6 @@ private fun Modifier.searchKeyEvents(
     .onKeyEvent { keyEvent ->
         if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
         val code = keyEvent.nativeKeyEvent.keyCode
-        // TODO(phase2): replace with system tile selection
-        if (code == AndroidKeyEvent.KEYCODE_BUTTON_Y) {
-            onOpenGamesForFirstSystem()
-            return@onKeyEvent true
-        }
         val isShoulderOrTrigger = code in SHOULDER_KEYS
         if (isShoulderOrTrigger && !dropdownVisible) {
             onUpdateQuery("@")

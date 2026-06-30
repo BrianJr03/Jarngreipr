@@ -36,6 +36,6 @@ class RomSearchResultsViewModel @Inject constructor(
     fun clearState() {
         store.query.value = ""
         store.focusedGame.value = null
-        store.currentRoute.value = FrontendRoute.Search
+        store.currentRoute.value = FrontendRoute.Systems
     }
 }
