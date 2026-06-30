@@ -109,7 +109,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/Xenogears.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.iso",
@@ -125,7 +125,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/Xenogears.m3u.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.m3u",
@@ -141,7 +141,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/Xenogears.m3u.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.m3u/Xenogears.m3u",
@@ -157,7 +157,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/RPG/Xenogears.m3u.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "RPG/Xenogears.m3u",
@@ -176,7 +176,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/Xenogears.iso.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.iso",
@@ -193,7 +193,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/covers/Xenogears.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("covers", "screenshots"),
             gameFilename = "Xenogears.iso",
@@ -210,7 +210,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "snes/screenshots/Contra.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("snes-msu1", "snes"),
             folders = listOf("screenshots"),
             gameFilename = "Contra.sfc",
@@ -227,7 +227,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "psx/screenshots/Xenogears.webp")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.iso",
@@ -243,7 +243,7 @@ class RomPathUtilsTest {
         writeMedia(mediaRoot, "scummvm/marquees/dig.scummvm.png")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("scummvm"),
             folders = listOf("marquees"),
             gameFilename = "dig.scummvm",
@@ -255,11 +255,50 @@ class RomPathUtilsTest {
     }
 
     @Test
+    fun `secondary media root is consulted when primary lacks the file`() {
+        // Phase 2.6: resolution walks an ordered list of media roots. A game whose art
+        // exists only under RetroHrai!'s root must resolve when ES-DE has none.
+        val primary = tempFolder.newFolder("esde-media")
+        val secondary = tempFolder.newFolder("retrohrai-media")
+        writeMedia(secondary, "psx/covers/Xenogears.png")
+
+        val hit = findFirstMedia(
+            mediaPaths = listOf(primary.absolutePath, secondary.absolutePath),
+            systemNames = listOf("psx"),
+            folders = listOf("covers"),
+            gameFilename = "Xenogears.iso",
+            extensions = listOf("png")
+        )
+
+        assertEquals(mediaFile(secondary, "psx/covers/Xenogears.png"), hit)
+    }
+
+    @Test
+    fun `first media root wins when both roots have the file`() {
+        // Same Phase 2.6 contract — ES-DE root[0] takes priority over RetroHrai! root[1]
+        // so the user's own scrape is preferred when both sources have art.
+        val primary = tempFolder.newFolder("esde-media")
+        val secondary = tempFolder.newFolder("retrohrai-media")
+        writeMedia(primary, "psx/covers/Xenogears.png")
+        writeMedia(secondary, "psx/covers/Xenogears.png")
+
+        val hit = findFirstMedia(
+            mediaPaths = listOf(primary.absolutePath, secondary.absolutePath),
+            systemNames = listOf("psx"),
+            folders = listOf("covers"),
+            gameFilename = "Xenogears.iso",
+            extensions = listOf("png")
+        )
+
+        assertEquals(mediaFile(primary, "psx/covers/Xenogears.png"), hit)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val mediaRoot = tempFolder.newFolder("media")
 
         val hit = findFirstMedia(
-            mediaPath = mediaRoot.absolutePath,
+            mediaPaths = listOf(mediaRoot.absolutePath),
             systemNames = listOf("psx"),
             folders = listOf("screenshots"),
             gameFilename = "Xenogears.m3u",

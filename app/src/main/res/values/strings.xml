@@ -37,6 +37,13 @@
     <string name="frontend_no_systems">No systems found</string>
     <string name="frontend_open_search">Search</string>
     <string name="frontend_open_search_hint">Search  •  Y</string>
+    <string name="frontend_open_settings_hint">Settings  •  SELECT</string>
+    <string name="frontend_settings_title">Frontend settings</string>
+    <string name="frontend_settings_close">Close</string>
+    <string name="frontend_layout_systems_row_title">System screen — row layout</string>
+    <string name="frontend_layout_systems_row_description">Render the System screen as a single horizontal carousel (D-pad left/right) instead of a multi-column grid.</string>
+    <string name="frontend_layout_games_row_title">Games view — row layout</string>
+    <string name="frontend_layout_games_row_description">Render each system\'s games as a single horizontal carousel (D-pad left/right) instead of a multi-column grid. Search stays a grid.</string>
     <string name="frontend_enable_title">Enable frontend</string>
     <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
     <string name="frontend_launch_cd">Launch frontend</string>

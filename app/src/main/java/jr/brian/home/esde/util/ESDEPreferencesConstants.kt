@@ -109,4 +109,6 @@ object ESDEPreferencesConstants {
     const val KEY_ROM_SEARCH_HINTS_KB_VISIBLE = "rom_search_hints_kb_visible"
     const val KEY_FRONTEND_ENABLED = "frontend_enabled"
     const val KEY_SECONDARY_MEDIA_ENABLED = "secondary_media_enabled"
+    const val KEY_SYSTEM_LAYOUT = "system_layout"
+    const val KEY_GAME_LAYOUT = "game_layout"
 }
