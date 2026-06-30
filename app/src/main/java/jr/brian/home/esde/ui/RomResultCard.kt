@@ -36,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -61,10 +62,7 @@ import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFlip
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
-import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.themePrimaryColor
-import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
 import android.view.KeyEvent as AndroidKeyEvent
 
@@ -148,7 +146,6 @@ internal fun RomResultCard(
 
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
-    val primary = themePrimaryColor()
     val focusProgress by animateFloatAsState(
         targetValue = if (isFocused) 1f else 0f,
         animationSpec = tween(
@@ -167,12 +164,11 @@ internal fun RomResultCard(
             }
             .scale(scale)
             .then(
-                if (!hasImage && isFocused) Modifier.animatedGradientBorder(
-                    colors = listOf(primary, themeSecondaryColor()),
+                if (!hasImage) Modifier.border(
+                    width = 2.dp,
+                    color = lerp(Color.DarkGray, ThemeAccentColor, focusProgress),
                     shape = shape
-                )
-                else if (!hasImage) Modifier.border(width = 2.dp, Color.DarkGray, shape = shape)
-                else Modifier
+                ) else Modifier
             )
             .clip(shape)
             .then(if (!hasImage) Modifier.background(Color.DarkGray) else Modifier)

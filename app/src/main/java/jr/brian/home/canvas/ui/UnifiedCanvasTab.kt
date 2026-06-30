@@ -295,6 +295,7 @@ fun UnifiedCanvasTab(
                     context = context,
                     onPickApp = { pickAppVisible = true },
                     onAddRssLauncher = { viewModel.addItem(newRssLauncher()) },
+                    onAddRssMusic = { viewModel.addItem(newRssMusic()) },
                     onAddFolder = { createFolderVisible = true },
                     onAddRom = { pickRomVisible = true },
                     onAddWidget = { pickWidgetVisible = true },
@@ -549,6 +550,10 @@ private fun handleTap(
         is ResolvedCanvasItem.Widget -> {
             // Widget interaction lives in Phase J.
         }
+        is ResolvedCanvasItem.RssMusic -> {
+            // Music tile owns its own tap handling (artwork → NowPlayingDialog,
+            // transport buttons drive playback). The canvas-level onTap is a no-op.
+        }
         is ResolvedCanvasItem.EsdeArt -> onChangeEsdeArtType(resolved)
     }
 }
@@ -558,6 +563,7 @@ private fun handleAddChoice(
     context: android.content.Context,
     onPickApp: () -> Unit,
     onAddRssLauncher: () -> Unit,
+    onAddRssMusic: () -> Unit,
     onAddFolder: () -> Unit,
     onAddRom: () -> Unit,
     onAddWidget: () -> Unit,
@@ -566,6 +572,7 @@ private fun handleAddChoice(
     when (choice) {
         CanvasAddChoice.APP -> onPickApp()
         CanvasAddChoice.RSS_LAUNCHER -> onAddRssLauncher()
+        CanvasAddChoice.RSS_MUSIC -> onAddRssMusic()
         CanvasAddChoice.FOLDER -> onAddFolder()
         CanvasAddChoice.ROM -> onAddRom()
         CanvasAddChoice.WIDGET -> onAddWidget()
@@ -610,6 +617,11 @@ private fun newAppItem(app: AppInfo): CanvasItem.AppItem =
 private fun newRssLauncher(): CanvasItem.RssLauncherItem =
     CanvasItem.RssLauncherItem(
         id = "rss-${UUID.randomUUID()}"
+    )
+
+private fun newRssMusic(): CanvasItem.RssMusicItem =
+    CanvasItem.RssMusicItem(
+        id = "rss-music-${UUID.randomUUID()}"
     )
 
 /**

@@ -139,6 +139,12 @@ fun CanvasItemTile(
             modifier = baseModifier,
             editMode = editMode
         )
+        is ResolvedCanvasItem.RssMusic -> CanvasRssMusicTile(
+            onTap = onTap,
+            onLongPress = effectiveLongPress,
+            modifier = baseModifier,
+            editMode = editMode
+        )
         is ResolvedCanvasItem.EsdeArt -> EsdeArtTile(
             resolved = resolved,
             onTap = onTap,
@@ -484,6 +490,27 @@ private fun CanvasRssLauncherTile(
             }
         }
     }
+}
+
+/**
+ * Placeholder for the RSS music-widget tile. The real artwork + transport
+ * rendering lives in [CanvasRssMusicTileContent] under `canvas/ui/rss/`, which
+ * is wired in by [CanvasItemTile] in Part C. Kept here as a thin alias so the
+ * variant dispatch stays in one place.
+ */
+@Composable
+private fun CanvasRssMusicTile(
+    onTap: () -> Unit,
+    onLongPress: () -> Unit,
+    modifier: Modifier = Modifier,
+    editMode: Boolean = false
+) {
+    jr.brian.home.canvas.ui.rss.CanvasRssMusicTileContent(
+        onTap = onTap,
+        onLongPress = onLongPress,
+        modifier = modifier,
+        editMode = editMode
+    )
 }
 
 @Composable
