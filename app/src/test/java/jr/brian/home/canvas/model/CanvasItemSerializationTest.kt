@@ -66,6 +66,15 @@ class CanvasItemSerializationTest {
     }
 
     @Test
+    fun `RssMusicItem round trips through JSON`() {
+        val original: CanvasItem = CanvasItem.RssMusicItem(id = "rss-music-1")
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<CanvasItem>(encoded)
+        assertEquals(original, decoded)
+        assertTrue(decoded is CanvasItem.RssMusicItem)
+    }
+
+    @Test
     fun `EsdeArtItem with imageType round trips through JSON`() {
         val original: CanvasItem = CanvasItem.EsdeArtItem(
             id = "esde-cover-1",

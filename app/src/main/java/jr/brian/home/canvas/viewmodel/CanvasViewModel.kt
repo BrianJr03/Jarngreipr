@@ -356,6 +356,8 @@ class CanvasViewModel @Inject constructor(
                     ResolvedCanvasItem.Widget(item)
                 is CanvasItem.RssLauncherItem ->
                     ResolvedCanvasItem.RssLauncher(item)
+                is CanvasItem.RssMusicItem ->
+                    ResolvedCanvasItem.RssMusic(item)
                 is CanvasItem.EsdeArtItem ->
                     ResolvedCanvasItem.EsdeArt(item)
             }

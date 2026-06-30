@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
@@ -80,7 +81,7 @@ import kotlinx.coroutines.launch
  * the variants of [jr.brian.home.canvas.model.CanvasItem] one-to-one.
  */
 enum class CanvasAddChoice {
-    APP, FOLDER, ROM, WIDGET, RSS_LAUNCHER, ESDE_DISPLAY
+    APP, FOLDER, ROM, WIDGET, RSS_LAUNCHER, RSS_MUSIC, ESDE_DISPLAY
 }
 
 private enum class CanvasDialogMode { Options, Edit }
@@ -470,5 +471,6 @@ private val CANVAS_ADD_TILES: List<AddOptionTileSpec> = listOf(
     AddOptionTileSpec(CanvasAddChoice.ROM, Icons.Default.VideogameAsset, R.string.canvas_add_rom_option),
     AddOptionTileSpec(CanvasAddChoice.WIDGET, Icons.Default.Widgets, R.string.canvas_add_widget_option),
     AddOptionTileSpec(CanvasAddChoice.RSS_LAUNCHER, Icons.Default.RssFeed, R.string.canvas_add_rss_launcher_option),
+    AddOptionTileSpec(CanvasAddChoice.RSS_MUSIC, Icons.Default.MusicNote, R.string.canvas_add_rss_music_option),
     AddOptionTileSpec(CanvasAddChoice.ESDE_DISPLAY, Icons.Default.Image, R.string.canvas_add_esde_display_option)
 )

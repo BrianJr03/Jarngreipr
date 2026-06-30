@@ -38,6 +38,15 @@ sealed class ResolvedCanvasItem {
     ) : ResolvedCanvasItem()
 
     /**
+     * RSS music-widget tile. Display + transport state is read live from
+     * [jr.brian.home.viewmodels.RssViewModel] at render time, so the resolved
+     * data carries no extra fields beyond the raw item.
+     */
+    data class RssMusic(
+        override val raw: CanvasItem.RssMusicItem
+    ) : ResolvedCanvasItem()
+
+    /**
      * ES-DE art tile. Display-only and event-driven — the renderer reads the
      * current path live from
      * [jr.brian.home.esde.util.LocalEsdeWallpaperState], so the resolved

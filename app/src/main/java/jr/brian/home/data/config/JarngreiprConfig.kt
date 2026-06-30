@@ -20,7 +20,10 @@ data class JarngreiprConfig(
         // v3: CanvasLayout split into shared content + per-orientation
         //     arrangements; v2 blobs decode with empty arrangements and are
         //     auto-repaired by CanvasLayoutManager.repair on apply.
-        const val CONFIG_VERSION = 4
+        // v5: added CanvasItem.RssMusicItem variant. Older blobs decode
+        //     unchanged (no rss_music entries); new blobs with rss_music are
+        //     unreadable by pre-v5 builds, so the version bump signals that.
+        const val CONFIG_VERSION = 5
     }
 }
 

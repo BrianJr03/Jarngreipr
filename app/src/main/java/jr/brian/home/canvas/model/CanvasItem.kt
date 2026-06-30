@@ -66,6 +66,19 @@ sealed class CanvasItem {
     ) : CanvasItem()
 
     /**
+     * Music-widget tile that mirrors the RSS tab's currently-playing item
+     * (or the first visible item, when nothing is playing). Carries no
+     * configuration of its own — content + queue are derived live from
+     * [jr.brian.home.viewmodels.RssViewModel] / `NowPlayingManager`, so the
+     * tile and the tab share one playback state.
+     */
+    @Serializable
+    @SerialName("rss_music")
+    data class RssMusicItem(
+        override val id: String
+    ) : CanvasItem()
+
+    /**
      * Display-only tile that mirrors the currently-focused ES-DE game's art
      * for the chosen [imageType]. The renderer reads
      * [jr.brian.home.esde.util.LocalEsdeWallpaperState]'s `currentGame` and
@@ -136,6 +149,7 @@ enum class EsdeContentScale {
 fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
     is CanvasItem.WidgetItem -> 2 to 2
     is CanvasItem.EsdeArtItem -> 2 to 2
+    is CanvasItem.RssMusicItem -> 2 to 2
     is CanvasItem.AppItem,
     is CanvasItem.FolderItem,
     is CanvasItem.RomItem,
