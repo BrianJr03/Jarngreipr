@@ -3,6 +3,7 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -378,6 +379,6 @@ private fun launchResultsActivity(context: Context) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
     }
     val options = ActivityOptions.makeBasic()
-    options.launchDisplayId = 0
+    options.launchDisplayId = PRIMARY_DISPLAY_ID
     context.startActivity(intent, options.toBundle())
 }
