@@ -18,6 +18,7 @@ import jr.brian.home.esde.util.buildSafDocumentUri
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.util.sdCardVolumeId
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import jr.brian.home.util.launchApp
 import java.io.File
 
@@ -115,7 +116,7 @@ class RomGameLauncher(
                 if (fallbackPkg != null) {
                     val intent = activity.packageManager.getLaunchIntentForPackage(fallbackPkg)!!
                         .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                    val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+                    val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
                     onSignalGameLaunch()
                     activity.startActivity(intent, options.toBundle())
                     activity.finish()
@@ -133,7 +134,7 @@ class RomGameLauncher(
             val intent = activity.packageManager.getLaunchIntentForPackage(pkg)
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+                val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
                 onSignalGameLaunch()
                 activity.startActivity(intent, options.toBundle())
                 activity.finish()
@@ -160,7 +161,7 @@ class RomGameLauncher(
                             .show()
                         return
                     }
-            val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
             Log.d("RomSearchResults", "launchGame (command) | cmd=$savedCommand rom=$romPath")
             onSignalGameLaunch()
             activity.startActivity(intent, options.toBundle())
@@ -178,7 +179,7 @@ class RomGameLauncher(
             val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
                 pkg, romPath, effectiveContentUri, context, corePath
             )
-            val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
             val canHandleRom = activity.packageManager.resolveActivity(romIntent, 0) != null
             val intent = if (canHandleRom) {
                 romIntent
@@ -238,7 +239,7 @@ class RomGameLauncher(
                 "RomSearchResults",
                 "  → intent data=${romIntent.data} extras=${romIntent.extras}"
             )
-            val options = ActivityOptions.makeBasic().apply { launchDisplayId = 0 }
+            val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
             val canHandleRom = activity.packageManager.resolveActivity(romIntent, 0) != null
             val intent = if (canHandleRom) {
                 romIntent

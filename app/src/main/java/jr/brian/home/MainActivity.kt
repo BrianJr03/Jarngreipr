@@ -44,6 +44,7 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.ESDESetupHelper
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.model.FrontendSelection
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
@@ -85,6 +86,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var romSearchStateHolder: jr.brian.home.esde.data.RomSearchStateHolder
+
+    @Inject
+    lateinit var frontendSelectionStateHolder: jr.brian.home.esde.data.FrontendSelectionStateHolder
 
     private val esdeViewModel: ESDEViewModel by viewModels()
 
@@ -165,6 +169,8 @@ class MainActivity : ComponentActivity() {
                         esdeViewModel = esdeViewModel,
                         powerViewModel = powerViewModel
                     )
+
+                    ObserveFrontendSelection(esdeViewModel = esdeViewModel)
 
                     SetupESDEEventListeners(
                         esdeViewModel = esdeViewModel,
@@ -306,6 +312,21 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
             romSearchStateHolder.gameLaunchSignal.collect {
                 esdeViewModel.handleRomSearchGameStarted()
+            }
+        }
+    }
+
+    @Composable
+    private fun ObserveFrontendSelection(esdeViewModel: ESDEViewModel) {
+        LaunchedEffect(Unit) {
+            frontendSelectionStateHolder.selection.collect { selection ->
+                when (selection) {
+                    is FrontendSelection.System ->
+                        esdeViewModel.updateForSystem(selection.systemName)
+                    is FrontendSelection.Game ->
+                        esdeViewModel.updateForGame(selection.systemName, selection.gameFilename)
+                    null -> Unit
+                }
             }
         }
     }

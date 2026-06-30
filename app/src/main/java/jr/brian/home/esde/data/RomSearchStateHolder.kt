@@ -1,5 +1,6 @@
 package jr.brian.home.esde.data
 
+import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,4 +23,6 @@ class RomSearchStateHolder @Inject constructor() {
     val pendingSelectPageIndex = MutableStateFlow(-1)
     val pendingRomForPin = MutableStateFlow<Pair<Int, GameInfo>?>(null)
     val pendingRomToLaunch = MutableStateFlow<PinnedRomInfo?>(null)
+
+    val currentRoute = MutableStateFlow<FrontendRoute>(FrontendRoute.Search)
 }
