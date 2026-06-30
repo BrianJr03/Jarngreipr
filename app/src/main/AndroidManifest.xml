@@ -79,6 +79,7 @@
             android:name=".esde.ui.FrontEndActivity"
             android:excludeFromRecents="true"
             android:exported="false"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Home"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
 
