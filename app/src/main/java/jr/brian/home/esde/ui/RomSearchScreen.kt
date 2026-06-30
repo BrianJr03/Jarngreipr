@@ -101,10 +101,12 @@ fun RomSearchScreen(
     var showCommandsDialog by remember { mutableStateOf(false) }
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
 
+    val fromFrontend = remember { viewModel.stateHolder.openedFromFrontend.value }
+
     LaunchedEffect(Unit) {
         jinglesManager.stop()
         viewModel.loadGames()
-        launchResultsActivity(context)
+        launchResultsActivity(context, fromFrontend = fromFrontend)
     }
 
     LaunchedEffect(Unit) {
@@ -118,6 +120,7 @@ fun RomSearchScreen(
         onDispose {
             viewModel.clearState()
             viewModel.resetHintAndKbVisibility()
+            viewModel.stateHolder.openedFromFrontend.value = false
         }
     }
 
@@ -180,7 +183,7 @@ fun RomSearchScreen(
                                 onNavigateToSearch()
                             },
                             onAtClick = { viewModel.updateQuery("$query@") },
-                            onReopenResults = { launchResultsActivity(context) },
+                            onReopenResults = { launchResultsActivity(context, fromFrontend = fromFrontend) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -374,9 +377,10 @@ private fun MarqueeDisplay(game: GameInfo?) {
     }
 }
 
-private fun launchResultsActivity(context: Context) {
+private fun launchResultsActivity(context: Context, fromFrontend: Boolean) {
     val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, fromFrontend)
     }
     val options = ActivityOptions.makeBasic()
     options.launchDisplayId = PRIMARY_DISPLAY_ID

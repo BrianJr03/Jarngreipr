@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -46,7 +47,6 @@ import jr.brian.home.R
 import jr.brian.home.model.rom.toGameInfo
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.util.launchRomSearchActivity
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.delay
 
@@ -176,6 +176,7 @@ private fun FrontendRouteHost(
             isLoading = isLoading,
             hiddenGames = esdeState.hiddenGames,
             layout = esdeState.systemLayout,
+            useWallpaper = esdeState.romSearchUseWallpaper,
             viewModel = viewModel,
             romSearchStateHolder = romSearchStateHolder,
             frontendSelectionStateHolder = frontendSelectionStateHolder
@@ -228,7 +229,11 @@ private fun GamesRoute(
 
     Surface(
         color = if (esdeState.romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .onPreviewKeyEvent { keyEvent ->
+                keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_Y
+            }
     ) {
         FrontendRomGrid(
             games = filteredGames,
@@ -263,6 +268,7 @@ private fun SystemsRoute(
     isLoading: Boolean,
     hiddenGames: Set<String>,
     layout: jr.brian.home.esde.model.FrontendLayout,
+    useWallpaper: Boolean,
     viewModel: RomSearchResultsViewModel,
     romSearchStateHolder: RomSearchStateHolder,
     frontendSelectionStateHolder: FrontendSelectionStateHolder
@@ -277,8 +283,6 @@ private fun SystemsRoute(
     // Back / B button on Systems is intentionally inert (kiosk behaviour) — the
     // frontend is the launcher's home, so the user shouldn't be able to back out of
     // it. Only the in-route settings dialog uses back to close.
-    val context = LocalContext.current
-
     BackHandler {
         if (showSettingsDialog) showSettingsDialog = false
     }
@@ -290,7 +294,7 @@ private fun SystemsRoute(
                 if (keyEvent.type != KeyEventType.KeyDown) return@onKeyEvent false
                 when (keyEvent.nativeKeyEvent.keyCode) {
                     AndroidKeyEvent.KEYCODE_BUTTON_Y -> {
-                        launchRomSearchActivity(context)
+                        romSearchStateHolder.showSearchKeyboardSignal.tryEmit(Unit)
                         true
                     }
                     AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
@@ -306,6 +310,7 @@ private fun SystemsRoute(
             isLoading = isLoading,
             layout = layout,
             initialRealIndex = initialSystemIndex,
+            backgroundTransparent = useWallpaper,
             onSystemFocused = { tile ->
                 frontendSelectionStateHolder.selectSystem(tile.systemName)
                 romSearchStateHolder.lastFocusedSystem.value = tile.systemName

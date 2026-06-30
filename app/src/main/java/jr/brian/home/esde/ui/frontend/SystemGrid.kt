@@ -67,10 +67,15 @@ internal fun SystemGrid(
     layout: FrontendLayout,
     modifier: Modifier = Modifier,
     initialRealIndex: Int = 0,
+    backgroundTransparent: Boolean = false,
     onSystemFocused: (SystemTile) -> Unit = {},
     onSystemSelected: (SystemTile) -> Unit = {}
 ) {
-    Box(modifier = modifier.background(OledBackgroundColor)) {
+    Box(
+        modifier = modifier.then(
+            if (backgroundTransparent) Modifier else Modifier.background(OledBackgroundColor)
+        )
+    ) {
         when {
             isLoading -> CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
