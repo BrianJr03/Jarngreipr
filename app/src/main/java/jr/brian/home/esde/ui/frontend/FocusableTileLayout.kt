@@ -51,8 +51,11 @@ fun <T> FocusableTileLayout(
     layout: FrontendLayout,
     columns: Int,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
-    itemSpacing: Dp = 12.dp,
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = FrontendTokens.Spacing.M,
+        vertical = FrontendTokens.Spacing.L
+    ),
+    itemSpacing: Dp = FrontendTokens.Spacing.S,
     rowItemWidth: Dp = DEFAULT_ROW_TILE_WIDTH,
     /**
      * Initial focus index in *real* items space (0..items.lastIndex). Row mode

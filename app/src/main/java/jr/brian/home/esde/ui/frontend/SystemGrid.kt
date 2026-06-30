@@ -1,17 +1,15 @@
 package jr.brian.home.esde.ui.frontend
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
@@ -54,7 +55,9 @@ private const val NUM_COLS = 4
  * Inset applied inside every cell so the focused-tile scale animation stays within
  * the cell slot — the lazy grid clips at cell bounds.
  */
-private val TILE_INSET = 12.dp
+private val TILE_INSET = FrontendTokens.Spacing.S
+
+private val FOCUS_LIFT = FrontendTokens.Spacing.M
 
 @Composable
 internal fun SystemGrid(
@@ -88,7 +91,10 @@ internal fun SystemGrid(
                     items = systems,
                     layout = layout,
                     columns = NUM_COLS,
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 32.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = FrontendTokens.Spacing.L,
+                        vertical = FrontendTokens.Spacing.XL
+                    ),
                     initialRealIndex = initialRealIndex,
                     focusResetKey = systemKey,
                     onItemFocused = { tile -> tile?.let(onSystemFocused) },
@@ -116,34 +122,32 @@ private fun SystemTileCard(
     onSelected: () -> Unit
 ) {
     val scale = animatedFocusedScale(isFocused)
-    val shape = RoundedCornerShape(8.dp)
+    val shape = FrontendTokens.Radius.TileSmall
+    val focusProgress by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = FrontendTokens.Motion.FocusMs,
+            easing = FrontendTokens.Motion.Easing
+        ),
+        label = "systemTileFocus"
+    )
+    val tileAlpha = lerp(FrontendTokens.Alpha.Unfocused, FrontendTokens.Alpha.Primary, focusProgress)
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(TILE_INSET),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .aspectRatio(1f)
+            .padding(TILE_INSET)
+            .alpha(tileAlpha)
+            .graphicsLayer { translationY = -FOCUS_LIFT.toPx() * focusProgress }
+            .scale(scale)
+            .clip(shape)
+            .background(OledCardColor)
+            .focusRequester(focusRequester)
+            .onFocusChanged { if (it.isFocused) onFocused() }
+            .clickable { onSelected() }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .scale(scale)
-                .clip(shape)
-                .background(OledCardColor)
-                .focusRequester(focusRequester)
-                .onFocusChanged { if (it.isFocused) onFocused() }
-                .clickable { onSelected() }
-        ) {
-            SystemTileContent(tile = tile)
-        }
-        Spacer(modifier = Modifier.height(3.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(2.dp)
-                .background(if (isFocused) ThemeAccentColor else Color.Transparent)
-        )
+        SystemTileContent(tile = tile)
     }
 }
 
@@ -157,7 +161,7 @@ private fun SystemTileContent(tile: SystemTile) {
     }
     var hasError by remember(logoModel) { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+    Box(modifier = Modifier.fillMaxSize().padding(FrontendTokens.Spacing.S)) {
         if (hasError) {
             SystemTileTextFallback(systemName = tile.systemName)
         } else {
