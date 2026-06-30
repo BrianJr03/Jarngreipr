@@ -219,6 +219,12 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
                                 onClick = { prefsManager.setRomSearchCardMediaType(type) }
                             )
                         }
+                        ToggleSetting(
+                            title = stringResource(R.string.secondary_media_title),
+                            description = stringResource(R.string.secondary_media_description),
+                            checked = state.secondaryMediaEnabled,
+                            onCheckedChange = { prefsManager.setSecondaryMediaEnabled(it) }
+                        )
                     }
                 }
 

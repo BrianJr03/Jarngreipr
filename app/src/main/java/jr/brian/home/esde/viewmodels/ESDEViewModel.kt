@@ -44,6 +44,7 @@ import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
 import jr.brian.home.esde.util.mediaCandidatePaths
+import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
@@ -74,8 +75,13 @@ class ESDEViewModel @Inject constructor(
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
-    private val mediaPath: String
-        get() = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
+    private val mediaPaths: List<String>
+        get() {
+            val primary = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
+            val secondary = if (prefs.state.value.secondaryMediaEnabled)
+                SetupPreferences.DEFAULT_SECONDARY_MEDIA_PATH else null
+            return mediaRoots(primary, secondary)
+        }
 
     private val esdeRootPath: String?
         get() {
@@ -112,11 +118,7 @@ class ESDEViewModel @Inject constructor(
     private var romSearchGameLaunched: Boolean = false
 
     init {
-        Log.d(TAG, "ESDE Media path configured: $mediaPath")
-        Log.d(
-            TAG,
-            "Parent folder (for system_images/system_logos): ${File(mediaPath).parentFile?.absolutePath}"
-        )
+        Log.d(TAG, "ESDE Media roots configured: $mediaPaths")
 
         prefs.state
             .onEach { prefsState ->
@@ -511,8 +513,9 @@ class ESDEViewModel @Inject constructor(
      */
     private fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
         val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
+        val roots = mediaPaths
         fun media(folder: String) = findFirstMedia(
-            mediaPath = mediaPath,
+            mediaPaths = roots,
             systemNames = systemNames,
             folders = listOf(folder),
             gameFilename = gameFilename,
@@ -530,7 +533,7 @@ class ESDEViewModel @Inject constructor(
             artworkPath = media(FOLDER_COVERS),
             physicalMediaPath = media(FOLDER_PHYSICALMEDIA),
             marqueeImagePath = findFirstMedia(
-                mediaPath = mediaPath,
+                mediaPaths = roots,
                 systemNames = systemNames,
                 folders = listOf(FOLDER_MARQUEES) + MARQUEE_FALLBACK_DIRS,
                 gameFilename = gameFilename,
@@ -582,17 +585,21 @@ class ESDEViewModel @Inject constructor(
             return systemImageCache[systemName]
         }
 
+        val roots = mediaPaths
+
         // This contains system-level background images like n64.png, snes.png, etc.
-        val systemImagesDir = File(mediaPath, "system_images")
-        if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
-            // Try exact system name first, then fall back to parent system
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in IMAGE_EXTENSIONS) {
-                    val systemImage = File(systemImagesDir, "$name.$ext")
-                    if (systemImage.exists()) {
-                        Log.d(TAG, "Found system image: ${systemImage.absolutePath}")
-                        systemImageCache[systemName] = systemImage.absolutePath
-                        return systemImage.absolutePath
+        for (root in roots) {
+            val systemImagesDir = File(root, "system_images")
+            if (systemImagesDir.exists() && systemImagesDir.isDirectory) {
+                // Try exact system name first, then fall back to parent system
+                for (name in listOf(systemName, mediaSystemName).distinct()) {
+                    for (ext in IMAGE_EXTENSIONS) {
+                        val systemImage = File(systemImagesDir, "$name.$ext")
+                        if (systemImage.exists()) {
+                            Log.d(TAG, "Found system image: ${systemImage.absolutePath}")
+                            systemImageCache[systemName] = systemImage.absolutePath
+                            return systemImage.absolutePath
+                        }
                     }
                 }
             }
@@ -600,12 +607,14 @@ class ESDEViewModel @Inject constructor(
 
         if (systemImageType == SystemImageType.All) {
             val allImages = mutableListOf<File>()
-            for (type in SystemImageType.randomizableTypes()) {
-                for (name in listOf(systemName, mediaSystemName).distinct()) {
-                    val mediaDir = File(mediaPath, "$name/${type.folderName}")
-                    if (mediaDir.exists() && mediaDir.isDirectory) {
-                        mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
-                            ?.let { allImages.addAll(it) }
+            for (root in roots) {
+                for (type in SystemImageType.randomizableTypes()) {
+                    for (name in listOf(systemName, mediaSystemName).distinct()) {
+                        val mediaDir = File(root, "$name/${type.folderName}")
+                        if (mediaDir.exists() && mediaDir.isDirectory) {
+                            mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+                                ?.let { allImages.addAll(it) }
+                        }
                     }
                 }
             }
@@ -621,15 +630,17 @@ class ESDEViewModel @Inject constructor(
         // Then check in downloaded_media/<system>/<imageType>/ folders
         val preferredFolder = systemImageType.folderName ?: return null
         // Try both exact system name and parent system for game media folders
-        for (name in listOf(systemName, mediaSystemName).distinct()) {
-            val mediaDir = File(mediaPath, "$name/$preferredFolder")
-            if (mediaDir.exists() && mediaDir.isDirectory) {
-                val images = mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
-                if (!images.isNullOrEmpty()) {
-                    val selectedPath =
-                        if (useRandom) images.random().absolutePath else images.first().absolutePath
-                    systemImageCache[systemName] = selectedPath
-                    return selectedPath
+        for (root in roots) {
+            for (name in listOf(systemName, mediaSystemName).distinct()) {
+                val mediaDir = File(root, "$name/$preferredFolder")
+                if (mediaDir.exists() && mediaDir.isDirectory) {
+                    val images = mediaDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+                    if (!images.isNullOrEmpty()) {
+                        val selectedPath =
+                            if (useRandom) images.random().absolutePath else images.first().absolutePath
+                        systemImageCache[systemName] = selectedPath
+                        return selectedPath
+                    }
                 }
             }
         }
@@ -638,15 +649,17 @@ class ESDEViewModel @Inject constructor(
             .filter { it != preferredFolder }
 
         for (mediaType in fallbackTypes) {
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                val fallbackDir = File(mediaPath, "$name/$mediaType")
-                if (fallbackDir.exists() && fallbackDir.isDirectory) {
-                    val images = fallbackDir.listFiles()?.filter { it.isFile && isImageFile(it) }
-                    if (!images.isNullOrEmpty()) {
-                        val selectedPath =
-                            if (useRandom) images.random().absolutePath else images.first().absolutePath
-                        systemImageCache[systemName] = selectedPath
-                        return selectedPath
+            for (root in roots) {
+                for (name in listOf(systemName, mediaSystemName).distinct()) {
+                    val fallbackDir = File(root, "$name/$mediaType")
+                    if (fallbackDir.exists() && fallbackDir.isDirectory) {
+                        val images = fallbackDir.listFiles()?.filter { it.isFile && isImageFile(it) }
+                        if (!images.isNullOrEmpty()) {
+                            val selectedPath =
+                                if (useRandom) images.random().absolutePath else images.first().absolutePath
+                            systemImageCache[systemName] = selectedPath
+                            return selectedPath
+                        }
                     }
                 }
             }
@@ -690,15 +703,17 @@ class ESDEViewModel @Inject constructor(
         }
 
         // e.g. downloaded_media/system_logos/n64.svg or n64.mp4
-        val userLogosDir = File(mediaPath, "system_logos")
-        if (userLogosDir.exists() && userLogosDir.isDirectory) {
-            // Try exact system name first, then fall back to parent system
-            for (name in listOf(systemName, mediaSystemName).distinct()) {
-                for (ext in LOGO_EXTENSIONS) {
-                    val userLogo = File(userLogosDir, "$name.$ext")
-                    if (userLogo.exists()) {
-                        Log.d(TAG, "Found user system logo: ${userLogo.absolutePath}")
-                        return userLogo.absolutePath
+        for (root in mediaPaths) {
+            val userLogosDir = File(root, "system_logos")
+            if (userLogosDir.exists() && userLogosDir.isDirectory) {
+                // Try exact system name first, then fall back to parent system
+                for (name in listOf(systemName, mediaSystemName).distinct()) {
+                    for (ext in LOGO_EXTENSIONS) {
+                        val userLogo = File(userLogosDir, "$name.$ext")
+                        if (userLogo.exists()) {
+                            Log.d(TAG, "Found user system logo: ${userLogo.absolutePath}")
+                            return userLogo.absolutePath
+                        }
                     }
                 }
             }
@@ -736,11 +751,13 @@ class ESDEViewModel @Inject constructor(
 
         val systemNames = listOf(systemName, mediaSystemName).distinct()
 
+        val roots = mediaPaths
+
         if (preferredType == GameImageType.All) {
             val existing = GameImageType.randomizableTypes()
                 .mapNotNull { it.folderName }
                 .flatMap { folder ->
-                    mediaCandidatePaths(mediaPath, systemNames, folder, gameFilename, IMAGE_EXTENSIONS)
+                    mediaCandidatePaths(roots, systemNames, folder, gameFilename, IMAGE_EXTENSIONS)
                         .filter { it.exists() }
                         .toList()
                 }
@@ -752,7 +769,7 @@ class ESDEViewModel @Inject constructor(
             GAME_IMAGE_FALLBACKS.filter { it != preferredFolder } +
             FOLDER_WHEEL_3D
 
-        return findFirstMedia(mediaPath, systemNames, folders.distinct(), gameFilename, IMAGE_EXTENSIONS)
+        return findFirstMedia(roots, systemNames, folders.distinct(), gameFilename, IMAGE_EXTENSIONS)
     }
 
     private fun getGameMarqueePath(systemName: String, gameFilename: String): String? {
@@ -780,7 +797,7 @@ class ESDEViewModel @Inject constructor(
         }.distinct()
 
         return findFirstMedia(
-            mediaPath,
+            mediaPaths,
             systemNames,
             folders,
             gameFilename,
@@ -792,7 +809,7 @@ class ESDEViewModel @Inject constructor(
     private fun getGameVideoPath(systemName: String, gameFilename: String): String? {
         // Use normalized system name for media lookups (e.g., snes-msu1 -> snes)
         val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
-        return findFirstMedia(mediaPath, systemNames, listOf(FOLDER_VIDEOS), gameFilename, VIDEO_EXTENSIONS)
+        return findFirstMedia(mediaPaths, systemNames, listOf(FOLDER_VIDEOS), gameFilename, VIDEO_EXTENSIONS)
     }
 
     private fun findInCustomImagesFolder(

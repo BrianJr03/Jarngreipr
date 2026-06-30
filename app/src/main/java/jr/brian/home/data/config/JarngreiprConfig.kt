@@ -20,7 +20,7 @@ data class JarngreiprConfig(
         // v3: CanvasLayout split into shared content + per-orientation
         //     arrangements; v2 blobs decode with empty arrangements and are
         //     auto-repaired by CanvasLayoutManager.repair on apply.
-        const val CONFIG_VERSION = 3
+        const val CONFIG_VERSION = 4
     }
 }
 
@@ -215,7 +215,9 @@ data class BgMusicConfig(
 
 @Serializable
 data class RomSearchConfig(
-    val hintsKbVisible: Boolean = true
+    val hintsKbVisible: Boolean = true,
+    val frontendEnabled: Boolean = false,
+    val secondaryMediaEnabled: Boolean = true
 )
 
 @Serializable

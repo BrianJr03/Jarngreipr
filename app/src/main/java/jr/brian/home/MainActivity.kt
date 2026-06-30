@@ -48,6 +48,7 @@ import jr.brian.home.esde.model.FrontendSelection
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
@@ -90,6 +91,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var frontendSelectionStateHolder: jr.brian.home.esde.data.FrontendSelectionStateHolder
 
+    @Inject
+    lateinit var esdePreferencesManager: ESDEPreferencesManager
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private var navigateToThemeShare by mutableStateOf(false)
@@ -112,6 +116,7 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.startWatching()
         managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
+        launchFrontendIfEnabled()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -274,6 +279,11 @@ class MainActivity : ComponentActivity() {
             scaleMode = event.scaleMode,
             overlayEnabled = event.overlayEnabled
         )
+    }
+
+    private fun launchFrontendIfEnabled() {
+        if (!esdePreferencesManager.state.value.frontendEnabled) return
+        launchFrontend(this)
     }
 
     private fun checkAndCreateScripts() {

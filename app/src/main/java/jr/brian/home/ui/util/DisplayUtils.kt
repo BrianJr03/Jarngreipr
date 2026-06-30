@@ -1,16 +1,32 @@
 package jr.brian.home.ui.util
 
+import android.app.ActivityOptions
 import android.content.Context
+import android.content.Intent
 import android.hardware.display.DisplayManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.esde.ui.RomSearchResultsActivity
 
 /**
  * Display the Thor treats as primary — the top screen — and the target of every
  * gameplay/emulator launch. Pass to [android.app.ActivityOptions.setLaunchDisplayId].
  */
 const val PRIMARY_DISPLAY_ID = 0
+
+/**
+ * Fires [RomSearchResultsActivity] with no [RomSearchResultsActivity.EXTRA_START_ROUTE],
+ * so the activity falls through to its default route (Systems when the frontend toggle
+ * is on, Search when it's off). Always targets the top display.
+ */
+fun launchFrontend(context: Context) {
+    val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+    }
+    val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
+    context.startActivity(intent, options.toBundle())
+}
 
 /**
  * Checks if the device has an external display connected.

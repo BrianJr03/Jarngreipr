@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolumeOff
@@ -91,6 +92,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.animatedColor
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.util.MediaPickerLauncher
 import jr.brian.home.util.launchApp
 
@@ -262,6 +264,23 @@ fun DrawerOptionsDialog(
                                 tint = animatedColor(firstSeen = isRomIconNew),
                                 modifier = Modifier.size(26.dp)
                             )
+                        }
+
+                        if (esdePrefsState.frontendEnabled) {
+                            IconButton(
+                                onClick = {
+                                    onDismiss()
+                                    launchFrontend(context)
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = stringResource(R.string.frontend_launch_cd),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
 
                         Spacer(Modifier.width(8.dp))
