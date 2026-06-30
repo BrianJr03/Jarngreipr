@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -132,6 +133,7 @@ private fun SystemTileCard(
         label = "systemTileFocus"
     )
     val tileAlpha = lerp(FrontendTokens.Alpha.Unfocused, FrontendTokens.Alpha.Primary, focusProgress)
+    val floatPhase = focusFloatPhase(isFocused)
 
     Box(
         modifier = Modifier
@@ -139,13 +141,18 @@ private fun SystemTileCard(
             .aspectRatio(1f)
             .padding(TILE_INSET)
             .alpha(tileAlpha)
-            .graphicsLayer { translationY = -FOCUS_LIFT.toPx() * focusProgress }
+            .graphicsLayer {
+                translationY = (-FOCUS_LIFT.toPx() + FrontendTokens.FloatAmplitude.toPx() * floatPhase) * focusProgress
+            }
             .scale(scale)
             .clip(shape)
             .background(OledCardColor)
             .focusRequester(focusRequester)
             .onFocusChanged { if (it.isFocused) onFocused() }
-            .clickable { onSelected() }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onSelected() }
     ) {
         SystemTileContent(tile = tile)
     }

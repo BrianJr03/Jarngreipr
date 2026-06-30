@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import jr.brian.home.esde.ui.frontend.FrontendTokens
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -164,17 +165,18 @@ internal fun RomResultsGrid(
                     items = displayedGames,
                     layout = layout,
                     columns = NUM_COLS,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(if (backgroundTransparent) Color.Transparent else OledBackgroundColor),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 48.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        horizontal = FrontendTokens.Spacing.M,
+                        vertical = FrontendTokens.Spacing.XL
+                    ),
                     initialRealIndex = initialRealIndex,
                     focusResetKey = focusResetKey,
                     onItemFocused = { game -> onGameFocused(game) },
                     header = hiddenHeader,
                     itemKey = { _, game -> "${game.systemName}/${game.path}" }
                 ) { _, game, focusRequester, _, onFocused ->
-                    Box(modifier = Modifier.padding(12.dp)) {
+                    Box(modifier = Modifier.padding(FrontendTokens.Spacing.S)) {
                         RomResultCard(
                             game = game,
                             focusRequester = focusRequester,
