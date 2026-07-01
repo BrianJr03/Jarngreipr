@@ -16,6 +16,17 @@ import jr.brian.home.esde.ui.FrontEndActivity
 const val PRIMARY_DISPLAY_ID = 0
 
 /**
+ * Returns the display id the bottom screen lives on (anything other than
+ * [PRIMARY_DISPLAY_ID]), or `null` when the device only has a single display.
+ */
+fun resolveBottomDisplayId(context: Context): Int? {
+    val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+    return displayManager.displays
+        .firstOrNull { it.displayId != PRIMARY_DISPLAY_ID }
+        ?.displayId
+}
+
+/**
  * Fires [FrontEndActivity] (Systems → Games browse experience). Always targets the
  * top display.
  */

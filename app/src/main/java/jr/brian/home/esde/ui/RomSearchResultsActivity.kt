@@ -545,9 +545,24 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     ) {
                                         return@onPreviewKeyEvent true
                                     }
+                                    if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                    // Hack: catch back at the preview stage so neither the focus
+                                    // animation nor any descendant can swallow the first press.
+                                    if (keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BUTTON_B ||
+                                        keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BACK
+                                    ) {
+                                        if (queryTrimmed.isNotEmpty()) {
+                                            viewModel.clearState()
+                                        } else {
+                                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                            dismiss()
+                                        }
+                                        return@onPreviewKeyEvent true
+                                    }
                                     // When navigating the dropdown, a DPAD press returns focus to the grid
                                     // without consuming — let the grid handle the actual movement.
-                                    if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                     val isDpad = keyEvent.nativeKeyEvent.keyCode in listOf(
                                         AndroidKeyEvent.KEYCODE_DPAD_UP,
                                         AndroidKeyEvent.KEYCODE_DPAD_DOWN,

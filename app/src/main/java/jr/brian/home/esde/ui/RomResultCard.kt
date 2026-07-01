@@ -57,6 +57,7 @@ import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.ui.frontend.FrontendTokens
 import jr.brian.home.esde.ui.frontend.emitFocusHapticIfReady
 import jr.brian.home.esde.ui.frontend.focusFloatPhase
+import jr.brian.home.esde.ui.frontend.rememberFloatAmplitude
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFlip
@@ -155,12 +156,13 @@ internal fun RomResultCard(
         label = "romCardFocus"
     )
     val floatPhase = focusFloatPhase(isFocused)
+    val floatAmplitude = rememberFloatAmplitude()
 
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
             .graphicsLayer {
-                translationY = (-FOCUS_LIFT.toPx() + FrontendTokens.FloatAmplitude.toPx() * floatPhase) * focusProgress
+                translationY = (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
             }
             .scale(scale)
             .then(

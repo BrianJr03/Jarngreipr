@@ -27,8 +27,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideogameAsset
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -79,7 +82,10 @@ fun PinnedRomOptionsDialog(
     onDisplayPreferenceChange: (DisplayPreference) -> Unit = {},
     currentContentScale: EsdeContentScale? = null,
     onContentScaleChange: ((EsdeContentScale) -> Unit)? = null,
-    onEditCanvas: (() -> Unit)? = null
+    onEditCanvas: (() -> Unit)? = null,
+    continuousSpinEligible: Boolean = false,
+    continuousSpinEnabled: Boolean = false,
+    onContinuousSpinChange: ((Boolean) -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) {
@@ -145,6 +151,15 @@ fun PinnedRomOptionsDialog(
                                     onContentScaleChange(scale)
                                     onDismiss()
                                 }
+                            )
+                        }
+                        if (continuousSpinEligible && onContinuousSpinChange != null) {
+                            Spacer(Modifier.height(4.dp))
+                            HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
+                            Spacer(Modifier.height(4.dp))
+                            RomContinuousSpinRow(
+                                enabled = continuousSpinEnabled,
+                                onToggle = onContinuousSpinChange
                             )
                         }
                         Spacer(Modifier.height(4.dp))
@@ -415,6 +430,52 @@ private fun RomContentScaleSection(
             label = label,
             isSelected = scale == current,
             onClick = { onSelected(scale) }
+        )
+    }
+}
+
+@Composable
+private fun RomContinuousSpinRow(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onToggle(!enabled) }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Autorenew,
+            contentDescription = null,
+            tint = if (enabled) ThemePrimaryColor else Color.White.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.rom_options_continuous_spin),
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.rom_options_continuous_spin_description),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 12.sp
+            )
+        }
+        Switch(
+            checked = enabled,
+            onCheckedChange = onToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ThemePrimaryColor,
+                checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
+                uncheckedThumbColor = Color.Gray,
+                uncheckedTrackColor = Color.DarkGray
+            )
         )
     }
 }

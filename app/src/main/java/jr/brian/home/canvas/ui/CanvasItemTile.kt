@@ -38,8 +38,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.animation.core.animateFloat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -299,6 +302,9 @@ private fun CanvasRomTile(
 ) {
     val context = LocalContext.current
     val visibility = LocalAppVisibilityManager.current
+    val esdeState by jr.brian.home.esde.data.LocalESDEPreferencesManager.current
+        .state.collectAsStateWithLifecycle()
+    val continuousSpin = rom != null && rom.key in esdeState.canvasContinuousSpinRoms
     BaseTile(
         onTap = onTap,
         onLongPress = onLongPress,
@@ -332,7 +338,9 @@ private fun CanvasRomTile(
                                 contentDescription = stringResource(
                                     R.string.rom_search_icon_description
                                 ),
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .continuousSpin(continuousSpin),
                                 contentScale = when (contentScale) {
                                     EsdeContentScale.FIT -> ContentScale.Fit
                                     EsdeContentScale.CROP -> ContentScale.Crop
@@ -360,6 +368,26 @@ private fun CanvasRomTile(
             MissingTile(label = fallbackKey, icon = Icons.Default.VideogameAsset)
         }
     }
+}
+
+@Composable
+private fun Modifier.continuousSpin(enabled: Boolean): Modifier {
+    if (!enabled) return this
+    val transition = androidx.compose.animation.core.rememberInfiniteTransition(
+        label = "canvasRomSpin"
+    )
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(
+                durationMillis = 4000,
+                easing = androidx.compose.animation.core.LinearEasing
+            )
+        ),
+        label = "canvasRomSpinAngle"
+    )
+    return this.graphicsLayer { rotationZ = rotation }
 }
 
 @Composable

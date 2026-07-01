@@ -15,10 +15,14 @@ import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.PlatformImageFolderType
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.model.VideoScaleMode
 import jr.brian.home.esde.model.WallpaperToggleTarget
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -126,6 +130,11 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
@@ -135,6 +144,8 @@ class ESDEPreferencesManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
     )
+
+    private val customizationJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val _state = MutableStateFlow(loadState())
     val state: StateFlow<ESDEPrefsState> = _state.asStateFlow()
@@ -355,6 +366,16 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        val systemCustomizations: Map<String, SystemCustomization> = prefs.getString(KEY_SYSTEM_CUSTOMIZATIONS, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<Map<String, SystemCustomization>>(it) }.getOrNull() }
+            ?: emptyMap()
+
+        val systemOrder: List<String> = prefs.getString(KEY_SYSTEM_ORDER, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<List<String>>(it) }.getOrNull() }
+            ?: emptyList()
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -496,7 +517,19 @@ class ESDEPreferencesManager(context: Context) {
                 ?: FrontendLayout.Grid,
             gameLayout = prefs.getString(KEY_GAME_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
-                ?: FrontendLayout.Grid
+                ?: FrontendLayout.Grid,
+            systemCustomizations = systemCustomizations,
+            systemOrder = systemOrder,
+            frontendHintsVisible = prefs.getBoolean(KEY_FRONTEND_HINTS_VISIBLE, true),
+            frontendFloatIntensity = prefs.getFloat(KEY_FRONTEND_FLOAT_INTENSITY, 1f).coerceIn(0f, 3f),
+            canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val arr = JSONArray(json)
+                        (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    } catch (_: Exception) { emptySet() }
+                } ?: emptySet()
         )
     }
 
@@ -1199,5 +1232,67 @@ class ESDEPreferencesManager(context: Context) {
         val updated = _state.value.hiddenGames - gameKey
         _state.value = _state.value.copy(hiddenGames = updated)
         prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
+    }
+
+    fun setSystemCustomization(systemName: String, customization: SystemCustomization) {
+        val updated = _state.value.systemCustomizations + (systemName to customization)
+        persistSystemCustomizations(updated)
+    }
+
+    fun clearSystemCustomization(systemName: String) {
+        val updated = _state.value.systemCustomizations - systemName
+        persistSystemCustomizations(updated)
+    }
+
+    fun setAllSystemCustomizations(map: Map<String, SystemCustomization>) {
+        persistSystemCustomizations(map)
+    }
+
+    private fun persistSystemCustomizations(map: Map<String, SystemCustomization>) {
+        _state.value = _state.value.copy(systemCustomizations = map)
+        if (map.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_CUSTOMIZATIONS) }
+        } else {
+            prefs.edit { putString(KEY_SYSTEM_CUSTOMIZATIONS, customizationJson.encodeToString(map)) }
+        }
+    }
+
+    fun setSystemOrder(order: List<String>) {
+        _state.value = _state.value.copy(systemOrder = order)
+        if (order.isEmpty()) {
+            prefs.edit { remove(KEY_SYSTEM_ORDER) }
+        } else {
+            prefs.edit { putString(KEY_SYSTEM_ORDER, customizationJson.encodeToString(order)) }
+        }
+    }
+
+    fun setFrontendHintsVisible(visible: Boolean) {
+        _state.value = _state.value.copy(frontendHintsVisible = visible)
+        prefs.edit { putBoolean(KEY_FRONTEND_HINTS_VISIBLE, visible) }
+    }
+
+    fun setFrontendFloatIntensity(intensity: Float) {
+        val coerced = intensity.coerceIn(0f, 3f)
+        _state.value = _state.value.copy(frontendFloatIntensity = coerced)
+        prefs.edit { putFloat(KEY_FRONTEND_FLOAT_INTENSITY, coerced) }
+    }
+
+    fun setCanvasContinuousSpin(romKey: String, enabled: Boolean) {
+        val current = _state.value.canvasContinuousSpinRoms
+        val updated = if (enabled) current + romKey else current - romKey
+        persistCanvasContinuousSpin(updated)
+    }
+
+    fun setAllCanvasContinuousSpin(roms: Set<String>) {
+        persistCanvasContinuousSpin(roms)
+    }
+
+    private fun persistCanvasContinuousSpin(roms: Set<String>) {
+        _state.value = _state.value.copy(canvasContinuousSpinRoms = roms)
+        if (roms.isEmpty()) {
+            prefs.edit { remove(KEY_CANVAS_CONTINUOUS_SPIN_ROMS) }
+        } else {
+            prefs.edit { putString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, JSONArray(roms.toList()).toString()) }
+        }
     }
 }
