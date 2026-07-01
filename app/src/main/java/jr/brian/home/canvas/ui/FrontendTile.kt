@@ -81,7 +81,7 @@ import java.io.File
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun EsdeArtTile(
+fun FrontendTile(
     resolved: ResolvedCanvasItem.EsdeArt,
     onTap: () -> Unit,
     onLongPress: () -> Unit,
@@ -95,11 +95,18 @@ fun EsdeArtTile(
     val imageType = resolved.raw.resolvedImageType
     val contentScale = resolved.raw.resolvedContentScale
 
-    val path: String? = state.currentGame?.imagePathFor(imageType)
+    val livePath: String? = state.currentGame?.imagePathFor(imageType)
         ?: when (imageType) {
             GameImageType.Marquee -> state.logoPath
             else -> state.currentImagePath
         }
+
+    // Sticky: when a game launches, ES-DE state may clear (currentGame/logoPath/
+    // currentImagePath all null). Keep the most recent artwork instead of
+    // dropping to the gradient placeholder.
+    var lastPath by remember { mutableStateOf<String?>(null) }
+    if (livePath != null && livePath != lastPath) lastPath = livePath
+    val path = livePath ?: lastPath
 
     val imageData = remember(path) { path?.let { toCoilModel(it) } }
 

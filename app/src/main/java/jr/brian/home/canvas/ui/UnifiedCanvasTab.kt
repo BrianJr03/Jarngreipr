@@ -86,7 +86,8 @@ fun UnifiedCanvasTab(
     viewModel: CanvasViewModel = hiltViewModel(key = "canvas-page-$pageIndex"),
     romSearchViewModel: RomSearchViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
-    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel()
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
+    powerViewModel: jr.brian.home.viewmodels.PowerViewModel
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
@@ -288,7 +289,7 @@ fun UnifiedCanvasTab(
     }
 
     if (addDialogVisible) {
-        CanvasMainDialog(
+        CanvasMenuDialog(
             layout = uiState.layout,
             pagerState = pagerState,
             totalPages = totalPages,
@@ -313,6 +314,7 @@ fun UnifiedCanvasTab(
             onSettingsClick = onSettingsClick,
             onDeletePage = onDeletePage,
             onNavigateToSearch = onNavigateToSearch,
+            onPowerClick = { powerViewModel.togglePower() },
             onDismiss = {
                 addDialogVisible = false
                 addDialogStartInEdit = false
@@ -637,7 +639,7 @@ private fun newRssMusic(): CanvasItem.RssMusicItem =
 
 /**
  * Default Fit/Crop choice presented when no tile-specific value exists yet.
- * Mirrors the legacy hardcoded EsdeArtTile rule so a freshly-added tile renders
+ * Mirrors the legacy hardcoded FrontendTile rule so a freshly-added tile renders
  * the same way the pre-toggle code would have rendered it.
  */
 private fun defaultEsdeContentScaleFor(type: GameImageType): EsdeContentScale =

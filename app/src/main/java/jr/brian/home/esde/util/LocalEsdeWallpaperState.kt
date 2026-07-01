@@ -9,7 +9,7 @@ import jr.brian.home.esde.model.WallpaperState
  * `logoPath` and `currentImagePath`, updated by ES-DE events via
  * `ESDEViewModel.updateForSystem` / `updateForGame`.
  *
- * Consumers (e.g. [jr.brian.home.canvas.ui.EsdeArtTile]) just read
+ * Consumers (e.g. [jr.brian.home.canvas.ui.FrontendTile]) just read
  * `LocalEsdeWallpaperState.current` — Compose recomposes the readers when
  * MainActivity re-provides a new state value, so tiles react automatically
  * to system / game / screensaver events with no additional listener wiring.
