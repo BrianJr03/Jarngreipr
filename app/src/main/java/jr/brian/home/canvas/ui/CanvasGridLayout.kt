@@ -20,9 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.absoluteOffset
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -561,11 +559,11 @@ private fun AddTile(onClick: () -> Unit, onLongClick: () -> Unit) {
     var isFocused by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .size(42.dp)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .clip(RoundedCornerShape(14.dp))
-            .background(ThemePrimaryColor.copy(alpha = if (isFocused) 0.22f else 0.12f))
+            .background(ThemePrimaryColor)
             .border(
                 width = if (isFocused) 3.dp else 2.dp,
                 color = ThemePrimaryColor.copy(alpha = if (isFocused) 0.95f else 0.55f),
@@ -576,9 +574,9 @@ private fun AddTile(onClick: () -> Unit, onLongClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = stringResource(R.string.canvas_add_item),
-            tint = ThemePrimaryColor
+            imageVector = Icons.Default.Menu,
+            contentDescription = stringResource(R.string.canvas_menu),
+            tint = Color.White
         )
     }
 }

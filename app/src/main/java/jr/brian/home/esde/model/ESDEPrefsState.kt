@@ -251,7 +251,12 @@ data class ESDEPrefsState(
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val systemLayout: FrontendLayout = FrontendLayout.Grid,
-    val gameLayout: FrontendLayout = FrontendLayout.Grid
+    val gameLayout: FrontendLayout = FrontendLayout.Grid,
+    val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
+    val systemOrder: List<String> = emptyList(),
+    val frontendHintsVisible: Boolean = true,
+    val frontendFloatIntensity: Float = 1f,
+    val canvasContinuousSpinRoms: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

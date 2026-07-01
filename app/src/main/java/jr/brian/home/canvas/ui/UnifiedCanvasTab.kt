@@ -92,6 +92,8 @@ fun UnifiedCanvasTab(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val notificationCountManager = LocalNotificationManager.current
+    val esdePrefsManager = jr.brian.home.esde.data.LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val allPinnedRoms by viewModel.allPinnedRoms.collectAsStateWithLifecycle()
     val appWidgetHost = widgetViewModel.getAppWidgetHost()
@@ -184,11 +186,13 @@ fun UnifiedCanvasTab(
                 )
             },
             onLongPress = { resolved ->
-                when {
-                    resolved is ResolvedCanvasItem.App && resolved.info != null ->
+                when (resolved) {
+                    is ResolvedCanvasItem.App if resolved.info != null ->
                         appOptionsTarget = resolved
-                    resolved is ResolvedCanvasItem.Rom && resolved.info != null ->
+
+                    is ResolvedCanvasItem.Rom if resolved.info != null ->
                         romOptionsTarget = resolved
+
                     else -> pendingRemoval = resolved
                 }
             },
@@ -462,6 +466,8 @@ fun UnifiedCanvasTab(
             romOptionsTarget = null
             return@let
         }
+        val spinEligible = rom.systemName.lowercase() in
+            jr.brian.home.esde.util.ESDEMediaConstants.DISC_PLATFORMS
         PinnedRomOptionsDialog(
             rom = rom,
             onDismiss = { romOptionsTarget = null },
@@ -478,7 +484,12 @@ fun UnifiedCanvasTab(
             onEditCanvas = {
                 romOptionsTarget = null
                 onEditCanvas()
-            }
+            },
+            continuousSpinEligible = spinEligible,
+            continuousSpinEnabled = rom.key in esdePrefsState.canvasContinuousSpinRoms,
+            onContinuousSpinChange = if (spinEligible) { enabled ->
+                esdePrefsManager.setCanvasContinuousSpin(rom.key, enabled)
+            } else null
         )
     }
 

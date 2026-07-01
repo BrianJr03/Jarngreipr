@@ -1,6 +1,7 @@
 package jr.brian.home.data.config
 
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
@@ -23,7 +24,12 @@ data class JarngreiprConfig(
         // v5: added CanvasItem.RssMusicItem variant. Older blobs decode
         //     unchanged (no rss_music entries); new blobs with rss_music are
         //     unreadable by pre-v5 builds, so the version bump signals that.
-        const val CONFIG_VERSION = 5
+        // v6: added RomSearchConfig.systemCustomizations + systemOrder for per-system
+        //     frontend tile customization (background, name overlay toggle, color, order).
+        // v7: added RomSearchConfig.frontendHintsVisible for the bottom hint-row toggle.
+        // v8: added RomSearchConfig.frontendFloatIntensity for the floating-animation slider.
+        // v9: added RomSearchConfig.canvasContinuousSpinRoms for per-rom continuous-spin toggle.
+        const val CONFIG_VERSION = 9
     }
 }
 
@@ -222,7 +228,12 @@ data class RomSearchConfig(
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val systemLayout: String = "Grid",
-    val gameLayout: String = "Grid"
+    val gameLayout: String = "Grid",
+    val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
+    val systemOrder: List<String> = emptyList(),
+    val frontendHintsVisible: Boolean = true,
+    val frontendFloatIntensity: Float = 1f,
+    val canvasContinuousSpinRoms: Set<String> = emptySet()
 )
 
 @Serializable

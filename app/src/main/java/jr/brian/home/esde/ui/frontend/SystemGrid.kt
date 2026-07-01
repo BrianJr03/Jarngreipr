@@ -2,8 +2,9 @@ package jr.brian.home.esde.ui.frontend
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,13 +23,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +40,7 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.LocalESDEImageLoader
@@ -68,8 +69,11 @@ internal fun SystemGrid(
     modifier: Modifier = Modifier,
     initialRealIndex: Int = 0,
     backgroundTransparent: Boolean = false,
+    customizations: Map<String, SystemCustomization> = emptyMap(),
+    reorderingSystem: String? = null,
     onSystemFocused: (SystemTile) -> Unit = {},
-    onSystemSelected: (SystemTile) -> Unit = {}
+    onSystemSelected: (SystemTile) -> Unit = {},
+    onSystemLongPressed: (SystemTile) -> Unit = {}
 ) {
     Box(
         modifier = modifier.then(
@@ -110,8 +114,11 @@ internal fun SystemGrid(
                         tile = tile,
                         isFocused = isFocused,
                         focusRequester = focusRequester,
+                        customization = customizations[tile.systemName],
+                        isReordering = reorderingSystem == tile.systemName,
                         onFocused = onFocused,
-                        onSelected = { onSystemSelected(tile) }
+                        onSelected = { onSystemSelected(tile) },
+                        onLongPress = { onSystemLongPressed(tile) }
                     )
                 }
             }
@@ -119,13 +126,17 @@ internal fun SystemGrid(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SystemTileCard(
     tile: SystemTile,
     isFocused: Boolean,
     focusRequester: androidx.compose.ui.focus.FocusRequester,
+    customization: SystemCustomization?,
+    isReordering: Boolean,
     onFocused: () -> Unit,
-    onSelected: () -> Unit
+    onSelected: () -> Unit,
+    onLongPress: () -> Unit
 ) {
     val scale = animatedFocusedScale(isFocused)
     val shape = FrontendTokens.Radius.TileSmall
@@ -139,35 +150,107 @@ private fun SystemTileCard(
     )
     val tileAlpha = lerp(FrontendTokens.Alpha.Unfocused, FrontendTokens.Alpha.Primary, focusProgress)
     val floatPhase = focusFloatPhase(isFocused)
+    val floatAmplitude = rememberFloatAmplitude()
+
+    val backgroundColor = resolveBackgroundColor(customization)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(TILE_INSET)
-            .alpha(tileAlpha)
             .graphicsLayer {
-                translationY = (-FOCUS_LIFT.toPx() + FrontendTokens.FloatAmplitude.toPx() * floatPhase) * focusProgress
+                translationY = (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
+                scaleX = scale
+                scaleY = scale
+                alpha = tileAlpha
+                clip = false
             }
-            .scale(scale)
+            .padding(TILE_INSET)
             .clip(shape)
-            .background(OledCardColor)
+            .background(backgroundColor)
             .focusRequester(focusRequester)
             .onFocusChanged { if (it.isFocused) onFocused() }
-            .clickable(
+            .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onSelected() }
+                indication = null,
+                onClick = onSelected,
+                onLongClick = onLongPress
+            )
     ) {
-        SystemTileContent(tile = tile)
+        SystemTileContent(tile = tile, customization = customization)
+        if (isReordering) {
+            ReorderingHighlight()
+        }
     }
 }
 
 @Composable
-private fun SystemTileContent(tile: SystemTile) {
+private fun resolveBackgroundColor(customization: SystemCustomization?): Color {
+    val argb = customization?.solidColorArgb ?: return OledCardColor
+    return Color(argb.toInt())
+}
+
+@Composable
+private fun SystemTileContent(tile: SystemTile, customization: SystemCustomization?) {
+    val customBackgroundUri = customization?.backgroundUri
+    val showName = customization?.showName ?: true
+
+    if (customBackgroundUri != null) {
+        CustomBackgroundContent(
+            systemName = tile.systemName,
+            backgroundUri = customBackgroundUri,
+            showName = showName
+        )
+    } else {
+        DefaultSystemLogoContent(systemName = tile.systemName)
+    }
+}
+
+@Composable
+private fun CustomBackgroundContent(
+    systemName: String,
+    backgroundUri: String,
+    showName: Boolean
+) {
+    val context = LocalContext.current
+    Box(modifier = Modifier.fillMaxSize()) {
+        AsyncImage(
+            model = ImageRequest.Builder(context).data(backgroundUri).build(),
+            contentDescription = systemName,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        if (showName) {
+            SystemNameOverlay(systemName = systemName)
+        }
+    }
+}
+
+@Composable
+private fun SystemNameOverlay(systemName: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.35f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = systemName.uppercase(),
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(FrontendTokens.Spacing.S)
+        )
+    }
+}
+
+@Composable
+private fun DefaultSystemLogoContent(systemName: String) {
     val context = LocalContext.current
     val imageLoader = LocalESDEImageLoader.current
-    val mediaName = remember(tile.systemName) { getMediaSystemName(tile.systemName) }
+    val mediaName = remember(systemName) { getMediaSystemName(systemName) }
     val logoModel = remember(mediaName) {
         "${ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH}/$mediaName.svg"
     }
@@ -175,12 +258,12 @@ private fun SystemTileContent(tile: SystemTile) {
 
     Box(modifier = Modifier.fillMaxSize().padding(FrontendTokens.Spacing.S)) {
         if (hasError) {
-            SystemTileTextFallback(systemName = tile.systemName)
+            SystemTileTextFallback(systemName = systemName)
         } else {
             AsyncImage(
                 model = ImageRequest.Builder(context).data(logoModel).build(),
                 imageLoader = imageLoader,
-                contentDescription = tile.systemName,
+                contentDescription = systemName,
                 modifier = Modifier
                     .fillMaxSize()
                     .align(Alignment.Center),
@@ -204,4 +287,13 @@ private fun SystemTileTextFallback(systemName: String) {
             style = MaterialTheme.typography.titleMedium
         )
     }
+}
+
+@Composable
+private fun ReorderingHighlight() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ThemeAccentColor.copy(alpha = 0.18f))
+    )
 }

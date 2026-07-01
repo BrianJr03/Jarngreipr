@@ -15,8 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 
 object FrontendTokens {
 
@@ -83,6 +86,12 @@ object FrontendTokens {
             letterSpacing = 0.5.sp
         )
     }
+}
+
+@Composable
+internal fun rememberFloatAmplitude(): Dp {
+    val state by LocalESDEPreferencesManager.current.state.collectAsStateWithLifecycle()
+    return FrontendTokens.FloatAmplitude * state.frontendFloatIntensity
 }
 
 @Composable

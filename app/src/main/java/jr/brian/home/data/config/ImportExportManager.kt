@@ -270,7 +270,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
-                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name
+                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
+                systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
+                systemOrder = f.esdePreferencesManager.state.value.systemOrder,
+                frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
+                frontendFloatIntensity = f.esdePreferencesManager.state.value.frontendFloatIntensity,
+                canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms
             )
         )
     }
@@ -511,6 +516,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             ?.let { f.esdePreferencesManager.setSystemLayout(it) }
         runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
             ?.let { f.esdePreferencesManager.setGameLayout(it) }
+        f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)
+        f.esdePreferencesManager.setSystemOrder(config.romSearch.systemOrder)
+        f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
+        f.esdePreferencesManager.setFrontendFloatIntensity(config.romSearch.frontendFloatIntensity)
+        f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
     }
 
     private fun applySystemConfig(config: SystemConfig) {
