@@ -53,7 +53,7 @@ import jr.brian.home.util.MediaPickerLauncher
  * Inner controls for editing a canvas page (edit-mode toggle, orientation,
  * column/row steppers, tidy). Lives standalone so the unified canvas dialog
  * can host it as a sub-view; the old standalone `CanvasEditDialog` surface
- * is gone (one dialog now, see [CanvasMainDialog]).
+ * is gone (one dialog now, see [CanvasMenuDialog]).
  */
 @Composable
 fun ColumnScope.EditCanvasContent(

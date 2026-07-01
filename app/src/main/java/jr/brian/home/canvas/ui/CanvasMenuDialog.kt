@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
@@ -72,12 +73,13 @@ import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
+import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.ui.util.rememberDialogState
 import kotlinx.coroutines.launch
 
 /**
- * Add-action choices surfaced by [CanvasMainDialog]'s options list. Mirrors
+ * Add-action choices surfaced by [CanvasMenuDialog]'s options list. Mirrors
  * the variants of [jr.brian.home.canvas.model.CanvasItem] one-to-one.
  */
 enum class CanvasAddChoice {
@@ -97,7 +99,7 @@ private enum class CanvasDialogMode { Options, Edit }
  * (the canvas's add icon), and one focus traversal across all controls.
  */
 @Composable
-fun CanvasMainDialog(
+fun CanvasMenuDialog(
     layout: CanvasLayout,
     pagerState: PagerState,
     totalPages: Int,
@@ -110,6 +112,7 @@ fun CanvasMainDialog(
     onDeletePage: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
     onDismiss: () -> Unit,
+    onPowerClick: (() -> Unit)? = null,
     startInEdit: Boolean = false
 ) {
     val initialMode = if (startInEdit) CanvasDialogMode.Edit else CanvasDialogMode.Options
@@ -167,6 +170,12 @@ fun CanvasMainDialog(
                         onLaunchFrontend = {
                             launchFrontend(context)
                             onDismiss()
+                        },
+                        onPowerClick = onPowerClick?.let { click ->
+                            {
+                                click()
+                                onDismiss()
+                            }
                         }
                     )
                     CanvasDialogMode.Edit -> EditBody(
@@ -198,16 +207,20 @@ private fun OptionsBody(
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
-    onLaunchFrontend: () -> Unit
+    onLaunchFrontend: () -> Unit,
+    onPowerClick: (() -> Unit)?
 ) {
     val esdePrefsState by LocalESDEPreferencesManager.current.state.collectAsStateWithLifecycle()
+    val powerSettingsManager = LocalPowerSettingsManager.current
+    val powerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
     OptionsHeaderRow(
         pagerState = pagerState,
         totalPages = totalPages,
         onSettingsClick = onSettingsClick,
         onDeletePage = onDeletePage,
-        onNavigateToSearch = onNavigateToSearch
+        onNavigateToSearch = onNavigateToSearch,
+        onPowerClick = if (powerButtonVisible) onPowerClick else null
     )
     CompactOptionRow(
         icon = Icons.Default.Tune,
@@ -246,7 +259,8 @@ private fun OptionsHeaderRow(
     totalPages: Int,
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
-    onNavigateToSearch: () -> Unit
+    onNavigateToSearch: () -> Unit,
+    onPowerClick: (() -> Unit)? = null
 ) {
     val homeTabManager = LocalHomeTabManager.current
     val pageCountManager = LocalPageCountManager.current
@@ -304,6 +318,16 @@ private fun OptionsHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState
             )
+        }
+        if (onPowerClick != null) {
+            IconBox(onClick = onPowerClick) {
+                Icon(
+                    imageVector = Icons.Default.PowerSettingsNew,
+                    contentDescription = stringResource(R.string.header_power_button),
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         IconBox(onClick = onSettingsClick) {
             Icon(

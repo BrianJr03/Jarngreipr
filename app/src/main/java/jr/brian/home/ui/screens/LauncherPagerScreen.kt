@@ -489,7 +489,8 @@ fun LauncherPagerScreen(
                                     }
                                 },
                                 dismissShadeSignal = dismissShadeSignal,
-                                widgetViewModel = widgetViewModel
+                                widgetViewModel = widgetViewModel,
+                                powerViewModel = powerViewModel
                             )
                         }
                     }
