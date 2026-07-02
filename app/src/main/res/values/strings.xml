@@ -39,7 +39,7 @@
     <string name="rom_detail_media_scope_this_game">This game</string>
     <string name="rom_detail_media_scope_all_system">All %1$s</string>
     <string name="rom_search_hidden_no_results">No hidden games</string>
-    <string name="rom_search_experimental_title">ROM Search (Experimental)</string>
+    <string name="rom_search_experimental_title">Jarngreipr FE (Experimental)</string>
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
     <string name="rom_search_experimental_got_it">Got it</string>
     <string name="frontend_no_systems">No systems found</string>
