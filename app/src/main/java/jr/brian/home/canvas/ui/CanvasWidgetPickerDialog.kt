@@ -18,10 +18,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.data.WidgetProviderRepository
@@ -60,7 +58,7 @@ import jr.brian.home.model.widget.WidgetProviderInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedDialog
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -109,27 +107,13 @@ fun CanvasWidgetPickerDialog(
         }
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.85f)
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush(isFocused = true),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = stringResource(R.string.canvas_widget_picker_title),
                     color = Color.White,
@@ -140,7 +124,9 @@ fun CanvasWidgetPickerDialog(
                 when {
                     isLoading -> {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -152,7 +138,9 @@ fun CanvasWidgetPickerDialog(
                     }
                     categories.isEmpty() -> {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -165,7 +153,9 @@ fun CanvasWidgetPickerDialog(
                     }
                     else -> {
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 520.dp),
                             contentPadding = PaddingValues(4.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -218,7 +208,6 @@ fun CanvasWidgetPickerDialog(
                         }
                     }
                 }
-            }
         }
     }
 }

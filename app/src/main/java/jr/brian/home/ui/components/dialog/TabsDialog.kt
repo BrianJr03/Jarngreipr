@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,7 +53,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import jr.brian.home.R
 import jr.brian.home.data.PageCountManager
@@ -62,7 +60,6 @@ import jr.brian.home.model.PageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 
 @Composable
@@ -117,31 +114,15 @@ fun TabsDialog(
         )
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = modifier
-                .fillMaxWidth(0.9f)
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush(isFocused = true),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 28.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(28.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -288,13 +269,12 @@ fun TabsDialog(
                 }
 
                 // ── Add page button ──────────────────────────────────────
-                AnimatedVisibility(
-                    visible = totalPages < PageCountManager.MAX_PAGE_COUNT + 1,
-                    enter = fadeIn() + slideInVertically(),
-                    exit = fadeOut() + slideOutVertically()
-                ) {
-                    AddPageButton(onClick = { showPageTypeSelection = true })
-                }
+            AnimatedVisibility(
+                visible = totalPages < PageCountManager.MAX_PAGE_COUNT + 1,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically()
+            ) {
+                AddPageButton(onClick = { showPageTypeSelection = true })
             }
         }
     }

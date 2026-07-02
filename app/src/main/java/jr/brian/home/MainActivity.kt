@@ -34,7 +34,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -53,6 +56,7 @@ import jr.brian.home.esde.model.FrontendSelection
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.ui.FrontEndActivity
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
@@ -66,11 +70,16 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.launchFrontend
+import jr.brian.home.ui.util.resolveBottomDisplayId
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.ping.PingPermissions.hasPingPermissions
 import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -120,6 +129,7 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.startWatching()
         managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
+        observeFrontendEnabledFlag()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -283,6 +293,24 @@ class MainActivity : ComponentActivity() {
             scaleMode = event.scaleMode,
             overlayEnabled = event.overlayEnabled
         )
+    }
+
+    private fun observeFrontendEnabledFlag() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                esdePreferencesManager.state
+                    .map { it.frontendEnabled }
+                    .distinctUntilChanged()
+                    .collect { enabled -> if (enabled) launchFrontendIfEnabled() }
+            }
+        }
+    }
+
+    private fun launchFrontendIfEnabled() {
+        if (!esdePreferencesManager.state.value.frontendEnabled) return
+        if (FrontEndActivity.isRunning) return
+        if (resolveBottomDisplayId(this) == null) return
+        launchFrontend(this)
     }
 
     private fun checkAndCreateScripts() {

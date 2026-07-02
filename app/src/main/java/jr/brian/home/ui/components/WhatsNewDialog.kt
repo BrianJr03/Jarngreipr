@@ -9,7 +9,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -18,11 +27,16 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,24 +48,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.ui.components.dialog.DimmedDialog
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
-import jr.brian.home.ui.components.konfetti.KonfettiPresets
 import jr.brian.home.ui.extensions.clickWithHaptic
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
-import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
-import nl.dionsegijn.konfetti.compose.KonfettiView
-import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
-import nl.dionsegijn.konfetti.core.PartySystem
 
 @Composable
 fun WhatsNewDialog(
@@ -59,32 +70,20 @@ fun WhatsNewDialog(
     patchNotes: String,
     onDismiss: () -> Unit
 ) {
-    val whatsNewManager = LocalWhatsNewManager.current
-    val selectedPreset = whatsNewManager.selectedKonfettiPreset
+//    val whatsNewManager = LocalWhatsNewManager.current
+//    val selectedPreset = whatsNewManager.selectedKonfettiPreset
 
-    var konfettiTrigger by remember { mutableIntStateOf(0) }
-    var isKonfettiPlaying by remember { mutableStateOf(selectedPreset != KonfettiPreset.NONE) }
+//    var konfettiTrigger by remember { mutableIntStateOf(0) }
+//    var isKonfettiPlaying by remember { mutableStateOf(selectedPreset != KonfettiPreset.NONE) }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = OledCardColor,
-                tonalElevation = 0.dp
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .systemBarsPadding()
-                        .padding(24.dp)
-                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -118,76 +117,66 @@ fun WhatsNewDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        val scrollState = rememberScrollState()
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(scrollState)
-                        ) {
-                            MarkdownText(
-                                text = patchNotes,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            KonfettiAnimationChooser(
-                                selectedPreset = selectedPreset,
-                                onPresetSelected = { preset ->
-                                    whatsNewManager.setKonfettiPreset(preset)
-                                    if (preset == KonfettiPreset.NONE) {
-                                        isKonfettiPlaying = false
-                                    } else {
-                                        konfettiTrigger++
-                                        isKonfettiPlaying = true
-                                    }
-                                }
-                            )
-                        }
-                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    MarkdownText(
+                        text = patchNotes,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ThemePrimaryColor,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text(stringResource(R.string.whats_new_got_it))
-                    }
+//                    KonfettiAnimationChooser(
+//                        selectedPreset = selectedPreset,
+//                        onPresetSelected = { preset ->
+//                            whatsNewManager.setKonfettiPreset(preset)
+//                            if (preset == KonfettiPreset.NONE) {
+//                                isKonfettiPlaying = false
+//                            } else {
+//                                konfettiTrigger++
+//                                isKonfettiPlaying = true
+//                            }
+//                        }
+//                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemePrimaryColor,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(stringResource(R.string.whats_new_got_it))
                 }
             }
 
-            // Konfetti overlay - plays on dialog open and on preset change
-            // Resolve theme colors in composable scope, key() forces re-creation when trigger changes
-            val parties = KonfettiPresets.getParties(selectedPreset)
-            if (isKonfettiPlaying) {
-                key(konfettiTrigger) {
-                    KonfettiView(
-                        modifier = Modifier.fillMaxSize(),
-                        parties = parties,
-                        updateListener = object : OnParticleSystemUpdateListener {
-                            override fun onParticleSystemEnded(
-                                system: PartySystem,
-                                activeSystems: Int
-                            ) {
-                                if (activeSystems == 0) {
-                                    isKonfettiPlaying = false
-                                }
-                            }
-                        }
-                    )
-                }
-            }
+//            val parties = KonfettiPresets.getParties(selectedPreset)
+//            if (isKonfettiPlaying) {
+//                key(konfettiTrigger) {
+//                    KonfettiView(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        parties = parties,
+//                        updateListener = object : OnParticleSystemUpdateListener {
+//                            override fun onParticleSystemEnded(
+//                                system: PartySystem,
+//                                activeSystems: Int
+//                            ) {
+//                                if (activeSystems == 0) {
+//                                    isKonfettiPlaying = false
+//                                }
+//                            }
+//                        }
+//                    )
+//                }
+//            }
         }
     }
 }
@@ -481,6 +470,7 @@ private fun MarkdownHeader3(line: String) {
 private fun MarkdownBulletPoint(line: String) {
     val leadingSpaces = line.length - line.trimStart().length
     val indentLevel = leadingSpaces / 2
+    val content = line.trim().removePrefix("- ").removePrefix("* ")
     Row(
         modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
             .padding(start = (indentLevel * 16).dp)
@@ -491,7 +481,7 @@ private fun MarkdownBulletPoint(line: String) {
             color = ThemePrimaryColor
         )
         Text(
-            text = line.trim().removePrefix("- ").removePrefix("* "),
+            text = parseInlineMarkdown(content),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.85f),
             lineHeight = 24.sp
@@ -516,7 +506,7 @@ private fun MarkdownBlockquote(line: String) {
         ) {}
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = quoteText,
+            text = parseInlineMarkdown(quoteText),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White.copy(alpha = 0.6f),
             lineHeight = 24.sp,
@@ -548,9 +538,8 @@ private fun MarkdownCodeBlock(codeLines: List<String>) {
 @Composable
 private fun MarkdownBoldText(line: String) {
     Text(
-        text = line.replace("**", ""),
+        text = parseInlineMarkdown(line),
         style = MaterialTheme.typography.bodyLarge,
-        fontWeight = if (line.trim().startsWith("**")) FontWeight.Bold else FontWeight.Normal,
         color = Color.White,
         modifier = Modifier.padding(vertical = 4.dp)
     )
@@ -564,10 +553,53 @@ private fun MarkdownEmptyLine() {
 @Composable
 private fun MarkdownRegularText(line: String) {
     Text(
-        text = line,
+        text = parseInlineMarkdown(line),
         style = MaterialTheme.typography.bodyLarge,
         color = Color.White.copy(alpha = 0.85f),
         lineHeight = 24.sp,
         modifier = Modifier.padding(vertical = 4.dp)
     )
+}
+
+@Composable
+private fun parseInlineMarkdown(text: String): AnnotatedString = buildAnnotatedString {
+    var i = 0
+    while (i < text.length) {
+        when {
+            i + 1 < text.length && text[i] == '*' && text[i + 1] == '*' -> {
+                val end = text.indexOf("**", i + 2)
+                if (end != -1) {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(text.substring(i + 2, end))
+                    }
+                    i = end + 2
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            text[i] == '`' -> {
+                val end = text.indexOf('`', i + 1)
+                if (end != -1) {
+                    withStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            background = Color.White.copy(alpha = 0.12f),
+                            color = ThemePrimaryColor
+                        )
+                    ) {
+                        append(text.substring(i + 1, end))
+                    }
+                    i = end + 1
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            else -> {
+                append(text[i])
+                i++
+            }
+        }
+    }
 }

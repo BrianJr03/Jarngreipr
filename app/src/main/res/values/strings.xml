@@ -55,6 +55,15 @@
     <string name="frontend_settings_float_intensity_description">How far focused system / game cards bob up and down. 0% disables the float.</string>
     <string name="frontend_settings_float_intensity_value">%1$d%%</string>
     <string name="frontend_settings_close">Close</string>
+    <string name="frontend_settings_filter_systems_title">Filter Systems</string>
+    <string name="frontend_settings_filter_systems_description">Choose which systems appear on the frontend.</string>
+    <string name="system_filter_title">Filter Systems</string>
+    <string name="system_filter_row_shown">Shown</string>
+    <string name="system_filter_row_hidden">Hidden</string>
+    <string name="system_filter_show_all">Show all</string>
+    <string name="system_filter_hide_all">Hide all</string>
+    <string name="system_filter_empty">No systems available</string>
+    <string name="system_filter_close">Close</string>
     <string name="frontend_layout_systems_row_title">System screen — row layout</string>
     <string name="frontend_layout_systems_row_description">Render the System screen as a single horizontal carousel (D-pad left/right) instead of a multi-column grid.</string>
     <string name="frontend_layout_games_row_title">Games view — row layout</string>
@@ -289,6 +298,7 @@
     <string name="settings_wallpaper_image_picker">Choose Image</string>
     <string name="settings_wallpaper_gif_picker">Choose GIF</string>
     <string name="settings_wallpaper_video_picker">Choose Video</string>
+    <string name="front_end_tile">Frontend Widget</string>
     <string name="settings_wallpaper_esde">ES-DE</string>
     <string name="wallpaper_grid_default">Default</string>
     <string name="wallpaper_grid_system">System</string>
@@ -594,7 +604,7 @@
     <string name="home_tab_dialog_title">Tabs</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
-    <string name="home_tab_add_page">Add Page</string>
+    <string name="home_tab_add_page">Add Tab</string>
     <string name="home_tab_delete_page_title">Delete Page</string>
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
     <string name="home_tab_delete_confirm">@string/common_delete</string>
@@ -609,7 +619,7 @@
     <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
     <string name="home_tab_page_type_rss_tab">RSS Tab</string>
     <string name="home_tab_page_type_rss_tab_description">A tab for browsing RSS feeds.</string>
-    <string name="home_tab_page_type_unified_canvas">Unified Canvas</string>
+    <string name="home_tab_page_type_unified_canvas">Canvas</string>
     <string name="home_tab_page_type_unified_canvas_description">One continuous grid that holds apps, folders, ROMs, and widgets together.</string>
     <string name="home_tab_unified_canvas_placeholder">Canvas</string>
 

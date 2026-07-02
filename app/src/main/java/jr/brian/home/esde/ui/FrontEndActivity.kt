@@ -16,6 +16,9 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
@@ -32,6 +35,9 @@ import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.viewmodels.MainViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -143,6 +149,7 @@ class FrontEndActivity : ComponentActivity() {
         romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
+        observeFrontendEnabledFlag()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -170,6 +177,17 @@ class FrontEndActivity : ComponentActivity() {
                         onChangeFolder = ::launchSafPickerForGame
                     )
                 }
+            }
+        }
+    }
+
+    private fun observeFrontendEnabledFlag() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                esdePrefs.state
+                    .map { it.frontendEnabled }
+                    .distinctUntilChanged()
+                    .collect { enabled -> if (!enabled) finish() }
             }
         }
     }

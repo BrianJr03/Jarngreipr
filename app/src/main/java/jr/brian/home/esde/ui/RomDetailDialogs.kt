@@ -1,33 +1,21 @@
 package jr.brian.home.esde.ui
 
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,26 +23,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.EsdeCommandLauncher
-import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import java.io.File
 
@@ -101,20 +82,26 @@ internal fun EmulatorPickerDialog(
         )
     }
 
-    AlertDialog(
-        modifier = Modifier.fillMaxWidth(0.95f),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        title = {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Text(
                 text = stringResource(R.string.rom_emulator_picker_title),
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-        },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 if (emulators.isEmpty()) {
                     Text(
                         text = stringResource(R.string.rom_emulator_none_found),
@@ -153,14 +140,14 @@ internal fun EmulatorPickerDialog(
                     )
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
                 Text(stringResource(R.string.rom_detail_close))
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -183,20 +170,26 @@ private fun AppPickerDialog(
             .sortedBy { it.first.lowercase() }
     }
 
-    AlertDialog(
-        modifier = Modifier.fillMaxWidth(0.95f),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        title = {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Text(
                 text = stringResource(R.string.rom_emulator_choose_app_title),
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-        },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 installedApps.forEach { (label, pkg) ->
                     TextButton(
                         onClick = { onAppSelected(pkg) },
@@ -210,14 +203,14 @@ private fun AppPickerDialog(
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
                 Text(stringResource(R.string.rom_detail_close))
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -230,19 +223,20 @@ internal fun RetroArchCorePickerDialog(
         EsdeCommandLauncher.getInstalledCores(context)
     }
 
-    AlertDialog(
-        modifier = Modifier.fillMaxWidth(0.95f),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        title = {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Text(
                 text = "Select RetroArch Core",
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-        },
-        text = {
             if (cores.isEmpty()) {
                 Text(
                     text = "No cores found. Download cores in RetroArch → Online Updater → Core Downloader.",
@@ -250,7 +244,12 @@ internal fun RetroArchCorePickerDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
             } else {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     cores.forEach { (displayName, corePath) ->
                         TextButton(
                             onClick = {
@@ -268,14 +267,14 @@ internal fun RetroArchCorePickerDialog(
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
                 Text(stringResource(R.string.rom_detail_close))
             }
         }
-    )
+    }
 }
 
 fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): String? = when (type) {
@@ -297,20 +296,26 @@ fun MediaTypePickerDialog(
     onSelectedForSystem: (RomSearchCardMediaType?) -> Unit = {}
 ) {
     var scopeAllSystem by remember { mutableStateOf(false) }
-    AlertDialog(
-        modifier = Modifier.fillMaxWidth(0.95f),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        title = {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Text(
                 text = stringResource(R.string.rom_detail_media_type_dialog_title),
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-        },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 if (!systemName.isNullOrBlank()) {
                     MediaTypeScopeToggle(
                         systemName = systemName,
@@ -366,14 +371,14 @@ fun MediaTypePickerDialog(
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
                 Text(stringResource(R.string.rom_detail_close))
             }
         }
-    )
+    }
 }
 
 @Composable

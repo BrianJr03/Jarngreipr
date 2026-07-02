@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -42,13 +43,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
 /**
@@ -67,39 +66,33 @@ fun AppSelectionDialog(
     onMultiSelectConfirm: (List<AppInfo>) -> Unit = {}
 ) {
     val selected = remember { mutableStateMapOf<String, AppInfo>() }
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(OledBackgroundColor.copy(alpha = 0.95f))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (multiSelect) {
-                    MultiSelectHeader(
-                        selectedCount = selected.size,
-                        onConfirm = {
-                            if (selected.isNotEmpty()) {
-                                onMultiSelectConfirm(selected.values.toList())
-                            }
-                        },
-                        onCancel = onDismiss
-                    )
-                }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+            if (multiSelect) {
+                MultiSelectHeader(
+                    selectedCount = selected.size,
+                    onConfirm = {
+                        if (selected.isNotEmpty()) {
+                            onMultiSelectConfirm(selected.values.toList())
+                        }
+                    },
+                    onCancel = onDismiss
+                )
+            }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                     items(apps, key = { it.packageName }) { app ->
                         AppSelectionItem(
                             app = app,
@@ -118,7 +111,6 @@ fun AppSelectionDialog(
                         )
                     }
                 }
-            }
         }
     }
 }

@@ -39,15 +39,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.esde.model.WarningType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedDialog
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -66,32 +64,14 @@ fun SetupWizardDialog(
     onWarningContinue: () -> Unit,
     onWarningChooseAgain: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = {},
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = {}) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight()
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                ).border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                ).padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -119,12 +99,10 @@ fun SetupWizardDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Step content
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
                 ) {
                     when (currentStep) {
                         is SetupStep.Welcome -> WelcomeContent()
@@ -267,7 +245,6 @@ fun SetupWizardDialog(
                         }
                     }
                 }
-            }
         }
     }
 }

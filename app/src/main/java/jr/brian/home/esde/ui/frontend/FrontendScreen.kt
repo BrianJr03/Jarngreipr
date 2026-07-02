@@ -192,6 +192,7 @@ private fun FrontendRouteHost(
             allGames = allGames,
             isLoading = isLoading,
             hiddenGames = esdeState.hiddenGames,
+            hiddenSystems = esdeState.hiddenSystems,
             layout = esdeState.systemLayout,
             useWallpaper = esdeState.romSearchUseWallpaper,
             customizations = esdeState.systemCustomizations,
@@ -245,10 +246,15 @@ private fun GamesRoute(
     val focusResetKey = remember(system) { system }
 
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showSystemFilter by remember { mutableStateOf(false) }
+    val allSystemNames = rememberAllSystemNames(allGames = allGames)
 
     BackHandler {
-        if (showSettingsDialog) showSettingsDialog = false
-        else viewModel.navigateTo(FrontendRoute.Systems)
+        when {
+            showSystemFilter -> showSystemFilter = false
+            showSettingsDialog -> showSettingsDialog = false
+            else -> viewModel.navigateTo(FrontendRoute.Systems)
+        }
     }
 
     Surface(
@@ -302,7 +308,23 @@ private fun GamesRoute(
     }
 
     if (showSettingsDialog) {
-        FrontendSettingsDialog(onDismiss = { showSettingsDialog = false })
+        FrontendSettingsDialog(
+            onDismiss = { showSettingsDialog = false },
+            onOpenSystemFilter = {
+                showSettingsDialog = false
+                showSystemFilter = true
+            }
+        )
+    }
+    if (showSystemFilter) {
+        SystemFilterSheet(
+            systems = allSystemNames,
+            hiddenSystems = esdeState.hiddenSystems,
+            onToggle = esdePrefs::setSystemHidden,
+            onShowAll = { esdePrefs.setHiddenSystems(emptySet()) },
+            onHideAll = { esdePrefs.setHiddenSystems(allSystemNames) },
+            onDismiss = { showSystemFilter = false }
+        )
     }
 }
 
@@ -311,6 +333,7 @@ private fun SystemsRoute(
     allGames: List<GameInfo>,
     isLoading: Boolean,
     hiddenGames: Set<String>,
+    hiddenSystems: Set<String>,
     layout: jr.brian.home.esde.model.FrontendLayout,
     useWallpaper: Boolean,
     customizations: Map<String, jr.brian.home.esde.model.SystemCustomization>,
@@ -321,7 +344,12 @@ private fun SystemsRoute(
     romSearchStateHolder: RomSearchStateHolder,
     frontendSelectionStateHolder: FrontendSelectionStateHolder
 ) {
-    val baseSystems = rememberSystemTiles(allGames = allGames, hiddenGames = hiddenGames)
+    val baseSystems = rememberSystemTiles(
+        allGames = allGames,
+        hiddenGames = hiddenGames,
+        hiddenSystems = hiddenSystems
+    )
+    val allSystemNames = rememberAllSystemNames(allGames = allGames)
     var workingOrder by remember(baseSystems, systemOrder) {
         mutableStateOf(applySystemOrder(baseSystems, systemOrder))
     }
@@ -330,6 +358,7 @@ private fun SystemsRoute(
         workingOrder.indexOfFirst { it.systemName == target }.takeIf { it >= 0 } ?: 0
     }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showSystemFilter by remember { mutableStateOf(false) }
     var customizingSystem by remember { mutableStateOf<String?>(null) }
     var reorderingSystem by remember { mutableStateOf<String?>(null) }
 
@@ -343,6 +372,7 @@ private fun SystemsRoute(
                 reorderingSystem = null
             }
             customizingSystem != null -> customizingSystem = null
+            showSystemFilter -> showSystemFilter = false
             showSettingsDialog -> showSettingsDialog = false
         }
     }
@@ -415,7 +445,23 @@ private fun SystemsRoute(
     }
 
     if (showSettingsDialog) {
-        FrontendSettingsDialog(onDismiss = { showSettingsDialog = false })
+        FrontendSettingsDialog(
+            onDismiss = { showSettingsDialog = false },
+            onOpenSystemFilter = {
+                showSettingsDialog = false
+                showSystemFilter = true
+            }
+        )
+    }
+    if (showSystemFilter) {
+        SystemFilterSheet(
+            systems = allSystemNames,
+            hiddenSystems = hiddenSystems,
+            onToggle = esdePrefs::setSystemHidden,
+            onShowAll = { esdePrefs.setHiddenSystems(emptySet()) },
+            onHideAll = { esdePrefs.setHiddenSystems(allSystemNames) },
+            onDismiss = { showSystemFilter = false }
+        )
     }
 
     val activeCustomizeTarget = customizingSystem
@@ -506,16 +552,30 @@ private fun applySystemOrder(
 @Composable
 private fun rememberSystemTiles(
     allGames: List<GameInfo>,
-    hiddenGames: Set<String>
-): List<SystemTile> = remember(allGames, hiddenGames) {
+    hiddenGames: Set<String>,
+    hiddenSystems: Set<String>
+): List<SystemTile> = remember(allGames, hiddenGames, hiddenSystems) {
     allGames
         .asSequence()
         .filter { hiddenGameKey(it) !in hiddenGames }
         .filter { !it.systemName.equals(ANDROID_APPS_SYSTEM, ignoreCase = true) }
         .groupBy { it.systemName }
         .map { (name, _) -> SystemTile(systemName = name) }
+        .filter { it.systemName !in hiddenSystems }
         .sortedBy { it.systemName.lowercase() }
 }
+
+@Composable
+internal fun rememberAllSystemNames(allGames: List<GameInfo>): List<String> =
+    remember(allGames) {
+        allGames
+            .asSequence()
+            .filter { !it.systemName.equals(ANDROID_APPS_SYSTEM, ignoreCase = true) }
+            .map { it.systemName }
+            .distinct()
+            .sortedBy { it.lowercase() }
+            .toList()
+    }
 
 @Composable
 private fun FrontendAffordanceHints(
