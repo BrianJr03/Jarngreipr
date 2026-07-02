@@ -56,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
@@ -65,7 +64,6 @@ import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.rom.resolveDisplayPath
 import jr.brian.home.ui.components.apps.ROM_DEFAULT_ICON_SIZE
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import java.io.File
 
@@ -92,20 +90,15 @@ fun PinnedRomOptionsDialog(
         mutableFloatStateOf(currentIconSize ?: ROM_DEFAULT_ICON_SIZE)
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(OledCardColor, RoundedCornerShape(24.dp))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                RomOptionsHeader(rom = rom, onDismiss = onDismiss)
+            RomOptionsHeader(rom = rom, onDismiss = onDismiss)
                 Spacer(Modifier.height(16.dp))
 
                 AnimatedVisibility(visible = !showResizeMode, enter = fadeIn(), exit = fadeOut()) {
@@ -188,7 +181,6 @@ fun PinnedRomOptionsDialog(
                         }
                     )
                 }
-            }
         }
     }
 }
@@ -613,47 +605,38 @@ fun RomCustomIconPickerDialog(
     onRomSelected: (PinnedRomInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(OledCardColor, RoundedCornerShape(24.dp))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.app_options_custom_icon),
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                Text(
+                    text = stringResource(R.string.app_options_custom_icon),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.dialog_cancel),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.dialog_cancel),
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
                 }
+            }
 
-                roms.forEach { rom ->
+            roms.forEach { rom ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -677,7 +660,6 @@ fun RomCustomIconPickerDialog(
                         )
                     }
                 }
-            }
         }
     }
 }

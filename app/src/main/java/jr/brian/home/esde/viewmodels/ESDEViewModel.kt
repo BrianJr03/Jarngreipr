@@ -40,7 +40,6 @@ import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_IMAGE_FALLBACKS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
-import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
@@ -80,7 +79,7 @@ class ESDEViewModel @Inject constructor(
         get() {
             val primary = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
             val secondary = if (prefs.state.value.secondaryMediaEnabled)
-                SetupPreferences.DEFAULT_SECONDARY_MEDIA_PATH else null
+                SetupPreferences.RETRO_HRAI_PATH else null
             return mediaRoots(primary, secondary)
         }
 

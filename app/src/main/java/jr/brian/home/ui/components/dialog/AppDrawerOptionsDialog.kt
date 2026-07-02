@@ -40,12 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -55,31 +52,15 @@ fun AppDrawerOptionsDialog(
     onCreateFolderClick: () -> Unit,
 ) {
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -109,16 +90,15 @@ fun AppDrawerOptionsDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                DrawerOptionButton(
-                    modifier = Modifier.fillMaxWidth(fraction = 0.5f),
-                    title = stringResource(R.string.dialog_create_folder_title),
-                    icon = Icons.Default.FolderOpen,
-                    onClick = {
-                        onCreateFolderClick()
-                        onDismiss()
-                    }
-                )
-            }
+            DrawerOptionButton(
+                modifier = Modifier.fillMaxWidth(fraction = 0.5f),
+                title = stringResource(R.string.dialog_create_folder_title),
+                icon = Icons.Default.FolderOpen,
+                onClick = {
+                    onCreateFolderClick()
+                    onDismiss()
+                }
+            )
         }
     }
 }

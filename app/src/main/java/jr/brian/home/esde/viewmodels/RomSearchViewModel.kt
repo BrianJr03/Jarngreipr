@@ -54,7 +54,7 @@ class RomSearchViewModel @Inject constructor(
             val state = esdePreferencesManager.state.value
             val primary = state.customMediaPath ?: setupPreferences.mediaPath
             val secondary = if (state.secondaryMediaEnabled)
-                SetupPreferences.DEFAULT_SECONDARY_MEDIA_PATH else null
+                SetupPreferences.RETRO_HRAI_PATH else null
             return mediaRoots(primary, secondary)
         }
 

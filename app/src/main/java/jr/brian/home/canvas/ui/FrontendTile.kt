@@ -168,7 +168,7 @@ fun FrontendTile(
             // cold boot.
             val title = state.currentGame?.name ?: state.currentSystemName
             Text(
-                text = title ?: stringResource(R.string.settings_wallpaper_esde),
+                text = title ?: stringResource(R.string.front_end_tile),
                 color = Color.White,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,

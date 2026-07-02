@@ -108,6 +108,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
@@ -349,6 +350,18 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        val hiddenSystemsJson = prefs.getString(KEY_HIDDEN_SYSTEMS, null)
+        val hiddenSystems: Set<String> = if (!hiddenSystemsJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(hiddenSystemsJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
         // Migrate legacy excludeEffectsFromHome boolean to per-page set
         val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
         val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
@@ -452,6 +465,7 @@ class ESDEPreferencesManager(context: Context) {
             systemBgVideoMuted = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, true),
             systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true),
             hiddenGames = hiddenGames,
+            hiddenSystems = hiddenSystems,
             gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->

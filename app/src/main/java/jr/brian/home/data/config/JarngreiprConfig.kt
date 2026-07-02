@@ -33,7 +33,8 @@ data class JarngreiprConfig(
         //      card media type overrides.
         // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
         //      haptic toggle (applies to both system and game cards).
-        const val CONFIG_VERSION = 11
+        // v12: added SystemConfig.hiddenSystems for the Frontend "Filter Systems" sheet.
+        const val CONFIG_VERSION = 12
     }
 }
 
@@ -246,5 +247,6 @@ data class RomSearchConfig(
 @Serializable
 data class SystemConfig(
     val badgesVisible: Boolean = true,
-    val shadeTabPage: Int = 0
+    val shadeTabPage: Int = 0,
+    val hiddenSystems: List<String> = emptyList()
 )

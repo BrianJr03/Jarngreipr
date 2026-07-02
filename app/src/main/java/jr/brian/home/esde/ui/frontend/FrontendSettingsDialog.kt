@@ -46,7 +46,10 @@ private val GAMEPAD_SCROLL_STEP: Dp = 96.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FrontendSettingsDialog(onDismiss: () -> Unit) {
+fun FrontendSettingsDialog(
+    onDismiss: () -> Unit,
+    onOpenSystemFilter: () -> Unit = {}
+) {
     val prefsManager = LocalESDEPreferencesManager.current
     val state by prefsManager.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -69,6 +72,7 @@ fun FrontendSettingsDialog(onDismiss: () -> Unit) {
             onSecondaryMediaChange = prefsManager::setSecondaryMediaEnabled,
             onFloatIntensityChange = prefsManager::setFrontendFloatIntensity,
             onFocusHapticEnabledChange = prefsManager::setFrontendFocusHapticEnabled,
+            onOpenSystemFilter = onOpenSystemFilter,
             onClose = onDismiss
         )
     }
@@ -88,6 +92,7 @@ private fun SheetBody(
     onSecondaryMediaChange: (Boolean) -> Unit,
     onFloatIntensityChange: (Float) -> Unit,
     onFocusHapticEnabledChange: (Boolean) -> Unit,
+    onOpenSystemFilter: () -> Unit,
     onClose: () -> Unit
 ) {
     val firstToggleFocus = remember { FocusRequester() }
@@ -124,6 +129,7 @@ private fun SheetBody(
             onSecondaryMediaChange = onSecondaryMediaChange,
             onFloatIntensityChange = onFloatIntensityChange,
             onFocusHapticEnabledChange = onFocusHapticEnabledChange,
+            onOpenSystemFilter = onOpenSystemFilter,
             firstToggleFocus = firstToggleFocus
         )
         DialogCloseButton(onClick = onClose)
@@ -192,19 +198,27 @@ private fun FrontendSettingsContent(
     onSecondaryMediaChange: (Boolean) -> Unit,
     onFloatIntensityChange: (Float) -> Unit,
     onFocusHapticEnabledChange: (Boolean) -> Unit,
+    onOpenSystemFilter: () -> Unit,
     firstToggleFocus: FocusRequester
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(modifier = Modifier.focusRequester(firstToggleFocus)) {
             ToggleSetting(
-                title = stringResource(R.string.frontend_layout_systems_row_title),
-                description = stringResource(R.string.frontend_layout_systems_row_description),
-                checked = systemLayout == FrontendLayout.Row,
-                onCheckedChange = {
-                    onSystemLayoutChange(if (it) FrontendLayout.Row else FrontendLayout.Grid)
-                }
+                title = stringResource(R.string.frontend_settings_filter_systems_title),
+                description = stringResource(R.string.frontend_settings_filter_systems_description),
+                checked = false,
+                showToggle = false,
+                onClick = onOpenSystemFilter
             )
         }
+        ToggleSetting(
+            title = stringResource(R.string.frontend_layout_systems_row_title),
+            description = stringResource(R.string.frontend_layout_systems_row_description),
+            checked = systemLayout == FrontendLayout.Row,
+            onCheckedChange = {
+                onSystemLayoutChange(if (it) FrontendLayout.Row else FrontendLayout.Grid)
+            }
+        )
         ToggleSetting(
             title = stringResource(R.string.frontend_layout_games_row_title),
             description = stringResource(R.string.frontend_layout_games_row_description),
