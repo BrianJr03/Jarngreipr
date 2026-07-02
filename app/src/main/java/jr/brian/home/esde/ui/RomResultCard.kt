@@ -55,8 +55,10 @@ import coil.request.ImageRequest
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.ui.frontend.FrontendTokens
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.frontend.emitFocusHapticIfReady
 import jr.brian.home.esde.ui.frontend.focusFloatPhase
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.esde.ui.frontend.rememberFloatAmplitude
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
@@ -87,6 +89,9 @@ internal fun RomResultCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
+    val focusHapticEnabled = prefs.frontendFocusHapticEnabled
     var isFocused by remember { mutableStateOf(false) }
     var isFocusedDelayed by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
@@ -177,7 +182,7 @@ internal fun RomResultCard(
             .onFocusChanged {
                 isFocused = it.isFocused
                 if (it.isFocused) {
-                    view.emitFocusHapticIfReady()
+                    if (focusHapticEnabled) view.emitFocusHapticIfReady()
                     onFocused()
                 }
             }

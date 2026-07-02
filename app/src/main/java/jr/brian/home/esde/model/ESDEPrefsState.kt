@@ -257,6 +257,7 @@ data class ESDEPrefsState(
     val systemOrder: List<String> = emptyList(),
     val frontendHintsVisible: Boolean = true,
     val frontendFloatIntensity: Float = 1f,
+    val frontendFocusHapticEnabled: Boolean = true,
     val canvasContinuousSpinRoms: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f

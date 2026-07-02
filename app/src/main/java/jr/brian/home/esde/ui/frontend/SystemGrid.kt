@@ -30,7 +30,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -153,6 +156,10 @@ private fun SystemTileCard(
     val floatAmplitude = rememberFloatAmplitude()
 
     val backgroundColor = resolveBackgroundColor(customization)
+    val view = LocalView.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
+    val hapticEnabled = prefs.frontendFocusHapticEnabled
 
     Box(
         modifier = Modifier
@@ -169,7 +176,12 @@ private fun SystemTileCard(
             .clip(shape)
             .background(backgroundColor)
             .focusRequester(focusRequester)
-            .onFocusChanged { if (it.isFocused) onFocused() }
+            .onFocusChanged {
+                if (it.isFocused) {
+                    if (hapticEnabled) view.emitFocusHapticIfReady()
+                    onFocused()
+                }
+            }
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

@@ -7,16 +7,19 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -30,6 +33,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +50,7 @@ import jr.brian.home.esde.model.FrontendLayout
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 
-private val DEFAULT_ROW_TILE_WIDTH = 240.dp
+private val DEFAULT_ROW_TILE_WIDTH = 250.dp
 private const val FOCUS_RESET_RETRIES = 3
 private const val FOCUS_RESET_RETRY_DELAY_MS = 80L
 
@@ -201,6 +205,22 @@ private fun <T> GridLayout(
         }
     }
 
+    TouchScrollFocusSync(
+        interactionSource = gridState.interactionSource,
+        isScrollInProgress = { gridState.isScrollInProgress },
+        onSettle = {
+            val idx = nearestGridItemToViewportCenter(gridState, headerOffset, items.size)
+            if (idx != null && idx != focusedIndex) {
+                focusedIndex = idx
+                // Fire onItemFocused explicitly. In touch mode requestFocus() on a card
+                // sometimes doesn't cascade onFocusChanged, so downstream consumers
+                // (wallpaperState / jingles) may miss the update if we rely on the
+                // focus system alone.
+                onItemFocused(items[idx])
+            }
+        }
+    )
+
     fun moveFocus(delta: Int) {
         val next = (focusedIndex + delta).coerceIn(0, items.lastIndex)
         if (next == focusedIndex) return
@@ -297,6 +317,18 @@ private fun <T> RowLayout(
         }
         centerOnFocused(rowState, initialVirtualIndex + headerOffset)
     }
+
+    TouchScrollFocusSync(
+        interactionSource = rowState.interactionSource,
+        isScrollInProgress = { rowState.isScrollInProgress },
+        onSettle = {
+            val idx = nearestRowItemToViewportCenter(rowState, headerOffset, virtualCount)
+            if (idx != null && idx != focusedIndex) {
+                focusedIndex = idx
+                onItemFocused(items[idx % realCount])
+            }
+        }
+    )
 
     fun moveFocus(delta: Int) {
         if (realCount == 0) return
@@ -447,3 +479,76 @@ private fun Modifier.rowDpadHandler(moveFocus: (Int) -> Unit): Modifier =
             else -> false
         }
     }
+
+/**
+ * Watches for a user-initiated touch scroll on [interactionSource] and fires [onSettle]
+ * once the scroll (including any fling) has come to rest. Programmatic scrolls that
+ * never receive a [DragInteraction.Start] pass through silently.
+ */
+@Composable
+private fun TouchScrollFocusSync(
+    interactionSource: androidx.compose.foundation.interaction.InteractionSource,
+    isScrollInProgress: () -> Boolean,
+    onSettle: () -> Unit
+) {
+    var userInitiated by remember { mutableStateOf(false) }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) userInitiated = true
+        }
+    }
+
+    LaunchedEffect(interactionSource) {
+        snapshotFlow { isScrollInProgress() }.collect { inProgress ->
+            if (!inProgress && userInitiated) {
+                userInitiated = false
+                onSettle()
+            }
+        }
+    }
+}
+
+/**
+ * Returns the real-item index of the tile nearest the viewport's vertical centre,
+ * or null when nothing is measurable. Header items (index < [headerOffset]) are
+ * skipped so focus never lands on the header.
+ */
+private fun nearestGridItemToViewportCenter(
+    gridState: LazyGridState,
+    headerOffset: Int,
+    itemCount: Int
+): Int? {
+    if (itemCount == 0) return null
+    val info = gridState.layoutInfo
+    val start = info.viewportStartOffset + info.beforeContentPadding
+    val end = info.viewportEndOffset - info.afterContentPadding
+    val viewportCenter = (start + end) / 2
+    val target = info.visibleItemsInfo
+        .filter { it.index >= headerOffset }
+        .minByOrNull { abs((it.offset.y + it.size.height / 2) - viewportCenter) }
+        ?: return null
+    val realIdx = target.index - headerOffset
+    return realIdx.takeIf { it in 0 until itemCount }
+}
+
+/**
+ * Row-layout counterpart to [nearestGridItemToViewportCenter] — nearest to the
+ * viewport's horizontal centre. Returns the virtual index (matches focusedIndex
+ * in row mode).
+ */
+private fun nearestRowItemToViewportCenter(
+    rowState: LazyListState,
+    headerOffset: Int,
+    virtualCount: Int
+): Int? {
+    if (virtualCount == 0) return null
+    val info = rowState.layoutInfo
+    val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2
+    val target = info.visibleItemsInfo
+        .filter { it.index >= headerOffset }
+        .minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }
+        ?: return null
+    val virtualIdx = target.index - headerOffset
+    return virtualIdx.takeIf { it in 0 until virtualCount }
+}

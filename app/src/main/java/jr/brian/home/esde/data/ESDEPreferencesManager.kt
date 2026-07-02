@@ -135,6 +135,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
@@ -531,6 +532,7 @@ class ESDEPreferencesManager(context: Context) {
             systemOrder = systemOrder,
             frontendHintsVisible = prefs.getBoolean(KEY_FRONTEND_HINTS_VISIBLE, true),
             frontendFloatIntensity = prefs.getFloat(KEY_FRONTEND_FLOAT_INTENSITY, 1f).coerceIn(0f, 3f),
+            frontendFocusHapticEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, true),
             canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
