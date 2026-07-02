@@ -74,6 +74,8 @@ fun PageTypeSelectionDialog(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -110,21 +112,6 @@ fun PageTypeSelectionDialog(
                         onClick = { onTypeSelected(PageType.RSS_TAB); onDismiss() },
                         modifier = Modifier.weight(1f)
                     )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    PageTypeOption(
-                        title = stringResource(R.string.home_tab_page_type_unified_canvas),
-                        description = stringResource(R.string.home_tab_page_type_unified_canvas_description),
-                        onClick = { onTypeSelected(PageType.UNIFIED_CANVAS); onDismiss() },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }

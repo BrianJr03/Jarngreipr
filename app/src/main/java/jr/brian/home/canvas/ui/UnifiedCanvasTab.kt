@@ -5,19 +5,24 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -313,6 +318,12 @@ fun UnifiedCanvasTab(
                 .onGloballyPositioned { canvasAreaCoordinates = it },
             appWidgetHost = appWidgetHost,
             onAddTilePositioned = { menuButtonCoordinates = it }
+        )
+
+        CanvasEditModeDoneFab(
+            visible = uiState.layout.editMode,
+            onDone = { viewModel.setEditMode(false) },
+            modifier = Modifier.align(Alignment.BottomEnd)
         )
 
         NotificationShade(
@@ -656,6 +667,27 @@ fun UnifiedCanvasTab(
             menuButtonContent = { CanvasOnboardingMenuButtonHighlight() },
             canvasAreaContent = { CanvasOnboardingAreaHighlight() }
         )
+    }
+}
+
+@Composable
+private fun CanvasEditModeDoneFab(
+    visible: Boolean,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn() + fadeIn(),
+        exit = scaleOut() + fadeOut(),
+        modifier = modifier.padding(16.dp)
+    ) {
+        FloatingActionButton(onClick = onDone) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = stringResource(R.string.common_done)
+            )
+        }
     }
 }
 
