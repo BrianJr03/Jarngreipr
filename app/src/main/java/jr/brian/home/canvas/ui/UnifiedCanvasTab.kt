@@ -84,6 +84,7 @@ fun UnifiedCanvasTab(
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     dismissShadeSignal: Int = 0,
+    onShowQuickDelete: () -> Unit = {},
     viewModel: CanvasViewModel = hiltViewModel(key = "canvas-page-$pageIndex"),
     romSearchViewModel: RomSearchViewModel = hiltViewModel(),
     widgetViewModel: WidgetViewModel = hiltViewModel(),
@@ -126,6 +127,22 @@ fun UnifiedCanvasTab(
     var pickWidgetVisible by remember { mutableStateOf(false) }
     var pickEsdeArtVisible by remember { mutableStateOf(false) }
     var esdeArtRetypeTarget by remember { mutableStateOf<ResolvedCanvasItem.EsdeArt?>(null) }
+    // Set from the tap handler and add-menu, read by the launcher's callback so
+    // the pick result routes to the right tile. Cleared after every pick
+    // (success or cancel). Using a plain var is fine — writes happen before
+    // launch() and reads happen after result, never in the same composition.
+    var photoPickerTargetId by remember { mutableStateOf<String?>(null) }
+    val photoPickerLauncher = rememberPhotoPickerLauncher { persistedUri ->
+        val targetId = photoPickerTargetId
+        if (targetId != null && persistedUri != null) {
+            viewModel.updatePhotoContainerImage(targetId, persistedUri)
+        }
+        photoPickerTargetId = null
+    }
+    val launchPhotoPickerFor: (String) -> Unit = { itemId ->
+        photoPickerTargetId = itemId
+        photoPickerLauncher.launch(photoPickerMimeTypes())
+    }
     var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
     var appOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.App?>(null) }
     var romOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.Rom?>(null) }
@@ -184,7 +201,8 @@ fun UnifiedCanvasTab(
                                 .getAppDisplayPreference(rom.key)
                         )
                     },
-                    onChangeEsdeArtType = { esdeArt -> esdeArtRetypeTarget = esdeArt }
+                    onChangeEsdeArtType = { esdeArt -> esdeArtRetypeTarget = esdeArt },
+                    onPickPhotoContainer = { photo -> launchPhotoPickerFor(photo.raw.id) }
                 )
             },
             onLongPress = { resolved ->
@@ -222,6 +240,7 @@ fun UnifiedCanvasTab(
             },
             onAddClick = { addDialogVisible = true },
             onAddLongClick = { viewModel.setEditMode(!uiState.layout.editMode) },
+            onDeleteClick = { resolved -> pendingRemoval = resolved },
             modifier = Modifier.fillMaxSize(),
             appWidgetHost = appWidgetHost
         )
@@ -305,7 +324,8 @@ fun UnifiedCanvasTab(
                     onAddFolder = { createFolderVisible = true },
                     onAddRom = { pickRomVisible = true },
                     onAddWidget = { pickWidgetVisible = true },
-                    onAddEsdeDisplay = { pickEsdeArtVisible = true }
+                    onAddEsdeDisplay = { pickEsdeArtVisible = true },
+                    onAddPhotoContainer = { viewModel.addPhotoContainerItem() }
                 )
             },
             onOrientationChanged = viewModel::setOrientation,
@@ -316,6 +336,7 @@ fun UnifiedCanvasTab(
             onDeletePage = onDeletePage,
             onNavigateToSearch = onNavigateToSearch,
             onPowerClick = { powerViewModel.togglePower() },
+            onShowQuickDelete = onShowQuickDelete,
             onDismiss = {
                 addDialogVisible = false
                 addDialogStartInEdit = false
@@ -478,7 +499,7 @@ fun UnifiedCanvasTab(
                 viewModel.updateRomMediaType(rom, mediaType)
             },
             onRemove = {
-                viewModel.removeCanvasRom(target.raw)
+                viewModel.removeItemAndCleanup(target.raw)
             },
             currentContentScale = target.raw.resolvedContentScale,
             onContentScaleChange = { scale ->
@@ -554,7 +575,8 @@ private fun handleTap(
     onOpenRss: () -> Unit,
     onOpenFolder: (ResolvedCanvasItem.Folder) -> Unit,
     onLaunchRom: (PinnedRomInfo) -> Unit,
-    onChangeEsdeArtType: (ResolvedCanvasItem.EsdeArt) -> Unit
+    onChangeEsdeArtType: (ResolvedCanvasItem.EsdeArt) -> Unit,
+    onPickPhotoContainer: (ResolvedCanvasItem.PhotoContainer) -> Unit
 ) {
     when (resolved) {
         is ResolvedCanvasItem.App -> resolved.info?.let(onLaunchApp)
@@ -569,6 +591,7 @@ private fun handleTap(
             // transport buttons drive playback). The canvas-level onTap is a no-op.
         }
         is ResolvedCanvasItem.EsdeArt -> onChangeEsdeArtType(resolved)
+        is ResolvedCanvasItem.PhotoContainer -> onPickPhotoContainer(resolved)
     }
 }
 
@@ -581,7 +604,8 @@ private fun handleAddChoice(
     onAddFolder: () -> Unit,
     onAddRom: () -> Unit,
     onAddWidget: () -> Unit,
-    onAddEsdeDisplay: () -> Unit
+    onAddEsdeDisplay: () -> Unit,
+    onAddPhotoContainer: () -> Unit
 ) {
     when (choice) {
         CanvasAddChoice.APP -> onPickApp()
@@ -591,6 +615,7 @@ private fun handleAddChoice(
         CanvasAddChoice.ROM -> onAddRom()
         CanvasAddChoice.WIDGET -> onAddWidget()
         CanvasAddChoice.ESDE_DISPLAY -> onAddEsdeDisplay()
+        CanvasAddChoice.PHOTO_CONTAINER -> onAddPhotoContainer()
     }
 }
 

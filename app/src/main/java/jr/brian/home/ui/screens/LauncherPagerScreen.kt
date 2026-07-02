@@ -490,6 +490,7 @@ fun LauncherPagerScreen(
                                     }
                                 },
                                 dismissShadeSignal = dismissShadeSignal,
+                                onShowQuickDelete = onShowBottomSheet,
                                 widgetViewModel = widgetViewModel,
                                 powerViewModel = powerViewModel
                             )

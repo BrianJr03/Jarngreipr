@@ -55,4 +55,13 @@ sealed class ResolvedCanvasItem {
     data class EsdeArt(
         override val raw: CanvasItem.EsdeArtItem
     ) : ResolvedCanvasItem()
+
+    /**
+     * User photo tile. The raw item carries the persisted `imageUri`; the
+     * renderer decides between placeholder (null) and image based on that,
+     * so there is no extra resolved data.
+     */
+    data class PhotoContainer(
+        override val raw: CanvasItem.PhotoContainer
+    ) : ResolvedCanvasItem()
 }

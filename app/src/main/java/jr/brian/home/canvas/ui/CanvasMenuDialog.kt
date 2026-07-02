@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -24,16 +25,20 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.RssFeed
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.CanvasScrollOrientation
@@ -64,7 +68,6 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.IconBox
-import jr.brian.home.ui.components.dialog.DimmedDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.header.PageIndicators
 import jr.brian.home.ui.theme.OledCardColor
@@ -74,7 +77,10 @@ import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.launchFrontend
+import jr.brian.home.util.WallpaperUtils
 import jr.brian.home.ui.util.rememberDialogState
 import kotlinx.coroutines.launch
 
@@ -83,21 +89,22 @@ import kotlinx.coroutines.launch
  * the variants of [jr.brian.home.canvas.model.CanvasItem] one-to-one.
  */
 enum class CanvasAddChoice {
-    APP, FOLDER, ROM, WIDGET, RSS_LAUNCHER, RSS_MUSIC, ESDE_DISPLAY
+    APP, FOLDER, ROM, WIDGET, RSS_LAUNCHER, RSS_MUSIC, ESDE_DISPLAY, PHOTO_CONTAINER
 }
 
 private enum class CanvasDialogMode { Options, Edit }
 
 /**
- * The single canvas dialog. Mode 1 is a compact list of actions (Edit Canvas
+ * The single canvas menu. Mode 1 is a compact list of actions (Edit Canvas
  * first, then add actions); tapping a row either invokes its action and
- * dismisses, or — for Edit Canvas — switches the dialog body to host
+ * dismisses, or — for Edit Canvas — switches the sheet body to host
  * [EditCanvasContent] in-place with a back affordance.
  *
  * Replaces the old pair of `CanvasAddItemDialog` (square-tile grid) and
  * `CanvasEditDialog` (standalone). There is now one surface, one entry point
  * (the canvas's add icon), and one focus traversal across all controls.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CanvasMenuDialog(
     layout: CanvasLayout,
@@ -113,43 +120,33 @@ fun CanvasMenuDialog(
     onNavigateToSearch: () -> Unit,
     onDismiss: () -> Unit,
     onPowerClick: (() -> Unit)? = null,
+    onShowQuickDelete: (() -> Unit)? = null,
     startInEdit: Boolean = false
 ) {
     val initialMode = if (startInEdit) CanvasDialogMode.Edit else CanvasDialogMode.Options
     var mode by rememberSaveable { mutableStateOf(initialMode) }
     val context = LocalContext.current
-    DimmedDialog(
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
+        sheetState = sheetState,
+        containerColor = OledCardColor,
+        dragHandle = { CanvasMenuDragHandle() }
     ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .heightIn(max = 560.dp)
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush(isFocused = true),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                when (mode) {
+            when (mode) {
                     CanvasDialogMode.Options -> OptionsBody(
                         editMode = layout.editMode,
                         onEditModeChanged = { enabled ->
                             onEditModeChanged(enabled)
-                            if (enabled) onDismiss()
+                            onDismiss()
                         },
                         onEditCanvasClick = { mode = CanvasDialogMode.Edit },
                         onChoice = { choice ->
@@ -176,6 +173,12 @@ fun CanvasMenuDialog(
                                 click()
                                 onDismiss()
                             }
+                        },
+                        onShowQuickDelete = onShowQuickDelete?.let { show ->
+                            {
+                                show()
+                                onDismiss()
+                            }
                         }
                     )
                     CanvasDialogMode.Edit -> EditBody(
@@ -191,9 +194,19 @@ fun CanvasMenuDialog(
                         onDismiss = onDismiss
                     )
                 }
-            }
         }
     }
+}
+
+@Composable
+private fun CanvasMenuDragHandle() {
+    Box(
+        modifier = Modifier
+            .padding(vertical = 12.dp)
+            .size(width = 40.dp, height = 4.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(Color.White.copy(alpha = 0.3f))
+    )
 }
 
 @Composable
@@ -208,11 +221,16 @@ private fun OptionsBody(
     onDeletePage: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
     onLaunchFrontend: () -> Unit,
-    onPowerClick: (() -> Unit)?
+    onPowerClick: (() -> Unit)?,
+    onShowQuickDelete: (() -> Unit)?
 ) {
     val esdePrefsState by LocalESDEPreferencesManager.current.state.collectAsStateWithLifecycle()
     val powerSettingsManager = LocalPowerSettingsManager.current
     val powerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
+    // Match ScreenHeaderRow's visibility conditional exactly so the folder /
+    // wallpaper icons appear in the same states here as in the app-drawer header.
+    val quickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
+    val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
 
     OptionsHeaderRow(
         pagerState = pagerState,
@@ -220,7 +238,9 @@ private fun OptionsBody(
         onSettingsClick = onSettingsClick,
         onDeletePage = onDeletePage,
         onNavigateToSearch = onNavigateToSearch,
-        onPowerClick = if (powerButtonVisible) onPowerClick else null
+        onPowerClick = if (powerButtonVisible) onPowerClick else null,
+        onShowQuickDelete = if (quickDeleteVisible) onShowQuickDelete else null,
+        showWallpaperToggle = showWallpaperToggle
     )
     CompactOptionRow(
         icon = Icons.Default.Tune,
@@ -243,6 +263,7 @@ private fun OptionsBody(
         )
     }
     HairlineSeparator()
+    AddSectionHeader()
     CANVAS_ADD_TILES.forEach { tile ->
         CompactOptionRow(
             icon = tile.icon,
@@ -254,13 +275,28 @@ private fun OptionsBody(
 }
 
 @Composable
+private fun AddSectionHeader() {
+    Text(
+        text = stringResource(R.string.canvas_add_section_header),
+        color = Color.White.copy(alpha = 0.6f),
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+    )
+}
+
+@Composable
 private fun OptionsHeaderRow(
     pagerState: PagerState,
     totalPages: Int,
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onNavigateToSearch: () -> Unit,
-    onPowerClick: (() -> Unit)? = null
+    onPowerClick: (() -> Unit)? = null,
+    onShowQuickDelete: (() -> Unit)? = null,
+    showWallpaperToggle: Boolean = false
 ) {
     val homeTabManager = LocalHomeTabManager.current
     val pageCountManager = LocalPageCountManager.current
@@ -270,6 +306,9 @@ private fun OptionsHeaderRow(
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val homeTabDialogState = rememberDialogState<Unit>()
     val coroutineScope = rememberCoroutineScope()
+    val wallpaperManager = LocalWallpaperManager.current
+    val esdePrefsState by LocalESDEPreferencesManager.current
+        .state.collectAsStateWithLifecycle()
 
     if (homeTabDialogState.isVisible) {
         HomeTabSelectionDialog(
@@ -303,13 +342,6 @@ private fun OptionsHeaderRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = stringResource(R.string.canvas_dialog_title),
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f)
-        )
         Box(
             modifier = Modifier.clickable { homeTabDialogState.show() }
         ) {
@@ -318,6 +350,39 @@ private fun OptionsHeaderRow(
                 totalPages = totalPages,
                 pagerState = pagerState
             )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        if (onShowQuickDelete != null) {
+            IconBox(onClick = onShowQuickDelete) {
+                Icon(
+                    imageVector = Icons.Default.SdStorage,
+                    contentDescription = stringResource(R.string.header_folder_options),
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        if (showWallpaperToggle) {
+            val wallpaperToggleAction = {
+                val currentType = wallpaperManager.getWallpaperType()
+                val target = esdePrefsState.wallpaperToggleTarget
+                if (currentType == WallpaperType.ESDE) {
+                    WallpaperUtils.useStandardWallpaper(
+                        target = target,
+                        wallpaperManager = wallpaperManager
+                    )
+                } else {
+                    wallpaperManager.setESDE()
+                }
+            }
+            IconBox(onClick = wallpaperToggleAction) {
+                Icon(
+                    imageVector = Icons.Default.SwapHoriz,
+                    contentDescription = stringResource(R.string.header_wallpaper_toggle),
+                    tint = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         if (onPowerClick != null) {
             IconBox(onClick = onPowerClick) {
@@ -489,12 +554,15 @@ private data class AddOptionTileSpec(
     val labelRes: Int
 )
 
+// Sorted alphabetically by display label so the menu reads:
+//   App, Folder, Frontend widget, Photo container, ROM, RSS launcher, RSS widget, Widget
 private val CANVAS_ADD_TILES: List<AddOptionTileSpec> = listOf(
     AddOptionTileSpec(CanvasAddChoice.APP, Icons.Default.Apps, R.string.canvas_add_app_option),
     AddOptionTileSpec(CanvasAddChoice.FOLDER, Icons.Default.Folder, R.string.canvas_add_folder_option),
+    AddOptionTileSpec(CanvasAddChoice.ESDE_DISPLAY, Icons.Default.Image, R.string.canvas_add_esde_display_option),
+    AddOptionTileSpec(CanvasAddChoice.PHOTO_CONTAINER, Icons.Default.Image, R.string.canvas_add_photo_container_option),
     AddOptionTileSpec(CanvasAddChoice.ROM, Icons.Default.VideogameAsset, R.string.canvas_add_rom_option),
-    AddOptionTileSpec(CanvasAddChoice.WIDGET, Icons.Default.Widgets, R.string.canvas_add_widget_option),
     AddOptionTileSpec(CanvasAddChoice.RSS_LAUNCHER, Icons.Default.RssFeed, R.string.canvas_add_rss_launcher_option),
     AddOptionTileSpec(CanvasAddChoice.RSS_MUSIC, Icons.Default.MusicNote, R.string.canvas_add_rss_music_option),
-    AddOptionTileSpec(CanvasAddChoice.ESDE_DISPLAY, Icons.Default.Image, R.string.canvas_add_esde_display_option)
+    AddOptionTileSpec(CanvasAddChoice.WIDGET, Icons.Default.Widgets, R.string.canvas_add_widget_option)
 )

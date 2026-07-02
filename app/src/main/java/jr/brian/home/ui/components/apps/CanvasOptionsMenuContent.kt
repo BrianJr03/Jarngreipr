@@ -38,7 +38,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.util.rememberAutoFocus
 
 @Composable
-fun AppOptionsMenuContent(
+fun CanvasOptionsMenuContent(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
     hasExternalDisplay: Boolean,

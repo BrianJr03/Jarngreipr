@@ -84,6 +84,39 @@ class CanvasViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Place a new, unconfigured photo tile on the current page. The renderer
+     * shows the "Tap to configure" placeholder until [updatePhotoContainerImage]
+     * writes an image URI.
+     */
+    fun addPhotoContainerItem() {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.PhotoContainer(
+                id = "photo-${UUID.randomUUID()}"
+            )
+        )
+    }
+
+    /**
+     * Replace an existing photo tile's [imageUri] in place. Routed through
+     * [canvasLayoutManager.addItem] with the same id, preserving the tile's
+     * per-orientation placements. Passing null clears the image and drops the
+     * tile back to the "Tap to configure" placeholder.
+     */
+    fun updatePhotoContainerImage(id: String, imageUri: String?) {
+        val pageIndex = boundPage() ?: return
+        val layout = canvasLayoutManager.getLayout(pageIndex)
+        val existing = layout.items
+            .filterIsInstance<CanvasItem.PhotoContainer>()
+            .firstOrNull { it.id == id } ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = existing.copy(imageUri = imageUri)
+        )
+    }
+
     private val _pageIndex = MutableStateFlow(UNBOUND_PAGE)
     private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
 
@@ -129,17 +162,6 @@ class CanvasViewModel @Inject constructor(
             updatedRom = rom.copy(displayMediaType = mediaType),
             tabType = CanvasTabType.VALUE
         )
-    }
-
-    /**
-     * Unpin [romKey] from the canvas page (so it stops appearing in the pinned-ROM
-     * list) and remove the matching [CanvasItem.RomItem] from the layout. The
-     * paired unpin + tile-remove is the "Remove" action on the canvas ROM dialog.
-     */
-    fun removeCanvasRom(item: CanvasItem.RomItem) {
-        val pageIndex = boundPage() ?: return
-        pinnedRomManager.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)
-        canvasLayoutManager.removeItem(pageIndex, item.id)
     }
 
     /**
@@ -319,18 +341,53 @@ class CanvasViewModel @Inject constructor(
     }
 
     /**
-     * Remove an item from the canvas. For folders, this also deletes the
-     * underlying folder entity so the reactive sync doesn't immediately re-add
-     * a FolderItem for it.
+     * Remove an item from the canvas along with the backing resources that
+     * only it owns. Runs per-variant cleanup before the layout removal so a
+     * failure in cleanup can't leave a persisted tile referencing something
+     * we've already released. Widget host allocations are freed by the UI
+     * (the ViewModel has no [android.appwidget.AppWidgetHost]) via the
+     * X-handle callsite before delegating here.
+     *
+     * Per-variant:
+     * - FolderItem — deletes the folder entity from [FolderManager] so the
+     *   reactive folder-sync loop doesn't immediately re-add a FolderItem.
+     * - RomItem — unpins from [PinnedRomManager] under [CanvasTabType.VALUE]
+     *   so the ROM stops appearing in the canvas pinned-list.
+     * - PhotoContainer — deletes the internal-storage file the picker copied
+     *   into `filesDir/canvas_photos/`; SAF fallback URIs are left alone.
+     * - Others (App, Widget, ES-DE art, RSS launcher, RSS music) — no
+     *   external state to release; layout removal alone is enough.
      */
     fun removeItemAndCleanup(item: CanvasItem) {
         val pageIndex = boundPage() ?: return
-        if (item is CanvasItem.FolderItem) {
-            viewModelScope.launch {
+        when (item) {
+            is CanvasItem.FolderItem -> viewModelScope.launch {
                 folderManager.deleteFolder(pageIndex, item.folderId, CanvasTabType.VALUE)
             }
+            is CanvasItem.RomItem ->
+                pinnedRomManager.removePinnedRom(pageIndex, item.romKey, CanvasTabType.VALUE)
+            is CanvasItem.PhotoContainer -> deleteInternalPhotoFile(item.imageUri)
+            is CanvasItem.AppItem,
+            is CanvasItem.WidgetItem,
+            is CanvasItem.EsdeArtItem,
+            is CanvasItem.RssLauncherItem,
+            is CanvasItem.RssMusicItem -> Unit
         }
         canvasLayoutManager.removeItem(pageIndex, item.id)
+    }
+
+    /**
+     * Deletes a `file://` URI backed by our own `filesDir/canvas_photos/`
+     * directory. No-op for content URIs (SAF fallback), malformed paths, or
+     * paths that escape the canvas photo subdirectory — those either aren't
+     * ours to delete or would risk touching unrelated files.
+     */
+    private fun deleteInternalPhotoFile(imageUri: String?) {
+        val uri = imageUri ?: return
+        if (!uri.startsWith("file://")) return
+        val path = uri.removePrefix("file://")
+        if (!path.contains("/canvas_photos/")) return
+        runCatching { java.io.File(path).takeIf { it.exists() }?.delete() }
     }
 
     private fun boundPage(): Int? = _pageIndex.value.takeIf { it >= 0 }
@@ -360,6 +417,8 @@ class CanvasViewModel @Inject constructor(
                     ResolvedCanvasItem.RssMusic(item)
                 is CanvasItem.EsdeArtItem ->
                     ResolvedCanvasItem.EsdeArt(item)
+                is CanvasItem.PhotoContainer ->
+                    ResolvedCanvasItem.PhotoContainer(item)
             }
         }
     }

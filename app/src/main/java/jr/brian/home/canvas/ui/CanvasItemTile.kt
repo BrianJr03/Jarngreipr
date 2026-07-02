@@ -155,6 +155,13 @@ fun CanvasItemTile(
             modifier = baseModifier,
             editMode = editMode
         )
+        is ResolvedCanvasItem.PhotoContainer -> PhotoContainerTile(
+            resolved = resolved,
+            onTap = onTap,
+            onLongPress = effectiveLongPress,
+            modifier = baseModifier,
+            editMode = editMode
+        )
     }
 }
 
