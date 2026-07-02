@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,12 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +55,7 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SystemCustomizationDialog(
     systemName: String,
@@ -64,20 +65,40 @@ internal fun SystemCustomizationDialog(
     onReset: () -> Unit,
     onEnterReorder: () -> Unit
 ) {
-    AlertDialog(
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = OledCardColor,
-        title = { CustomizationTitle(systemName = systemName) },
-        text = {
+        dragHandle = { SystemCustomizationDragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CustomizationTitle(systemName = systemName)
             CustomizationDialogBody(
                 customization = customization,
                 onChange = onChange,
                 onEnterReorder = onEnterReorder,
                 onReset = onReset
             )
-        },
-        confirmButton = { DismissButton(onClick = onDismiss) },
-        dismissButton = {}
+        }
+    }
+}
+
+@Composable
+private fun SystemCustomizationDragHandle() {
+    Box(
+        modifier = Modifier
+            .padding(vertical = 12.dp)
+            .size(width = 40.dp, height = 4.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(Color.White.copy(alpha = 0.3f))
     )
 }
 
@@ -86,18 +107,9 @@ private fun CustomizationTitle(systemName: String) {
     Text(
         text = systemName.uppercase(),
         color = Color.White.copy(alpha = 0.9f),
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
     )
-}
-
-@Composable
-private fun DismissButton(onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
-        Text(
-            text = stringResource(R.string.frontend_settings_close),
-            color = ThemeAccentColor
-        )
-    }
 }
 
 @Composable
@@ -107,29 +119,24 @@ private fun CustomizationDialogBody(
     onEnterReorder: () -> Unit,
     onReset: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        BackgroundImageSection(
-            backgroundUri = customization.backgroundUri,
-            onBackgroundUriChange = { uri -> onChange(customization.copy(backgroundUri = uri)) }
-        )
+    BackgroundImageSection(
+        backgroundUri = customization.backgroundUri,
+        onBackgroundUriChange = { uri -> onChange(customization.copy(backgroundUri = uri)) }
+    )
 
-        ShowNameToggleRow(
-            showName = customization.showName,
-            onShowNameChange = { onChange(customization.copy(showName = it)) }
-        )
+    ShowNameToggleRow(
+        showName = customization.showName,
+        onShowNameChange = { onChange(customization.copy(showName = it)) }
+    )
 
-        BackgroundColorSection(
-            colorArgb = customization.solidColorArgb,
-            onColorChange = { argb -> onChange(customization.copy(solidColorArgb = argb)) }
-        )
+    BackgroundColorSection(
+        colorArgb = customization.solidColorArgb,
+        onColorChange = { argb -> onChange(customization.copy(solidColorArgb = argb)) }
+    )
 
-        ReorderButton(onEnterReorder = onEnterReorder)
+    ReorderButton(onEnterReorder = onEnterReorder)
 
-        ResetButton(onReset = onReset)
-    }
+    ResetButton(onReset = onReset)
 }
 
 @Composable

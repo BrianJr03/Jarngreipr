@@ -29,7 +29,9 @@ data class JarngreiprConfig(
         // v7: added RomSearchConfig.frontendHintsVisible for the bottom hint-row toggle.
         // v8: added RomSearchConfig.frontendFloatIntensity for the floating-animation slider.
         // v9: added RomSearchConfig.canvasContinuousSpinRoms for per-rom continuous-spin toggle.
-        const val CONFIG_VERSION = 9
+        // v10: added RomSearchConfig.gameMediaMap + systemMediaMap for per-game and per-system
+        //      card media type overrides.
+        const val CONFIG_VERSION = 10
     }
 }
 
@@ -233,7 +235,9 @@ data class RomSearchConfig(
     val systemOrder: List<String> = emptyList(),
     val frontendHintsVisible: Boolean = true,
     val frontendFloatIntensity: Float = 1f,
-    val canvasContinuousSpinRoms: Set<String> = emptySet()
+    val canvasContinuousSpinRoms: Set<String> = emptySet(),
+    val gameMediaMap: Map<String, String> = emptyMap(),
+    val systemMediaMap: Map<String, String> = emptyMap()
 )
 
 @Serializable

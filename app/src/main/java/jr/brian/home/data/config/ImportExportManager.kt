@@ -1,15 +1,20 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.util.UnstableApi
 import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
 import jr.brian.home.data.FabPosition
 import jr.brian.home.data.FolderManager
+import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.data.PageManagers
+import jr.brian.home.data.SnapMode
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.model.PageType
@@ -123,7 +128,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private fun buildPositionsByPage(
-        app: jr.brian.home.data.AppManagers,
+        app: AppManagers,
         maxPages: Int
     ): Map<String, PagePositionConfig> {
         val result = mutableMapOf<String, PagePositionConfig>()
@@ -152,7 +157,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private suspend fun buildFoldersByKey(
-        app: jr.brian.home.data.AppManagers,
+        app: AppManagers,
         maxPages: Int
     ): Map<String, List<FolderItemConfig>> {
         val result = mutableMapOf<String, List<FolderItemConfig>>()
@@ -200,7 +205,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private suspend fun buildWidgetPageApps(
-        page: jr.brian.home.data.PageManagers,
+        page: PageManagers,
         pageCount: Int
     ): Map<String, WidgetPageAppsConfig> {
         val result = mutableMapOf<String, WidgetPageAppsConfig>()
@@ -275,7 +280,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 systemOrder = f.esdePreferencesManager.state.value.systemOrder,
                 frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
                 frontendFloatIntensity = f.esdePreferencesManager.state.value.frontendFloatIntensity,
-                canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms
+                canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
+                gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
+                systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap
             )
         )
     }
@@ -305,8 +312,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setTabTransitionAnimationName(config.gridSettings.tabTransitionAnimationName)
         ui.gridSettingsManager.setIconSnapEnabled(config.gridSettings.iconSnapEnabled)
         runCatching {
-            val mode = jr.brian.home.data.SnapMode.valueOf(config.gridSettings.snapMode)
-            if (mode != jr.brian.home.data.SnapMode.OFF) {
+            val mode = SnapMode.valueOf(config.gridSettings.snapMode)
+            if (mode != SnapMode.OFF) {
                 ui.gridSettingsManager.setSnapMode(mode)
             }
         }
@@ -472,7 +479,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.controlPadManager.setCameraSensitivity(config.controlPad.cameraSensitivity)
         runCatching {
             f.controlPadManager.setJoystickMode(
-                jr.brian.home.data.JoystickMode.valueOf(config.controlPad.joystickMode)
+                JoystickMode.valueOf(config.controlPad.joystickMode)
             )
         }
 
@@ -521,6 +528,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
         f.esdePreferencesManager.setFrontendFloatIntensity(config.romSearch.frontendFloatIntensity)
         f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
+        f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
+        f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
     }
 
     private fun applySystemConfig(config: SystemConfig) {

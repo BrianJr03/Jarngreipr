@@ -25,7 +25,6 @@ class RomSearchViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder
 ) : ViewModel() {
-
     val query: StateFlow<String> = store.query.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()

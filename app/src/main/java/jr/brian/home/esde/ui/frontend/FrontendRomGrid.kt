@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui.frontend
 
+import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ internal fun FrontendRomGrid(
     focusAnimationDelayMs: Int,
     focusAnimationDisabledGames: Set<String>,
     gameMediaMap: Map<String, String>,
+    systemMediaMap: Map<String, String>,
     focusResetKey: Any?,
     layout: FrontendLayout,
     esdePrefs: ESDEPreferencesManager,
@@ -75,10 +77,18 @@ internal fun FrontendRomGrid(
         getGameMediaType = { game ->
             gameMediaMap[gameKey(game)]
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                ?: systemMediaMap[game.systemName]
+                    ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
         },
         onSetGameMediaType = { game, type ->
             if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
             else esdePrefs.setGameMediaType(gameKey(game), type)
+        },
+        onSetMediaTypeForSystem = { game, type ->
+            if (type == null) esdePrefs.clearSystemMediaType(game.systemName)
+            else esdePrefs.setSystemMediaType(game.systemName, type)
+            games.filter { it.systemName == game.systemName }
+                .forEach { esdePrefs.clearGameMediaType(gameKey(it)) }
         },
         modifier = modifier,
         onLaunchGame = { game ->

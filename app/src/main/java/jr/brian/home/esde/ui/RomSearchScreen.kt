@@ -94,7 +94,7 @@ fun RomSearchScreen(
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
-    val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
+    // val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
 
     var showSpecialCharRow by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -145,7 +145,7 @@ fun RomSearchScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                AnimatedVisibility(visible = hintAndKbVisible) {
+                AnimatedVisibility(visible = true) {
                     RomSearchControlHints {
                         showCommandsDialog = true
                     }
@@ -165,7 +165,7 @@ fun RomSearchScreen(
                     }
                 }
 
-                AnimatedVisibility(visible = hintAndKbVisible) {
+                AnimatedVisibility(visible = true) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         QwertyKeyboard(
                             searchQuery = query,
@@ -211,26 +211,26 @@ private fun RomSearchControlHints(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Keyboard,
-                contentDescription = null,
-                tint = ThemePrimaryColor.copy(alpha = 0.5f),
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = stringResource(R.string.rom_search_hint_keyboard),
-                color = ThemePrimaryColor.copy(alpha = 0.5f),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
+//        Row(
+//            horizontalArrangement = Arrangement.spacedBy(4.dp),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.Keyboard,
+//                contentDescription = null,
+//                tint = ThemePrimaryColor.copy(alpha = 0.5f),
+//                modifier = Modifier.size(16.dp)
+//            )
+//            Text(
+//                text = stringResource(R.string.rom_search_hint_keyboard),
+//                color = ThemePrimaryColor.copy(alpha = 0.5f),
+//                fontSize = 14.sp,
+//                fontWeight = FontWeight.Medium
+//            )
+//        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
