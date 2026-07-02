@@ -702,6 +702,11 @@
     <string name="onboarding_keyboard_description">On the first tab, press (or gesture) Back to toggle the on-screen keyboard.</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_finish">Got It</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_canvas_menu_title">Welcome to Canvas</string>
+    <string name="onboarding_canvas_menu_description">Canvas is one continuous grid where you freely arrange apps, widgets, ROMs, photos, and more. Tap this menu button any time to add items or open Canvas options.</string>
+    <string name="onboarding_canvas_area_title">Long-press to add</string>
+    <string name="onboarding_canvas_area_description">Long-press anywhere on the canvas to open the options menu — edit mode, add apps, widgets, ROMs, photos, RSS, change the wallpaper, and more.</string>
 
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Apps Tab Options</string>
