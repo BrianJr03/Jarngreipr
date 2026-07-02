@@ -49,6 +49,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -128,7 +130,8 @@ fun CanvasGridLayout(
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
-    onDoubleTap: (ResolvedCanvasItem) -> Unit = {}
+    onDoubleTap: (ResolvedCanvasItem) -> Unit = {},
+    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null
 ) {
     val pushDirection = PushDirection.from(state.layout.activeOrientation)
     val crossAxisCount = state.layout.activeCrossAxis.coerceAtLeast(1)
@@ -232,7 +235,11 @@ fun CanvasGridLayout(
                     outerPadding = CanvasOuterPadding,
                     animationLabel = "__canvas_add_tile__"
                 ) {
-                    AddTile(onClick = onAddClick, onLongClick = onAddLongClick)
+                    AddTile(
+                        onClick = onAddClick,
+                        onLongClick = onAddLongClick,
+                        onPositioned = onAddTilePositioned
+                    )
                 }
             }
 
@@ -601,7 +608,11 @@ private fun CanvasTileSlot(
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AddTile(onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun AddTile(
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onPositioned: ((LayoutCoordinates) -> Unit)? = null
+) {
     var isFocused by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -616,7 +627,12 @@ private fun AddTile(onClick: () -> Unit, onLongClick: () -> Unit) {
                 shape = RoundedCornerShape(14.dp)
             )
             .focusable()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .then(
+                if (onPositioned != null) {
+                    Modifier.onGloballyPositioned { coords -> onPositioned(coords) }
+                } else Modifier
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
