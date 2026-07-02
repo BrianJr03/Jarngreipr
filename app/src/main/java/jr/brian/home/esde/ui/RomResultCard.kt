@@ -1,18 +1,12 @@
 package jr.brian.home.esde.ui
 
-import android.view.HapticFeedbackConstants
-import androidx.compose.animation.core.EaseInOutCubic
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -35,16 +29,14 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -62,36 +54,20 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.ui.frontend.FrontendTokens
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.frontend.emitFocusHapticIfReady
+import jr.brian.home.esde.ui.frontend.focusFloatPhase
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.ui.frontend.rememberFloatAmplitude
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.animations.animatedFlip
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
-import jr.brian.home.ui.colors.animatedGradientBorder
 import jr.brian.home.ui.theme.ThemeAccentColor
-import jr.brian.home.ui.theme.themePrimaryColor
-import jr.brian.home.ui.theme.themeSecondaryColor
 import java.io.File
 import android.view.KeyEvent as AndroidKeyEvent
-
-@Composable
-private fun glowPulseAlpha(isFocused: Boolean): Float {
-    return if (isFocused) {
-        val infiniteTransition = rememberInfiniteTransition(label = "glow_pulse")
-        val pulse by infiniteTransition.animateFloat(
-            initialValue = 0.6f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(900, easing = EaseInOutCubic),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "glowPulse"
-        )
-        pulse
-    } else {
-        1f
-    }
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -113,6 +89,9 @@ internal fun RomResultCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
+    val focusHapticEnabled = prefs.frontendFocusHapticEnabled
     var isFocused by remember { mutableStateOf(false) }
     var isFocusedDelayed by remember { mutableStateOf(false) }
     val scale = animatedFocusedScale(isFocused)
@@ -173,57 +152,37 @@ internal fun RomResultCard(
 
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
-
-    val glowAlpha by animateFloatAsState(
+    val focusProgress by animateFloatAsState(
         targetValue = if (isFocused) 1f else 0f,
-        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
-        label = "glowAlpha"
+        animationSpec = tween(
+            durationMillis = FrontendTokens.Motion.FocusMs,
+            easing = FrontendTokens.Motion.Easing
+        ),
+        label = "romCardFocus"
     )
-
-    val glowRadius by animateDpAsState(
-        targetValue = if (isFocused) 2.dp else 0.dp,
-        animationSpec = tween(durationMillis = 300, easing = EaseInOutCubic),
-        label = "glowRadius"
-    )
-
-    val glowPulse = glowPulseAlpha(isFocused)
-    val primary = themePrimaryColor()
+    val floatPhase = focusFloatPhase(isFocused)
+    val floatAmplitude = rememberFloatAmplitude()
 
     Box(
         modifier = Modifier
             .focusRequester(focusRequester)
-            .then(if (hasImage) Modifier.scale(scale) else Modifier)
-            .drawBehind {
-                if (glowAlpha > 0f && hasImage) {
-                    val pulse = if (isFocused) glowPulse else 1f
-                    val radius = (size.maxDimension / 1.7f) + glowRadius.toPx()
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                primary.copy(alpha = 1.3f * glowAlpha * pulse),
-                                Color.Transparent
-                            ),
-                            center = Offset(size.width / 2f, size.height / 2f),
-                            radius = radius
-                        ),
-                        radius = radius,
-                        center = Offset(size.width / 2f, size.height / 2f)
-                    )
-                }
+            .graphicsLayer {
+                translationY = (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
             }
+            .scale(scale)
             .then(
-                if (!hasImage && isFocused) Modifier.animatedGradientBorder(
-                    colors = listOf(primary, themeSecondaryColor()),
+                if (!hasImage) Modifier.border(
+                    width = 2.dp,
+                    color = lerp(Color.DarkGray, ThemeAccentColor, focusProgress),
                     shape = shape
-                )
-                else if (!hasImage) Modifier.border(width = 2.dp, Color.DarkGray, shape = shape)
-                else Modifier
+                ) else Modifier
             )
             .clip(shape)
+            .then(if (!hasImage) Modifier.background(Color.DarkGray) else Modifier)
             .onFocusChanged {
                 isFocused = it.isFocused
                 if (it.isFocused) {
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    if (focusHapticEnabled) view.emitFocusHapticIfReady()
                     onFocused()
                 }
             }
@@ -245,6 +204,8 @@ internal fun RomResultCard(
                 }
             }
             .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
@@ -297,7 +258,7 @@ internal fun RomResultCard(
                 } else {
                     AnimatedGameTitle(
                         name = game.name,
-                        fontSize = 10.sp,
+                        fontSize = 14.sp,
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(horizontal = 8.dp),
@@ -341,3 +302,5 @@ internal fun RomResultCard(
         }
     }
 }
+
+private val FOCUS_LIFT = FrontendTokens.Spacing.M

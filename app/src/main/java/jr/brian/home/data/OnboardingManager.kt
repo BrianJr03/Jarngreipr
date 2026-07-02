@@ -16,12 +16,19 @@ class OnboardingManager(context: Context) {
     private val _hasSeenSliderHint = MutableStateFlow(loadSliderHintState())
     val hasSeenSliderHint: StateFlow<Boolean> = _hasSeenSliderHint.asStateFlow()
 
+    private val _hasSeenCanvasOnboarding = MutableStateFlow(loadCanvasOnboardingState())
+    val hasSeenCanvasOnboarding: StateFlow<Boolean> = _hasSeenCanvasOnboarding.asStateFlow()
+
     private fun loadOnboardingState(): Boolean {
         return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
     }
 
     private fun loadSliderHintState(): Boolean {
         return prefs.getBoolean(KEY_SLIDER_HINT_SEEN, false)
+    }
+
+    private fun loadCanvasOnboardingState(): Boolean {
+        return prefs.getBoolean(KEY_CANVAS_ONBOARDING_SEEN, false)
     }
 
     fun markOnboardingComplete() {
@@ -40,9 +47,18 @@ class OnboardingManager(context: Context) {
         }
     }
 
+    fun markCanvasOnboardingComplete() {
+        _hasSeenCanvasOnboarding.value = true
+        prefs.edit().apply {
+            putBoolean(KEY_CANVAS_ONBOARDING_SEEN, true)
+            apply()
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "onboarding_prefs"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         private const val KEY_SLIDER_HINT_SEEN = "slider_hint_seen"
+        private const val KEY_CANVAS_ONBOARDING_SEEN = "canvas_onboarding_seen"
     }
 }

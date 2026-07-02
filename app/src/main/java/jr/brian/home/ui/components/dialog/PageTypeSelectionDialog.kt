@@ -12,8 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,13 +30,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.model.PageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledCardColor
 
 @Composable
 fun PageTypeSelectionDialog(
@@ -43,71 +42,67 @@ fun PageTypeSelectionDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = modifier
-                .fillMaxWidth(0.9f)
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush(isFocused = true),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 28.dp)
         ) {
-            Column(modifier = Modifier.padding(28.dp)) {
-                Text(
-                    text = stringResource(R.string.home_tab_page_type_dialog_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
+            Text(
+                text = stringResource(R.string.home_tab_page_type_dialog_title),
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            PageTypeOption(
+                title = stringResource(R.string.home_tab_page_type_unified_canvas),
+                description = stringResource(R.string.home_tab_page_type_unified_canvas_description),
+                onClick = { onTypeSelected(PageType.UNIFIED_CANVAS); onDismiss() },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_apps_tab),
+                    description = stringResource(R.string.home_tab_page_type_apps_tab_description),
+                    onClick = { onTypeSelected(PageType.APPS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
                 )
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab),
+                    description = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab_description),
+                    onClick = { onTypeSelected(PageType.APPS_AND_WIDGETS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    PageTypeOption(
-                        title = stringResource(R.string.home_tab_page_type_apps_tab),
-                        description = stringResource(R.string.home_tab_page_type_apps_tab_description),
-                        onClick = { onTypeSelected(PageType.APPS_TAB); onDismiss() },
-                        modifier = Modifier.weight(1f)
-                    )
-                    PageTypeOption(
-                        title = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab),
-                        description = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab_description),
-                        onClick = { onTypeSelected(PageType.APPS_AND_WIDGETS_TAB); onDismiss() },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    PageTypeOption(
-                        title = stringResource(R.string.home_tab_page_type_app_drawer_tab),
-                        description = stringResource(R.string.home_tab_page_type_app_drawer_tab_description),
-                        onClick = { onTypeSelected(PageType.APP_DRAWER_TAB); onDismiss() },
-                        modifier = Modifier.weight(1f)
-                    )
-                    PageTypeOption(
-                        title = stringResource(R.string.home_tab_page_type_rss_tab),
-                        description = stringResource(R.string.home_tab_page_type_rss_tab_description),
-                        onClick = { onTypeSelected(PageType.RSS_TAB); onDismiss() },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_app_drawer_tab),
+                    description = stringResource(R.string.home_tab_page_type_app_drawer_tab_description),
+                    onClick = { onTypeSelected(PageType.APP_DRAWER_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
+                )
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_rss_tab),
+                    description = stringResource(R.string.home_tab_page_type_rss_tab_description),
+                    onClick = { onTypeSelected(PageType.RSS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }

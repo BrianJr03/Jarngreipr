@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
@@ -119,26 +118,14 @@ fun FolderBackgroundDialog(
         }
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column {
                 FolderBackgroundDialogHeader(
                     folderName = folderName,
                     onDismiss = onDismiss
@@ -210,7 +197,6 @@ fun FolderBackgroundDialog(
                         }
                     )
                 }
-            }
         }
     }
 }

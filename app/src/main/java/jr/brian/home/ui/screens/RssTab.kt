@@ -67,7 +67,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
-import jr.brian.home.ui.util.parsePubDateMillis
+import jr.brian.home.ui.util.computeRssVisibleItems
 import jr.brian.home.ui.util.rememberTopFlingTrigger
 import jr.brian.home.viewmodels.RssViewModel
 import androidx.core.net.toUri
@@ -91,25 +91,6 @@ fun RssTab(
     val keyboardFocusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
     val selectedFeedUrls = uiState.selectedFeedUrls
 
-    val itemsByFeed = remember(uiState.items) {
-        uiState.items.groupBy { it.feedUrl }
-    }
-
-    val filteredItemsByFeed = remember(itemsByFeed, selectedFeedUrls, searchQuery, isAudioOnly) {
-        val feedFiltered = if (selectedFeedUrls.isEmpty()) itemsByFeed
-        else itemsByFeed.filterKeys { it in selectedFeedUrls }
-        val audioFiltered = if (!isAudioOnly) feedFiltered
-        else feedFiltered.mapValues { (_, items) -> items.filter { it.audioUrl.isNotEmpty() } }
-            .filterValues { it.isNotEmpty() }
-        if (searchQuery.isBlank()) audioFiltered
-        else audioFiltered.mapValues { (_, items) ->
-            items.filter { item ->
-                item.title.contains(searchQuery, ignoreCase = true) ||
-                        item.description.contains(searchQuery, ignoreCase = true)
-            }
-        }.filterValues { it.isNotEmpty() }
-    }
-
     val currentlyPlayingFeedUrl: String? by viewModel.currentlyPlayingFeedUrl.collectAsStateWithLifecycle()
     val currentlyPlayingItemId: String? by viewModel.currentlyPlayingItemId.collectAsStateWithLifecycle()
 
@@ -117,33 +98,34 @@ fun RssTab(
         currentlyPlayingItemId?.let { id -> uiState.items.find { it.id == id } }
     }
 
-    val historyItems = remember(uiState.items, historyItemIds) {
-        val itemMap = uiState.items.associateBy { it.id }
-        historyItemIds.mapNotNull { itemMap[it] }
+    val visibleItems = remember(
+        uiState.items,
+        uiState.feeds,
+        selectedFeedUrls,
+        isAudioOnly,
+        isMixedMode,
+        isHistoryMode,
+        historyItemIds,
+        searchQuery,
+        currentlyPlayingFeedUrl
+    ) {
+        computeRssVisibleItems(
+            items = uiState.items,
+            feeds = uiState.feeds,
+            selectedFeedUrls = selectedFeedUrls,
+            isAudioOnly = isAudioOnly,
+            isMixedMode = isMixedMode,
+            isHistoryMode = isHistoryMode,
+            historyItemIds = historyItemIds,
+            searchQuery = searchQuery,
+            currentlyPlayingFeedUrl = currentlyPlayingFeedUrl
+        )
     }
-
-    val mixedItems = remember(filteredItemsByFeed, isMixedMode) {
-        if (!isMixedMode) emptyList()
-        else {
-            val lists = filteredItemsByFeed.values.toList()
-            val maxSize = lists.maxOfOrNull { it.size } ?: 0
-            buildList {
-                for (i in 0 until maxSize) {
-                    lists.forEach { feedItems -> feedItems.getOrNull(i)?.let { add(it) } }
-                }
-            }.sortedByDescending { parsePubDateMillis(it.pubDate) }
-        }
-    }
-
-    val filteredFeeds =
-        remember(uiState.feeds, selectedFeedUrls, currentlyPlayingFeedUrl, filteredItemsByFeed) {
-            val base = if (selectedFeedUrls.isEmpty()) uiState.feeds
-            else uiState.feeds.filter { it.url in selectedFeedUrls }
-            val withItems = base.filter { it.url in filteredItemsByFeed }
-            val playingUrl = currentlyPlayingFeedUrl ?: return@remember withItems
-            val playing = withItems.find { it.url == playingUrl } ?: return@remember withItems
-            listOf(playing) + withItems.filter { it.url != playingUrl }
-        }
+    val filteredItemsByFeed = visibleItems.itemsByFeed
+    val mixedItems = visibleItems.mixedItems
+    val historyItems = visibleItems.historyItems
+    val filteredFeeds = visibleItems.orderedFeeds
+    val visibleOrderedQueue = visibleItems.flatOrdered
 
     val currentMixedFeedTitle by remember(mixedItems, currentlyPlayingItem, uiState.feeds) {
         derivedStateOf {
@@ -327,7 +309,7 @@ fun RssTab(
                                                     }
 
                                                     item.audioUrl.isNotEmpty() ->
-                                                        viewModel.playAudio(item)
+                                                        viewModel.playAudio(item, visibleOrderedQueue)
                                                 }
                                             },
                                             onVideoClick = {
@@ -338,7 +320,7 @@ fun RssTab(
                                                 if (item.id == currentlyPlayingItemId)
                                                     showNowPlayingDialog = true
                                                 else if (item.audioUrl.isNotEmpty())
-                                                    viewModel.playAudio(item)
+                                                    viewModel.playAudio(item, visibleOrderedQueue)
                                             }
                                         )
                                     }
@@ -373,7 +355,7 @@ fun RssTab(
                                                     }
 
                                                     item.audioUrl.isNotEmpty() ->
-                                                        viewModel.playAudio(item)
+                                                        viewModel.playAudio(item, visibleOrderedQueue)
                                                 }
                                             },
                                             onVideoClick = {
@@ -384,7 +366,7 @@ fun RssTab(
                                                 if (item.id == currentlyPlayingItemId)
                                                     showNowPlayingDialog = true
                                                 else if (item.audioUrl.isNotEmpty())
-                                                    viewModel.playAudio(item)
+                                                    viewModel.playAudio(item, visibleOrderedQueue)
                                             }
                                         )
                                     }
@@ -432,7 +414,7 @@ fun RssTab(
                                                             }
 
                                                             item.audioUrl.isNotEmpty() ->
-                                                                viewModel.playAudio(item)
+                                                                viewModel.playAudio(item, visibleOrderedQueue)
                                                         }
                                                     },
                                                     onVideoClick = {
@@ -444,7 +426,7 @@ fun RssTab(
                                                         if (item.id == currentlyPlayingItemId) {
                                                             showNowPlayingDialog = true
                                                         } else if (item.audioUrl.isNotEmpty()) {
-                                                            viewModel.playAudio(item)
+                                                            viewModel.playAudio(item, visibleOrderedQueue)
                                                         }
                                                     }
                                                 )

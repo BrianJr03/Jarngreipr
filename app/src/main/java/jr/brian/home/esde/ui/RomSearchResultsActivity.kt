@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -68,6 +69,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.util.launchFrontend
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -75,6 +77,10 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class RomSearchResultsActivity : ComponentActivity() {
+    companion object {
+        const val EXTRA_FROM_FRONTEND = "from_frontend"
+    }
+
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -89,6 +95,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
+    private var fromFrontend = false
 
     private val safTreeLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -134,6 +141,9 @@ class RomSearchResultsActivity : ComponentActivity() {
     }
 
     override fun finish() {
+        if (fromFrontend && !gameLaunched) {
+            launchFrontend(this)
+        }
         super.finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
@@ -151,6 +161,7 @@ class RomSearchResultsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
@@ -269,6 +280,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val romSearchUseWallpaper = esdeState.romSearchUseWallpaper
                     val cardMediaType = esdeState.romSearchCardMediaType
                     val gameMediaMap = esdeState.romSearchGameMediaMap
+                    val systemMediaMap = esdeState.systemMediaMap
                     val hideNoMetadata = esdeState.romSearchHideNoMetadata
                     val hideNoImage = esdeState.romSearchHideNoImage
                     val focusAnimationEnabled = esdeState.romSearchDiscSpin
@@ -530,9 +542,29 @@ class RomSearchResultsActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .onPreviewKeyEvent { keyEvent ->
+                                    if (keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BUTTON_Y
+                                    ) {
+                                        return@onPreviewKeyEvent true
+                                    }
+                                    if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                    // Hack: catch back at the preview stage so neither the focus
+                                    // animation nor any descendant can swallow the first press.
+                                    if (keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BUTTON_B ||
+                                        keyEvent.nativeKeyEvent.keyCode ==
+                                        AndroidKeyEvent.KEYCODE_BACK
+                                    ) {
+                                        if (queryTrimmed.isNotEmpty()) {
+                                            viewModel.clearState()
+                                        } else {
+                                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                            dismiss()
+                                        }
+                                        return@onPreviewKeyEvent true
+                                    }
                                     // When navigating the dropdown, a DPAD press returns focus to the grid
                                     // without consuming — let the grid handle the actual movement.
-                                    if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                     val isDpad = keyEvent.nativeKeyEvent.keyCode in listOf(
                                         AndroidKeyEvent.KEYCODE_DPAD_UP,
                                         AndroidKeyEvent.KEYCODE_DPAD_DOWN,
@@ -618,10 +650,18 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     getGameMediaType = { game ->
                                         gameMediaMap[gameKey(game)]
                                             ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                                            ?: systemMediaMap[game.systemName]
+                                                ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
                                     },
                                     onSetGameMediaType = { game, type ->
                                         if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
                                         else esdePrefs.setGameMediaType(gameKey(game), type)
+                                    },
+                                    onSetMediaTypeForSystem = { game, type ->
+                                        if (type == null) esdePrefs.clearSystemMediaType(game.systemName)
+                                        else esdePrefs.setSystemMediaType(game.systemName, type)
+                                        filteredGames.filter { it.systemName == game.systemName }
+                                            .forEach { esdePrefs.clearGameMediaType(gameKey(it)) }
                                     },
                                     modifier = Modifier.fillMaxSize(),
                                     onLaunchGame = { game ->

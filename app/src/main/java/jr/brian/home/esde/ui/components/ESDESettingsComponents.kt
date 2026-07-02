@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui.components
 
+import jr.brian.home.esde.data.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically

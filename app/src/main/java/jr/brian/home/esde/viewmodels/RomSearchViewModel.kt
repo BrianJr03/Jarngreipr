@@ -8,6 +8,7 @@ import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.RomListParser
+import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,7 +25,6 @@ class RomSearchViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder
 ) : ViewModel() {
-
     val query: StateFlow<String> = store.query.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
@@ -49,8 +49,14 @@ class RomSearchViewModel @Inject constructor(
     private val esdeRootPath: String?
         get() = File(setupPreferences.scriptsPath).parentFile?.absolutePath
 
-    private val mediaPath: String
-        get() = esdePreferencesManager.state.value.customMediaPath ?: setupPreferences.mediaPath
+    private val mediaPaths: List<String>
+        get() {
+            val state = esdePreferencesManager.state.value
+            val primary = state.customMediaPath ?: setupPreferences.mediaPath
+            val secondary = if (state.secondaryMediaEnabled)
+                SetupPreferences.RETRO_HRAI_PATH else null
+            return mediaRoots(primary, secondary)
+        }
 
     fun updateQuery(q: String) {
         store.query.value = q
@@ -79,7 +85,7 @@ class RomSearchViewModel @Inject constructor(
             val prefsState = esdePreferencesManager.state.value
             val games = RomListParser.parseAllSystems(
                 esdeRootPath = rootPath,
-                mediaPath = mediaPath,
+                mediaPaths = mediaPaths,
                 romsPaths = prefsState.romsPaths,
                 systemEmulatorMap = prefsState.systemAppMap
             )

@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +72,7 @@ internal fun RomDetailScreen(
     onHide: () -> Unit = {},
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
+    onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
     discSpinEnabled: Boolean = false,
     discSpinDisabled: Boolean = false,
     onToggleDiscSpin: () -> Unit = {}
@@ -86,9 +88,14 @@ internal fun RomDetailScreen(
     if (showMediaTypePicker) {
         MediaTypePickerDialog(
             currentType = currentMediaType,
+            systemName = game.systemName,
             onDismiss = { showMediaTypePicker = false },
             onSelected = { type ->
                 onSetMediaType(type)
+                showMediaTypePicker = false
+            },
+            onSelectedForSystem = { type ->
+                onSetMediaTypeForSystem(type)
                 showMediaTypePicker = false
             }
         )
@@ -146,7 +153,7 @@ internal fun RomDetailScreen(
     }
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        runCatching { focusRequester.requestFocus() }
     }
 
     BackHandler(onBack = onDismiss)
@@ -155,7 +162,7 @@ internal fun RomDetailScreen(
         color = OledBackgroundColor,
         modifier = Modifier
             .fillMaxSize()
-            .focusRequester(focusRequester)
+            .then(if (isHidden) Modifier.focusRequester(focusRequester) else Modifier)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
@@ -271,7 +278,10 @@ internal fun RomDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isHidden) {
-                    TextButton(onClick = onChangeCore) {
+                    TextButton(
+                        onClick = onChangeCore,
+                        modifier = Modifier.focusRequester(focusRequester)
+                    ) {
                         Text(
                             stringResource(R.string.rom_detail_change_core),
                             color = ThemeAccentColor

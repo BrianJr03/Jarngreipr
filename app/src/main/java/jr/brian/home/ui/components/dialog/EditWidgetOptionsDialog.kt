@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoveDown
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -35,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.model.widget.WidgetInfo
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.viewmodels.WidgetViewModel
 
@@ -49,12 +46,13 @@ fun EditWidgetOptionsDialog(
     onResize: () -> Unit,
     onSwap: () -> Unit
 ) {
-    AlertDialog(
-        modifier = Modifier.fillMaxSize(),
-        onDismissRequest = onDismiss,
-        containerColor = OledCardColor,
-        shape = RoundedCornerShape(24.dp),
-        title = {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -87,12 +85,13 @@ fun EditWidgetOptionsDialog(
                     )
                 }
             }
-        },
-        text = {
+
+            Spacer(modifier = Modifier.size(16.dp))
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 400.dp)
+                    .heightIn(max = 480.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -254,7 +253,6 @@ fun EditWidgetOptionsDialog(
                     }
                 }
             }
-        },
-        confirmButton = {}
-    )
+        }
+    }
 }

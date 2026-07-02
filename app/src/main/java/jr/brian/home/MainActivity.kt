@@ -1,6 +1,8 @@
 package jr.brian.home
 
+import jr.brian.home.esde.data.*
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
@@ -32,21 +34,30 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.esde.data.ESDEEventListenerImpl
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.ESDESetupHelper
+import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.model.FrontendSelection
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
+import jr.brian.home.esde.ui.FrontEndActivity
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
@@ -59,11 +70,16 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.launchFrontend
+import jr.brian.home.ui.util.resolveBottomDisplayId
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.ping.PingPermissions.hasPingPermissions
 import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
 import nl.dionsegijn.konfetti.core.Party
@@ -83,7 +99,13 @@ class MainActivity : ComponentActivity() {
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
     @Inject
-    lateinit var romSearchStateHolder: jr.brian.home.esde.data.RomSearchStateHolder
+    lateinit var romSearchStateHolder: RomSearchStateHolder
+
+    @Inject
+    lateinit var frontendSelectionStateHolder: FrontendSelectionStateHolder
+
+    @Inject
+    lateinit var esdePreferencesManager: ESDEPreferencesManager
 
     private val esdeViewModel: ESDEViewModel by viewModels()
 
@@ -107,6 +129,7 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.startWatching()
         managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
+        observeFrontendEnabledFlag()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -165,6 +188,8 @@ class MainActivity : ComponentActivity() {
                         powerViewModel = powerViewModel
                     )
 
+                    ObserveFrontendSelection(esdeViewModel = esdeViewModel)
+
                     SetupESDEEventListeners(
                         esdeViewModel = esdeViewModel,
                         powerViewModel = powerViewModel,
@@ -193,20 +218,25 @@ class MainActivity : ComponentActivity() {
                         currentPageIndex = currentPageIndex,
                         dockTopY = dockTopY,
                         content = {
-                            MainContent(
-                                triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                onMarqueePressShortcutHandled = {
-                                    triggerMarqueePressShortcut = false
-                                },
-                                navigateToThemeShare = navigateToThemeShare,
-                                onNavigateToThemeShareHandled = { navigateToThemeShare = false },
-                                onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
-                                onCurrentPageChanged = { currentPageIndex = it },
-                                onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                onDockPositioned = { y -> dockTopY = y },
-                                hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
-                                        (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
-                            )
+                            CompositionLocalProvider(
+                                LocalEsdeWallpaperState provides wallpaperState
+                            ) {
+                                MainContent(
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    triggerMarqueePressShortcut = triggerMarqueePressShortcut,
+                                    onMarqueePressShortcutHandled = {
+                                        triggerMarqueePressShortcut = false
+                                    },
+                                    navigateToThemeShare = navigateToThemeShare,
+                                    onNavigateToThemeShareHandled = { navigateToThemeShare = false },
+                                    onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
+                                    onCurrentPageChanged = { currentPageIndex = it },
+                                    onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                    onDockPositioned = { y -> dockTopY = y },
+                                    hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
+                                            (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
+                                )
+                            }
                         }
                     )
 
@@ -219,6 +249,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
     }
 
     override fun onStart() {
@@ -261,6 +295,24 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private fun observeFrontendEnabledFlag() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                esdePreferencesManager.state
+                    .map { it.frontendEnabled }
+                    .distinctUntilChanged()
+                    .collect { enabled -> if (enabled) launchFrontendIfEnabled() }
+            }
+        }
+    }
+
+    private fun launchFrontendIfEnabled() {
+        if (!esdePreferencesManager.state.value.frontendEnabled) return
+        if (FrontEndActivity.isRunning) return
+        if (resolveBottomDisplayId(this) == null) return
+        launchFrontend(this)
+    }
+
     private fun checkAndCreateScripts() {
         if (!ESDESetupHelper.hasStoragePermission(this)) {
             ESDESetupHelper.requestStoragePermission(this)
@@ -297,6 +349,24 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
             romSearchStateHolder.gameLaunchSignal.collect {
                 esdeViewModel.handleRomSearchGameStarted()
+            }
+        }
+    }
+
+    @Composable
+    private fun ObserveFrontendSelection(esdeViewModel: ESDEViewModel) {
+        val jinglesManager = LocalJinglesManager.current
+        LaunchedEffect(Unit) {
+            frontendSelectionStateHolder.selection.collect { selection ->
+                when (selection) {
+                    is FrontendSelection.System -> {
+                        jinglesManager.stop()
+                        esdeViewModel.updateForSystem(selection.systemName)
+                    }
+                    is FrontendSelection.Game ->
+                        esdeViewModel.updateForGame(selection.systemName, selection.gameFilename)
+                    null -> Unit
+                }
             }
         }
     }

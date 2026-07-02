@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,10 +41,10 @@ import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.extensions.handleFullNavigation
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -51,6 +52,7 @@ import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.WallpaperUtils
 import jr.brian.home.viewmodels.PowerViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ScreenHeaderRow(
@@ -96,8 +98,9 @@ fun ScreenHeaderRow(
     val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
     val pageCountManager = LocalPageCountManager.current
     val pageTypeManager = LocalPageTypeManager.current
-    val appVisibilityManager = LocalAppVisibilityManager.current
+    val pageOrderCoordinator = LocalPageOrderCoordinator.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
 
     val onboardingManager = LocalOnboardingManager.current
     val hasCompletedOnboarding by onboardingManager.hasCompletedOnboarding.collectAsStateWithLifecycle()
@@ -186,9 +189,13 @@ fun ScreenHeaderRow(
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch,
             onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
-                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
-                pageTypeManager.reorderPages(newOrder)
-                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
             }
         )
     }

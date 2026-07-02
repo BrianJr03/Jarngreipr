@@ -27,7 +27,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VideogameAsset
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -52,15 +56,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.model.rom.resolveDisplayPath
 import jr.brian.home.ui.components.apps.ROM_DEFAULT_ICON_SIZE
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import java.io.File
 
@@ -74,31 +77,39 @@ fun PinnedRomOptionsDialog(
     onIconSizeChange: ((Float) -> Unit)? = null,
     hasExternalDisplay: Boolean = false,
     currentDisplayPreference: DisplayPreference = DisplayPreference.CURRENT_DISPLAY,
-    onDisplayPreferenceChange: (DisplayPreference) -> Unit = {}
+    onDisplayPreferenceChange: (DisplayPreference) -> Unit = {},
+    currentContentScale: EsdeContentScale? = null,
+    onContentScaleChange: ((EsdeContentScale) -> Unit)? = null,
+    onEditCanvas: (() -> Unit)? = null,
+    continuousSpinEligible: Boolean = false,
+    continuousSpinEnabled: Boolean = false,
+    onContinuousSpinChange: ((Boolean) -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) {
         mutableFloatStateOf(currentIconSize ?: ROM_DEFAULT_ICON_SIZE)
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(OledCardColor, RoundedCornerShape(24.dp))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                RomOptionsHeader(rom = rom, onDismiss = onDismiss)
+            RomOptionsHeader(rom = rom, onDismiss = onDismiss)
                 Spacer(Modifier.height(16.dp))
 
                 AnimatedVisibility(visible = !showResizeMode, enter = fadeIn(), exit = fadeOut()) {
                     Column(modifier = Modifier.fillMaxWidth()) {
+                        if (onEditCanvas != null) {
+                            RomEditCanvasRow(onClick = {
+                                onDismiss()
+                                onEditCanvas()
+                            })
+                            Spacer(Modifier.height(4.dp))
+                        }
                         HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
                         Spacer(Modifier.height(4.dp))
                         RomMediaTypeList(rom = rom, onMediaTypeSelected = { type ->
@@ -123,6 +134,27 @@ fun PinnedRomOptionsDialog(
 //                                }
 //                            )
 //                        }
+                        if (currentContentScale != null && onContentScaleChange != null) {
+                            Spacer(Modifier.height(4.dp))
+                            HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
+                            Spacer(Modifier.height(8.dp))
+                            RomContentScaleSection(
+                                current = currentContentScale,
+                                onSelected = { scale ->
+                                    onContentScaleChange(scale)
+                                    onDismiss()
+                                }
+                            )
+                        }
+                        if (continuousSpinEligible && onContinuousSpinChange != null) {
+                            Spacer(Modifier.height(4.dp))
+                            HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
+                            Spacer(Modifier.height(4.dp))
+                            RomContinuousSpinRow(
+                                enabled = continuousSpinEnabled,
+                                onToggle = onContinuousSpinChange
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
                         HorizontalDivider(color = ThemePrimaryColor.copy(alpha = 0.3f))
                         Spacer(Modifier.height(4.dp))
@@ -149,7 +181,6 @@ fun PinnedRomOptionsDialog(
                         }
                     )
                 }
-            }
         }
     }
 }
@@ -343,6 +374,105 @@ private fun DisplayPreferenceTile(
 }
 
 @Composable
+private fun RomEditCanvasRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Tune,
+            contentDescription = null,
+            tint = ThemePrimaryColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(R.string.canvas_edit_canvas_option),
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun RomContentScaleSection(
+    current: EsdeContentScale,
+    onSelected: (EsdeContentScale) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.canvas_esde_picker_scale_label),
+        color = Color.White.copy(alpha = 0.7f),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+    )
+    EsdeContentScale.entries.forEach { scale ->
+        val label = stringResource(
+            when (scale) {
+                EsdeContentScale.FIT -> R.string.canvas_esde_picker_scale_fit
+                EsdeContentScale.CROP -> R.string.canvas_esde_picker_scale_crop
+            }
+        )
+        RomMediaTypeRow(
+            label = label,
+            isSelected = scale == current,
+            onClick = { onSelected(scale) }
+        )
+    }
+}
+
+@Composable
+private fun RomContinuousSpinRow(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onToggle(!enabled) }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Autorenew,
+            contentDescription = null,
+            tint = if (enabled) ThemePrimaryColor else Color.White.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.rom_options_continuous_spin),
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(R.string.rom_options_continuous_spin_description),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 12.sp
+            )
+        }
+        Switch(
+            checked = enabled,
+            onCheckedChange = onToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ThemePrimaryColor,
+                checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
+                uncheckedThumbColor = Color.Gray,
+                uncheckedTrackColor = Color.DarkGray
+            )
+        )
+    }
+}
+
+@Composable
 private fun RomRemoveRow(onClick: () -> Unit) {
     Row(
         modifier = Modifier
@@ -475,47 +605,38 @@ fun RomCustomIconPickerDialog(
     onRomSelected: (PinnedRomInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(OledCardColor, RoundedCornerShape(24.dp))
-                .border(2.dp, ThemePrimaryColor.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.app_options_custom_icon),
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                Text(
+                    text = stringResource(R.string.app_options_custom_icon),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(R.string.dialog_cancel),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.dialog_cancel),
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
                 }
+            }
 
-                roms.forEach { rom ->
+            roms.forEach { rom ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -539,7 +660,6 @@ fun RomCustomIconPickerDialog(
                         )
                     }
                 }
-            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.settings
 
+import jr.brian.home.esde.data.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn

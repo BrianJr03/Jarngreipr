@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VolumeOff
@@ -65,7 +66,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.edit
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +91,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.animatedColor
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.util.MediaPickerLauncher
 import jr.brian.home.util.launchApp
 
@@ -182,31 +183,15 @@ fun DrawerOptionsDialog(
         )
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -262,6 +247,23 @@ fun DrawerOptionsDialog(
                                 tint = animatedColor(firstSeen = isRomIconNew),
                                 modifier = Modifier.size(26.dp)
                             )
+                        }
+
+                        if (esdePrefsState.frontendEnabled) {
+                            IconButton(
+                                onClick = {
+                                    onDismiss()
+                                    launchFrontend(context)
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = stringResource(R.string.frontend_launch_cd),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                         }
 
                         Spacer(Modifier.width(8.dp))
@@ -521,124 +523,6 @@ fun DrawerOptionsDialog(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WallpaperOptionsSection(
-    isVisible: Boolean,
-    wallpaperManager: WallpaperManager,
-    setupPreferences: SetupPreferences,
-    mediaPickerLauncher: ActivityResultLauncher<Array<String>>,
-    onBack: () -> Unit,
-    onDismiss: () -> Unit,
-    onESDESetupClick: () -> Unit
-) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = expandVertically() + fadeIn(),
-        exit = shrinkVertically() + fadeOut()
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            WallpaperGridButton(
-                modifier = Modifier.fillMaxWidth(),
-                title = stringResource(R.string.drawer_options_back),
-                onClick = onBack
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_default),
-                    onClick = {
-                        wallpaperManager.clearWallpaper()
-                        onBack()
-                        onDismiss()
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_system),
-                    onClick = {
-                        wallpaperManager.setTransparent()
-                        onBack()
-                        onDismiss()
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_image),
-                    onClick = {
-                        val savedUri = wallpaperManager.savedImageUri
-                        if (savedUri != null) {
-                            wallpaperManager.setWallpaper(savedUri, WallpaperType.IMAGE)
-                            onBack()
-                            onDismiss()
-                        } else {
-                            mediaPickerLauncher.launch(arrayOf("image/*"))
-                        }
-                    }
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_gif),
-                    onClick = {
-                        val savedUri = wallpaperManager.savedGifUri
-                        if (savedUri != null) {
-                            wallpaperManager.setWallpaper(savedUri, WallpaperType.GIF)
-                            onBack()
-                            onDismiss()
-                        } else {
-                            mediaPickerLauncher.launch(arrayOf("image/gif"))
-                        }
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_video),
-                    onClick = {
-                        val savedUri = wallpaperManager.savedVideoUri
-                        if (savedUri != null) {
-                            wallpaperManager.setWallpaper(savedUri, WallpaperType.VIDEO)
-                            onBack()
-                            onDismiss()
-                        } else {
-                            mediaPickerLauncher.launch(arrayOf("video/*"))
-                        }
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_esde),
-                    onClick = {
-                        onBack()
-                        onDismiss()
-                        if (setupPreferences.setupCompleted) {
-                            wallpaperManager.setESDE()
-                        } else {
-                            onESDESetupClick()
-                        }
-                    }
-                )
-            }
         }
     }
 }
@@ -652,29 +536,15 @@ private fun MuteOptionsDialog(
     onUnmuteAll: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.75f)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .padding(20.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Text(
                     text = stringResource(R.string.music_options_title),
                     color = Color.White,
@@ -709,7 +579,6 @@ private fun MuteOptionsDialog(
                         onClick = onResumeBgMusic
                     )
                 }
-            }
         }
     }
 }
@@ -811,40 +680,3 @@ private fun QuickAccessIconButton(
     }
 }
 
-@Composable
-private fun WallpaperGridButton(
-    modifier: Modifier = Modifier,
-    title: String,
-    onClick: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
-
-    Box(
-        modifier = modifier
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = cardGradient(isFocused = isFocused),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                brush = borderBrush(isFocused = isFocused),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clip(RoundedCornerShape(10.dp))
-            .clickWithHaptic(haptic) { onClick() }
-            .focusable()
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-    }
-}

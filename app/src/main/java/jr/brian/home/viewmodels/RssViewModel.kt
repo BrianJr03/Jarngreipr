@@ -47,11 +47,14 @@ class RssViewModel @Inject constructor(
         return if (file.exists()) file.length() else 0L
     }
 
-    fun playAudio(item: RssItem) {
-        val selectedUrls = _uiState.value.selectedFeedUrls
-        val items = _uiState.value.items
-        val filtered = if (selectedUrls.isEmpty()) items else items.filter { it.feedUrl in selectedUrls }
-        val audioItems = filtered.filter { it.audioUrl.isNotEmpty() }
+    /**
+     * Start playback of [item], using [orderedQueue] as the playback queue. The
+     * caller is responsible for passing the same ordered list the UI shows, so
+     * `skipToNext` / `skipToPrevious` traverse exactly that order. Video-only
+     * items (no audio URL) are dropped from the queue here.
+     */
+    fun playAudio(item: RssItem, orderedQueue: List<RssItem>) {
+        val audioItems = orderedQueue.filter { it.audioUrl.isNotEmpty() }
         val idx = audioItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) nowPlayingManager.play(audioItems, idx)
     }

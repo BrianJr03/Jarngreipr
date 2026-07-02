@@ -19,6 +19,7 @@ enum class SystemImageType(val folderName: String?) {
     }
 }
 
+@kotlinx.serialization.Serializable
 enum class GameImageType(val folderName: String?) {
     None(null),
     All(null),
@@ -26,6 +27,7 @@ enum class GameImageType(val folderName: String?) {
     Fanart("fanart"),
     TitleScreens("titlescreens"),
     Covers("covers"),
+    PhysicalMedia("physicalmedia"),
     Marquee("marquees"),
     MixImages("miximages"),
     Description(null);
@@ -228,9 +230,11 @@ data class ESDEPrefsState(
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
+    val hiddenSystems: Set<String> = emptySet(),
     val romSearchUseWallpaper: Boolean = true,
     val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     val romSearchGameMediaMap: Map<String, String> = emptyMap(),
+    val systemMediaMap: Map<String, String> = emptyMap(),
     val romSearchHideNoMetadata: Boolean = false,
     val romSearchHideNoImage: Boolean = false,
     val romSearchDiscSpin: Boolean = false,
@@ -245,7 +249,17 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesFolderUri: String? = null,
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
     val romSearchDetailImageHeightDp: Int = 240,
-    val romSearchHintsKbVisible: Boolean = true
+    val romSearchHintsKbVisible: Boolean = true,
+    val frontendEnabled: Boolean = false,
+    val secondaryMediaEnabled: Boolean = true,
+    val systemLayout: FrontendLayout = FrontendLayout.Grid,
+    val gameLayout: FrontendLayout = FrontendLayout.Grid,
+    val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
+    val systemOrder: List<String> = emptyList(),
+    val frontendHintsVisible: Boolean = true,
+    val frontendFloatIntensity: Float = 1f,
+    val frontendFocusHapticEnabled: Boolean = true,
+    val canvasContinuousSpinRoms: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f
