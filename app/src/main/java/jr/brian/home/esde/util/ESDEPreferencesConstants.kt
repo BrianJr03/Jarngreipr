@@ -116,5 +116,6 @@ object ESDEPreferencesConstants {
     const val KEY_SYSTEM_ORDER = "system_order"
     const val KEY_FRONTEND_HINTS_VISIBLE = "frontend_hints_visible"
     const val KEY_FRONTEND_FLOAT_INTENSITY = "frontend_float_intensity"
+    const val KEY_FRONTEND_FOCUS_HAPTIC_ENABLED = "frontend_focus_haptic_enabled"
     const val KEY_CANVAS_CONTINUOUS_SPIN_ROMS = "canvas_continuous_spin_roms"
 }

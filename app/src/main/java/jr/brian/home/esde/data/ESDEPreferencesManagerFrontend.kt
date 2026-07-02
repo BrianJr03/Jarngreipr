@@ -10,6 +10,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIB
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import kotlinx.serialization.encodeToString
@@ -76,6 +77,11 @@ fun ESDEPreferencesManager.setFrontendFloatIntensity(intensity: Float) {
     val coerced = intensity.coerceIn(0f, 3f)
     _state.value = _state.value.copy(frontendFloatIntensity = coerced)
     prefs.edit { putFloat(KEY_FRONTEND_FLOAT_INTENSITY, coerced) }
+}
+
+fun ESDEPreferencesManager.setFrontendFocusHapticEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(frontendFocusHapticEnabled = enabled)
+    prefs.edit { putBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, enabled) }
 }
 
 fun ESDEPreferencesManager.setCanvasContinuousSpin(romKey: String, enabled: Boolean) {

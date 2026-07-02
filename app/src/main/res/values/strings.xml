@@ -49,6 +49,8 @@
     <string name="frontend_settings_title">Frontend Settings</string>
     <string name="frontend_settings_show_hints_title">Show control hints</string>
     <string name="frontend_settings_show_hints_description">Display the SELECT / START / Y hint row along the bottom of the system screen.</string>
+    <string name="frontend_settings_focus_haptic_title">Focus haptic feedback</string>
+    <string name="frontend_settings_focus_haptic_description">Emit a soft haptic tick each time focus moves between system or game cards.</string>
     <string name="frontend_settings_float_intensity_title">Float intensity</string>
     <string name="frontend_settings_float_intensity_description">How far focused system / game cards bob up and down. 0% disables the float.</string>
     <string name="frontend_settings_float_intensity_value">%1$d%%</string>

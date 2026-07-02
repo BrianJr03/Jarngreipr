@@ -282,7 +282,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendFloatIntensity = f.esdePreferencesManager.state.value.frontendFloatIntensity,
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
-                systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap
+                systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
+                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled
             )
         )
     }
@@ -530,6 +531,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
+        f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
     }
 
     private fun applySystemConfig(config: SystemConfig) {

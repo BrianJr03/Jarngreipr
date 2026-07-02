@@ -31,7 +31,9 @@ data class JarngreiprConfig(
         // v9: added RomSearchConfig.canvasContinuousSpinRoms for per-rom continuous-spin toggle.
         // v10: added RomSearchConfig.gameMediaMap + systemMediaMap for per-game and per-system
         //      card media type overrides.
-        const val CONFIG_VERSION = 10
+        // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
+        //      haptic toggle (applies to both system and game cards).
+        const val CONFIG_VERSION = 11
     }
 }
 
@@ -237,7 +239,8 @@ data class RomSearchConfig(
     val frontendFloatIntensity: Float = 1f,
     val canvasContinuousSpinRoms: Set<String> = emptySet(),
     val gameMediaMap: Map<String, String> = emptyMap(),
-    val systemMediaMap: Map<String, String> = emptyMap()
+    val systemMediaMap: Map<String, String> = emptyMap(),
+    val frontendFocusHapticEnabled: Boolean = true
 )
 
 @Serializable

@@ -62,11 +62,13 @@ fun FrontendSettingsDialog(onDismiss: () -> Unit) {
             hintsVisible = state.frontendHintsVisible,
             secondaryMediaEnabled = state.secondaryMediaEnabled,
             floatIntensity = state.frontendFloatIntensity,
+            focusHapticEnabled = state.frontendFocusHapticEnabled,
             onSystemLayoutChange = prefsManager::setSystemLayout,
             onGameLayoutChange = prefsManager::setGameLayout,
             onHintsVisibleChange = prefsManager::setFrontendHintsVisible,
             onSecondaryMediaChange = prefsManager::setSecondaryMediaEnabled,
             onFloatIntensityChange = prefsManager::setFrontendFloatIntensity,
+            onFocusHapticEnabledChange = prefsManager::setFrontendFocusHapticEnabled,
             onClose = onDismiss
         )
     }
@@ -79,11 +81,13 @@ private fun SheetBody(
     hintsVisible: Boolean,
     secondaryMediaEnabled: Boolean,
     floatIntensity: Float,
+    focusHapticEnabled: Boolean,
     onSystemLayoutChange: (FrontendLayout) -> Unit,
     onGameLayoutChange: (FrontendLayout) -> Unit,
     onHintsVisibleChange: (Boolean) -> Unit,
     onSecondaryMediaChange: (Boolean) -> Unit,
     onFloatIntensityChange: (Float) -> Unit,
+    onFocusHapticEnabledChange: (Boolean) -> Unit,
     onClose: () -> Unit
 ) {
     val firstToggleFocus = remember { FocusRequester() }
@@ -113,11 +117,13 @@ private fun SheetBody(
             hintsVisible = hintsVisible,
             secondaryMediaEnabled = secondaryMediaEnabled,
             floatIntensity = floatIntensity,
+            focusHapticEnabled = focusHapticEnabled,
             onSystemLayoutChange = onSystemLayoutChange,
             onGameLayoutChange = onGameLayoutChange,
             onHintsVisibleChange = onHintsVisibleChange,
             onSecondaryMediaChange = onSecondaryMediaChange,
             onFloatIntensityChange = onFloatIntensityChange,
+            onFocusHapticEnabledChange = onFocusHapticEnabledChange,
             firstToggleFocus = firstToggleFocus
         )
         DialogCloseButton(onClick = onClose)
@@ -179,11 +185,13 @@ private fun FrontendSettingsContent(
     hintsVisible: Boolean,
     secondaryMediaEnabled: Boolean,
     floatIntensity: Float,
+    focusHapticEnabled: Boolean,
     onSystemLayoutChange: (FrontendLayout) -> Unit,
     onGameLayoutChange: (FrontendLayout) -> Unit,
     onHintsVisibleChange: (Boolean) -> Unit,
     onSecondaryMediaChange: (Boolean) -> Unit,
     onFloatIntensityChange: (Float) -> Unit,
+    onFocusHapticEnabledChange: (Boolean) -> Unit,
     firstToggleFocus: FocusRequester
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -210,6 +218,12 @@ private fun FrontendSettingsContent(
             description = stringResource(R.string.frontend_settings_show_hints_description),
             checked = hintsVisible,
             onCheckedChange = onHintsVisibleChange
+        )
+        ToggleSetting(
+            title = stringResource(R.string.frontend_settings_focus_haptic_title),
+            description = stringResource(R.string.frontend_settings_focus_haptic_description),
+            checked = focusHapticEnabled,
+            onCheckedChange = onFocusHapticEnabledChange
         )
         ToggleSetting(
             title = stringResource(R.string.secondary_media_title),
