@@ -1,6 +1,11 @@
 name: Build Release
 
 on:
+  push:
+    branches:
+      - dev  # Early access build on push to dev — only when versionName changes
+    paths:
+      - 'app/build.gradle.kts'
   workflow_dispatch:
     inputs:
       create_release:
@@ -28,9 +33,55 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: write
+
 jobs:
+  version-check:
+    name: Check versionName Change
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to compare versionName
+
+      - name: Check if versionName changed
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger — skipping version check."
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Allow skipping version check via commit message flag
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qi '\[skip-version-check\]'; then
+            echo "Found [skip-version-check] in commit message — forcing build."
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          CURRENT=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          PREVIOUS=$(git show HEAD~1:app/build.gradle.kts 2>/dev/null | grep 'versionName' | head -1 | sed 's/.*"\(.*\)".*/\1/' || echo "")
+          echo "Current versionName:  $CURRENT"
+          echo "Previous versionName: $PREVIOUS"
+          if [ "$CURRENT" = "$PREVIOUS" ]; then
+            echo "versionName unchanged ($CURRENT) — skipping build."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "versionName bumped: $PREVIOUS → $CURRENT"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
   build-release:
     name: Build Release APK
+    needs: version-check
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -62,13 +113,13 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
 
-      - name: Build signed release APK
+      - name: Build signed standard release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleStandardRelease \
             -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
@@ -80,36 +131,119 @@ jobs:
         run: |
           VERSION_NAME="${{ steps.version.outputs.version_name }}"
           APK_NAME="jarngreipr-${VERSION_NAME}.apk"
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/${APK_NAME}
+          mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/${APK_NAME}
           echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${APK_NAME}"
 
+      # --- Manual release flow (workflow_dispatch) ---
+
       - name: Create Release and Upload APK
-        if: ${{ inputs.create_release }}
+        if: github.event_name == 'workflow_dispatch' && inputs.create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
           name: ${{ inputs.release_name || inputs.release_tag }}
           prerelease: ${{ inputs.prerelease }}
           body_path: app/src/main/res/raw/patch_notes.md
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to Existing Release
-        if: ${{ !inputs.create_release }}
+        if: github.event_name == 'workflow_dispatch' && !inputs.create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
-          files: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK as artifact (backup)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/${{ steps.rename.outputs.apk_name }}
+          path: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
+
+      - name: Notify Discord of manual release
+        if: github.event_name == 'workflow_dispatch' && inputs.create_release
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PUBLIC_WEBHOOK_URL }}
+          VERSION: ${{ steps.version.outputs.version_name }}
+          REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+          PATCH_NOTES=$(cat app/src/main/res/raw/patch_notes.md)
+
+          DESC=$(printf "A new release is available.\n\n%s\n\n[View Release](%s)" "$PATCH_NOTES" "$RELEASE_URL")
+
+          PAYLOAD=$(jq -n \
+            --arg title "🚀 Járngreipr v${VERSION} is now available!" \
+            --arg desc "$DESC" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5763719,
+                footer: { text: "Járngreipr Release" }
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$PAYLOAD" \
+               "${DISCORD_WEBHOOK_URL}"
+
+      # --- Early access flow (push to dev) ---
+
+      - name: Upload early access APK artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarngreipr-${{ steps.version.outputs.version_name }}
+          path: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
+          retention-days: 90
+
+      - name: Post to Discord early-builds
+        if: github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPPORTER_ROLE_ID: ${{ secrets.SUPPORTER_ROLE_ID }}
+          VERSION: ${{ steps.version.outputs.version_name }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          PATCH_NOTES=$(cat app/src/main/res/raw/patch_notes.md)
+
+          DESC=$(printf "A new build is ready for early access supporters!\n\n%s\n\n**[⬇️ Download APKs](%s)** (normal + hidden)\n\n*Public release drops in 3 days.*" "$PATCH_NOTES" "$ARTIFACT_URL")
+
+          PAYLOAD=$(jq -n \
+            --arg content "<@&${SUPPORTER_ROLE_ID}>" \
+            --arg title "🧤 Járngreipr Early Build — v${VERSION}" \
+            --arg desc "$DESC" \
+            '{
+              content: $content,
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 7419530,
+                footer: { text: "Járngreipr Early Access" }
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$PAYLOAD" \
+               "${DISCORD_WEBHOOK_URL}"
+
+      - name: Tag early access build
+        if: github.event_name == 'push'
+        run: |
+          TAG="early/v${{ steps.version.outputs.version_name }}"
+          git tag "$TAG" "${{ github.sha }}"
+          git push origin "$TAG"
 
       - name: Cleanup keystore
         if: always()
@@ -117,11 +251,11 @@ jobs:
 
   build-hidden:
     name: Build Hidden Release APK
-    needs: build-release
-    if: ${{ inputs.build_hidden }}
+    needs: [version-check, build-release]
+    if: needs.version-check.outputs.changed == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.build_hidden) || github.event_name == 'push')
     uses: ./.github/workflows/build-hidden-release.yml
     with:
-      release_tag: ${{ inputs.release_tag }}
+      release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || '' }}
     secrets:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

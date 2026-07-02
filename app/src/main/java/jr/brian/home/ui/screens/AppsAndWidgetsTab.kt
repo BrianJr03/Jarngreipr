@@ -1,7 +1,11 @@
 package jr.brian.home.ui.screens
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -36,8 +40,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.navigation.NavHostController
 import jr.brian.home.data.FolderManager.Companion.TAB_TYPE_WIDGETS
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.model.rom.toPinnedRomInfo
 import jr.brian.home.model.widget.WidgetInfo
 import androidx.compose.ui.platform.LocalContext
 import jr.brian.home.ui.animations.onPressScaleAndOffset
@@ -49,11 +57,15 @@ import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
+import jr.brian.home.ui.components.dialog.RomCustomIconPickerDialog
 import jr.brian.home.esde.ui.ESDESetupScreen
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.SetupStep
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation
@@ -65,6 +77,8 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
+import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
@@ -72,11 +86,17 @@ import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
+import jr.brian.home.service.AppNotificationListenerService
+import jr.brian.home.ui.components.NotificationShade
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberTopFlingTrigger
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
 import kotlinx.coroutines.launch
@@ -85,10 +105,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppsAndWidgetsTab(
     pageIndex: Int,
+    pagerPageIndex: Int = pageIndex,
     widgets: List<WidgetInfo>,
     viewModel: WidgetViewModel,
     modifier: Modifier = Modifier,
     powerViewModel: PowerViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
     allApps: List<AppInfo> = emptyList(),
     totalPages: Int = 1,
     pagerState: PagerState? = null,
@@ -100,16 +122,21 @@ fun AppsAndWidgetsTab(
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
     onScrollStateChanged: (
         isScrolling: Boolean,
         hasScrollableContent: Boolean
-    ) -> Unit = { _, _ -> }
+    ) -> Unit = { _, _ -> },
+    dismissShadeSignal: Int = 0
 ) {
     val context = LocalContext.current
     val widgetPageAppManager = LocalWidgetPageAppManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val appPositionManager = LocalAppPositionManager.current
     val folderManager = LocalFolderManager.current
     val dockManager = LocalDockManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
@@ -119,8 +146,34 @@ fun AppsAndWidgetsTab(
     val scope = rememberCoroutineScope()
 
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val folders by folderManager.getFolders(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val pinnedRomManager = LocalPinnedRomManager.current
+    val hasExternalDisplay = rememberHasExternalDisplay()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val pinnedRoms by pinnedRomManager.getPinnedRoms(pageIndex, TAB_TYPE_WIDGETS)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    var romForOptions by remember { mutableStateOf<PinnedRomInfo?>(null) }
+    var romForCustomIcon by remember { mutableStateOf<PinnedRomInfo?>(null) }
+    var showRomCustomIconPicker by remember { mutableStateOf(false) }
+    var romPageDisplayPreference by remember(pinnedRoms.firstOrNull()?.key) {
+        mutableStateOf(
+            pinnedRoms.firstOrNull()?.let {
+                appDisplayPreferenceManager.getAppDisplayPreference(it.key)
+            } ?: DisplayPreference.CURRENT_DISPLAY
+        )
+    }
+
+    val pendingRomForPin by romSearchViewModel.pendingRomForPin.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingRomForPin) {
+        val pending = pendingRomForPin ?: return@LaunchedEffect
+        if (pending.first == pageIndex) {
+            romSearchViewModel.clearPendingRomForPin()
+            pinnedRomManager.addPinnedRom(pageIndex, pending.second.toPinnedRomInfo(), TAB_TYPE_WIDGETS)
+        }
+    }
 
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
 
@@ -168,10 +221,30 @@ fun AppsAndWidgetsTab(
         }
     }
 
+    val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage.collectAsStateWithLifecycle()
+    val isBottomFlingDisabled = !(gridSettingsManager.bottomFlingAppDrawerEnabled) ||
+        (bottomFlingDisabledByPage[pagerPageIndex] ?: false)
+
     val bottomFlingTrigger = rememberBottomFlingTrigger(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
     )
+
+    var showNotificationShade by remember { mutableStateOf(false) }
+    var showAllNotifications by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
+
+    val topFlingTrigger = rememberTopFlingTrigger(
+        gridState = gridState,
+        onFlingAtTop = { if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true }
+    )
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+    val notificationCountManager = LocalNotificationManager.current
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
 
     val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
@@ -201,10 +274,11 @@ fun AppsAndWidgetsTab(
 
     BackHandler(enabled = isPoweredOff) {}
 
+    Box(modifier = modifier.fillMaxSize().nestedScroll(topFlingTrigger)) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(bottomFlingTrigger)
+            .then(if (!isBottomFlingDisabled) Modifier.nestedScroll(bottomFlingTrigger) else Modifier)
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
@@ -283,7 +357,27 @@ fun AppsAndWidgetsTab(
                     swapModeEnabled = true
                     swapSourceWidgetId = widgetId
                 },
-                onFolderClick = folderContentsDialogState::show
+                onFolderClick = folderContentsDialogState::show,
+                pinnedRoms = pinnedRoms,
+                onRomClick = { rom ->
+                    romSearchViewModel.requestRomLaunch(rom)
+                    val intent = android.content.Intent(
+                        context,
+                        jr.brian.home.esde.ui.RomSearchResultsActivity::class.java
+                    ).apply {
+                        addFlags(
+                            android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                        )
+                    }
+                    val displayPreference = if (hasExternalDisplay) {
+                        appDisplayPreferenceManager.getAppDisplayPreference(rom.key)
+                    } else {
+                        DisplayPreference.CURRENT_DISPLAY
+                    }
+                    launchApp(context, rom.key, displayPreference, intent)
+                },
+                onRomLongClick = { rom -> romForOptions = rom }
             )
         }
 
@@ -324,6 +418,49 @@ fun AppsAndWidgetsTab(
 
     }
 
+    NotificationShade(
+        visible = showNotificationShade,
+        nowPlaying = nowPlaying,
+        currentPosition = nowPlayingPosition,
+        duration = nowPlayingDuration,
+        volume = nowPlayingVolume,
+        onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+        onPrevious = { nowPlayingViewModel.skipToPrevious() },
+        onNext = { nowPlayingViewModel.skipToNext() },
+        onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+        onSeek = { nowPlayingViewModel.seekTo(it) },
+        onDismiss = { showNotificationShade = false },
+        onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+        notifications = notifications,
+        onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+        onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
+        onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+        initialTabPage = notificationCountManager.shadeTabPage,
+        onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
+        backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
+        onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) },
+        cornerRadiusDp = gridSettingsManager.shadeCornerRadiusDp,
+        onCornerRadiusChange = { gridSettingsManager.setShadeCornerRadiusDp(it) },
+        backgroundAlpha = gridSettingsManager.shadeBackgroundAlpha,
+        onBackgroundAlphaChange = { gridSettingsManager.setShadeBackgroundAlpha(it) },
+        accentColorArgb = gridSettingsManager.shadeAccentColorArgb,
+        onAccentColorChange = { gridSettingsManager.setShadeAccentColorArgb(it) }
+    )
+
+    AnimatedVisibility(
+        visible = showAllNotifications,
+        enter = slideInVertically(tween(300)) { it } + fadeIn(tween(300)),
+        exit = slideOutVertically(tween(250)) { it } + fadeOut(tween(200))
+    ) {
+        AllNotificationsScreen(
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAll = { AppNotificationListenerService.cancelAll() },
+            onDismiss = { showAllNotifications = false }
+        )
+    }
+    }
+
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {
             val availableApps = allApps.filter { app ->
@@ -345,8 +482,6 @@ fun AppsAndWidgetsTab(
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
         val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
-        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
                 addOptionsDialogState.dismiss()
@@ -364,10 +499,65 @@ fun AppsAndWidgetsTab(
             },
             isEditModeActive = editModeEnabled,
             isEmpty = isTabEmpty,
-            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-            onToggleMarqueePositionLock = if (isEsdeMode) {
-                { esdePrefsManager.toggleMarqueePositionLocked() }
+            isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() },
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            },
+            onCustomIcon = if (pinnedRoms.isNotEmpty()) {
+                {
+                    if (pinnedRoms.size == 1) {
+                        romForCustomIcon = pinnedRoms.first()
+                    } else {
+                        showRomCustomIconPicker = true
+                    }
+                }
+            } else null,
+            currentRomDisplayPreference = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) romPageDisplayPreference else null,
+            onRomDisplayPreferenceChange = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) { pref ->
+                romPageDisplayPreference = pref
+                pinnedRoms.forEach { appDisplayPreferenceManager.setAppDisplayPreference(it.key, pref) }
             } else null
+        )
+    }
+
+    if (showRomCustomIconPicker) {
+        RomCustomIconPickerDialog(
+            roms = pinnedRoms,
+            onRomSelected = { rom ->
+                romForCustomIcon = rom
+                showRomCustomIconPicker = false
+            },
+            onDismiss = { showRomCustomIconPicker = false }
+        )
+    }
+
+    romForCustomIcon?.let { rom ->
+        CustomIconDialog(
+            packageName = rom.key,
+            appLabel = rom.name,
+            onDismiss = { romForCustomIcon = null }
+        )
+    }
+
+    romForOptions?.let { rom ->
+        PinnedRomOptionsDialog(
+            rom = rom,
+            onDismiss = { romForOptions = null },
+            hasExternalDisplay = hasExternalDisplay,
+            currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(rom.key),
+            onDisplayPreferenceChange = { pref ->
+                appDisplayPreferenceManager.setAppDisplayPreference(rom.key, pref)
+            },
+            onMediaTypeSelected = { type ->
+                pinnedRomManager.updatePinnedRom(pageIndex, rom.copy(displayMediaType = type), TAB_TYPE_WIDGETS)
+                romForOptions = null
+            },
+            onRemove = {
+                pinnedRomManager.removePinnedRom(pageIndex, rom.key, TAB_TYPE_WIDGETS)
+                romForOptions = null
+            }
         )
     }
 
@@ -392,8 +582,10 @@ fun AppsAndWidgetsTab(
         val homeTabManager = LocalHomeTabManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageCountManager = LocalPageCountManager.current
+        val pageOrderCoordinator = LocalPageOrderCoordinator.current
         val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+        val coroutineScope = rememberCoroutineScope()
 
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
@@ -410,7 +602,16 @@ fun AppsAndWidgetsTab(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
+            }
         )
     }
 
@@ -434,7 +635,10 @@ fun AppsAndWidgetsTab(
             onDockSettingsClick = onNavigateToDockSettings,
             onESDESetupClick = {
                 esdeSetupDialogState.show(SetupStep.Welcome)
-            }
+            },
+            onNavigateToSystemApps = onNavigateToSystemApps,
+            onNavigateToRomSearch = onNavigateToRomSearch,
+            onNavigateToTrackpad = onNavigateToTrackpad
         )
     }
 
@@ -452,7 +656,11 @@ fun AppsAndWidgetsTab(
             onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
             allApps = allApps,
-            tabType = TAB_TYPE_WIDGETS
+            tabType = TAB_TYPE_WIDGETS,
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            }
         )
     }
 
@@ -466,6 +674,8 @@ fun AppsAndWidgetsTab(
                 pageIndex = pageIndex,
                 allApps = allApps,
                 tabType = TAB_TYPE_WIDGETS,
+                backgroundColorArgb = folder.backgroundColorArgb,
+                backgroundImagePath = folder.backgroundImagePath,
                 onDismiss = folderContentsDialogState::dismiss
             )
         }

@@ -3,6 +3,7 @@ package jr.brian.home.ui.theme
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import jr.brian.home.R
+import androidx.core.graphics.toColorInt
 
 data class ColorTheme(
     val id: String,
@@ -129,13 +130,13 @@ data class ColorTheme(
             isSolid: Boolean,
         ): ColorTheme {
             val primary = try {
-                Color(android.graphics.Color.parseColor(primaryColorHex))
+                Color(primaryColorHex.toColorInt())
             } catch (_: Exception) {
                 Color(0xFF8A2BE2)
             }
 
             val secondary = try {
-                Color(android.graphics.Color.parseColor(secondaryColorHex))
+                Color(secondaryColorHex.toColorInt())
             } catch (_: Exception) {
                 primary
             }

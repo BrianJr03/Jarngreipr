@@ -1,12 +1,12 @@
 package jr.brian.home.ui.components.dialog
 
-import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -42,23 +44,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import jr.brian.home.ui.util.rememberDialogState
-import jr.brian.home.ui.util.rememberHasExternalDisplay
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.data.CustomIconManager
@@ -69,14 +65,15 @@ import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
 import jr.brian.home.ui.components.settings.AppName
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
@@ -90,8 +87,13 @@ fun FolderContentsDialog(
     pageIndex: Int,
     allApps: List<AppInfo> = apps,
     tabType: String = jr.brian.home.data.FolderManager.TAB_TYPE_APPS,
+    backgroundColorArgb: Int? = null,
+    backgroundImagePath: String? = null,
     onDismiss: () -> Unit
 ) {
+    var currentBackgroundColorArgb by remember(folderId) { mutableStateOf(backgroundColorArgb) }
+    var currentBackgroundImagePath by remember(folderId) { mutableStateOf(backgroundImagePath) }
+    val backgroundDialogState = rememberDialogState<Unit>()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val customIconManager = LocalCustomIconManager.current
@@ -106,25 +108,14 @@ fun FolderContentsDialog(
     var folderAppPackages by remember { mutableStateOf(apps.map { it.packageName }.toSet()) }
     var selectedAppForOptions by remember { mutableStateOf<AppInfo?>(null) }
     var appForCustomIcon by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(16.dp)
-                )
+                .fillMaxWidth()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -132,9 +123,9 @@ fun FolderContentsDialog(
                     focusManager.clearFocus()
                     keyboardController?.hide()
                 }
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -183,6 +174,18 @@ fun FolderContentsDialog(
                     )
 
                     Row {
+                        IconButton(
+                            onClick = { backgroundDialogState.show() },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = stringResource(R.string.folder_background_button_description),
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
                         IconButton(
                             onClick = { editAppsDialogState.show() },
                             modifier = Modifier.size(40.dp)
@@ -240,7 +243,8 @@ fun FolderContentsDialog(
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(4),
                         modifier = Modifier
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .heightIn(max = 480.dp),
                         contentPadding = PaddingValues(vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -278,7 +282,6 @@ fun FolderContentsDialog(
                         }
                     }
                 }
-            }
         }
     }
 
@@ -358,6 +361,10 @@ fun FolderContentsDialog(
             onCustomIconClick = {
                 appForCustomIcon = app
                 selectedAppForOptions = null
+            },
+            onRenameClick = {
+                appForRename = app
+                selectedAppForOptions = null
             }
         )
     }
@@ -365,9 +372,33 @@ fun FolderContentsDialog(
     appForCustomIcon?.let { app ->
         CustomIconDialog(
             packageName = app.packageName,
-            appLabel = app.label,
+            appLabel = app.displayName(),
             onDismiss = { appForCustomIcon = null },
             onIconChanged = { }
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
+        )
+    }
+
+    if (backgroundDialogState.isVisible) {
+        FolderBackgroundDialog(
+            folderId = folderId,
+            folderName = editableName,
+            pageIndex = pageIndex,
+            tabType = tabType,
+            currentColorArgb = currentBackgroundColorArgb,
+            currentImagePath = currentBackgroundImagePath,
+            onBackgroundChanged = { argb, path ->
+                currentBackgroundColorArgb = argb
+                currentBackgroundImagePath = path
+            },
+            onDismiss = backgroundDialogState::dismiss
         )
     }
 }

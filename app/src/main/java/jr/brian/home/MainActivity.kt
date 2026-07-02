@@ -1,43 +1,89 @@
 package jr.brian.home
 
+import jr.brian.home.esde.data.*
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.LocalJinglesManager
 import jr.brian.home.data.ManagerCompositionLocalProvider
 import jr.brian.home.data.ManagerContainer
-import jr.brian.home.esde.events.ESDEEventListenerImpl
-import jr.brian.home.esde.events.ESDEEventManager
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.preferences.ScreensaverBehavior
-import jr.brian.home.esde.scripts.ScriptManager
-import jr.brian.home.esde.setup.ESDESetupHelper
+import jr.brian.home.data.config.ImportExportManager
+import jr.brian.home.esde.data.ESDEEventListenerImpl
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.ESDESetupHelper
+import jr.brian.home.esde.data.FrontendSelectionStateHolder
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.ScriptManager
+import jr.brian.home.esde.model.FrontendSelection
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
-import jr.brian.home.esde.ui.VideoPlayerActivity
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.ui.FrontEndActivity
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
+import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
+import jr.brian.home.ui.components.konfetti.KonfettiShapeFactory
+import jr.brian.home.ui.components.konfetti.LetterFormationBurst
 import jr.brian.home.ui.theme.LauncherTheme
+import jr.brian.home.ui.theme.ThemeAccentColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
+import jr.brian.home.ui.theme.managers.LocalImportExportManager
+import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.launchFrontend
+import jr.brian.home.ui.util.resolveBottomDisplayId
+import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.ping.PingPermissions.hasPingPermissions
+import jr.brian.pingnearby.PingNearbyPermissions.hasNearbyPermissions
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.compose.OnParticleSystemUpdateListener
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.PartySystem
 import java.io.File
 import javax.inject.Inject
 
@@ -47,26 +93,43 @@ class MainActivity : ComponentActivity() {
     lateinit var managers: ManagerContainer
 
     @Inject
-    lateinit var esdeEventManager: ESDEEventManager
+    lateinit var importExportManager: ImportExportManager
 
     @Inject
     lateinit var esdeEventListener: ESDEEventListenerImpl
 
+    @Inject
+    lateinit var romSearchStateHolder: RomSearchStateHolder
+
+    @Inject
+    lateinit var frontendSelectionStateHolder: FrontendSelectionStateHolder
+
+    @Inject
+    lateinit var esdePreferencesManager: ESDEPreferencesManager
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
-    private val videoPlayerLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            esdeViewModel.onVideoActivityFinished()
-        }
+    private var navigateToThemeShare by mutableStateOf(false)
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
 
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        esdeEventManager.startWatching()
-        esdeEventManager.startPolling()
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        }
+
+        managers.feature.esdeEventManager.startWatching()
+        managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
+        observeFrontendEnabledFlag()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -78,14 +141,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 managers.ManagerCompositionLocalProvider {
+                CompositionLocalProvider(
+                    LocalImportExportManager provides importExportManager
+                ) {
+                    val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
                     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
+                    val themeManager = LocalThemeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
                     var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
                     var isAnyOverlayVisible by remember { mutableStateOf(false) }
-                    var currentPageIndex by remember { mutableStateOf(0) }
-                    var pagerScrollProgress by remember { mutableStateOf(0f) }
+                    var currentPageIndex by remember { mutableIntStateOf(0) }
+                    var pagerScrollProgress by remember { mutableFloatStateOf(0f) }
                     var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
                     var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
                     var dockTopY by remember { mutableStateOf<Float?>(null) }
@@ -93,10 +161,34 @@ class MainActivity : ComponentActivity() {
                     val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
                     val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
 
+                    LaunchedEffect(Unit) {
+                        if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
+                            themeManager.shareCurrentTheme()
+                        }
+                        if (context.hasNearbyPermissions() && themeManager.isWallpaperNearbyAutoStart) {
+                            themeManager.startWallpaperNearby()
+                        }
+                    }
+
+                    LaunchedEffect(Unit) {
+                        openThemeShareRequests.collect {
+                            navigateToThemeShare = true
+                        }
+                    }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            themeManager.stopSharing()
+                            themeManager.stopWallpaperNearby()
+                        }
+                    }
+
                     ObserveVideoLaunchEvents(
                         esdeViewModel = esdeViewModel,
                         powerViewModel = powerViewModel
                     )
+
+                    ObserveFrontendSelection(esdeViewModel = esdeViewModel)
 
                     SetupESDEEventListeners(
                         esdeViewModel = esdeViewModel,
@@ -126,20 +218,30 @@ class MainActivity : ComponentActivity() {
                         currentPageIndex = currentPageIndex,
                         dockTopY = dockTopY,
                         content = {
-                            MainContent(
-                                triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                onMarqueePressShortcutHandled = {
-                                    triggerMarqueePressShortcut = false
-                                },
-                                onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
-                                onCurrentPageChanged = { currentPageIndex = it },
-                                onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                onDockPositioned = { y -> dockTopY = y },
-                                hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
-                                        (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
-                            )
+                            CompositionLocalProvider(
+                                LocalEsdeWallpaperState provides wallpaperState
+                            ) {
+                                MainContent(
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    triggerMarqueePressShortcut = triggerMarqueePressShortcut,
+                                    onMarqueePressShortcutHandled = {
+                                        triggerMarqueePressShortcut = false
+                                    },
+                                    navigateToThemeShare = navigateToThemeShare,
+                                    onNavigateToThemeShareHandled = { navigateToThemeShare = false },
+                                    onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
+                                    onCurrentPageChanged = { currentPageIndex = it },
+                                    onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                    onDockPositioned = { y -> dockTopY = y },
+                                    hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
+                                            (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
+                                )
+                            }
                         }
                     )
+
+                    GameKonfettiOverlay(esdeViewModel = esdeViewModel)
+                }
                 }
             }
         }
@@ -149,19 +251,66 @@ class MainActivity : ComponentActivity() {
         super.onConfigurationChanged(newConfig)
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+    }
+
     override fun onStart() {
         super.onStart()
         esdeViewModel.musicController.onActivityVisible()
     }
 
+
+    override fun onResume() {
+        super.onResume()
+        esdeViewModel.musicController.onActivityResumed()
+        esdeViewModel.onVideoActivityFinished()
+        esdeViewModel.handleLauncherResumed()
+        managers.feature.bgMusicManager.resumePlayback()
+    }
+
     override fun onStop() {
         super.onStop()
         esdeViewModel.musicController.onActivityInvisible()
+        managers.feature.jinglesManager.stop()
+        managers.feature.bgMusicManager.pausePlayback()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        esdeEventManager.stopWatching()
+        managers.feature.esdeEventManager.stopWatching()
+        managers.feature.jinglesManager.release()
+        managers.feature.bgMusicManager.release()
+    }
+
+
+    @UnstableApi
+    private fun launchVideoPlayer(event: VideoLaunchEvent) {
+        managers.feature.videoPresentationManager.show(
+            context = this,
+            videoPath = event.videoPath,
+            audioEnabled = event.audioEnabled,
+            scaleMode = event.scaleMode,
+            overlayEnabled = event.overlayEnabled
+        )
+    }
+
+    private fun observeFrontendEnabledFlag() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                esdePreferencesManager.state
+                    .map { it.frontendEnabled }
+                    .distinctUntilChanged()
+                    .collect { enabled -> if (enabled) launchFrontendIfEnabled() }
+            }
+        }
+    }
+
+    private fun launchFrontendIfEnabled() {
+        if (!esdePreferencesManager.state.value.frontendEnabled) return
+        if (FrontEndActivity.isRunning) return
+        if (resolveBottomDisplayId(this) == null) return
+        launchFrontend(this)
     }
 
     private fun checkAndCreateScripts() {
@@ -174,31 +323,15 @@ class MainActivity : ComponentActivity() {
         if (!ScriptManager.areScriptsValid(scriptsDir)) {
             val setupResult = ESDESetupHelper.initializeESDEIntegration(this)
             if (setupResult.success) {
-                Toast.makeText(
-                    this,
-                    "ES-DE scripts created successfully!",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, "ES-DE scripts created successfully!", Toast.LENGTH_LONG)
+                    .show()
             } else {
-                Toast.makeText(
-                    this,
-                    setupResult.message,
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, setupResult.message, Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun launchVideoPlayer(event: VideoLaunchEvent) {
-        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
-            putExtra(VideoPlayerActivity.EXTRA_VIDEO_PATH, event.videoPath)
-            putExtra(VideoPlayerActivity.EXTRA_AUDIO_ENABLED, event.audioEnabled)
-            putExtra(VideoPlayerActivity.EXTRA_SCALE_MODE, event.scaleMode.name)
-        }
-        videoPlayerLauncher.launch(intent)
-    }
-
-
+    @OptIn(UnstableApi::class)
     @Composable
     private fun ObserveVideoLaunchEvents(
         esdeViewModel: ESDEViewModel,
@@ -212,8 +345,33 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        LaunchedEffect(Unit) {
+            romSearchStateHolder.gameLaunchSignal.collect {
+                esdeViewModel.handleRomSearchGameStarted()
+            }
+        }
     }
 
+    @Composable
+    private fun ObserveFrontendSelection(esdeViewModel: ESDEViewModel) {
+        val jinglesManager = LocalJinglesManager.current
+        LaunchedEffect(Unit) {
+            frontendSelectionStateHolder.selection.collect { selection ->
+                when (selection) {
+                    is FrontendSelection.System -> {
+                        jinglesManager.stop()
+                        esdeViewModel.updateForSystem(selection.systemName)
+                    }
+                    is FrontendSelection.Game ->
+                        esdeViewModel.updateForGame(selection.systemName, selection.gameFilename)
+                    null -> Unit
+                }
+            }
+        }
+    }
+
+    @OptIn(UnstableApi::class)
     @Composable
     private fun SetupESDEEventListeners(
         esdeViewModel: ESDEViewModel,
@@ -223,26 +381,53 @@ class MainActivity : ComponentActivity() {
         onGameBrowsingUIVisibilityChanged: (Boolean) -> Unit
     ) {
         LaunchedEffect(Unit) {
+            fun launchSystemAppIfTriggered(systemName: String, trigger: SystemLaunchTrigger) {
+                if (esdePreferencesManager.getSystemLaunchTrigger(systemName) == trigger) {
+                    esdePreferencesManager.getSystemAppForSystem(systemName)?.let { pkg ->
+                        val displayPref =
+                            if (!esdePreferencesManager.isSystemBottomScreen(systemName)) {
+                                DisplayPreference.PRIMARY_DISPLAY
+                            } else {
+                                DisplayPreference.CURRENT_DISPLAY
+                            }
+                        launchApp(
+                            context = this@MainActivity,
+                            packageName = pkg,
+                            displayPreference = displayPref
+                        )
+                    }
+                }
+            }
+
+
             esdeEventListener.onSystemSelected = { systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
+                managers.feature.jinglesManager.stop()
                 esdeViewModel.updateForSystem(systemName)
                 onGameBrowsingUIVisibilityChanged(false)
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.SystemSelect)
             }
             esdeEventListener.onGameSelected = { gameFilename, _, systemName ->
-                VideoPlayerActivity.finishIfRunning()
+                managers.feature.videoPresentationManager.dismiss()
                 esdeViewModel.updateForGame(systemName, gameFilename)
                 onGameBrowsingUIVisibilityChanged(true)
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
+                managers.feature.jinglesManager.onGameSelected(gameFilename)
             }
-            esdeEventListener.onGameStarted = { _, _, _ ->
-                VideoPlayerActivity.finishIfRunning()
-                esdeViewModel.handleGameStarted()
+            esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
+                managers.feature.videoPresentationManager.dismiss()
+                managers.feature.jinglesManager.onGameLaunched()
+                esdeViewModel.handleGameStarted(gameFilename)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
                 } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
                     powerViewModel.setGamePersistActive(true)
                 }
+                launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameStart)
             }
             esdeEventListener.onGameEnded = { _, _, _ ->
+                managers.feature.videoPresentationManager.dismiss()
+                managers.feature.jinglesManager.stop()
                 esdeViewModel.handleGameEnded()
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOn()
@@ -250,15 +435,20 @@ class MainActivity : ComponentActivity() {
                 powerViewModel.setGamePersistActive(false)
             }
             esdeEventListener.onScreensaverStarted = {
-                VideoPlayerActivity.finishIfRunning()
-                onScreensaverUIVisibilityChanged(true)
-                esdeViewModel.handleScreensaverStarted()
-                onGameBrowsingUIVisibilityChanged(false)
-                if (esdePreferencesManager.state.value.screensaverBehavior == ScreensaverBehavior.PowerOff) {
-                    powerViewModel.powerOff()
+                val behavior = esdePreferencesManager.state.value.screensaverBehavior
+                if (behavior != ScreensaverBehavior.ShowAll) {
+                    managers.feature.videoPresentationManager.dismiss()
+                    managers.feature.jinglesManager.stop()
+                    onScreensaverUIVisibilityChanged(true)
+                    esdeViewModel.handleScreensaverStarted()
+                    onGameBrowsingUIVisibilityChanged(false)
+                    if (behavior == ScreensaverBehavior.PowerOff) {
+                        powerViewModel.powerOff()
+                    }
                 }
             }
             esdeEventListener.onScreensaverEnded = { _ ->
+                managers.feature.videoPresentationManager.dismiss()
                 onScreensaverUIVisibilityChanged(false)
                 esdeViewModel.handleScreensaverEnded()
                 onGameBrowsingUIVisibilityChanged(false)
@@ -266,12 +456,103 @@ class MainActivity : ComponentActivity() {
                     powerViewModel.powerOn()
                 }
             }
-            esdeEventListener.onScreensaverGameSelected =
-                { gameFilename, _, systemName ->
-                    esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
-                    // Don't hide UI during screensaver
-                    onGameBrowsingUIVisibilityChanged(false)
-                }
+            esdeEventListener.onScreensaverGameSelected = { gameFilename, _, systemName ->
+                managers.feature.videoPresentationManager.dismiss()
+                esdeViewModel.updateForScreensaverGame(systemName, gameFilename)
+                onGameBrowsingUIVisibilityChanged(false)
+            }
         }
+    }
+
+    @Composable
+    private fun GameKonfettiOverlay(esdeViewModel: ESDEViewModel) {
+        val context = LocalContext.current
+        val gameKonfettiManager = LocalGameKonfettiManager.current
+
+        val primaryArgb = ThemePrimaryColor.toArgb()
+        val secondaryArgb = ThemeSecondaryColor.toArgb()
+        val accentArgb = ThemeAccentColor.toArgb()
+
+        val currentThemeColors by rememberUpdatedState(
+            listOf(primaryArgb, secondaryArgb, accentArgb)
+        )
+
+        var konfettiParties by remember { mutableStateOf<List<Party>?>(null) }
+        var letterBurstEvent by remember { mutableStateOf<LetterBurstState?>(null) }
+        var animationKey by remember { mutableIntStateOf(0) }
+
+        LaunchedEffect(esdeViewModel) {
+            esdeViewModel.gameKonfettiEvent.collect { event ->
+                val config = gameKonfettiManager.config
+                if (!config.enabled) return@collect
+                if (event.trigger != config.trigger) return@collect
+
+                val gameFilename = event.gameFilename
+                val themeColors = currentThemeColors
+
+                konfettiParties = null
+                letterBurstEvent = null
+                animationKey++
+
+                if (config.isLetterBurst) {
+                    val char = gameKonfettiManager.resolveLetterBurstChar(gameFilename)
+                    letterBurstEvent = LetterBurstState(
+                        char = char,
+                        colors = themeColors,
+                        burstPreset = gameKonfettiManager.letterBurstExplodePreset(),
+                        formationMs = config.letterBurstFormationMs,
+                        holdMs = config.letterBurstHoldMs,
+                        particleCount = config.letterBurstParticleCount
+                    )
+                } else {
+                    val charShape = if (gameKonfettiManager.config.useCharShape) {
+                        val firstChar = gameFilename
+                            .substringAfterLast("/")
+                            .substringBeforeLast(".")
+                            .firstOrNull()
+                            ?.uppercaseChar() ?: 'G'
+                        KonfettiShapeFactory.createCharShape(context, firstChar)
+                    } else null
+
+                    konfettiParties = gameKonfettiManager.buildParties(themeColors, charShape)
+                }
+            }
+        }
+
+        konfettiParties?.let { parties ->
+            key(animationKey) {
+                KonfettiView(
+                    modifier = Modifier.fillMaxSize(),
+                    parties = parties,
+                    updateListener = object : OnParticleSystemUpdateListener {
+                        override fun onParticleSystemEnded(
+                            system: PartySystem,
+                            activeSystems: Int
+                        ) {
+                            if (activeSystems == 0) konfettiParties = null
+                        }
+                    }
+                )
+            }
+        }
+
+        letterBurstEvent?.let { state ->
+            key(animationKey) {
+                LetterFormationBurst(
+                    char = state.char,
+                    colors = state.colors,
+                    burstPreset = state.burstPreset,
+                    formationDurationMs = state.formationMs,
+                    holdDurationMs = state.holdMs,
+                    particleCount = state.particleCount,
+                    onComplete = { letterBurstEvent = null }
+                )
+            }
+        }
+    }
+
+    companion object {
+        const val ACTION_OPEN_THEME_SHARE = "jr.brian.home.ACTION_OPEN_THEME_SHARE"
+        val openThemeShareRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     }
 }

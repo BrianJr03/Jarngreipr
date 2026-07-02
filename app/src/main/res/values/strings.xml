@@ -1,5 +1,112 @@
 <resources>
     <string name="app_name">Jarngreipr</string>
+
+    <!-- ROM Search -->
+    <string name="rom_search_icon_description">Rom Search</string>
+    <string name="rom_search_no_results">No games found</string>
+    <string name="rom_detail_system">System</string>
+    <string name="rom_detail_genre">Genre</string>
+    <string name="rom_detail_developer">Developer</string>
+    <string name="rom_detail_publisher">Publisher</string>
+    <string name="rom_detail_players">Players</string>
+    <string name="rom_detail_rating">Rating</string>
+    <string name="rom_detail_play_count">Plays</string>
+    <string name="rom_detail_playtime">Play Time</string>
+    <string name="rom_detail_playtime_hm">%1$dh %2$dm</string>
+    <string name="rom_detail_playtime_m">%1$dm</string>
+    <string name="rom_detail_launch">Launch</string>
+    <string name="rom_detail_resize_image">Resize Image</string>
+    <string name="rom_detail_close">Close</string>
+    <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_detail_change_core">Change Core</string>
+    <string name="rom_detail_change_folder">Change Folder</string>
+    <string name="rom_emulator_picker_title">Select Emulator</string>
+    <string name="rom_emulator_none_found">No compatible emulators installed</string>
+    <string name="rom_detail_hide">Hide</string>
+    <string name="rom_detail_unhide">Unhide</string>
+    <string name="rom_detail_apply">Apply</string>
+    <string name="rom_detail_cancel">Cancel</string>
+    <string name="rom_detail_resize_image_title">Resize Image</string>
+    <string name="rom_detail_image_height">Image Height</string>
+    <string name="rom_detail_media_type">Media: %1$s</string>
+    <string name="rom_detail_media_type_default">Default</string>
+    <string name="rom_detail_media_type_dialog_title">Card Media Type</string>
+    <string name="rom_detail_media_type_default_option">Default (use global setting)</string>
+    <string name="rom_detail_media_type_default_option_selected">✓ Default (use global setting)</string>
+    <string name="rom_detail_media_type_default_option_system">Default (use global setting) — clears system override</string>
+    <string name="rom_detail_media_type_default_option_system_selected">✓ Default (use global setting) — clears system override</string>
+    <string name="rom_detail_media_type_option_selected">✓ %1$s</string>
+    <string name="rom_detail_media_scope_this_game">This game</string>
+    <string name="rom_detail_media_scope_all_system">All %1$s</string>
+    <string name="rom_search_hidden_no_results">No hidden games</string>
+    <string name="rom_search_experimental_title">Jarngreipr FE (Experimental)</string>
+    <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
+    <string name="rom_search_experimental_got_it">Got it</string>
+    <string name="frontend_no_systems">No systems found</string>
+    <string name="frontend_open_search">Search</string>
+    <string name="frontend_open_search_hint">Y  •  Search</string>
+    <string name="frontend_open_settings_hint">SELECT  •  Settings</string>
+    <string name="frontend_settings_title">Frontend Settings</string>
+    <string name="frontend_settings_show_hints_title">Show control hints</string>
+    <string name="frontend_settings_show_hints_description">Display the SELECT / START / Y hint row along the bottom of the system screen.</string>
+    <string name="frontend_settings_focus_haptic_title">Focus haptic feedback</string>
+    <string name="frontend_settings_focus_haptic_description">Emit a soft haptic tick each time focus moves between system or game cards.</string>
+    <string name="frontend_settings_float_intensity_title">Float intensity</string>
+    <string name="frontend_settings_float_intensity_description">How far focused system / game cards bob up and down. 0% disables the float.</string>
+    <string name="frontend_settings_float_intensity_value">%1$d%%</string>
+    <string name="frontend_settings_close">Close</string>
+    <string name="frontend_settings_filter_systems_title">Filter Systems</string>
+    <string name="frontend_settings_filter_systems_description">Choose which systems appear on the frontend.</string>
+    <string name="system_filter_title">Filter Systems</string>
+    <string name="system_filter_row_shown">Shown</string>
+    <string name="system_filter_row_hidden">Hidden</string>
+    <string name="system_filter_show_all">Show all</string>
+    <string name="system_filter_hide_all">Hide all</string>
+    <string name="system_filter_empty">No systems available</string>
+    <string name="system_filter_close">Close</string>
+    <string name="frontend_layout_systems_row_title">System screen — row layout</string>
+    <string name="frontend_layout_systems_row_description">Render the System screen as a single horizontal carousel (D-pad left/right) instead of a multi-column grid.</string>
+    <string name="frontend_layout_games_row_title">Games view — row layout</string>
+    <string name="frontend_layout_games_row_description">Render each system\'s games as a single horizontal carousel (D-pad left/right) instead of a multi-column grid. Search stays a grid.</string>
+    <string name="frontend_customize_background_section">Background image</string>
+    <string name="frontend_customize_choose_background">Choose background</string>
+    <string name="frontend_customize_change_background">Change background</string>
+    <string name="frontend_customize_remove_background">Remove background</string>
+    <string name="frontend_customize_show_name">Show system name</string>
+    <string name="frontend_customize_color_section">Background color</string>
+    <string name="frontend_customize_color_default">Default</string>
+    <string name="frontend_customize_color_transparent">Transparent</string>
+    <string name="frontend_customize_reorder">Reorder systems</string>
+    <string name="frontend_customize_reset">Reset to default</string>
+    <string name="frontend_reorder_hint">Reorder mode — D-pad to move • A to confirm • B to cancel</string>
+    <string name="frontend_open_customize_hint">START / hold A  •  Customize</string>
+    <string name="frontend_enable_title">Enable frontend</string>
+    <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
+    <string name="frontend_launch_cd">Launch frontend</string>
+    <string name="canvas_launch_frontend_option">Launch Frontend</string>
+    <string name="secondary_media_title">Also read RetroHrai! artwork</string>
+    <string name="secondary_media_description">When ES-DE has no art for a game or system, fall back to /storage/emulated/0/RetroHrai!/media. ES-DE art still wins when both exist. Changes apply on the next library reload.</string>
+    <string name="rom_emulator_choose_app">Choose App\u2026</string>
+    <string name="rom_emulator_choose_app_title">Choose an App</string>
+    <string name="faq_section_rom_search">ROM Search</string>
+    <string name="faq_rom_search_what_question">What is ROM Search?</string>
+    <string name="faq_rom_search_what_answer">ROM Search reads your ES-DE game library and lets you launch games directly from the home screen. Tap the controller icon to open it, then type a game name, system (e.g. @psp), or genre to filter results.</string>
+    <string name="faq_rom_search_emulator_question">My emulator isn\'t supported — what do I do?</string>
+    <string name="faq_rom_search_emulator_answer">Not every emulator is supported on day one. When picking an emulator for a game, use the \"Choose App\" option at the bottom of the list to launch with any installed app as a workaround. If you\'d like full support added, please open a GitHub issue at github.com/BrianJr03/Jarngreipr.</string>
+    <string name="add_rom">Add ROM</string>
+    <string name="rom_remove_from_page">Remove from page</string>
+    <string name="rom_options_choose_media">Choose media</string>
+    <string name="rom_media_auto">Auto</string>
+    <string name="rom_media_covers">Covers</string>
+    <string name="rom_media_marquee">Marquee</string>
+    <string name="rom_media_screenshots">Screenshots</string>
+    <string name="rom_media_fanart">Fanart</string>
+    <string name="rom_media_title_screens">Title Screens</string>
+    <string name="rom_media_mix_images">Mix Images</string>
+    <string name="rom_media_physical_media">Physical Media</string>
+    <string name="rom_options_continuous_spin">Continuous spin</string>
+    <string name="rom_options_continuous_spin_description">Continuously rotate this disc\'s artwork on the canvas.</string>
+    <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
     <string name="keyboard_button_select">Select Button</string>
@@ -18,6 +125,8 @@
     <string name="keyboard_label_arrow_left">←</string>
     <string name="keyboard_label_swap">Swap</string>
     <string name="keyboard_label_flip">Flip Layout</string>
+    <string name="keyboard_label_reopen_results">Reopen Results</string>
+    <string name="keyboard_label_special">Toggle special characters</string>
 
     <!-- Search Screen Onboarding -->
     <string name="search_onboarding_title">Switch Layout</string>
@@ -32,6 +141,8 @@
     <string name="drawer_options_title">Drawer Options</string>
     <string name="drawer_options_close">@string/common_close</string>
     <string name="drawer_options_back">@string/common_back</string>
+    <string name="drawer_options_launch_system_app">Launch System App</string>
+    <string name="drawer_options_configure_system_app">Configure System App</string>
     <string name="drawer_options_header_section">Header</string>
     <string name="drawer_options_show_header">Show Tab Header</string>
     <string name="drawer_options_hide_header">Hide Tab Header</string>
@@ -75,9 +186,56 @@
     <string name="app_options_resize_preview">Icon Preview</string>
     <string name="app_options_resize_cancel">@string/common_cancel</string>
     <string name="app_options_resize_apply">Apply</string>
+    <string name="app_options_rename">Rename</string>
+    <string name="app_options_rename_hint">Display name</string>
+    <string name="app_options_rename_save">Save</string>
+    <string name="app_options_rename_reset">Reset</string>
 
-    <string name="settings_color_theme_title">Color Theme</string>
-    <string name="settings_color_theme_description">Customize app colors</string>
+    <string name="settings_color_theme_title">Choose Theme</string>
+
+    <!-- Theme Share Info Dialog -->
+    <string name="theme_share_info_dialog_title">Theme Sharing</string>
+    <string name="theme_share_info_dialog_bullet_1">• Broadcasts your active theme to nearby devices over Bluetooth</string>
+    <string name="theme_share_info_dialog_bullet_2">• Both devices must have sharing active at the same time</string>
+    <string name="theme_share_info_dialog_bullet_3">• Set a display name so others know who sent a theme</string>
+    <string name="theme_share_info_dialog_bullet_4">• Tap a received theme to apply and save it</string>
+    <string name="theme_share_info_dialog_bullet_5">• Disable battery optimization for reliable background use</string>
+    <string name="theme_share_info_dialog_faq_hint">You can revisit this in FAQ</string>
+    <string name="theme_share_info_dialog_got_it">Got it</string>
+    <!-- Theme Sharing Screen -->
+    <string name="theme_sharing_title">Theme Sharing</string>
+    <string name="theme_sharing_subtitle">Theme Sharing via BLE</string>
+    <string name="theme_sharing_ping">Start Theme Sharing</string>
+    <string name="theme_sharing_stop">Stop Theme Sharing</string>
+    <string name="theme_sharing_empty">No themes received yet.\nBring a nearby device running this app within BLE range to receive themes.</string>
+    <string name="theme_sharing_edit_name_description">Edit name</string>
+    <string name="theme_sharing_name_default_hint">Default name will be used (%1$s)</string>
+    <string name="theme_sharing_notification_title">Themes Received</string>
+    <string name="theme_sharing_notification_single">1 theme from %1$s</string>
+    <string name="theme_sharing_notification_multiple">%1$d themes from %2$s</string>
+    <string name="wallpaper_sharing_notification_title">Wallpaper Received</string>
+    <string name="wallpaper_sharing_notification_text">A new system background was received via Nearby</string>
+    <!-- Ping Service Notification -->
+    <string name="ping_notification_title">Theme Sharing is active</string>
+    <!-- Nearby Wallpaper -->
+    <string name="wallpaper_nearby_auto_start_title">Wallpaper Sharing Auto-Start</string>
+    <string name="wallpaper_nearby_auto_start_description">Broadcast current wallpaper automatically on launch</string>
+    <string name="nearby_wallpaper_title">Nearby Wallpaper</string>
+    <string name="nearby_wallpaper_subtitle">Wallpaper Sharing via Wi-Fi Direct</string>
+    <string name="nearby_wallpaper_start">Start Discovery</string>
+    <string name="nearby_wallpaper_stop">Stop Discovery</string>
+    <string name="nearby_wallpaper_no_wallpaper">No wallpaper set to share</string>
+    <string name="nearby_wallpaper_current_esde">Sharing current ESDE wallpaper</string>
+    <string name="nearby_wallpaper_current_path">Sharing current wallpaper</string>
+    <string name="nearby_wallpaper_scanning">Scanning for nearby devices…</string>
+    <string name="nearby_wallpaper_send">Send</string>
+    <string name="nearby_wallpaper_transfer_failed">Transfer failed — tap Send to retry</string>
+    <string name="nearby_wallpaper_received_title">Received Wallpapers</string>
+    <string name="nearby_wallpaper_apply">Apply</string>
+    <string name="nearby_wallpaper_delete_description">Delete received wallpaper</string>
+    <!-- Ping Auto-Start Toggle -->
+    <string name="ping_auto_start_title">Theme Sharing Auto-Start</string>
+    <string name="ping_auto_start_description">Broadcast current theme automatically on launch</string>
 
     <!-- Color Theme Names -->
     <string name="theme_pink_violet">Pink &amp; Violet</string>
@@ -92,6 +250,8 @@
     <!-- Custom Theme Dialog -->
     <string name="custom_theme_dialog_title">@string/common_create_custom_theme</string>
     <string name="custom_theme_solid_color">Solid Color</string>
+    <string name="custom_theme_mode_presets">Presets</string>
+    <string name="custom_theme_mode_wheel">Color Wheel</string>
     <string name="custom_theme_preview">Preview</string>
     <string name="custom_theme_color">Color</string>
     <string name="custom_theme_primary_color">Primary Color</string>
@@ -103,17 +263,23 @@
 
     <string name="settings_oled_mode_title">OLED Black Mode</string>
     <string name="settings_oled_mode_description">Pure black for OLED screens</string>
+    <string name="settings_keyboard_oled_exempt_title">Keyboard Ignores OLED Mode</string>
+    <string name="settings_keyboard_oled_exempt_description">Keep keyboard keys styled when OLED mode is on</string>
 
     <string name="settings_tab_animation_title">Tab Animation</string>
-    <string name="settings_tab_animation_description">Long press animation on tabs. When disabled, uses standard long press without animation</string>
+    <string name="settings_tab_animation_description">Long press animation on tabs</string>
 
     <string name="settings_icon_shape_title">Icon Shape</string>
-    <string name="settings_icon_shape_description">Choose between rounded or square icons</string>
     <string name="settings_icon_shape_rounded">Rounded</string>
     <string name="settings_icon_shape_square">Square</string>
 
-    <string name="settings_show_app_names_title">Show App Names</string>
-    <string name="settings_show_app_names_description">Display names below app icons</string>
+    <string name="settings_show_app_names_title">Show App Names (Drawer)</string>
+    <string name="settings_show_app_names_description">Display names below icons in the app drawer</string>
+    <string name="settings_show_home_screen_app_names_title">Show App Names (Home)</string>
+    <string name="settings_show_home_screen_app_names_description">Display names below icons on the home screen</string>
+
+    <string name="settings_app_label_font_size_title">App Label Font Size</string>
+    <string name="settings_app_label_font_size_description">Adjust the font size of app name labels</string>
 
     <string name="settings_show_folder_names_title">Show Folder Names</string>
     <string name="settings_show_folder_names_description">Display names below folders</string>
@@ -132,6 +298,7 @@
     <string name="settings_wallpaper_image_picker">Choose Image</string>
     <string name="settings_wallpaper_gif_picker">Choose GIF</string>
     <string name="settings_wallpaper_video_picker">Choose Video</string>
+    <string name="front_end_tile">Frontend Widget</string>
     <string name="settings_wallpaper_esde">ES-DE</string>
     <string name="wallpaper_grid_default">Default</string>
     <string name="wallpaper_grid_system">System</string>
@@ -143,6 +310,14 @@
     <string name="settings_buy_me_coffee_title">Buy Me A Coffee</string>
     <string name="settings_buy_me_coffee_url">https://www.buymeacoffee.com/brianjr03</string>
     <string name="settings_buy_me_coffee_description">☕ is always appreciated</string>
+
+    <string name="settings_kofi_title">Support on Ko-fi</string>
+    <string name="settings_kofi_url">https://ko-fi.com/jarngreipr</string>
+    <string name="settings_kofi_description">☕ Get early builds &amp; support the project</string>
+
+    <string name="settings_discord_title">Join the Discord</string>
+    <string name="settings_discord_url">https://discord.gg/B9hrMVYfwU</string>
+    <string name="settings_discord_description">💬 Chat, feedback &amp; community</string>
 
     <string name="settings_app_visibility_title">App Visibility</string>
     <string name="settings_app_visibility_description">Choose which apps to show or hide</string>
@@ -222,26 +397,26 @@
     <string name="shortcut_selected_app">@string/common_selected_app</string>
     <string name="shortcut_no_app">@string/common_no_app_selected</string>
 
-    <!-- Marquee Press Shortcut -->
-    <string name="marquee_press_shortcut_screen_title">Marquee Shortcut</string>
-    <string name="marquee_press_shortcut_screen_description">Select what happens when you double tap the marquee</string>
+    <!-- Logo Press Shortcut -->
+    <string name="marquee_press_shortcut_screen_title">Logo Shortcut</string>
+    <string name="marquee_press_shortcut_screen_description">Select what happens when you double tap the logo</string>
     <string name="esde_settings_marquee_press_shortcut_choose">Choose Shortcut</string>
 
-    <!-- Consolidated Marquee Tab Settings -->
-    <string name="esde_settings_marquee_tab_settings_title">Marquee Tab Settings</string>
-    <string name="esde_settings_marquee_tab_settings_description">Configure marquee visibility and overlay mode per tab</string>
+    <!-- Consolidated Logo Tab Settings -->
+    <string name="esde_settings_marquee_tab_settings_title">Logo Tab Settings</string>
+    <string name="esde_settings_marquee_tab_settings_description">Configure logo visibility and overlay mode per tab</string>
     <string name="esde_settings_marquee_tab_number">Tab %1$d</string>
-    <string name="esde_settings_marquee_show_on_tab">Show marquee</string>
+    <string name="esde_settings_marquee_show_on_tab">Show logo</string>
     <string name="esde_settings_marquee_overlay_on_tab">Overlay mode</string>
-    <string name="esde_settings_marquee_overlay_on_tab_description">Marquee floats over tab content</string>
+    <string name="esde_settings_marquee_overlay_on_tab_description">Logo floats over tab content</string>
     <string name="esde_settings_description_overlay_on_tab">Description overlay</string>
-    <string name="esde_settings_description_overlay_on_tab_description">Show game description as overlay</string>
+    <string name="esde_settings_description_overlay_on_tab_description">Show game description as overlay. Not supported yet.</string>
     
-    <!-- Marquee Context Settings -->
-    <string name="esde_settings_marquee_show_for_system">Show Marquee for System</string>
-    <string name="esde_settings_marquee_show_for_system_description">Display the marquee when browsing game systems</string>
-    <string name="esde_settings_marquee_show_for_game">Show Marquee for Game</string>
-    <string name="esde_settings_marquee_show_for_game_description">Display the marquee when browsing games within a system</string>
+    <!-- Logo Context Settings -->
+    <string name="esde_settings_marquee_show_for_system">Show Logo for System</string>
+    <string name="esde_settings_marquee_show_for_system_description">Display the logo when browsing game systems</string>
+    <string name="esde_settings_marquee_show_for_game">Show Logo for Game</string>
+    <string name="esde_settings_marquee_show_for_game_description">Display the logo when browsing games within a system</string>
 
     <!-- App Visibility Dialog -->
     <string name="dialog_app_visibility_title">Manage App Visibility</string>
@@ -279,9 +454,44 @@
     <string name="settings_wallpaper_icon_description">Wallpaper icon</string>
     <string name="settings_coffee_icon_description">Buy me a coffee icon</string>
     <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance_subtitle">Theme &amp; Icons</string>
     <string name="settings_section_layout">Layout</string>
+    <string name="settings_section_layout_subtitle">Grid &amp; Dock</string>
+    <string name="settings_section_music">Music</string>
+    <string name="settings_section_music_subtitle">Background Audio</string>
+    <string name="settings_section_rss">RSS</string>
+    <string name="settings_section_rss_subtitle">News Feeds</string>
+    <string name="settings_section_esde">ES-DE</string>
+    <string name="settings_section_esde_subtitle">Emulation Display</string>
+    <string name="settings_section_extras_subtitle">Extras! Extras!</string>
+    <string name="settings_section_system_subtitle">Updates &amp; Tools</string>
+    <string name="settings_section_support_subtitle">FAQs</string>
+    <string name="settings_no_results">No settings match \"%s\"</string>
+    <string name="settings_clear_search_cd">Clear search</string>
+    <string name="settings_show_keyboard_cd">Show keyboard</string>
+    <string name="settings_hide_keyboard_cd">Hide keyboard</string>
+    <string name="settings_layout_scroll_title">Disable Scroll</string>
+    <string name="settings_layout_scroll_description">Disable vertical scrolling on this tab.</string>
+    <string name="settings_layout_scroll_per_tab">Scroll Per Tab</string>
+    <string name="settings_layout_bottom_fling_per_tab">Bottom Fling Per Tab</string>
+    <string name="settings_layout_bottom_fling_description">Open app drawer by flinging to the bottom on this tab.</string>
+    <string name="settings_layout_app_drawer_filter_by_page">Filter App Drawer by Tab</string>
+    <string name="settings_layout_app_drawer_filter_by_page_description">Only show apps visible on the current tab when opening the app drawer.</string>
+    <string name="settings_layout_notification_shade">Notification Shade</string>
+    <string name="settings_layout_notification_tab_transition_animation">Tab Transition Animations</string>
+    <string name="settings_layout_notification_shade_description">Pull down from the top of any tab to reveal the Now Playing shade.</string>
+    <string name="settings_layout_icon_snap">Icon Snapping</string>
+    <string name="settings_layout_icon_snap_description">Snap icons when dragging in free positioning mode.</string>
+    <string name="settings_layout_snap_mode">Snap Mode</string>
+    <string name="settings_layout_snap_mode_description">Snap to nearby icon edges, or to a fixed grid for border-symmetric layouts.</string>
+    <string name="settings_layout_snap_mode_icon">Icons</string>
+    <string name="settings_layout_snap_mode_grid">Grid</string>
+    <string name="settings_layout_bottom_fling_app_drawer">Bottom Swipe App Drawer</string>
+    <string name="settings_layout_bottom_fling_app_drawer_description">Swipe up from the bottom of a tab to open the app drawer.</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_extras">Extras</string>
+    <string name="settings_whats_new_title">What\'s New</string>
+    <string name="settings_whats_new_description">See what changed in this version</string>
 
     <!-- App Grid Item -->
     <string name="app_icon_description">App icon for %1$s</string>
@@ -302,10 +512,41 @@
     <string name="settings_faq_description">Frequently asked questions</string>
     <string name="settings_faq_icon_description">FAQ icon</string>
     <string name="faq_screen_title">Frequently Asked Questions</string>
+    <string name="faq_section_general">General</string>
+    <string name="faq_section_theming">Theming</string>
+    <string name="faq_section_jingles">Jingles</string>
     <string name="faq_app_close_question">How can I prevent the Android system from closing Jarngreipr?</string>
     <string name="faq_app_close_answer">Open the Recent Apps screen and swipe down on Jarngreipr. This will \'lock\' the app and tell Android to never close Jarngreipr.</string>
     <string name="faq_keyboard_question">Why doesn\'t the keyboard appear when I request it?</string>
     <string name="faq_keyboard_answer">If the bottom keyboard doesn\'t appear when requested from the top screen, tap the bottom screen first and then try again. This ensures the bottom screen is in focus to receive the keyboard input.</string>
+    <string name="faq_theme_sharing_question">How does Theme Sharing work?</string>
+    <string name="faq_theme_sharing_answer">Theme Sharing broadcasts your active theme to nearby devices over Bluetooth Low Energy (BLE). Both devices must have the app open with sharing active at the same time.\n\nSet a display name so others can identify your themes. When a theme is received, it appears in the Theme Sharing screen — tap it to apply and save it.\n\nFor reliable background sharing, disable battery optimization for this app in your device settings.</string>
+    <string name="faq_wallpaper_sharing_question">How does Wallpaper Sharing work?</string>
+    <string name="faq_wallpaper_sharing_answer">Wallpaper Sharing uses the Nearby Connections API to send and receive wallpapers between nearby devices over Wi-Fi and Bluetooth.\n\nEnable Nearby Wallpaper in the Theme Share screen to start discovering devices. When a wallpaper is received, it appears in the Received Wallpapers list where you can apply or delete it.\n\nBoth devices need to have Nearby Wallpaper active and the required Bluetooth and Wi-Fi permissions granted.</string>
+    <string name="faq_wallpaper_automation_question">How can I use MacroDroid (or similar) to toggle wallpaper modes?</string>
+    <string name="faq_wallpaper_automation_answer">You can trigger wallpaper mode switches from any automation app (e.g. MacroDroid, Tasker) by sending a broadcast intent.\n\nIn MacroDroid, add a Send Intent action, set Type to Broadcast, and fill in these fields:</string>
+
+    <!-- Jingles FAQ -->
+    <string name="faq_jingles_what_question">What are Jingles?</string>
+    <string name="faq_jingles_what_answer">Jingles are short audio clips that play automatically when you browse games in ES-DE. When you select a game, Jarngreipr looks up a matching Jingle and plays it in the background, giving each game its own sound.\n\nJingle collections are defined by a simple index.json file that maps game titles to audio files. You can use community repos from GitHub or build your own local collection.</string>
+
+    <string name="faq_jingles_offline_question">How does offline-first playback work?</string>
+    <string name="faq_jingles_offline_answer">Jarngreipr uses three source types, each with different network behaviour:\n\n• Downloaded repos: Tap the download icon on a GitHub repo card to save all audio files to your device. Once downloaded, playback never requires a network connection.\n\n• Local folders: Pick any folder on your device containing an index.json and a jingles/ subfolder. These always play offline via direct file access.\n\n• Streaming repos: GitHub repos that have not been downloaded stream audio directly from GitHub. These require an active internet connection each time a Jingle plays and there may be delay before playback.</string>
+
+    <string name="faq_jingles_matching_question">How does the app know which Jingle to play for a game?</string>
+    <string name="faq_jingles_matching_answer">When you browse a game in ES-DE, Jarngreipr receives the game\'s filename. It strips the path and extension, then searches every loaded index.json for an entry whose game field matches.\n\nMatching is case-insensitive and works both ways. A file named "Super Mario Bros. (USA).zip" will match an entry titled "Super Mario Bros.", and vice versa. The first match found across all your sources wins.\n\nIf no match is found the currently playing Jingle stops and nothing new plays.</string>
+
+    <string name="faq_jingles_format_question">What format does index.json need to be in?</string>
+    <string name="faq_jingles_format_answer">Your index.json must live at the root of your folder or GitHub repo. The name field sets the display name shown in the app. Each entry maps a game title to an audio file path relative to the root. Supported formats are anything ExoPlayer can decode — MP3, OGG, FLAC, and WAV all work well.</string>
+    <string name="faq_jingles_format_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"Game Title\", \"file\": \"jingles/audio.mp3\" }\n  ]\n}</string>
+
+    <string name="faq_jingles_troubleshoot_question">My Jingle isn\'t playing — what should I check?</string>
+    <string name="faq_jingles_troubleshoot_answer">Work through these checks in order:\n\n1. Make sure the Enable Jingles toggle is on at the top of the Jingles screen.\n\n2. Confirm ES-DE is actually sending game selection events to Jarngreipr (the app must be running).\n\n3. Check that your game\'s filename (without extension) matches a game entry in your index.json. Partial matches are supported.\n\n4. If using a local folder, tap the refresh button on the folder card after editing index.json. Changes are not picked up automatically.\n\n5. If streaming from GitHub, verify you have an active internet connection. Download the repo for fully offline playback.\n\n6. Ensure the json file does not have any trailing commas.</string>
+
+    <string name="faq_jingles_defaults_question">Can I set a fallback Jingle for an entire platform or for every game?</string>
+    <string name="faq_jingles_defaults_answer">Yes — two special game names let you define fallback Jingles:\n\n• \"global-default-jingle\" — plays for any game that has no other match. Add exactly one entry with this name across your packs; the first one found wins.\n\n• \"system-jingle\" — plays for all games on a specific platform. The platform is determined by the folder name ES-DE reports (e.g. \"n3ds\", \"wii\"). In a grouped index.json the platform key is used automatically. In a flat index.json add a \"platform\" field to the entry.\n\nBoth fall back naturally: if a per-game Jingle is found it is always preferred.</string>
+    <string name="faq_jingles_defaults_flat_code">{\n  \"name\": \"My Jingles\",\n  \"entries\": [\n    { \"game\": \"system-jingle\", \"platform\": \"n3ds\", \"file\": \"jingles/n3ds-default.mp3\" },\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
+    <string name="faq_jingles_defaults_grouped_code">{\n  \"name\": \"My Jingles\",\n  \"n3ds\": [\n    { \"game\": \"system-jingle\", \"file\": \"jingles/n3ds-default.mp3\" }\n  ],\n  \"entries\": [\n    { \"game\": \"global-default-jingle\", \"file\": \"jingles/global.mp3\" }\n  ]\n}</string>
 
     <!-- Thor Facts -->
     <string name="thor_fact_1">Thor is the Norse god of thunder, lightning, storms, and strength.</string>
@@ -363,7 +604,7 @@
     <string name="home_tab_dialog_title">Tabs</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
-    <string name="home_tab_add_page">Add Page</string>
+    <string name="home_tab_add_page">Add Tab</string>
     <string name="home_tab_delete_page_title">Delete Page</string>
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
     <string name="home_tab_delete_confirm">@string/common_delete</string>
@@ -376,6 +617,84 @@
     <string name="home_tab_page_type_apps_tab_description">Apps only. Display apps in grid or free positioning.</string>
     <string name="home_tab_page_type_apps_and_widgets_tab_description">Apps and widgets. Display apps in grid only. </string>
     <string name="home_tab_page_type_app_drawer_tab_description">Empty tab with an app drawer. Swipe up to open the drawer.</string>
+    <string name="home_tab_page_type_rss_tab">RSS Tab</string>
+    <string name="home_tab_page_type_rss_tab_description">A tab for browsing RSS feeds.</string>
+    <string name="home_tab_page_type_unified_canvas">Canvas</string>
+    <string name="home_tab_page_type_unified_canvas_description">One continuous grid that holds apps, folders, ROMs, and widgets together.</string>
+    <string name="home_tab_unified_canvas_placeholder">Canvas</string>
+
+    <!-- Unified Canvas tab -->
+    <string name="canvas_add_item_tile">Add</string>
+    <string name="canvas_widget_placeholder_description">Widget tile</string>
+    <string name="canvas_widget_id_label">Widget #%1$d</string>
+    <string name="canvas_rss_launcher_tile">RSS</string>
+    <string name="canvas_missing_item_description">Missing entity</string>
+    <string name="canvas_edit_layout">Edit layout</string>
+    <string name="canvas_menu">Canvas Menu</string>
+    <string name="canvas_add_item_dialog_title">Add to canvas</string>
+    <string name="canvas_dialog_title">Canvas</string>
+    <string name="canvas_dialog_back">Back</string>
+    <string name="canvas_edit_canvas_option">Edit canvas</string>
+    <string name="canvas_add_section_header">Add</string>
+    <string name="canvas_add_app_option">App</string>
+    <string name="canvas_add_folder_option">Folder</string>
+    <string name="canvas_add_rom_option">ROM</string>
+    <string name="canvas_add_widget_option">Widget</string>
+    <string name="canvas_add_rss_launcher_option">RSS launcher</string>
+    <string name="canvas_add_rss_music_option">RSS widget</string>
+    <string name="canvas_rss_music_artwork_cd">RSS music artwork</string>
+    <string name="canvas_rss_music_empty">No audio items</string>
+    <string name="canvas_add_esde_display_option">Frontend widget</string>
+    <string name="canvas_esde_art_tile_description">Frontend game art</string>
+    <string name="canvas_add_photo_container_option">Photo container</string>
+    <string name="canvas_photo_container_tap_to_configure">Tap to configure</string>
+    <string name="canvas_photo_container_pending">Loading…</string>
+    <string name="canvas_photo_container_description">User photo tile</string>
+    <string name="canvas_esde_picker_title">Frontend widget</string>
+    <string name="canvas_esde_picker_image_type_label">Image type</string>
+    <string name="canvas_esde_picker_confirm">Add</string>
+    <string name="canvas_esde_picker_scale_label">Image scaling</string>
+    <string name="canvas_esde_picker_scale_fit">Fit</string>
+    <string name="canvas_esde_picker_scale_crop">Crop</string>
+    <string name="canvas_esde_chooser_title">Edit Frontend widget</string>
+    <string name="canvas_picker_coming_soon">%1$s picker is coming in a future update</string>
+    <string name="canvas_picker_selected_count">%1$d selected</string>
+    <string name="canvas_picker_done">Done</string>
+    <string name="canvas_picker_cancel">Cancel</string>
+    <string name="canvas_edit_dialog_title">Edit canvas</string>
+    <string name="canvas_orientation_label">Scroll orientation</string>
+    <string name="canvas_orientation_vertical">Vertical</string>
+    <string name="canvas_orientation_horizontal">Horizontal</string>
+    <string name="canvas_columns_label">Columns</string>
+    <string name="canvas_rows_label">Rows</string>
+    <string name="canvas_remove_item_title">Remove from canvas</string>
+    <string name="canvas_remove_item_message">Remove this item from the canvas?</string>
+    <string name="canvas_remove_confirm">Remove</string>
+    <string name="canvas_remove_cancel">Cancel</string>
+    <string name="canvas_rom_picker_title">Pin a ROM to canvas</string>
+    <string name="canvas_rom_picker_empty">No ROMs pinned yet. Pin a ROM from the ROM search screen first, then come back to add it here.</string>
+    <string name="canvas_rom_picker_browse">Browse all ROMs</string>
+    <string name="canvas_edit_mode_label">Edit mode</string>
+    <string name="canvas_edit_mode_off">Off</string>
+    <string name="canvas_edit_mode_on">On</string>
+    <string name="canvas_edit_mode_off_hint">Long-press a tile to remove it.</string>
+    <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
+    <string name="canvas_tidy_label">Tidy</string>
+    <string name="canvas_tidy_button">Tidy now</string>
+    <string name="canvas_wallpaper_label">Wallpaper</string>
+    <string name="canvas_change_wallpaper">Change wallpaper</string>
+    <string name="canvas_tidy_hint">Closes the gaps left by moves, deletes, and resizes. Nothing else compacts automatically.</string>
+    <string name="canvas_widget_picker_title">Add a widget</string>
+    <string name="canvas_widget_picker_loading">Loading widgets…</string>
+    <string name="canvas_widget_picker_empty">No widgets available on this device.</string>
+    <string name="canvas_widget_host_unavailable">Widget host not ready yet. Try again in a moment.</string>
+    <string name="canvas_resize_widget_title">Resize widget</string>
+    <string name="canvas_resize_widget_subtitle">%1$d × %2$d cells</string>
+    <string name="canvas_resize_widget_cols">Width (columns)</string>
+    <string name="canvas_resize_widget_rows">Height (rows)</string>
+    <string name="canvas_resize_widget_hint">Tap a widget in Edit Mode to resize it.</string>
+    <string name="canvas_resize_handle_description">Drag to resize, or focus and select to open the resize dialog.</string>
+    <string name="canvas_delete_handle_description">Remove this item from the canvas.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
@@ -393,6 +712,11 @@
     <string name="onboarding_keyboard_description">On the first tab, press (or gesture) Back to toggle the on-screen keyboard.</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_finish">Got It</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_canvas_menu_title">Welcome to Canvas</string>
+    <string name="onboarding_canvas_menu_description">Canvas is one continuous grid where you freely arrange apps, widgets, ROMs, photos, and more. Tap this menu button any time to add items or open Canvas options.</string>
+    <string name="onboarding_canvas_area_title">Long-press to add</string>
+    <string name="onboarding_canvas_area_description">Long-press anywhere on the canvas to open the options menu — edit mode, add apps, widgets, ROMs, photos, RSS, change the wallpaper, and more.</string>
 
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Apps Tab Options</string>
@@ -471,6 +795,14 @@
     <string name="folder_icon_description">Folder containing %1$d apps</string>
     <string name="folder_empty">Empty folder</string>
     <string name="folder_delete">Delete folder</string>
+    <string name="folder_background_title">Folder Background</string>
+    <string name="folder_background_button_description">Change folder background</string>
+    <string name="folder_background_pick_color">Pick a color</string>
+    <string name="folder_background_choose_png">Choose PNG</string>
+    <string name="folder_background_choose_gif">Choose GIF</string>
+    <string name="folder_background_remove">Remove background</string>
+    <string name="folder_background_image_error">Unable to load image</string>
+    <string name="folder_background_color_description">Background color</string>
 
     <!-- App Drawer Layout -->
     <string name="app_drawer_layout_mode">Layout Mode</string>
@@ -660,6 +992,16 @@
     <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
     <string name="back_button_shortcut_volume_controls">@string/common_volume_controls</string>
 
+    <!-- Backup & Restore -->
+    <string name="settings_backup_title">Backup</string>
+    <string name="settings_backup_description">Save your config to a JSON file</string>
+    <string name="settings_restore_title">Restore</string>
+    <string name="settings_restore_description">Load config from a JSON file</string>
+    <string name="settings_backup_success">Config backed up successfully</string>
+    <string name="settings_backup_error">Failed to back up config</string>
+    <string name="settings_restore_success">Config restored successfully</string>
+    <string name="settings_restore_error">Failed to restore: invalid or incompatible file</string>
+
     <!-- Notification Access -->
     <string name="settings_notification_badge_title">Notification Badges</string>
     <string name="settings_notification_badge_description">Show notification counts on app icons</string>
@@ -700,6 +1042,9 @@
     <string name="settings_app_drawer_fab_color">Button Color</string>
     <string name="settings_app_drawer_fab_page_visibility">Show on Specific Tabs</string>
     <string name="settings_app_drawer_fab_page_visibility_description">Choose which tabs display the button</string>
+    <string name="settings_app_drawer_fab_position">Button Position</string>
+    <string name="settings_app_drawer_fab_position_left">Left</string>
+    <string name="settings_app_drawer_fab_position_right">Right</string>
     
     <!-- Volume Controls -->
     <string name="volume_top_screen">Top Screen Volume</string>
@@ -747,8 +1092,8 @@
     <string name="esde_setup_warning_scripts_missing">Warning: Required scripts are missing from this folder.\n\nWithout these, the app cannot receive game information from ES-DE.\n\nContinue anyway?</string>
 
     <!-- ESDE Settings Screen -->
-    <string name="esde_settings_title">ES-DE Display Settings</string>
-    <string name="esde_settings_description">Configure ES-DE wallpaper and effects</string>
+    <string name="esde_settings_title">Frontend Settings</string>
+    <string name="esde_settings_description">Rom Search, Jingles and more!</string>
     <string name="esde_settings_section_animation">Animation</string>
     <string name="esde_settings_section_effects">Visual Effects</string>
     <string name="esde_settings_section_video">Video</string>
@@ -767,13 +1112,18 @@
     <string name="esde_settings_system_background_dimming">System Background Dimming</string>
     <string name="esde_settings_exclude_effects_from_home">Exclude Home Tab</string>
     <string name="esde_settings_exclude_effects_from_home_description">Keep the home tab background clear without blur or dimming effects</string>
+    <string name="esde_settings_effects_excluded_pages_title">Exclude Effects by Tab</string>
+    <string name="esde_settings_effects_excluded_pages_description">Disable blur and dimming effects on specific tabs</string>
+    <string name="esde_settings_effects_excluded_tab_description">Skip blur and dimming</string>
     <string name="esde_settings_background_color">Background Color</string>
     <string name="esde_settings_off">Off</string>
     <string name="esde_settings_video_enabled">Video Playback</string>
     <string name="esde_settings_video_enabled_description">Play game videos when browsing</string>
     <string name="esde_settings_video_delay">Video Delay</string>
     <string name="esde_settings_video_audio">Video Audio</string>
+    <string name="esde_settings_video_control_overlay">Video Controls Overlay</string>
     <string name="esde_settings_video_audio_description">Enable audio during video playback</string>
+    <string name="esde_settings_video_control_overlay_description">Show play/pause button when tapping a video. If disabled, video exits.</string>
     <string name="esde_settings_video_scale_mode">Video Scaling</string>
     <string name="esde_settings_video_scale_mode_description">How videos fit on the display</string>
     <string name="esde_settings_video_scale_fill">Fill Screen</string>
@@ -804,46 +1154,74 @@
     <string name="esde_settings_game_image_fanart">@string/common_fanart</string>
     <string name="esde_settings_game_image_titlescreens">Titles</string>
     <string name="esde_settings_game_image_covers">Covers</string>
+    <string name="esde_settings_game_image_physicalmedia">Physical Media</string>
     <string name="esde_settings_game_image_miximages">Mix</string>
+    <string name="esde_settings_game_image_marquee">Marquee</string>
     <string name="esde_settings_game_image_description">Description</string>
-    <string name="esde_settings_section_marquee">Marquee</string>
-    <string name="esde_settings_logo_alignment">Logo Alignment</string>
-    <string name="esde_settings_logo_alignment_top_left">Top Left</string>
-    <string name="esde_settings_logo_alignment_top">@string/common_top</string>
-    <string name="esde_settings_logo_alignment_top_right">Top Right</string>
-    <string name="esde_settings_logo_alignment_center">@string/common_center</string>
-    <string name="esde_settings_logo_alignment_bottom_left">Bottom Left</string>
-    <string name="esde_settings_logo_alignment_bottom">@string/common_bottom</string>
-    <string name="esde_settings_logo_alignment_bottom_right">Bottom Right</string>
-    <string name="esde_settings_logo_alignment_free">Free Position</string>
-    <string name="esde_settings_logo_alignment_free_hint">Drag the marquee to reposition it</string>
-    <string name="marquee_position_lock">Lock Marquee Position</string>
-    <string name="marquee_position_unlock">Unlock Marquee Position</string>
+    <string name="esde_settings_overlay_media_type">Overlay Media Type</string>
+    <string name="esde_settings_overlay_media_type_description">Choose which media type to show for the game logo overlay</string>
+    <string name="esde_settings_overlay_marquees">Logos</string>
+    <string name="esde_settings_overlay_3dboxes">3D Boxes</string>
+    <string name="esde_settings_overlay_covers">Covers</string>
+    <string name="esde_settings_overlay_screenshots">@string/common_screenshots</string>
+    <string name="esde_settings_overlay_fanart">@string/common_fanart</string>
+    <string name="esde_settings_overlay_miximages">Mix</string>
+    <string name="esde_settings_section_marquee">Logo</string>
+    <string name="esde_settings_marquee_alignment">Logo Alignment</string>
+    <string name="esde_settings_marquee_alignment_top_left">Top Left</string>
+    <string name="esde_settings_marquee_alignment_top">@string/common_top</string>
+    <string name="esde_settings_marquee_alignment_top_right">Top Right</string>
+    <string name="esde_settings_marquee_alignment_center">@string/common_center</string>
+    <string name="esde_settings_marquee_alignment_bottom_left">Bottom Left</string>
+    <string name="esde_settings_marquee_alignment_bottom">@string/common_bottom</string>
+    <string name="esde_settings_marquee_alignment_bottom_right">Bottom Right</string>
+    <string name="esde_settings_marquee_alignment_free">Free Position</string>
+    <string name="esde_settings_marquee_alignment_free_hint">Drag the logo to reposition it</string>
+    <string name="marquee_position_lock">Lock Logo Position</string>
+    <string name="marquee_position_unlock">Unlock Logo Position</string>
     <string name="esde_settings_random_system_image">Random System Background</string>
     <string name="esde_settings_random_system_image_description">Use a random image instead of the first one found</string>
-    <string name="esde_settings_logo_size">Logo Size</string>
-    <string name="esde_settings_logo_size_description">Adjust the system logo dimensions</string>
-    <string name="esde_settings_logo_width">Width</string>
-    <string name="esde_settings_logo_height">Height</string>
-    <string name="esde_settings_logo_size_reset">@string/common_reset</string>
-    <string name="esde_settings_marquee_min_width">Marquee Minimum Width</string>
-    <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait marquee images</string>
-    <string name="esde_settings_android_games_bg_scale">Android Games Background Scale</string>
-    <string name="esde_settings_android_games_bg_scale_description">Size of game artwork for Android Games platform</string>
+    <string name="esde_settings_marquee_size">Logo Size</string>
+    <string name="esde_settings_marquee_size_description">Adjust the logo dimensions</string>
+    <string name="esde_settings_marquee_width">Width</string>
+    <string name="esde_settings_marquee_height">Height</string>
+    <string name="esde_settings_marquee_size_reset">@string/common_reset</string>
+    <string name="esde_settings_marquee_min_width">Logo Minimum Width</string>
+    <string name="esde_settings_marquee_min_width_description">Minimum width for narrow/portrait logo images</string>
+    <string name="esde_settings_game_bg_scale">Game Background Scale</string>
+    <string name="esde_settings_game_bg_scale_description">Size of game artwork when browsing games</string>
     <string name="esde_settings_section_setup">Setup</string>
     <string name="esde_settings_run_setup_wizard">Run Setup Wizard</string>
     <string name="esde_settings_run_setup_wizard_description">Run the setup wizard to configure paths and scripts</string>
+    <string name="esde_settings_reset_to_system_wallpaper">Reset to System Wallpaper</string>
+    <string name="esde_settings_reset_to_system_wallpaper_description">Clear ES-DE display and show your system wallpaper</string>
+    <string name="esde_settings_select_wallpaper_toggle">Show Wallpaper Shortcut In Header</string>
+    <string name="esde_settings_select_wallpaper_toggle_description">Quickly switch between ES-DE and your chosen wallpaper target</string>
+    <string name="esde_settings_wallpaper_toggle_target">Switch To</string>
+    <string name="esde_settings_wallpaper_toggle_target_description">Choose what to toggle to when pressing the wallpaper shortcut</string>
+    <string name="wallpaper_saved_image">Saved Image</string>
+    <string name="wallpaper_saved_image_description">Image used for quick wallpaper switching</string>
+    <string name="wallpaper_saved_gif">Saved GIF</string>
+    <string name="wallpaper_saved_gif_description">GIF used for quick wallpaper switching</string>
+    <string name="wallpaper_saved_video">Saved Video</string>
+    <string name="wallpaper_saved_video_description">Video used for quick wallpaper switching</string>
+    <string name="wallpaper_not_set">Not set</string>
+    <string name="header_wallpaper_toggle">Toggle wallpaper</string>
     <string name="esde_settings_section_power">Power Events</string>
     <string name="esde_settings_power_events">Control Power on Game Events</string>
     <string name="esde_settings_power_events_description">Screen off on game launch, on when exiting</string>
     <string name="esde_settings_persist_on_game_launch">Persist Display on Game Launch</string>
-    <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and marquee visible when a game is launched</string>
-    <string name="esde_settings_logo_brightness">Logo Brightness</string>
+    <string name="esde_settings_persist_on_game_launch_description">Keep wallpaper and logo visible when a game is launched</string>
+    <string name="esde_settings_persist_background_brightness">Background Brightness</string>
+    <string name="esde_settings_persist_logo_brightness">Logo Brightness</string>
+    <string name="esde_settings_marquee_brightness">Logo Brightness</string>
     <string name="esde_settings_section_custom_paths">Custom Paths</string>
     <string name="esde_settings_custom_system_logos_path">System Logos Folder</string>
     <string name="esde_settings_custom_system_logos_path_description">Custom folder for console/system logos (e.g. snes.svg, n64.png)</string>
-    <string name="esde_settings_custom_system_images_path">System Backgrounds Folder</string>
-    <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images</string>
+    <string name="esde_settings_custom_system_images_path">System Background Folder</string>
+    <string name="esde_settings_video_options_hide">Hide</string>
+    <string name="esde_settings_video_options_more">More</string>
+    <string name="esde_settings_custom_system_images_path_description">Custom folder for console/system background images or videos</string>
     <string name="esde_settings_single_system_image">Single System Background</string>
     <string name="esde_settings_single_system_image_description">Use one image file for all console backgrounds</string>
     <string name="esde_settings_single_system_logo">Single System Logo</string>
@@ -855,9 +1233,14 @@
     <string name="esde_settings_custom_media_path">Downloaded Media Folder</string>
     <string name="esde_settings_custom_media_path_description">Custom folder for game media (videos, screenshots, fanart, etc.). Overrides the default ES-DE downloaded_media path for the companion screen.</string>
     <string name="esde_settings_path_not_set">Not set (using default)</string>
+    <string name="esde_settings_system_bg_video_muted">Mute System Background Video</string>
+    <string name="esde_settings_system_bg_video_muted_description">Mute audio when playing a system background video</string>
+    <string name="esde_settings_system_bg_video_looping">Loop System Background Video</string>
+    <string name="esde_settings_system_bg_video_looping_description">Restart the video when it reaches the end</string>
     <string name="esde_settings_clear_path">@string/common_clear</string>
     <string name="esde_settings_select_folder">@string/common_select_folder</string>
-    
+    <string name="settings_search_settings">Search Settings…</string>
+
     <!-- ESDE Screensaver Settings -->
     <string name="esde_settings_section_screensaver">Screensaver</string>
     <string name="esde_settings_screensaver_behavior">Screen Behavior</string>
@@ -866,6 +1249,11 @@
     <string name="esde_settings_screensaver_show_companion_description">Display screensaver game artwork</string>
     <string name="esde_settings_screensaver_power_off">Power Off</string>
     <string name="esde_settings_screensaver_power_off_description">Show clock and battery info</string>
+    <string name="esde_settings_screensaver_floaty">Floating Apps</string>
+    <string name="esde_settings_screensaver_show_all">Show All</string>
+    <string name="esde_settings_screensaver_app_count">Floaty App Count</string>
+    <string name="esde_settings_screensaver_app_count_description">How many apps to show while screensaver is active (All = no limit)</string>
+    <string name="esde_settings_screensaver_app_count_all">All</string>
 
     <!-- ESDE Music Settings -->
     <string name="esde_settings_section_music">Background Music</string>
@@ -900,6 +1288,8 @@
     <string name="esde_settings_section_extras">Extras</string>
     <string name="esde_settings_hide_ui_for_game_browsing">Hide UI When Browsing Games</string>
     <string name="esde_settings_hide_ui_for_game_browsing_description">Hide apps, docks, and folders when browsing games. UI reappears when returning to system selection.</string>
+    <string name="esde_settings_music_ignore_audio_focus">Ignore Audio Focus</string>
+    <string name="esde_settings_music_ignore_audio_focus_description">Play music regardless of background audio from other apps. Music will not pause or duck when other apps play audio.</string>
     <string name="esde_settings_add_cleanup_folder">Add Folder for Cleanup</string>
     <string name="esde_settings_add_cleanup_folder_description">Select a folder to scan for empty directories</string>
     <string name="esde_settings_selected_folders">Selected Folders</string>
@@ -912,9 +1302,386 @@
     <string name="esde_settings_delete_button">Delete</string>
     <string name="esde_settings_cancel_button">Cancel</string>
 
+    <!-- ROM Search hints -->
+    <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
+    <string name="rom_search_hint_details">Start: open details</string>
+    <string name="rom_search_commands">Search Commands</string>
+    <string name="rom_search_command_android">@android</string>
+    <string name="rom_search_command_android_desc">Browse all installed Android apps</string>
+    <string name="rom_search_command_hidden">@hidden</string>
+    <string name="rom_search_command_hidden_desc">Show all hidden games</string>
+    <string name="rom_search_command_platform">@{platform}</string>
+    <string name="rom_search_command_platform_desc">Filter games to a specific system</string>
+    <string name="rom_search_command_partial">@{partial}</string>
+    <string name="rom_search_command_partial_desc">Partial platform match</string>
+    <string name="rom_search_command_name">{name}</string>
+    <string name="rom_search_command_name_desc">Search by game name, system, genre, developer, or publisher</string>
+
+    <!-- Search Settings -->
+    <string name="esde_settings_section_search">Search</string>
+    <string name="esde_settings_rom_search_use_wallpaper">Show System Wallpaper</string>
+    <string name="esde_settings_rom_search_use_wallpaper_description">Display your system wallpaper behind ROM search results. When disabled, an OLED-friendly dark background is used instead.</string>
+
+    <!-- ROM Search Settings Screen -->
+    <string name="rom_search_settings_title">ROM Search Settings</string>
+    <string name="rom_search_settings_back">Back</string>
+    <string name="rom_search_settings_section_display">Display</string>
+    <string name="rom_search_settings_section_card_media">Card Media</string>
+    <string name="rom_search_settings_black_bg_title">Always Black Background</string>
+    <string name="rom_search_settings_black_bg_description">Use pure black for the search screen background, or follow OLED background color when off.</string>
+    <string name="rom_search_settings_wallpaper_title">Show System Wallpaper</string>
+    <string name="rom_search_settings_wallpaper_description">Display your system wallpaper behind ROM search results.</string>
+    <string name="rom_search_settings_hide_no_image_title">Hide Games Without Image</string>
+    <string name="rom_search_settings_hide_no_image_description">Exclude games with no artwork of any type.</string>
+    <string name="rom_search_settings_hide_no_metadata_title">Hide Games Without Metadata</string>
+    <string name="rom_search_settings_hide_no_metadata_description">Exclude games with no artwork, descriptions, or other scraped info.</string>
+    <string name="rom_search_settings_focus_animation_title">Game Focus Animation</string>
+    <string name="rom_search_settings_focus_animation_description">Animate the game with a spin or flip animation when focused. Only discs will spin and Physical Media type must be selected.</string>
+    <string name="rom_search_settings_platform_auto_filter_title">Platform Auto-Filter</string>
+    <string name="rom_search_settings_platform_auto_filter_description">Automatically filter by platform when navigating the platform row with a controller.</string>
+    <string name="rom_search_settings_platform_images_title">Platform System Images</string>
+    <string name="rom_search_settings_platform_images_description">Show platform logo images in the platform row instead of text labels.</string>
+    <string name="rom_search_settings_platform_images_smart_folder">Smart Folder</string>
+    <string name="rom_search_settings_platform_images_default_folder">Default Folder</string>
+    <string name="rom_search_settings_platform_images_clear">Clear</string>
+    <string name="rom_search_settings_platform_images_structure_title">Folder Structures</string>
+    <string name="rom_search_settings_show_android_apps_title">Show All Android Apps</string>
+    <string name="rom_search_settings_show_android_apps_description">Enable the @android command and plain-text search to include all installed apps.</string>
+    <string name="rom_search_settings_card_media_description">Choose which artwork type is shown on game cards.</string>
+    <string name="rom_search_settings_launch_title">Launch ROM Search</string>
+    <string name="rom_search_settings_launch_description">Open ROM Search directly from settings.</string>
+    <string name="rom_search_settings_disc_spin_title">Spin Disc Art</string>
+    <string name="rom_search_settings_disc_spin_description">Animate disc art with a spin when focused. Applies to PS1, PS2, PS3, Sega CD, Saturn, Dreamcast, GameCube, Wii, Wii U, Xbox, Xbox 360, 3DO, Jaguar CD, CD32, and CDTV. Only active when Physical Media type is selected.</string>
+    <string name="rom_search_settings_card_media_type">Card Media Type</string>
+
     <!-- What\'s New Dialog -->
+    <string name="esde_settings_marquee_only_mode">Logo Only Mode</string>
+
+    <!-- System Apps Screen -->
+    <string name="esde_system_apps_title">System Apps</string>
+    <string name="esde_system_apps_info_title">Quick Access Setup</string>
+    <string name="esde_system_apps_info_content">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
+    <string name="esde_system_apps_roms_folder_title">ROMs Folder</string>
+    <string name="esde_system_apps_roms_folder_description">Select your ESDE ROMs directory</string>
+    <string name="esde_system_apps_roms_folders_title">ROMs Folders</string>
+    <string name="esde_system_apps_roms_folders_description">Add your ESDE ROMs directories</string>
+    <string name="esde_system_apps_select_roms_folder">Select ROMs folder</string>
+    <string name="esde_system_apps_add_roms_folder">Add ROMs folder</string>
+    <string name="esde_system_apps_remove_roms_folder">Remove ROMs folder</string>
+    <string name="esde_system_apps_no_folders">No folders added</string>
+    <string name="esde_system_apps_refresh_system_list">Refresh system list</string>
+    <string name="esde_system_apps_not_set">Not set</string>
+    <string name="esde_system_apps_no_systems_match">No systems match "%1$s"</string>
+    <string name="esde_system_apps_prompt_message">Please add a ROMs folder to start linking system folders to Android apps.</string>
+    <string name="esde_system_apps_no_app_assigned">No app assigned</string>
+    <string name="esde_system_apps_change">Change</string>
+    <string name="esde_system_apps_remove">Remove system entry</string>
+    <string name="esde_system_apps_remove_confirm_title">Remove %1$s?</string>
+    <string name="esde_system_apps_remove_confirm_message">This will remove the system entry and its settings.</string>
+    <string name="esde_system_apps_remove_confirm_yes">Remove</string>
+    <string name="esde_system_apps_remove_confirm_no">Cancel</string>
+    <string name="esde_system_apps_select_app">Select app for %1$s</string>
+    <string name="esde_settings_marquee_only_mode_description">Show only game/system logos with transparent background system wallpaper shows through</string>
+    <string name="esde_settings_logo_visibility_animation">Logo Appear/Disappear Animation</string>
+    <string name="esde_settings_logo_visibility_animation_description">Animate the logo bouncing in and out when it shows or hides</string>
+    <string name="esde_settings_logo_change_animation">Logo Change Animation</string>
+    <string name="esde_settings_logo_change_animation_description">Animate the logo bouncing in when switching between systems or games</string>
+    <string name="esde_settings_section_system_apps">System Apps</string>
+    <string name="esde_settings_system_apps_info">Link each of your ESDE system folders to an Android app for quick access while browsing. Tap a system card to assign or change its linked app.</string>
+    <string name="esde_settings_configure_system_apps">Configure System Apps</string>
+    <string name="esde_system_apps_search">Search Systems</string>
+    <string name="esde_system_apps_show">Show</string>
+    <string name="esde_system_apps_hide">Hide</string>
+    <string name="esde_system_apps_launch_trigger">Launch trigger</string>
+    <string name="esde_system_apps_trigger_no_action">No Action</string>
+    <string name="esde_system_apps_trigger_game_start">Game Start</string>
+    <string name="esde_system_apps_trigger_game_select">Game Select</string>
+    <string name="esde_system_apps_trigger_system_select">System Select</string>
+    <string name="esde_system_apps_bottom_screen">Use bottom screen</string>
+
+    <!-- Powered Off Screen Brightness -->
+    <string name="settings_powered_off_brightness_title">Sleep Screen Brightness</string>
+
     <string name="whats_new_title">What\'s New</string>
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_close">Close</string>
-    <string name="whats_new_got_it">Got it!</string>
+    <string name="whats_new_got_it">Got it</string>
+
+    <!-- Konfetti Animation Chooser -->
+    <string name="konfetti_section_title">Konfetti Animation</string>
+    <string name="konfetti_collapse">Collapse</string>
+    <string name="konfetti_expand">Expand</string>
+    <string name="konfetti_selected">Selected</string>
+
+    <!-- Konfetti Editor Screen -->
+    <string name="konfetti_editor_title">Konfetti Editor</string>
+    <string name="konfetti_editor_enable">Enable Game Konfetti</string>
+    <string name="konfetti_editor_enable_description">Show Konfetti animation for games</string>
+    <string name="konfetti_editor_trigger_title">Trigger</string>
+    <string name="konfetti_editor_trigger_description">Choose when the Konfetti animation plays</string>
+    <string name="konfetti_editor_mode_title">Animation Mode</string>
+    <string name="konfetti_editor_mode_preset">Preset</string>
+    <string name="konfetti_editor_mode_custom">Custom</string>
+    <string name="konfetti_editor_custom_params">Custom Parameters</string>
+    <string name="konfetti_editor_speed">Speed</string>
+    <string name="konfetti_editor_max_speed">Max Speed</string>
+    <string name="konfetti_editor_damping">Damping</string>
+    <string name="konfetti_editor_angle">Angle</string>
+    <string name="konfetti_editor_spread">Spread</string>
+    <string name="konfetti_editor_time_to_live">Duration</string>
+    <string name="konfetti_editor_emitter_duration">Emitter Duration</string>
+    <string name="konfetti_editor_emitter_rate">Particles Per Second</string>
+    <string name="konfetti_editor_shape_title">Konfetti Shape</string>
+    <string name="konfetti_editor_use_char">Use Game Letter</string>
+    <string name="konfetti_editor_use_char_description">Display the first character of the game title as individual Konfetti</string>
+    <string name="konfetti_editor_preview">Preview</string>
+
+    <!-- Letter Burst Settings -->
+    <string name="konfetti_editor_letter_burst_title">Letter Burst Settings</string>
+    <string name="konfetti_editor_letter_burst_char">Formation Character</string>
+    <string name="konfetti_editor_letter_burst_char_description">Letter or number that particles form before bursting. Leave empty to use the game\'s first letter.</string>
+    <string name="konfetti_editor_letter_burst_explode_preset">Burst Style</string>
+    <string name="konfetti_editor_letter_burst_explode_description">Which animation plays after the letter forms</string>
+    <string name="konfetti_editor_letter_burst_formation_speed">Formation Speed</string>
+    <string name="konfetti_editor_letter_burst_hold">Hold Duration</string>
+    <string name="konfetti_editor_letter_burst_particles">Particle Count</string>
+
+    <!-- ESDE Konfetti Section -->
+    <string name="esde_settings_section_konfetti">Konfetti</string>
+    <string name="esde_settings_konfetti_info">Create custom Konfetti animations that play when a game is selected or started</string>
+    <string name="esde_settings_open_konfetti_editor">Open Konfetti Editor</string>
+
+    <!-- Floaty Mode Easter Egg -->
+    <string name="floaty_mode_steps_away">You are %1$d steps away from becoming floaty</string>
+    <string name="floaty_mode_unlocked">You are now floaty! Head to Extras to toggle it on.</string>
+    <string name="floaty_mode_already_unlocked">You\'ve already unlocked floaty mode!</string>
+    <string name="floaty_mode_toggle_title">Floaty Mode</string>
+    <string name="floaty_mode_toggle_description">Apps float around with physics-based bouncing</string>
+    <string name="floaty_mode_section_konfetti_title">Section Tap Konfetti</string>
+    <string name="floaty_mode_section_konfetti_description">Play explosion effect when sections are tapped in Settings screens</string>
+    <string name="floaty_mode_powered_off_effect_title">Powered Off Floaty Effect</string>
+    <string name="floaty_mode_powered_off_effect_description">Use floating overlay positions on the powered off screen</string>
+    <string name="floaty_mode_apps_modal_effect_title">Apps Drawer Floaty Effect</string>
+    <string name="floaty_mode_apps_modal_effect_description">Use floating app layout in the app drawer</string>
+    <string name="floaty_mode_apps_modal_count_title">Apps Drawer Floaty App Count</string>
+    <string name="floaty_mode_apps_modal_count_description">Choose how many apps appear while floaty app drawer effect is enabled</string>
+    <string name="floaty_mode_apps_modal_count_all">All</string>
+    <string name="floaty_mode_app_drawer_bubble_pop_title">App Drawer Bubble Pop</string>
+    <string name="floaty_mode_app_drawer_bubble_pop_description">Tap bubbles to pop them with haptics; all bubbles return after clearing</string>
+    <string name="floaty_mode_tabs_title">Floaty Tabs</string>
+    <string name="floaty_mode_tabs_description">Choose which tabs use floaty mode</string>
+    <string name="floaty_mode_reset_title">Reset Floaty Mode</string>
+    <string name="floaty_mode_reset_description">Turn off and lock it again until version is tapped 7 times</string>
+    <string name="floaty_mode_reset_done">Floaty mode reset. Tap version 7 times to unlock again.</string>
+
+    <string name="esde_wallpaper">ES-DE Wallpaper</string>
+    <string name="standard_wallpaper">Standard Wallpaper</string>
+
+    <!-- Jingles -->
+    <string name="jingles_screen_title">Jingles</string>
+    <string name="jingles_screen_subtitle">Build your collection of game Jingles</string>
+    <string name="jingles_enable_title">Enable Jingles</string>
+    <string name="jingles_enable_description">Play a matching Jingle when browsing games in ES-DE</string>
+    <string name="jingles_repo_label">Jingle Repo</string>
+    <string name="jingles_repo_placeholder">your-username/your-repo-name</string>
+    <string name="jingles_playback_settings_label">Settings</string>
+    <string name="jingles_repositories_label">Repositories</string>
+    <string name="jingles_add_repo_description">Add repo</string>
+    <string name="jingles_remove_repo_description">Remove %s</string>
+    <string name="jingles_launch_title">Manage Jingles</string>
+    <string name="jingles_launch_description">Build your own collection of game jingles</string>
+    <string name="jingles_section_info">Build a collection of game Jingles from GitHub repositories</string>
+    <string name="jingles_manage_description">Manage repositories and playback settings</string>
+    <string name="jingles_local_folder_label">Local Folder</string>
+    <string name="jingles_local_folder_description">Folder must contain index.json and a jingles sub-folder</string>
+    <string name="jingles_pick_folder_description">Pick folder</string>
+    <string name="jingles_local_folders_label">Local Folders</string>
+    <string name="jingles_remove_folder_description">Remove %s</string>
+    <string name="jingles_invalid_folder_error">Folder must contain index.json and a jingles sub-folder</string>
+    <string name="jingles_volume">Jingle Volume</string>
+    <string name="jingles_volume_unmute">Unmute to adjust volume</string>
+    <string name="jingles_regex_priority_title">Regex Match Priority</string>
+    <string name="jingles_regex_priority_description">Try regex patterns before exact name. When off, exact name is matched first.</string>
+    <string name="jingles_normalize_title">Volume Normalization</string>
+    <string name="jingles_normalize_description">Automatically boost quiet tracks using Android\'s LoudnessEnhancer</string>
+    <!-- Jingles Info Dialog -->
+    <string name="jingles_info_button_description">About Jingles</string>
+    <string name="jingles_info_title">About Jingles</string>
+    <string name="jingles_info_disclaimer">The Cocoon frontend allows Jingles to be created and used to easily share audio for playback when browsing games. Those assets can also be used in Jarngreipr! Repositories are hosted by third parties and may contain copyrighted material. Neither Cocoon nor Jarngreipr hosts, verifies, or controls repository content. You are responsible for ensuring you have the rights to download or use repository assets.</string>
+    <string name="jingles_info_getting_started">Getting Started</string>
+    <string name="jingles_info_local_title">Local Folder</string>
+    <string name="jingles_info_local_subtitle">Offline playback</string>
+    <string name="jingles_info_local_step1">1. Create a folder anywhere on your device.</string>
+    <string name="jingles_info_local_step2">2. Add an index.json file at the root of the folder.</string>
+    <string name="jingles_info_local_step3">3. Create a jingles subfolder and place your audio files inside.</string>
+    <string name="jingles_info_local_step4">4. Tap Pick Folder to select your folder.</string>
+    <string name="jingles_info_github_title">GitHub Repo</string>
+    <string name="jingles_info_github_json_examples">JSON Formatting Examples</string>
+    <string name="jingles_info_github_subtitle">Streams from GitHub</string>
+    <string name="jingles_info_github_body">Fork or use the template below as a starting point, then add it as username/repo-name in the Jingle Repo field.</string>
+    <string name="jingles_info_close">Got it</string>
+    <string name="jingles_faq_title">FAQ</string>
+    <string name="jingles_faq_inconsistent_q">Downloads are inconsistent or incomplete</string>
+    <string name="jingles_faq_inconsistent_a">If Jarngreipr fails to download all tracks, visit the repo directly on GitHub and download the index.json and jingles folder. You can then add this as a Local Folder for playback.</string>
+    <string name="jingles_pack_info_failed">%1$d track(s) failed to download</string>
+    <string name="jingles_download_description">Download repo</string>
+    <string name="jingles_update_description">Update downloaded repo</string>
+    <string name="jingles_refresh_folder_description">Refresh local folder</string>
+    <string name="jingles_search_browse_button">Browse</string>
+    <string name="jingles_search_icon_description">Search GitHub repos</string>
+    <string name="jingles_search_browse_title">Browse Jingles Repos</string>
+    <string name="jingles_search_results_title">Search Results</string>
+    <string name="jingles_search_query_label">"%s"</string>
+    <string name="jingles_search_empty">No repositories found</string>
+    <string name="jingles_search_error">Search failed</string>
+    <string name="jingles_search_error_hint">Check your connection and try again</string>
+    <string name="jingles_search_add">Add</string>
+    <string name="jingles_search_added">Added</string>
+    <string name="jingles_search_close">Close</string>
+    <string name="jingles_pack_info_icon_description">Jingle pack info</string>
+    <string name="jingles_pack_info_tracks">%d tracks</string>
+    <string name="jingles_pack_info_size">~%s</string>
+    <string name="jingles_pack_info_fetching_size">Fetching size…</string>
+
+    <!-- Add Jingle Screen -->
+    <string name="jingles_add_screen_title">Add Jingle Entry</string>
+    <string name="jingles_add_pack_name_label">Pack Name</string>
+    <string name="jingles_add_pack_name_placeholder">e.g. My Awesome Jingles</string>
+    <string name="jingles_add_pack_select_existing">Select existing pack</string>
+    <string name="jingles_add_pack_updating">Updating existing pack</string>
+    <string name="jingles_create_pack_button">Create Pack</string>
+    <string name="jingles_update_pack_button">Update Pack</string>
+    <string name="jingles_create_pack_parent">Parent: %s</string>
+    <string name="jingles_create_pack_change">Change</string>
+    <string name="jingles_create_pack_dialog_title">Choose Parent Folder</string>
+    <string name="jingles_create_pack_dialog_body">Select the folder where your new jingle pack will be created as a subfolder. You\'ll name the pack on the next screen.</string>
+    <string name="jingles_create_pack_dialog_confirm">Choose Folder</string>
+    <string name="jingles_create_pack_dialog_cancel">Cancel</string>
+    <string name="jingles_add_game_label">Game</string>
+    <string name="jingles_add_game_placeholder">e.g. Phoenix Wright - Ace Attorney</string>
+    <string name="jingles_add_platform_label">Platform</string>
+    <string name="jingles_add_platform_placeholder">e.g. n3ds, gba, ps2</string>
+    <string name="jingles_add_platform_supporting">Used as the JSON key and subfolder name</string>
+    <string name="jingles_add_jingle_name_label">Jingle Name</string>
+    <string name="jingles_add_jingle_name_placeholder">e.g. ace-attorney-trilogy</string>
+    <string name="jingles_add_jingle_name_supporting">Extension is preserved from the picked file</string>
+    <string name="jingles_add_pick_audio">Pick Audio File</string>
+    <string name="jingles_add_preview_label">PREVIEW</string>
+    <string name="jingles_add_submit">Add Jingle</string>
+    <string name="jingles_add_success">Jingle added successfully!</string>
+    <string name="jingles_add_keyboard_hint">Start typing…</string>
+    <string name="jingles_add_cancel">Cancel</string>
+    <string name="jingles_add_done">Done</string>
+    <string name="jingles_add_repo_field_label">Repository</string>
+    <string name="music_section_title">Background Music</string>
+    <string name="music_section_select_folder_title">Select Music Folder</string>
+    <string name="music_section_select_folder_description">Play all audio files in a folder in order, looping</string>
+    <string name="music_section_select_folder_selected">Selected: %1$s</string>
+    <string name="music_section_select_file_title">Select Music File</string>
+    <string name="music_section_select_file_description">Loop a single audio file continuously</string>
+    <string name="music_section_select_file_selected">Selected: %1$s</string>
+    <string name="music_section_volume_title">Volume</string>
+    <string name="music_section_volume_description">Global background music volume</string>
+    <string name="music_options_title">Music</string>
+    <string name="music_options_mute_all">Mute All Music</string>
+    <string name="music_options_unmute_all">Unmute All Music</string>
+    <string name="music_options_resume_bg">Resume Background Music</string>
+
+    <!-- RSS Settings Screen -->
+    <string name="rss_settings_title">RSS Feeds</string>
+    <string name="rss_settings_refresh_all_cd">Refresh all feeds</string>
+    <string name="rss_settings_add_feed_cd">Add feed</string>
+    <string name="rss_settings_save_cd">Save</string>
+    <string name="rss_settings_display_section">Display</string>
+    <string name="rss_settings_date_format">Date format</string>
+    <string name="rss_settings_date_dmy">D/M/YYYY</string>
+    <string name="rss_settings_date_mdy">M/D/YYYY</string>
+    <string name="rss_settings_time_format">Time format</string>
+    <string name="rss_settings_time_24h">24h</string>
+    <string name="rss_settings_time_12h">12h</string>
+    <string name="rss_settings_empty_title">No RSS feeds added yet</string>
+    <string name="rss_settings_empty_hint">Tap + to add your first feed</string>
+    <string name="rss_settings_error_dismiss">Dismiss</string>
+    <string name="rss_settings_feed_refresh_cd">Refresh feed</string>
+    <string name="rss_settings_feed_delete_cd">Remove feed</string>
+    <string name="rss_settings_copy_url_cd">Copy feed URL</string>
+    <string name="rss_settings_interval_manual">Manual only</string>
+    <string name="rss_settings_interval_15m">15 minutes</string>
+    <string name="rss_settings_interval_30m">30 minutes</string>
+    <string name="rss_settings_interval_1h">1 hour</string>
+    <string name="rss_settings_interval_2h">2 hours</string>
+    <string name="rss_settings_interval_6h">6 hours</string>
+    <string name="rss_settings_interval_12h">12 hours</string>
+    <string name="rss_settings_dialog_title">Add RSS Feed</string>
+    <string name="rss_settings_dialog_url_placeholder">https://example.com/feed.xml</string>
+    <string name="rss_settings_dialog_url_label">Feed URL</string>
+    <string name="rss_settings_dialog_paste_cd">Paste</string>
+    <string name="rss_settings_dialog_hint">Supports RSS 2.0 and Atom feeds</string>
+    <string name="rss_settings_dialog_cancel">Cancel</string>
+    <string name="rss_settings_dialog_add">Add Feed</string>
+
+    <!-- RSS Tab -->
+    <string name="rss_tab_title">RSS</string>
+    <string name="rss_tab_refresh_cd">Refresh</string>
+    <string name="rss_tab_filter_cd">Filter feeds</string>
+    <string name="rss_tab_all_feeds">All Feeds</string>
+    <string name="rss_tab_settings_cd">Settings</string>
+    <string name="rss_tab_video_available">Video available</string>
+    <string name="rss_tab_play_video_cd">Play video</string>
+    <string name="rss_tab_play_audio_cd">Play audio</string>
+    <string name="rss_tab_listen">Listen</string>
+    <string name="rss_tab_empty_title">No RSS feeds</string>
+    <string name="rss_tab_empty_hint">Add feeds in Settings → RSS</string>
+    <string name="rss_tab_no_articles">No articles yet</string>
+    <string name="rss_tab_refresh_now">Refresh Now</string>
+    <string name="rss_tab_mixed">Mixed</string>
+    <string name="rss_tab_history">History</string>
+    <string name="rss_tab_now_playing">Now Playing</string>
+    <string name="rss_tab_hide_search_cd">Hide search</string>
+    <string name="rss_tab_search_feeds_cd">Search</string>
+    <string name="rss_tab_filtering_by">Filtering by: \"%1$s\"</string>
+    <string name="rss_tab_clear_search_cd">Clear search</string>
+    <string name="rss_tab_previous_cd">Previous</string>
+    <string name="rss_tab_next_cd">Next</string>
+    <string name="rss_tab_play_cd">Play</string>
+    <string name="rss_tab_pause_cd">Pause</string>
+    <string name="rss_tab_volume_cd">Volume</string>
+    <string name="volume_percentage">%d%%</string>
+    <string name="rss_tab_audio_only">Audio Only</string>
+    <string name="rss_tab_audio_only_cd">Toggle audio only</string>
+    <string name="rss_tab_options_cd">More options</string>
+
+    <!-- Notification Shade -->
+    <string name="shade_wifi">Wi-Fi</string>
+    <string name="shade_bluetooth">Bluetooth</string>
+    <string name="shade_notifications">Notifications</string>
+    <string name="shade_nothing_playing">Nothing Playing</string>
+    <string name="shade_previous_cd">Previous</string>
+    <string name="shade_next_cd">Next</string>
+    <string name="shade_play_cd">Play</string>
+    <string name="shade_pause_cd">Pause</string>
+    <string name="shade_volume_cd">Volume</string>
+    <string name="shade_dismiss_cd">Dismiss</string>
+    <string name="shade_all_notifications">All Notifications</string>
+    <string name="shade_no_notifications">No notifications</string>
+    <string name="shade_customize">Customize</string>
+    <string name="shade_background_color">Background Color</string>
+    <string name="shade_background_color_description">Choose a background color for the notification shade.</string>
+    <string name="shade_change_color">Change Color</string>
+    <string name="shade_reset_color">Reset to Default</string>
+    <string name="shade_pick_color">Pick a Color</string>
+    <string name="shade_pick_accent_color">Pick an Accent Color</string>
+    <string name="shade_accent_color">Accent Color</string>
+    <string name="shade_accent_color_description">Tint the header, indicators, and icons.</string>
+    <string name="shade_corner_radius">Corner Radius</string>
+    <string name="shade_background_opacity">Background Opacity</string>
+    <string name="shade_slider_hint_title">Tap to Unlock</string>
+    <string name="shade_slider_hint_description">These sliders are locked by default to prevent accidental changes. Tap a slider once to unlock it, then drag to adjust.</string>
+
+    <string name="faq_section_rss">RSS / Now Playing</string>
+    <string name="faq_rss_nowplaying_question">Why doesn\'t the Now Playing bubble appear?</string>
+    <string name="faq_rss_nowplaying_answer">The Now Playing bubble reads media metadata from other apps via Android\'s notification listener. It requires Notification Access to be granted once.\n\nGo to Settings → Apps → Special app access → Notification access and enable it for this app.\n\nIf you\'re sideloading and can\'t reach that screen, you can grant it with a single ADB command — no PC required if you use Termux.</string>
+    <string name="faq_rss_adb_question">How do I grant Notification Access via ADB (no PC needed)?</string>
+    <string name="faq_rss_adb_answer">You can run ADB commands directly on your Android device using Termux from F-Droid (not the Play Store version).\n\n1. Install Termux from f-droid.org\n2. Open Termux and run: pkg update &amp;&amp; pkg install android-tools\n3. Go to Settings → Developer Options → enable Wireless Debugging\n4. Tap "Pair device with pairing code" — note the IP, pairing port, and code shown\n5. In Termux: adb pair IP:PAIRPORT then enter the code when prompted\n6. Then: adb connect IP:DEBUGPORT (the debug port shown on the main Wireless Debugging screen)\n7. Finally run the command below\n\nNotification access persists across reinstalls of this app.</string>
+    <string name="faq_rss_adb_command">adb shell cmd notification allow_listener jr.brian.home/jr.brian.home.service.AppNotificationListenerService</string>
 </resources>

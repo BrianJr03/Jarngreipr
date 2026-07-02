@@ -4,10 +4,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -28,17 +24,12 @@ fun AppOptionsMenu(
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onIconSizeChange: (Float) -> Unit = {},
-    onToggleVisibility: () -> Unit = {},
+    onToggleVisibility: (() -> Unit)? = null,
     onCustomIconClick: () -> Unit = {},
+    onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {}
 ) {
     val hasExternalDisplay = rememberHasExternalDisplay()
-    val focusRequesters = rememberAppOptionsMenuFocusRequesters(
-        hasResizeOption = app != null,
-        hasExternalDisplay = hasExternalDisplay,
-        isInDock = isInDock
-    )
-    var focusedIndex by remember { mutableIntStateOf(0) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -49,21 +40,20 @@ fun AppOptionsMenu(
             )
         },
         text = {
-            AppOptionsMenuContent(
+            CanvasOptionsMenuContent(
                 appLabel = appLabel,
                 currentDisplayPreference = currentDisplayPreference,
                 hasExternalDisplay = hasExternalDisplay,
-                focusRequesters = focusRequesters,
                 app = app,
                 currentIconSize = currentIconSize,
                 isInDock = isInDock,
                 onDismiss = onDismiss,
                 onAppInfoClick = onAppInfoClick,
-                onFocusedIndexChange = { focusedIndex = it },
                 onDisplayPreferenceChange = onDisplayPreferenceChange,
                 onIconSizeChange = onIconSizeChange,
                 onToggleVisibility = onToggleVisibility,
                 onCustomIconClick = onCustomIconClick,
+                onRenameClick = onRenameClick,
                 onRemoveFromDock = onRemoveFromDock
             )
         },

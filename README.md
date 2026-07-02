@@ -4,7 +4,9 @@
 ![Latest Release Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/latest/total?style=flat-square)
 ![Version](https://img.shields.io/github/v/release/BrianJr03/Jarngreipr)
 ![Android](https://img.shields.io/badge/Android-13%2B-green)
-![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg)
+<!-- ![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg) -->
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U6U21UGZT3)
 
 <!-- <a href = "https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true)](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22jr.brian.home%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FBrianJr03%2FJarngreipr%22%2C%22author%22%3A%22BrianJr03%22%2C%22name%22%3A%22Jarngreipr%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Afalse%2C%5C%22includeZips%5C%22%3Afalse%2C%5C%22zippedApkFilterRegEx%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D">
 <img
@@ -14,7 +16,7 @@
   >
 </a> -->
 
-**A powerful, fully-featured Android launcher designed for dual-screen devices and gamepad enthusiasts.**
+**Designed with dual-screen devices in mind, Jarngreipr is a clean, powerful launcher that lets you decide exactly where your apps open and much more.**
 
 Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. 
 Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
@@ -78,6 +80,10 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 - **OLED Mode** - True black backgrounds for OLED displays to save battery
 - **Icon Pack Support** - Use any installed icon pack (Lawnicons, Arcticons, etc.)
 - **Icon Pack Browser** - Preview and switch between icon packs in-app
+- **Theme Sharing** - Share your current theme with nearby devices via Bluetooth (Ping)
+
+### **What is Ping?**
+- Ping is an open sourced library developed to allow seemless `Theme Sharing` between two devices running `Jarngreipr`. It uses `bluetooth low energy (BLE)` to transfer Themes and Google's `Nearby Connections API` for transferring Wallpapers. Go to `Settings -> Appearance -> Theme Sharing` and accept the required permissions to get started. Want to know more about Ping? Here is the [GitHub repo](https://github.com/BrianJr03/Ping)!
 
 ### 🖼️ **Wallpaper Options**
 
@@ -274,6 +280,50 @@ Járngreipr supports [Shizuku](https://shizuku.rikka.app/) for enhanced system f
 
 ---
 
+## 📡 Theme Sharing (Ping)
+
+Járngreipr supports sharing themes and wallpapers wirelessly with nearby devices using the **[Ping](https://github.com/BrianJr03/Ping)** library (Bluetooth LE) and the **Nearby Connections API**.
+
+### Theme Sharing via Bluetooth (Ping)
+
+Broadcasts your current theme to nearby Járngreipr devices over BLE so others can receive and apply it instantly.
+
+**Setup:**
+1. Navigate to **Settings** → **Theme Share**
+2. Grant Bluetooth permissions when prompted
+3. Grant battery optimization exemption for reliable background operation
+4. Tap **Start Sharing** in the **Theme Sharing** section to begin broadcasting
+
+**Auto-Start:** Enable auto-start in Theme Share Settings to begin broadcasting automatically every time the launcher opens.
+
+**Quick Settings Tile:** A system Quick Settings tile is available for toggling theme sharing without opening the app.
+
+### Wallpaper Sharing via Nearby Connections
+
+Discovers and receives wallpapers from nearby devices using the Nearby Connections API over Wi-Fi/Bluetooth.
+
+**Setup:**
+1. Navigate to **Settings** → **Theme Share**
+2. Grant Nearby/Wi-Fi permissions when prompted
+3. Toggle **Nearby Wallpaper** to start discovering
+
+Received wallpapers are saved and accessible in the **Received Wallpapers** list on the same screen.
+
+### Received Themes & Wallpapers
+
+Both received themes and wallpapers are stored locally and shown in the Theme Share screen, where you can apply or delete them.
+
+### Required Permissions
+
+| Permission | Purpose |
+|------------|---------|
+| `BLUETOOTH_SCAN` / `BLUETOOTH_ADVERTISE` / `BLUETOOTH_CONNECT` | BLE theme broadcasting |
+| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Background sharing |
+| `ACCESS_FINE_LOCATION` / `ACCESS_WIFI_STATE` / `CHANGE_WIFI_STATE` | Nearby wallpaper discovery |
+| `NEARBY_WIFI_DEVICES` (API 33+) | Nearby Connections |
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Whether it's bug fixes, new features, or documentation improvements.
@@ -350,6 +400,12 @@ Your support helps maintain and improve the launcher with new features, bug fixe
 - **Icon Pack Creators** - For beautiful icon packs that work seamlessly
 - **Community Contributors** - For feedback, bug reports, and feature ideas
 - **You** - For using Járngreipr! 🧤
+- Ko-fi icon by Icons8
+  - https://icons8.com/icon/mP1WMboAU3cv/ko-fi
+- Discord icon by Icons8
+  - https://icons8.com/icon/Lvq129LtPFaK/discord
+- Buy Me a Coffee icon by Icons8
+  - https://icons8.com/icon/1LzgW8zTryyM/buy-me-a-coffee
 
 ---
 
@@ -365,6 +421,8 @@ Your support helps maintain and improve the launcher with new features, bug fixe
 - [x] Icon pack support
 - [x] Quick delete feature
 - [x] Auto-update checker
+- [x] Theme sharing via Bluetooth (Ping)
+- [x] Wallpaper sharing via Nearby Connections
 
 **Coming Soon 🚀**
 - [ ] Gesture customization

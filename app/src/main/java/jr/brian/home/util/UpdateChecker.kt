@@ -3,6 +3,7 @@ package jr.brian.home.util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URL
+import org.json.JSONObject
 
 /**
  * Represents a single APK variant available for download
@@ -61,21 +62,18 @@ object UpdateChecker {
         try {
             val url = "https://api.github.com/repos/$owner/$repo/releases/latest"
             val response = URL(url).readText()
+            val releaseJson = JSONObject(response)
 
-            val tagMatch = Regex("\"tag_name\":\\s*\"([^\"]+)\"").find(response)
-            val latestVersion = tagMatch?.groupValues?.get(1)?.removePrefix("v") ?: ""
+            val latestVersion = releaseJson.optString("tag_name")
+                .removePrefix("v")
+                .trim()
 
-            val bodyMatch = Regex("\"body\":\\s*\"(.*?)\"").find(response)
-            val releaseNotes = bodyMatch?.groupValues?.get(1)
-                ?.replace("\\n", "\n")
-                ?.replace("\\r", "")
-                ?: ""
+            val releaseNotes = releaseJson.optString("body").trim()
 
-            val downloadUrlMatch = Regex("\"html_url\":\\s*\"([^\"]+)\"").find(response)
-            val downloadUrl = downloadUrlMatch?.groupValues?.get(1) ?: ""
+            val downloadUrl = releaseJson.optString("html_url")
 
             // Parse all APK assets from the assets array
-            val apkVariants = parseApkVariants(response)
+            val apkVariants = parseApkVariants(releaseJson)
 
             val isUpdateAvailable = isNewerVersion(latestVersion, currentVersionName)
 
@@ -98,33 +96,17 @@ object UpdateChecker {
     }
 
     /**
-     * Parse all APK variants from the GitHub API response
+     * Parse all APK variants from the GitHub API response.
      */
-    private fun parseApkVariants(response: String): List<ApkVariant> {
+    private fun parseApkVariants(releaseJson: JSONObject): List<ApkVariant> {
         val variants = mutableListOf<ApkVariant>()
-
-        // Extract the assets array
-        val assetsMatch = Regex("\"assets\":\\s*\\[(.*?)\\]", RegexOption.DOT_MATCHES_ALL).find(response)
-        val assetsJson = assetsMatch?.groupValues?.get(1) ?: return emptyList()
-
-        // Find all APK assets - match each asset object
-        val assetPattern = Regex(
-            "\\{[^{}]*?\"name\":\\s*\"([^\"]+\\.apk)\"[^{}]*?\"size\":\\s*(\\d+)[^{}]*?\"browser_download_url\":\\s*\"([^\"]+)\"[^{}]*?\\}",
-            RegexOption.DOT_MATCHES_ALL
-        )
-
-        // Also try alternate order pattern
-        val altAssetPattern = Regex(
-            "\\{[^{}]*?\"browser_download_url\":\\s*\"([^\"]+\\.apk)\"[^{}]*?\"name\":\\s*\"([^\"]+)\"[^{}]*?\"size\":\\s*(\\d+)[^{}]*?\\}",
-            RegexOption.DOT_MATCHES_ALL
-        )
-
-        // Try primary pattern
-        assetPattern.findAll(assetsJson).forEach { match ->
-            val fileName = match.groupValues[1]
-            val size = match.groupValues[2].toLongOrNull() ?: 0L
-            val downloadUrl = match.groupValues[3]
-
+        val assets = releaseJson.optJSONArray("assets") ?: return emptyList()
+        for (i in 0 until assets.length()) {
+            val asset = assets.optJSONObject(i) ?: continue
+            val downloadUrl = asset.optString("browser_download_url")
+            if (!downloadUrl.endsWith(".apk", ignoreCase = true)) continue
+            val fileName = asset.optString("name").ifBlank { downloadUrl.substringAfterLast("/") }
+            val size = asset.optLong("size", 0L)
             variants.add(
                 ApkVariant(
                     fileName = fileName,
@@ -134,43 +116,6 @@ object UpdateChecker {
                 )
             )
         }
-
-        // If no matches, try alternate pattern
-        if (variants.isEmpty()) {
-            altAssetPattern.findAll(assetsJson).forEach { match ->
-                val downloadUrl = match.groupValues[1]
-                val fileName = match.groupValues[2]
-                val size = match.groupValues[3].toLongOrNull() ?: 0L
-
-                variants.add(
-                    ApkVariant(
-                        fileName = fileName,
-                        downloadUrl = downloadUrl,
-                        size = size,
-                        variantType = VariantType.fromFileName(fileName)
-                    )
-                )
-            }
-        }
-
-        // If still no matches, try a simpler fallback
-        if (variants.isEmpty()) {
-            val simplePattern = Regex("\"browser_download_url\":\\s*\"([^\"]+\\.apk)\"")
-            simplePattern.findAll(assetsJson).forEach { match ->
-                val downloadUrl = match.groupValues[1]
-                val fileName = downloadUrl.substringAfterLast("/")
-
-                variants.add(
-                    ApkVariant(
-                        fileName = fileName,
-                        downloadUrl = downloadUrl,
-                        size = 0L,
-                        variantType = VariantType.fromFileName(fileName)
-                    )
-                )
-            }
-        }
-
         // Sort: Standard first, then Thor variant
         return variants.sortedBy { it.variantType.ordinal }
     }

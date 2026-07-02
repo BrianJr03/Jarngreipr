@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,9 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +48,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.CustomIconManager
@@ -59,8 +60,6 @@ import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
@@ -75,7 +74,8 @@ fun CreateFolderDialog(
     onDismiss: () -> Unit,
     pageIndex: Int = 0,
     allApps: List<AppInfo> = apps,
-    tabType: String = TAB_TYPE_APPS
+    tabType: String = TAB_TYPE_APPS,
+    onAddRom: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -96,25 +96,13 @@ fun CreateFolderDialog(
         selectedApps.size == allApps.size && allApps.isNotEmpty()
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -226,10 +214,25 @@ fun CreateFolderDialog(
                     )
                 }
 
+                if (onAddRom != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ActionButton(
+                        text = stringResource(R.string.add_rom),
+                        icon = Icons.Default.VideogameAsset,
+                        onClick = {
+                            onDismiss()
+                            onAddRom()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -248,7 +251,6 @@ fun CreateFolderDialog(
                         )
                     }
                 }
-            }
         }
     }
 }
@@ -327,7 +329,8 @@ private fun AppSelectionItem(
 private fun ActionButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -350,11 +353,25 @@ private fun ActionButton(
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
+            )
+        }
     }
 }

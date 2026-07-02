@@ -1,6 +1,7 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -9,15 +10,26 @@ plugins {
 
 android {
     namespace = "jr.brian.home"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "jr.brian.home"
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
-        versionName = "1.7.3"
+        versionName = "2.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "mode"
+    productFlavors {
+        create("standard") {
+            dimension = "mode"
+        }
+        create("hidden") {
+            dimension = "mode"
+            versionNameSuffix = "h"
+        }
     }
 
     buildTypes {
@@ -40,13 +52,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         aidl = true
         buildConfig = true
+        resValues = true
     }
     
     packaging {
@@ -56,6 +66,25 @@ android {
                 "META-INF/LICENSE-notice.md"
             )
         }
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val name = if (variant.buildType == "release") {
+                "app-${variant.flavorName}-release.apk"
+            } else {
+                "jarngreipr-${version}.apk"
+            }
+            (output as com.android.build.api.variant.impl.VariantOutputImpl).outputFileName.set(name)
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -71,6 +100,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.browser)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -83,6 +114,7 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.coil.svg)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
@@ -98,9 +130,27 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Color Picker
+    implementation(libs.colorpicker.compose)
+
+    // Konfetti
+    implementation(libs.konfetti.compose)
+
     // Shizuku
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
+
+    // Ping
+    implementation(libs.ping)
+    implementation(libs.ping.nearby)
+
+    // AndroidX TV
+    implementation(libs.androidx.tv.foundation) {
+        exclude(group = "androidx.compose.foundation")
+        exclude(group = "androidx.compose.runtime")
+        exclude(group = "androidx.compose.ui")
+        exclude(group = "androidx.compose.animation")
+    }
 
     // Testing dependencies
     testImplementation(libs.kotlinx.coroutines.test)

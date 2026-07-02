@@ -1,0 +1,143 @@
+package jr.brian.home.data
+
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
+
+private const val PREFS_NAME = "notification_badge_prefs"
+private const val KEY_BADGES_VISIBLE = "badges_visible"
+private const val KEY_SHADE_TAB_PAGE = "shade_tab_page"
+
+data class NotificationItem(
+    val key: String,
+    val packageName: String,
+    val appLabel: String,
+    val title: String?,
+    val text: String?,
+    val postTime: Long
+)
+
+/**
+ * Manager class that tracks notification counts per app package.
+ * Works in conjunction with AppNotificationListenerService to receive updates.
+ *
+ * This is a singleton scoped to the application lifecycle and is injected
+ * via Hilt into both UI components and the NotificationListenerService.
+ */
+@Singleton
+class NotificationManager @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) {
+    var badgesVisible by mutableStateOf(loadBadgesVisible())
+        private set
+
+    var shadeTabPage by mutableIntStateOf(loadShadeTabPage())
+        private set
+
+    private fun loadBadgesVisible(): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_BADGES_VISIBLE, true)
+    }
+
+    private fun loadShadeTabPage(): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_SHADE_TAB_PAGE, 0)
+    }
+
+    fun toggleBadgesVisible() {
+        badgesVisible = !badgesVisible
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putBoolean(KEY_BADGES_VISIBLE, badgesVisible) }
+    }
+
+    fun saveShadeTabPage(page: Int) {
+        shadeTabPage = page
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putInt(KEY_SHADE_TAB_PAGE, page) }
+    }
+
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newShade = oldToNew[shadeTabPage] ?: 0
+        if (newShade != shadeTabPage) saveShadeTabPage(newShade)
+    }
+
+    fun removePage(pageIndex: Int) {
+        val current = shadeTabPage
+        val newShade = when {
+            current == pageIndex -> 0
+            current > pageIndex -> current - 1
+            else -> current
+        }
+        if (newShade != current) saveShadeTabPage(newShade)
+    }
+    
+    private val _notificationCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val notificationCounts: StateFlow<Map<String, Int>> = _notificationCounts.asStateFlow()
+
+    private val _activeNotifications = MutableStateFlow<List<NotificationItem>>(emptyList())
+    val activeNotifications: StateFlow<List<NotificationItem>> = _activeNotifications.asStateFlow()
+    
+    /**
+     * Get the notification count for a specific package.
+     */
+    fun getNotificationCount(packageName: String): Int {
+        return _notificationCounts.value[packageName] ?: 0
+    }
+    
+    /**
+     * Update the notification count for a specific package.
+     */
+    fun setNotificationCount(packageName: String, count: Int) {
+        val currentCounts = _notificationCounts.value.toMutableMap()
+        if (count > 0) {
+            currentCounts[packageName] = count
+        } else {
+            currentCounts.remove(packageName)
+        }
+        _notificationCounts.value = currentCounts
+    }
+    
+    /**
+     * Update all notification counts at once.
+     * This is typically called when the notification listener service starts
+     * or when we need to refresh all counts.
+     */
+    fun updateAllCounts(counts: Map<String, Int>) {
+        _notificationCounts.value = counts.filterValues { it > 0 }
+    }
+
+    /**
+     * Update the full list of active notifications (with content) and derive counts from them.
+     */
+    fun updateActiveNotifications(items: List<NotificationItem>) {
+        _activeNotifications.value = items
+        val counts = items.groupBy { it.packageName }.mapValues { it.value.size }
+        _notificationCounts.value = counts
+    }
+    
+    /**
+     * Clear all notification counts.
+     */
+    fun clearAll() {
+        _notificationCounts.value = emptyMap()
+    }
+    
+    /**
+     * Remove notification count for a specific package.
+     */
+    fun clearForPackage(packageName: String) {
+        val currentCounts = _notificationCounts.value.toMutableMap()
+        currentCounts.remove(packageName)
+        _notificationCounts.value = currentCounts
+    }
+}

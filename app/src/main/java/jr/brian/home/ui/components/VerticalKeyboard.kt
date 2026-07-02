@@ -1,5 +1,11 @@
 package jr.brian.home.ui.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,7 +49,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
@@ -54,6 +64,9 @@ import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalOledModeManager
+import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
 
 @Composable
 fun VerticalKeyboard(
@@ -65,8 +78,22 @@ fun VerticalKeyboard(
     onFocusChanged: (Int) -> Unit = {},
     onNavigateRight: () -> Unit = {},
     onFlipLayout: () -> Unit = {},
+    onReopenResults: (() -> Unit)? = null,
 ) {
     var isNumericMode by remember { mutableStateOf(false) }
+    val wallpaperManager = LocalWallpaperManager.current
+
+    val cursorTransition = rememberInfiniteTransition(label = "cursor")
+    val cursorAlpha by cursorTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(530, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+
     val letters = ('A'..'Z').toList()
     val numbers = (0..9).toList()
 
@@ -85,13 +112,41 @@ fun VerticalKeyboard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = searchQuery.ifEmpty { stringResource(R.string.keyboard_label_search) },
+                    text = buildAnnotatedString {
+                        if (searchQuery.isEmpty()) {
+                            append(stringResource(R.string.keyboard_label_search))
+                        } else {
+                            append(searchQuery)
+                            withStyle(SpanStyle(color = ThemePrimaryColor.copy(alpha = cursorAlpha))) {
+                                append("|")
+                            }
+                        }
+                    },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (searchQuery.isEmpty()) Color.Gray else Color.White,
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                if (onReopenResults != null &&
+                    wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(ThemePrimaryColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                            .clickable { onReopenResults() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = stringResource(R.string.keyboard_label_reopen_results),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -256,6 +311,8 @@ private fun LazyListScope.numericKeyboard(
     onNavigateRight: () -> Unit,
     onSwapMode: () -> Unit,
 ) {
+    val specialChars = listOf('-', '_', '.', '/', '(', ')', '\'', ':', ',', '!', '?', '&')
+
     items(numbers.chunked(4).size) { index ->
         val rowNumbers = numbers.chunked(4)[index]
         Row(
@@ -303,6 +360,37 @@ private fun LazyListScope.numericKeyboard(
             }
         }
     }
+
+    items(specialChars.chunked(4).size) { index ->
+        val rowChars = specialChars.chunked(4)[index]
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            rowChars.forEachIndexed { charIndex, char ->
+                val combinedIndex = 20 + index * 4 + charIndex
+                KeyboardButton(
+                    label = char.toString(),
+                    onClick = { onQueryChange(searchQuery + char) },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                    focusRequester =
+                        remember(combinedIndex) {
+                            FocusRequester().also {
+                                keyboardFocusRequesters[combinedIndex] = it
+                            }
+                        },
+                    onFocusChanged = { onFocusChanged(combinedIndex) },
+                    onNavigateRight = onNavigateRight,
+                )
+            }
+            repeat(4 - rowChars.size) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
 }
 
 @Composable
@@ -318,6 +406,7 @@ private fun KeyboardButton(
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
+    val oledManager = LocalOledModeManager.current
     val (pressScale, offsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
@@ -339,7 +428,7 @@ private fun KeyboardButton(
                     isFocused = it.isFocused
                 }
                 .background(
-                    brush = cardGradient(isFocused, isPressed = isPressed),
+                    brush = cardGradient(isFocused, isPressed = isPressed, ignoreOled = oledManager.isKeyboardOledExempt),
                     shape = RoundedCornerShape(8.dp),
                 )
                 .border(

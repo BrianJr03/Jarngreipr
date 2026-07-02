@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components.settings
 
+import jr.brian.home.esde.data.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -39,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,13 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.data.FabPosition
 import jr.brian.home.ui.components.dock.ColorOption
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
@@ -72,26 +73,14 @@ fun AppDrawerFabSettingsItem(
     val isFabEnabled by fabManager.isFabEnabled.collectAsStateWithLifecycle()
     val currentFabColor by fabManager.fabColor.collectAsStateWithLifecycle()
     val fabVisiblePages by fabManager.fabVisiblePages.collectAsStateWithLifecycle()
+    val fabExplicitPages by fabManager.fabExplicitPages.collectAsStateWithLifecycle()
+    val fabPosition by fabManager.fabPosition.collectAsStateWithLifecycle()
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val pageCount = pageTypes.size
     val appDrawerOpacity = esdePrefsState.appDrawerOpacity
 
     var isFocused by remember { mutableStateOf(false) }
-
-    val cardGradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        },
-    )
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -106,7 +95,7 @@ fun AppDrawerFabSettingsItem(
                     .fillMaxWidth()
                     .onFocusChanged { isFocused = it.isFocused }
                     .background(
-                        brush = cardGradient,
+                        brush = subtleCardGradient(isFocused),
                         shape = RoundedCornerShape(16.dp),
                     )
                     .border(
@@ -273,6 +262,77 @@ fun AppDrawerFabSettingsItem(
                         }
                     }
 
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                OledCardColor,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_app_drawer_fab_position),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        if (fabPosition == FabPosition.LEFT) ThemePrimaryColor.copy(alpha = 0.3f)
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        width = if (fabPosition == FabPosition.LEFT) 2.dp else 1.dp,
+                                        color = if (fabPosition == FabPosition.LEFT) ThemePrimaryColor else Color.Gray.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { fabManager.setFabPosition(FabPosition.LEFT) }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_app_drawer_fab_position_left),
+                                    color = if (fabPosition == FabPosition.LEFT) ThemePrimaryColor else Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (fabPosition == FabPosition.LEFT) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor.copy(alpha = 0.3f)
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        width = if (fabPosition == FabPosition.RIGHT) 2.dp else 1.dp,
+                                        color = if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor else Color.Gray.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { fabManager.setFabPosition(FabPosition.RIGHT) }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_app_drawer_fab_position_right),
+                                    color = if (fabPosition == FabPosition.RIGHT) ThemePrimaryColor else Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (fabPosition == FabPosition.RIGHT) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+
                     if (pageCount > 1) {
                         Column(
                             modifier = Modifier
@@ -302,9 +362,7 @@ fun AppDrawerFabSettingsItem(
                             ) {
                                 for (pageIndex in 0 until pageCount) {
                                     val isPageVisible =
-                                        fabVisiblePages.isEmpty() || fabVisiblePages.contains(
-                                            pageIndex
-                                        )
+                                        !fabExplicitPages || fabVisiblePages.contains(pageIndex)
                                     PageVisibilityOption(
                                         pageIndex = pageIndex,
                                         isVisible = isPageVisible,

@@ -1,33 +1,42 @@
 package jr.brian.home.data
 
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.media3.common.util.UnstableApi
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
+import jr.brian.home.ui.theme.managers.LocalCanvasLayoutManager
 import jr.brian.home.ui.theme.managers.LocalControlPadManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
+import jr.brian.home.ui.theme.managers.LocalDockManager
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
+import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
+import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
-import jr.brian.home.ui.theme.managers.LocalNotificationCountManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
-import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
-import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
-import jr.brian.home.ui.theme.managers.LocalShizukuManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
-import jr.brian.home.ui.theme.managers.LocalAppDrawerFabManager
-import jr.brian.home.ui.theme.managers.LocalDockManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
+import jr.brian.home.ui.theme.managers.LocalShizukuManager
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.util.LocalESDEImageLoader
 import javax.inject.Inject
 
 /**
@@ -42,6 +51,7 @@ import javax.inject.Inject
  * All managers are injected via Hilt and scoped as Singletons at the application level.
  * Managers are accessed through CompositionLocal providers (e.g., `LocalXxxManager.current`)
  */
+@OptIn(UnstableApi::class)
 data class ManagerContainer @Inject constructor(
     val ui: UIManagers,
     val app: AppManagers,
@@ -71,6 +81,7 @@ data class ManagerContainer @Inject constructor(
  * }
  * ```
  */
+@OptIn(UnstableApi::class)
 @Composable
 fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> Unit) {
     CompositionLocalProvider(
@@ -83,6 +94,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalGlobalIconRefreshManager provides ui.globalIconRefreshManager,
         LocalWallpaperManager provides ui.wallpaperManager,
         LocalSearchLayoutManager provides ui.searchLayoutManager,
+        LocalCustomAppNameManager provides ui.customAppNameManager,
         
         // App Management
         LocalAppVisibilityManager provides app.appVisibilityManager,
@@ -95,6 +107,8 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalPageTypeManager provides page.pageTypeManager,
         LocalHomeTabManager provides page.homeTabManager,
         LocalWidgetPageAppManager provides page.widgetPageAppManager,
+        LocalCanvasLayoutManager provides page.canvasLayoutManager,
+        LocalPageOrderCoordinator provides page.pageOrderCoordinator,
         
         // Feature Management
         LocalDockManager provides feature.dockManager,
@@ -102,9 +116,14 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalESDEPreferencesManager provides feature.esdePreferencesManager,
         LocalESDEImageLoader provides feature.esdeImageLoader,
         LocalAppDrawerFabManager provides feature.appDrawerFabManager,
+        LocalGameKonfettiManager provides feature.gameKonfettiManager,
+        LocalFloatyModeManager provides feature.floatyModeManager,
+        LocalJinglesManager provides feature.jinglesManager,
+        LocalBgMusicManager provides feature.bgMusicManager,
+        LocalPinnedRomManager provides feature.pinnedRomManager,
         
         // System Integration
-        LocalNotificationCountManager provides system.notificationCountManager,
+        LocalNotificationManager provides system.notificationManager,
         LocalShizukuManager provides system.shizukuManager,
         LocalAppUpdateManager provides system.appUpdateManager,
         LocalOnboardingManager provides system.onboardingManager,

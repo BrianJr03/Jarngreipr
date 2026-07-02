@@ -21,6 +21,12 @@ class AppVisibilityManager(context: Context) {
     var showAppNames by mutableStateOf(loadShowAppNames())
         private set
 
+    var showHomeScreenAppNames by mutableStateOf(loadShowHomeScreenAppNames())
+        private set
+
+    var appLabelFontSize by mutableStateOf(loadAppLabelFontSize())
+        private set
+
     var showFolderNames by mutableStateOf(loadShowFolderNames())
         private set
 
@@ -61,6 +67,14 @@ class AppVisibilityManager(context: Context) {
         return prefs.getBoolean(KEY_SHOW_APP_NAMES, false)
     }
 
+    private fun loadShowHomeScreenAppNames(): Boolean {
+        return prefs.getBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, true)
+    }
+
+    private fun loadAppLabelFontSize(): Int {
+        return prefs.getInt(KEY_APP_LABEL_FONT_SIZE, DEFAULT_APP_LABEL_FONT_SIZE)
+    }
+
     private fun loadShowFolderNames(): Boolean {
         return prefs.getBoolean(KEY_SHOW_FOLDER_NAMES, true)
     }
@@ -73,6 +87,22 @@ class AppVisibilityManager(context: Context) {
         showAppNames = !showAppNames
         prefs.edit().apply {
             putBoolean(KEY_SHOW_APP_NAMES, showAppNames)
+            apply()
+        }
+    }
+
+    fun toggleShowHomeScreenAppNames() {
+        showHomeScreenAppNames = !showHomeScreenAppNames
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, showHomeScreenAppNames)
+            apply()
+        }
+    }
+
+    fun updateAppLabelFontSize(size: Int) {
+        appLabelFontSize = size.coerceIn(MIN_APP_LABEL_FONT_SIZE, MAX_APP_LABEL_FONT_SIZE)
+        prefs.edit().apply {
+            putInt(KEY_APP_LABEL_FONT_SIZE, appLabelFontSize)
             apply()
         }
     }
@@ -133,6 +163,42 @@ class AppVisibilityManager(context: Context) {
         return packageName in getHiddenApps(pageIndex)
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldMap = _hiddenAppsByPage.value
+        val newMap = mutableMapOf<Int, Set<String>>()
+        oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+            val hiddenAtOld = oldMap[oldIndex]
+            if (hiddenAtOld != null) newMap[newIndex] = hiddenAtOld
+        }
+        _hiddenAppsByPage.value = newMap
+        prefs.edit().apply {
+            oldMap.keys.forEach { remove("${KEY_HIDDEN_APPS}_$it") }
+            newMap.forEach { (pageIndex, hiddenApps) ->
+                putString("${KEY_HIDDEN_APPS}_$pageIndex", hiddenApps.joinToString(SEPARATOR))
+            }
+            apply()
+        }
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldMap = _hiddenAppsByPage.value
+        val newMap = mutableMapOf<Int, Set<String>>()
+        oldMap.forEach { (idx, hidden) ->
+            when {
+                idx < pageIndex -> newMap[idx] = hidden
+                idx > pageIndex -> newMap[idx - 1] = hidden
+            }
+        }
+        _hiddenAppsByPage.value = newMap
+        prefs.edit().apply {
+            oldMap.keys.forEach { remove("${KEY_HIDDEN_APPS}_$it") }
+            newMap.forEach { (idx, hidden) ->
+                putString("${KEY_HIDDEN_APPS}_$idx", hidden.joinToString(SEPARATOR))
+            }
+            apply()
+        }
+    }
+
     private fun saveHiddenAppsForPage(pageIndex: Int, hiddenApps: Set<String>) {
         val currentMap = _hiddenAppsByPage.value.toMutableMap()
         if (hiddenApps.isEmpty()) {
@@ -153,13 +219,54 @@ class AppVisibilityManager(context: Context) {
         }
     }
 
+    fun setHiddenApps(pageIndex: Int, apps: Set<String>) {
+        saveHiddenAppsForPage(pageIndex, apps)
+    }
+
+    fun updateShowAppNames(value: Boolean) {
+        showAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowHomeScreenAppNames(value: Boolean) {
+        showHomeScreenAppNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_HOME_SCREEN_APP_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowFolderNames(value: Boolean) {
+        showFolderNames = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_FOLDER_NAMES, value)
+            apply()
+        }
+    }
+
+    fun updateShowSettingsBackButton(value: Boolean) {
+        showSettingsBackButton = value
+        prefs.edit().apply {
+            putBoolean(KEY_SHOW_SETTINGS_BACK_BUTTON, value)
+            apply()
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "app_visibility_prefs"
         private const val KEY_HIDDEN_APPS = "hidden_apps"
         private const val KEY_SHOW_APP_NAMES = "show_app_names"
+        private const val KEY_SHOW_HOME_SCREEN_APP_NAMES = "show_home_screen_app_names"
         private const val KEY_SHOW_FOLDER_NAMES = "show_folder_names"
         private const val KEY_SHOW_SETTINGS_BACK_BUTTON = "show_settings_back_button"
         private const val KEY_NEW_APPS_VISIBLE_BY_DEFAULT = "new_apps_visible_by_default"
+        private const val KEY_APP_LABEL_FONT_SIZE = "app_label_font_size"
+        const val DEFAULT_APP_LABEL_FONT_SIZE = 12
+        const val MIN_APP_LABEL_FONT_SIZE = 8
+        const val MAX_APP_LABEL_FONT_SIZE = 24
         private const val SEPARATOR = ","
     }
 }

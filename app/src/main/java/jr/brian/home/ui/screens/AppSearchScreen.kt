@@ -1,9 +1,9 @@
 package jr.brian.home.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,10 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
@@ -42,14 +41,14 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import jr.brian.home.R
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.combinedClickWithHaptic
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.QwertyKeyboard
 import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
+import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
 import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
@@ -57,6 +56,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalIconShapeManager
+import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
@@ -66,22 +66,27 @@ import jr.brian.home.util.openAppInfo
 @Composable
 fun AppSearchScreen(
     allApps: List<AppInfo>,
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val searchLayoutManager = LocalSearchLayoutManager.current
     val isHorizontalLayout = searchLayoutManager.isHorizontalLayout
     val hasCompletedOnboarding = searchLayoutManager.hasCompletedOnboarding
     var showOnboarding by remember { mutableStateOf(!hasCompletedOnboarding) }
+    val customAppNameManager = LocalCustomAppNameManager.current
+    val customNames by customAppNameManager.customNames.collectAsStateWithLifecycle()
 
     BackHandler(onBack = onDismiss)
 
-    val filteredApps = remember(allApps, searchQuery) {
+    val filteredApps = remember(allApps, searchQuery, customNames) {
         if (searchQuery.isBlank()) {
             allApps
         } else {
             allApps.filter { app ->
-                app.label.contains(searchQuery, ignoreCase = true)
+                val customName = customNames[app.packageName]
+                app.label.contains(searchQuery, ignoreCase = true) ||
+                    customName?.contains(searchQuery, ignoreCase = true) == true
             }
         }
     }
@@ -96,14 +101,16 @@ fun AppSearchScreen(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             } else {
                 VerticalSearchLayout(
                     searchQuery = searchQuery,
                     filteredApps = filteredApps,
                     onQueryChange = { searchQuery = it },
-                    onFlipLayout = { searchLayoutManager.toggleLayout() }
+                    onFlipLayout = { searchLayoutManager.toggleLayout() },
+                    onNavigateToRomSearch = onNavigateToRomSearch
                 )
             }
         }
@@ -125,11 +132,10 @@ private fun VerticalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -160,6 +166,7 @@ private fun VerticalSearchLayout(
                 onFocusChanged = { focusedKeyIndex = it },
                 onNavigateRight = {},
                 onFlipLayout = onFlipLayout,
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -172,11 +179,12 @@ private fun HorizontalSearchLayout(
     filteredApps: List<AppInfo>,
     onQueryChange: (String) -> Unit,
     onFlipLayout: () -> Unit,
+    onNavigateToRomSearch: () -> Unit = {},
 ) {
+    var showSpecialCharRow by remember { mutableStateOf(false) }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
@@ -186,6 +194,7 @@ private fun HorizontalSearchLayout(
         ) {
             HorizontalAppGrid(
                 apps = filteredApps,
+                showAppNames = !showSpecialCharRow,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -205,6 +214,8 @@ private fun HorizontalSearchLayout(
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 onFocusChanged = { focusedKeyIndex = it },
                 onFlipLayout = onFlipLayout,
+                showSpecialCharRow = showSpecialCharRow,
+                onReopenResults = onNavigateToRomSearch,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -220,14 +231,13 @@ private fun AppGrid(
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
-        modifier = modifier
-            .background(OledBackgroundColor)
-            .padding(horizontal = 8.dp),
+        modifier = modifier.background(OledBackgroundColor),
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -277,7 +287,19 @@ private fun AppGrid(
                     preference
                 )
             },
+            onRenameClick = {
+                appForRename = app
+                selectedApp = null
+            },
             hasExternalDisplay = hasExternalDisplay
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
         )
     }
 }
@@ -286,11 +308,13 @@ private fun AppGrid(
 @Composable
 private fun HorizontalAppGrid(
     apps: List<AppInfo>,
+    showAppNames: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+    var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
 
@@ -306,6 +330,7 @@ private fun HorizontalAppGrid(
         items(apps, key = { it.packageName }) { app ->
             HorizontalAppGridItem(
                 app = app,
+                showAppName = showAppNames,
                 onAppClick = {
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -348,16 +373,28 @@ private fun HorizontalAppGrid(
                     preference
                 )
             },
+            onRenameClick = {
+                appForRename = app
+                selectedApp = null
+            },
             hasExternalDisplay = hasExternalDisplay
+        )
+    }
+
+    appForRename?.let { app ->
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = { appForRename = null }
         )
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HorizontalAppGridItem(
     app: AppInfo,
     modifier: Modifier = Modifier,
+    showAppName: Boolean = true,
     onAppClick: () -> Unit,
     onAppDoubleClick: () -> Unit = {},
     onAppLongClick: () -> Unit
@@ -366,27 +403,19 @@ private fun HorizontalAppGridItem(
     val iconShapeManager = LocalIconShapeManager.current
     val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
             .width(80.dp)
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = cardGradient(isFocused),
                 shape = RoundedCornerShape(10.dp)
             )
             .clip(RoundedCornerShape(10.dp))
-            .pressWithHaptic(
-                onAppClick, onAppDoubleClick, onAppLongClick,
+            .combinedClickWithHaptic(
                 haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .combinedClickable(
                 onClick = onAppClick,
                 onDoubleClick = onAppDoubleClick,
                 onLongClick = onAppLongClick
@@ -412,11 +441,12 @@ private fun HorizontalAppGridItem(
         }
 
         Spacer(Modifier.height(2.dp))
-        app.AppName()
+        AnimatedVisibility(showAppName) {
+            app.AppName()
+        }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppGridItem(
     app: AppInfo,
@@ -429,26 +459,18 @@ private fun AppGridItem(
     val iconShapeManager = LocalIconShapeManager.current
     val iconShape = iconShapeManager.iconShape.toComposeShape()
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 brush = cardGradient(isFocused),
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .pressWithHaptic(
-                onAppClick, onAppDoubleClick, onAppLongClick,
+            .combinedClickWithHaptic(
                 haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .combinedClickable(
                 onClick = onAppClick,
                 onDoubleClick = onAppDoubleClick,
                 onLongClick = onAppLongClick

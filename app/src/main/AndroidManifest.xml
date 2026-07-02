@@ -27,6 +27,26 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        tools:ignore="CoarseFineLocation" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -36,6 +56,7 @@
             <action android:name="android.appwidget.action.APPWIDGET_PICK" />
         </intent>
         <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="eu.es_de.frontend" />
     </queries>
     <application
         android:name=".JarngreiprApplication"
@@ -48,10 +69,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Home">
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
+            android:name=".esde.ui.RomSearchResultsActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
             android:theme="@style/Theme.Home"
-            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
+
+        <activity
+            android:name=".esde.ui.FrontEndActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Home"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
+
+        <activity
+            android:name=".HomeRouterActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.HomeRouter"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -60,15 +97,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".esde.ui.VideoPlayerActivity"
+            android:name=".MainActivity"
             android:exported="false"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Home"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
-        <provider
+
+<provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
@@ -77,6 +114,57 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <service
+            android:name="jr.brian.ping.PingService"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false" />
+
+        <service
+            android:name=".service.RssPlaybackService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.ThemeSharingTile"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_share"
+            android:label="@string/tile_theme_sharing_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".service.ThemeShareReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="jr.brian.home.ACTION_OPEN_THEME_SHARE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".WallpaperActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="jr.brian.SET_ESDE_WALLPAPER" />
+                <action android:name="jr.brian.SET_STANDARD_WALLPAPER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="jr.brian.ping.BootReceiver"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".service.AppNotificationListenerService"
             android:exported="true"

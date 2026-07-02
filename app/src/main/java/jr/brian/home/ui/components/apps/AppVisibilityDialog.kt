@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,14 +37,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
@@ -51,11 +49,10 @@ import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.animations.animatedRotation
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedDialog
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -93,25 +90,13 @@ fun AppVisibilityDialog(
         apps.count { it.packageName !in hiddenApps }
     }
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
         ) {
-            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -185,8 +170,8 @@ fun AppVisibilityDialog(
 
                 LazyColumn(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -209,7 +194,6 @@ fun AppVisibilityDialog(
                         )
                     }
                 }
-            }
         }
     }
 }
@@ -292,19 +276,7 @@ private fun ActionButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.7f),
-                ThemeSecondaryColor.copy(alpha = 0.7f),
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.7f),
-                OledCardColor.copy(alpha = 0.7f),
-            )
-        }
-    )
+    val gradient = subtleCardGradient(isFocused)
 
     Box(
         modifier = modifier

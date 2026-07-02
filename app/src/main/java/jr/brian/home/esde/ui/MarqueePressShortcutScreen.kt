@@ -1,11 +1,12 @@
 package jr.brian.home.esde.ui
 
+import jr.brian.home.esde.data.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.model.Shortcut
 import jr.brian.home.model.ShortcutOption
 import jr.brian.home.model.app.AppInfo

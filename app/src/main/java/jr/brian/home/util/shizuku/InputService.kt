@@ -251,6 +251,106 @@ class InputService : IInputService.Stub() {
         }
     }
     
+    override fun injectMouseMove(x: Float, y: Float) {
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            if (im == null || method == null) return
+
+            val now = SystemClock.uptimeMillis()
+
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_MOUSE
+            })
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                this.x = x
+                this.y = y
+                pressure = 0f
+                size = 0f
+            })
+
+            val event = MotionEvent.obtain(
+                now, now,
+                MotionEvent.ACTION_HOVER_MOVE,
+                1, pointerProperties, pointerCoords,
+                0, 0, 1f, 1f, 0, 0,
+                InputDevice.SOURCE_MOUSE, 0
+            )
+            method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            event.recycle()
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseMove failed", e)
+        }
+    }
+
+    override fun injectMouseClick(x: Float, y: Float, button: Int, action: Int) {
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            if (im == null || method == null) return
+
+            val now = SystemClock.uptimeMillis()
+
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_MOUSE
+            })
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                this.x = x
+                this.y = y
+                pressure = if (action == MotionEvent.ACTION_DOWN) 1f else 0f
+                size = 0f
+            })
+
+            val event = MotionEvent.obtain(
+                now, now,
+                action,
+                1, pointerProperties, pointerCoords,
+                0, button, 1f, 1f, 0, 0,
+                InputDevice.SOURCE_MOUSE, 0
+            )
+            method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            event.recycle()
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseClick failed", e)
+        }
+    }
+
+    override fun injectMouseScroll(x: Float, y: Float, vscroll: Float) {
+        try {
+            val im = inputManager
+            val method = injectInputEventMethod
+            if (im == null || method == null) return
+
+            val now = SystemClock.uptimeMillis()
+
+            val pointerProperties = arrayOf(MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_MOUSE
+            })
+            val pointerCoords = arrayOf(MotionEvent.PointerCoords().apply {
+                this.x = x
+                this.y = y
+                pressure = 0f
+                size = 0f
+                setAxisValue(MotionEvent.AXIS_VSCROLL, vscroll)
+            })
+
+            val event = MotionEvent.obtain(
+                now, now,
+                MotionEvent.ACTION_SCROLL,
+                1, pointerProperties, pointerCoords,
+                0, 0, 1f, 1f, 0, 0,
+                InputDevice.SOURCE_MOUSE, 0
+            )
+            method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
+            event.recycle()
+        } catch (e: Exception) {
+            Log.e(TAG, "injectMouseScroll failed", e)
+        }
+    }
+
     override fun injectLeftJoystick(leftX: Float, leftY: Float) {
         Log.d(TAG, "injectLeftJoystick: leftX=$leftX, leftY=$leftY")
         

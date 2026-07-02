@@ -13,7 +13,6 @@ class PowerViewModel @Inject constructor() : ViewModel() {
     val isPoweredOff: StateFlow<Boolean> = _isPoweredOff.asStateFlow()
 
     private val _isGamePersistActive = MutableStateFlow(false)
-    val isGamePersistActive: StateFlow<Boolean> = _isGamePersistActive.asStateFlow()
 
     fun togglePower() {
         _isPoweredOff.value = !_isPoweredOff.value

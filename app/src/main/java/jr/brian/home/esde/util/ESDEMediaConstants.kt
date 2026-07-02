@@ -4,19 +4,14 @@ package jr.brian.home.esde.util
  * Constants for ES-DE media paths, folder names, and file extensions.
  */
 object ESDEMediaConstants {
-    // Base paths
-    const val DEFAULT_MEDIA_PATH = "/storage/emulated/0/ES-DE/downloaded_media"
     const val SYSTEM_LOGOS_ASSET_PATH = "file:///android_asset/system_logos"
-
-    // Folder names for system-level media
-    const val FOLDER_SYSTEM_LOGOS = "system_logos"
-    const val FOLDER_SYSTEM_IMAGES = "system_images"
 
     // Media folder names
     const val FOLDER_FANART = "fanart"
     const val FOLDER_SCREENSHOTS = "screenshots"
     const val FOLDER_TITLESCREENS = "titlescreens"
     const val FOLDER_COVERS = "covers"
+    const val FOLDER_PHYSICALMEDIA = "physicalmedia"
     const val FOLDER_MIXIMAGES = "miximages"
     const val FOLDER_MARQUEES = "marquees"
     const val FOLDER_VIDEOS = "videos"
@@ -44,7 +39,41 @@ object ESDEMediaConstants {
         "sfc-msu1" to "sfc",
         "msu-md" to "genesis",
         "genesis-msu" to "genesis",
-        "megadrive-msu" to "megadrive"
+        "megadrive-msu" to "megadrive",
+        "megadrive" to "genesis",
+        "megadrivejp" to "genesis",
+        "md" to "genesis",
+        "megacd" to "segacd",
+        "megacdjp" to "segacd",
+        "mark3" to "mastersystem",
+        "sms" to "mastersystem",
+        "saturnjp" to "saturn",
+        "sg1000" to "sg-1000",
+        "pcengine" to "tg16",
+        "pce" to "tg16",
+        "pcenginecd" to "tg-cd",
+        "pcecd" to "tg-cd",
+        "tgcd" to "tg-cd",
+        "sfc" to "snes",
+        "snesna" to "snes",
+        "sufami" to "snes",
+        "famicom" to "nes",
+        "n64dd" to "n64",
+        "sgb" to "gb",
+        "nswitch" to "switch",
+        "gamecube" to "gc",
+        "neogeocdjp" to "neogeocd",
+        "fba" to "fbneo",
+        "cps" to "cps1",
+        "arcade" to "mame",
+        "msx1" to "msx",
+        "msx2" to "msx",
+        "msxturbor" to "msx",
+        "amiga1200" to "amiga",
+        "amiga600" to "amiga",
+        "amigacd32" to "amiga",
+        "cd32" to "amiga",
+        "cdtv" to "amiga"
     )
 
     /**
@@ -54,4 +83,18 @@ object ESDEMediaConstants {
     fun getMediaSystemName(systemName: String): String {
         return SYSTEM_MEDIA_ALIASES[systemName] ?: systemName
     }
+
+    /** Systems that use disc-based physical media. Used for the disc spin animation. */
+    val DISC_PLATFORMS = setOf(
+        // Sony
+        "ps1", "psx", "ps2", "ps3", "psp",
+        // Sega
+        "segacd", "saturn", "dreamcast",
+        // Nintendo
+        "gamecube", "gc", "wii", "wiiu",
+        // Microsoft
+        "xbox", "xbox360",
+        // Other
+        "3do", "atarijaguarcd", "cd32", "amigacd32", "cdtv", "amigacdtv", "steam", "windows"
+    )
 }

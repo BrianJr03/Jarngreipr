@@ -1,6 +1,7 @@
 package jr.brian.home.ui.navigation
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
@@ -16,36 +19,47 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import jr.brian.home.data.LocalJinglesManager
+import jr.brian.home.esde.model.SetupStep
+import jr.brian.home.esde.ui.ESDESettingsScreen
+import jr.brian.home.esde.ui.ESDESetupScreen
+import jr.brian.home.esde.ui.MarqueePressShortcutScreen
+import jr.brian.home.esde.ui.RomSearchScreen
+import jr.brian.home.esde.ui.SystemAppsScreen
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
-import jr.brian.home.esde.ui.MarqueePressShortcutScreen
 import jr.brian.home.ui.screens.CrashLogsScreen
 import jr.brian.home.ui.screens.CustomThemeScreen
-import jr.brian.home.esde.ui.ESDESettingsScreen
-import jr.brian.home.esde.ui.ESDESetupScreen
-import jr.brian.home.esde.setup.SetupStep
-import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.screens.FAQScreen
+import jr.brian.home.ui.screens.GamePadScreen
+import jr.brian.home.ui.screens.KonfettiEditorScreen
 import jr.brian.home.ui.screens.LauncherPagerScreen
 import jr.brian.home.ui.screens.MonitorScreen
 import jr.brian.home.ui.screens.QuickDeleteScreen
 import jr.brian.home.ui.screens.RecentAppsScreen
 import jr.brian.home.ui.screens.SettingsScreen
-import jr.brian.home.ui.screens.GamePadScreen
+import jr.brian.home.ui.screens.RssSettingsScreen
+import jr.brian.home.ui.screens.TransitionAnimationScreen
+import jr.brian.home.ui.screens.TrackpadScreen
 import jr.brian.home.ui.screens.VolumeControlsScreen
 import jr.brian.home.ui.screens.WidgetPickerScreen
+import jr.brian.home.ui.screens.jingles.AddJingleScreen
+import jr.brian.home.ui.screens.jingles.JinglesScreen
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.Routes
 import jr.brian.home.util.launchApp
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
+import jr.brian.home.viewmodels.RssViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
+import androidx.core.net.toUri
 
 @UnstableApi
 fun NavGraphBuilder.launcherScreen(
@@ -108,6 +122,7 @@ fun NavGraphBuilder.launcherScreen(
                         BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
                         BackButtonShortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                         BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
+                        BackButtonShortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
                         BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
                         BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
                         BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
@@ -132,6 +147,18 @@ fun NavGraphBuilder.launcherScreen(
             onNavigateToDockSettings = {
                 navController.navigate(Routes.APP_DOCK_SETTINGS)
             },
+            onNavigateToSystemApps = {
+                navController.navigate(Routes.ESDE_SYSTEM_APPS)
+            },
+            onNavigateToRomSearch = {
+                navController.navigate(Routes.ROM_SEARCH)
+            },
+            onNavigateToRssSettings = {
+                navController.navigate(Routes.RSS_SETTINGS)
+            },
+            onNavigateToTrackpad = {
+                navController.navigate(Routes.TRACKPAD)
+            },
             onPagerScrollProgressChanged = onPagerScrollProgressChanged,
             onCurrentPageChanged = onCurrentPageChanged,
             onDockPositioned = onDockPositioned,
@@ -154,6 +181,10 @@ fun NavGraphBuilder.launcherScreen(
                     allApps = uiState.allAppsUnfiltered,
                     onDismiss = {
                         showAppSearchSheet = false
+                    },
+                    onNavigateToRomSearch = {
+                        showAppSearchSheet = false
+                        navController.navigate(Routes.ROM_SEARCH)
                     }
                 )
             }
@@ -221,10 +252,10 @@ fun NavGraphBuilder.launcherScreen(
 
 fun NavGraphBuilder.settingsScreen(
     navController: NavHostController,
-    context: Context,
     mainViewModel: MainViewModel
 ) {
     composable(Routes.SETTINGS) {
+        val context = LocalContext.current
         var showScreen by remember { mutableStateOf(true) }
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
         val esdeSetupDialogState = rememberDialogState<SetupStep>()
@@ -278,9 +309,37 @@ fun NavGraphBuilder.settingsScreen(
                     showScreen = false
                     navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
                 },
+                onNavigateToSystemApps = {
+                    showScreen = false
+                    navController.navigate(Routes.ESDE_SYSTEM_APPS)
+                },
+                onNavigateToKonfettiEditor = {
+                    showScreen = false
+                    navController.navigate(Routes.KONFETTI_EDITOR)
+                },
+                onNavigateToJingles = {
+                    showScreen = false
+                    navController.navigate(Routes.JINGLES)
+                },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
+                },
+                onNavigateToRssSettings = {
+                    showScreen = false
+                    navController.navigate(Routes.RSS_SETTINGS)
+                },
+                onNavigateToTransitionAnimations = {
+                    showScreen = false
+                    navController.navigate(Routes.TAB_TRANSITION_ANIMATIONS)
+                },
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
+                },
+                onNavigateToThemeShare = {
+                    showScreen = false
+                    navController.navigate(Routes.THEME_SHARE)
                 }
             )
         }
@@ -368,6 +427,10 @@ fun NavGraphBuilder.appSearchScreen(
                 onDismiss = {
                     showScreen = false
                     navController.popBackStack()
+                },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
                 }
             )
         }
@@ -531,6 +594,22 @@ fun NavGraphBuilder.esdeSettingsScreen(
                 onNavigateToMarqueePressShortcut = {
                     showScreen = false
                     navController.navigate(Routes.MARQUEE_PRESS_SHORTCUT)
+                },
+                onNavigateToSystemApps = {
+                    showScreen = false
+                    navController.navigate(Routes.ESDE_SYSTEM_APPS)
+                },
+                onNavigateToKonfettiEditor = {
+                    showScreen = false
+                    navController.navigate(Routes.KONFETTI_EDITOR)
+                },
+                onNavigateToJingles = {
+                    showScreen = false
+                    navController.navigate(Routes.JINGLES)
+                },
+                onNavigateToRomSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.ROM_SEARCH)
                 }
             )
         }
@@ -540,6 +619,23 @@ fun NavGraphBuilder.esdeSettingsScreen(
             onDismiss = {},
             onSetupComplete = {}
         )
+    }
+}
+
+fun NavGraphBuilder.transitionAnimationScreen(
+    navController: NavHostController
+) {
+    composable(Routes.TAB_TRANSITION_ANIMATIONS) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            TransitionAnimationScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 
@@ -561,6 +657,170 @@ fun NavGraphBuilder.marqueePressShortcutScreen(
                     }
                 )
             }
+        }
+    }
+}
+
+fun NavGraphBuilder.esdeSystemAppsScreen(
+    navController: NavHostController,
+    mainViewModel: MainViewModel
+) {
+    composable(Routes.ESDE_SYSTEM_APPS) {
+        var showScreen by remember { mutableStateOf(true) }
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        SlideInVertically(showScreen) {
+            SystemAppsScreen(
+                allApps = uiState.allAppsUnfiltered,
+                onNavigateBack = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.konfettiEditorScreen(
+    navController: NavHostController
+) {
+    composable(Routes.KONFETTI_EDITOR) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            KonfettiEditorScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.jinglesScreen(
+    navController: NavHostController
+) {
+    composable(Routes.JINGLES) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            JinglesScreen(
+                onNavigateToAddJingle = { folderUriString, createPack, existingPackPath, existingPackName ->
+                    showScreen = false
+                    navController.navigate(
+                        Routes.addJingle(
+                            encodedFolderUri = Uri.encode(folderUriString),
+                            createPack = createPack,
+                            encodedExistingPackPath = Uri.encode(existingPackPath ?: ""),
+                            encodedExistingPackName = Uri.encode(existingPackName ?: "")
+                        )
+                    )
+                },
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.romSearchScreen(
+    navController: NavHostController
+) {
+    composable(Routes.ROM_SEARCH) {
+        var showScreen by remember { mutableStateOf(true) }
+        val jinglesManager = LocalJinglesManager.current
+        SlideInVertically(showScreen) {
+            RomSearchScreen(
+                onNavigateToSearch = {
+                    showScreen = false
+                    navController.navigate(Routes.APP_SEARCH)
+                },
+                onDismiss = {
+                    showScreen = false
+                    jinglesManager.stop()
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.trackpadScreen(
+    navController: NavHostController
+) {
+    composable(Routes.TRACKPAD) {
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            TrackpadScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.rssSettingsScreen(
+    navController: NavHostController
+) {
+    composable(Routes.RSS_SETTINGS) { backStackEntry ->
+        var showScreen by remember { mutableStateOf(true) }
+        val launcherEntry = remember(backStackEntry) {
+            navController.getBackStackEntry(Routes.LAUNCHER)
+        }
+        val viewModel: RssViewModel = hiltViewModel(launcherEntry)
+
+        SlideInVertically(showScreen) {
+            RssSettingsScreen(
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.addJingleScreen(
+    navController: NavHostController
+) {
+    composable(
+        route = Routes.ADD_JINGLE,
+        arguments = listOf(
+            navArgument("folderUri") { type = NavType.StringType },
+            navArgument("createPack") { type = NavType.BoolType; defaultValue = false },
+            navArgument("existingPackPath") { type = NavType.StringType; defaultValue = "" },
+            navArgument("existingPackName") { type = NavType.StringType; defaultValue = "" }
+        )
+    ) { backStackEntry ->
+        val encodedUri = backStackEntry.arguments?.getString("folderUri") ?: return@composable
+        val folderUri = Uri.decode(encodedUri).toUri()
+        val createPack = backStackEntry.arguments?.getBoolean("createPack") ?: false
+        val existingPackPath = backStackEntry.arguments?.getString("existingPackPath")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
+        val existingPackName = backStackEntry.arguments?.getString("existingPackName")?.let { Uri.decode(it) }?.takeIf { it.isNotBlank() }
+        var showScreen by remember { mutableStateOf(true) }
+
+        SlideInVertically(showScreen) {
+            AddJingleScreen(
+                localFolderUri = folderUri,
+                createPack = createPack,
+                existingPackPath = existingPackPath,
+                existingPackName = existingPackName,
+                onDismiss = {
+                    showScreen = false
+                    navController.popBackStack()
+                },
+                onSuccess = {
+                    showScreen = false
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

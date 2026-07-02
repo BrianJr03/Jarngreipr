@@ -1,5 +1,12 @@
 package jr.brian.home.ui.components.settings.sections
 
+import jr.brian.home.esde.data.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.runtime.Composable
@@ -7,12 +14,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.ui.components.settings.AppLabelFontSizeSliderItem
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.IconPackSelectorItem
 import jr.brian.home.ui.components.settings.IconShapeToggleItem
+import jr.brian.home.ui.components.settings.KeyboardOledExemptToggleItem
 import jr.brian.home.ui.components.settings.OledModeToggleItem
+import jr.brian.home.ui.components.settings.PoweredOffBrightnessSliderItem
+import jr.brian.home.ui.components.settings.SettingsTextButton
 import jr.brian.home.ui.components.settings.TabAnimationToggleItem
 import jr.brian.home.ui.components.settings.ThemeSelectorItem
 import jr.brian.home.ui.components.settings.WallpaperSelectorItem
@@ -25,11 +40,14 @@ fun AppearanceSection(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onNavigateToCustomTheme: () -> Unit,
+    onNavigateToThemeShare: () -> Unit,
     onIconPackChanged: () -> Unit,
     onNavigateToEsdeSettings: () -> Unit = {}
 ) {
     var expandedItem by remember { mutableStateOf<String?>(null) }
-    
+    val preferencesManager = LocalESDEPreferencesManager.current
+    val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
+
     CollapsibleSettingsSection(
         title = stringResource(id = R.string.settings_section_appearance),
         icon = Icons.Default.Palette,
@@ -44,7 +62,14 @@ fun AppearanceSection(
             onNavigateToCustomTheme = {
                 expandedItem = null
                 onNavigateToCustomTheme()
-            }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        SettingsTextButton(
+            text = stringResource(R.string.theme_sharing_title),
+            onClick = onNavigateToThemeShare,
+            modifier = Modifier.fillMaxWidth()
         )
 
         IconPackSelectorItem(
@@ -55,17 +80,12 @@ fun AppearanceSection(
             onIconPackChanged = onIconPackChanged
         )
 
-        IconShapeToggleItem(
-            isExpanded = false
-        )
-
-        OledModeToggleItem(
-            isExpanded = false
-        )
-
-        TabAnimationToggleItem(
-            isExpanded = false
-        )
+        IconShapeToggleItem(isExpanded = false)
+        OledModeToggleItem(isExpanded = false)
+        KeyboardOledExemptToggleItem(isExpanded = false)
+        TabAnimationToggleItem(isExpanded = false)
+        AppLabelFontSizeSliderItem()
+        PoweredOffBrightnessSliderItem()
 
         WallpaperSelectorItem(
             isExpanded = expandedItem == EXPANDED_WALLPAPER,
@@ -74,5 +94,27 @@ fun AppearanceSection(
             },
             onESDESetupClick = onNavigateToEsdeSettings
         )
+
+        ToggleSetting(
+            title = stringResource(id = R.string.esde_settings_select_wallpaper_toggle),
+            description = stringResource(id = R.string.esde_settings_select_wallpaper_toggle_description),
+            checked = prefsState.selectButtonWallpaperToggle,
+            onCheckedChange = {
+                preferencesManager.setSelectButtonWallpaperToggle(it)
+            }
+        )
+
+        AnimatedVisibility(
+            visible = prefsState.selectButtonWallpaperToggle,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            WallpaperToggleTargetSelector(
+                selectedTarget = prefsState.wallpaperToggleTarget,
+                onTargetSelected = {
+                    preferencesManager.setWallpaperToggleTarget(it)
+                }
+            )
+        }
     }
 }

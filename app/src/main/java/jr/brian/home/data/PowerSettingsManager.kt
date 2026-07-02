@@ -33,6 +33,12 @@ class PowerSettingsManager(context: Context) {
     private val _backButtonShortcutAppPackage = MutableStateFlow(loadBackButtonShortcutAppPackage())
     val backButtonShortcutAppPackage: StateFlow<String?> = _backButtonShortcutAppPackage.asStateFlow()
 
+    private val _poweredOffBrightness = MutableStateFlow(loadPoweredOffBrightness())
+    val poweredOffBrightness: StateFlow<Int> = _poweredOffBrightness.asStateFlow()
+
+    private val _appDrawerFilterByPage = MutableStateFlow(loadAppDrawerFilterByPage())
+    val appDrawerFilterByPage: StateFlow<Boolean> = _appDrawerFilterByPage.asStateFlow()
+
     private fun loadPowerButtonVisibility(): Boolean {
         return prefs.getBoolean(KEY_POWER_BUTTON_VISIBLE, false)
     }
@@ -69,6 +75,14 @@ class PowerSettingsManager(context: Context) {
 
     private fun loadBackButtonShortcutAppPackage(): String? {
         return prefs.getString(KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE, null)
+    }
+
+    private fun loadPoweredOffBrightness(): Int {
+        return prefs.getInt(KEY_POWERED_OFF_BRIGHTNESS, DEFAULT_POWERED_OFF_BRIGHTNESS)
+    }
+
+    private fun loadAppDrawerFilterByPage(): Boolean {
+        return prefs.getBoolean(KEY_APP_DRAWER_FILTER_BY_PAGE, false)
     }
 
     fun setPowerButtonVisibility(visible: Boolean) {
@@ -127,6 +141,23 @@ class PowerSettingsManager(context: Context) {
         }
     }
 
+    fun setPoweredOffBrightness(brightness: Int) {
+        val coerced = brightness.coerceIn(MIN_POWERED_OFF_BRIGHTNESS, MAX_POWERED_OFF_BRIGHTNESS)
+        _poweredOffBrightness.value = coerced
+        prefs.edit().apply {
+            putInt(KEY_POWERED_OFF_BRIGHTNESS, coerced)
+            apply()
+        }
+    }
+
+    fun setAppDrawerFilterByPage(enabled: Boolean) {
+        _appDrawerFilterByPage.value = enabled
+        prefs.edit().apply {
+            putBoolean(KEY_APP_DRAWER_FILTER_BY_PAGE, enabled)
+            apply()
+        }
+    }
+
     fun resetBackButtonShortcut() {
         _backButtonShortcut.value = BackButtonShortcut.NONE
         _backButtonShortcutAppPackage.value = null
@@ -146,5 +177,10 @@ class PowerSettingsManager(context: Context) {
         private const val KEY_BACK_BUTTON_SHORTCUT_ENABLED = "back_button_shortcut_enabled"
         private const val KEY_BACK_BUTTON_SHORTCUT = "back_button_shortcut"
         private const val KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE = "back_button_shortcut_app_package"
+        private const val KEY_POWERED_OFF_BRIGHTNESS = "powered_off_brightness"
+        private const val KEY_APP_DRAWER_FILTER_BY_PAGE = "app_drawer_filter_by_page"
+        const val DEFAULT_POWERED_OFF_BRIGHTNESS = 40
+        const val MIN_POWERED_OFF_BRIGHTNESS = 5
+        const val MAX_POWERED_OFF_BRIGHTNESS = 100
     }
 }

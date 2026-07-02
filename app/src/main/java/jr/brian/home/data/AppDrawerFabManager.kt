@@ -13,10 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
 
-/**
- * Manages the App Drawer FAB (Floating Action Button) settings.
- * Controls visibility per page and the FAB color.
- */
+enum class FabPosition {
+    LEFT, RIGHT
+}
+
 @Singleton
 class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Context) {
     private val prefs: SharedPreferences =
@@ -30,6 +30,12 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
 
     private val _fabVisiblePages = MutableStateFlow(loadFabVisiblePages())
     val fabVisiblePages: StateFlow<Set<Int>> = _fabVisiblePages.asStateFlow()
+
+    private val _fabExplicitPages = MutableStateFlow(loadFabExplicitPages())
+    val fabExplicitPages: StateFlow<Boolean> = _fabExplicitPages.asStateFlow()
+
+    private val _fabPosition = MutableStateFlow(loadFabPosition())
+    val fabPosition: StateFlow<FabPosition> = _fabPosition.asStateFlow()
 
     private fun loadFabColor(): Color {
         val colorInt = prefs.getInt(KEY_FAB_COLOR, AppRed.toArgb())
@@ -49,6 +55,21 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         }
     }
 
+    private fun loadFabExplicitPages(): Boolean {
+        val savedPagesStr = prefs.getString(KEY_FAB_VISIBLE_PAGES, null)
+        val hasExplicitPages = !savedPagesStr.isNullOrEmpty()
+        return prefs.getBoolean(KEY_FAB_EXPLICIT_PAGES, hasExplicitPages)
+    }
+
+    private fun loadFabPosition(): FabPosition {
+        val positionName = prefs.getString(KEY_FAB_POSITION, FabPosition.LEFT.name)
+        return try {
+            FabPosition.valueOf(positionName ?: FabPosition.LEFT.name)
+        } catch (_: Exception) {
+            FabPosition.LEFT
+        }
+    }
+
     fun setFabColor(color: Color) {
         _fabColor.value = color
         prefs.edit { putInt(KEY_FAB_COLOR, color.toArgb()) }
@@ -65,28 +86,59 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         prefs.edit { putString(KEY_FAB_VISIBLE_PAGES, pagesString) }
     }
 
-    fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
-        val currentPages = _fabVisiblePages.value.toMutableSet()
+    fun setFabExplicitPages(explicit: Boolean) {
+        _fabExplicitPages.value = explicit
+        prefs.edit { putBoolean(KEY_FAB_EXPLICIT_PAGES, explicit) }
+    }
 
-        if (currentPages.isEmpty()) {
-            for (i in 0 until totalPages) {
-                currentPages.add(i)
-            }
+    fun setFabPosition(position: FabPosition) {
+        _fabPosition.value = position
+        prefs.edit { putString(KEY_FAB_POSITION, position.name) }
+    }
+
+    fun togglePageVisibility(pageIndex: Int, totalPages: Int) {
+        if (!_fabExplicitPages.value) {
+            setFabExplicitPages(true)
+            val allPages = (0 until totalPages).toMutableSet()
+            allPages.remove(pageIndex)
+            setFabVisiblePages(allPages)
+            return
         }
 
+        val currentPages = _fabVisiblePages.value.toMutableSet()
         if (currentPages.contains(pageIndex)) {
             currentPages.remove(pageIndex)
         } else {
             currentPages.add(pageIndex)
         }
-
         setFabVisiblePages(currentPages)
     }
 
     fun isFabVisibleOnPage(pageIndex: Int): Boolean {
         if (!_isFabEnabled.value) return false
-        if (_fabVisiblePages.value.isEmpty()) return true // Empty means all pages
+        if (!_fabExplicitPages.value) return true // Default: all pages
         return _fabVisiblePages.value.contains(pageIndex)
+    }
+
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        if (!_fabExplicitPages.value) return
+        val oldPages = _fabVisiblePages.value
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newPages = oldPages.mapNotNull { oldToNew[it] }.toSet()
+        setFabVisiblePages(newPages)
+    }
+
+    fun removePage(pageIndex: Int) {
+        if (!_fabExplicitPages.value) return
+        val oldPages = _fabVisiblePages.value
+        val newPages = oldPages.mapNotNull { idx ->
+            when {
+                idx < pageIndex -> idx
+                idx > pageIndex -> idx - 1
+                else -> null
+            }
+        }.toSet()
+        setFabVisiblePages(newPages)
     }
 
     companion object {
@@ -94,5 +146,7 @@ class AppDrawerFabManager @Inject constructor(@ApplicationContext context: Conte
         private const val KEY_FAB_COLOR = "fab_color"
         private const val KEY_FAB_ENABLED = "fab_enabled"
         private const val KEY_FAB_VISIBLE_PAGES = "fab_visible_pages"
+        private const val KEY_FAB_EXPLICIT_PAGES = "fab_explicit_pages"
+        private const val KEY_FAB_POSITION = "fab_position"
     }
 }

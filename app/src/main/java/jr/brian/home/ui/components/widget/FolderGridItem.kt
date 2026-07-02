@@ -25,7 +25,8 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.ui.components.apps.AppIconImage
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.components.apps.FolderBackgroundImageLayer
+import jr.brian.home.ui.components.apps.resolveFolderBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -52,7 +53,12 @@ fun FolderGridItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(OledCardColor.copy(alpha = 0.9f))
+                .background(
+                    resolveFolderBackgroundColor(
+                        backgroundColorArgb = folder.backgroundColorArgb,
+                        hasImage = folder.backgroundImagePath != null
+                    )
+                )
                 .border(
                     width = 2.dp,
                     color = ThemePrimaryColor.copy(alpha = 0.4f),
@@ -61,6 +67,8 @@ fun FolderGridItem(
                 .padding(4.dp),
             contentAlignment = Alignment.Center
         ) {
+            FolderBackgroundImageLayer(backgroundImagePath = folder.backgroundImagePath)
+
             when (previewApps.size) {
                 0 -> {
                     Text(

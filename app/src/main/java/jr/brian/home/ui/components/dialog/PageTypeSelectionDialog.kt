@@ -7,12 +7,14 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,22 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.model.PageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun PageTypeSelectionDialog(
@@ -46,67 +42,66 @@ fun PageTypeSelectionDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            color = OledCardColor,
-            shape = RoundedCornerShape(24.dp),
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = modifier
-                .fillMaxWidth(0.9f)
-                .border(
-                    width = 1.dp,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.5f),
-                            ThemeSecondaryColor.copy(alpha = 0.3f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 28.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(28.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.home_tab_page_type_dialog_title),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+            Text(
+                text = stringResource(R.string.home_tab_page_type_dialog_title),
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
+            PageTypeOption(
+                title = stringResource(R.string.home_tab_page_type_unified_canvas),
+                description = stringResource(R.string.home_tab_page_type_unified_canvas_description),
+                onClick = { onTypeSelected(PageType.UNIFIED_CANVAS); onDismiss() },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 PageTypeOption(
                     title = stringResource(R.string.home_tab_page_type_apps_tab),
                     description = stringResource(R.string.home_tab_page_type_apps_tab_description),
-                    onClick = {
-                        onTypeSelected(PageType.APPS_TAB)
-                        onDismiss()
-                    }
+                    onClick = { onTypeSelected(PageType.APPS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
                 )
-
                 PageTypeOption(
                     title = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab),
                     description = stringResource(R.string.home_tab_page_type_apps_and_widgets_tab_description),
-                    onClick = {
-                        onTypeSelected(PageType.APPS_AND_WIDGETS_TAB)
-                        onDismiss()
-                    }
+                    onClick = { onTypeSelected(PageType.APPS_AND_WIDGETS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
                 )
+            }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 PageTypeOption(
                     title = stringResource(R.string.home_tab_page_type_app_drawer_tab),
                     description = stringResource(R.string.home_tab_page_type_app_drawer_tab_description),
-                    onClick = {
-                        onTypeSelected(PageType.APP_DRAWER_TAB)
-                        onDismiss()
-                    }
+                    onClick = { onTypeSelected(PageType.APP_DRAWER_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
+                )
+                PageTypeOption(
+                    title = stringResource(R.string.home_tab_page_type_rss_tab),
+                    description = stringResource(R.string.home_tab_page_type_rss_tab_description),
+                    onClick = { onTypeSelected(PageType.RSS_TAB); onDismiss() },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -133,22 +128,7 @@ private fun PageTypeOption(
             )
             .border(
                 width = if (isFocused) 3.dp else 2.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))

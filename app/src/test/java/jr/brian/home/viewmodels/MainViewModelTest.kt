@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import io.mockk.mockk
+import jr.brian.home.data.CustomAppNameManager
 import jr.brian.home.data.IconPackManager
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.state.AppDrawerUIState
@@ -30,12 +31,14 @@ class MainViewModelTest {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var iconPackManager: IconPackManager
+    private lateinit var customAppNameManager: CustomAppNameManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         iconPackManager = mockk(relaxed = true)
-        viewModel = MainViewModel(iconPackManager)
+        customAppNameManager = mockk(relaxed = true)
+        viewModel = MainViewModel(iconPackManager, customAppNameManager)
     }
 
     @After
@@ -218,7 +221,7 @@ class MainViewModelTest {
     @Test
     fun `ViewModel can be instantiated`() {
         // Given/When
-        val vm = MainViewModel(iconPackManager)
+        val vm = MainViewModel(iconPackManager, customAppNameManager)
 
         // Then
         assertTrue(vm.uiState.value.allApps.isEmpty())
@@ -258,8 +261,8 @@ class MainViewModelTest {
         val mockManager2 = mockk<IconPackManager>(relaxed = true)
 
         // When
-        val vm1 = MainViewModel(mockManager1)
-        val vm2 = MainViewModel(mockManager2)
+        val vm1 = MainViewModel(mockManager1, customAppNameManager)
+        val vm2 = MainViewModel(mockManager2, customAppNameManager)
 
         // Then
         assertTrue(vm1 !== vm2) // Different instances

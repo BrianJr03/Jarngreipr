@@ -36,12 +36,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
-import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import androidx.core.content.edit
 
 @Composable
 fun NotificationAccessDialog(
@@ -50,31 +48,15 @@ fun NotificationAccessDialog(
     onOpenAppSettings: () -> Unit,
     onNeverAskAgain: () -> Unit
 ) {
-    val isAndroid13OrHigher = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = OledCardColor
-            )
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = null,
@@ -102,49 +84,48 @@ fun NotificationAccessDialog(
                     lineHeight = 22.sp
                 )
 
-                if (isAndroid13OrHigher) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF2D2D2D)
-                        )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF2D2D2D)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.notification_access_restricted_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = ThemeAccentColor
-                            )
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Text(
-                                text = stringResource(R.string.notification_access_restricted_steps),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.9f),
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    OutlinedButton(
-                        onClick = onOpenAppSettings,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = ThemeAccentColor
+                        Text(
+                            text = stringResource(R.string.notification_access_restricted_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = ThemeAccentColor
                         )
-                    ) {
-                        Text(stringResource(R.string.notification_access_open_app_settings))
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = stringResource(R.string.notification_access_restricted_steps),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f),
+                            lineHeight = 18.sp
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onOpenAppSettings,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ThemeAccentColor
+                    )
+                ) {
+                    Text(stringResource(R.string.notification_access_open_app_settings))
+                }
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -172,7 +153,7 @@ fun NotificationAccessDialog(
                         Text(stringResource(R.string.notification_access_grant))
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 TextButton(
@@ -187,7 +168,6 @@ fun NotificationAccessDialog(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-            }
         }
     }
 }
@@ -228,5 +208,5 @@ fun hasUserDeclinedNotificationAccess(context: Context): Boolean {
  */
 fun setNotificationAccessDeclined(context: Context) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    prefs.edit().putBoolean(KEY_NEVER_ASK_AGAIN, true).apply()
+    prefs.edit { putBoolean(KEY_NEVER_ASK_AGAIN, true) }
 }

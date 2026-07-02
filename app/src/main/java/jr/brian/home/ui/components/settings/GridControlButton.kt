@@ -20,15 +20,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.colors.subtleCardGradient
 
 @Composable
 fun GridControlButton(
@@ -42,34 +38,7 @@ fun GridControlButton(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val gradient = Brush.linearGradient(
-        colors = when {
-            !enabled -> listOf(Color.Gray.copy(alpha = 0.3f), Color.Gray.copy(alpha = 0.3f))
-            isFocused && isSpecial -> listOf(
-                ThemePrimaryColor.copy(alpha = 1f),
-                ThemeSecondaryColor.copy(alpha = 0.9f),
-            )
-
-            isFocused -> listOf(
-                ThemePrimaryColor.copy(alpha = 0.9f),
-                ThemeSecondaryColor.copy(alpha = 0.7f),
-            )
-
-            isSpecial -> listOf(
-                ThemePrimaryColor.copy(alpha = 0.5f),
-                ThemeSecondaryColor.copy(alpha = 0.3f),
-            )
-            isPrimary -> listOf(
-                ThemePrimaryColor.copy(alpha = 0.6f),
-                ThemeSecondaryColor.copy(alpha = 0.4f),
-            )
-
-            else -> listOf(
-                OledCardLightColor,
-                OledCardColor,
-            )
-        }
-    )
+    val gradient = subtleCardGradient(isFocused)
 
     val borderColor = when {
         !enabled -> Color.Gray.copy(alpha = 0.3f)

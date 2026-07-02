@@ -1,0 +1,207 @@
+name: Public Release (3-Day Delay)
+
+on:
+  # Runs every day at 9am UTC — checks if a release is due
+  schedule:
+    - cron: '0 9 * * *'
+
+  # Also lets you trigger it manually from the GitHub Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-release:
+    name: Check & Build Public Release
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      commit_sha: ${{ steps.check.outputs.commit_sha }}
+      version_name: ${{ steps.version.outputs.version_name }}
+      release_exists: ${{ steps.release_check.outputs.exists }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history so we can check commit dates
+
+      # Find early access tags from exactly 3 days ago
+      - name: Check for a release due today
+        id: check
+        run: |
+          THREE_DAYS_AGO=$(date -d '3 days ago' +'%Y-%m-%d')
+          echo "Looking for early access tags from $THREE_DAYS_AGO..."
+
+          # Find early/* tags created 3 days ago
+          FOUND_TAG=""
+          FOUND_COMMIT=""
+          for TAG in $(git tag -l 'early/*'); do
+            TAG_DATE=$(git log -1 --format='%ai' "$TAG" | cut -d' ' -f1)
+            if [ "$TAG_DATE" = "$THREE_DAYS_AGO" ]; then
+              FOUND_TAG="$TAG"
+              FOUND_COMMIT=$(git rev-list -n 1 "$TAG")
+              echo "Found matching tag: $TAG (commit $FOUND_COMMIT, date $TAG_DATE)"
+              break
+            fi
+          done
+
+          if [ -z "$FOUND_TAG" ]; then
+            echo "No early access tag from $THREE_DAYS_AGO found."
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "Release due for tag $FOUND_TAG"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "commit_sha=$FOUND_COMMIT" >> $GITHUB_OUTPUT
+            echo "early_tag=$FOUND_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout the early access commit
+        if: steps.check.outputs.should_release == 'true'
+        run: git checkout ${{ steps.check.outputs.commit_sha }}
+
+      - name: Set up JDK 17
+        if: steps.check.outputs.should_release == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        if: steps.check.outputs.should_release == 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        if: steps.check.outputs.should_release == 'true'
+        run: chmod +x gradlew
+
+      - name: Extract version info
+        if: steps.check.outputs.should_release == 'true'
+        id: version
+        run: |
+          VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION_NAME}"
+
+      - name: Check if release already exists
+        if: steps.check.outputs.should_release == 'true'
+        id: release_check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version_name }}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing release for $TAG, proceeding."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Decode Keystore
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > ${{ github.workspace }}/keystore.jks
+
+      - name: Build signed standard release APK
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleStandardRelease \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            --stacktrace
+
+      - name: Rename APK
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        id: rename
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.version_name }}"
+          APK_NAME="jarngreipr-${VERSION_NAME}.apk"
+          mv app/build/outputs/apk/standard/release/app-standard-release.apk app/build/outputs/apk/standard/release/${APK_NAME}
+          echo "apk_name=${APK_NAME}" >> $GITHUB_OUTPUT
+          echo "Renamed APK to: ${APK_NAME}"
+
+      # Creates a public GitHub Release with the APK attached
+      - name: Create public GitHub Release
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version_name }}
+          name: Járngreipr v${{ steps.version.outputs.version_name }}
+          body: |
+            ## Járngreipr v${{ steps.version.outputs.version_name }}
+
+            Download the APK below and sideload it onto your device.
+
+            **Requirements:** Android 13 (API 33) or higher
+
+            ---
+            *Want builds 3 days early? [Support on Ko-fi](https://ko-fi.com/brianjr03)*
+          files: app/build/outputs/apk/standard/release/${{ steps.rename.outputs.apk_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Let Discord know the build is now public
+      - name: Notify Discord of public release
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PUBLIC_WEBHOOK_URL }}
+          VERSION: ${{ steps.version.outputs.version_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
+          PATCH_NOTES=$(cat app/src/main/res/raw/patch_notes.md)
+
+          DESC=$(printf "The build you got early is now live for everyone.\n\n%s\n\n[View Release](%s)" "$PATCH_NOTES" "$RELEASE_URL")
+
+          PAYLOAD=$(jq -n \
+            --arg title "🚀 Járngreipr v${VERSION} is now public!" \
+            --arg desc "$DESC" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5763719,
+                footer: { text: "Járngreipr Public Release" }
+              }]
+            }')
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$PAYLOAD" \
+               "${DISCORD_WEBHOOK_URL}"
+
+      - name: Cleanup early access tag
+        if: steps.check.outputs.should_release == 'true' && steps.release_check.outputs.exists != 'true'
+        run: |
+          git push origin --delete "${{ steps.check.outputs.early_tag }}" || true
+
+      - name: Cleanup keystore
+        if: always()
+        run: rm -f ${{ github.workspace }}/keystore.jks
+
+  # Also build the hidden release variant and attach it to the same GitHub Release
+  build-hidden:
+    name: Build Hidden Release APK
+    needs: check-and-release
+    if: needs.check-and-release.outputs.should_release == 'true' && needs.check-and-release.outputs.release_exists != 'true'
+    uses: ./.github/workflows/build-hidden-release.yml
+    with:
+      release_tag: v${{ needs.check-and-release.outputs.version_name }}
+      ref: ${{ needs.check-and-release.outputs.commit_sha }}
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

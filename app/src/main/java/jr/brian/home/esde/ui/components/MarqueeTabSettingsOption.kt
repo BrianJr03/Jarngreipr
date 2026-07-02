@@ -112,7 +112,6 @@ fun MarqueeTabSettingsOption(
                         color = if (isDescriptionOverlayFocused) ThemePrimaryColor.copy(alpha = 0.1f)
                         else Color.DarkGray.copy(alpha = 0.15f)
                     )
-                    .clickable { onDescriptionOverlayToggle() }
                     .focusable()
                     .padding(start = 28.dp, end = 14.dp, top = 10.dp, bottom = 12.dp)
             ) {
@@ -124,25 +123,28 @@ fun MarqueeTabSettingsOption(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.esde_settings_description_overlay_on_tab),
-                            color = Color.White.copy(alpha = 0.9f),
+                            color = Color.White.copy(alpha = 0.5f),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Normal
                         )
                         Text(
                             text = stringResource(R.string.esde_settings_description_overlay_on_tab_description),
-                            color = Color.Gray.copy(alpha = 0.6f),
+                            color = Color.Gray.copy(alpha = 0.4f),
                             fontSize = 11.sp
                         )
                     }
                     Switch(
-                        checked = isDescriptionOverlayEnabled,
-                        onCheckedChange = { onDescriptionOverlayToggle() },
+                        checked = false,
+                        onCheckedChange = { },
+                        enabled = false,
                         modifier = Modifier.scale(0.85f),
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = ThemePrimaryColor,
                             checkedTrackColor = ThemePrimaryColor.copy(alpha = 0.5f),
                             uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+                            uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f),
+                            disabledUncheckedThumbColor = Color.Gray.copy(alpha = 0.5f),
+                            disabledUncheckedTrackColor = Color.DarkGray.copy(alpha = 0.2f)
                         )
                     )
                 }

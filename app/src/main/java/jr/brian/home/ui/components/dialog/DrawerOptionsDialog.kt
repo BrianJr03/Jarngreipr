@@ -1,5 +1,7 @@
 package jr.brian.home.ui.components.dialog
 
+import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -8,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,9 +18,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -32,13 +33,19 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,8 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -58,24 +66,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.edit
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import jr.brian.home.R
-import jr.brian.home.esde.setup.SetupPreferences
+import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.LocalJinglesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.model.WallpaperToggleTarget
+import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.util.animatedColor
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.util.MediaPickerLauncher
+import jr.brian.home.util.launchApp
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun DrawerOptionsDialog(
     onDismiss: () -> Unit,
@@ -86,16 +106,49 @@ fun DrawerOptionsDialog(
     onQuickDeleteClick: () -> Unit,
     onCreateFolderClick: (() -> Unit)?,
     onDockSettingsClick: () -> Unit,
-    onESDESetupClick: () -> Unit = {}
+    onESDESetupClick: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val wallpaperManager = LocalWallpaperManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
+    val bgMusicManager = LocalBgMusicManager.current
     val setupPreferences = remember { SetupPreferences(context) }
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val isQuickDeleteVisible by powerSettingsManager.quickDeleteVisible.collectAsStateWithLifecycle()
+    val esdePreferencesManager = LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val lastSelectedSystem = esdePrefsState.lastSelectedSystem
+    val showWallpaperToggle = esdePrefsState.selectButtonWallpaperToggle
     var isWallpaperExpanded by remember { mutableStateOf(false) }
+    var showMuteOptionsDialog by remember { mutableStateOf(false) }
+    val closeFocusRequester = remember { FocusRequester() }
+    val jinglesManager = LocalJinglesManager.current
+    val esdeViewModel: ESDEViewModel = hiltViewModel(
+        context as ComponentActivity
+    )
+    val isMuted by jinglesManager.isMuted.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        closeFocusRequester.requestFocus()
+    }
+
+    val romIconPrefs = remember {
+        context.getSharedPreferences("rom_search_prefs", Context.MODE_PRIVATE)
+    }
+    var isRomIconNew by remember {
+        mutableStateOf(romIconPrefs.getBoolean("drawer_icon_new", true))
+    }
+    LaunchedEffect(Unit) {
+        if (isRomIconNew) {
+            romIconPrefs.edit { putBoolean("drawer_icon_new", false) }
+        }
+    }
+
+
     val mediaPickerLauncher = MediaPickerLauncher(
         onResult = {
             isWallpaperExpanded = false
@@ -103,31 +156,42 @@ fun DrawerOptionsDialog(
         }
     )
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    if (showMuteOptionsDialog) {
+        val hasBgMusic = bgMusicManager.folderUri != null || bgMusicManager.singleFileUri != null
+        MuteOptionsDialog(
+            isMuted = isMuted,
+            hasBgMusic = hasBgMusic,
+            onMuteAll = {
+                jinglesManager.setMuted(true)
+                esdeViewModel.musicController.setMuted(true)
+                VideoPresentationManager.setMuted(true)
+                bgMusicManager.setMuted(true)
+                showMuteOptionsDialog = false
+            },
+            onResumeBgMusic = {
+                bgMusicManager.resumePlayback()
+                showMuteOptionsDialog = false
+            },
+            onUnmuteAll = {
+                jinglesManager.setMuted(false)
+                esdeViewModel.musicController.setMuted(false)
+                VideoPresentationManager.setMuted(false)
+                bgMusicManager.setMuted(false)
+                showMuteOptionsDialog = false
+            },
+            onDismiss = { showMuteOptionsDialog = false }
+        )
+    }
+
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -142,16 +206,81 @@ fun DrawerOptionsDialog(
                         fontWeight = FontWeight.Bold
                     )
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.drawer_options_close),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { showMuteOptionsDialog = true },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                contentDescription = if (isMuted) "Unmute" else "Mute",
+                                tint = if (isMuted) Color.White.copy(alpha = 0.4f) else Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+
+//                        IconButton(
+//                            onClick = {
+//                                onDismiss()
+//                                onNavigateToTrackpad()
+//                            },
+//                            modifier = Modifier.size(48.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Mouse,
+//                                contentDescription = "Trackpad",
+//                                tint = Color.White,
+//                                modifier = Modifier.size(26.dp)
+//                            )
+//                        }
+
+                        IconButton(
+                            onClick = {
+                                onDismiss()
+                                onNavigateToRomSearch()
+                            },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = stringResource(R.string.rom_search_icon_description),
+                                tint = animatedColor(firstSeen = isRomIconNew),
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+
+                        if (esdePrefsState.frontendEnabled) {
+                            IconButton(
+                                onClick = {
+                                    onDismiss()
+                                    launchFrontend(context)
+                                },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = stringResource(R.string.frontend_launch_cd),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .focusRequester(closeFocusRequester)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.drawer_options_close),
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
 
@@ -207,6 +336,53 @@ fun DrawerOptionsDialog(
                                 onDismiss()
                             }
                         )
+
+                        if (showWallpaperToggle) {
+                            QuickAccessIconButton(
+                                icon = Icons.Default.SwapHoriz,
+                                contentDescription = stringResource(R.string.header_wallpaper_toggle),
+                                onClick = {
+                                    val currentType = wallpaperManager.getWallpaperType()
+                                    val target = esdePrefsState.wallpaperToggleTarget
+                                    if (currentType == WallpaperType.ESDE) {
+                                        when (target) {
+                                            WallpaperToggleTarget.SystemWallpaper -> wallpaperManager.setTransparent()
+                                            WallpaperToggleTarget.SavedImage -> {
+                                                val uri = wallpaperManager.savedImageUri
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.IMAGE
+                                                )
+                                                else wallpaperManager.setTransparent()
+                                            }
+
+                                            WallpaperToggleTarget.SavedGif -> {
+                                                val uri = wallpaperManager.savedGifUri
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.GIF
+                                                )
+                                                else wallpaperManager.setTransparent()
+                                            }
+
+                                            WallpaperToggleTarget.SavedVideo -> {
+                                                val uri = wallpaperManager.savedVideoUri
+                                                if (uri != null) wallpaperManager.setWallpaper(
+                                                    uri = uri,
+                                                    type = WallpaperType.VIDEO
+                                                )
+                                                else wallpaperManager.setTransparent()
+                                            }
+
+                                            WallpaperToggleTarget.Default -> wallpaperManager.setDefault()
+                                        }
+                                    } else {
+                                        wallpaperManager.setESDE()
+                                    }
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         if (isPowerButtonVisible) {
                             QuickAccessIconButton(
@@ -300,103 +476,109 @@ fun DrawerOptionsDialog(
                     }
                 }
 
-            }
+                if (
+                    !isWallpaperExpanded
+                    && wallpaperManager.getWallpaperType() == WallpaperType.ESDE
+                    && lastSelectedSystem != null
+                ) {
+                    val packageName = esdePrefsState.systemAppMap[lastSelectedSystem]
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (packageName != null) {
+                            DrawerOptionButton(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.drawer_options_launch_system_app),
+                                onClick = {
+                                    val displayPref =
+                                        if (esdePrefsState.systemTopScreenSet.contains(
+                                                lastSelectedSystem
+                                            )
+                                        ) {
+                                            DisplayPreference.PRIMARY_DISPLAY
+                                        } else {
+                                            DisplayPreference.CURRENT_DISPLAY
+                                        }
+                                    launchApp(
+                                        context = context,
+                                        packageName = packageName,
+                                        displayPreference = displayPref
+                                    )
+                                    onDismiss()
+                                }
+                            )
+                        }
+
+                        DrawerOptionButton(
+                            modifier = Modifier.weight(1f),
+                            title = stringResource(R.string.drawer_options_configure_system_app),
+                            onClick = {
+                                onNavigateToSystemApps()
+                                onDismiss()
+                            }
+                        )
+                    }
+                }
         }
     }
 }
 
 @Composable
-private fun WallpaperOptionsSection(
-    isVisible: Boolean,
-    wallpaperManager: WallpaperManager,
-    setupPreferences: SetupPreferences,
-    mediaPickerLauncher: ActivityResultLauncher<Array<String>>,
-    onBack: () -> Unit,
-    onDismiss: () -> Unit,
-    onESDESetupClick: () -> Unit
+private fun MuteOptionsDialog(
+    isMuted: Boolean,
+    hasBgMusic: Boolean,
+    onMuteAll: () -> Unit,
+    onResumeBgMusic: () -> Unit,
+    onUnmuteAll: () -> Unit,
+    onDismiss: () -> Unit
 ) {
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = expandVertically() + fadeIn(),
-        exit = shrinkVertically() + fadeOut()
-    ) {
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            WallpaperGridButton(
-                modifier = Modifier.fillMaxWidth(),
-                title = stringResource(R.string.drawer_options_back),
-                onClick = onBack
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_default),
-                    onClick = {
-                        wallpaperManager.clearWallpaper()
-                        onBack()
-                        onDismiss()
-                    }
+                Text(
+                    text = stringResource(R.string.music_options_title),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
 
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_system),
-                    onClick = {
-                        wallpaperManager.setTransparent()
-                        onBack()
-                        onDismiss()
-                    }
-                )
+                Spacer(modifier = Modifier.height(4.dp))
 
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_image),
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/*"))
-                    }
-                )
-            }
+                if (isMuted) {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_unmute_all),
+                        icon = Icons.Default.VolumeUp,
+                        onClick = onUnmuteAll
+                    )
+                } else {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_mute_all),
+                        icon = Icons.Default.VolumeOff,
+                        onClick = onMuteAll
+                    )
+                }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_gif),
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("image/gif"))
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_video),
-                    onClick = {
-                        mediaPickerLauncher.launch(arrayOf("video/*"))
-                    }
-                )
-
-                WallpaperGridButton(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.wallpaper_grid_esde),
-                    onClick = {
-                        onBack()
-                        onDismiss()
-                        if (setupPreferences.setupCompleted) {
-                            wallpaperManager.setESDE()
-                        } else {
-                            onESDESetupClick()
-                        }
-                    }
-                )
-            }
+                if (hasBgMusic) {
+                    DrawerOptionButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = stringResource(R.string.music_options_resume_bg),
+                        icon = Icons.Default.VolumeUp,
+                        onClick = onResumeBgMusic
+                    )
+                }
         }
     }
 }
@@ -405,18 +587,14 @@ private fun WallpaperOptionsSection(
 fun DrawerOptionButton(
     modifier: Modifier = Modifier,
     title: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Box(
         modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -425,31 +603,11 @@ fun DrawerOptionButton(
             )
             .border(
                 width = if (isFocused) 3.dp else 2.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused = isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable()
             .padding(12.dp),
         contentAlignment = Alignment.Center
@@ -458,13 +616,15 @@ fun DrawerOptionButton(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            icon?.let {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             Text(
                 text = title,
                 color = Color.White,
@@ -484,29 +644,13 @@ private fun QuickAccessIconButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
-    val gradient = Brush.linearGradient(
-        colors = if (isFocused) {
-            listOf(
-                ThemePrimaryColor.copy(alpha = 0.8f),
-                ThemeSecondaryColor.copy(alpha = 0.8f)
-            )
-        } else {
-            listOf(
-                OledCardLightColor.copy(alpha = 0.6f),
-                OledCardColor.copy(alpha = 0.6f)
-            )
-        }
-    )
+    val gradient = subtleCardGradient(isFocused)
 
     Box(
         modifier = Modifier
             .size(64.dp)
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged { isFocused = it.isFocused }
             .background(
@@ -523,12 +667,7 @@ private fun QuickAccessIconButton(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
+            .clickWithHaptic(haptic) { onClick() }
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
@@ -541,64 +680,3 @@ private fun QuickAccessIconButton(
     }
 }
 
-@Composable
-private fun WallpaperGridButton(
-    modifier: Modifier = Modifier,
-    title: String,
-    onClick: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
-
-    Box(
-        modifier = modifier
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
-            .scale(animatedFocusedScale(isFocused))
-            .onFocusChanged { isFocused = it.isFocused }
-            .background(
-                brush = cardGradient(isFocused = isFocused),
-                shape = RoundedCornerShape(10.dp)
-            )
-            .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                brush = if (isFocused) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.4f),
-                            ThemeSecondaryColor.copy(alpha = 0.3f)
-                        )
-                    )
-                },
-                shape = RoundedCornerShape(10.dp)
-            )
-            .clip(RoundedCornerShape(10.dp))
-            .pressWithHaptic(
-                onClick,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onClick() }
-            .focusable()
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
-    }
-}

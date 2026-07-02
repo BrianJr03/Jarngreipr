@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +44,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.skydoves.colorpicker.compose.BrightnessSlider
+import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import jr.brian.home.R
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.ScreenHeader
@@ -61,6 +65,8 @@ fun CustomThemeScreen(
     var selectedPrimaryColor by remember { mutableStateOf(Color(0xFF8A2BE2)) }
     var selectedSecondaryColor by remember { mutableStateOf(Color(0xFFFF69B4)) }
     var isSolidColor by remember { mutableStateOf(false) }
+    var useColorWheel by remember { mutableStateOf(false) }
+    var wheelTarget by remember { mutableStateOf("primary") }
 
     val colorOptions = remember {
         listOf(
@@ -96,7 +102,7 @@ fun CustomThemeScreen(
                 .padding(innerPadding)
                 .systemBarsPadding()
         ) {
-            Column {
+            Column(modifier = Modifier.fillMaxSize()) {
                 ScreenHeader(
                     onBackClick = onNavigateBack
                 )
@@ -114,7 +120,6 @@ fun CustomThemeScreen(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
-                    // Preview box
                     Box(
                         modifier = Modifier
                             .width(120.dp)
@@ -143,12 +148,12 @@ fun CustomThemeScreen(
 
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .padding(horizontal = 32.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // Solid color toggle
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -174,72 +179,96 @@ fun CustomThemeScreen(
                         }
                     }
 
-                    // Color selection section
-                    if (isSolidColor) {
-                        // Single color section header
-                        item {
-                            Text(
-                                text = stringResource(R.string.custom_theme_color),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.fillMaxWidth()
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ModeTab(
+                                text = stringResource(R.string.custom_theme_mode_presets),
+                                isSelected = !useColorWheel,
+                                onClick = { useColorWheel = false },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ModeTab(
+                                text = stringResource(R.string.custom_theme_mode_wheel),
+                                isSelected = useColorWheel,
+                                onClick = { useColorWheel = true },
+                                modifier = Modifier.weight(1f)
                             )
                         }
+                    }
 
-                        // Color grid rows
-                        val colorRows = colorOptions.chunked(8)
-                        items(colorRows.size) { rowIndex ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(
-                                    8.dp,
-                                    Alignment.CenterHorizontally
-                                )
-                            ) {
-                                for (color in colorRows[rowIndex]) {
-                                    ColorSwatch(
-                                        color = color,
-                                        isSelected = selectedPrimaryColor == color,
-                                        onClick = { selectedPrimaryColor = color }
+                    if (useColorWheel) {
+                        if (!isSolidColor) {
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ModeTab(
+                                        text = stringResource(R.string.custom_theme_primary_color),
+                                        isSelected = wheelTarget == "primary",
+                                        onClick = { wheelTarget = "primary" },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    ModeTab(
+                                        text = stringResource(R.string.custom_theme_secondary_color),
+                                        isSelected = wheelTarget == "secondary",
+                                        onClick = { wheelTarget = "secondary" },
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
                         }
-                    } else {
-                        // Split view headers
+
                         item {
-                            Row(
+                            val controller = rememberColorPickerController()
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Text(
-                                    text = stringResource(R.string.custom_theme_primary_color),
-                                    color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f)
+                                HsvColorPicker(
+                                    modifier = Modifier
+                                        .width(200.dp)
+                                        .height(160.dp),
+                                    controller = controller,
+                                    initialColor = if (isSolidColor || wheelTarget == "primary")
+                                        selectedPrimaryColor else selectedSecondaryColor,
+                                    onColorChanged = { envelope ->
+                                        if (isSolidColor || wheelTarget == "primary") {
+                                            selectedPrimaryColor = envelope.color
+                                        } else {
+                                            selectedSecondaryColor = envelope.color
+                                        }
+                                    }
                                 )
-                                Text(
-                                    text = stringResource(R.string.custom_theme_secondary_color),
-                                    color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f)
+                                BrightnessSlider(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(36.dp),
+                                    controller = controller
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
                         }
+                    } else {
+                        if (isSolidColor) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.custom_theme_color),
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
 
-                        // Color grid rows - split view
-                        val colorRows = colorOptions.chunked(4)
-                        items(colorRows.size) { rowIndex ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                // Primary color column
+                            val colorRows = colorOptions.chunked(8)
+                            items(colorRows.size) { rowIndex ->
                                 Row(
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(
                                         8.dp,
                                         Alignment.CenterHorizontally
@@ -253,58 +282,133 @@ fun CustomThemeScreen(
                                         )
                                     }
                                 }
-                                // Secondary color column
+                            }
+                        } else {
+                            item {
                                 Row(
-                                    modifier = Modifier.weight(1f),
-                                    horizontalArrangement = Arrangement.spacedBy(
-                                        8.dp,
-                                        Alignment.CenterHorizontally
-                                    )
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    for (color in colorRows[rowIndex]) {
-                                        ColorSwatch(
-                                            color = color,
-                                            isSelected = selectedSecondaryColor == color,
-                                            onClick = { selectedSecondaryColor = color }
+                                    Text(
+                                        text = stringResource(R.string.custom_theme_primary_color),
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.custom_theme_secondary_color),
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+
+                            val colorRows = colorOptions.chunked(4)
+                            items(colorRows.size) { rowIndex ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(
+                                            8.dp,
+                                            Alignment.CenterHorizontally
                                         )
+                                    ) {
+                                        for (color in colorRows[rowIndex]) {
+                                            ColorSwatch(
+                                                color = color,
+                                                isSelected = selectedPrimaryColor == color,
+                                                onClick = { selectedPrimaryColor = color }
+                                            )
+                                        }
+                                    }
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(
+                                            8.dp,
+                                            Alignment.CenterHorizontally
+                                        )
+                                    ) {
+                                        for (color in colorRows[rowIndex]) {
+                                            ColorSwatch(
+                                                color = color,
+                                                isSelected = selectedSecondaryColor == color,
+                                                onClick = { selectedSecondaryColor = color }
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                }
 
-                    // Action buttons
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp, bottom = 32.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            ActionButton(
-                                text = stringResource(R.string.dialog_cancel),
-                                onClick = onNavigateBack,
-                                isPrimary = false,
-                                modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ActionButton(
+                        text = stringResource(R.string.dialog_cancel),
+                        onClick = onNavigateBack,
+                        isPrimary = false,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ActionButton(
+                        text = stringResource(R.string.custom_theme_create),
+                        onClick = {
+                            val customTheme = ColorTheme.createCustomTheme(
+                                primaryColor = selectedPrimaryColor,
+                                secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
+                                name = "Custom Theme"
                             )
-                            ActionButton(
-                                text = stringResource(R.string.custom_theme_create),
-                                onClick = {
-                                    val customTheme = ColorTheme.createCustomTheme(
-                                        primaryColor = selectedPrimaryColor,
-                                        secondaryColor = if (isSolidColor) null else selectedSecondaryColor,
-                                        name = "Custom Theme"
-                                    )
-                                    onThemeCreated(customTheme)
-                                },
-                                isPrimary = true,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
+                            onThemeCreated(customTheme)
+                        },
+                        isPrimary = true,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ModeTab(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(36.dp)
+            .background(
+                color = if (isSelected) ThemePrimaryColor.copy(alpha = 0.8f)
+                else Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = if (isSelected) ThemePrimaryColor else Color.White.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 

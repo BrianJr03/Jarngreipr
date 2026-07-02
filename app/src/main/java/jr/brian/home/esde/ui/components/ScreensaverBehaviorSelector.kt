@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.ScreensaverBehavior
+import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -94,6 +94,8 @@ private fun ScreensaverBehaviorChip(
     val behaviorName = when (behavior) {
         ScreensaverBehavior.ShowContent -> stringResource(R.string.esde_settings_screensaver_show_companion)
         ScreensaverBehavior.PowerOff -> stringResource(R.string.esde_settings_screensaver_power_off)
+        ScreensaverBehavior.Floaty -> stringResource(R.string.esde_settings_screensaver_floaty)
+        ScreensaverBehavior.ShowAll -> stringResource(R.string.esde_settings_screensaver_show_all)
     }
 
     Box(

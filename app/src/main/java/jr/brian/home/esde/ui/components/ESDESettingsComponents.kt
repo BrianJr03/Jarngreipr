@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui.components
 
+import jr.brian.home.esde.data.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -8,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -38,6 +38,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,44 +49,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.ui.animations.animatedFocusedScale
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.OledCardLightColor
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.model.ESDEPrefsState
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
-/**
- * Applies the standard ESDE settings card styling with focus-aware gradient background and border.
- * This includes scale animation, linear gradient background (focused vs unfocused colors),
- * and a border that appears when focused.
- */
 @Composable
 fun Modifier.focusableSettingCard(
     isFocused: Boolean,
-    cornerRadius: androidx.compose.ui.unit.Dp = 16.dp
+    cornerRadius: Dp = 16.dp
 ): Modifier = this
     .scale(animatedFocusedScale(isFocused))
     .background(
-        brush = Brush.linearGradient(
-            colors = if (isFocused) {
-                listOf(
-                    ThemePrimaryColor.copy(alpha = 0.3f),
-                    ThemeSecondaryColor.copy(alpha = 0.2f)
-                )
-            } else {
-                listOf(OledCardLightColor, OledCardColor)
-            }
-        ),
+        brush = subtleCardGradient(isFocused),
         shape = RoundedCornerShape(cornerRadius)
     )
     .border(
@@ -99,13 +88,13 @@ fun CollapsibleSection(
     title: String,
     showBorder: Boolean = false,
     initiallyExpanded: Boolean = false,
+    onHeaderTap: (() -> Unit)? = null,
+    badge: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     var isExpanded by remember { mutableStateOf(initiallyExpanded) }
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     val rotationAngle by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
         label = "chevron_rotation"
@@ -136,41 +125,35 @@ fun CollapsibleSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(y = pressOffsetY)
-                .scale(pressScale * animatedFocusedScale(isFocused))
+                .scale(animatedFocusedScale(isFocused))
                 .background(
-                    brush = Brush.linearGradient(
-                        colors = if (isFocused || isExpanded) {
-                            listOf(
-                                ThemePrimaryColor.copy(alpha = 0.8f),
-                                ThemeSecondaryColor.copy(alpha = 0.6f)
-                            )
-                        } else {
-                            listOf(OledCardLightColor, OledCardColor)
-                        }
-                    ),
+                    brush = subtleCardGradient(isFocused || isExpanded),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .then(border)
                 .clip(RoundedCornerShape(16.dp))
-                .pressWithHaptic(
-                    { isExpanded = !isExpanded },
-                    haptic = haptic,
-                    onPressChange = { isPressed = it }
-                )
-                .clickable { isExpanded = !isExpanded }
+                .clickWithHaptic(haptic) {
+                    onHeaderTap?.invoke()
+                    isExpanded = !isExpanded
+                }
                 .focusable()
                 .onFocusChanged { isFocused = it.isFocused }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                badge?.invoke()
+            }
 
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -190,7 +173,7 @@ fun CollapsibleSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp),
+                    .padding(top = 12.dp, start = 16.dp, end = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 content()
@@ -275,30 +258,19 @@ fun ToggleSetting(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit = {},
     showToggle: Boolean = true,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    icon: ImageVector? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
     val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .offset(y = pressOffsetY)
-            .scale(pressScale * animatedFocusedScale(isFocused))
+            .scale(animatedFocusedScale(isFocused))
             .background(
-                brush = Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    } else {
-                        listOf(OledCardLightColor, OledCardColor)
-                    }
-                ),
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -307,17 +279,22 @@ fun ToggleSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                clickAction,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { clickAction() }
+            .clickWithHaptic(haptic) { clickAction() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -325,17 +302,95 @@ fun ToggleSetting(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+            if (description.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
         }
 
         if (showToggle) {
             Spacer(modifier = Modifier.width(12.dp))
 
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = ThemePrimaryColor,
+                    checkedTrackColor = ThemeSecondaryColor.copy(alpha = 0.5f),
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = Color.DarkGray
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ToggleSetting(
+    title: String,
+    description: AnnotatedString,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit = {},
+    showToggle: Boolean = true,
+    onClick: (() -> Unit)? = null,
+    icon: ImageVector? = null
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(isFocused))
+            .background(
+                brush = subtleCardGradient(isFocused),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .clickWithHaptic(haptic) { clickAction() }
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (description.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        if (showToggle) {
+            Spacer(modifier = Modifier.width(12.dp))
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
@@ -357,29 +412,18 @@ fun PathSetting(
     currentPath: String?,
     defaultText: String,
     onSelectPath: () -> Unit,
-    onClearPath: () -> Unit
+    onClearPath: () -> Unit,
+    fallbackPath: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .offset(y = pressOffsetY)
-            .scale(pressScale * animatedFocusedScale(isFocused))
+            .scale(animatedFocusedScale(isFocused))
             .background(
-                brush = Brush.linearGradient(
-                    colors = if (isFocused) {
-                        listOf(
-                            ThemePrimaryColor.copy(alpha = 0.3f),
-                            ThemeSecondaryColor.copy(alpha = 0.2f)
-                        )
-                    } else {
-                        listOf(OledCardLightColor, OledCardColor)
-                    }
-                ),
+                brush = subtleCardGradient(isFocused),
                 shape = RoundedCornerShape(16.dp)
             )
             .border(
@@ -388,12 +432,7 @@ fun PathSetting(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .pressWithHaptic(
-                onSelectPath,
-                haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .clickable { onSelectPath() }
+            .clickWithHaptic(haptic) { onSelectPath() }
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
             .padding(16.dp)
@@ -440,9 +479,16 @@ fun PathSetting(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        val displayPath = currentPath ?: fallbackPath ?: defaultText
+        val pathColor = when {
+            currentPath != null -> ThemePrimaryColor
+            fallbackPath != null -> Color.Gray.copy(alpha = 0.8f)
+            else -> Color.Gray
+        }
+
         Text(
-            text = currentPath ?: defaultText,
-            color = if (currentPath != null) ThemePrimaryColor else Color.Gray,
+            text = displayPath,
+            color = pathColor,
             fontSize = 12.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -531,12 +577,7 @@ fun MarqueeSizeSetting(
                 modifier = Modifier
                     .size((width / 3).dp, (height / 3).dp)
                     .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                ThemePrimaryColor.copy(alpha = 0.5f),
-                                ThemeSecondaryColor.copy(alpha = 0.3f)
-                            )
-                        ),
+                        brush = subtleCardGradient(isFocused = true),
                         shape = RoundedCornerShape(4.dp)
                     )
                     .border(
@@ -549,7 +590,6 @@ fun MarqueeSizeSetting(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Width control
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -592,7 +632,7 @@ fun MarqueeSizeSetting(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
 
                 IconButton(
@@ -661,7 +701,7 @@ fun MarqueeSizeSetting(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.width(60.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
 
                 IconButton(
@@ -684,6 +724,19 @@ fun MarqueeSizeSetting(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SyncLogoPositionLock(
+    esdePrefsState: ESDEPrefsState,
+    esdePrefsManager: ESDEPreferencesManager
+) {
+    val isLogoFreePosEnabled = esdePrefsState.isLogoFreePosEnabled()
+    LaunchedEffect(isLogoFreePosEnabled) {
+        if (!isLogoFreePosEnabled) {
+            esdePrefsManager.setLogoPositionLocked(true)
         }
     }
 }

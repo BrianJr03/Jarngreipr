@@ -1,7 +1,11 @@
 package jr.brian.home.ui.screens
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -22,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -33,12 +38,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
+import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.model.rom.toPinnedRomInfo
 import jr.brian.home.ui.animations.onPressScaleAndOffset
 import jr.brian.home.ui.components.apps.AppOptionsMenu
 import jr.brian.home.ui.components.apps.AppVisibilityDialog
@@ -47,6 +55,9 @@ import jr.brian.home.ui.components.dialog.AppsTabOptionsDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
+import jr.brian.home.ui.components.dialog.RenameAppDialog
+import jr.brian.home.ui.components.dialog.RomCustomIconPickerDialog
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.components.dialog.DrawerOptionsDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
@@ -62,12 +73,18 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
+import jr.brian.home.ui.theme.managers.LocalNotificationManager
+import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.service.AppNotificationListenerService
+import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
 import jr.brian.home.ui.util.rememberDialogState
+import jr.brian.home.ui.util.rememberTopFlingTrigger
+import jr.brian.home.viewmodels.NowPlayingViewModel
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.launchApp
@@ -76,6 +93,8 @@ import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -85,18 +104,26 @@ fun AppsTab(
     isLoading: Boolean = false,
     pageIndex: Int = 0,
     totalPages: Int = 1,
+    dismissShadeSignal: Int = 0,
+    allApps: List<AppInfo> = emptyList(),
     powerViewModel: PowerViewModel = hiltViewModel(),
+    nowPlayingViewModel: NowPlayingViewModel = hiltViewModel(),
+    pageIndicatorBorderColor: Color = ThemePrimaryColor,
     pagerState: PagerState? = null,
     onSettingsClick: () -> Unit = {},
     onShowBottomSheet: () -> Unit = {},
     onDeletePage: (Int) -> Unit = {},
-    pageIndicatorBorderColor: Color = ThemePrimaryColor,
-    allApps: List<AppInfo> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {},
     onShowAppDrawer: () -> Unit = {},
-    onScrollStateChanged: (isScrolling: Boolean, hasScrollableContent: Boolean) -> Unit = { _, _ -> }
+    onScrollStateChanged: (
+        isScrolling: Boolean,
+        hasScrollableContent: Boolean
+    ) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val gridSettingsManager = LocalGridSettingsManager.current
@@ -106,8 +133,11 @@ fun AppsTab(
     val dockManager = LocalDockManager.current
     val tabAnimationManager = LocalTabAnimationManager.current
     val esdePrefsManager = LocalESDEPreferencesManager.current
-    
+    val pinnedRomManager = LocalPinnedRomManager.current
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -115,11 +145,38 @@ fun AppsTab(
     val freeModeByPage by appPositionManager.isFreeModeByPage.collectAsStateWithLifecycle()
     val isFreeModeEnabled = freeModeByPage[pageIndex] ?: false
 
-    val dragLockedByPage by appPositionManager.isDragLockedByPage.collectAsStateWithLifecycle()
+    val dragLockedByPage by appPositionManager.isDragLockedByPage
+        .collectAsStateWithLifecycle()
     val isDragLocked = dragLockedByPage[pageIndex] ?: true
+
+    val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage
+        .collectAsStateWithLifecycle()
+    val isScrollDisabled = scrollDisabledByPage[pageIndex] ?: false
+
+    val bottomFlingDisabledByPage by appPositionManager.isBottomFlingDisabledByPage
+        .collectAsStateWithLifecycle()
+    val isBottomFlingDisabled = !(gridSettingsManager.bottomFlingAppDrawerEnabled) ||
+            (bottomFlingDisabledByPage[pageIndex] ?: false)
 
     LaunchedEffect(pageIndex) {
         appPositionManager.setDragLock(pageIndex, true)
+    }
+
+    val pinnedRoms by pinnedRomManager.getPinnedRoms(pageIndex)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val pendingRomForPin by romSearchViewModel.pendingRomForPin
+        .collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingRomForPin) {
+        val pending = pendingRomForPin ?: return@LaunchedEffect
+        if (pending.first == pageIndex) {
+            romSearchViewModel.clearPendingRomForPin()
+            pinnedRomManager.addPinnedRom(pageIndex, pending.second.toPinnedRomInfo())
+            if (!isFreeModeEnabled) {
+                appPositionManager.setFreeMode(pageIndex, true)
+            }
+        }
     }
 
     BackHandler(enabled = isPoweredOff) {}
@@ -128,6 +185,16 @@ fun AppsTab(
 
     val appOptionsDialogState = rememberDialogState<AppInfo>()
     val customIconDialogState = rememberDialogState<AppInfo>()
+    val renameDialogState = rememberDialogState<AppInfo>()
+    var romForCustomIcon by remember { mutableStateOf<PinnedRomInfo?>(null) }
+    var showRomCustomIconPicker by remember { mutableStateOf(false) }
+    var romPageDisplayPreference by remember(pinnedRoms.firstOrNull()?.key) {
+        mutableStateOf(
+            pinnedRoms.firstOrNull()?.let {
+                appDisplayPreferenceManager.getAppDisplayPreference(it.key)
+            } ?: DisplayPreference.CURRENT_DISPLAY
+        )
+    }
     val folderContentsDialogState = rememberDialogState<Folder>()
     val drawerOptionsDialogState = rememberDialogState<Unit>()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
@@ -151,6 +218,8 @@ fun AppsTab(
     val gridState = rememberLazyGridState()
     var isScrolling by remember { mutableStateOf(false) }
 
+    val appVisibilityManager = LocalAppVisibilityManager.current
+
     val hasScrollableContent by remember {
         derivedStateOf {
             gridState.canScrollForward || gridState.canScrollBackward
@@ -161,6 +230,24 @@ fun AppsTab(
         gridState = gridState,
         onFlingAtBottom = onShowAppDrawer
     )
+
+    var showNotificationShade by remember { mutableStateOf(false) }
+    var showAllNotifications by remember { mutableStateOf(false) }
+
+    LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
+
+    val topFlingTrigger = rememberTopFlingTrigger(
+        gridState = gridState,
+        onFlingAtTop = {
+            if (gridSettingsManager.notificationShadeEnabled) showNotificationShade = true
+        }
+    )
+    val nowPlaying by nowPlayingViewModel.nowPlaying.collectAsStateWithLifecycle()
+    val nowPlayingVolume by nowPlayingViewModel.volume.collectAsStateWithLifecycle()
+    val nowPlayingPosition by nowPlayingViewModel.currentPosition.collectAsStateWithLifecycle()
+    val nowPlayingDuration by nowPlayingViewModel.duration.collectAsStateWithLifecycle()
+    val notificationCountManager = LocalNotificationManager.current
+    val notifications by notificationCountManager.activeNotifications.collectAsStateWithLifecycle()
 
     LaunchedEffect(isScrolling, hasScrollableContent) {
         onScrollStateChanged(isScrolling, hasScrollableContent)
@@ -196,7 +283,7 @@ fun AppsTab(
             val isInDock = dockManager.isAppInDock(appInfo.packageName)
 
             AppOptionsMenu(
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                     appInfo.packageName
                 ),
@@ -243,6 +330,10 @@ fun AppsTab(
                 onCustomIconClick = {
                     customIconDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
+                },
+                onRenameClick = {
+                    renameDialogState.show(appInfo)
+                    appOptionsDialogState.dismiss()
                 }
             )
         }
@@ -252,8 +343,18 @@ fun AppsTab(
         if (customIconDialogState.isVisible) {
             CustomIconDialog(
                 packageName = appInfo.packageName,
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 onDismiss = customIconDialogState::dismiss
+            )
+        }
+    }
+
+    renameDialogState.item?.let { appInfo ->
+        if (renameDialogState.isVisible) {
+            RenameAppDialog(
+                packageName = appInfo.packageName,
+                appLabel = appInfo.label,
+                onDismiss = renameDialogState::dismiss
             )
         }
     }
@@ -264,6 +365,8 @@ fun AppsTab(
         val pageCountManager = LocalPageCountManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+        val pageOrderCoordinator = LocalPageOrderCoordinator.current
+        val coroutineScope = rememberCoroutineScope()
 
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
@@ -280,7 +383,16 @@ fun AppsTab(
                 pageCountManager.addPage()
             },
             pageTypes = pageTypes,
-            onNavigateToSearch = onNavigateToSearch
+            onNavigateToSearch = onNavigateToSearch,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
+            }
         )
     }
 
@@ -304,7 +416,10 @@ fun AppsTab(
             onDockSettingsClick = onNavigateToDockSettings,
             onESDESetupClick = {
                 esdeSetupDialogState.show(SetupStep.Welcome)
-            }
+            },
+            onNavigateToSystemApps = onNavigateToSystemApps,
+            onNavigateToRomSearch = onNavigateToRomSearch,
+            onNavigateToTrackpad = onNavigateToTrackpad
         )
     }
 
@@ -321,13 +436,15 @@ fun AppsTab(
             apps = apps,
             onDismiss = createFolderDialogState::dismiss,
             pageIndex = pageIndex,
-            allApps = allApps
+            allApps = allApps,
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            }
         )
     }
 
     if (appDrawerOptionsDialogState.isVisible) {
-        val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-        
         AppsTabOptionsDialog(
             onDismiss = appDrawerOptionsDialogState::dismiss,
             onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -342,10 +459,36 @@ fun AppsTab(
             onToggleDragLock = { lockOnly ->
                 appPositionManager.setDragLock(pageIndex, lockOnly ?: !isDragLocked)
             },
-            isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-            onToggleMarqueePositionLock = if (isEsdeMode) {
-                { esdePrefsManager.toggleMarqueePositionLocked() }
+            isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+            onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() },
+            onAddRom = {
+                romSearchViewModel.enterSelectMode(pageIndex)
+                onNavigateToRomSearch()
+            },
+            currentRomDisplayPreference = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) romPageDisplayPreference else null,
+            onRomDisplayPreferenceChange = if (hasExternalDisplay && pinnedRoms.isNotEmpty()) { pref ->
+                romPageDisplayPreference = pref
+                pinnedRoms.forEach { appDisplayPreferenceManager.setAppDisplayPreference(it.key, pref) }
             } else null
+        )
+    }
+
+    if (showRomCustomIconPicker) {
+        RomCustomIconPickerDialog(
+            roms = pinnedRoms,
+            onRomSelected = { rom ->
+                romForCustomIcon = rom
+                showRomCustomIconPicker = false
+            },
+            onDismiss = { showRomCustomIconPicker = false }
+        )
+    }
+
+    romForCustomIcon?.let { rom ->
+        CustomIconDialog(
+            packageName = rom.key,
+            appLabel = rom.name,
+            onDismiss = { romForCustomIcon = null }
         )
     }
 
@@ -358,141 +501,211 @@ fun AppsTab(
     }
 
     Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .nestedScroll(bottomFlingTrigger)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .offset(y = offsetY)
-                .scale(pressScale)
-                .then(
-                    if (isTabAnimationEnabled) {
-                        Modifier.pagerFriendlyClickable(
-                            isFreeModeEnabled, isDragLocked,
-                            interactionSource = interactionSource,
-                            isPressedState = isPressedState,
-                            onDoubleTap = { powerViewModel.togglePower() },
-                            onLongPress = {
-                                if (isFreeModeEnabled && !isDragLocked) {
-                                    appDrawerOptionsDialogState.show()
-                                } else {
-                                    drawerOptionsDialogState.show()
-                                }
-                            }
-                        )
-                    } else {
-                        Modifier.pagerFriendlyClickableSimple(
-                            onDoubleTap = { powerViewModel.togglePower() },
-                            onLongPress = {
-                                if (isFreeModeEnabled && !isDragLocked) {
-                                    appDrawerOptionsDialogState.show()
-                                } else {
-                                    drawerOptionsDialogState.show()
-                                }
-                            }
-                        )
-                    }
-                ),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(topFlingTrigger)
     ) {
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            AppsTabContent(
-                apps = apps,
-                columns = gridSettingsManager.columnCount,
-                appFocusRequesters = appFocusRequesters,
-                onAppFocusChanged = { savedAppIndex = it },
-                onAppClick = { app ->
-                    val displayPreference = if (hasExternalDisplay) {
-                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    } else {
-                        DisplayPreference.CURRENT_DISPLAY
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (!isBottomFlingDisabled) {
+                            Modifier.nestedScroll(bottomFlingTrigger)
+                        } else Modifier
+                    )
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .offset(y = offsetY)
+                    .scale(pressScale)
+                    .then(
+                        if (isTabAnimationEnabled) {
+                            Modifier.pagerFriendlyClickable(
+                                isFreeModeEnabled, isDragLocked,
+                                interactionSource = interactionSource,
+                                isPressedState = isPressedState,
+                                onDoubleTap = { powerViewModel.togglePower() },
+                                onLongPress = { drawerOptionsDialogState.show() }
+                            )
+                        } else {
+                            Modifier.pagerFriendlyClickableSimple(
+                                onDoubleTap = { powerViewModel.togglePower() },
+                                onLongPress = { drawerOptionsDialogState.show() }
+                            )
+                        }
+                    ),
+        ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                AppsTabContent(
+                    apps = apps,
+                    columns = gridSettingsManager.columnCount,
+                    appFocusRequesters = appFocusRequesters,
+                    onAppFocusChanged = { savedAppIndex = it },
+                    onAppClick = { app ->
+                        val displayPreference = if (hasExternalDisplay) {
+                            appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                        } else {
+                            DisplayPreference.CURRENT_DISPLAY
+                        }
+                        launchApp(
+                            context = context,
+                            packageName = app.packageName,
+                            displayPreference = displayPreference
+                        )
+                    },
+                    onAppLongClick = { app ->
+                        appOptionsDialogState.show(app)
+                    },
+                    onAppDoubleClick = { app ->
+                        launchAppOnOppositeDisplay(
+                            context = context,
+                            packageName = app.packageName,
+                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                app.packageName
+                            )
+                        )
+                    },
+                    onSettingsClick = onSettingsClick,
+                    powerViewModel = powerViewModel,
+                    totalPages = totalPages,
+                    pagerState = pagerState,
+                    onMenuClick = { appDrawerOptionsDialogState.show() },
+                    onShowBottomSheet = onShowBottomSheet,
+                    isFreeModeEnabled = isFreeModeEnabled,
+                    appPositionManager = appPositionManager,
+                    onDeletePage = onDeletePage,
+                    isDragLocked = isDragLocked,
+                    pageIndex = pageIndex,
+                    pageIndicatorBorderColor = pageIndicatorBorderColor,
+                    allApps = appsUnfiltered,
+                    onNavigateToSearch = onNavigateToSearch,
+                    folders = folders,
+                    onFolderClick = folderContentsDialogState::show,
+                    gridState = gridState,
+                    scrollEnabled = !isScrollDisabled,
+                    pinnedRoms = pinnedRoms,
+                    onRomClick = { rom ->
+                        romSearchViewModel.requestRomLaunch(rom)
+                        val intent = android.content.Intent(
+                            context,
+                            jr.brian.home.esde.ui.RomSearchResultsActivity::class.java
+                        ).apply {
+                            addFlags(
+                                android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            )
+                        }
+                        val displayPreference = if (hasExternalDisplay) {
+                            appDisplayPreferenceManager.getAppDisplayPreference(rom.key)
+                        } else {
+                            DisplayPreference.CURRENT_DISPLAY
+                        }
+                        launchApp(context, rom.key, displayPreference, intent)
+                    },
+                    onRomRemove = { rom ->
+                        pinnedRomManager.removePinnedRom(pageIndex, rom.key)
+                        appPositionManager.removePosition(pageIndex, rom.key)
                     }
-                    launchApp(
-                        context = context,
-                        packageName = app.packageName,
-                        displayPreference = displayPreference
-                    )
-                },
-                onAppLongClick = { app ->
-                    appOptionsDialogState.show(app)
-                },
-                onAppDoubleClick = { app ->
-                    launchAppOnOppositeDisplay(
-                        context = context,
-                        packageName = app.packageName,
-                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    )
-                },
-                onSettingsClick = onSettingsClick,
-                powerViewModel = powerViewModel,
-                totalPages = totalPages,
-                pagerState = pagerState,
-                onMenuClick = { appDrawerOptionsDialogState.show() },
-                onShowBottomSheet = onShowBottomSheet,
-                isFreeModeEnabled = isFreeModeEnabled,
-                appPositionManager = appPositionManager,
-                onDeletePage = onDeletePage,
-                isDragLocked = isDragLocked,
-                pageIndex = pageIndex,
-                pageIndicatorBorderColor = pageIndicatorBorderColor,
-                allApps = appsUnfiltered,
-                onNavigateToSearch = onNavigateToSearch,
-                folders = folders,
-                onFolderClick = folderContentsDialogState::show,
-                gridState = gridState
-            )
+                )
+            }
+
+            val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
+            val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+
+            AnimatedVisibility(
+                visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                AppDock(
+                    apps = appsUnfiltered,
+                    onAppClick = { app ->
+                        val displayPreference = if (hasExternalDisplay) {
+                            appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
+                        } else {
+                            DisplayPreference.CURRENT_DISPLAY
+                        }
+                        launchApp(
+                            context = context,
+                            packageName = app.packageName,
+                            displayPreference = displayPreference
+                        )
+                    },
+                    onAppDoubleClick = { app ->
+                        launchAppOnOppositeDisplay(
+                            context = context,
+                            packageName = app.packageName,
+                            currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(
+                                app.packageName
+                            )
+                        )
+                    },
+                    onAppLongClick = { app ->
+                        appOptionsDialogState.show(app)
+                    },
+                    onEmptySlotClick = { position ->
+                        dockAppSelectionDialogState.show(position)
+                    },
+                    onEmptySlotLongClick = { position ->
+                        dockManager.removeEmptySlot(position)
+                    },
+                    onDockPositioned = onDockPositioned
+                )
+            }
+
         }
 
-        val isDockVisible by dockManager.isDockVisible.collectAsStateWithLifecycle()
-        val isDockVisibleOnPage = dockManager.isDockVisibleOnPage(pageIndex)
+        NotificationShade(
+            visible = showNotificationShade,
+            nowPlaying = nowPlaying,
+            currentPosition = nowPlayingPosition,
+            duration = nowPlayingDuration,
+            volume = nowPlayingVolume,
+            onPlayPause = { nowPlayingViewModel.togglePlayPause() },
+            onPrevious = { nowPlayingViewModel.skipToPrevious() },
+            onNext = { nowPlayingViewModel.skipToNext() },
+            onVolumeChange = { nowPlayingViewModel.setVolume(it) },
+            onSeek = { nowPlayingViewModel.seekTo(it) },
+            onDismiss = { showNotificationShade = false },
+            onSettingsClick = { showNotificationShade = false; onSettingsClick() },
+            notifications = notifications,
+            onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+            onClearAllNotifications = { AppNotificationListenerService.cancelAll() },
+            onSeeAllNotifications = { showNotificationShade = false; showAllNotifications = true },
+            initialTabPage = notificationCountManager.shadeTabPage,
+            onTabPageChange = { notificationCountManager.saveShadeTabPage(it) },
+            backgroundColorArgb = gridSettingsManager.shadeBackgroundColorArgb,
+            onBackgroundColorChange = { gridSettingsManager.setShadeBackgroundColorArgb(it) },
+            cornerRadiusDp = gridSettingsManager.shadeCornerRadiusDp,
+            onCornerRadiusChange = { gridSettingsManager.setShadeCornerRadiusDp(it) },
+            backgroundAlpha = gridSettingsManager.shadeBackgroundAlpha,
+            onBackgroundAlphaChange = { gridSettingsManager.setShadeBackgroundAlpha(it) },
+            accentColorArgb = gridSettingsManager.shadeAccentColorArgb,
+            onAccentColorChange = { gridSettingsManager.setShadeAccentColorArgb(it) }
+        )
 
         AnimatedVisibility(
-            visible = isDockVisible && isDockVisibleOnPage && !isScrolling,
-            enter = slideInVertically(initialOffsetY = { it }),
-            exit = slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier.align(Alignment.BottomCenter)
+            visible = showAllNotifications,
+            enter = slideInVertically(tween(300)) { it }
+                    + fadeIn(tween(300)),
+            exit = slideOutVertically(tween(250)) { it }
+                    + fadeOut(tween(200))
         ) {
-            AppDock(
-                apps = appsUnfiltered,
-                onAppClick = { app ->
-                    val displayPreference = if (hasExternalDisplay) {
-                        appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    } else {
-                        DisplayPreference.CURRENT_DISPLAY
-                    }
-                    launchApp(
-                        context = context,
-                        packageName = app.packageName,
-                        displayPreference = displayPreference
-                    )
-                },
-                onAppDoubleClick = { app ->
-                    launchAppOnOppositeDisplay(
-                        context = context,
-                        packageName = app.packageName,
-                        currentPreference = appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    )
-                },
-                onAppLongClick = { app ->
-                    appOptionsDialogState.show(app)
-                },
-                onEmptySlotClick = { position ->
-                    dockAppSelectionDialogState.show(position)
-                },
-                onEmptySlotLongClick = { position ->
-                    dockManager.removeEmptySlot(position)
-                },
-                onDockPositioned = onDockPositioned
+            AllNotificationsScreen(
+                notifications = notifications,
+                onDismissNotification = { key -> AppNotificationListenerService.cancel(key) },
+                onClearAll = { AppNotificationListenerService.cancelAll() },
+                onDismiss = { showAllNotifications = false }
             )
         }
-
-        }
+    }
 
     dockAppSelectionDialogState.item?.let { position ->
         if (dockAppSelectionDialogState.isVisible) {
@@ -520,6 +733,8 @@ fun AppsTab(
                 folderId = folder.id,
                 pageIndex = pageIndex,
                 allApps = appsUnfiltered,
+                backgroundColorArgb = folder.backgroundColorArgb,
+                backgroundImagePath = folder.backgroundImagePath,
                 onDismiss = folderContentsDialogState::dismiss
             )
         }

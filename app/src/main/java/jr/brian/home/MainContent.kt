@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,12 +25,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.ui.VideoPlayerActivity
-import jr.brian.home.esde.viewmodel.ESDEViewModel
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
@@ -45,16 +50,28 @@ import jr.brian.home.ui.navigation.controlPadScreen
 import jr.brian.home.ui.navigation.crashLogsScreen
 import jr.brian.home.ui.navigation.customThemeScreen
 import jr.brian.home.ui.navigation.esdeSettingsScreen
+import jr.brian.home.ui.navigation.esdeSystemAppsScreen
 import jr.brian.home.ui.navigation.faqScreen
+import jr.brian.home.ui.navigation.addJingleScreen
+import jr.brian.home.ui.navigation.jinglesScreen
+import jr.brian.home.ui.navigation.rssSettingsScreen
+import jr.brian.home.ui.navigation.transitionAnimationScreen
+import jr.brian.home.ui.navigation.trackpadScreen
+import jr.brian.home.ui.navigation.romSearchScreen
+import jr.brian.home.ui.navigation.konfettiEditorScreen
 import jr.brian.home.ui.navigation.launcherScreen
 import jr.brian.home.ui.navigation.marqueePressShortcutScreen
 import jr.brian.home.ui.navigation.monitorScreen
 import jr.brian.home.ui.navigation.recentAppsScreen
+import jr.brian.home.ui.navigation.themeShareScreen
 import jr.brian.home.ui.navigation.settingsScreen
 import jr.brian.home.ui.navigation.volumeControlsScreen
 import jr.brian.home.ui.navigation.widgetPickerScreen
+import jr.brian.home.ui.screens.AppsModalContent
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
+import jr.brian.home.ui.theme.managers.LocalBgMusicManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.LocalWhatsNewManager
 import jr.brian.home.ui.util.rememberDialogState
@@ -69,12 +86,15 @@ import jr.brian.home.viewmodels.WidgetViewModel
 import androidx.compose.ui.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
-@androidx.media3.common.util.UnstableApi
+@UnstableApi
 @Composable
 fun MainContent(
+    romSearchStateHolder: RomSearchStateHolder,
     hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
+    navigateToThemeShare: Boolean = false,
+    onNavigateToThemeShareHandled: () -> Unit = {},
     onAnyOverlayVisibleChanged: (Boolean) -> Unit = {},
     onCurrentPageChanged: (Int) -> Unit = {},
     onPagerScrollProgressChanged: (Float) -> Unit = {},
@@ -90,13 +110,18 @@ fun MainContent(
     val wallpaperManager = LocalWallpaperManager.current
     val whatsNewManager = LocalWhatsNewManager.current
     val appUpdateManager = LocalAppUpdateManager.current
+    val bgMusicManager = LocalBgMusicManager.current
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val appVisibilityManager = LocalAppVisibilityManager.current
+    val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
+    val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
+    val wallpaperState by esdeViewModel.wallpaperState
     val shouldShowWhatsNew by whatsNewManager.shouldShowWhatsNew.collectAsStateWithLifecycle()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
-    var currentPagerPage by remember { mutableStateOf(0) }
+    var currentPagerPage by remember { mutableIntStateOf(0) }
     var isAnyLauncherSheetVisible by remember { mutableStateOf(false) }
 
     val isNotOnLauncher = currentRoute != null && currentRoute != Routes.LAUNCHER
@@ -122,8 +147,12 @@ fun MainContent(
     LaunchedEffect(isAnyOverlayVisible) {
         onAnyOverlayVisibleChanged(isAnyOverlayVisible)
         if (isAnyOverlayVisible) {
-            VideoPlayerActivity.finishIfRunning()
+            VideoPresentationManager.dismiss()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        bgMusicManager.resumeIfConfigured()
     }
 
     LaunchedEffect(Unit) {
@@ -157,12 +186,27 @@ fun MainContent(
         }
     }
 
+    LaunchedEffect(navigateToThemeShare) {
+        if (navigateToThemeShare) {
+            navController.navigate(Routes.THEME_SHARE)
+            onNavigateToThemeShareHandled()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showSearchKeyboardSignal.collect {
+            romSearchStateHolder.openedFromFrontend.value = true
+            navController.navigate(Routes.ROM_SEARCH)
+        }
+    }
+
     LaunchedEffect(triggerMarqueePressShortcut) {
         if (triggerMarqueePressShortcut) {
             when (esdePrefsState.marqueePressShortcut) {
                 Shortcut.NONE -> navController.navigate(Routes.ESDE_SETTINGS)
                 Shortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
                 Shortcut.APP_SEARCH -> navController.navigate(Routes.APP_SEARCH)
+                Shortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
                 Shortcut.POWERED_OFF -> powerViewModel.togglePower()
                 Shortcut.QUICK_DELETE -> {}
                 Shortcut.CUSTOM_THEME -> navController.navigate(Routes.CUSTOM_THEME)
@@ -278,9 +322,10 @@ fun MainContent(
 
                 recentAppsScreen(navController = navController)
 
+                themeShareScreen(navController = navController)
+
                 settingsScreen(
                     navController = navController,
-                    context = context,
                     mainViewModel = mainViewModel
                 )
 
@@ -298,6 +343,39 @@ fun MainContent(
                 marqueePressShortcutScreen(
                     navController = navController,
                     mainViewModel = mainViewModel
+                )
+
+                esdeSystemAppsScreen(
+                    navController = navController,
+                    mainViewModel = mainViewModel
+                )
+
+                konfettiEditorScreen(
+                    navController = navController
+                )
+
+                jinglesScreen(
+                    navController = navController
+                )
+
+                addJingleScreen(
+                    navController = navController
+                )
+
+                romSearchScreen(
+                    navController = navController
+                )
+
+                trackpadScreen(
+                    navController = navController
+                )
+
+                rssSettingsScreen(
+                    navController = navController
+                )
+
+                transitionAnimationScreen(
+                    navController = navController
                 )
             }
         }
@@ -360,6 +438,40 @@ fun MainContent(
                     notificationAccessDialogState.dismiss()
                 }
             )
+        }
+        val shouldShowFloatyScreensaver = wallpaperState.isScreensaverActive &&
+                esdePrefsState.screensaverBehavior == ScreensaverBehavior.Floaty
+        if (shouldShowFloatyScreensaver) {
+            val hiddenApps = hiddenAppsByPage[currentPagerPage] ?: emptySet()
+            val visibleApps = remember(uiState.allApps, hiddenApps) {
+                uiState.allApps.filter { app -> app.packageName !in hiddenApps }
+            }
+            val limitedApps = remember(visibleApps, esdePrefsState.screensaverFloatyAppCount) {
+                val maxApps = esdePrefsState.screensaverFloatyAppCount
+                if (maxApps == 0) visibleApps else visibleApps.take(maxApps)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(GraphicsColor.Black)
+            ) {
+                AppsModalContent(
+                    modifier = Modifier.fillMaxSize(),
+                    apps = limitedApps,
+                    appsUnfiltered = uiState.allAppsUnfiltered,
+                    isLoading = uiState.isLoading,
+                    allApps = uiState.allAppsUnfiltered,
+                    pageIndex = currentPagerPage,
+                    isHeaderVisible = false,
+                    forceFloatyMode = true,
+                    onAppOpened = {}
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(GraphicsColor.Black.copy(alpha = 0.3f))
+                )
+            }
         }
     }
 }

@@ -1,18 +1,23 @@
 package jr.brian.home.data
 
 import android.content.Context
+import android.net.Uri
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.model.app.AppPosition
 import jr.brian.home.model.app.Folder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +28,12 @@ class FolderManager @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     private val json = Json { ignoreUnknownKeys = true }
+
+    private val folderBackgroundsDir: File by lazy {
+        File(context.filesDir, "folder_backgrounds").apply {
+            if (!exists()) mkdirs()
+        }
+    }
 
     private fun getStorageKey(
         pageIndex: Int,
@@ -148,8 +159,72 @@ class FolderManager @Inject constructor(
             } catch (_: Exception) {
                 emptyList()
             }
+            existingFolders.firstOrNull { it.id == folderId }
+                ?.backgroundImagePath
+                ?.let { path -> deleteBackgroundFileIfManaged(path) }
             val updatedFolders = existingFolders.filter { it.id != folderId }
             preferences[key] = json.encodeToString(updatedFolders)
+        }
+    }
+
+    suspend fun updateFolderBackground(
+        pageIndex: Int,
+        folderId: String,
+        backgroundColorArgb: Int?,
+        backgroundImagePath: String?,
+        tabType: String = TAB_TYPE_APPS
+    ) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
+        context.folderDataStore.edit { preferences ->
+            val existingFoldersJson = preferences[key] ?: "[]"
+            val existingFolders: List<FolderData> = try {
+                json.decodeFromString(existingFoldersJson)
+            } catch (_: Exception) {
+                emptyList()
+            }
+            existingFolders.firstOrNull { it.id == folderId }
+                ?.backgroundImagePath
+                ?.takeIf { it != backgroundImagePath }
+                ?.let { previousPath -> deleteBackgroundFileIfManaged(previousPath) }
+            val updatedFolders = existingFolders.map { folderData ->
+                if (folderData.id == folderId) {
+                    folderData.copy(
+                        backgroundColorArgb = backgroundColorArgb,
+                        backgroundImagePath = backgroundImagePath
+                    )
+                } else {
+                    folderData
+                }
+            }
+            preferences[key] = json.encodeToString(updatedFolders)
+        }
+    }
+
+    suspend fun saveFolderBackgroundImage(
+        folderId: String,
+        sourceUri: Uri
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val mimeType = context.contentResolver.getType(sourceUri)
+            val extension = if (mimeType == "image/gif") "gif" else "png"
+            val fileName = "${folderId}_${System.currentTimeMillis()}.$extension"
+            val target = File(folderBackgroundsDir, fileName)
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                FileOutputStream(target).use { output -> input.copyTo(output) }
+            } ?: return@withContext Result.failure(Exception("Unable to open image"))
+            Result.success(target.absolutePath)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun deleteBackgroundFileIfManaged(path: String) {
+        try {
+            val file = File(path)
+            if (file.exists() && file.parentFile?.absolutePath == folderBackgroundsDir.absolutePath) {
+                file.delete()
+            }
+        } catch (_: Exception) {
         }
     }
 
@@ -217,6 +292,68 @@ class FolderManager @Inject constructor(
         }
     }
 
+    suspend fun setAllFolders(
+        pageIndex: Int,
+        tabType: String,
+        folders: List<Folder>
+    ) {
+        val key = stringPreferencesKey(getStorageKey(pageIndex, tabType))
+        context.folderDataStore.edit { preferences ->
+            preferences[key] = json.encodeToString(folders.map { it.toData() })
+        }
+    }
+
+    suspend fun reorderPages(
+        oldIndicesInNewOrder: Map<Int, Int>,
+        tabType: String = TAB_TYPE_APPS
+    ) {
+        context.folderDataStore.edit { preferences ->
+            val oldEntries = mutableMapOf<Int, String>()
+            preferences.asMap().forEach { (prefKey, value) ->
+                val pageIndex = extractPageIndex(prefKey.name, tabType) ?: return@forEach
+                (value as? String)?.let { oldEntries[pageIndex] = it }
+            }
+            oldEntries.keys.forEach { idx ->
+                preferences.remove(stringPreferencesKey(getStorageKey(idx, tabType)))
+            }
+            oldIndicesInNewOrder.forEach { (newIndex, oldIndex) ->
+                oldEntries[oldIndex]?.let { value ->
+                    preferences[stringPreferencesKey(getStorageKey(newIndex, tabType))] = value
+                }
+            }
+        }
+    }
+
+    suspend fun removePage(
+        pageIndex: Int,
+        tabType: String = TAB_TYPE_APPS
+    ) {
+        context.folderDataStore.edit { preferences ->
+            val oldEntries = mutableMapOf<Int, String>()
+            preferences.asMap().forEach { (prefKey, value) ->
+                val idx = extractPageIndex(prefKey.name, tabType) ?: return@forEach
+                (value as? String)?.let { oldEntries[idx] = it }
+            }
+            oldEntries.keys.forEach { idx ->
+                preferences.remove(stringPreferencesKey(getStorageKey(idx, tabType)))
+            }
+            oldEntries.forEach { (idx, value) ->
+                val newIdx = when {
+                    idx < pageIndex -> idx
+                    idx > pageIndex -> idx - 1
+                    else -> return@forEach
+                }
+                preferences[stringPreferencesKey(getStorageKey(newIdx, tabType))] = value
+            }
+        }
+    }
+
+    private fun extractPageIndex(keyName: String, tabType: String): Int? {
+        val prefix = if (tabType == TAB_TYPE_APPS) "folders_page_" else "folders_${tabType}_page_"
+        if (!keyName.startsWith(prefix)) return null
+        return keyName.removePrefix(prefix).toIntOrNull()
+    }
+
     @Serializable
     private data class FolderData(
         val id: String,
@@ -224,7 +361,9 @@ class FolderManager @Inject constructor(
         val appPackageNames: List<String>,
         val x: Float,
         val y: Float,
-        val iconSize: Float
+        val iconSize: Float,
+        val backgroundColorArgb: Int? = null,
+        val backgroundImagePath: String? = null
     )
 
     private fun Folder.toData() = FolderData(
@@ -233,7 +372,9 @@ class FolderManager @Inject constructor(
         appPackageNames = appPackageNames,
         x = position.x,
         y = position.y,
-        iconSize = position.iconSize
+        iconSize = position.iconSize,
+        backgroundColorArgb = backgroundColorArgb,
+        backgroundImagePath = backgroundImagePath
     )
 
     private fun FolderData.toFolder() = Folder(
@@ -245,7 +386,9 @@ class FolderManager @Inject constructor(
             x = x,
             y = y,
             iconSize = iconSize
-        )
+        ),
+        backgroundColorArgb = backgroundColorArgb,
+        backgroundImagePath = backgroundImagePath
     )
 
     companion object {

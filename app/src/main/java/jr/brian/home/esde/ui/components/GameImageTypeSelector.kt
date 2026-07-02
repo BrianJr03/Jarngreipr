@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.GameImageType
+import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -106,6 +106,8 @@ private fun GameImageTypeChip(
         GameImageType.Fanart -> stringResource(R.string.esde_settings_game_image_fanart)
         GameImageType.TitleScreens -> stringResource(R.string.esde_settings_game_image_titlescreens)
         GameImageType.Covers -> stringResource(R.string.esde_settings_game_image_covers)
+        GameImageType.PhysicalMedia -> stringResource(R.string.esde_settings_game_image_physicalmedia)
+        GameImageType.Marquee -> stringResource(R.string.esde_settings_game_image_marquee)
         GameImageType.MixImages -> stringResource(R.string.esde_settings_game_image_miximages)
         GameImageType.Description -> stringResource(R.string.esde_settings_game_image_description)
     }

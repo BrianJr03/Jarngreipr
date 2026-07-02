@@ -10,10 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,26 +33,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedDialog
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.components.dialog.DimmedBottomSheet
 import jr.brian.home.ui.theme.StatusOrange
 import jr.brian.home.ui.theme.StatusYellow
 import jr.brian.home.ui.theme.ThemePrimaryColor
-import jr.brian.home.ui.theme.ThemeSecondaryColor
 
 @Composable
 fun ButtonMappingDialog(
@@ -61,29 +55,14 @@ fun ButtonMappingDialog(
     onButtonSelected: (PhysicalButton) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -114,7 +93,9 @@ fun ButtonMappingDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 480.dp),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -126,7 +107,6 @@ fun ButtonMappingDialog(
                         )
                     }
                 }
-            }
         }
     }
 }
@@ -155,22 +135,7 @@ private fun ButtonMappingOption(
             )
             .border(
                 width = if (isFocused || isSelected) 3.dp else 2.dp,
-                brush = if (isFocused || isSelected) {
-                    borderBrush(
-                        isFocused = true,
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.8f),
-                            ThemeSecondaryColor.copy(alpha = 0.6f)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            ThemePrimaryColor.copy(alpha = 0.6f),
-                            ThemeSecondaryColor.copy(alpha = 0.4f)
-                        )
-                    )
-                },
+                brush = borderBrush(isFocused = isFocused || isSelected),
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
@@ -193,29 +158,14 @@ private fun ButtonMappingOption(
 fun GamePadHelpDialog(
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.85f)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -248,7 +198,7 @@ fun GamePadHelpDialog(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .heightIn(max = 520.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Shizuku Section
@@ -344,7 +294,6 @@ fun GamePadHelpDialog(
                         }
                     }
                 }
-            }
         }
     }
 }

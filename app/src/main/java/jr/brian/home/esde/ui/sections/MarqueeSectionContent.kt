@@ -14,11 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.ESDEPrefsState
-import jr.brian.home.esde.preferences.LogoAlignment
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.LogoAlignment
+import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.ui.components.LogoAlignmentSelector
 import jr.brian.home.esde.ui.components.MarqueeSizeSetting
 import jr.brian.home.esde.ui.components.MarqueeTabSettingsOption
+import jr.brian.home.esde.ui.components.OverlayMediaTypeSelector
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.model.PageType
@@ -37,9 +39,22 @@ fun MarqueeSectionContent(
     onToggleDescriptionOverlayPage: (Int) -> Unit,
     onShowMarqueeForSystemChange: (Boolean) -> Unit,
     onShowMarqueeForGameChange: (Boolean) -> Unit,
-    onMarqueeMinWidthPercentChange: (Float) -> Unit
+    onMarqueeMinWidthPercentChange: (Float) -> Unit,
+    onOverlayMediaTypeChange: (OverlayMediaType) -> Unit,
+    onMarqueeOnlyModeChange: (Boolean) -> Unit = {},
+    onLogoVisibilityAnimationChange: (Boolean) -> Unit = {},
+    onLogoChangeAnimationChange: (Boolean) -> Unit = {}
 ) {
     val pageCount = pageTypes.size
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_marquee_only_mode),
+        description = stringResource(R.string.esde_settings_marquee_only_mode_description),
+        checked = prefsState.logoOnlyMode,
+        onCheckedChange = { enabled ->
+            onMarqueeOnlyModeChange(enabled)
+        }
+    )
 
     LogoAlignmentSelector(
         selectedAlignment = prefsState.logoAlignment,
@@ -48,14 +63,21 @@ fun MarqueeSectionContent(
         }
     )
 
+    OverlayMediaTypeSelector(
+        selectedType = prefsState.overlayMediaType,
+        onTypeSelected = { type ->
+            onOverlayMediaTypeChange(type)
+        }
+    )
+
     MarqueeSizeSetting(
-        title = stringResource(R.string.esde_settings_logo_size),
-        description = stringResource(R.string.esde_settings_logo_size_description),
+        title = stringResource(R.string.esde_settings_marquee_size),
+        description = stringResource(R.string.esde_settings_marquee_size_description),
         width = prefsState.marqueeWidth,
         height = prefsState.marqueeHeight,
-        widthLabel = stringResource(R.string.esde_settings_logo_width),
-        heightLabel = stringResource(R.string.esde_settings_logo_height),
-        resetLabel = stringResource(R.string.esde_settings_logo_size_reset),
+        widthLabel = stringResource(R.string.esde_settings_marquee_width),
+        heightLabel = stringResource(R.string.esde_settings_marquee_height),
+        resetLabel = stringResource(R.string.esde_settings_marquee_size_reset),
         onWidthChange = onMarqueeWidthChange,
         onHeightChange = onMarqueeHeightChange,
         onReset = onMarqueeSizeReset
@@ -77,6 +99,7 @@ fun MarqueeSectionContent(
         Shortcut.NONE -> stringResource(R.string.shortcut_none)
         Shortcut.SETTINGS -> stringResource(R.string.shortcut_settings)
         Shortcut.APP_SEARCH -> stringResource(R.string.shortcut_app_search)
+        Shortcut.ROM_SEARCH -> stringResource(R.string.rom_search_icon_description)
         Shortcut.POWERED_OFF -> stringResource(R.string.shortcut_powered_off)
         Shortcut.QUICK_DELETE -> stringResource(R.string.shortcut_quick_delete)
         Shortcut.CUSTOM_THEME -> stringResource(R.string.shortcut_custom_theme)
@@ -111,6 +134,20 @@ fun MarqueeSectionContent(
         description = stringResource(R.string.esde_settings_marquee_show_for_game_description),
         checked = prefsState.showMarqueeForGame,
         onCheckedChange = { show -> onShowMarqueeForGameChange(show) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_visibility_animation),
+        description = stringResource(R.string.esde_settings_logo_visibility_animation_description),
+        checked = prefsState.logoVisibilityAnimation,
+        onCheckedChange = { enabled -> onLogoVisibilityAnimationChange(enabled) }
+    )
+
+    ToggleSetting(
+        title = stringResource(R.string.esde_settings_logo_change_animation),
+        description = stringResource(R.string.esde_settings_logo_change_animation_description),
+        checked = prefsState.logoChangeAnimation,
+        onCheckedChange = { enabled -> onLogoChangeAnimationChange(enabled) }
     )
 
     if (pageCount > 1) {

@@ -1,8 +1,11 @@
 package jr.brian.home.data
 
+import androidx.media3.common.util.UnstableApi
 import coil.ImageLoader
 import jr.brian.home.di.ESDEImageLoader
-import jr.brian.home.esde.preferences.ESDEPreferencesManager
+import jr.brian.home.esde.data.ESDEEventManager
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.ui.video.VideoPresentationManager
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,11 +17,19 @@ import javax.inject.Singleton
  * - Gamepad/controller support
  * - ES-DE integration settings
  */
+@UnstableApi
 @Singleton
 data class FeatureManagers @Inject constructor(
     val dockManager: DockManager,
     val controlPadManager: ControlPadManager,
     val appDrawerFabManager: AppDrawerFabManager,
     val esdePreferencesManager: ESDEPreferencesManager,
-    @param:ESDEImageLoader val esdeImageLoader: ImageLoader
+    val esdeEventManager: ESDEEventManager,
+    val videoPresentationManager: VideoPresentationManager,
+    val gameKonfettiManager: GameKonfettiManager,
+    val floatyModeManager: FloatyModeManager,
+    val jinglesManager: JinglesManager,
+    val bgMusicManager: BgMusicManager,
+    @param:ESDEImageLoader val esdeImageLoader: ImageLoader,
+    val pinnedRomManager: PinnedRomManager
 )

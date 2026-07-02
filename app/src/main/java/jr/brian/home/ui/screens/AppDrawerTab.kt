@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -49,8 +50,9 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.LocalESDEPreferencesManager
-import jr.brian.home.esde.setup.SetupStep
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.ui.components.SyncLogoPositionLock
+import jr.brian.home.esde.model.SetupStep
 import jr.brian.home.esde.ui.ESDESetupScreen
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.components.apps.AppOptionsMenu
@@ -65,15 +67,16 @@ import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
-import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.util.launchApp
@@ -107,6 +110,9 @@ fun AppDrawerTab(
     onDeletePage: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToDockSettings: () -> Unit = {},
+    onNavigateToSystemApps: () -> Unit = {},
+    onNavigateToRomSearch: () -> Unit = {},
+    onNavigateToTrackpad: () -> Unit = {},
     onDockPositioned: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -187,6 +193,7 @@ fun AppDrawerTab(
 
     val esdePrefsManager = LocalESDEPreferencesManager.current
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val drawerOpacity = esdePrefsState.appDrawerOpacityFloat
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -359,7 +366,10 @@ fun AppDrawerTab(
                 onDockSettingsClick = onNavigateToDockSettings,
                 onESDESetupClick = {
                     esdeSetupDialogState.show(SetupStep.Welcome)
-                }
+                },
+                onNavigateToSystemApps = onNavigateToSystemApps,
+                onNavigateToRomSearch = onNavigateToRomSearch,
+                onNavigateToTrackpad = onNavigateToTrackpad
             )
         }
 
@@ -372,8 +382,6 @@ fun AppDrawerTab(
         )
 
         if (appDrawerOptionsDialogState.isVisible) {
-            val isEsdeMode = wallpaperManager.getWallpaperType() == WallpaperType.ESDE
-
             AppsTabOptionsDialog(
                 onDismiss = appDrawerOptionsDialogState::dismiss,
                 onShowAppVisibility = { appVisibilityDialogState.show() },
@@ -381,10 +389,8 @@ fun AppDrawerTab(
                 isDragLocked = true,
                 onToggleDragLock = { },
                 title = stringResource(R.string.app_drawer_tab_options_title),
-                isMarqueePositionLocked = esdePrefsState.marqueePositionLocked,
-                onToggleMarqueePositionLock = if (isEsdeMode) {
-                    { esdePrefsManager.toggleMarqueePositionLocked() }
-                } else null
+                isLogoPositionLocked = esdePrefsState.marqueePositionLocked,
+                onToggleMarqueePositionLock = { esdePrefsManager.toggleLogoPositionLocked() }
             )
         }
 
@@ -401,7 +407,9 @@ fun AppDrawerTab(
             val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
             val pageCountManager = LocalPageCountManager.current
             val pageTypeManager = LocalPageTypeManager.current
+            val pageOrderCoordinator = LocalPageOrderCoordinator.current
             val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+            val coroutineScope = rememberCoroutineScope()
 
             HomeTabSelectionDialog(
                 currentTabIndex = currentHomeTabIndex,
@@ -418,7 +426,16 @@ fun AppDrawerTab(
                     pageCountManager.addPage()
                 },
                 pageTypes = pageTypes,
-                onNavigateToSearch = onNavigateToSearch
+                onNavigateToSearch = onNavigateToSearch,
+                onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                    coroutineScope.launch {
+                        pageOrderCoordinator.reorder(
+                            newOrder = newOrder,
+                            oldIndicesInNewOrder = oldIndicesInNewOrder,
+                            newCurrentTabIndex = newCurrentTabIndex
+                        )
+                    }
+                }
             )
         }
 
@@ -446,7 +463,7 @@ fun AppDrawerTab(
     dockAppOptionsDialogState.item?.let { appInfo ->
         if (dockAppOptionsDialogState.isVisible) {
             AppOptionsMenu(
-                appLabel = appInfo.label,
+                appLabel = appInfo.displayName(),
                 currentDisplayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
                     appInfo.packageName
                 ),

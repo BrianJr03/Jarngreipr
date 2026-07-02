@@ -7,12 +7,15 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.AppPositionManager
 import jr.brian.home.data.AppVisibilityManager
 import jr.brian.home.data.ControlPadManager
 import jr.brian.home.data.CustomIconManager
 import jr.brian.home.data.DockManager
+import jr.brian.home.data.FloatyModeManager
+import jr.brian.home.data.GameKonfettiManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
 import jr.brian.home.data.HomeTabManager
@@ -21,13 +24,16 @@ import jr.brian.home.data.OnboardingManager
 import jr.brian.home.data.PageCountManager
 import jr.brian.home.data.PageTypeManager
 import jr.brian.home.data.PowerSettingsManager
+import jr.brian.home.data.CustomAppNameManager
 import jr.brian.home.data.SearchLayoutManager
 import jr.brian.home.data.WidgetPageAppManager
 import jr.brian.home.data.WidgetPreferences
 import jr.brian.home.data.WidgetProviderRepository
 import jr.brian.home.data.WhatsNewManager
+import jr.brian.home.data.RssRepository
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
+import jr.brian.home.data.database.RssFeedDao
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Singleton
 
@@ -149,6 +155,22 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideGameKonfettiManager(
+        @ApplicationContext context: Context
+    ): GameKonfettiManager {
+        return GameKonfettiManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFloatyModeManager(
+        @ApplicationContext context: Context
+    ): FloatyModeManager {
+        return FloatyModeManager(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideAppDatabase(
         @ApplicationContext context: Context
     ): AppDatabase {
@@ -156,13 +178,33 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "jarngreipr_database"
-        ).build()
+        )
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideCustomIconDao(database: AppDatabase): CustomIconDao {
         return database.customIconDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRssFeedDao(database: AppDatabase): RssFeedDao {
+        return database.rssFeedDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRssRepository(rssFeedDao: RssFeedDao): RssRepository {
+        return RssRepository(rssFeedDao)
     }
 
     @Provides
@@ -212,5 +254,21 @@ object AppModule {
         @ApplicationContext context: Context
     ): SearchLayoutManager {
         return SearchLayoutManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomAppNameManager(
+        @ApplicationContext context: Context
+    ): CustomAppNameManager {
+        return CustomAppNameManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCanvasLayoutManager(
+        @ApplicationContext context: Context
+    ): CanvasLayoutManager {
+        return CanvasLayoutManager(context)
     }
 }

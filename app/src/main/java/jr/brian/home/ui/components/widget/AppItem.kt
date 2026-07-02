@@ -1,24 +1,16 @@
 package jr.brian.home.ui.components.widget
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -26,13 +18,14 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
-import jr.brian.home.ui.animations.onPressScaleAndOffset
-import jr.brian.home.ui.extensions.pressWithHaptic
+import jr.brian.home.ui.extensions.combinedClickWithHaptic
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.apps.NotificationBadge
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
+import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.settings.AppName
+import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
@@ -44,7 +37,6 @@ import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppItem(
     app: AppInfo,
@@ -59,23 +51,17 @@ fun AppItem(
     val scope = rememberCoroutineScope()
     val optionsDialogState = rememberDialogState<Unit>()
     val customIconDialogState = rememberDialogState<Unit>()
+    val renameDialogState = rememberDialogState<Unit>()
 
     val hasExternalDisplay = rememberHasExternalDisplay()
     
-    var isPressed by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val (pressScale, pressOffsetY) = onPressScaleAndOffset(isPressed)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .offset(y = pressOffsetY)
-            .scale(pressScale)
-            .pressWithHaptic(
+            .combinedClickWithHaptic(
                 haptic = haptic,
-                onPressChange = { isPressed = it }
-            )
-            .combinedClickable(
                 onClick = {
                     val displayPreference = if (hasExternalDisplay) {
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
@@ -118,7 +104,7 @@ fun AppItem(
 
         Spacer(Modifier.height(4.dp))
 
-        if (appVisibilityManager.showAppNames) {
+        if (appVisibilityManager.showHomeScreenAppNames) {
             app.AppName()
         }
     }
@@ -150,6 +136,10 @@ fun AppItem(
             onCustomIconClick = {
                 customIconDialogState.show()
                 optionsDialogState.dismiss()
+            },
+            onRenameClick = {
+                renameDialogState.show()
+                optionsDialogState.dismiss()
             }
         )
     }
@@ -157,9 +147,17 @@ fun AppItem(
     if (customIconDialogState.isVisible) {
         CustomIconDialog(
             packageName = app.packageName,
-            appLabel = app.label,
+            appLabel = app.displayName(),
             onDismiss = customIconDialogState::dismiss,
             onIconChanged = {  }
+        )
+    }
+
+    if (renameDialogState.isVisible) {
+        RenameAppDialog(
+            packageName = app.packageName,
+            appLabel = app.label,
+            onDismiss = renameDialogState::dismiss
         )
     }
 }

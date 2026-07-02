@@ -3,8 +3,8 @@ package jr.brian.home.esde.ui.sections
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.R
-import jr.brian.home.esde.preferences.ESDEPrefsState
-import jr.brian.home.esde.preferences.MusicVideoBehavior
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.ui.components.MusicVideoBehaviorSelector
 import jr.brian.home.esde.ui.components.PathSetting
 import jr.brian.home.esde.ui.components.SliderSetting
@@ -22,7 +22,8 @@ fun MusicSectionContent(
     onMusicSystemEnabledChange: (Boolean) -> Unit,
     onMusicVideoBehaviorChange: (MusicVideoBehavior) -> Unit,
     onMusicUseSystemSpecificChange: (Boolean) -> Unit,
-    onMusicLoopEnabledChange: (Boolean) -> Unit
+    onMusicLoopEnabledChange: (Boolean) -> Unit,
+    onMusicIgnoreAudioFocusChange: (Boolean) -> Unit
 ) {
     ToggleSetting(
         title = stringResource(R.string.esde_settings_music_enabled),
@@ -34,6 +35,15 @@ fun MusicSectionContent(
     )
 
     if (prefsState.musicEnabled) {
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_music_ignore_audio_focus),
+            description = stringResource(R.string.esde_settings_music_ignore_audio_focus_description),
+            checked = prefsState.musicIgnoreAudioFocus,
+            onCheckedChange = { ignore ->
+                onMusicIgnoreAudioFocusChange(ignore)
+            }
+        )
+
         SliderSetting(
             title = stringResource(R.string.esde_settings_music_volume),
             value = prefsState.musicVolume.toFloat(),

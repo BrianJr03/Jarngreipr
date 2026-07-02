@@ -1,0 +1,252 @@
+package jr.brian.home.data.config
+
+import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.esde.model.SystemCustomization
+import jr.brian.home.model.rom.PinnedRomInfo
+import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class JarngreiprConfig(
+    val version: Int = CONFIG_VERSION,
+    val exportedAt: String = "",
+    val ui: UiConfig = UiConfig(),
+    val app: AppConfig = AppConfig(),
+    val page: PageConfig = PageConfig(),
+    val feature: FeatureConfig = FeatureConfig(),
+    val system: SystemConfig = SystemConfig()
+) {
+    companion object {
+        // v2: added page.canvasLayouts for Unified Canvas pages.
+        // v3: CanvasLayout split into shared content + per-orientation
+        //     arrangements; v2 blobs decode with empty arrangements and are
+        //     auto-repaired by CanvasLayoutManager.repair on apply.
+        // v5: added CanvasItem.RssMusicItem variant. Older blobs decode
+        //     unchanged (no rss_music entries); new blobs with rss_music are
+        //     unreadable by pre-v5 builds, so the version bump signals that.
+        // v6: added RomSearchConfig.systemCustomizations + systemOrder for per-system
+        //     frontend tile customization (background, name overlay toggle, color, order).
+        // v7: added RomSearchConfig.frontendHintsVisible for the bottom hint-row toggle.
+        // v8: added RomSearchConfig.frontendFloatIntensity for the floating-animation slider.
+        // v9: added RomSearchConfig.canvasContinuousSpinRoms for per-rom continuous-spin toggle.
+        // v10: added RomSearchConfig.gameMediaMap + systemMediaMap for per-game and per-system
+        //      card media type overrides.
+        // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
+        //      haptic toggle (applies to both system and game cards).
+        // v12: added SystemConfig.hiddenSystems for the Frontend "Filter Systems" sheet.
+        const val CONFIG_VERSION = 12
+    }
+}
+
+@Serializable
+data class UiConfig(
+    val gridSettings: GridSettingsConfig = GridSettingsConfig(),
+    val appDisplayPreferences: Map<String, String> = emptyMap(),
+    val powerSettings: PowerSettingsConfig = PowerSettingsConfig(),
+    val selectedIconPackage: String? = null,
+    val wallpaper: WallpaperConfig = WallpaperConfig(),
+    val searchLayout: SearchLayoutConfig = SearchLayoutConfig(),
+    val customAppNames: Map<String, String> = emptyMap()
+)
+
+@Serializable
+data class GridSettingsConfig(
+    val columnCount: Int = 4,
+    val rowCount: Int = 6,
+    val unlimitedMode: Boolean = true,
+    val notificationShadeEnabled: Boolean = false,
+    val tabTransitionAnimationName: String = "",
+    val iconSnapEnabled: Boolean = true,
+    val snapMode: String = "ICON",
+    val bottomFlingAppDrawerEnabled: Boolean = true,
+    val shadeBackgroundColorArgb: Long = 0xFF111111L,
+    val shadeCornerRadiusDp: Int = 20,
+    val shadeBackgroundAlpha: Float = 1f,
+    val shadeAccentColorArgb: Long = 0L
+)
+
+@Serializable
+data class PowerSettingsConfig(
+    val powerButtonVisible: Boolean = false,
+    val quickDeleteVisible: Boolean = false,
+    val headerVisible: Boolean = true,
+    val wakeMethod: String = "DOUBLE_TAP",
+    val backButtonShortcutEnabled: Boolean = false,
+    val backButtonShortcut: String = "NONE",
+    val backButtonShortcutAppPackage: String? = null,
+    val poweredOffBrightness: Int = 40,
+    val appDrawerFilterByPage: Boolean = false
+)
+
+@Serializable
+data class WallpaperConfig(
+    val type: String = "NONE",
+    val activeUri: String? = null,
+    val savedImageUri: String? = null,
+    val savedGifUri: String? = null,
+    val savedVideoUri: String? = null
+)
+
+@Serializable
+data class SearchLayoutConfig(
+    val isHorizontalLayout: Boolean = false
+)
+
+@Serializable
+data class AppConfig(
+    val visibility: AppVisibilityConfig = AppVisibilityConfig(),
+    val positions: Map<String, PagePositionConfig> = emptyMap(),
+    val folders: Map<String, List<FolderItemConfig>> = emptyMap(),
+    val pinnedRoms: Map<String, List<PinnedRomInfo>> = emptyMap()
+)
+
+@Serializable
+data class AppVisibilityConfig(
+    val hiddenAppsByPage: Map<String, List<String>> = emptyMap(),
+    val newAppsVisibleByDefault: Boolean = true,
+    val showAppNames: Boolean = false,
+    val showHomeScreenAppNames: Boolean = true,
+    val appLabelFontSize: Int = 12,
+    val showFolderNames: Boolean = true,
+    val showSettingsBackButton: Boolean = true
+)
+
+@Serializable
+data class PagePositionConfig(
+    val freeMode: Boolean = false,
+    val dragLocked: Boolean = true,
+    val scrollDisabled: Boolean = false,
+    val bottomFlingDisabled: Boolean = false,
+    val items: Map<String, AppPositionItemConfig> = emptyMap()
+)
+
+@Serializable
+data class AppPositionItemConfig(
+    val x: Float,
+    val y: Float,
+    val iconSize: Float = 64f
+)
+
+@Serializable
+data class FolderItemConfig(
+    val id: String,
+    val name: String,
+    val apps: List<String>,
+    val x: Float,
+    val y: Float,
+    val iconSize: Float = 64f,
+    val backgroundColorArgb: Int? = null,
+    val backgroundImagePath: String? = null
+)
+
+@Serializable
+data class PageConfig(
+    val pageCount: Int = 1,
+    val pageTypes: List<String> = listOf("APPS_TAB"),
+    val homeTabIndex: Int = 0,
+    val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap(),
+    /** Per-page Unified Canvas layouts, keyed by pageIndex.toString(). */
+    val canvasLayouts: Map<String, CanvasLayout> = emptyMap()
+)
+
+@Serializable
+data class WidgetPageAppsConfig(
+    val visibleApps: List<String> = emptyList(),
+    val appsFirst: Boolean = false
+)
+
+@Serializable
+data class FeatureConfig(
+    val dock: DockConfig = DockConfig(),
+    val controlPad: ControlPadConfig = ControlPadConfig(),
+    val appDrawerFab: AppDrawerFabConfig = AppDrawerFabConfig(),
+    val gameKonfetti: GameKonfettiConfig = GameKonfettiConfig(),
+    val floatyMode: FloatyModeConfig = FloatyModeConfig(),
+    val jingles: JinglesConfig = JinglesConfig(),
+    val bgMusic: BgMusicConfig = BgMusicConfig(),
+    val romSearch: RomSearchConfig = RomSearchConfig()
+)
+
+@Serializable
+data class DockConfig(
+    val apps: List<String> = emptyList(),
+    val colorArgb: Int = -16777216,
+    val size: String = "MEDIUM",
+    val visible: Boolean = true,
+    val visiblePages: List<Int> = emptyList(),
+    val maxApps: Int = 5
+)
+
+@Serializable
+data class ControlPadConfig(
+    val items: List<ControlPadItemConfig> = emptyList(),
+    val cameraSensitivity: Float = 0.05f,
+    val joystickMode: String = "RIGHT_ONLY"
+)
+
+@Serializable
+data class ControlPadItemConfig(
+    val label: String,
+    val mappedButton: String? = null
+)
+
+@Serializable
+data class AppDrawerFabConfig(
+    val colorArgb: Int = -65536,
+    val enabled: Boolean = true,
+    val visiblePages: List<Int> = emptyList(),
+    val explicitPages: Boolean = false,
+    val position: String = "LEFT"
+)
+
+@Serializable
+data class FloatyModeConfig(
+    val isUnlocked: Boolean = false,
+    val isActive: Boolean = false,
+    val enabledTabs: List<Int> = emptyList(),
+    val sectionTapKonfettiEnabled: Boolean = false,
+    val poweredOffFloatyEffectEnabled: Boolean = false,
+    val appsModalFloatyEffectEnabled: Boolean = false,
+    val appDrawerFloatyAppCount: Int = 0,
+    val appDrawerBubblePopEnabled: Boolean = false
+)
+
+@Serializable
+data class JinglesConfig(
+    val isMuted: Boolean = false,
+    val volume: Float = 1.0f,
+    val regexPriority: Boolean = false,
+    val isNormalizationEnabled: Boolean = false
+)
+
+@Serializable
+data class BgMusicConfig(
+    val mode: String = "SINGLE_FILE",
+    val folderUri: String? = null,
+    val fileUri: String? = null,
+    val volume: Float = 0.5f
+)
+
+@Serializable
+data class RomSearchConfig(
+    val hintsKbVisible: Boolean = true,
+    val frontendEnabled: Boolean = false,
+    val secondaryMediaEnabled: Boolean = true,
+    val systemLayout: String = "Grid",
+    val gameLayout: String = "Grid",
+    val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
+    val systemOrder: List<String> = emptyList(),
+    val frontendHintsVisible: Boolean = true,
+    val frontendFloatIntensity: Float = 1f,
+    val canvasContinuousSpinRoms: Set<String> = emptySet(),
+    val gameMediaMap: Map<String, String> = emptyMap(),
+    val systemMediaMap: Map<String, String> = emptyMap(),
+    val frontendFocusHapticEnabled: Boolean = true
+)
+
+@Serializable
+data class SystemConfig(
+    val badgesVisible: Boolean = true,
+    val shadeTabPage: Int = 0,
+    val hiddenSystems: List<String> = emptyList()
+)
