@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui.frontend
 
+import jr.brian.home.esde.data.*
 import android.view.KeyEvent
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement

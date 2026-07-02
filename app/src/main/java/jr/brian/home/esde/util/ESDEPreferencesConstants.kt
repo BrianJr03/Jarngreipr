@@ -92,6 +92,7 @@ object ESDEPreferencesConstants {
     const val KEY_ROM_SEARCH_USE_WALLPAPER = "rom_search_use_wallpaper"
     const val KEY_ROM_SEARCH_CARD_MEDIA_TYPE = "rom_search_card_media_type"
     const val KEY_ROM_SEARCH_GAME_MEDIA_MAP = "rom_search_game_media_map"
+    const val KEY_ROM_SEARCH_SYSTEM_MEDIA_MAP = "rom_search_system_media_map"
     const val KEY_ROM_SEARCH_HIDE_NO_METADATA = "rom_search_hide_no_metadata"
     const val KEY_ROM_SEARCH_HIDE_NO_IMAGE = "rom_search_hide_no_image"
     const val KEY_ROM_FOCUS_ANIMATION_SPIN = "rom_search_disc_spin"

@@ -1,5 +1,6 @@
 package jr.brian.home.canvas.ui
 
+import jr.brian.home.esde.data.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn

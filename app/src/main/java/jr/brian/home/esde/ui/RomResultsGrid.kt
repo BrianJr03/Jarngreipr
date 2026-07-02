@@ -3,6 +3,7 @@ package jr.brian.home.esde.ui
 import android.net.Uri
 import android.view.KeyEvent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -100,6 +101,7 @@ internal fun RomResultsGrid(
     onToggleGameDiscSpin: (GameInfo) -> Unit = {},
     getGameMediaType: (GameInfo) -> RomSearchCardMediaType? = { null },
     onSetGameMediaType: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
+    onSetMediaTypeForSystem: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
     onLaunchGame: (GameInfo) -> Unit,
     onSaveEmulator: (GameInfo, String, String?) -> Unit = { _, _, _ -> },
     hasSavedEmulator: (GameInfo) -> Boolean = { false },
@@ -121,6 +123,10 @@ internal fun RomResultsGrid(
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
+
+    BackHandler(enabled = selectedGame != null && !showEmulatorPicker && !showCorePicker) {
+        selectedGame = null
+    }
 
     val hiddenPlatforms = remember(games, isHiddenMode) {
         if (isHiddenMode) games.map { it.systemName }.distinct().sorted() else emptyList()
@@ -257,6 +263,7 @@ internal fun RomResultsGrid(
                         selectedGame = null
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
+                    onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
                     discSpinEnabled = focusAnimationEnabled,
                     discSpinDisabled = isFocusAnimationDisabled(game),
                     onToggleDiscSpin = { onToggleGameDiscSpin(game) }

@@ -233,6 +233,7 @@ data class ESDEPrefsState(
     val romSearchUseWallpaper: Boolean = true,
     val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     val romSearchGameMediaMap: Map<String, String> = emptyMap(),
+    val systemMediaMap: Map<String, String> = emptyMap(),
     val romSearchHideNoMetadata: Boolean = false,
     val romSearchHideNoImage: Boolean = false,
     val romSearchDiscSpin: Boolean = false,

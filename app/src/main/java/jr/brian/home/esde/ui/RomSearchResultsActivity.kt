@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui
 
+import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -279,6 +280,7 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val romSearchUseWallpaper = esdeState.romSearchUseWallpaper
                     val cardMediaType = esdeState.romSearchCardMediaType
                     val gameMediaMap = esdeState.romSearchGameMediaMap
+                    val systemMediaMap = esdeState.systemMediaMap
                     val hideNoMetadata = esdeState.romSearchHideNoMetadata
                     val hideNoImage = esdeState.romSearchHideNoImage
                     val focusAnimationEnabled = esdeState.romSearchDiscSpin
@@ -648,10 +650,18 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     getGameMediaType = { game ->
                                         gameMediaMap[gameKey(game)]
                                             ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
+                                            ?: systemMediaMap[game.systemName]
+                                                ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
                                     },
                                     onSetGameMediaType = { game, type ->
                                         if (type == null) esdePrefs.clearGameMediaType(gameKey(game))
                                         else esdePrefs.setGameMediaType(gameKey(game), type)
+                                    },
+                                    onSetMediaTypeForSystem = { game, type ->
+                                        if (type == null) esdePrefs.clearSystemMediaType(game.systemName)
+                                        else esdePrefs.setSystemMediaType(game.systemName, type)
+                                        filteredGames.filter { it.systemName == game.systemName }
+                                            .forEach { esdePrefs.clearGameMediaType(gameKey(it)) }
                                     },
                                     modifier = Modifier.fillMaxSize(),
                                     onLaunchGame = { game ->

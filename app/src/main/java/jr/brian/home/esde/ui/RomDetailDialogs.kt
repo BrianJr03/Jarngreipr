@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -291,15 +292,18 @@ fun effectiveMediaPath(game: GameInfo, type: RomSearchCardMediaType): String? = 
 fun MediaTypePickerDialog(
     currentType: RomSearchCardMediaType?,
     onDismiss: () -> Unit,
-    onSelected: (RomSearchCardMediaType?) -> Unit
+    onSelected: (RomSearchCardMediaType?) -> Unit,
+    systemName: String? = null,
+    onSelectedForSystem: (RomSearchCardMediaType?) -> Unit = {}
 ) {
+    var scopeAllSystem by remember { mutableStateOf(false) }
     AlertDialog(
         modifier = Modifier.fillMaxWidth(0.95f),
         onDismissRequest = onDismiss,
         containerColor = OledCardColor,
         title = {
             Text(
-                text = "Card Media Type",
+                text = stringResource(R.string.rom_detail_media_type_dialog_title),
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
@@ -307,13 +311,38 @@ fun MediaTypePickerDialog(
         },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (!systemName.isNullOrBlank()) {
+                    MediaTypeScopeToggle(
+                        systemName = systemName,
+                        scopeAllSystem = scopeAllSystem,
+                        onScopeChange = { scopeAllSystem = it }
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = Color.White.copy(alpha = 0.12f)
+                    )
+                }
+                val selectType: (RomSearchCardMediaType?) -> Unit = { type ->
+                    if (scopeAllSystem) onSelectedForSystem(type) else onSelected(type)
+                }
                 TextButton(
-                    onClick = { onSelected(null) },
+                    onClick = { selectType(null) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    val defaultLabelRes = when {
+                        scopeAllSystem && currentType == null ->
+                            R.string.rom_detail_media_type_default_option_system_selected
+                        scopeAllSystem ->
+                            R.string.rom_detail_media_type_default_option_system
+                        currentType == null ->
+                            R.string.rom_detail_media_type_default_option_selected
+                        else ->
+                            R.string.rom_detail_media_type_default_option
+                    }
                     Text(
-                        text = if (currentType == null) "✓ Default (use global setting)" else "Default (use global setting)",
-                        color = if (currentType == null) Color.White else Color.White.copy(alpha = 0.6f),
+                        text = stringResource(defaultLabelRes),
+                        color = if (!scopeAllSystem && currentType == null) Color.White
+                        else Color.White.copy(alpha = 0.6f),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -323,12 +352,15 @@ fun MediaTypePickerDialog(
                 )
                 RomSearchCardMediaType.entries.forEach { type ->
                     TextButton(
-                        onClick = { onSelected(type) },
+                        onClick = { selectType(type) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        val isSelected = !scopeAllSystem && currentType == type
                         Text(
-                            text = if (currentType == type) "✓ ${type.displayName}" else type.displayName,
-                            color = if (currentType == type) Color.White else Color.White.copy(alpha = 0.6f),
+                            text = if (isSelected)
+                                stringResource(R.string.rom_detail_media_type_option_selected, type.displayName)
+                            else type.displayName,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -342,6 +374,58 @@ fun MediaTypePickerDialog(
             }
         }
     )
+}
+
+@Composable
+private fun MediaTypeScopeToggle(
+    systemName: String,
+    scopeAllSystem: Boolean,
+    onScopeChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        MediaTypeScopeChip(
+            label = stringResource(R.string.rom_detail_media_scope_this_game),
+            selected = !scopeAllSystem,
+            onClick = { onScopeChange(false) },
+            modifier = Modifier.weight(1f)
+        )
+        MediaTypeScopeChip(
+            label = stringResource(R.string.rom_detail_media_scope_all_system, systemName.uppercase()),
+            selected = scopeAllSystem,
+            onClick = { onScopeChange(true) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun MediaTypeScopeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .then(
+                if (selected) Modifier.background(ThemeAccentColor.copy(alpha = 0.2f))
+                else Modifier.background(OledBackgroundColor)
+            )
+    ) {
+        Text(
+            text = label,
+            color = if (selected) ThemeAccentColor else ThemeAccentColor.copy(alpha = 0.6f),
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 @Composable

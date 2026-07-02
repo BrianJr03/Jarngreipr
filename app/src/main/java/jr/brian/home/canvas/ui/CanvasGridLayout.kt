@@ -46,6 +46,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -295,7 +296,7 @@ fun CanvasGridLayout(
                         pointerOffsetState = pointerOffsetState,
                         trackPointer = isMoveDragging,
                         isDragging = isDragging,
-                        dragModifier = moveDragModifier,
+                        modifier = moveDragModifier,
                         overlay = resizeOverlay
                     ) {
                         CanvasItemTile(
@@ -316,7 +317,7 @@ fun CanvasGridLayout(
     }
 }
 
-private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.handleMoveDrag(
+private suspend fun PointerInputScope.handleMoveDrag(
     itemId: String,
     latestState: androidx.compose.runtime.State<CanvasUiState>,
     cellPlusSpacingPxState: androidx.compose.runtime.State<Float>,
@@ -383,7 +384,7 @@ private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.handleMo
     )
 }
 
-private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.handleResizeDrag(
+private suspend fun PointerInputScope.handleResizeDrag(
     itemId: String,
     latestState: androidx.compose.runtime.State<CanvasUiState>,
     cellPlusSpacingPxState: androidx.compose.runtime.State<Float>,
@@ -496,10 +497,10 @@ private fun CanvasTileSlot(
     spacing: Dp,
     outerPadding: Dp,
     animationLabel: String,
+    modifier: Modifier = Modifier,
     pointerOffsetState: androidx.compose.runtime.State<IntOffset>? = null,
     trackPointer: Boolean = false,
     isDragging: Boolean = false,
-    dragModifier: Modifier = Modifier,
     overlay: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
@@ -540,7 +541,7 @@ private fun CanvasTileSlot(
             .size(width = width, height = height)
             .absoluteOffset { animatedTarget + animatedPointer }
             .then(dragVisualModifier)
-            .then(dragModifier)
+            .then(modifier)
     ) {
         content()
         overlay?.invoke(this)

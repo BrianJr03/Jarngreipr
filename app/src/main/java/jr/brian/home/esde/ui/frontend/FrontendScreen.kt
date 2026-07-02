@@ -1,5 +1,6 @@
 package jr.brian.home.esde.ui.frontend
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -54,6 +55,23 @@ import android.view.KeyEvent as AndroidKeyEvent
 private const val ANIM_ENTER_MS = 220
 private const val ANIM_EXIT_MS = 180
 private const val ANDROID_APPS_SYSTEM = "androidapps"
+
+private fun Modifier.frontendControlKeys(
+    onSearch: () -> Unit,
+    onOpenSettings: () -> Unit
+): Modifier = onPreviewKeyEvent { keyEvent ->
+    val code = keyEvent.nativeKeyEvent.keyCode
+    if (code != AndroidKeyEvent.KEYCODE_BUTTON_Y &&
+        code != AndroidKeyEvent.KEYCODE_BUTTON_SELECT
+    ) return@onPreviewKeyEvent false
+    if (keyEvent.type == KeyEventType.KeyDown) {
+        when (code) {
+            AndroidKeyEvent.KEYCODE_BUTTON_Y -> onSearch()
+            AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> onOpenSettings()
+        }
+    }
+    true
+}
 
 @Composable
 internal fun FrontendScreen(
@@ -226,18 +244,24 @@ private fun GamesRoute(
 
     val focusResetKey = remember(system) { system }
 
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
     BackHandler {
-        viewModel.navigateTo(FrontendRoute.Systems)
+        if (showSettingsDialog) showSettingsDialog = false
+        else viewModel.navigateTo(FrontendRoute.Systems)
     }
 
     Surface(
         color = if (esdeState.romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
         modifier = Modifier
             .fillMaxSize()
+            .frontendControlKeys(
+                onSearch = { romSearchStateHolder.showSearchKeyboardSignal.tryEmit(Unit) },
+                onOpenSettings = { showSettingsDialog = true }
+            )
             .onPreviewKeyEvent { keyEvent ->
                 if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (keyEvent.nativeKeyEvent.keyCode) {
-                    AndroidKeyEvent.KEYCODE_BUTTON_Y -> true
                     // Hack: catch back at the preview stage so neither the focus
                     // animation nor any descendant can swallow the first press.
                     AndroidKeyEvent.KEYCODE_BUTTON_B,
@@ -260,6 +284,7 @@ private fun GamesRoute(
             focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
             focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames,
             gameMediaMap = esdeState.romSearchGameMediaMap,
+            systemMediaMap = esdeState.systemMediaMap,
             focusResetKey = focusResetKey,
             layout = esdeState.gameLayout,
             esdePrefs = esdePrefs,
@@ -274,6 +299,10 @@ private fun GamesRoute(
             system = system,
             initialRealIndex = initialGameIndex
         )
+    }
+
+    if (showSettingsDialog) {
+        FrontendSettingsDialog(onDismiss = { showSettingsDialog = false })
     }
 }
 
