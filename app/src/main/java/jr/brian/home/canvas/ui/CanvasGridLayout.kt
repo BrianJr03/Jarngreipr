@@ -28,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.Icon
@@ -74,6 +75,8 @@ import kotlin.math.roundToInt
 private val CanvasOuterPadding = 8.dp
 private val CanvasCellSpacing = 8.dp
 private val CanvasResizeHandleSize = 28.dp
+private val CanvasDeleteHandleSize = 28.dp
+private val CanvasDeleteHandleColor = Color(0xFFD32F2F)
 
 /**
  * Upper bound on a single cell's edge length, applied to both orientations.
@@ -121,6 +124,7 @@ fun CanvasGridLayout(
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
     onAddClick: () -> Unit,
     onAddLongClick: () -> Unit,
+    onDeleteClick: (ResolvedCanvasItem) -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
@@ -254,8 +258,12 @@ fun CanvasGridLayout(
                         }
                     } else Modifier
 
-                    val resizeOverlay: (@Composable BoxScope.() -> Unit)? = if (editMode) {
+                    val editHandlesOverlay: (@Composable BoxScope.() -> Unit)? = if (editMode) {
                         {
+                            CanvasDeleteHandle(
+                                modifier = Modifier.align(Alignment.TopEnd),
+                                onTap = { onDeleteClick(resolved) }
+                            )
                             CanvasResizeHandle(
                                 modifier = Modifier.align(Alignment.BottomEnd),
                                 onTap = {
@@ -297,7 +305,7 @@ fun CanvasGridLayout(
                         trackPointer = isMoveDragging,
                         isDragging = isDragging,
                         modifier = moveDragModifier,
-                        overlay = resizeOverlay
+                        overlay = editHandlesOverlay
                     ) {
                         CanvasItemTile(
                             resolved = resolved,
@@ -478,6 +486,43 @@ private fun CanvasResizeHandle(
             contentDescription = stringResource(R.string.canvas_resize_handle_description),
             tint = Color.White,
             modifier = Modifier.size(14.dp)
+        )
+    }
+}
+
+/**
+ * Top-right delete handle. Mirrors [CanvasResizeHandle] in size, focus behavior,
+ * and D-pad reachability so removal and resize feel like a matched pair. Rendered
+ * only in edit mode by the caller; its hit area is isolated on the tile chrome so
+ * a tap here doesn't fall through to the tile's own move/tap/long-press handlers.
+ */
+@Composable
+private fun CanvasDeleteHandle(
+    onTap: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    Box(
+        modifier = modifier
+            .size(CanvasDeleteHandleSize)
+            .scale(animatedFocusedScale(isFocused))
+            .onFocusChanged { isFocused = it.isFocused }
+            .clip(RoundedCornerShape(bottomStart = 10.dp))
+            .background(CanvasDeleteHandleColor.copy(alpha = if (isFocused) 0.95f else 0.85f))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = Color.White.copy(alpha = if (isFocused) 0.9f else 0.5f),
+                shape = RoundedCornerShape(bottomStart = 10.dp)
+            )
+            .focusable()
+            .clickable { onTap() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = stringResource(R.string.canvas_delete_handle_description),
+            tint = Color.White,
+            modifier = Modifier.size(16.dp)
         )
     }
 }

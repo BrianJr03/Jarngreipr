@@ -127,6 +127,28 @@ sealed class CanvasItem {
                 else -> EsdeContentScale.CROP
             }
     }
+
+    /**
+     * User-configurable photo tile. The tile shows a placeholder ("Tap to
+     * configure") while [imageUri] is null; tapping opens a picker that copies
+     * the chosen image into app internal storage and updates the same tile in
+     * place (see [jr.brian.home.canvas.viewmodel.CanvasViewModel.updatePhotoContainerImage]).
+     * PNG/JPG/WebP/GIF are supported — animated GIF/WebP animate through the
+     * shared GIF-capable Coil `ImageLoader`.
+     *
+     * [contentScale] defaults to [EsdeContentScale.CROP] so a freshly-picked
+     * image fills the tile.
+     */
+    @Serializable
+    @SerialName("photo")
+    data class PhotoContainer(
+        override val id: String,
+        val imageUri: String? = null,
+        val contentScale: EsdeContentScale? = null
+    ) : CanvasItem() {
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: EsdeContentScale.CROP
+    }
 }
 
 @Serializable
@@ -150,6 +172,7 @@ fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
     is CanvasItem.WidgetItem -> 2 to 2
     is CanvasItem.EsdeArtItem -> 2 to 2
     is CanvasItem.RssMusicItem -> 2 to 2
+    is CanvasItem.PhotoContainer -> 2 to 2
     is CanvasItem.AppItem,
     is CanvasItem.FolderItem,
     is CanvasItem.RomItem,

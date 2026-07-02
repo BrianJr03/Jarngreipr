@@ -625,16 +625,21 @@
     <string name="canvas_dialog_title">Canvas</string>
     <string name="canvas_dialog_back">Back</string>
     <string name="canvas_edit_canvas_option">Edit canvas</string>
-    <string name="canvas_add_app_option">Add an app</string>
-    <string name="canvas_add_folder_option">Add a folder</string>
-    <string name="canvas_add_rom_option">Add a ROM</string>
-    <string name="canvas_add_widget_option">Add a widget</string>
-    <string name="canvas_add_rss_launcher_option">Add RSS launcher</string>
-    <string name="canvas_add_rss_music_option">Add RSS widget</string>
+    <string name="canvas_add_section_header">Add</string>
+    <string name="canvas_add_app_option">App</string>
+    <string name="canvas_add_folder_option">Folder</string>
+    <string name="canvas_add_rom_option">ROM</string>
+    <string name="canvas_add_widget_option">Widget</string>
+    <string name="canvas_add_rss_launcher_option">RSS launcher</string>
+    <string name="canvas_add_rss_music_option">RSS widget</string>
     <string name="canvas_rss_music_artwork_cd">RSS music artwork</string>
     <string name="canvas_rss_music_empty">No audio items</string>
     <string name="canvas_add_esde_display_option">Frontend widget</string>
     <string name="canvas_esde_art_tile_description">Frontend game art</string>
+    <string name="canvas_add_photo_container_option">Photo container</string>
+    <string name="canvas_photo_container_tap_to_configure">Tap to configure</string>
+    <string name="canvas_photo_container_pending">Loading…</string>
+    <string name="canvas_photo_container_description">User photo tile</string>
     <string name="canvas_esde_picker_title">Frontend widget</string>
     <string name="canvas_esde_picker_image_type_label">Image type</string>
     <string name="canvas_esde_picker_confirm">Add</string>
@@ -679,6 +684,7 @@
     <string name="canvas_resize_widget_rows">Height (rows)</string>
     <string name="canvas_resize_widget_hint">Tap a widget in Edit Mode to resize it.</string>
     <string name="canvas_resize_handle_description">Drag to resize, or focus and select to open the resize dialog.</string>
+    <string name="canvas_delete_handle_description">Remove this item from the canvas.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->

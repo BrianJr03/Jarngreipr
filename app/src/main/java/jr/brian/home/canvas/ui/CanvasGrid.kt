@@ -30,6 +30,7 @@ fun CanvasGrid(
     onRequestResizeDialog: (item: CanvasItem, minColSpan: Int, minRowSpan: Int) -> Unit,
     onAddClick: () -> Unit,
     onAddLongClick: () -> Unit,
+    onDeleteClick: (ResolvedCanvasItem) -> Unit,
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: ScrollState = rememberScrollState(),
@@ -45,6 +46,7 @@ fun CanvasGrid(
         onRequestResizeDialog = onRequestResizeDialog,
         onAddClick = onAddClick,
         onAddLongClick = onAddLongClick,
+        onDeleteClick = onDeleteClick,
         modifier = modifier,
         appWidgetHost = appWidgetHost,
         scrollState = scrollState

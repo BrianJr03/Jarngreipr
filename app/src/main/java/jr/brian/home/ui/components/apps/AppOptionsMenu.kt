@@ -40,7 +40,7 @@ fun AppOptionsMenu(
             )
         },
         text = {
-            AppOptionsMenuContent(
+            CanvasOptionsMenuContent(
                 appLabel = appLabel,
                 currentDisplayPreference = currentDisplayPreference,
                 hasExternalDisplay = hasExternalDisplay,
