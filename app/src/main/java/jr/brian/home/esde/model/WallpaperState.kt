@@ -8,6 +8,22 @@ import jr.brian.home.esde.model.ScreensaverBehavior
 data class WallpaperState(
     val currentImagePath: String? = null,
     val logoPath: String? = null,
+    /**
+     * The full per-type media bundle for the currently-focused game (set by
+     * [jr.brian.home.esde.viewmodels.ESDEViewModel.updateForGame]). Null at
+     * system-level and during screensaver/no-game contexts. The wallpaper
+     * itself ignores this field — it's exposed so the canvas's ES-DE Display
+     * tiles can resolve any [jr.brian.home.esde.model.GameImageType] for the
+     * current game independent of the global image-type pref.
+     */
+    val currentGame: GameInfo? = null,
+    /**
+     * The currently-focused ES-DE system name (e.g. "snes", "n64") when no
+     * game is selected. Null at boot, during a game-context update, or after
+     * a screensaver-game shows. Mirrors [currentGame] in role: gives canvas
+     * tiles a label to render in the empty-art placeholder.
+     */
+    val currentSystemName: String? = null,
     val videoPath: String? = null,
     val isVideoPlaying: Boolean = false,
     val systemBackgroundVideoPath: String? = null,

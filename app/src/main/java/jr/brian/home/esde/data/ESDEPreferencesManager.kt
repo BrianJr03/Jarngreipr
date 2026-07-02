@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
@@ -14,10 +15,14 @@ import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.PlatformImageFolderType
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemImageType
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.model.VideoScaleMode
 import jr.brian.home.esde.model.WallpaperToggleTarget
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,10 +108,12 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SYSTEM_MEDIA_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_METADATA
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_FOCUS_ANIMATION_SPIN
@@ -121,17 +128,29 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
 
 class ESDEPreferencesManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences(
+    internal val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
     )
 
-    private val _state = MutableStateFlow(loadState())
+    internal val customizationJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    internal val _state = MutableStateFlow(loadState())
     val state: StateFlow<ESDEPrefsState> = _state.asStateFlow()
 
     private fun loadState(): ESDEPrefsState {
@@ -331,6 +350,18 @@ class ESDEPreferencesManager(context: Context) {
             emptySet()
         }
 
+        val hiddenSystemsJson = prefs.getString(KEY_HIDDEN_SYSTEMS, null)
+        val hiddenSystems: Set<String> = if (!hiddenSystemsJson.isNullOrEmpty()) {
+            try {
+                val arr = JSONArray(hiddenSystemsJson)
+                (0 until arr.length()).map { arr.getString(it) }.toSet()
+            } catch (_: Exception) {
+                emptySet()
+            }
+        } else {
+            emptySet()
+        }
+
         // Migrate legacy excludeEffectsFromHome boolean to per-page set
         val effectsExcludedPagesString = prefs.getString(KEY_EFFECTS_EXCLUDED_PAGES, null)
         val effectsExcludedPages: Set<Int> = if (effectsExcludedPagesString != null) {
@@ -349,6 +380,16 @@ class ESDEPreferencesManager(context: Context) {
         } else {
             emptySet()
         }
+
+        val systemCustomizations: Map<String, SystemCustomization> = prefs.getString(KEY_SYSTEM_CUSTOMIZATIONS, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<Map<String, SystemCustomization>>(it) }.getOrNull() }
+            ?: emptyMap()
+
+        val systemOrder: List<String> = prefs.getString(KEY_SYSTEM_ORDER, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<List<String>>(it) }.getOrNull() }
+            ?: emptyList()
 
         return ESDEPrefsState(
             animationStyle = animationStyle,
@@ -424,6 +465,7 @@ class ESDEPreferencesManager(context: Context) {
             systemBgVideoMuted = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, true),
             systemBgVideoLooping = prefs.getBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, true),
             hiddenGames = hiddenGames,
+            hiddenSystems = hiddenSystems,
             gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
@@ -460,6 +502,14 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
+            systemMediaMap = prefs.getString(KEY_ROM_SEARCH_SYSTEM_MEDIA_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
             romSearchHideNoMetadata = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, false),
             romSearchHideNoImage = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, false),
             romSearchDiscSpin = prefs.getBoolean(KEY_ROM_FOCUS_ANIMATION_SPIN, false),
@@ -483,688 +533,29 @@ class ESDEPreferencesManager(context: Context) {
                 ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
                 ?: PlatformImageFolderType.Default,
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
-            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true)
+            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true),
+            frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
+            secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
+            systemLayout = prefs.getString(KEY_SYSTEM_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid,
+            gameLayout = prefs.getString(KEY_GAME_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid,
+            systemCustomizations = systemCustomizations,
+            systemOrder = systemOrder,
+            frontendHintsVisible = prefs.getBoolean(KEY_FRONTEND_HINTS_VISIBLE, true),
+            frontendFloatIntensity = prefs.getFloat(KEY_FRONTEND_FLOAT_INTENSITY, 1f).coerceIn(0f, 3f),
+            frontendFocusHapticEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, true),
+            canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val arr = JSONArray(json)
+                        (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    } catch (_: Exception) { emptySet() }
+                } ?: emptySet()
         )
     }
 
-    fun setAnimationStyle(style: AnimationStyle) {
-        _state.value = _state.value.copy(animationStyle = style)
-        prefs.edit { putString(KEY_ANIMATION_STYLE, style.name) }
-    }
-
-    fun setAnimationDuration(duration: Int) {
-        _state.value = _state.value.copy(animationDuration = duration)
-        prefs.edit { putInt(KEY_ANIMATION_DURATION, duration) }
-    }
-
-    fun setAnimationScale(scale: Float) {
-        _state.value = _state.value.copy(animationScale = scale)
-        prefs.edit { putInt(KEY_ANIMATION_SCALE, (scale * 100).toInt()) }
-    }
-
-    fun setSystemBlurLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 25)
-        _state.value = _state.value.copy(systemBlurLevel = coercedLevel)
-        prefs.edit { putInt(KEY_SYSTEM_BLUR_LEVEL, coercedLevel) }
-    }
-
-    fun setGameBlurLevel(level: Int) {
-        val coercedLevel = level.coerceIn(0, 25)
-        _state.value = _state.value.copy(gameBlurLevel = coercedLevel)
-        prefs.edit { putInt(KEY_GAME_BLUR_LEVEL, coercedLevel) }
-    }
-
-    fun setBackgroundColor(color: Int) {
-        _state.value = _state.value.copy(backgroundColor = color)
-        prefs.edit { putInt(KEY_BACKGROUND_COLOR, color) }
-    }
-
-    fun setVideoEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(videoEnabled = enabled)
-        prefs.edit { putBoolean(KEY_VIDEO_ENABLED, enabled) }
-    }
-
-    fun setVideoDelaySeconds(seconds: Int) {
-        _state.value = _state.value.copy(videoDelaySeconds = seconds)
-        prefs.edit { putInt(KEY_VIDEO_DELAY, seconds) }
-    }
-
-    fun setVideoAudioEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(videoAudioEnabled = enabled)
-        prefs.edit { putBoolean(KEY_VIDEO_AUDIO_ENABLED, enabled) }
-    }
-
-    fun setVideoScaleMode(mode: VideoScaleMode) {
-        _state.value = _state.value.copy(videoScaleMode = mode)
-        prefs.edit { putString(KEY_VIDEO_SCALE_MODE, mode.name) }
-    }
-
-    fun setVideoOverlayEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(videoOverlayEnabled = enabled)
-        prefs.edit { putBoolean(KEY_VIDEO_OVERLAY_ENABLED, enabled) }
-    }
-
-    fun setSystemBackgroundScaleMode(mode: BackgroundScaleMode) {
-        _state.value = _state.value.copy(systemBackgroundScaleMode = mode)
-        prefs.edit { putString(KEY_SYSTEM_BACKGROUND_SCALE_MODE, mode.name) }
-    }
-
-    fun setGameBackgroundScaleMode(mode: BackgroundScaleMode) {
-        _state.value = _state.value.copy(gameBackgroundScaleMode = mode)
-        prefs.edit { putString(KEY_GAME_BACKGROUND_SCALE_MODE, mode.name) }
-    }
-
-    fun setLastSelectedSystem(systemName: String?) {
-        _state.value = _state.value.copy(lastSelectedSystem = systemName)
-        if (systemName != null) {
-            prefs.edit { putString(KEY_LAST_SELECTED_SYSTEM, systemName) }
-        } else {
-            prefs.edit { remove(KEY_LAST_SELECTED_SYSTEM) }
-        }
-    }
-
-    fun setSystemImageType(type: SystemImageType) {
-        _state.value = _state.value.copy(systemImageType = type)
-        prefs.edit { putString(KEY_SYSTEM_IMAGE_TYPE, type.name) }
-    }
-
-    fun setGameImageType(type: GameImageType) {
-        _state.value = _state.value.copy(gameImageType = type)
-        prefs.edit { putString(KEY_GAME_IMAGE_TYPE, type.name) }
-    }
-
-    fun setLogoAlignment(alignment: LogoAlignment) {
-        _state.value = _state.value.copy(logoAlignment = alignment)
-        prefs.edit { putString(KEY_LOGO_ALIGNMENT, alignment.name) }
-    }
-
-    fun setLogoOffset(x: Float, y: Float) {
-        _state.value = _state.value.copy(logoOffsetX = x, logoOffsetY = y)
-        prefs.edit {
-            putFloat(KEY_LOGO_OFFSET_X, x)
-            putFloat(KEY_LOGO_OFFSET_Y, y)
-        }
-    }
-
-    fun setRandomSystemImage(random: Boolean) {
-        _state.value = _state.value.copy(randomSystemImage = random)
-        prefs.edit { putBoolean(KEY_RANDOM_SYSTEM_IMAGE, random) }
-    }
-
-    fun setPowerEventsEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(powerEventsEnabled = enabled)
-        prefs.edit { putBoolean(KEY_POWER_EVENTS_ENABLED, enabled) }
-    }
-
-    fun setPersistOnGameLaunch(persist: Boolean) {
-        _state.value = _state.value.copy(persistOnGameLaunch = persist)
-        prefs.edit { putBoolean(KEY_PERSIST_ON_GAME_LAUNCH, persist) }
-    }
-
-    fun setPersistBackgroundBrightness(brightness: Int) {
-        val coercedBrightness = brightness.coerceIn(30, 100)
-        _state.value = _state.value.copy(persistBackgroundBrightness = coercedBrightness)
-        prefs.edit { putInt(KEY_PERSIST_BACKGROUND_BRIGHTNESS, coercedBrightness) }
-    }
-
-    fun setPersistLogoBrightness(brightness: Int) {
-        val coercedBrightness = brightness.coerceIn(30, 100)
-        _state.value = _state.value.copy(persistLogoBrightness = coercedBrightness)
-        prefs.edit { putInt(KEY_PERSIST_LOGO_BRIGHTNESS, coercedBrightness) }
-    }
-
-    fun setCustomSystemLogosPath(path: String?) {
-        _state.value = _state.value.copy(customSystemLogosPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_CUSTOM_SYSTEM_LOGOS_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_CUSTOM_SYSTEM_LOGOS_PATH) }
-        }
-    }
-
-    fun setCustomSystemImagesPath(path: String?) {
-        _state.value = _state.value.copy(customSystemImagesPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_CUSTOM_SYSTEM_IMAGES_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_CUSTOM_SYSTEM_IMAGES_PATH) }
-        }
-    }
-
-    fun setSystemBgVideoMuted(muted: Boolean) {
-        _state.value = _state.value.copy(systemBgVideoMuted = muted)
-        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_MUTED, muted) }
-    }
-
-    fun setSystemBgVideoLooping(looping: Boolean) {
-        _state.value = _state.value.copy(systemBgVideoLooping = looping)
-        prefs.edit { putBoolean(KEY_SYSTEM_BG_VIDEO_LOOPING, looping) }
-    }
-
-    fun setSingleSystemImagePath(path: String?) {
-        _state.value = _state.value.copy(singleSystemImagePath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_SINGLE_SYSTEM_IMAGE_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_SINGLE_SYSTEM_IMAGE_PATH) }
-        }
-    }
-
-    fun setSingleSystemLogoPath(path: String?) {
-        _state.value = _state.value.copy(singleSystemLogoPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_SINGLE_SYSTEM_LOGO_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_SINGLE_SYSTEM_LOGO_PATH) }
-        }
-    }
-
-    fun setSingleGameImagePath(path: String?) {
-        _state.value = _state.value.copy(singleGameImagePath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_SINGLE_GAME_IMAGE_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_SINGLE_GAME_IMAGE_PATH) }
-        }
-    }
-
-    fun setSingleGameLogoPath(path: String?) {
-        _state.value = _state.value.copy(singleGameLogoPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_SINGLE_GAME_LOGO_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_SINGLE_GAME_LOGO_PATH) }
-        }
-    }
-
-    fun setMarqueeWidth(width: Int) {
-        val coercedWidth = width.coerceIn(40, 600)
-        _state.value = _state.value.copy(marqueeWidth = coercedWidth)
-        prefs.edit { putInt(KEY_MARQUEE_WIDTH, coercedWidth) }
-    }
-
-    fun setMarqueeHeight(height: Int) {
-        val coercedHeight = height.coerceIn(40, 600)
-        _state.value = _state.value.copy(marqueeHeight = coercedHeight)
-        prefs.edit { putInt(KEY_MARQUEE_HEIGHT, coercedHeight) }
-    }
-
-    fun setScreensaverBehavior(behavior: ScreensaverBehavior) {
-        _state.value = _state.value.copy(screensaverBehavior = behavior)
-        prefs.edit { putString(KEY_SCREENSAVER_BEHAVIOR, behavior.name) }
-    }
-    
-    fun setScreensaverFloatyAppCount(count: Int) {
-        val coercedCount = count.coerceIn(0, 100)
-        _state.value = _state.value.copy(screensaverFloatyAppCount = coercedCount)
-        prefs.edit { putInt(KEY_SCREENSAVER_FLOATY_APP_COUNT, coercedCount) }
-    }
-
-    fun setMusicEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(musicEnabled = enabled)
-        prefs.edit { putBoolean(KEY_MUSIC_ENABLED, enabled) }
-    }
-
-    fun setMusicPath(path: String?) {
-        _state.value = _state.value.copy(musicPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_MUSIC_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_MUSIC_PATH) }
-        }
-    }
-
-    fun setMusicSystemEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(musicSystemEnabled = enabled)
-        prefs.edit { putBoolean(KEY_MUSIC_SYSTEM_ENABLED, enabled) }
-    }
-
-    fun setMusicGameEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(musicGameEnabled = enabled)
-        prefs.edit { putBoolean(KEY_MUSIC_GAME_ENABLED, enabled) }
-    }
-
-    fun setMusicScreensaverEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(musicScreensaverEnabled = enabled)
-        prefs.edit { putBoolean(KEY_MUSIC_SCREENSAVER_ENABLED, enabled) }
-    }
-
-    fun setMusicVideoBehavior(behavior: MusicVideoBehavior) {
-        _state.value = _state.value.copy(musicVideoBehavior = behavior)
-        prefs.edit { putString(KEY_MUSIC_VIDEO_BEHAVIOR, behavior.value) }
-    }
-
-    fun setMusicVolume(volume: Int) {
-        val coercedVolume = volume.coerceIn(0, 100)
-        _state.value = _state.value.copy(musicVolume = coercedVolume)
-        prefs.edit { putInt(KEY_MUSIC_VOLUME, coercedVolume) }
-    }
-
-    fun setMusicUseSystemSpecific(useSystemSpecific: Boolean) {
-        _state.value = _state.value.copy(musicUseSystemSpecific = useSystemSpecific)
-        prefs.edit { putBoolean(KEY_MUSIC_USE_SYSTEM_SPECIFIC, useSystemSpecific) }
-    }
-
-    fun setMusicLoopEnabled(loopEnabled: Boolean) {
-        _state.value = _state.value.copy(musicLoopEnabled = loopEnabled)
-        prefs.edit { putBoolean(KEY_MUSIC_LOOP_ENABLED, loopEnabled) }
-    }
-
-    fun setMusicIgnoreAudioFocus(ignoreAudioFocus: Boolean) {
-        _state.value = _state.value.copy(musicIgnoreAudioFocus = ignoreAudioFocus)
-        prefs.edit { putBoolean(KEY_MUSIC_IGNORE_AUDIO_FOCUS, ignoreAudioFocus) }
-    }
-
-    fun setAppDrawerOpacity(opacity: Int) {
-        val coercedOpacity = opacity.coerceIn(0, 100)
-        _state.value = _state.value.copy(appDrawerOpacity = coercedOpacity)
-        prefs.edit { putInt(KEY_APP_DRAWER_OPACITY, coercedOpacity) }
-    }
-
-    fun setMarqueePressShortcut(shortcut: Shortcut) {
-        _state.value = _state.value.copy(marqueePressShortcut = shortcut)
-        prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT, shortcut.name) }
-    }
-
-    fun setMarqueePressShortcutAppPackage(packageName: String?) {
-        _state.value = _state.value.copy(marqueePressShortcutAppPackage = packageName)
-        if (packageName != null) {
-            prefs.edit { putString(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE, packageName) }
-        } else {
-            prefs.edit { remove(KEY_MARQUEE_PRESS_SHORTCUT_APP_PACKAGE) }
-        }
-    }
-
-    fun toggleMarqueePageVisibility(pageIndex: Int) {
-        val hiddenPages = _state.value.marqueeHiddenPages
-        val newPages = if (hiddenPages.contains(pageIndex)) {
-            hiddenPages - pageIndex
-        } else {
-            hiddenPages + pageIndex
-        }
-        
-        _state.value = _state.value.copy(marqueeHiddenPages = newPages)
-        if (newPages.isEmpty()) {
-            prefs.edit { remove(KEY_MARQUEE_VISIBLE_PAGES) }
-        } else {
-            prefs.edit { putString(KEY_MARQUEE_VISIBLE_PAGES, newPages.joinToString(",")) }
-        }
-    }
-
-    fun toggleDescriptionOverlayPage(pageIndex: Int) {
-        val enabledPages = _state.value.descriptionOverlayEnabledPages
-        val newPages = if (enabledPages.contains(pageIndex)) {
-            enabledPages - pageIndex
-        } else {
-            enabledPages + pageIndex
-        }
-        
-        _state.value = _state.value.copy(descriptionOverlayEnabledPages = newPages)
-        if (newPages.isEmpty()) {
-            prefs.edit { remove(KEY_DESCRIPTION_OVERLAY_PAGES) }
-        } else {
-            prefs.edit { putString(KEY_DESCRIPTION_OVERLAY_PAGES, newPages.joinToString(",")) }
-        }
-    }
-
-    fun setGameBackgroundDimming(level: Int) {
-        val coercedLevel = level.coerceIn(0, 70)
-        _state.value = _state.value.copy(gameBackgroundDimming = coercedLevel)
-        prefs.edit { putInt(KEY_GAME_BACKGROUND_DIMMING, coercedLevel) }
-    }
-
-    fun setSystemBackgroundDimming(level: Int) {
-        val coercedLevel = level.coerceIn(0, 70)
-        _state.value = _state.value.copy(systemBackgroundDimming = coercedLevel)
-        prefs.edit { putInt(KEY_SYSTEM_BACKGROUND_DIMMING, coercedLevel) }
-    }
-
-    fun setCustomMediaPath(path: String?) {
-        _state.value = _state.value.copy(customMediaPath = path)
-        if (path != null) {
-            prefs.edit { putString(KEY_CUSTOM_MEDIA_PATH, path) }
-        } else {
-            prefs.edit { remove(KEY_CUSTOM_MEDIA_PATH) }
-        }
-    }
-
-    fun toggleEffectsExcludedPage(pageIndex: Int) {
-        val excludedPages = _state.value.effectsExcludedPages
-        val newPages = if (excludedPages.contains(pageIndex)) {
-            excludedPages - pageIndex
-        } else {
-            excludedPages + pageIndex
-        }
-
-        _state.value = _state.value.copy(effectsExcludedPages = newPages)
-        if (newPages.isEmpty()) {
-            prefs.edit { remove(KEY_EFFECTS_EXCLUDED_PAGES) }
-        } else {
-            prefs.edit { putString(KEY_EFFECTS_EXCLUDED_PAGES, newPages.joinToString(",")) }
-        }
-    }
-
-    fun setShowLogoForSystem(show: Boolean) {
-        _state.value = _state.value.copy(showMarqueeForSystem = show)
-        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_SYSTEM, show) }
-    }
-
-    fun setShowLogoForGame(show: Boolean) {
-        _state.value = _state.value.copy(showMarqueeForGame = show)
-        prefs.edit { putBoolean(KEY_SHOW_MARQUEE_FOR_GAME, show) }
-    }
-
-    fun setHideUIForGameBrowsing(hide: Boolean) {
-        _state.value = _state.value.copy(hideUIForGameBrowsing = hide)
-        prefs.edit { putBoolean(KEY_HIDE_UI_FOR_GAME_BROWSING, hide) }
-    }
-
-    fun setLogoPositionLocked(locked: Boolean) {
-        _state.value = _state.value.copy(marqueePositionLocked = locked)
-        prefs.edit { putBoolean(KEY_MARQUEE_POSITION_LOCKED, locked) }
-    }
-
-    fun toggleLogoPositionLocked() {
-        setLogoPositionLocked(!_state.value.marqueePositionLocked)
-    }
-
-    fun setGameBackgroundScale(scale: Float) {
-        val coercedScale = scale.coerceIn(0.2f, 1.0f)
-        _state.value = _state.value.copy(gameBackgroundScale = coercedScale)
-        prefs.edit { putFloat(KEY_GAME_BACKGROUND_SCALE, coercedScale) }
-    }
-
-    fun setMarqueeMinWidthPercent(percent: Float) {
-        val coercedPercent = percent.coerceIn(0.3f, 1.0f)
-        _state.value = _state.value.copy(marqueeMinWidthPercent = coercedPercent)
-        prefs.edit { putFloat(KEY_MARQUEE_MIN_WIDTH_PERCENT, coercedPercent) }
-    }
-
-    fun setOverlayMediaType(type: OverlayMediaType) {
-        _state.value = _state.value.copy(overlayMediaType = type)
-        prefs.edit { putString(KEY_OVERLAY_MEDIA_TYPE, type.name) }
-    }
-
-    fun setLogoOnlyMode(enabled: Boolean) {
-        _state.value = _state.value.copy(logoOnlyMode = enabled)
-        prefs.edit { putBoolean(KEY_LOGO_ONLY_MODE, enabled) }
-    }
-
-    fun setSelectButtonWallpaperToggle(enabled: Boolean) {
-        _state.value = _state.value.copy(selectButtonWallpaperToggle = enabled)
-        prefs.edit { putBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, enabled) }
-    }
-
-    fun setWallpaperToggleTarget(target: WallpaperToggleTarget) {
-        _state.value = _state.value.copy(wallpaperToggleTarget = target)
-        prefs.edit { putString(KEY_WALLPAPER_TOGGLE_TARGET, target.name) }
-    }
-
-    fun setRomSearchUseWallpaper(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchUseWallpaper = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, enabled) }
-    }
-
-    fun setRomSearchCardMediaType(type: RomSearchCardMediaType) {
-        _state.value = _state.value.copy(romSearchCardMediaType = type)
-        prefs.edit { putString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, type.name) }
-    }
-
-    fun setGameMediaType(gameKey: String, type: RomSearchCardMediaType) {
-        val updated = _state.value.romSearchGameMediaMap + (gameKey to type.name)
-        _state.value = _state.value.copy(romSearchGameMediaMap = updated)
-        prefs.edit { putString(KEY_ROM_SEARCH_GAME_MEDIA_MAP, JSONObject(updated).toString()) }
-    }
-
-    fun setRomSearchHideNoMetadata(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchHideNoMetadata = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, enabled) }
-    }
-
-    fun setRomSearchHideNoImage(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchHideNoImage = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, enabled) }
-    }
-
-    fun setRomSearchDiscSpin(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchDiscSpin = enabled)
-        prefs.edit { putBoolean(KEY_ROM_FOCUS_ANIMATION_SPIN, enabled) }
-    }
-
-    fun setRomSearchBlackBackground(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchBlackBackground = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_BLACK_BACKGROUND, enabled) }
-    }
-
-    fun setLogoVisibilityAnimation(enabled: Boolean) {
-        _state.value = _state.value.copy(logoVisibilityAnimation = enabled)
-        prefs.edit { putBoolean(KEY_LOGO_VISIBILITY_ANIMATION, enabled) }
-    }
-
-    fun setLogoChangeAnimation(enabled: Boolean) {
-        _state.value = _state.value.copy(logoChangeAnimation = enabled)
-        prefs.edit { putBoolean(KEY_LOGO_CHANGE_ANIMATION, enabled) }
-    }
-
-    fun setRomSearchPlatformAutoFilter(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchPlatformAutoFilter = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER, enabled) }
-    }
-
-    fun setRomSearchShowAllAndroidApps(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchShowAllAndroidApps = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_SHOW_ALL_ANDROID_APPS, enabled) }
-    }
-
-    fun setRomSearchFocusAnimationDelayMs(delayMs: Int) {
-        _state.value = _state.value.copy(romSearchFocusAnimationDelayMs = delayMs)
-        prefs.edit { putInt(KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS, delayMs) }
-    }
-
-    fun setRomSearchPlatformImagesEnabled(enabled: Boolean) {
-        _state.value = _state.value.copy(romSearchPlatformImagesEnabled = enabled)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED, enabled) }
-    }
-
-    fun setRomSearchPlatformImagesFolderUri(uri: String?) {
-        _state.value = _state.value.copy(romSearchPlatformImagesFolderUri = uri)
-        prefs.edit {
-            if (uri != null) putString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI, uri)
-            else remove(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_URI)
-        }
-    }
-
-    fun setRomSearchPlatformImagesFolderType(type: PlatformImageFolderType) {
-        _state.value = _state.value.copy(romSearchPlatformImagesFolderType = type)
-        prefs.edit { putString(KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE, type.name) }
-    }
-
-    fun setRomSearchDetailImageHeightDp(heightDp: Int) {
-        _state.value = _state.value.copy(romSearchDetailImageHeightDp = heightDp)
-        prefs.edit { putInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, heightDp) }
-    }
-
-    fun setRomSearchHintsKbVisible(visible: Boolean) {
-        _state.value = _state.value.copy(romSearchHintsKbVisible = visible)
-        prefs.edit { putBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, visible) }
-    }
-
-    fun disableFocusAnimation(gameKey: String) {
-        val updated = _state.value.romSearchFocusAnimationDisabledGames + gameKey
-        _state.value = _state.value.copy(romSearchFocusAnimationDisabledGames = updated)
-        prefs.edit { putString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, JSONArray(updated.toList()).toString()) }
-    }
-
-    fun enableFocusAnimation(gameKey: String) {
-        val updated = _state.value.romSearchFocusAnimationDisabledGames - gameKey
-        _state.value = _state.value.copy(romSearchFocusAnimationDisabledGames = updated)
-        if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES) }
-        } else {
-            prefs.edit { putString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, JSONArray(updated.toList()).toString()) }
-        }
-    }
-
-    fun unhideAllGames(gameKeys: Collection<String>) {
-        val updated = _state.value.hiddenGames - gameKeys.toSet()
-        _state.value = _state.value.copy(hiddenGames = updated)
-        if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_HIDDEN_GAMES) }
-        } else {
-            prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
-        }
-    }
-
-    fun clearGameMediaType(gameKey: String) {
-        val updated = _state.value.romSearchGameMediaMap - gameKey
-        _state.value = _state.value.copy(romSearchGameMediaMap = updated)
-        if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_ROM_SEARCH_GAME_MEDIA_MAP) }
-        } else {
-            prefs.edit { putString(KEY_ROM_SEARCH_GAME_MEDIA_MAP, JSONObject(updated).toString()) }
-        }
-    }
-
-    fun addRomsPath(path: String) {
-        val current = _state.value.romsPaths
-        if (current.contains(path)) return
-        val updated = current + path
-        _state.value = _state.value.copy(romsPaths = updated)
-        prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
-    }
-
-    fun removeRomsPath(path: String) {
-        val updated = _state.value.romsPaths - path
-        _state.value = _state.value.copy(romsPaths = updated)
-        if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_ROMS_PATHS) }
-        } else {
-            prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
-        }
-    }
-
-    /** Returns the persisted SAF tree URI string for the given SD card volume ID, or null. */
-    fun getSafTreeUri(volumeId: String): String? {
-        val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
-        return try { JSONObject(json).optString(volumeId, null) } catch (_: Exception) { null }
-    }
-
-    /** Persists a SAF tree URI for the given SD card volume ID. */
-    fun setSafTreeUri(volumeId: String, treeUriString: String) {
-        val json = try { JSONObject(prefs.getString(KEY_SAF_TREE_URIS, null) ?: "{}") } catch (_: Exception) { JSONObject() }
-        json.put(volumeId, treeUriString)
-        prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
-    }
-
-    fun setSystemAppMap(map: Map<String, String?>) {
-        _state.value = _state.value.copy(systemAppMap = map)
-        if (map.isEmpty()) {
-            prefs.edit { remove(KEY_SYSTEM_APP_MAP) }
-        } else {
-            val json = JSONObject()
-            map.forEach { (key, value) ->
-                if (value != null) json.put(key, value) else json.put(key, JSONObject.NULL)
-            }
-            prefs.edit { putString(KEY_SYSTEM_APP_MAP, json.toString()) }
-        }
-    }
-
-    fun getSystemAppForSystem(systemName: String): String? {
-        return state.value.systemAppMap[systemName]
-    }
-
-    fun setSystemLaunchTrigger(systemFolderName: String, trigger: SystemLaunchTrigger) {
-        val current = _state.value.systemLaunchTriggerMap.toMutableMap()
-        if (trigger == SystemLaunchTrigger.NoAction) {
-            current.remove(systemFolderName)
-        } else {
-            current[systemFolderName] = trigger
-        }
-        _state.value = _state.value.copy(systemLaunchTriggerMap = current)
-        if (current.isEmpty()) {
-            prefs.edit { remove(KEY_SYSTEM_LAUNCH_TRIGGER_MAP) }
-        } else {
-            val json = JSONObject()
-            current.forEach { (key, value) -> json.put(key, value.name) }
-            prefs.edit { putString(KEY_SYSTEM_LAUNCH_TRIGGER_MAP, json.toString()) }
-        }
-    }
-
-    fun getSystemLaunchTrigger(systemName: String): SystemLaunchTrigger {
-        return state.value.systemLaunchTriggerMap[systemName] ?: SystemLaunchTrigger.NoAction
-    }
-
-    fun toggleSystemTopScreen(systemFolderName: String) {
-        val current = _state.value.systemTopScreenSet
-        val updated = if (current.contains(systemFolderName)) {
-            current - systemFolderName
-        } else {
-            current + systemFolderName
-        }
-        _state.value = _state.value.copy(systemTopScreenSet = updated)
-        if (updated.isEmpty()) {
-            prefs.edit { remove(KEY_SYSTEM_TOP_SCREEN) }
-        } else {
-            prefs.edit { putString(KEY_SYSTEM_TOP_SCREEN, JSONArray(updated.toList()).toString()) }
-        }
-    }
-
-    fun isSystemBottomScreen(systemName: String): Boolean {
-        return !state.value.systemTopScreenSet.contains(systemName)
-    }
-
-    fun setGameEmulator(gameKey: String, packageName: String) {
-        val updated = _state.value.gameEmulatorMap.toMutableMap()
-        updated[gameKey] = packageName
-        _state.value = _state.value.copy(gameEmulatorMap = updated)
-        val json = JSONObject()
-        updated.forEach { (k, v) -> json.put(k, v) }
-        prefs.edit { putString(KEY_GAME_EMULATOR_MAP, json.toString()) }
-    }
-
-    fun getGameEmulator(gameKey: String): String? {
-        return state.value.gameEmulatorMap[gameKey]
-    }
-
-    fun setGameLaunchCommand(gameKey: String, command: String) {
-        val updated = _state.value.gameCommandMap.toMutableMap()
-        updated[gameKey] = command
-        _state.value = _state.value.copy(gameCommandMap = updated)
-        val json = JSONObject()
-        updated.forEach { (k, v) -> json.put(k, v) }
-        prefs.edit { putString(KEY_GAME_COMMAND_MAP, json.toString()) }
-    }
-
-    fun getGameLaunchCommand(gameKey: String): String? {
-        return state.value.gameCommandMap[gameKey]
-    }
-
-    fun setGameCore(gameKey: String, corePath: String) {
-        val updated = _state.value.gameCoreMap.toMutableMap()
-        updated[gameKey] = corePath
-        _state.value = _state.value.copy(gameCoreMap = updated)
-        val json = JSONObject()
-        updated.forEach { (k, v) -> json.put(k, v) }
-        prefs.edit { putString(KEY_GAME_CORE_MAP, json.toString()) }
-    }
-
-    fun getGameCore(gameKey: String): String? {
-        return state.value.gameCoreMap[gameKey]
-    }
-
-    fun hideGame(gameKey: String) {
-        val updated = _state.value.hiddenGames + gameKey
-        _state.value = _state.value.copy(hiddenGames = updated)
-        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
-    }
-
-    fun isGameHidden(gameKey: String): Boolean {
-        return state.value.hiddenGames.contains(gameKey)
-    }
-
-    fun unhideGame(gameKey: String) {
-        val updated = _state.value.hiddenGames - gameKey
-        _state.value = _state.value.copy(hiddenGames = updated)
-        prefs.edit { putString(KEY_HIDDEN_GAMES, JSONArray(updated.toList()).toString()) }
-    }
 }

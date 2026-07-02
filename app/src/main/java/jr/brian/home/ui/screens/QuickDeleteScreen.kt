@@ -4,6 +4,7 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -490,7 +491,7 @@ private fun openFolderInFileManager(
     try {
         val uri = Uri.parse(uriString)
         val options = ActivityOptions.makeBasic()
-        options.launchDisplayId = 0
+        options.launchDisplayId = PRIMARY_DISPLAY_ID
 
         try {
             val browseIntent = Intent("android.provider.action.BROWSE").apply {

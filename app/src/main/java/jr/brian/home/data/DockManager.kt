@@ -200,6 +200,27 @@ class DockManager(context: Context) {
         return _dockVisiblePages.value.contains(pageIndex)
     }
 
+    fun reorderPages(oldIndicesInNewOrder: Map<Int, Int>) {
+        val oldPages = _dockVisiblePages.value
+        if (oldPages.isEmpty()) return
+        val oldToNew = oldIndicesInNewOrder.entries.associate { (newIdx, oldIdx) -> oldIdx to newIdx }
+        val newPages = oldPages.mapNotNull { oldToNew[it] }.toSet()
+        setDockVisiblePages(newPages)
+    }
+
+    fun removePage(pageIndex: Int) {
+        val oldPages = _dockVisiblePages.value
+        if (oldPages.isEmpty()) return
+        val newPages = oldPages.mapNotNull { idx ->
+            when {
+                idx < pageIndex -> idx
+                idx > pageIndex -> idx - 1
+                else -> null
+            }
+        }.toSet()
+        setDockVisiblePages(newPages)
+    }
+
     fun swapDockApps(fromPosition: Int, toPosition: Int) {
         val currentDockApps = _dockApps.value.toMutableList()
         

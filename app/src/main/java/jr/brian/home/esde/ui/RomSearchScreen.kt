@@ -3,6 +3,7 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -93,17 +94,19 @@ fun RomSearchScreen(
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
-    val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
+    // val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
 
     var showSpecialCharRow by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showCommandsDialog by remember { mutableStateOf(false) }
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
 
+    val fromFrontend = remember { viewModel.stateHolder.openedFromFrontend.value }
+
     LaunchedEffect(Unit) {
         jinglesManager.stop()
         viewModel.loadGames()
-        launchResultsActivity(context)
+        launchResultsActivity(context, fromFrontend = fromFrontend)
     }
 
     LaunchedEffect(Unit) {
@@ -117,6 +120,7 @@ fun RomSearchScreen(
         onDispose {
             viewModel.clearState()
             viewModel.resetHintAndKbVisibility()
+            viewModel.stateHolder.openedFromFrontend.value = false
         }
     }
 
@@ -141,7 +145,7 @@ fun RomSearchScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                AnimatedVisibility(visible = hintAndKbVisible) {
+                AnimatedVisibility(visible = true) {
                     RomSearchControlHints {
                         showCommandsDialog = true
                     }
@@ -161,7 +165,7 @@ fun RomSearchScreen(
                     }
                 }
 
-                AnimatedVisibility(visible = hintAndKbVisible) {
+                AnimatedVisibility(visible = true) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         QwertyKeyboard(
                             searchQuery = query,
@@ -179,7 +183,7 @@ fun RomSearchScreen(
                                 onNavigateToSearch()
                             },
                             onAtClick = { viewModel.updateQuery("$query@") },
-                            onReopenResults = { launchResultsActivity(context) },
+                            onReopenResults = { launchResultsActivity(context, fromFrontend = fromFrontend) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -207,26 +211,26 @@ private fun RomSearchControlHints(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Keyboard,
-                contentDescription = null,
-                tint = ThemePrimaryColor.copy(alpha = 0.5f),
-                modifier = Modifier.size(16.dp)
-            )
-            Text(
-                text = stringResource(R.string.rom_search_hint_keyboard),
-                color = ThemePrimaryColor.copy(alpha = 0.5f),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
+//        Row(
+//            horizontalArrangement = Arrangement.spacedBy(4.dp),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.Keyboard,
+//                contentDescription = null,
+//                tint = ThemePrimaryColor.copy(alpha = 0.5f),
+//                modifier = Modifier.size(16.dp)
+//            )
+//            Text(
+//                text = stringResource(R.string.rom_search_hint_keyboard),
+//                color = ThemePrimaryColor.copy(alpha = 0.5f),
+//                fontSize = 14.sp,
+//                fontWeight = FontWeight.Medium
+//            )
+//        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -373,11 +377,12 @@ private fun MarqueeDisplay(game: GameInfo?) {
     }
 }
 
-private fun launchResultsActivity(context: Context) {
+private fun launchResultsActivity(context: Context, fromFrontend: Boolean) {
     val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, fromFrontend)
     }
     val options = ActivityOptions.makeBasic()
-    options.launchDisplayId = 0
+    options.launchDisplayId = PRIMARY_DISPLAY_ID
     context.startActivity(intent, options.toBundle())
 }

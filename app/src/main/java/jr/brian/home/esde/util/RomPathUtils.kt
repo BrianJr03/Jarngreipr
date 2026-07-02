@@ -10,6 +10,17 @@ fun gameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 
 /**
+ * Builds the ordered list of media roots the resolvers should search.
+ * The primary (ES-DE) root always comes first; a non-blank secondary
+ * (e.g. RetroHrai!) is appended when enabled. Duplicates are dropped so
+ * a misconfigured secondary pointing at the same dir doesn't double the work.
+ */
+fun mediaRoots(primary: String, secondary: String?): List<String> =
+    listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() })
+        .map { it.trimEnd('/') }
+        .distinct()
+
+/**
  * Candidate (basename, parentDir) pairs to probe when locating scraped media.
  *
  * ES-DE's "Directories interpreted as files" convention (e.g. `Xenogears.m3u/`) means
@@ -35,13 +46,13 @@ fun mediaBasenameCandidates(gameFilename: String): List<Pair<String, String?>> {
 }
 
 /**
- * Lazily yields candidate scraped-media files for `gameFilename` under one media folder,
- * walking [systemNames] × [mediaBasenameCandidates] × [suffixVariants] × [extensions] in
- * preference order. Pass [suffixVariants] like `listOf("", ".scummvm")` for ScummVM-style
- * sidecar names.
+ * Lazily yields candidate scraped-media files for `gameFilename` under each media root,
+ * walking [mediaPaths] × [systemNames] × [mediaBasenameCandidates] × [suffixVariants] ×
+ * [extensions] in preference order. Roots are the outermost loop so a first-root hit wins.
+ * Pass [suffixVariants] like `listOf("", ".scummvm")` for ScummVM-style sidecar names.
  */
 fun mediaCandidatePaths(
-    mediaPath: String,
+    mediaPaths: List<String>,
     systemNames: List<String>,
     folder: String,
     gameFilename: String,
@@ -49,14 +60,16 @@ fun mediaCandidatePaths(
     suffixVariants: List<String> = listOf("")
 ): Sequence<File> = sequence {
     val candidates = mediaBasenameCandidates(gameFilename)
-    for (sysName in systemNames) {
-        for ((basename, parentDir) in candidates) {
-            for (suffix in suffixVariants) {
-                for (ext in extensions) {
-                    if (parentDir != null) {
-                        yield(File(mediaPath, "$sysName/$folder/$parentDir/$basename$suffix.$ext"))
+    for (mediaPath in mediaPaths) {
+        for (sysName in systemNames) {
+            for ((basename, parentDir) in candidates) {
+                for (suffix in suffixVariants) {
+                    for (ext in extensions) {
+                        if (parentDir != null) {
+                            yield(File(mediaPath, "$sysName/$folder/$parentDir/$basename$suffix.$ext"))
+                        }
+                        yield(File(mediaPath, "$sysName/$folder/$basename$suffix.$ext"))
                     }
-                    yield(File(mediaPath, "$sysName/$folder/$basename$suffix.$ext"))
                 }
             }
         }
@@ -64,18 +77,18 @@ fun mediaCandidatePaths(
 }
 
 /**
- * Returns the absolute path of the first existing scraped-media file across [folders],
- * or null if none exist.
+ * Returns the absolute path of the first existing scraped-media file across [folders]
+ * and [mediaPaths] (first-root, first-folder hit wins), or null if none exist.
  */
 fun findFirstMedia(
-    mediaPath: String,
+    mediaPaths: List<String>,
     systemNames: List<String>,
     folders: List<String>,
     gameFilename: String,
     extensions: List<String>,
     suffixVariants: List<String> = listOf("")
 ): String? = folders.firstNotNullOfOrNull { folder ->
-    mediaCandidatePaths(mediaPath, systemNames, folder, gameFilename, extensions, suffixVariants)
+    mediaCandidatePaths(mediaPaths, systemNames, folder, gameFilename, extensions, suffixVariants)
         .firstOrNull { it.exists() }
         ?.absolutePath
 }

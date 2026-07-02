@@ -49,15 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.theme.OledCardColor
-import jr.brian.home.ui.theme.ThemePrimaryColor
 
 @Composable
 fun AppsAndWidgetsOptionsDialog(
@@ -75,32 +72,16 @@ fun AppsAndWidgetsOptionsDialog(
     currentRomDisplayPreference: DisplayPreference? = null,
     onRomDisplayPreferenceChange: ((DisplayPreference) -> Unit)? = null
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 16.dp)
-                .background(
-                    color = OledCardColor,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -251,7 +232,6 @@ fun AppsAndWidgetsOptionsDialog(
                         }
                     )
                 }
-            }
         }
     }
 }

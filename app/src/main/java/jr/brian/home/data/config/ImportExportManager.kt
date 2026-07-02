@@ -1,13 +1,21 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.util.UnstableApi
+import jr.brian.home.canvas.data.CanvasTabType
+import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.data.AppManagers
 import jr.brian.home.data.BgMusicManager
 import jr.brian.home.data.DockSize
 import jr.brian.home.data.FabPosition
 import jr.brian.home.data.FolderManager
+import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
+import jr.brian.home.data.PageManagers
+import jr.brian.home.data.SnapMode
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
@@ -120,7 +128,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private fun buildPositionsByPage(
-        app: jr.brian.home.data.AppManagers,
+        app: AppManagers,
         maxPages: Int
     ): Map<String, PagePositionConfig> {
         val result = mutableMapOf<String, PagePositionConfig>()
@@ -149,11 +157,15 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     }
 
     private suspend fun buildFoldersByKey(
-        app: jr.brian.home.data.AppManagers,
+        app: AppManagers,
         maxPages: Int
     ): Map<String, List<FolderItemConfig>> {
         val result = mutableMapOf<String, List<FolderItemConfig>>()
-        val tabTypes = listOf(FolderManager.TAB_TYPE_APPS, FolderManager.TAB_TYPE_WIDGETS)
+        val tabTypes = listOf(
+            FolderManager.TAB_TYPE_APPS,
+            FolderManager.TAB_TYPE_WIDGETS,
+            CanvasTabType.VALUE
+        )
         for (page in 0 until maxPages) {
             for (tabType in tabTypes) {
                 val folders = app.folderManager.getFolders(page, tabType).first()
@@ -180,16 +192,20 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         val page = managers.page
         val pageTypes = page.pageTypeManager.pageTypes.value
         val widgetPageApps = buildWidgetPageApps(page, pageTypes.size)
+        val canvasLayouts = page.canvasLayoutManager.layoutsByPage.value
+            .filterValues { it.items.isNotEmpty() || it != CanvasLayout() }
+            .mapKeys { it.key.toString() }
         return PageConfig(
             pageCount = pageTypes.size,
             pageTypes = pageTypes.map { it.name },
             homeTabIndex = page.homeTabManager.homeTabIndex.value,
-            widgetPageApps = widgetPageApps
+            widgetPageApps = widgetPageApps,
+            canvasLayouts = canvasLayouts
         )
     }
 
     private suspend fun buildWidgetPageApps(
-        page: jr.brian.home.data.PageManagers,
+        page: PageManagers,
         pageCount: Int
     ): Map<String, WidgetPageAppsConfig> {
         val result = mutableMapOf<String, WidgetPageAppsConfig>()
@@ -255,14 +271,27 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 volume = f.bgMusicManager.vol
             ),
             romSearch = RomSearchConfig(
-                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible
+                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible,
+                frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
+                systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
+                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
+                systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
+                systemOrder = f.esdePreferencesManager.state.value.systemOrder,
+                frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
+                frontendFloatIntensity = f.esdePreferencesManager.state.value.frontendFloatIntensity,
+                canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
+                gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
+                systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
+                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled
             )
         )
     }
 
     private fun buildSystemConfig() = SystemConfig(
         badgesVisible = managers.system.notificationManager.badgesVisible,
-        shadeTabPage = managers.system.notificationManager.shadeTabPage
+        shadeTabPage = managers.system.notificationManager.shadeTabPage,
+        hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList()
     )
 
     // ── Import ──────────────────────────────────────────────────────────────
@@ -285,8 +314,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setTabTransitionAnimationName(config.gridSettings.tabTransitionAnimationName)
         ui.gridSettingsManager.setIconSnapEnabled(config.gridSettings.iconSnapEnabled)
         runCatching {
-            val mode = jr.brian.home.data.SnapMode.valueOf(config.gridSettings.snapMode)
-            if (mode != jr.brian.home.data.SnapMode.OFF) {
+            val mode = SnapMode.valueOf(config.gridSettings.snapMode)
+            if (mode != SnapMode.OFF) {
                 ui.gridSettingsManager.setSnapMode(mode)
             }
         }
@@ -370,7 +399,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             }
         }
 
-        val tabTypes = listOf(FolderManager.TAB_TYPE_APPS, FolderManager.TAB_TYPE_WIDGETS)
+        val tabTypes = listOf(
+            FolderManager.TAB_TYPE_APPS,
+            FolderManager.TAB_TYPE_WIDGETS,
+            CanvasTabType.VALUE
+        )
         for (page in 0 until PageCountRange.MAX) {
             for (tabType in tabTypes) {
                 app.folderManager.setAllFolders(page, tabType, emptyList())
@@ -419,6 +452,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             }
             if (wpc.appsFirst) page.widgetPageAppManager.toggleSectionOrder(p)
         }
+
+        page.canvasLayoutManager.clearAll()
+        config.canvasLayouts.forEach { (pageStr, layout) ->
+            pageStr.toIntOrNull()?.let { idx ->
+                page.canvasLayoutManager.replaceLayout(idx, layout)
+            }
+        }
     }
 
     private fun applyFeatureConfig(config: FeatureConfig) {
@@ -441,7 +481,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.controlPadManager.setCameraSensitivity(config.controlPad.cameraSensitivity)
         runCatching {
             f.controlPadManager.setJoystickMode(
-                jr.brian.home.data.JoystickMode.valueOf(config.controlPad.joystickMode)
+                JoystickMode.valueOf(config.controlPad.joystickMode)
             )
         }
 
@@ -479,6 +519,20 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         )
 
         f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
+        f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
+        runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
+            ?.let { f.esdePreferencesManager.setSystemLayout(it) }
+        runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
+            ?.let { f.esdePreferencesManager.setGameLayout(it) }
+        f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)
+        f.esdePreferencesManager.setSystemOrder(config.romSearch.systemOrder)
+        f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
+        f.esdePreferencesManager.setFrontendFloatIntensity(config.romSearch.frontendFloatIntensity)
+        f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
+        f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
+        f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
+        f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
     }
 
     private fun applySystemConfig(config: SystemConfig) {
@@ -487,6 +541,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             sys.notificationManager.toggleBadgesVisible()
         }
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
+        managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
     }
 
     fun encodeToJson(config: JarngreiprConfig): String =

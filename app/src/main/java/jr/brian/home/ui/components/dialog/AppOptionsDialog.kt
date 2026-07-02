@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.model.app.AppInfo
-import jr.brian.home.ui.components.apps.AppOptionsMenuContent
+import jr.brian.home.ui.components.apps.CanvasOptionsMenuContent
 import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.OledCardColor
 
@@ -42,7 +42,8 @@ fun AppOptionsDialog(
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     isInDock: Boolean = false,
-    onRemoveFromDock: () -> Unit = {}
+    onRemoveFromDock: () -> Unit = {},
+    onEditCanvas: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -83,7 +84,7 @@ fun AppOptionsDialog(
             }
         },
         text = {
-            AppOptionsMenuContent(
+            CanvasOptionsMenuContent(
                 appLabel = "",
                 currentDisplayPreference = currentDisplayPreference,
                 onAppInfoClick = onAppInfoClick,
@@ -97,7 +98,8 @@ fun AppOptionsDialog(
                 onCustomIconClick = onCustomIconClick,
                 onRenameClick = onRenameClick,
                 isInDock = isInDock,
-                onRemoveFromDock = onRemoveFromDock
+                onRemoveFromDock = onRemoveFromDock,
+                onEditCanvas = onEditCanvas
             )
         },
         confirmButton = {}

@@ -4,6 +4,11 @@ import android.util.Log
 import android.util.Xml
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_COVERS
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_FANART
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MARQUEES
 import jr.brian.home.esde.util.ESDEMediaConstants.FOLDER_MIXIMAGES
@@ -20,16 +25,16 @@ import java.io.File
 object RomListParser {
     private const val TAG = "RomListParser"
 
-    fun parseAllSystems(
+    suspend fun parseAllSystems(
         esdeRootPath: String,
-        mediaPath: String,
+        mediaPaths: List<String>,
         romsPaths: List<String> = emptyList(),
         systemEmulatorMap: Map<String, String?> = emptyMap()
-    ): List<GameInfo> {
+    ): List<GameInfo> = withContext(Dispatchers.IO) {
         val gamelistsDir = File(esdeRootPath, "gamelists")
         if (!gamelistsDir.exists() || !gamelistsDir.isDirectory) {
             Log.d(TAG, "Gamelists directory not found: ${gamelistsDir.absolutePath}")
-            return emptyList()
+            return@withContext emptyList()
         }
 
         val esSystemsFile = File(esdeRootPath, "custom_systems/es_systems.xml")
@@ -45,25 +50,26 @@ object RomListParser {
             .map { it.trimEnd('/').substringBeforeLast('/') }
             .distinct()
 
-        return (gamelistsDir.listFiles()?.filter { it.isDirectory } ?: emptyList())
-            .flatMap { systemDir ->
-                val systemName = systemDir.name
-                val gamelistFile = File(systemDir, "gamelist.xml")
-                if (gamelistFile.exists()) {
+        val systemDirs = gamelistsDir.listFiles()?.filter { it.isDirectory }.orEmpty()
+        coroutineScope {
+            systemDirs.map { systemDir ->
+                async {
+                    val systemName = systemDir.name
+                    val gamelistFile = File(systemDir, "gamelist.xml")
+                    if (!gamelistFile.exists()) return@async emptyList()
                     parseSystemGamelist(
                         gamelistFile = gamelistFile,
                         systemName = systemName,
-                        mediaPath = mediaPath,
+                        mediaPaths = mediaPaths,
                         romsPaths = romsPaths,
                         systemRomDir = systemRomDirs[systemName],
                         sdCardParents = sdCardParents,
                         emulatorPackage = systemEmulatorMap[systemName],
                         launchCommand = systemCommands[systemName]
                     )
-                } else {
-                    emptyList()
                 }
-            }
+            }.awaitAll().flatten()
+        }
     }
 
     /** Extracts the &lt;path&gt; element for each system from es_systems.xml. */
@@ -165,7 +171,7 @@ object RomListParser {
     private fun parseSystemGamelist(
         gamelistFile: File,
         systemName: String,
-        mediaPath: String,
+        mediaPaths: List<String>,
         romsPaths: List<String>,
         systemRomDir: String?,
         sdCardParents: List<String> = emptyList(),
@@ -241,13 +247,13 @@ object RomListParser {
                                     "lastplayed" -> lastPlayed = text.ifBlank { null }
                                     "game" -> {
                                         if (path.isNotEmpty()) {
-                                            val artworkPath = resolveArtworkPath(systemName, path, mediaPath)
-                                            val physicalMediaPath = resolvePhysicalMediaPath(systemName, path, mediaPath)
-                                            val marqueePath = resolveMarqueePath(systemName, path, mediaPath)
-                                            val screenshotPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_SCREENSHOTS)
-                                            val fanartPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_FANART)
-                                            val titlescreenPath = resolveMediaPath(systemName, path, mediaPath, FOLDER_TITLESCREENS)
-                                            val miximagePath = resolveMediaPath(systemName, path, mediaPath, FOLDER_MIXIMAGES)
+                                            val artworkPath = resolveArtworkPath(systemName, path, mediaPaths)
+                                            val physicalMediaPath = resolvePhysicalMediaPath(systemName, path, mediaPaths)
+                                            val marqueePath = resolveMarqueePath(systemName, path, mediaPaths)
+                                            val screenshotPath = resolveMediaPath(systemName, path, mediaPaths, FOLDER_SCREENSHOTS)
+                                            val fanartPath = resolveMediaPath(systemName, path, mediaPaths, FOLDER_FANART)
+                                            val titlescreenPath = resolveMediaPath(systemName, path, mediaPaths, FOLDER_TITLESCREENS)
+                                            val miximagePath = resolveMediaPath(systemName, path, mediaPaths, FOLDER_MIXIMAGES)
                                             val romAbsPath = resolveRomPath(systemName, path, romsPaths, systemRomDir, sdCardParents)
                                             games.add(
                                                 GameInfo(
@@ -320,18 +326,18 @@ object RomListParser {
         return null
     }
 
-    private fun resolvePhysicalMediaPath(systemName: String, gameFilename: String, mediaPath: String): String? =
-        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(FOLDER_PHYSICALMEDIA), gameFilename, IMAGE_EXTENSIONS)
+    private fun resolvePhysicalMediaPath(systemName: String, gameFilename: String, mediaPaths: List<String>): String? =
+        findFirstMedia(mediaPaths, mediaSystemNames(systemName), listOf(FOLDER_PHYSICALMEDIA), gameFilename, IMAGE_EXTENSIONS)
 
-    private fun resolveMediaPath(systemName: String, gameFilename: String, mediaPath: String, folder: String): String? =
-        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(folder), gameFilename, IMAGE_EXTENSIONS)
+    private fun resolveMediaPath(systemName: String, gameFilename: String, mediaPaths: List<String>, folder: String): String? =
+        findFirstMedia(mediaPaths, mediaSystemNames(systemName), listOf(folder), gameFilename, IMAGE_EXTENSIONS)
 
-    private fun resolveArtworkPath(systemName: String, gameFilename: String, mediaPath: String): String? =
-        findFirstMedia(mediaPath, mediaSystemNames(systemName), listOf(FOLDER_COVERS), gameFilename, IMAGE_EXTENSIONS)
+    private fun resolveArtworkPath(systemName: String, gameFilename: String, mediaPaths: List<String>): String? =
+        findFirstMedia(mediaPaths, mediaSystemNames(systemName), listOf(FOLDER_COVERS), gameFilename, IMAGE_EXTENSIONS)
 
-    private fun resolveMarqueePath(systemName: String, gameFilename: String, mediaPath: String): String? =
+    private fun resolveMarqueePath(systemName: String, gameFilename: String, mediaPaths: List<String>): String? =
         findFirstMedia(
-            mediaPath,
+            mediaPaths,
             mediaSystemNames(systemName),
             listOf(FOLDER_MARQUEES) + MARQUEE_FALLBACK_DIRS,
             gameFilename,

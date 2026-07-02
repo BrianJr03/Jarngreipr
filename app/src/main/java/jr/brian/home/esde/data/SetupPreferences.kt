@@ -23,5 +23,6 @@ class SetupPreferences(context: Context) {
     companion object {
         const val DEFAULT_SCRIPTS_PATH = "/storage/emulated/0/ES-DE/scripts"
         const val DEFAULT_MEDIA_PATH = "/storage/emulated/0/ES-DE/downloaded_media"
+        const val RETRO_HRAI_PATH = "/storage/emulated/0/RetroHrai!/media"
     }
 }

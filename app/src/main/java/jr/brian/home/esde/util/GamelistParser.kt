@@ -109,6 +109,59 @@ object GamelistParser {
     }
 
     /**
+     * Scraped `<name>` for the game from ES-DE's gamelist.xml — the same
+     * source [getGameDescription] reads from. Returns null when the gamelist
+     * is missing, the game isn't listed, or the entry has no `<name>`.
+     * Caller should fall back to a derived label (typically the filename
+     * stem) when this is null.
+     */
+    fun getGameName(
+        esdeRootPath: String,
+        systemName: String,
+        gameFilename: String
+    ): String? {
+        try {
+            val esdeRoot = File(esdeRootPath)
+            if (!esdeRoot.exists()) return null
+            val gamelistFile = File(esdeRoot, "gamelists/$systemName/gamelist.xml")
+            if (!gamelistFile.exists()) return null
+
+            val xmlContent = gamelistFile.readText()
+            val sanitizedFilename = sanitizeGameFilename(gameFilename)
+            val filenameWithEncodedAmpersand = sanitizedFilename.replace("&", "&amp;")
+
+            var pathMatch: MatchResult? = null
+            if (filenameWithEncodedAmpersand != sanitizedFilename) {
+                val pattern1 = "<path>\\./\\Q$filenameWithEncodedAmpersand\\E</path>".toRegex()
+                pathMatch = pattern1.find(xmlContent)
+            }
+            if (pathMatch == null) {
+                val pattern2 = "<path>\\./\\Q$sanitizedFilename\\E</path>".toRegex()
+                pathMatch = pattern2.find(xmlContent)
+            }
+            if (pathMatch == null) return null
+
+            val gameStartIndex = pathMatch.range.first
+            val remainingXml = xmlContent.substring(gameStartIndex)
+            val nextGameIndex = remainingXml.indexOf("<game>", startIndex = 1)
+            val searchSpace = if (nextGameIndex > 0) {
+                remainingXml.substring(0, nextGameIndex)
+            } else {
+                remainingXml
+            }
+
+            val nameMatch = "<name>([\\s\\S]*?)</name>".toRegex().find(searchSpace)
+            return nameMatch?.groupValues?.get(1)
+                ?.trim()
+                ?.let(::decodeXmlEntities)
+                ?.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing gamelist.xml for name", e)
+            return null
+        }
+    }
+
+    /**
      * Sanitize game filename by removing path prefixes and normalizing
      */
     private fun sanitizeGameFilename(gameFilename: String): String {

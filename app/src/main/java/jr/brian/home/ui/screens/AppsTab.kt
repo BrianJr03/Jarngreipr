@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -71,6 +73,7 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalTabAnimationManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
@@ -90,6 +93,7 @@ import jr.brian.home.util.openAppInfo
 import jr.brian.home.viewmodels.PowerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -361,6 +365,8 @@ fun AppsTab(
         val pageCountManager = LocalPageCountManager.current
         val pageTypeManager = LocalPageTypeManager.current
         val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+        val pageOrderCoordinator = LocalPageOrderCoordinator.current
+        val coroutineScope = rememberCoroutineScope()
 
         HomeTabSelectionDialog(
             currentTabIndex = currentHomeTabIndex,
@@ -379,9 +385,13 @@ fun AppsTab(
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch,
             onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
-                appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
-                pageTypeManager.reorderPages(newOrder)
-                homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
             }
         )
     }

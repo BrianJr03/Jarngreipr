@@ -30,6 +30,16 @@ class PinnedRomManager @Inject constructor(
     fun getPinnedRoms(pageIndex: Int, tabType: String = TAB_TYPE_APPS): Flow<List<PinnedRomInfo>> =
         _pinnedRomsByPage.map { it[compositeKey(tabType, pageIndex)] ?: emptyList() }
 
+    /**
+     * Every pinned ROM across all pages and tab types, deduplicated by [PinnedRomInfo.key].
+     * Used by surfaces that pin existing ROMs to new locations (e.g. Unified Canvas)
+     * without having to know which page/tab the ROM lives on.
+     */
+    val allPinnedRoms: Flow<List<PinnedRomInfo>> =
+        _pinnedRomsByPage.map { byKey ->
+            byKey.values.flatten().distinctBy { it.key }
+        }
+
     fun addPinnedRom(pageIndex: Int, romInfo: PinnedRomInfo, tabType: String = TAB_TYPE_APPS) {
         val ck = compositeKey(tabType, pageIndex)
         val current = _pinnedRomsByPage.value.toMutableMap()

@@ -1,6 +1,8 @@
 package jr.brian.home.ui.util
 
 import android.text.Html
+import jr.brian.home.model.rss.RssFeed
+import jr.brian.home.model.rss.RssItem
 
 internal val pubDateFormats = listOf(
     "EEE, dd MMM yyyy HH:mm:ss Z",
@@ -51,4 +53,103 @@ internal fun formatMs(ms: Long): String {
 internal fun stripHtml(html: String): String {
     if (html.isBlank()) return ""
     return Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT).toString()
+}
+
+/**
+ * Snapshot of the RSS items the user can currently see in the RSS tab, in the
+ * order the tab renders them. Computed by [computeRssVisibleItems] so the
+ * tab's list and the canvas RSS music tile's queue can never drift apart.
+ *
+ * [flatOrdered] is the queue: a single flat sequence matching the tab's render
+ * order for the active mode. The other fields preserve the per-mode groupings
+ * the tab still uses for sticky headers / per-feed sections.
+ */
+internal data class RssVisibleItems(
+    val flatOrdered: List<RssItem>,
+    val itemsByFeed: Map<String, List<RssItem>>,
+    val mixedItems: List<RssItem>,
+    val historyItems: List<RssItem>,
+    val orderedFeeds: List<RssFeed>
+)
+
+/**
+ * Compute the items the RSS tab currently shows for the given inputs, plus the
+ * flat ordered queue the canvas RSS music tile uses for prev/next.
+ *
+ * - History mode short-circuits filtering: it just maps [historyItemIds] back
+ *   to items by id, matching the tab's history list.
+ * - Mixed mode applies selected-feed + audio-only + search filters, interleaves
+ *   round-robin across feeds, then sorts by pubDate descending.
+ * - Feed mode applies the same filters per feed, then flattens in feed order
+ *   with the currently-playing feed pinned first.
+ */
+internal fun computeRssVisibleItems(
+    items: List<RssItem>,
+    feeds: List<RssFeed>,
+    selectedFeedUrls: Set<String>,
+    isAudioOnly: Boolean,
+    isMixedMode: Boolean,
+    isHistoryMode: Boolean,
+    historyItemIds: List<String>,
+    searchQuery: String,
+    currentlyPlayingFeedUrl: String?
+): RssVisibleItems {
+    val itemsByFeed = items.groupBy { it.feedUrl }
+
+    val feedFiltered = if (selectedFeedUrls.isEmpty()) itemsByFeed
+    else itemsByFeed.filterKeys { it in selectedFeedUrls }
+
+    val audioFiltered = if (!isAudioOnly) feedFiltered
+    else feedFiltered.mapValues { (_, feedItems) ->
+        feedItems.filter { it.audioUrl.isNotEmpty() }
+    }.filterValues { it.isNotEmpty() }
+
+    val filteredItemsByFeed = if (searchQuery.isBlank()) audioFiltered
+    else audioFiltered.mapValues { (_, feedItems) ->
+        feedItems.filter { item ->
+            item.title.contains(searchQuery, ignoreCase = true) ||
+                item.description.contains(searchQuery, ignoreCase = true)
+        }
+    }.filterValues { it.isNotEmpty() }
+
+    val mixedItems = if (!isMixedMode) emptyList()
+    else {
+        val lists = filteredItemsByFeed.values.toList()
+        val maxSize = lists.maxOfOrNull { it.size } ?: 0
+        buildList {
+            for (i in 0 until maxSize) {
+                lists.forEach { feedItems -> feedItems.getOrNull(i)?.let { add(it) } }
+            }
+        }.sortedByDescending { parsePubDateMillis(it.pubDate) }
+    }
+
+    val orderedFeeds = run {
+        val base = if (selectedFeedUrls.isEmpty()) feeds
+        else feeds.filter { it.url in selectedFeedUrls }
+        val withItems = base.filter { it.url in filteredItemsByFeed }
+        val playingUrl = currentlyPlayingFeedUrl
+        val playing = playingUrl?.let { url -> withItems.find { it.url == url } }
+        if (playing == null) withItems
+        else listOf(playing) + withItems.filter { it.url != playingUrl }
+    }
+
+    val historyItems = if (!isHistoryMode) emptyList()
+    else {
+        val itemMap = items.associateBy { it.id }
+        historyItemIds.mapNotNull { itemMap[it] }
+    }
+
+    val flatOrdered = when {
+        isHistoryMode -> historyItems
+        isMixedMode -> mixedItems
+        else -> orderedFeeds.flatMap { feed -> filteredItemsByFeed[feed.url].orEmpty() }
+    }
+
+    return RssVisibleItems(
+        flatOrdered = flatOrdered,
+        itemsByFeed = filteredItemsByFeed,
+        mixedItems = mixedItems,
+        historyItems = historyItems,
+        orderedFeeds = orderedFeeds
+    )
 }

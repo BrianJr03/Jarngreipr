@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -39,14 +39,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.cardGradient
 import jr.brian.home.ui.components.apps.AppIconImage
-import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 
 @Composable
@@ -55,23 +52,12 @@ fun DockAppSelectionDialog(
     onAppSelected: (AppInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(OledBackgroundColor.copy(alpha = 0.95f))
+                .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -97,21 +83,22 @@ fun DockAppSelectionDialog(
                     }
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(apps, key = { it.packageName }) { app ->
-                        DockAppSelectionItem(
-                            app = app,
-                            onClick = {
-                                onAppSelected(app)
-                            }
-                        )
-                    }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(apps, key = { it.packageName }) { app ->
+                    DockAppSelectionItem(
+                        app = app,
+                        onClick = {
+                            onAppSelected(app)
+                        }
+                    )
                 }
             }
         }

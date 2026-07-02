@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RemoveCircleOutline
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +38,7 @@ import jr.brian.home.model.app.AppInfo
 import jr.brian.home.ui.util.rememberAutoFocus
 
 @Composable
-fun AppOptionsMenuContent(
+fun CanvasOptionsMenuContent(
     appLabel: String,
     currentDisplayPreference: DisplayPreference,
     hasExternalDisplay: Boolean,
@@ -51,12 +52,25 @@ fun AppOptionsMenuContent(
     onToggleVisibility: (() -> Unit)? = null,
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
-    onRemoveFromDock: () -> Unit = {}
+    onRemoveFromDock: () -> Unit = {},
+    onEditCanvas: (() -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
 
     val items: List<GridItem> = buildList {
+        if (onEditCanvas != null) {
+            add(
+                GridItem.IconItem(
+                    icon = Icons.Default.Tune,
+                    label = stringResource(R.string.canvas_edit_canvas_option),
+                    onClick = {
+                        onDismiss()
+                        onEditCanvas()
+                    }
+                )
+            )
+        }
         add(
             GridItem.IconItem(
             icon = Icons.Default.Info,

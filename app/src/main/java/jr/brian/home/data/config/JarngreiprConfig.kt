@@ -1,5 +1,7 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
@@ -15,7 +17,24 @@ data class JarngreiprConfig(
     val system: SystemConfig = SystemConfig()
 ) {
     companion object {
-        const val CONFIG_VERSION = 1
+        // v2: added page.canvasLayouts for Unified Canvas pages.
+        // v3: CanvasLayout split into shared content + per-orientation
+        //     arrangements; v2 blobs decode with empty arrangements and are
+        //     auto-repaired by CanvasLayoutManager.repair on apply.
+        // v5: added CanvasItem.RssMusicItem variant. Older blobs decode
+        //     unchanged (no rss_music entries); new blobs with rss_music are
+        //     unreadable by pre-v5 builds, so the version bump signals that.
+        // v6: added RomSearchConfig.systemCustomizations + systemOrder for per-system
+        //     frontend tile customization (background, name overlay toggle, color, order).
+        // v7: added RomSearchConfig.frontendHintsVisible for the bottom hint-row toggle.
+        // v8: added RomSearchConfig.frontendFloatIntensity for the floating-animation slider.
+        // v9: added RomSearchConfig.canvasContinuousSpinRoms for per-rom continuous-spin toggle.
+        // v10: added RomSearchConfig.gameMediaMap + systemMediaMap for per-game and per-system
+        //      card media type overrides.
+        // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
+        //      haptic toggle (applies to both system and game cards).
+        // v12: added SystemConfig.hiddenSystems for the Frontend "Filter Systems" sheet.
+        const val CONFIG_VERSION = 12
     }
 }
 
@@ -125,7 +144,9 @@ data class PageConfig(
     val pageCount: Int = 1,
     val pageTypes: List<String> = listOf("APPS_TAB"),
     val homeTabIndex: Int = 0,
-    val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap()
+    val widgetPageApps: Map<String, WidgetPageAppsConfig> = emptyMap(),
+    /** Per-page Unified Canvas layouts, keyed by pageIndex.toString(). */
+    val canvasLayouts: Map<String, CanvasLayout> = emptyMap()
 )
 
 @Serializable
@@ -208,11 +229,24 @@ data class BgMusicConfig(
 
 @Serializable
 data class RomSearchConfig(
-    val hintsKbVisible: Boolean = true
+    val hintsKbVisible: Boolean = true,
+    val frontendEnabled: Boolean = false,
+    val secondaryMediaEnabled: Boolean = true,
+    val systemLayout: String = "Grid",
+    val gameLayout: String = "Grid",
+    val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
+    val systemOrder: List<String> = emptyList(),
+    val frontendHintsVisible: Boolean = true,
+    val frontendFloatIntensity: Float = 1f,
+    val canvasContinuousSpinRoms: Set<String> = emptySet(),
+    val gameMediaMap: Map<String, String> = emptyMap(),
+    val systemMediaMap: Map<String, String> = emptyMap(),
+    val frontendFocusHapticEnabled: Boolean = true
 )
 
 @Serializable
 data class SystemConfig(
     val badgesVisible: Boolean = true,
-    val shadeTabPage: Int = 0
+    val shadeTabPage: Int = 0,
+    val hiddenSystems: List<String> = emptyList()
 )

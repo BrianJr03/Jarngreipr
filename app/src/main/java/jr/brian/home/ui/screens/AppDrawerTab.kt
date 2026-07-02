@@ -1,5 +1,6 @@
 package jr.brian.home.ui.screens
 
+import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -69,10 +70,10 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
-import jr.brian.home.ui.theme.managers.LocalAppVisibilityManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
@@ -406,8 +407,9 @@ fun AppDrawerTab(
             val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
             val pageCountManager = LocalPageCountManager.current
             val pageTypeManager = LocalPageTypeManager.current
-            val appVisibilityManager = LocalAppVisibilityManager.current
+            val pageOrderCoordinator = LocalPageOrderCoordinator.current
             val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
+            val coroutineScope = rememberCoroutineScope()
 
             HomeTabSelectionDialog(
                 currentTabIndex = currentHomeTabIndex,
@@ -426,9 +428,13 @@ fun AppDrawerTab(
                 pageTypes = pageTypes,
                 onNavigateToSearch = onNavigateToSearch,
                 onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
-                    appVisibilityManager.reorderHiddenApps(oldIndicesInNewOrder)
-                    pageTypeManager.reorderPages(newOrder)
-                    homeTabManager.setHomeTabIndex(newCurrentTabIndex)
+                    coroutineScope.launch {
+                        pageOrderCoordinator.reorder(
+                            newOrder = newOrder,
+                            oldIndicesInNewOrder = oldIndicesInNewOrder,
+                            newCurrentTabIndex = newCurrentTabIndex
+                        )
+                    }
                 }
             )
         }

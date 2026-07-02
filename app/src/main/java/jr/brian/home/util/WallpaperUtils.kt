@@ -119,6 +119,51 @@ object WallpaperUtils {
     }
 
     /**
+     * Copies an image (still or animated) from [sourceUri] into an app-internal
+     * subdirectory, returning the resulting `file://` URI. Modelled on
+     * [copyWallpaperToInternalStorage] but *without* the wallpaper's
+     * keep-latest-only cleanup — each caller owns its own file, so canvas
+     * photo containers can persist multiple images side-by-side without
+     * clobbering each other.
+     *
+     * The subdirectory is created lazily. Animated formats (GIF, WebP) keep
+     * their original extension so the app's Coil `ImageLoader` decodes them
+     * as animations.
+     */
+    fun copyMediaToInternalStorage(
+        context: Context,
+        sourceUri: Uri,
+        subdirName: String,
+        filePrefix: String
+    ): String? {
+        return try {
+            val dir = File(context.filesDir, subdirName)
+            if (!dir.exists()) dir.mkdirs()
+
+            val detectedType = detectWallpaperType(context, sourceUri)
+            val extension = when (detectedType) {
+                WallpaperType.GIF -> "gif"
+                WallpaperType.IMAGE -> getImageExtension(context, sourceUri)
+                else -> return null
+            }
+
+            val fileName = "$filePrefix${System.currentTimeMillis()}.$extension"
+            val destFile = File(dir, fileName)
+
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                destFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return null
+
+            "file://${destFile.absolutePath}"
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
      * Gets the appropriate image extension from the source URI
      */
     private fun getImageExtension(context: Context, uri: Uri): String {

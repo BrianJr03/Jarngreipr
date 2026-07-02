@@ -6,6 +6,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 
 fun launchApp(
     context: Context,
@@ -19,7 +20,7 @@ fun launchApp(
             when (displayPreference) {
                 DisplayPreference.PRIMARY_DISPLAY -> {
                     val options = ActivityOptions.makeBasic()
-                    options.launchDisplayId = 0
+                    options.launchDisplayId = PRIMARY_DISPLAY_ID
                     context.startActivity(intent, options.toBundle())
                 }
 

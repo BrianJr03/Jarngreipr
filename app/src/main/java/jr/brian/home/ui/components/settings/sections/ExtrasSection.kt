@@ -1,4 +1,5 @@
 package jr.brian.home.ui.components.settings.sections
+import jr.brian.home.esde.data.*
 import android.widget.Toast
 
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.SliderSetting
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
@@ -43,6 +45,8 @@ fun ExtrasSection(
     val pageTypeManager = LocalPageTypeManager.current
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val pageCount = pageTypes.size
+    val esdePreferencesManager = LocalESDEPreferencesManager.current
+    val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
 
     CollapsibleSettingsSection(
         title = stringResource(id = R.string.settings_section_extras),
@@ -51,6 +55,13 @@ fun ExtrasSection(
         onToggle = onToggle
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            ToggleSetting(
+                title = stringResource(R.string.frontend_enable_title),
+                description = stringResource(R.string.frontend_enable_description),
+                checked = esdePrefsState.frontendEnabled,
+                onCheckedChange = { esdePreferencesManager.setFrontendEnabled(it) }
+            )
+
             SettingItem(
                 title = stringResource(R.string.settings_whats_new_title),
                 description = stringResource(R.string.settings_whats_new_description),

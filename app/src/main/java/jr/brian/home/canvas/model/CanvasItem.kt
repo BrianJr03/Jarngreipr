@@ -1,0 +1,180 @@
+package jr.brian.home.canvas.model
+
+import jr.brian.home.esde.model.GameImageType
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * A placeable entity on a Unified Canvas page.
+ *
+ * Items carry only their stable [id] and a *reference* to an entity owned by
+ * another manager (app package / folder id / rom key / widget id / rss
+ * launcher) — never a duplicate of that entity's data, so icon-pack changes,
+ * custom names, folder edits, etc. flow through automatically.
+ *
+ * Items are orientation-agnostic content. Their placement (col / row / colSpan
+ * / rowSpan) lives in [CanvasLayout.verticalArrangement] and
+ * [CanvasLayout.horizontalArrangement] — one map per scroll orientation — so
+ * the two orientations can keep independent grids over the same shared
+ * content set.
+ */
+@Serializable
+sealed class CanvasItem {
+    abstract val id: String
+
+    @Serializable
+    @SerialName("app")
+    data class AppItem(
+        override val id: String,
+        val packageName: String
+    ) : CanvasItem()
+
+    @Serializable
+    @SerialName("folder")
+    data class FolderItem(
+        override val id: String,
+        val folderId: String
+    ) : CanvasItem()
+
+    @Serializable
+    @SerialName("rom")
+    data class RomItem(
+        override val id: String,
+        val romKey: String,
+        val contentScale: EsdeContentScale? = null
+    ) : CanvasItem() {
+        /**
+         * Fit/Crop choice for the ROM tile's artwork. Defaults to [EsdeContentScale.CROP]
+         * when unset — box art and screenshots fill the tile under crop, which is what
+         * the canvas rendered before this field existed.
+         */
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: EsdeContentScale.CROP
+    }
+
+    @Serializable
+    @SerialName("widget")
+    data class WidgetItem(
+        override val id: String,
+        val widgetId: Int
+    ) : CanvasItem()
+
+    @Serializable
+    @SerialName("rss_launcher")
+    data class RssLauncherItem(
+        override val id: String
+    ) : CanvasItem()
+
+    /**
+     * Music-widget tile that mirrors the RSS tab's currently-playing item
+     * (or the first visible item, when nothing is playing). Carries no
+     * configuration of its own — content + queue are derived live from
+     * [jr.brian.home.viewmodels.RssViewModel] / `NowPlayingManager`, so the
+     * tile and the tab share one playback state.
+     */
+    @Serializable
+    @SerialName("rss_music")
+    data class RssMusicItem(
+        override val id: String
+    ) : CanvasItem()
+
+    /**
+     * Display-only tile that mirrors the currently-focused ES-DE game's art
+     * for the chosen [imageType]. The renderer reads
+     * [jr.brian.home.esde.util.LocalEsdeWallpaperState]'s `currentGame` and
+     * resolves the path via `imagePathFor(resolvedImageType)`, recomposing
+     * automatically as ES-DE events update that state.
+     *
+     * Migration: `imageType` is nullable so blobs written before this brief
+     * (which only carried [artType] LOGO/BACKGROUND) still deserialize.
+     * [resolvedImageType] folds the two together — new writes only set
+     * [imageType]; legacy writes are interpreted via [artType]. Once the
+     * persisted store has been re-saved at least once on this version, the
+     * `artType` field can be dropped.
+     */
+    @Serializable
+    @SerialName("esde_art")
+    data class EsdeArtItem(
+        override val id: String,
+        val imageType: GameImageType? = null,
+        val contentScale: EsdeContentScale? = null,
+        @Deprecated("Use imageType. Kept for one-release migration of older saves.")
+        val artType: EsdeArtType? = null
+    ) : CanvasItem() {
+        /**
+         * The image type this tile should render. Prefers the new
+         * [imageType] field; falls back to migrating the legacy
+         * [artType] (LOGO → Marquee, BACKGROUND → Fanart, missing → Fanart).
+         */
+        @Suppress("DEPRECATION")
+        val resolvedImageType: GameImageType
+            get() = imageType ?: when (artType) {
+                EsdeArtType.LOGO -> GameImageType.Marquee
+                EsdeArtType.BACKGROUND -> GameImageType.Fanart
+                null -> GameImageType.Fanart
+            }
+
+        /**
+         * The fit/crop choice to render with. When unset (legacy items, or new
+         * items written before the user picked one), defaults to the rule that
+         * matches the pre-toggle hardcoded behavior: marquee logos sit on
+         * transparent space and read best with Fit; every other art type fills
+         * the tile under Crop.
+         */
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: when (resolvedImageType) {
+                GameImageType.Marquee -> EsdeContentScale.FIT
+                else -> EsdeContentScale.CROP
+            }
+    }
+
+    /**
+     * User-configurable photo tile. The tile shows a placeholder ("Tap to
+     * configure") while [imageUri] is null; tapping opens a picker that copies
+     * the chosen image into app internal storage and updates the same tile in
+     * place (see [jr.brian.home.canvas.viewmodel.CanvasViewModel.updatePhotoContainerImage]).
+     * PNG/JPG/WebP/GIF are supported — animated GIF/WebP animate through the
+     * shared GIF-capable Coil `ImageLoader`.
+     *
+     * [contentScale] defaults to [EsdeContentScale.CROP] so a freshly-picked
+     * image fills the tile.
+     */
+    @Serializable
+    @SerialName("photo")
+    data class PhotoContainer(
+        override val id: String,
+        val imageUri: String? = null,
+        val contentScale: EsdeContentScale? = null
+    ) : CanvasItem() {
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: EsdeContentScale.CROP
+    }
+}
+
+@Serializable
+enum class EsdeArtType {
+    LOGO,
+    BACKGROUND
+}
+
+@Serializable
+enum class EsdeContentScale {
+    FIT,
+    CROP
+}
+
+/**
+ * Default 1×1 / 2×2 span used when an item is first placed into an arrangement
+ * (or when a migrated item needs an auto-placement). Widgets default to 2×2;
+ * everything else to 1×1. Users can resize per-orientation afterwards.
+ */
+fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
+    is CanvasItem.WidgetItem -> 2 to 2
+    is CanvasItem.EsdeArtItem -> 2 to 2
+    is CanvasItem.RssMusicItem -> 2 to 2
+    is CanvasItem.PhotoContainer -> 2 to 2
+    is CanvasItem.AppItem,
+    is CanvasItem.FolderItem,
+    is CanvasItem.RomItem,
+    is CanvasItem.RssLauncherItem -> 1 to 1
+}

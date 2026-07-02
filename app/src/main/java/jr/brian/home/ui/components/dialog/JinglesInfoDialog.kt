@@ -49,27 +49,15 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val haptic = LocalHapticFeedback.current
 
-    DimmedDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
+    DimmedBottomSheet(onDismissRequest = onDismiss) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .background(color = OledCardColor, shape = RoundedCornerShape(24.dp))
-                .border(
-                    width = 2.dp,
-                    color = ThemePrimaryColor.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -254,7 +242,6 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
                         fontSize = 15.sp
                     )
                 }
-            }
         }
     }
 }
