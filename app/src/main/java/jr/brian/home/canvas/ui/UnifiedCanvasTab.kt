@@ -7,23 +7,36 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
@@ -54,11 +67,14 @@ import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.util.rememberHasExternalDisplay
 import jr.brian.home.util.openAppInfo
 import jr.brian.home.ui.screens.AllNotificationsScreen
+import jr.brian.home.ui.components.onboarding.OnboardingStep
 import jr.brian.home.ui.screens.RssTab
 import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
+import jr.brian.home.ui.theme.managers.LocalOnboardingManager
 import jr.brian.home.ui.util.topEdgePullDown
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
@@ -95,6 +111,9 @@ fun UnifiedCanvasTab(
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val notificationCountManager = LocalNotificationManager.current
+    val onboardingManager = LocalOnboardingManager.current
+    val hasSeenCanvasOnboarding by onboardingManager.hasSeenCanvasOnboarding
+        .collectAsStateWithLifecycle()
     val esdePrefsManager = jr.brian.home.esde.data.LocalESDEPreferencesManager.current
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -155,6 +174,44 @@ fun UnifiedCanvasTab(
 
     var showNotificationShade by remember { mutableStateOf(false) }
     var showAllNotifications by remember { mutableStateOf(false) }
+
+    var showCanvasOnboarding by remember { mutableStateOf(false) }
+    var currentCanvasOnboardingStep by remember { mutableIntStateOf(0) }
+    var menuButtonCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var canvasAreaCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    val canvasOnboardingSteps = listOf(
+        OnboardingStep(
+            targetId = CANVAS_ONBOARDING_TARGET_MENU_BUTTON,
+            title = stringResource(R.string.onboarding_canvas_menu_title),
+            description = stringResource(R.string.onboarding_canvas_menu_description)
+        ),
+        OnboardingStep(
+            targetId = CANVAS_ONBOARDING_TARGET_CANVAS_AREA,
+            title = stringResource(R.string.onboarding_canvas_area_title),
+            description = stringResource(R.string.onboarding_canvas_area_description)
+        )
+    )
+
+    val isCanvasSelected = pagerState.currentPage == pageIndex
+    val isCanvasEffectivelyEmpty = uiState.resolvedItems.isEmpty()
+    LaunchedEffect(
+        isCanvasSelected,
+        uiState.pageIndex,
+        isCanvasEffectivelyEmpty,
+        hasSeenCanvasOnboarding
+    ) {
+        when {
+            !isCanvasSelected -> showCanvasOnboarding = false
+            hasSeenCanvasOnboarding -> Unit
+            uiState.pageIndex == -1 -> Unit
+            !isCanvasEffectivelyEmpty -> Unit
+            !showCanvasOnboarding -> {
+                currentCanvasOnboardingStep = 0
+                showCanvasOnboarding = true
+            }
+        }
+    }
 
     LaunchedEffect(dismissShadeSignal) { showNotificationShade = false }
 
@@ -238,11 +295,24 @@ fun UnifiedCanvasTab(
             onRequestResizeDialog = { item, minC, minR ->
                 resizeRequest = CanvasResizeRequest(item, minC, minR)
             },
-            onAddClick = { addDialogVisible = true },
+            onAddClick = {
+                when {
+                    !showCanvasOnboarding -> addDialogVisible = true
+                    currentCanvasOnboardingStep == 0 -> Unit
+                    else -> {
+                        showCanvasOnboarding = false
+                        onboardingManager.markCanvasOnboardingComplete()
+                        addDialogVisible = true
+                    }
+                }
+            },
             onAddLongClick = { viewModel.setEditMode(!uiState.layout.editMode) },
             onDeleteClick = { resolved -> pendingRemoval = resolved },
-            modifier = Modifier.fillMaxSize(),
-            appWidgetHost = appWidgetHost
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { canvasAreaCoordinates = it },
+            appWidgetHost = appWidgetHost,
+            onAddTilePositioned = { menuButtonCoordinates = it }
         )
 
         NotificationShade(
@@ -567,6 +637,52 @@ fun UnifiedCanvasTab(
             onDismiss = { renameTarget = null }
         )
     }
+
+    if (showCanvasOnboarding) {
+        CanvasOnboardingOverlay(
+            steps = canvasOnboardingSteps,
+            currentStep = currentCanvasOnboardingStep,
+            onNext = {
+                addDialogVisible = false
+                currentCanvasOnboardingStep++
+            },
+            onComplete = {
+                showCanvasOnboarding = false
+                addDialogVisible = false
+                onboardingManager.markCanvasOnboardingComplete()
+            },
+            menuButtonCoordinates = menuButtonCoordinates,
+            canvasAreaCoordinates = canvasAreaCoordinates,
+            menuButtonContent = { CanvasOnboardingMenuButtonHighlight() },
+            canvasAreaContent = { CanvasOnboardingAreaHighlight() }
+        )
+    }
+}
+
+@Composable
+private fun CanvasOnboardingMenuButtonHighlight() {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .background(ThemePrimaryColor, RoundedCornerShape(14.dp))
+            .border(3.dp, ThemePrimaryColor.copy(alpha = 0.95f), RoundedCornerShape(14.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Menu,
+            contentDescription = stringResource(R.string.canvas_menu),
+            tint = Color.White
+        )
+    }
+}
+
+@Composable
+private fun CanvasOnboardingAreaHighlight() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(2.dp, ThemePrimaryColor, RoundedCornerShape(12.dp))
+    )
 }
 
 private fun handleTap(

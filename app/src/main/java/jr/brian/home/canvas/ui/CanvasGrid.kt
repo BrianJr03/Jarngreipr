@@ -5,6 +5,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LayoutCoordinates
 import jr.brian.home.canvas.grid.LayoutSnapshot
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasUiState
@@ -34,7 +35,8 @@ fun CanvasGrid(
     modifier: Modifier = Modifier,
     appWidgetHost: AppWidgetHost? = null,
     scrollState: ScrollState = rememberScrollState(),
-    onDoubleTap: (ResolvedCanvasItem) -> Unit = {}
+    onDoubleTap: (ResolvedCanvasItem) -> Unit = {},
+    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null
 ) {
     CanvasGridLayout(
         state = state,
@@ -49,6 +51,7 @@ fun CanvasGrid(
         onDeleteClick = onDeleteClick,
         modifier = modifier,
         appWidgetHost = appWidgetHost,
-        scrollState = scrollState
+        scrollState = scrollState,
+        onAddTilePositioned = onAddTilePositioned
     )
 }
