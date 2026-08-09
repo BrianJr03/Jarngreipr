@@ -34,7 +34,10 @@ data class JarngreiprConfig(
         // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
         //      haptic toggle (applies to both system and game cards).
         // v12: added SystemConfig.hiddenSystems for the Frontend "Filter Systems" sheet.
-        const val CONFIG_VERSION = 12
+        // v13: added CanvasLayout.menuButtonVisible for per-page toggle of the inline
+        //      menu tile. Older blobs decode with the default (true) via
+        //      ignoreUnknownKeys, matching the pre-toggle behavior.
+        const val CONFIG_VERSION = 13
     }
 }
 

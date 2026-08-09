@@ -412,6 +412,7 @@ fun UnifiedCanvasTab(
             onOrientationChanged = viewModel::setOrientation,
             onGridChanged = viewModel::setGrid,
             onEditModeChanged = viewModel::setEditMode,
+            onMenuButtonVisibilityChanged = viewModel::setMenuButtonVisible,
             onTidy = { viewModel.compactLayout() },
             onSettingsClick = onSettingsClick,
             onDeletePage = onDeletePage,

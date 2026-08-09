@@ -62,6 +62,10 @@ class CanvasLayoutManager(context: Context) {
         update(pageIndex) { it.copy(editMode = enabled) }
     }
 
+    fun setMenuButtonVisible(pageIndex: Int, visible: Boolean) {
+        update(pageIndex) { reconcileReserved(it.copy(menuButtonVisible = visible)) }
+    }
+
     /**
      * Add or replace an item on the canvas. The item's id is the identity key.
      *

@@ -1,10 +1,19 @@
 package jr.brian.home.esde.util
 
+import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import jr.brian.home.esde.model.GameInfo
 import java.io.File
+
+/** Case-fold + collapse variant dash characters so gamelist/disk naming quirks match. */
+private fun normalizeName(name: String): String {
+    val sb = StringBuilder(name.length)
+    for (ch in name) sb.append(if (ch == '–' || ch == '—' || ch == '−') '-' else ch)
+    return sb.toString().lowercase()
+}
 
 fun gameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
@@ -144,7 +153,8 @@ fun buildSafDocumentUri(
 fun buildAetherDocUri(
     systemName: String,
     romAbsPath: String,
-    getSafTreeUri: (String) -> String?
+    getSafTreeUri: (String) -> String?,
+    context: Context? = null
 ): Uri? {
     val treeUriStr = getSafTreeUri(systemName) ?: return null
     val treeUri = treeUriStr.toUri()
@@ -156,9 +166,32 @@ fun buildAetherDocUri(
             "$volId:${romAbsPath.removePrefix("/storage/$volId/")}"
         }
     }
-    return try {
+    val direct = try {
         DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
     } catch (_: Exception) {
         null
     }
+
+    // Return the direct URI when we can't verify (no context), or when it resolves. Otherwise
+    // walk the tree once to find the file by normalized name — handles case differences and
+    // typographic dashes between gamelist entries and on-disk filenames.
+    if (context == null || direct == null) return direct
+    val exists = runCatching {
+        context.contentResolver.query(direct, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)
+            ?.use { it.moveToFirst() } == true
+    }.getOrDefault(false)
+    if (exists) return direct
+
+    val target = normalizeName(File(romAbsPath).name)
+    val root = DocumentFile.fromTreeUri(context, treeUri) ?: return direct
+    return findByNormalizedName(root, target) ?: direct
+}
+
+private fun findByNormalizedName(dir: DocumentFile, target: String): Uri? {
+    for (child in dir.listFiles()) {
+        val name = child.name ?: continue
+        if (child.isFile && normalizeName(name) == target) return child.uri
+        if (child.isDirectory) findByNormalizedName(child, target)?.let { return it }
+    }
+    return null
 }

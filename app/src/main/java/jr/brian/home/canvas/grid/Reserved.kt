@@ -21,13 +21,16 @@ import jr.brian.home.canvas.model.GridRect
 fun reservedRectsFor(
     layout: CanvasLayout,
     orientation: CanvasScrollOrientation
-): List<GridRect> = when (orientation) {
-    CanvasScrollOrientation.VERTICAL -> {
-        val col = (layout.verticalColumns - 1).coerceAtLeast(0)
-        listOf(GridRect(col, 0, 1, 1))
-    }
-    CanvasScrollOrientation.HORIZONTAL -> {
-        listOf(GridRect(0, 0, 1, 1))
+): List<GridRect> {
+    if (!layout.menuButtonVisible) return emptyList()
+    return when (orientation) {
+        CanvasScrollOrientation.VERTICAL -> {
+            val col = (layout.verticalColumns - 1).coerceAtLeast(0)
+            listOf(GridRect(col, 0, 1, 1))
+        }
+        CanvasScrollOrientation.HORIZONTAL -> {
+            listOf(GridRect(0, 0, 1, 1))
+        }
     }
 }
 

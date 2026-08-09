@@ -131,21 +131,15 @@ class RomGameLauncher(
                 return
             }
 
-        if (pkg == "org.ppsspp.ppsspp" || pkg == "org.ppsspp.ppssppgold" || pkg == "xyz.aethersx2.android") {
-            val intent = activity.packageManager.getLaunchIntentForPackage(pkg)
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
-                onSignalGameLaunch()
-                activity.startActivity(intent, options.toBundle())
-                activity.finish()
-            } else {
-                Toast.makeText(context, "Emulator not installed: $pkg", Toast.LENGTH_SHORT).show()
-            }
-            return
-        }
+        val aetherFamilyPkg = pkg == "xyz.aethersx2.android" ||
+                pkg == "xyz.aethersx2.tturnip" ||
+                pkg == "xyz.aethersx2.cturnip"
 
+        // AetherSX2/NetherSX2 need a SAF URI as bootPath. The parsed-command path can't
+        // manufacture one (only the pkg-based path has SAF plumbing), so bypass it for this
+        // family and fall through to buildRomIntentFromPackage.
         val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
+            ?.takeUnless { aetherFamilyPkg }
         if (savedCommand != null) {
             val findRulesFile =
                 File(
@@ -172,9 +166,40 @@ class RomGameLauncher(
 
         val corePath =
             if (pkg.startsWith("com.retroarch")) esdePrefs.getGameCore(gameKey(game)) else null
-        val effectiveContentUri: Uri = resolveContentUri(game, romPath, context) ?: return
+        val effectiveContentUri: Uri = if (aetherFamilyPkg) {
+            val aetherSafUri = buildAetherDocUri(game.systemName, romPath, esdePrefs::getSafTreeUri, context)
+            if (aetherSafUri == null) {
+                pendingGameLaunch = game to context
+                val romDir = File(romPath).parent ?: "/storage/emulated/0"
+                val rel = romDir.removePrefix("/storage/emulated/0/")
+                val hint =
+                    "content://com.android.externalstorage.documents/document/${Uri.encode("primary:$rel")}".toUri()
+                onLaunchSafPicker(hint)
+                return
+            }
+            aetherSafUri
+        } else {
+            resolveContentUri(game, romPath, context) ?: return
+        }
 
         Log.d("RomSearchResults", "launchGame | pkg=$pkg rom=$romPath uri=$effectiveContentUri")
+
+        // Multi-file ROMs (.cue+.bin, .m3u+chunks) need the emulator to read siblings of the
+        // entry-point file. A per-file URI grant only covers the file we point it at, so forward
+        // our persistable tree grant too — the emulator can then resolve references inside the
+        // same ROM directory.
+        if (aetherFamilyPkg) {
+            esdePrefs.getSafTreeUri(game.systemName)?.let { treeUriStr ->
+                try {
+                    context.grantUriPermission(
+                        pkg,
+                        treeUriStr.toUri(),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {
+                }
+            }
+        }
 
         try {
             val romIntent = EsdeCommandLauncher.buildRomIntentFromPackage(
@@ -214,8 +239,11 @@ class RomGameLauncher(
         }
         Log.d("RomSearchResults", "launchGameWithEmulator | pkg=$emulatorPackage | rom=$romPath")
         val contentUri: Uri
-        if (emulatorPackage == "xyz.aethersx2.android") {
-            val aetherSafUri = buildAetherDocUri(game.systemName, romPath, esdePrefs::getSafTreeUri)
+        if (emulatorPackage == "xyz.aethersx2.android" ||
+            emulatorPackage == "xyz.aethersx2.tturnip" ||
+            emulatorPackage == "xyz.aethersx2.cturnip"
+        ) {
+            val aetherSafUri = buildAetherDocUri(game.systemName, romPath, esdePrefs::getSafTreeUri, activity)
             if (aetherSafUri == null) {
                 pendingGameLaunch = game to activity
                 val romDir = File(romPath).parent ?: "/storage/emulated/0"
@@ -226,6 +254,17 @@ class RomGameLauncher(
                 return
             }
             contentUri = aetherSafUri
+            // Forward the ROM-folder tree grant so multi-file ROMs can resolve siblings.
+            esdePrefs.getSafTreeUri(game.systemName)?.let { treeUriStr ->
+                try {
+                    activity.grantUriPermission(
+                        emulatorPackage,
+                        treeUriStr.toUri(),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {
+                }
+            }
         } else {
             contentUri = resolveContentUri(game, romPath, activity) ?: return
         }

@@ -50,6 +50,18 @@ object EsdeCommandLauncher {
         "AETHERSX2" to listOf(
             "xyz.aethersx2.android/xyz.aethersx2.android.EmulationActivity"
         ),
+        "NETHERSX2-TURNIP" to listOf(
+            "xyz.aethersx2.tturnip/xyz.aethersx2.android.EmulationActivity"
+        ),
+        "NETHERSX2-TURNIP-CLASSIC" to listOf(
+            "xyz.aethersx2.cturnip/xyz.aethersx2.android.EmulationActivity"
+        ),
+        "ARMSX2R" to listOf(
+            "com.armsx2/com.armsx2.Main"
+        ),
+        "EMUCOREX" to listOf(
+            "com.sbro.emucorex/com.sbro.emucorex.MainActivity"
+        ),
         "DUCKSTATION" to listOf(
             "com.github.stenzek.duckstation/com.github.stenzek.duckstation.EmulationActivity"
         ),
@@ -327,6 +339,22 @@ object EsdeCommandLauncher {
     // Built-in command definitions for systems whose es_systems.xml lives inside the ES-DE APK
     // and is therefore not accessible to us. Used as a fallback when no custom file is found.
     private val BUILTIN_SYSTEM_COMMANDS: Map<String, List<Pair<String, String>>> = mapOf(
+        "psp" to listOf(
+            "PPSSPP" to
+                "%EMULATOR_PPSSPP% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%"
+        ),
+        "ps2" to listOf(
+            "AetherSX2" to
+                "%EMULATOR_AETHERSX2% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.MAIN %EXTRA_bootPath%=%ROMSAF%",
+            "NetherSX2-Turnip" to
+                "%EMULATOR_NETHERSX2-TURNIP% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.MAIN %EXTRA_bootPath%=%ROMSAF%",
+            "NetherSX2-Turnip Classic" to
+                "%EMULATOR_NETHERSX2-TURNIP-CLASSIC% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.MAIN %EXTRA_bootPath%=%ROMSAF%",
+            "ARMSX2 Refresh" to
+                "%EMULATOR_ARMSX2R% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%",
+            "EmuCoreX" to
+                "%EMULATOR_EMUCOREX% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%"
+        ),
         "steam" to listOf(
             "GameNative" to
                 "%EMULATOR_GAMENATIVE% %ACTION%=app.gamenative.LAUNCH_GAME %EXTRAINTEGER_app_id%=%INJECT%=%ROM%",
@@ -541,8 +569,9 @@ object EsdeCommandLauncher {
         val romName = romFile.nameWithoutExtension
 
         fun grantUri(pkg: String) {
-            // SAF URIs from ExternalStorageDocumentsProvider don't need manual grants.
-            if (contentUri.authority == "com.android.externalstorage.documents") return
+            // Forward URI access to the receiving app. FLAG_GRANT_READ_URI_PERMISSION on the
+            // intent only applies to intent.data / clipData — extras don't auto-grant, so we
+            // must explicitly grant here for anything that reads bootPath / rom_uri from extras.
             try {
                 context.grantUriPermission(pkg, contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             } catch (_: Exception) {
@@ -636,10 +665,18 @@ object EsdeCommandLauncher {
                 }
             }
 
-            packageName == "xyz.aethersx2.android" -> {
+            packageName == "xyz.aethersx2.android" ||
+                    packageName == "xyz.aethersx2.tturnip" ||
+                    packageName == "xyz.aethersx2.cturnip" -> {
+                // NetherSX2 forks reuse AetherSX2's EmulationActivity under xyz.aethersx2.android.
+                // bootPath must be a URI string (ES-DE uses %ROMSAF% here); the app can't read
+                // raw /storage paths under scoped storage. We also mirror the URI into
+                // intent.data so FLAG_GRANT_READ_URI_PERMISSION forwards the SAF grant.
+                grantUri(packageName)
                 Intent(Intent.ACTION_MAIN).apply {
-                    component = ComponentName(packageName, "$packageName.EmulationActivity")
-                    putExtra("bootPath", romFile.absolutePath)
+                    component = ComponentName(packageName, "xyz.aethersx2.android.EmulationActivity")
+                    data = contentUri
+                    putExtra("bootPath", contentUri.toString())
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }
@@ -768,7 +805,12 @@ object EsdeCommandLauncher {
             val filePath = resolveToken(pathToken, romAbsPath, packageName)
             return try { File(filePath).readText().trim() } catch (_: Exception) { filePath }
         }
+        // %ROMSAF% / %ROMPROVIDER% are URI hints in ES-DE syntax, but when embedded in a
+        // string-valued %EXTRA_*% (e.g. AetherSX2's bootPath) the target emulator expects a
+        // path, not the literal token. Fall back to the absolute ROM path.
         return token
+            .replace("%ROMSAF%", romAbsPath)
+            .replace("%ROMPROVIDER%", romAbsPath)
             .replace("%ROM%", romAbsPath)
             .replace("%ANDROIDPACKAGE%", packageName)
     }

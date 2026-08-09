@@ -679,6 +679,9 @@
     <string name="canvas_edit_mode_on">On</string>
     <string name="canvas_edit_mode_off_hint">Long-press a tile to remove it.</string>
     <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
+    <string name="canvas_menu_button_label">Menu button</string>
+    <string name="canvas_menu_button_visible_hint">Shown on the canvas grid.</string>
+    <string name="canvas_menu_button_hidden_hint">Long-press an empty canvas area to open the menu.</string>
     <string name="canvas_tidy_label">Tidy</string>
     <string name="canvas_tidy_button">Tidy now</string>
     <string name="canvas_wallpaper_label">Wallpaper</string>

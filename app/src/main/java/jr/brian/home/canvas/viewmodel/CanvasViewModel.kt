@@ -313,6 +313,10 @@ class CanvasViewModel @Inject constructor(
         boundPage()?.let { canvasLayoutManager.setEditMode(it, enabled) }
     }
 
+    fun setMenuButtonVisible(visible: Boolean) {
+        boundPage()?.let { canvasLayoutManager.setMenuButtonVisible(it, visible) }
+    }
+
     init {
         // Reactive folder sync: any canvas-owned folder that appears in FolderManager
         // (created by CreateFolderDialog) auto-gets a CanvasItem.FolderItem on the

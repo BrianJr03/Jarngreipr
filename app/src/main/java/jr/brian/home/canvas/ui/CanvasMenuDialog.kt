@@ -114,6 +114,7 @@ fun CanvasMenuDialog(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
+    onMenuButtonVisibilityChanged: (Boolean) -> Unit,
     onTidy: () -> Unit,
     onSettingsClick: () -> Unit,
     onDeletePage: (Int) -> Unit,
@@ -187,6 +188,7 @@ fun CanvasMenuDialog(
                         onOrientationChanged = onOrientationChanged,
                         onGridChanged = onGridChanged,
                         onEditModeChanged = onEditModeChanged,
+                        onMenuButtonVisibilityChanged = onMenuButtonVisibilityChanged,
                         onTidy = {
                             onTidy()
                             onDismiss()
@@ -412,6 +414,7 @@ private fun EditBody(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
+    onMenuButtonVisibilityChanged: (Boolean) -> Unit,
     onTidy: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -422,6 +425,7 @@ private fun EditBody(
             onOrientationChanged = onOrientationChanged,
             onGridChanged = onGridChanged,
             onEditModeChanged = onEditModeChanged,
+            onMenuButtonVisibilityChanged = onMenuButtonVisibilityChanged,
             onTidy = onTidy,
             onDismiss = onDismiss
         )

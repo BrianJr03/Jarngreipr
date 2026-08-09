@@ -235,7 +235,7 @@ fun CanvasGridLayout(
                     outerPadding = CanvasOuterPadding,
                     animationLabel = "__canvas_add_tile__"
                 ) {
-                    AddTile(
+                    MenuButton(
                         onClick = onAddClick,
                         onLongClick = onAddLongClick,
                         onPositioned = onAddTilePositioned
@@ -608,7 +608,7 @@ private fun CanvasTileSlot(
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AddTile(
+private fun MenuButton(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onPositioned: ((LayoutCoordinates) -> Unit)? = null
