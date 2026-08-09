@@ -68,6 +68,7 @@ import jr.brian.home.ui.extensions.blockHorizontalNavigation
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.components.settings.displayName
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
@@ -120,6 +121,7 @@ fun AppDrawerTab(
     val gridSettingsManager = LocalGridSettingsManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val displayChooser = rememberDisplayChooser()
     val rows = gridSettingsManager.rowCount
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
@@ -286,10 +288,10 @@ fun AppDrawerTab(
                             onAppClick = { app ->
                                 val displayPreference =
                                     appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                                launchApp(
+                                displayChooser.launch(
                                     context = context,
                                     packageName = app.packageName,
-                                    displayPreference = displayPreference
+                                    currentPreference = displayPreference
                                 )
                             },
                             onAppDoubleClick = { app ->
@@ -481,10 +483,20 @@ fun AppDrawerTab(
                 onRemoveFromDock = {
                     dockManager.removeAppFromDock(appInfo.packageName)
                     dockAppOptionsDialogState.dismiss()
+                },
+                promptForDisplayOnLaunch = appDisplayPreferenceManager
+                    .getPromptForDisplayOnLaunch(appInfo.packageName),
+                onPromptForDisplayOnLaunchChange = { enabled ->
+                    appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                        appInfo.packageName,
+                        enabled
+                    )
                 }
             )
         }
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @Composable

@@ -37,7 +37,10 @@ data class JarngreiprConfig(
         // v13: added CanvasLayout.menuButtonVisible for per-page toggle of the inline
         //      menu tile. Older blobs decode with the default (true) via
         //      ignoreUnknownKeys, matching the pre-toggle behavior.
-        const val CONFIG_VERSION = 13
+        // v14: added UiConfig.promptForDisplayOnLaunch — set of package names that
+        //      surface a display chooser on tap. Older blobs decode with the empty
+        //      default (no prompting), matching pre-toggle behavior.
+        const val CONFIG_VERSION = 14
     }
 }
 
@@ -45,6 +48,7 @@ data class JarngreiprConfig(
 data class UiConfig(
     val gridSettings: GridSettingsConfig = GridSettingsConfig(),
     val appDisplayPreferences: Map<String, String> = emptyMap(),
+    val promptForDisplayOnLaunch: Set<String> = emptySet(),
     val powerSettings: PowerSettingsConfig = PowerSettingsConfig(),
     val selectedIconPackage: String? = null,
     val wallpaper: WallpaperConfig = WallpaperConfig(),

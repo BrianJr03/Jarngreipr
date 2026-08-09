@@ -44,10 +44,12 @@ fun IconGridOption(
     onNavigateUp: () -> Unit,
     onNavigateDown: () -> Unit,
     onFocusChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false
 ) {
     var isFocused by remember { mutableIntStateOf(0) }
     val haptic = LocalHapticFeedback.current
+    val contentColor = if (isSelected) ThemePrimaryColor else Color.White
 
     Box(
         modifier = modifier
@@ -55,6 +57,7 @@ fun IconGridOption(
             .background(
                 color = when {
                     isFocused == 1 -> ThemePrimaryColor.copy(alpha = 0.3f)
+                    isSelected -> ThemePrimaryColor.copy(alpha = 0.2f)
                     else -> Color.White.copy(alpha = 0.1f)
                 },
                 shape = RoundedCornerShape(16.dp)
@@ -87,12 +90,12 @@ fun IconGridOption(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color.White,
+                tint = contentColor,
                 modifier = Modifier.size(32.dp)
             )
             Text(
                 text = label,
-                color = Color.White,
+                color = contentColor,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )

@@ -66,6 +66,7 @@ import jr.brian.home.ui.components.dialog.ConfirmationDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.settings.displayName
@@ -173,6 +174,7 @@ fun UnifiedCanvasTab(
     var customIconTarget by remember { mutableStateOf<AppInfo?>(null) }
     var renameTarget by remember { mutableStateOf<AppInfo?>(null) }
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     // Hoisted so the floating add icon can fade based on grid scroll.
     val canvasScrollState = rememberScrollState()
@@ -245,10 +247,10 @@ fun UnifiedCanvasTab(
                 handleTap(
                     resolved = it,
                     onLaunchApp = { app ->
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = appDisplayPreferenceManager
+                            currentPreference = appDisplayPreferenceManager
                                 .getAppDisplayPreference(app.packageName)
                         )
                     },
@@ -630,6 +632,12 @@ fun UnifiedCanvasTab(
             onEditCanvas = {
                 appOptionsTarget = null
                 onEditCanvas()
+            },
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager
+                    .setPromptForDisplayOnLaunch(app.packageName, enabled)
             }
         )
     }
@@ -649,6 +657,8 @@ fun UnifiedCanvasTab(
             onDismiss = { renameTarget = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 
     if (showCanvasOnboarding) {
         CanvasOnboardingOverlay(

@@ -27,7 +27,9 @@ fun AppOptionsMenu(
     onToggleVisibility: (() -> Unit)? = null,
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
-    onRemoveFromDock: () -> Unit = {}
+    onRemoveFromDock: () -> Unit = {},
+    promptForDisplayOnLaunch: Boolean = false,
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
     val hasExternalDisplay = rememberHasExternalDisplay()
 
@@ -54,7 +56,9 @@ fun AppOptionsMenu(
                 onToggleVisibility = onToggleVisibility,
                 onCustomIconClick = onCustomIconClick,
                 onRenameClick = onRenameClick,
-                onRemoveFromDock = onRemoveFromDock
+                onRemoveFromDock = onRemoveFromDock,
+                promptForDisplayOnLaunch = promptForDisplayOnLaunch,
+                onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
             )
         },
         confirmButton = {},

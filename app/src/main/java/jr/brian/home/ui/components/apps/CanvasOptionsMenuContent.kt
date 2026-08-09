@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RemoveCircleOutline
@@ -53,12 +54,14 @@ fun CanvasOptionsMenuContent(
     onCustomIconClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {},
-    onEditCanvas: (() -> Unit)? = null
+    onEditCanvas: (() -> Unit)? = null,
+    promptForDisplayOnLaunch: Boolean = false,
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
     var showResizeMode by remember { mutableStateOf(false) }
     var previewIconSize by remember(currentIconSize) { mutableFloatStateOf(currentIconSize) }
 
-    val items: List<GridItem> = buildList {
+    val mainItems: List<GridItem> = buildList {
         if (onEditCanvas != null) {
             add(
                 GridItem.IconItem(
@@ -121,31 +124,61 @@ fun CanvasOptionsMenuContent(
                 }
             ))
         }
-        if (hasExternalDisplay) {
-            add(
-                GridItem.TextItem(
-                text = stringResource(R.string.app_options_launch_primary_descr),
-                isSelected = currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
+    }
+
+    val launchItems: List<GridItem> = buildList {
+        if (!hasExternalDisplay) return@buildList
+        add(
+            GridItem.IconItem(
+                icon = Icons.AutoMirrored.Filled.Launch,
+                label = stringResource(R.string.app_options_launch_primary_short),
+                isSelected = !promptForDisplayOnLaunch &&
+                    currentDisplayPreference == DisplayPreference.PRIMARY_DISPLAY,
                 onClick = {
+                    onPromptForDisplayOnLaunchChange?.invoke(false)
                     onDisplayPreferenceChange(DisplayPreference.PRIMARY_DISPLAY)
                     onDismiss()
                 }
-            ))
-            add(
-                GridItem.TextItem(
-                text = stringResource(R.string.app_options_launch_external_descr),
-                isSelected = currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
+            )
+        )
+        add(
+            GridItem.IconItem(
+                icon = Icons.AutoMirrored.Filled.Launch,
+                label = stringResource(R.string.app_options_launch_external_short),
+                isSelected = !promptForDisplayOnLaunch &&
+                    currentDisplayPreference == DisplayPreference.CURRENT_DISPLAY,
                 onClick = {
+                    onPromptForDisplayOnLaunchChange?.invoke(false)
                     onDisplayPreferenceChange(DisplayPreference.CURRENT_DISPLAY)
                     onDismiss()
                 }
-            ))
+            )
+        )
+        if (onPromptForDisplayOnLaunchChange != null) {
+            add(
+                GridItem.IconItem(
+                    icon = Icons.AutoMirrored.Filled.Launch,
+                    label = stringResource(R.string.app_options_launch_ask_short),
+                    isSelected = promptForDisplayOnLaunch,
+                    onClick = {
+                        onPromptForDisplayOnLaunchChange(true)
+                        onDismiss()
+                    }
+                )
+            )
         }
     }
 
+    val rows: List<List<GridItem>> = buildList {
+        addAll(mainItems.chunked(3))
+        if (launchItems.isNotEmpty()) add(launchItems)
+    }
+    val flatItems: List<GridItem> = rows.flatten()
+    val rowStartOffsets: List<Int> = rows.runningFold(0) { acc, row -> acc + row.size }
+
     val firstFocusRequester = rememberAutoFocus()
-    val focusRequesters = remember(items.size, firstFocusRequester) {
-        List(items.size) { i -> if (i == 0) firstFocusRequester else FocusRequester() }
+    val focusRequesters = remember(flatItems.size, firstFocusRequester) {
+        List(flatItems.size) { i -> if (i == 0) firstFocusRequester else FocusRequester() }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -164,13 +197,33 @@ fun CanvasOptionsMenuContent(
             exit = fadeOut()
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items.chunked(3).forEachIndexed { rowIdx, rowItems ->
+                rows.forEachIndexed { rowIdx, rowItems ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         rowItems.forEachIndexed { colIdx, item ->
-                            val listIdx = rowIdx * 3 + colIdx
+                            val listIdx = rowStartOffsets[rowIdx] + colIdx
+                            val onNavigateLeft = {
+                                if (colIdx > 0) focusRequesters[listIdx - 1].requestFocus()
+                            }
+                            val onNavigateRight = {
+                                if (colIdx < rowItems.size - 1) focusRequesters[listIdx + 1].requestFocus()
+                            }
+                            val onNavigateUp = {
+                                if (rowIdx > 0) {
+                                    val prev = rows[rowIdx - 1]
+                                    val safeCol = colIdx.coerceAtMost(prev.size - 1)
+                                    focusRequesters[rowStartOffsets[rowIdx - 1] + safeCol].requestFocus()
+                                }
+                            }
+                            val onNavigateDown = {
+                                if (rowIdx < rows.size - 1) {
+                                    val next = rows[rowIdx + 1]
+                                    val safeCol = colIdx.coerceAtMost(next.size - 1)
+                                    focusRequesters[rowStartOffsets[rowIdx + 1] + safeCol].requestFocus()
+                                }
+                            }
                             Box(modifier = Modifier.weight(1f)) {
                                 when (item) {
                                     is GridItem.IconItem -> IconGridOption(
@@ -178,21 +231,12 @@ fun CanvasOptionsMenuContent(
                                         label = item.label,
                                         onClick = item.onClick,
                                         focusRequester = focusRequesters[listIdx],
-                                        onNavigateLeft = {
-                                            if (colIdx > 0) focusRequesters[listIdx - 1].requestFocus()
-                                        },
-                                        onNavigateRight = {
-                                            if (colIdx < rowItems.size - 1) focusRequesters[listIdx + 1].requestFocus()
-                                        },
-                                        onNavigateUp = {
-                                            val upIdx = listIdx - 3
-                                            if (upIdx >= 0) focusRequesters[upIdx].requestFocus()
-                                        },
-                                        onNavigateDown = {
-                                            val downIdx = listIdx + 3
-                                            if (downIdx < items.size) focusRequesters[downIdx].requestFocus()
-                                        },
-                                        onFocusChanged = {}
+                                        onNavigateLeft = onNavigateLeft,
+                                        onNavigateRight = onNavigateRight,
+                                        onNavigateUp = onNavigateUp,
+                                        onNavigateDown = onNavigateDown,
+                                        onFocusChanged = {},
+                                        isSelected = item.isSelected
                                     )
 
                                     is GridItem.TextItem -> TextGridOption(
@@ -200,20 +244,10 @@ fun CanvasOptionsMenuContent(
                                         onClick = item.onClick,
                                         isSelected = item.isSelected,
                                         focusRequester = focusRequesters[listIdx],
-                                        onNavigateLeft = {
-                                            if (colIdx > 0) focusRequesters[listIdx - 1].requestFocus()
-                                        },
-                                        onNavigateRight = {
-                                            if (colIdx < rowItems.size - 1) focusRequesters[listIdx + 1].requestFocus()
-                                        },
-                                        onNavigateUp = {
-                                            val upIdx = listIdx - 3
-                                            if (upIdx >= 0) focusRequesters[upIdx].requestFocus()
-                                        },
-                                        onNavigateDown = {
-                                            val downIdx = listIdx + 3
-                                            if (downIdx < items.size) focusRequesters[downIdx].requestFocus()
-                                        },
+                                        onNavigateLeft = onNavigateLeft,
+                                        onNavigateRight = onNavigateRight,
+                                        onNavigateUp = onNavigateUp,
+                                        onNavigateDown = onNavigateDown,
                                         onFocusChanged = {}
                                     )
                                 }

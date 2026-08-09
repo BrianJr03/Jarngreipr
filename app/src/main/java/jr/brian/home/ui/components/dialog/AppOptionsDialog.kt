@@ -43,7 +43,9 @@ fun AppOptionsDialog(
     onRenameClick: () -> Unit = {},
     isInDock: Boolean = false,
     onRemoveFromDock: () -> Unit = {},
-    onEditCanvas: (() -> Unit)? = null
+    onEditCanvas: (() -> Unit)? = null,
+    promptForDisplayOnLaunch: Boolean = false,
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -99,7 +101,9 @@ fun AppOptionsDialog(
                 onRenameClick = onRenameClick,
                 isInDock = isInDock,
                 onRemoveFromDock = onRemoveFromDock,
-                onEditCanvas = onEditCanvas
+                onEditCanvas = onEditCanvas,
+                promptForDisplayOnLaunch = promptForDisplayOnLaunch,
+                onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
             )
         },
         confirmButton = {}

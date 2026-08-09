@@ -24,6 +24,7 @@ import jr.brian.home.ui.components.apps.NotificationBadge
 import jr.brian.home.ui.components.dialog.AppOptionsDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
@@ -32,7 +33,6 @@ import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalWidgetPageAppManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -54,7 +54,8 @@ fun AppItem(
     val renameDialogState = rememberDialogState<Unit>()
 
     val hasExternalDisplay = rememberHasExternalDisplay()
-    
+    val displayChooser = rememberDisplayChooser()
+
     val haptic = LocalHapticFeedback.current
 
     Column(
@@ -68,10 +69,10 @@ fun AppItem(
                     } else {
                         DisplayPreference.CURRENT_DISPLAY
                     }
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onDoubleClick = {
@@ -140,9 +141,19 @@ fun AppItem(
             onRenameClick = {
                 renameDialogState.show()
                 optionsDialogState.dismiss()
+            },
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
             }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 
     if (customIconDialogState.isVisible) {
         CustomIconDialog(

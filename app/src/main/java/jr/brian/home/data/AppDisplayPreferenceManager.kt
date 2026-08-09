@@ -51,6 +51,39 @@ class AppDisplayPreferenceManager(context: Context) {
         editor.apply()
     }
 
+    /**
+     * When true, tapping [packageName] surfaces a chooser dialog so the user
+     * picks the display for that launch; the stored [DisplayPreference] is used
+     * as the fallback (single-display devices) and is not modified by the pick.
+     */
+    fun getPromptForDisplayOnLaunch(packageName: String): Boolean {
+        return prefs.getBoolean(PROMPT_PREFIX + packageName, false)
+    }
+
+    fun setPromptForDisplayOnLaunch(packageName: String, enabled: Boolean) {
+        prefs.edit().apply {
+            if (enabled) putBoolean(PROMPT_PREFIX + packageName, true)
+            else remove(PROMPT_PREFIX + packageName)
+            apply()
+        }
+    }
+
+    /** Packages with the prompt-on-launch flag enabled. Used by backup export. */
+    fun getPromptForDisplayPackages(): Set<String> {
+        return prefs.all
+            .filterKeys { it.startsWith(PROMPT_PREFIX) }
+            .filterValues { it as? Boolean == true }
+            .keys
+            .mapTo(mutableSetOf()) { it.removePrefix(PROMPT_PREFIX) }
+    }
+
+    fun restorePromptForDisplayPackages(packages: Set<String>) {
+        val editor = prefs.edit()
+        prefs.all.keys.filter { it.startsWith(PROMPT_PREFIX) }.forEach { editor.remove(it) }
+        packages.forEach { pkg -> editor.putBoolean(PROMPT_PREFIX + pkg, true) }
+        editor.apply()
+    }
+
     enum class DisplayPreference {
         CURRENT_DISPLAY,
         PRIMARY_DISPLAY
@@ -59,5 +92,6 @@ class AppDisplayPreferenceManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "app_display_prefs"
         private const val KEY_PREFIX = "display_pref_"
+        private const val PROMPT_PREFIX = "prompt_display_"
     }
 }

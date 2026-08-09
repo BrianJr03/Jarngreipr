@@ -6,7 +6,8 @@ sealed class GridItem {
     data class IconItem(
         val icon: ImageVector,
         val label: String,
-        val onClick: () -> Unit
+        val onClick: () -> Unit,
+        val isSelected: Boolean = false
     ) : GridItem()
 
     data class TextItem(

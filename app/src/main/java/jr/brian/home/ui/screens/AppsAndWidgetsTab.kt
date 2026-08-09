@@ -67,6 +67,7 @@ import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -152,6 +153,7 @@ fun AppsAndWidgetsTab(
 
     val pinnedRomManager = LocalPinnedRomManager.current
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
     val pinnedRoms by pinnedRomManager.getPinnedRoms(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -392,10 +394,10 @@ fun AppsAndWidgetsTab(
                 onAppClick = { app ->
                     val displayPreference =
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = { app ->
@@ -680,4 +682,6 @@ fun AppsAndWidgetsTab(
             )
         }
     }
+
+    displayChooser.DialogIfNeeded()
 }

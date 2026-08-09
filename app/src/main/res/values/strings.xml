@@ -166,6 +166,10 @@
     <string name="app_options_launch_primary">Launch on Primary Display</string>
     <string name="app_options_launch_primary_descr">Top\nDisplay</string>
     <string name="app_options_selected">Selected</string>
+    <string name="app_options_launch_primary_short">Top</string>
+    <string name="app_options_launch_external_short">Bottom</string>
+    <string name="app_options_launch_ask_short">Ask</string>
+    <string name="display_chooser_title">Launch on which display?</string>
     <string name="app_options_hide_app">Hide App</string>
     <string name="app_options_show_app">Show App</string>
     <string name="app_options_custom_icon">Custom Icon</string>

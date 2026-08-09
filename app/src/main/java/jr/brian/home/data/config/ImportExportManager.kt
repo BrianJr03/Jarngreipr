@@ -73,6 +73,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 shadeAccentColorArgb = ui.gridSettingsManager.shadeAccentColorArgb
             ),
             appDisplayPreferences = ui.appDisplayPreferenceManager.getAllPreferences(),
+            promptForDisplayOnLaunch = ui.appDisplayPreferenceManager.getPromptForDisplayPackages(),
             powerSettings = PowerSettingsConfig(
                 powerButtonVisible = ps.powerButtonVisible.value,
                 quickDeleteVisible = ps.quickDeleteVisible.value,
@@ -326,6 +327,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setShadeAccentColorArgb(config.gridSettings.shadeAccentColorArgb)
 
         ui.appDisplayPreferenceManager.restoreAllPreferences(config.appDisplayPreferences)
+        ui.appDisplayPreferenceManager.restorePromptForDisplayPackages(config.promptForDisplayOnLaunch)
 
         val ps = config.powerSettings
         ui.powerSettingsManager.setPowerButtonVisibility(ps.powerButtonVisible)

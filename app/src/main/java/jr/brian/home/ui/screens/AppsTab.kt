@@ -82,6 +82,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberTopFlingTrigger
 import jr.brian.home.viewmodels.NowPlayingViewModel
@@ -137,6 +138,7 @@ fun AppsTab(
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
 
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    val displayChooser = rememberDisplayChooser()
     SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
@@ -334,6 +336,14 @@ fun AppsTab(
                 onRenameClick = {
                     renameDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
+                },
+                promptForDisplayOnLaunch = appDisplayPreferenceManager
+                    .getPromptForDisplayOnLaunch(appInfo.packageName),
+                onPromptForDisplayOnLaunchChange = { enabled ->
+                    appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                        appInfo.packageName,
+                        enabled
+                    )
                 }
             )
         }
@@ -500,6 +510,8 @@ fun AppsTab(
         )
     }
 
+    displayChooser.DialogIfNeeded()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -553,10 +565,10 @@ fun AppsTab(
                         } else {
                             DisplayPreference.CURRENT_DISPLAY
                         }
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = displayPreference
+                            currentPreference = displayPreference
                         )
                     },
                     onAppLongClick = { app ->
@@ -632,10 +644,10 @@ fun AppsTab(
                         } else {
                             DisplayPreference.CURRENT_DISPLAY
                         }
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = displayPreference
+                            currentPreference = displayPreference
                         )
                     },
                     onAppDoubleClick = { app ->

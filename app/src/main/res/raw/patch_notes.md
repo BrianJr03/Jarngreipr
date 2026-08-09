@@ -1,12 +1,13 @@
-**nNew Tab Type: Canvas**
- - A single continuous grid that holds apps, folders, ROMs, and widgets
- - - Add a `Frontend widget` to `Canvas` to create a dual screen experience
- - How to use: `Menu -> Home Tab Button -> Tabs -> Add Tab -> Canvas`
+**Canvas Menu Button Toggle**
+ - Per-page toggle for the inline canvas menu button
+ - When hidden, long-press an empty canvas area to open the menu
+ - How to use: `Canvas -> Menu -> Edit canvas -> Menu button`
 
-**Jarngreipr Frontend**
- - A simple frontend that uses the top screen to display your Roms
- - Uses `ES-DE` and/or `RetroHrai!` media folders for scraped media
- - How to use: `Settings -> Extras -> Enable Frontend`
+**Pick Display on Launch**
+ - Per-app option to show a display chooser (Top / Bottom) each tap
+ - Only prompts when an external display is attached
+ - Works from every app tile: apps tab, canvas, folder, dock, recents, search
+ - How to use: Long-press an app -> `Ask on launch`
 
 **Coming Soon**
  - More updates on Jarngreipr Frontend including
@@ -14,4 +15,4 @@
    - More Customization Options
    - More Emulator support
 
-2.6.0
+2.7.0

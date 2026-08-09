@@ -82,6 +82,14 @@ fun FreePositionedDialogsManager(
             onRenameClick = {
                 renameDialogState.show(selectedApp)
                 appOptionsDialogState.dismiss()
+            },
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(selectedApp.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    selectedApp.packageName,
+                    enabled
+                )
             }
         )
         }

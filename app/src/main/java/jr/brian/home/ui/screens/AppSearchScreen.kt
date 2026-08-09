@@ -50,6 +50,7 @@ import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -59,7 +60,6 @@ import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 
@@ -234,6 +234,7 @@ private fun AppGrid(
     var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -251,10 +252,10 @@ private fun AppGrid(
                     } else {
                         DisplayPreference.CURRENT_DISPLAY
                     }
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = {
@@ -291,7 +292,15 @@ private fun AppGrid(
                 appForRename = app
                 selectedApp = null
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
+            }
         )
     }
 
@@ -302,6 +311,8 @@ private fun AppGrid(
             onDismiss = { appForRename = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -317,6 +328,7 @@ private fun HorizontalAppGrid(
     var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     LazyHorizontalGrid(
         rows = GridCells.Fixed(2),
@@ -337,10 +349,10 @@ private fun HorizontalAppGrid(
                     } else {
                         DisplayPreference.CURRENT_DISPLAY
                     }
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = {
@@ -377,7 +389,15 @@ private fun HorizontalAppGrid(
                 appForRename = app
                 selectedApp = null
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
+            }
         )
     }
 
@@ -388,6 +408,8 @@ private fun HorizontalAppGrid(
             onDismiss = { appForRename = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @Composable

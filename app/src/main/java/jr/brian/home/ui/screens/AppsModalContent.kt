@@ -75,7 +75,7 @@ import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberFocusRequesterMap
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.Job
@@ -581,6 +581,7 @@ private fun AppsContentLayout(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val displayChooser = rememberDisplayChooser()
     if (forceFloatyMode) {
         FreePositionedAppsLayout(
             apps = apps,
@@ -593,10 +594,10 @@ private fun AppsContentLayout(
                 } else {
                     DisplayPreference.CURRENT_DISPLAY
                 }
-                launchApp(
+                displayChooser.launch(
                     context = context,
                     packageName = app.packageName,
-                    displayPreference = displayPreference
+                    currentPreference = displayPreference
                 )
             },
             modifier = Modifier
@@ -623,10 +624,10 @@ private fun AppsContentLayout(
                 } else {
                     DisplayPreference.CURRENT_DISPLAY
                 }
-                launchApp(
+                displayChooser.launch(
                     context = context,
                     packageName = app.packageName,
-                    displayPreference = displayPreference
+                    currentPreference = displayPreference
                 )
                 scope.launch {
                     gridState.scrollToItem(0)
@@ -652,6 +653,8 @@ private fun AppsContentLayout(
             nestedScrollConnection = nestedScrollConnection
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 private fun levelTimeMultiplier(level: Int): Float = when (level) {

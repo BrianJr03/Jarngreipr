@@ -47,10 +47,10 @@ import jr.brian.home.ui.screens.recentapps.EmptyStateContent
 import jr.brian.home.ui.screens.recentapps.LoadingContent
 import jr.brian.home.ui.screens.recentapps.PermissionRequiredContent
 import jr.brian.home.ui.screens.recentapps.RecentAppsGrid
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.managers.LocalRecentAppsCacheManager
 import jr.brian.home.util.RecentAppsUtil
-import jr.brian.home.util.launchApp
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +63,7 @@ fun RecentAppsScreen(
     val recentAppsCache = LocalRecentAppsCacheManager.current
     val scope = rememberCoroutineScope()
     val appDisplayPreferenceManager = remember { AppDisplayPreferenceManager(context) }
+    val displayChooser = rememberDisplayChooser()
     var hasPermission by remember { mutableStateOf(RecentAppsUtil.hasUsageStatsPermission(context)) }
     
     var recentApps by remember { 
@@ -205,10 +206,12 @@ fun RecentAppsScreen(
                     onAppClick = { app ->
                         val pref =
                             appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                        launchApp(context, app.packageName, pref)
+                        displayChooser.launch(context, app.packageName, pref)
                     }
                 )
             }
         }
     }
+
+    displayChooser.DialogIfNeeded()
 }
