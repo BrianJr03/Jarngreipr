@@ -284,7 +284,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
                 systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
-                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled
+                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
+                frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
+                frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
+                frontendFocusBackgroundGames = f.esdePreferencesManager.state.value.frontendFocusBackgroundGames,
+                frontendFocusBackgroundDim = f.esdePreferencesManager.state.value.frontendFocusBackgroundDim
             )
         )
     }
@@ -535,6 +539,10 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
         f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
+        f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
+        f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)
+        f.esdePreferencesManager.setFrontendFocusBackgroundGames(config.romSearch.frontendFocusBackgroundGames)
+        f.esdePreferencesManager.setFrontendFocusBackgroundDim(config.romSearch.frontendFocusBackgroundDim)
     }
 
     private fun applySystemConfig(config: SystemConfig) {

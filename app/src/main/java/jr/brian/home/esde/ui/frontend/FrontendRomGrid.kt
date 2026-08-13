@@ -4,6 +4,7 @@ import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
@@ -53,9 +54,14 @@ internal fun FrontendRomGrid(
      * restore focus.
      */
     system: String? = null,
-    initialRealIndex: Int = 0
+    initialRealIndex: Int = 0,
+    onFocusedGameChanged: (GameInfo?) -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        onFocusedGameChanged(games.getOrNull(initialRealIndex))
+    }
 
     RomResultsGrid(
         games = games,
@@ -119,6 +125,7 @@ internal fun FrontendRomGrid(
         },
         onGameFocused = { game ->
             viewModel.updateFocusedGame(game)
+            onFocusedGameChanged(game)
             if (game != null) {
                 managers.feature.jinglesManager.onGameSelected(File(game.path).name)
                 frontendSelectionStateHolder.selectGame(game)

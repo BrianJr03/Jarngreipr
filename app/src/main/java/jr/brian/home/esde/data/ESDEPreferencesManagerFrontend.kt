@@ -6,6 +6,10 @@ import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
@@ -82,6 +86,27 @@ fun ESDEPreferencesManager.setFrontendFloatIntensity(intensity: Float) {
 fun ESDEPreferencesManager.setFrontendFocusHapticEnabled(enabled: Boolean) {
     _state.value = _state.value.copy(frontendFocusHapticEnabled = enabled)
     prefs.edit { putBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, enabled) }
+}
+
+fun ESDEPreferencesManager.setFrontendFocusBackgroundEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(frontendFocusBackgroundEnabled = enabled)
+    prefs.edit { putBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED, enabled) }
+}
+
+fun ESDEPreferencesManager.setFrontendFocusBackgroundSystems(enabled: Boolean) {
+    _state.value = _state.value.copy(frontendFocusBackgroundSystems = enabled)
+    prefs.edit { putBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS, enabled) }
+}
+
+fun ESDEPreferencesManager.setFrontendFocusBackgroundGames(enabled: Boolean) {
+    _state.value = _state.value.copy(frontendFocusBackgroundGames = enabled)
+    prefs.edit { putBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_GAMES, enabled) }
+}
+
+fun ESDEPreferencesManager.setFrontendFocusBackgroundDim(dim: Float) {
+    val coerced = dim.coerceIn(0f, 1f)
+    _state.value = _state.value.copy(frontendFocusBackgroundDim = coerced)
+    prefs.edit { putFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM, coerced) }
 }
 
 fun ESDEPreferencesManager.setCanvasContinuousSpin(romKey: String, enabled: Boolean) {

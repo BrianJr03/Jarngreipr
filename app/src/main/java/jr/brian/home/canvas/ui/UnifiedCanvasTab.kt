@@ -633,6 +633,11 @@ fun UnifiedCanvasTab(
                 appOptionsTarget = null
                 onEditCanvas()
             },
+            onOpenCanvasMenu = {
+                appOptionsTarget = null
+                addDialogStartInEdit = false
+                addDialogVisible = true
+            },
             promptForDisplayOnLaunch = appDisplayPreferenceManager
                 .getPromptForDisplayOnLaunch(app.packageName),
             onPromptForDisplayOnLaunchChange = { enabled ->

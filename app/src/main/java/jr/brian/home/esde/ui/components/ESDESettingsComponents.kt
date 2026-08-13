@@ -58,6 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import jr.brian.home.esde.ui.frontend.settings.RegisterForHorizontalSteps
+import jr.brian.home.esde.ui.frontend.settings.StepOnHorizontal
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.colors.borderBrush
@@ -191,16 +193,39 @@ fun SliderSetting(
     valueText: String,
     onValueChange: (Float) -> Unit,
     enabled: Boolean = true,
-    description: String? = null
+    description: String? = null,
+    focused: Boolean? = null
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    var internalFocus by remember { mutableStateOf(false) }
+    val isFocused = focused ?: internalFocus
+
+    if (focused != null && enabled) {
+        RegisterForHorizontalSteps(focused)
+        val stepSize = if (steps > 0) {
+            (valueRange.endInclusive - valueRange.start) / (steps + 1)
+        } else {
+            (valueRange.endInclusive - valueRange.start) / 20f
+        }
+        StepOnHorizontal(focused) { delta ->
+            val next = (value + delta * stepSize)
+                .coerceIn(valueRange.start, valueRange.endInclusive)
+            if (next != value) onValueChange(next)
+        }
+    }
+
+    val focusModifier = if (focused == null) {
+        Modifier
+            .focusable()
+            .onFocusChanged { internalFocus = it.isFocused }
+    } else {
+        Modifier
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .focusableSettingCard(isFocused)
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .then(focusModifier)
             .padding(16.dp)
     ) {
         Row(
@@ -259,11 +284,21 @@ fun ToggleSetting(
     onCheckedChange: (Boolean) -> Unit = {},
     showToggle: Boolean = true,
     onClick: (() -> Unit)? = null,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    focused: Boolean? = null
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    var internalFocus by remember { mutableStateOf(false) }
+    val isFocused = focused ?: internalFocus
     val haptic = LocalHapticFeedback.current
     val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
+
+    val focusModifier = if (focused == null) {
+        Modifier
+            .focusable()
+            .onFocusChanged { internalFocus = it.isFocused }
+    } else {
+        Modifier
+    }
 
     Row(
         modifier = Modifier
@@ -280,8 +315,7 @@ fun ToggleSetting(
             )
             .clip(RoundedCornerShape(16.dp))
             .clickWithHaptic(haptic) { clickAction() }
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .then(focusModifier)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -337,11 +371,21 @@ fun ToggleSetting(
     onCheckedChange: (Boolean) -> Unit = {},
     showToggle: Boolean = true,
     onClick: (() -> Unit)? = null,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    focused: Boolean? = null
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    var internalFocus by remember { mutableStateOf(false) }
+    val isFocused = focused ?: internalFocus
     val haptic = LocalHapticFeedback.current
     val clickAction = { onClick?.invoke() ?: onCheckedChange(!checked) }
+
+    val focusModifier = if (focused == null) {
+        Modifier
+            .focusable()
+            .onFocusChanged { internalFocus = it.isFocused }
+    } else {
+        Modifier
+    }
 
     Row(
         modifier = Modifier
@@ -358,8 +402,7 @@ fun ToggleSetting(
             )
             .clip(RoundedCornerShape(16.dp))
             .clickWithHaptic(haptic) { clickAction() }
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .then(focusModifier)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -57,6 +57,14 @@
     <string name="frontend_settings_close">Close</string>
     <string name="frontend_settings_filter_systems_title">Filter Systems</string>
     <string name="frontend_settings_filter_systems_description">Choose which systems appear on the frontend.</string>
+    <string name="frontend_settings_category_layout_title">Layout</string>
+    <string name="frontend_settings_category_layout_summary">Choose how systems and games are arranged on screen.</string>
+    <string name="frontend_settings_category_media_title">Media</string>
+    <string name="frontend_settings_category_media_summary">Control which artwork sources the frontend reads from.</string>
+    <string name="frontend_settings_category_feel_title">Feel</string>
+    <string name="frontend_settings_category_feel_summary">Adjust motion, haptics, and on-screen hints.</string>
+    <string name="frontend_settings_category_systems_title">Systems</string>
+    <string name="frontend_settings_category_systems_summary">Pick which systems appear on the frontend.</string>
     <string name="system_filter_title">Filter Systems</string>
     <string name="system_filter_row_shown">Shown</string>
     <string name="system_filter_row_hidden">Hidden</string>
@@ -72,12 +80,44 @@
     <string name="frontend_customize_choose_background">Choose background</string>
     <string name="frontend_customize_change_background">Change background</string>
     <string name="frontend_customize_remove_background">Remove background</string>
+    <string name="frontend_customize_focus_background_section">Focused background</string>
+    <string name="frontend_customize_choose_focus_background">Choose focused background</string>
+    <string name="frontend_customize_change_focus_background">Change focused background</string>
+    <string name="frontend_customize_remove_focus_background">Remove focused background</string>
+    <string name="frontend_settings_focus_background_title">Focused background</string>
+    <string name="frontend_settings_focus_background_description">When a system or game takes focus, show its full-screen artwork behind the grid.</string>
+    <string name="frontend_settings_focus_background_systems_title">Use for systems</string>
+    <string name="frontend_settings_focus_background_systems_description">Show each system\'s assigned focus artwork behind the System screen grid.</string>
+    <string name="frontend_settings_focus_background_games_title">Use for games</string>
+    <string name="frontend_settings_focus_background_games_description">Show each game\'s scraped fanart behind the Games screen grid.</string>
+    <string name="frontend_settings_focus_background_dim_title">Background dim</string>
+    <string name="frontend_settings_focus_background_dim_description">How dark the scrim over the focused background is. Higher values keep tile text readable over bright art.</string>
     <string name="frontend_customize_show_name">Show system name</string>
     <string name="frontend_customize_color_section">Background color</string>
     <string name="frontend_customize_color_default">Default</string>
     <string name="frontend_customize_color_transparent">Transparent</string>
     <string name="frontend_customize_reorder">Reorder systems</string>
+    <string name="frontend_customize_reorder_description">Move this system\'s tile to a different position in the grid.</string>
     <string name="frontend_customize_reset">Reset to default</string>
+    <string name="frontend_customize_reset_description">Clear the background image, focused background, colour, and name toggle for this system.</string>
+    <string name="frontend_customize_reset_confirm">Press again to confirm</string>
+    <string name="frontend_customize_reset_confirm_description">This will clear every setting for this system.</string>
+    <string name="frontend_customize_tile_background_title">Tile background</string>
+    <string name="frontend_customize_show_name_description">Draw the system\'s name over its tile.</string>
+    <string name="frontend_customize_remove_trailing">Right: Remove</string>
+    <string name="frontend_customize_preset_selected">Selected</string>
+    <string name="frontend_customize_channel_hue">Hue</string>
+    <string name="frontend_customize_channel_saturation">Saturation</string>
+    <string name="frontend_customize_channel_brightness">Brightness</string>
+    <string name="frontend_customize_channel_opacity">Opacity</string>
+    <string name="frontend_customize_channel_hue_value">%1$d°</string>
+    <string name="frontend_customize_channel_percent">%1$d%%</string>
+    <string name="system_customize_category_background_title">Background</string>
+    <string name="system_customize_category_background_summary">Set the tile image, focused background, and whether the system\'s name shows.</string>
+    <string name="system_customize_category_color_title">Colour</string>
+    <string name="system_customize_category_color_summary">Pick a solid colour behind the tile — or keep it clear.</string>
+    <string name="system_customize_category_actions_title">Actions</string>
+    <string name="system_customize_category_actions_summary">Reorder this system in the grid, or clear its customization.</string>
     <string name="frontend_reorder_hint">Reorder mode — D-pad to move • A to confirm • B to cancel</string>
     <string name="frontend_open_customize_hint">START / hold A  •  Customize</string>
     <string name="frontend_enable_title">Enable frontend</string>
@@ -105,7 +145,7 @@
     <string name="rom_media_mix_images">Mix Images</string>
     <string name="rom_media_physical_media">Physical Media</string>
     <string name="rom_options_continuous_spin">Continuous spin</string>
-    <string name="rom_options_continuous_spin_description">Continuously rotate this disc\'s artwork on the canvas.</string>
+    <string name="rom_options_continuous_spin_description">Continuously rotate this disc\'s artwork on the Canvas.</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
     <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
 
@@ -635,10 +675,10 @@
     <string name="canvas_missing_item_description">Missing entity</string>
     <string name="canvas_edit_layout">Edit layout</string>
     <string name="canvas_menu">Canvas Menu</string>
-    <string name="canvas_add_item_dialog_title">Add to canvas</string>
+    <string name="canvas_add_item_dialog_title">Add to Canvas</string>
     <string name="canvas_dialog_title">Canvas</string>
     <string name="canvas_dialog_back">Back</string>
-    <string name="canvas_edit_canvas_option">Edit canvas</string>
+    <string name="canvas_edit_canvas_option">Edit Canvas</string>
     <string name="canvas_add_section_header">Add</string>
     <string name="canvas_add_app_option">App</string>
     <string name="canvas_add_folder_option">Folder</string>
@@ -665,17 +705,17 @@
     <string name="canvas_picker_selected_count">%1$d selected</string>
     <string name="canvas_picker_done">Done</string>
     <string name="canvas_picker_cancel">Cancel</string>
-    <string name="canvas_edit_dialog_title">Edit canvas</string>
+    <string name="canvas_edit_dialog_title">Edit Canvas</string>
     <string name="canvas_orientation_label">Scroll orientation</string>
     <string name="canvas_orientation_vertical">Vertical</string>
     <string name="canvas_orientation_horizontal">Horizontal</string>
     <string name="canvas_columns_label">Columns</string>
     <string name="canvas_rows_label">Rows</string>
-    <string name="canvas_remove_item_title">Remove from canvas</string>
-    <string name="canvas_remove_item_message">Remove this item from the canvas?</string>
+    <string name="canvas_remove_item_title">Remove from Canvas</string>
+    <string name="canvas_remove_item_message">Remove this item from the Canvas?</string>
     <string name="canvas_remove_confirm">Remove</string>
     <string name="canvas_remove_cancel">Cancel</string>
-    <string name="canvas_rom_picker_title">Pin a ROM to canvas</string>
+    <string name="canvas_rom_picker_title">Pin a ROM to Canvas</string>
     <string name="canvas_rom_picker_empty">No ROMs pinned yet. Pin a ROM from the ROM search screen first, then come back to add it here.</string>
     <string name="canvas_rom_picker_browse">Browse all ROMs</string>
     <string name="canvas_edit_mode_label">Edit mode</string>
@@ -684,8 +724,8 @@
     <string name="canvas_edit_mode_off_hint">Long-press a tile to remove it.</string>
     <string name="canvas_edit_mode_on_hint">Long-press and drag tiles to rearrange. Open this dialog again to turn off.</string>
     <string name="canvas_menu_button_label">Menu button</string>
-    <string name="canvas_menu_button_visible_hint">Shown on the canvas grid.</string>
-    <string name="canvas_menu_button_hidden_hint">Long-press an empty canvas area to open the menu.</string>
+    <string name="canvas_menu_button_visible_hint">Shown on the Canvas grid.</string>
+    <string name="canvas_menu_button_hidden_hint">Long-press an empty Canvas area to open the menu.</string>
     <string name="canvas_tidy_label">Tidy</string>
     <string name="canvas_tidy_button">Tidy now</string>
     <string name="canvas_wallpaper_label">Wallpaper</string>
@@ -701,7 +741,7 @@
     <string name="canvas_resize_widget_rows">Height (rows)</string>
     <string name="canvas_resize_widget_hint">Tap a widget in Edit Mode to resize it.</string>
     <string name="canvas_resize_handle_description">Drag to resize, or focus and select to open the resize dialog.</string>
-    <string name="canvas_delete_handle_description">Remove this item from the canvas.</string>
+    <string name="canvas_delete_handle_description">Remove this item from the Canvas.</string>
     <string name="home_tab_search_apps">Search Apps</string>
 
     <!-- All Apps Screen -->
@@ -723,7 +763,7 @@
     <string name="onboarding_canvas_menu_title">Welcome to Canvas</string>
     <string name="onboarding_canvas_menu_description">Canvas is one continuous grid where you freely arrange apps, widgets, ROMs, photos, and more. Tap this menu button any time to add items or open Canvas options.</string>
     <string name="onboarding_canvas_area_title">Long-press to add</string>
-    <string name="onboarding_canvas_area_description">Long-press anywhere on the canvas to open the options menu — edit mode, add apps, widgets, ROMs, photos, RSS, change the wallpaper, and more.</string>
+    <string name="onboarding_canvas_area_description">Long-press anywhere on the Canvas to open the options menu — edit mode, add apps, widgets, ROMs, photos, RSS, change the wallpaper, and more.</string>
 
     <!-- App Drawer Options -->
     <string name="app_drawer_options_title">Apps Tab Options</string>

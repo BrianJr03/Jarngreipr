@@ -44,6 +44,7 @@ fun AppOptionsDialog(
     isInDock: Boolean = false,
     onRemoveFromDock: () -> Unit = {},
     onEditCanvas: (() -> Unit)? = null,
+    onOpenCanvasMenu: (() -> Unit)? = null,
     promptForDisplayOnLaunch: Boolean = false,
     onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
@@ -102,6 +103,7 @@ fun AppOptionsDialog(
                 isInDock = isInDock,
                 onRemoveFromDock = onRemoveFromDock,
                 onEditCanvas = onEditCanvas,
+                onOpenCanvasMenu = onOpenCanvasMenu,
                 promptForDisplayOnLaunch = promptForDisplayOnLaunch,
                 onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
             )

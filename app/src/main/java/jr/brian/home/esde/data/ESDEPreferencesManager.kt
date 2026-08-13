@@ -136,6 +136,10 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
@@ -547,6 +551,10 @@ class ESDEPreferencesManager(context: Context) {
             frontendHintsVisible = prefs.getBoolean(KEY_FRONTEND_HINTS_VISIBLE, true),
             frontendFloatIntensity = prefs.getFloat(KEY_FRONTEND_FLOAT_INTENSITY, 1f).coerceIn(0f, 3f),
             frontendFocusHapticEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, true),
+            frontendFocusBackgroundEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED, false),
+            frontendFocusBackgroundSystems = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS, true),
+            frontendFocusBackgroundGames = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_GAMES, true),
+            frontendFocusBackgroundDim = prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM, 0.55f).coerceIn(0f, 1f),
             canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->

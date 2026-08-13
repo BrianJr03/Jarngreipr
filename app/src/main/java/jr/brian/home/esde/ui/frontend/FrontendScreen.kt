@@ -40,9 +40,14 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.RomGameLauncher
+import jr.brian.home.esde.ui.frontend.settings.FrontendSettingsScreen
+import jr.brian.home.esde.ui.frontend.settings.SystemCustomizationScreen
+import jr.brian.home.esde.util.heroBackgroundPath
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.model.rom.toGameInfo
@@ -257,6 +262,14 @@ private fun GamesRoute(
         }
     }
 
+    var focusedGame by remember(system) { mutableStateOf<GameInfo?>(null) }
+    val focusBackgroundUri = if (
+        esdeState.frontendFocusBackgroundEnabled &&
+        esdeState.frontendFocusBackgroundGames
+    ) {
+        focusedGame?.heroBackgroundPath()
+    } else null
+
     Surface(
         color = if (esdeState.romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
         modifier = Modifier
@@ -280,35 +293,42 @@ private fun GamesRoute(
                 }
             }
     ) {
-        FrontendRomGrid(
-            games = filteredGames,
-            isLoading = isLoading,
-            isHiddenMode = false,
-            backgroundTransparent = esdeState.romSearchUseWallpaper,
-            cardMediaType = esdeState.romSearchCardMediaType,
-            focusAnimationEnabled = esdeState.romSearchDiscSpin,
-            focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
-            focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames,
-            gameMediaMap = esdeState.romSearchGameMediaMap,
-            systemMediaMap = esdeState.systemMediaMap,
-            focusResetKey = focusResetKey,
-            layout = esdeState.gameLayout,
-            esdePrefs = esdePrefs,
-            viewModel = viewModel,
-            romSearchStateHolder = romSearchStateHolder,
-            frontendSelectionStateHolder = frontendSelectionStateHolder,
-            managers = managers,
-            romLauncher = romLauncher,
-            appDisplayPreferenceManager = appDisplayPreferenceManager,
-            onChangeFolder = onChangeFolder,
-            modifier = Modifier.fillMaxSize(),
-            system = system,
-            initialRealIndex = initialGameIndex
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            FrontendFocusBackground(
+                focusedUri = focusBackgroundUri,
+                dimAlpha = esdeState.frontendFocusBackgroundDim
+            )
+            FrontendRomGrid(
+                games = filteredGames,
+                isLoading = isLoading,
+                isHiddenMode = false,
+                backgroundTransparent = esdeState.romSearchUseWallpaper || focusBackgroundUri != null,
+                cardMediaType = esdeState.romSearchCardMediaType,
+                focusAnimationEnabled = esdeState.romSearchDiscSpin,
+                focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
+                focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames,
+                gameMediaMap = esdeState.romSearchGameMediaMap,
+                systemMediaMap = esdeState.systemMediaMap,
+                focusResetKey = focusResetKey,
+                layout = esdeState.gameLayout,
+                esdePrefs = esdePrefs,
+                viewModel = viewModel,
+                romSearchStateHolder = romSearchStateHolder,
+                frontendSelectionStateHolder = frontendSelectionStateHolder,
+                managers = managers,
+                romLauncher = romLauncher,
+                appDisplayPreferenceManager = appDisplayPreferenceManager,
+                onChangeFolder = onChangeFolder,
+                modifier = Modifier.fillMaxSize(),
+                system = system,
+                initialRealIndex = initialGameIndex,
+                onFocusedGameChanged = { focusedGame = it }
+            )
+        }
     }
 
     if (showSettingsDialog) {
-        FrontendSettingsDialog(
+        FrontendSettingsScreen(
             onDismiss = { showSettingsDialog = false },
             onOpenSystemFilter = {
                 showSettingsDialog = false
@@ -334,9 +354,9 @@ private fun SystemsRoute(
     isLoading: Boolean,
     hiddenGames: Set<String>,
     hiddenSystems: Set<String>,
-    layout: jr.brian.home.esde.model.FrontendLayout,
+    layout: FrontendLayout,
     useWallpaper: Boolean,
-    customizations: Map<String, jr.brian.home.esde.model.SystemCustomization>,
+    customizations: Map<String, SystemCustomization>,
     systemOrder: List<String>,
     hintsVisible: Boolean,
     esdePrefs: ESDEPreferencesManager,
@@ -361,6 +381,15 @@ private fun SystemsRoute(
     var showSystemFilter by remember { mutableStateOf(false) }
     var customizingSystem by remember { mutableStateOf<String?>(null) }
     var reorderingSystem by remember { mutableStateOf<String?>(null) }
+    var focusedSystemName by remember { mutableStateOf<String?>(null) }
+
+    val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
+    val focusBackgroundUri = if (
+        esdeState.frontendFocusBackgroundEnabled &&
+        esdeState.frontendFocusBackgroundSystems
+    ) {
+        focusedSystemName?.let { customizations[it]?.focusBackgroundUri }
+    } else null
 
     // Back / B button on Systems is intentionally inert (kiosk behaviour) — the
     // frontend is the launcher's home, so the user shouldn't be able to back out of
@@ -412,15 +441,20 @@ private fun SystemsRoute(
                 )
             }
     ) {
+        FrontendFocusBackground(
+            focusedUri = focusBackgroundUri,
+            dimAlpha = esdeState.frontendFocusBackgroundDim
+        )
         SystemGrid(
             systems = workingOrder,
             isLoading = isLoading,
             layout = layout,
             initialRealIndex = initialSystemIndex,
-            backgroundTransparent = useWallpaper,
+            backgroundTransparent = useWallpaper || focusBackgroundUri != null,
             customizations = customizations,
             reorderingSystem = reorderingSystem,
             onSystemFocused = { tile ->
+                focusedSystemName = tile.systemName
                 frontendSelectionStateHolder.selectSystem(tile.systemName)
                 romSearchStateHolder.lastFocusedSystem.value = tile.systemName
             },
@@ -445,7 +479,7 @@ private fun SystemsRoute(
     }
 
     if (showSettingsDialog) {
-        FrontendSettingsDialog(
+        FrontendSettingsScreen(
             onDismiss = { showSettingsDialog = false },
             onOpenSystemFilter = {
                 showSettingsDialog = false
@@ -466,7 +500,7 @@ private fun SystemsRoute(
 
     val activeCustomizeTarget = customizingSystem
     if (activeCustomizeTarget != null) {
-        SystemCustomizationDialog(
+        SystemCustomizationScreen(
             systemName = activeCustomizeTarget,
             customization = customizations[activeCustomizeTarget]
                 ?: jr.brian.home.esde.model.SystemCustomization(),

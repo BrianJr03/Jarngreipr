@@ -1,0 +1,152 @@
+package jr.brian.home.esde.ui.frontend.settings
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.ui.theme.OledBackgroundColor
+
+@Composable
+fun FrontendSettingsScreen(
+    onDismiss: () -> Unit,
+    onOpenSystemFilter: () -> Unit = {}
+) {
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefsState by prefsManager.state.collectAsStateWithLifecycle()
+    val cursor = rememberFrontendSettingsState()
+
+    val rowCount = rowCountFor(cursor.selectedCategory)
+    val rootFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
+
+    val registerHorizontal = remember(cursor) {
+        { claims: Boolean -> cursor.registerHorizontal(claims) }
+    }
+
+    CompositionLocalProvider(
+        LocalRowActivation provides cursor.activationTick,
+        LocalRowStep provides cursor.horizontalStep,
+        LocalHorizontalRowRegistration provides registerHorizontal
+    ) {
+        Surface(
+            color = OledBackgroundColor,
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(rootFocus)
+                .focusTarget()
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    cursor.handleKey(
+                        keyCode = event.nativeKeyEvent.keyCode,
+                        rowCount = rowCount,
+                        onClose = onDismiss
+                    )
+                }
+        ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                CategoryRail(
+                    entries = FrontendSettingsCategory.entries,
+                    selected = cursor.selectedCategory,
+                    railHasFocus = cursor.focusOnRail
+                )
+                RowPaneContainer(
+                    category = cursor.selectedCategory,
+                    prefsState = prefsState,
+                    prefsManager = prefsManager,
+                    focusedRow = if (cursor.focusOnRail) -1 else cursor.focusedRow,
+                    onOpenSystemFilter = {
+                        onDismiss()
+                        onOpenSystemFilter()
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun rowCountFor(category: FrontendSettingsCategory): Int = when (category) {
+    FrontendSettingsCategory.LAYOUT -> 2
+    FrontendSettingsCategory.MEDIA -> 5
+    FrontendSettingsCategory.FEEL -> 3
+    FrontendSettingsCategory.SYSTEMS -> 1
+}
+
+@Composable
+private fun RowPaneContainer(
+    category: FrontendSettingsCategory,
+    prefsState: ESDEPrefsState,
+    prefsManager: ESDEPreferencesManager,
+    focusedRow: Int,
+    onOpenSystemFilter: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 12.dp, end = 16.dp, bottom = 16.dp)
+    ) {
+        PaneHeader(category = category)
+        Spacer(Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(PaddingValues(end = 4.dp)),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FrontendSettingsRows(
+                category = category,
+                prefsState = prefsState,
+                prefsManager = prefsManager,
+                focusedRow = focusedRow,
+                onOpenSystemFilter = onOpenSystemFilter
+            )
+        }
+    }
+}
+
+@Composable
+private fun PaneHeader(category: FrontendSettingsCategory) {
+    Column {
+        Text(
+            text = stringResource(category.titleRes),
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = stringResource(category.summaryRes),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 13.sp
+        )
+    }
+}

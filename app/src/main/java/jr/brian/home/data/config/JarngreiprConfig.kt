@@ -40,7 +40,12 @@ data class JarngreiprConfig(
         // v14: added UiConfig.promptForDisplayOnLaunch — set of package names that
         //      surface a display chooser on tap. Older blobs decode with the empty
         //      default (no prompting), matching pre-toggle behavior.
-        const val CONFIG_VERSION = 14
+        // v15: added RomSearchConfig.frontendFocusBackgroundSystems and
+        //      frontendFocusBackgroundGames per-route toggles for the focus-background
+        //      feature; SystemCustomization.focusBackgroundUri for a per-system full-screen
+        //      backdrop distinct from the tile-level backgroundUri. Older blobs decode
+        //      with defaults (both routes on, no focus URI) via ignoreUnknownKeys.
+        const val CONFIG_VERSION = 15
     }
 }
 
@@ -248,7 +253,11 @@ data class RomSearchConfig(
     val canvasContinuousSpinRoms: Set<String> = emptySet(),
     val gameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
-    val frontendFocusHapticEnabled: Boolean = true
+    val frontendFocusHapticEnabled: Boolean = true,
+    val frontendFocusBackgroundEnabled: Boolean = false,
+    val frontendFocusBackgroundSystems: Boolean = true,
+    val frontendFocusBackgroundGames: Boolean = true,
+    val frontendFocusBackgroundDim: Float = 0.55f
 )
 
 @Serializable

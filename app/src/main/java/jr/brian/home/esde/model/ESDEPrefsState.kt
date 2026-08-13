@@ -259,6 +259,10 @@ data class ESDEPrefsState(
     val frontendHintsVisible: Boolean = true,
     val frontendFloatIntensity: Float = 1f,
     val frontendFocusHapticEnabled: Boolean = true,
+    val frontendFocusBackgroundEnabled: Boolean = false,
+    val frontendFocusBackgroundSystems: Boolean = true,
+    val frontendFocusBackgroundGames: Boolean = true,
+    val frontendFocusBackgroundDim: Float = 0.55f,
     val canvasContinuousSpinRoms: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f

@@ -29,6 +29,7 @@ fun CanvasAppOptionsDialog(
     onCustomIconClick: () -> Unit,
     onRenameClick: () -> Unit,
     onEditCanvas: () -> Unit,
+    onOpenCanvasMenu: () -> Unit,
     promptForDisplayOnLaunch: Boolean = false,
     onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
@@ -45,6 +46,7 @@ fun CanvasAppOptionsDialog(
         showResizeOption = false,
         isInDock = false,
         onEditCanvas = onEditCanvas,
+        onOpenCanvasMenu = onOpenCanvasMenu,
         promptForDisplayOnLaunch = promptForDisplayOnLaunch,
         onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
     )

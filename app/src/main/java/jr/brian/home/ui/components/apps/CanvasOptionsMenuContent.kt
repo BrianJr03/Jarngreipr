@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.Tune
@@ -55,6 +56,7 @@ fun CanvasOptionsMenuContent(
     onRenameClick: () -> Unit = {},
     onRemoveFromDock: () -> Unit = {},
     onEditCanvas: (() -> Unit)? = null,
+    onOpenCanvasMenu: (() -> Unit)? = null,
     promptForDisplayOnLaunch: Boolean = false,
     onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
@@ -123,6 +125,18 @@ fun CanvasOptionsMenuContent(
                     previewIconSize = currentIconSize
                 }
             ))
+        }
+        if (onOpenCanvasMenu != null) {
+            add(
+                GridItem.IconItem(
+                    icon = Icons.Default.Menu,
+                    label = stringResource(R.string.canvas_menu),
+                    onClick = {
+                        onDismiss()
+                        onOpenCanvasMenu()
+                    }
+                )
+            )
         }
     }
 
