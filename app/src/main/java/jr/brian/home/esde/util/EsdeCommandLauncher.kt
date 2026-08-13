@@ -408,7 +408,8 @@ object EsdeCommandLauncher {
                 context.grantUriPermission(
                     packageName, contentUri!!, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w(TAG, "grantUriPermission($packageName, $contentUri) failed", e)
             }
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
@@ -445,12 +446,15 @@ object EsdeCommandLauncher {
         }
 
         // Extras do not carry a URI grant the way intent.data does, so anything
-        // reading a URI out of an extra needs an explicit grant.
+        // reading a URI out of an extra needs an explicit grant. Log rather
+        // than swallow: silent failure here manifests downstream as the
+        // emulator booting to a black screen when it cannot open the URI.
         fun grant() = try {
             context.grantUriPermission(
                 packageName, contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "grantUriPermission($packageName, $contentUri) failed", e)
         }
 
         val action = if (contract == RomLaunchContract.RetroArch) {

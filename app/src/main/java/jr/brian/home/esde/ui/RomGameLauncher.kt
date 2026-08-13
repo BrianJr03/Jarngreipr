@@ -20,6 +20,8 @@ import jr.brian.home.esde.util.buildSafDocumentUri
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.util.sdCardVolumeId
+import android.content.pm.PackageManager
+import android.provider.DocumentsContract
 import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import jr.brian.home.util.launchApp
 import java.io.File
@@ -28,6 +30,7 @@ sealed interface LaunchFailure {
     data class EmulatorNotInstalled(val packageName: String) : LaunchFailure
     data object NoEmulatorConfigured : LaunchFailure
     data class NoHandler(val packageName: String, val hint: String?) : LaunchFailure
+    data class UnreadableRom(val packageName: String, val uri: Uri) : LaunchFailure
     data class Unknown(val cause: Throwable) : LaunchFailure
 }
 
@@ -35,6 +38,8 @@ fun LaunchFailure.message(): String = when (this) {
     is LaunchFailure.EmulatorNotInstalled -> "Not installed: $packageName"
     LaunchFailure.NoEmulatorConfigured -> "No emulator set for this game — pick one from its details"
     is LaunchFailure.NoHandler -> hint ?: "$packageName wouldn't accept this ROM"
+    is LaunchFailure.UnreadableRom ->
+        "$packageName can't read this ROM — re-pick your ROMs folder in the SAF prompt so the grant applies to the emulator too"
     is LaunchFailure.Unknown -> "Failed to launch: ${cause.message}"
 }
 
@@ -206,6 +211,26 @@ class RomGameLauncher(
             }
         }
 
+        // Issue the per-file read grant here so verifyReadable can confirm it
+        // landed. The intent builders call grantUriPermission again for the
+        // same (pkg, uri) — that is idempotent.
+        if (effectiveContentUri.scheme == "content") {
+            try {
+                context.grantUriPermission(
+                    pkg,
+                    effectiveContentUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "grantUriPermission($pkg, $effectiveContentUri) failed", e)
+            }
+        }
+
+        if (!verifyReadable(context, pkg, effectiveContentUri)) {
+            fail(context, LaunchFailure.UnreadableRom(pkg, effectiveContentUri))
+            return
+        }
+
         if (useSavedCommand) {
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
             if (savedCommand != null) {
@@ -339,6 +364,47 @@ class RomGameLauncher(
             else -> return null
         }
         return "content://com.android.externalstorage.documents/document/${Uri.encode("$volumeId:$rel")}".toUri()
+    }
+
+    /**
+     * Confirms the document URI resolves and the target package holds a read
+     * grant on it. `startActivity` returns success even when the emulator will
+     * later fail to open the URI, so surfacing this as a launch-time failure
+     * turns a black-screen bug report into a self-service fix.
+     *
+     * Non-content URIs (file://, FileProvider from our own authority) skip the
+     * resolver check — the emulator will hit its own storage-permission path
+     * for those and the granting model here does not apply.
+     */
+    private fun verifyReadable(context: Context, pkg: String, uri: Uri): Boolean {
+        if (uri.scheme != "content") return true
+        val resolves = try {
+            context.contentResolver.query(
+                uri,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                null, null, null
+            )?.use { it.moveToFirst() } == true
+        } catch (e: Exception) {
+            Log.w(TAG, "Query for $uri failed", e)
+            false
+        }
+        if (!resolves) {
+            Log.w(TAG, "URI $uri did not resolve — grant is stale or file is gone")
+            return false
+        }
+        val uid = try {
+            context.packageManager.getPackageUid(pkg, 0)
+        } catch (e: PackageManager.NameNotFoundException) {
+            Log.w(TAG, "Cannot resolve uid for $pkg", e)
+            return false
+        }
+        val granted = context.checkUriPermission(
+            uri, -1, uid, Intent.FLAG_GRANT_READ_URI_PERMISSION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            Log.w(TAG, "Grant on $uri did not land on $pkg (uid $uid)")
+        }
+        return granted
     }
 
     private fun fail(context: Context, failure: LaunchFailure) {
