@@ -45,7 +45,6 @@ class RomSearchViewModel @Inject constructor(
     val query: StateFlow<String> = store.query.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
-    val hintAndKbVisible: StateFlow<Boolean> = store.hintAndKbVisible.asStateFlow()
     val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
     val pendingRomForPin: StateFlow<Pair<Int, GameInfo>?> = store.pendingRomForPin.asStateFlow()
     val stateHolder: RomSearchStateHolder = store
@@ -88,10 +87,6 @@ class RomSearchViewModel @Inject constructor(
     fun clearState() {
         store.query.value = ""
         store.focusedGame.value = null
-    }
-
-    fun resetHintAndKbVisibility() {
-        store.hintAndKbVisible.value = true
     }
 
     fun loadGames() {

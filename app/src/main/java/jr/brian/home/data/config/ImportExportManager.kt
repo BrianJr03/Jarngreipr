@@ -275,7 +275,6 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 volume = f.bgMusicManager.vol
             ),
             romSearch = RomSearchConfig(
-                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible,
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
@@ -540,7 +539,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             volume = bgMusic.volume
         )
 
-        f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
+        // config.romSearch.hintsKbVisible intentionally ignored — the feature it
+        // gated was removed. The field stays on RomSearchConfig so older exports
+        // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()

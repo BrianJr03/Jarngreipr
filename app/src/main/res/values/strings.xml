@@ -1407,8 +1407,7 @@
     <string name="esde_settings_cancel_button">Cancel</string>
 
     <!-- ROM Search hints -->
-    <string name="rom_search_hint_keyboard">Select: toggle hints and kb</string>
-    <string name="rom_search_hint_details">Start: open details</string>
+    <string name="rom_search_hint_details">Select: open details</string>
     <string name="rom_search_commands">Search Commands</string>
     <string name="rom_search_command_android">@android</string>
     <string name="rom_search_command_android_desc">Browse all installed Android apps</string>

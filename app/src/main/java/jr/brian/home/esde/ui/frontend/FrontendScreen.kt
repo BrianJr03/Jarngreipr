@@ -2,6 +2,7 @@ package jr.brian.home.esde.ui.frontend
 
 import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
@@ -299,6 +300,11 @@ private fun GamesRoute(
     }
 
     var focusedGame by remember(system) { mutableStateOf<GameInfo?>(null) }
+    // Route B/BACK through the OnBackPressedDispatcher so the innermost enabled
+    // BackHandler (e.g. the one that closes RomResultsGrid's details panel)
+    // fires first, and only when nothing inner is enabled does this screen's
+    // own BackHandler at the top of GamesRoute take over.
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     // Focus events only fire on *change*, so nothing sets this on first composition.
     // Fall back to the game the grid seeds focus onto (same index it uses) until a
     // real focus event arrives, so the hero background paints on frame one instead
@@ -322,10 +328,14 @@ private fun GamesRoute(
                 if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (keyEvent.nativeKeyEvent.keyCode) {
                     // Hack: catch back at the preview stage so neither the focus
-                    // animation nor any descendant can swallow the first press.
+                    // animation nor any descendant can swallow the first press —
+                    // then hand off to the back dispatcher so any active inner
+                    // BackHandler (like the details panel's) runs before we
+                    // fall back to leaving the route.
                     AndroidKeyEvent.KEYCODE_BUTTON_B,
                     AndroidKeyEvent.KEYCODE_BACK -> {
-                        viewModel.navigateTo(FrontendRoute.Systems)
+                        backDispatcher?.onBackPressed()
+                            ?: viewModel.navigateTo(FrontendRoute.Systems)
                         true
                     }
 

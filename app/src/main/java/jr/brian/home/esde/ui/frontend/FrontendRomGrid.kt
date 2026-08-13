@@ -137,11 +137,6 @@ internal fun FrontendRomGrid(
         onUnhideAllGames = { gamesToUnhide ->
             esdePrefs.unhideAllGames(gamesToUnhide.map { hiddenGameKey(it) })
         },
-        onToggleHintAndKeyboard = {
-            val newVisible = !romSearchStateHolder.hintAndKbVisible.value
-            romSearchStateHolder.hintAndKbVisible.value = newVisible
-            esdePrefs.setRomSearchHintsKbVisible(newVisible)
-        },
         onAndroidAppInfo = { game ->
             val pkg = game.path.trimEnd('/').removeSuffix(".app")
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

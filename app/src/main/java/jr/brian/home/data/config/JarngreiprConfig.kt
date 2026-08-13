@@ -264,6 +264,9 @@ data class BgMusicConfig(
 
 @Serializable
 data class RomSearchConfig(
+    // Retained for import compatibility with older exports. The feature it
+    // gated (SELECT-toggled on-screen keyboard hints) was removed; value is
+    // read but no longer applied.
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,

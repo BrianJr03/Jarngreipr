@@ -77,7 +77,6 @@ internal fun RomResultCard(
     onLongClick: () -> Unit,
     onFocused: () -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
-    onToggleKeyboard: () -> Unit = {},
     mediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     focusAnimationEnabled: Boolean = false,
     isFocusAnimationDisabled: Boolean = false,
@@ -187,18 +186,23 @@ internal fun RomResultCard(
                 }
             }
             .onKeyEvent { keyEvent ->
-                when (keyEvent.type) {
-                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onToggleKeyboard()
-                        true
-                    }
-
-                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START -> {
+                val code = keyEvent.nativeKeyEvent.keyCode
+                when {
+                    keyEvent.type == KeyEventType.KeyUp &&
+                            code == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
                         true
                     }
+
+                    // Swallow held confirm keys so combinedClickable's onLongClick
+                    // never fires from the gamepad. Touch long-press still works —
+                    // it goes through pointer input, not onKeyEvent.
+                    keyEvent.type == KeyEventType.KeyDown &&
+                            keyEvent.nativeKeyEvent.repeatCount > 0 &&
+                            (code == AndroidKeyEvent.KEYCODE_BUTTON_A ||
+                                    code == AndroidKeyEvent.KEYCODE_DPAD_CENTER ||
+                                    code == AndroidKeyEvent.KEYCODE_ENTER) -> true
 
                     else -> false
                 }

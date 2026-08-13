@@ -113,7 +113,6 @@ internal fun RomResultsGrid(
     onHideGame: (GameInfo) -> Unit = {},
     onUnhideGame: (GameInfo) -> Unit = {},
     onUnhideAllGames: (List<GameInfo>) -> Unit = {},
-    onToggleHintAndKeyboard: () -> Unit = {},
     onAndroidAppInfo: (GameInfo) -> Unit = {},
     isRetroArchGame: (GameInfo) -> Boolean = { false },
     hasSavedCore: (GameInfo) -> Boolean = { false },
@@ -233,8 +232,7 @@ internal fun RomResultsGrid(
                                 if (isAndroid) onAndroidAppInfo(game)
                                 else selectedGame = game
                             },
-                            onFocused = onFocused,
-                            onToggleKeyboard = onToggleHintAndKeyboard
+                            onFocused = onFocused
                         )
                     }
                 }

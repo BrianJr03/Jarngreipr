@@ -12,7 +12,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANI
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_METADATA
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
@@ -139,11 +138,6 @@ fun ESDEPreferencesManager.setRomSearchPlatformImagesFolderType(type: PlatformIm
 fun ESDEPreferencesManager.setRomSearchDetailImageHeightDp(heightDp: Int) {
     _state.value = _state.value.copy(romSearchDetailImageHeightDp = heightDp)
     prefs.edit { putInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, heightDp) }
-}
-
-fun ESDEPreferencesManager.setRomSearchHintsKbVisible(visible: Boolean) {
-    _state.value = _state.value.copy(romSearchHintsKbVisible = visible)
-    prefs.edit { putBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, visible) }
 }
 
 fun ESDEPreferencesManager.disableFocusAnimation(gameKey: String) {

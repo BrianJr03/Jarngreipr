@@ -249,7 +249,6 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesFolderUri: String? = null,
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
     val romSearchDetailImageHeightDp: Int = 240,
-    val romSearchHintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val systemLayout: FrontendLayout = FrontendLayout.Grid,

@@ -20,7 +20,6 @@ class RomSearchStateHolder @Inject constructor() {
     val showSearchKeyboardSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
-    val hintAndKbVisible = MutableStateFlow(true)
 
     val isSelectMode = MutableStateFlow(false)
     val pendingSelectPageIndex = MutableStateFlow(-1)

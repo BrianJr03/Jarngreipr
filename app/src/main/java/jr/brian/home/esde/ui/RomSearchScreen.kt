@@ -94,7 +94,6 @@ fun RomSearchScreen(
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
-    // val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
 
     var showSpecialCharRow by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -119,7 +118,6 @@ fun RomSearchScreen(
     DisposableEffect(Unit) {
         onDispose {
             viewModel.clearState()
-            viewModel.resetHintAndKbVisibility()
             viewModel.stateHolder.openedFromFrontend.value = false
         }
     }
@@ -214,24 +212,6 @@ private fun RomSearchControlHints(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        Row(
-//            horizontalArrangement = Arrangement.spacedBy(4.dp),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Icon(
-//                imageVector = Icons.Default.Keyboard,
-//                contentDescription = null,
-//                tint = ThemePrimaryColor.copy(alpha = 0.5f),
-//                modifier = Modifier.size(16.dp)
-//            )
-//            Text(
-//                text = stringResource(R.string.rom_search_hint_keyboard),
-//                color = ThemePrimaryColor.copy(alpha = 0.5f),
-//                fontSize = 14.sp,
-//                fontWeight = FontWeight.Medium
-//            )
-//        }
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically

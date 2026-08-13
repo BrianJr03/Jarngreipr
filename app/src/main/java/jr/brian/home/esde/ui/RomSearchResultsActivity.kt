@@ -146,7 +146,6 @@ class RomSearchResultsActivity : ComponentActivity() {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -681,11 +680,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
                                     onUnhideAllGames = { games ->
                                         esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
-                                    },
-                                    onToggleHintAndKeyboard = {
-                                        val newVisible = !romSearchStateHolder.hintAndKbVisible.value
-                                        romSearchStateHolder.hintAndKbVisible.value = newVisible
-                                        esdePrefs.setRomSearchHintsKbVisible(newVisible)
                                     },
                                     onAndroidAppInfo = { game ->
                                         val pkg = game.path.trimEnd('/').removeSuffix(".app")

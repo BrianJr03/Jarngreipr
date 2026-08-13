@@ -127,7 +127,6 @@ class FrontEndActivity : ComponentActivity() {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
         observeFrontendEnabledFlag()

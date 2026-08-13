@@ -157,7 +157,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKG
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -565,7 +564,6 @@ class ESDEPreferencesManager(context: Context) {
                 ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
                 ?: PlatformImageFolderType.Default,
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
-            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true),
             frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
             secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
             systemLayout = prefs.getString(KEY_SYSTEM_LAYOUT, null)
