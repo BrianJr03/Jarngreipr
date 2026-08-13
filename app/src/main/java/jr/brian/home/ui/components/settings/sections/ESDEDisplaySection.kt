@@ -59,6 +59,8 @@ import jr.brian.home.esde.ui.sections.ScreensaverSectionContent
 import jr.brian.home.esde.ui.sections.VideoSectionContent
 import jr.brian.home.esde.util.getPathFromUri
 import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.esde.data.setGamelistDecorationEnabled
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -77,6 +79,7 @@ fun ESDESettingsContent(
 ) {
     val context = LocalContext.current
     val viewModel: ESDEViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
     val preferencesManager = LocalESDEPreferencesManager.current
     val pageTypeManager = LocalPageTypeManager.current
     val prefsState by preferencesManager.state.collectAsStateWithLifecycle()
@@ -472,6 +475,22 @@ fun ESDESettingsContent(
         }
 
         CollapsibleSection(
+            title = stringResource(R.string.esde_settings_section_library),
+            onHeaderTap = onSectionHeaderTap,
+        ) {
+            LibrarySectionContent(
+                gamelistDecorationEnabled = prefsState.gamelistDecorationEnabled,
+                onGamelistDecorationChange = { enabled ->
+                    preferencesManager.setGamelistDecorationEnabled(enabled)
+                    // Rebuild the library so the flag change becomes visible
+                    // immediately. Callers watching allGames pick up the new
+                    // list without a restart.
+                    romSearchViewModel.refreshGames()
+                }
+            )
+        }
+
+        CollapsibleSection(
             title = stringResource(R.string.esde_settings_section_search),
             onHeaderTap = onSectionHeaderTap,
             badge = {
@@ -733,6 +752,21 @@ internal fun WallpaperToggleTargetChip(
             color = Color.White,
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun LibrarySectionContent(
+    gamelistDecorationEnabled: Boolean,
+    onGamelistDecorationChange: (Boolean) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ToggleSetting(
+            title = stringResource(R.string.esde_settings_gamelist_decoration_title),
+            description = stringResource(R.string.esde_settings_gamelist_decoration_description),
+            checked = gamelistDecorationEnabled,
+            onCheckedChange = onGamelistDecorationChange,
         )
     }
 }

@@ -130,4 +130,5 @@ object ESDEPreferencesConstants {
     const val KEY_FRONTEND_SYSTEM_TILE_SCALE = "frontend_system_tile_scale"
     const val KEY_FRONTEND_GAME_TILE_SCALE = "frontend_game_tile_scale"
     const val KEY_CANVAS_CONTINUOUS_SPIN_ROMS = "canvas_continuous_spin_roms"
+    const val KEY_GAMELIST_DECORATION_ENABLED = "gamelist_decoration_enabled"
 }

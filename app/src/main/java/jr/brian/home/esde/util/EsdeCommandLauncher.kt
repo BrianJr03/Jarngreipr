@@ -253,6 +253,43 @@ object EsdeCommandLauncher {
         )
     )
 
+    /**
+     * Union of extensions across every emulator that [BUILTIN_SYSTEM_COMMANDS] and
+     * [BUILTIN_RULES] resolve for [systemName]. Used by the ROM scanner when
+     * es_systems.xml is missing or lacks an `<extension>` element for this system.
+     *
+     * Emulator-level extensions are the authoritative source elsewhere in the app
+     * (the picker filters by them, RetroArch config uses them); reusing that set
+     * for scanning keeps the two views of "what is a ROM" identical.
+     */
+    fun systemExtensionsFallback(systemName: String): Set<String> {
+        val commands = BUILTIN_SYSTEM_COMMANDS[systemName].orEmpty()
+        val emulatorRegex = Regex("""%EMULATOR_([^%]+)%""")
+        val extensions = mutableSetOf<String>()
+        for ((_, command) in commands) {
+            val emulatorName = emulatorRegex.find(command)?.groupValues?.get(1) ?: continue
+            val entries = BUILTIN_RULES[emulatorName] ?: continue
+            for (entry in entries) {
+                val pkg = entry.substringBefore("/")
+                val spec = EmulatorRegistry.resolve(pkg) ?: continue
+                extensions += spec.extensions.map { it.lowercase() }
+            }
+        }
+        // For systems that don't appear in BUILTIN_SYSTEM_COMMANDS at all (most of
+        // them — that table only covers the built-in cases that ES-DE ships
+        // without a distributable XML), fall back to the union of extensions
+        // across every registered emulator. The ALWAYS_SKIPPED_EXTENSIONS filter
+        // in the scanner catches sidecar files (.sav, .png, etc.), so a broad
+        // set here is safe: false positives happen only for files whose extension
+        // is unique to a niche emulator we don't ship, which is rare.
+        if (extensions.isEmpty()) {
+            EmulatorRegistry.KNOWN.forEach { spec ->
+                extensions += spec.extensions.map { it.lowercase() }
+            }
+        }
+        return extensions
+    }
+
     fun getCompatibleEmulatorsFromSystem(
         context: Context,
         systemName: String,

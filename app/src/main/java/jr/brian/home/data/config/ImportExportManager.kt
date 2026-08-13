@@ -302,7 +302,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendSystemRowAlignment = f.esdePreferencesManager.state.value.frontendSystemRowAlignment.name,
                 frontendGameRowAlignment = f.esdePreferencesManager.state.value.frontendGameRowAlignment.name,
                 frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
-                frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale
+                frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
+                gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
             )
         )
     }
@@ -583,6 +584,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         )
         f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
+        f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

@@ -156,6 +156,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKG
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
@@ -607,7 +608,8 @@ class ESDEPreferencesManager(context: Context) {
                         val arr = JSONArray(json)
                         (0 until arr.length()).map { arr.getString(it) }.toSet()
                     } catch (_: Exception) { emptySet() }
-                } ?: emptySet()
+                } ?: emptySet(),
+            gamelistDecorationEnabled = prefs.getBoolean(KEY_GAMELIST_DECORATION_ENABLED, true),
         )
     }
 

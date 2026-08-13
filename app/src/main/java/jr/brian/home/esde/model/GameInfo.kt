@@ -1,5 +1,8 @@
 package jr.brian.home.esde.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GameInfo(
     val path: String,
     val name: String,

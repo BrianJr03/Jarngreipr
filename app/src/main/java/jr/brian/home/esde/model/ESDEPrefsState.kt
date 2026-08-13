@@ -270,7 +270,14 @@ data class ESDEPrefsState(
     val frontendGameRowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
     val frontendSystemTileScale: Float = FRONTEND_TILE_SCALE_MIN,
     val frontendGameTileScale: Float = FRONTEND_TILE_SCALE_MIN,
-    val canvasContinuousSpinRoms: Set<String> = emptySet()
+    val canvasContinuousSpinRoms: Set<String> = emptySet(),
+    /**
+     * When true (default), gamelist.xml decorates the filesystem scan with
+     * scraped titles, descriptions, and box-art. When false the library is
+     * built from filenames alone — same games, filename-derived titles, no
+     * XML reads. Users adopting a scraper other than ES-DE will turn this off.
+     */
+    val gamelistDecorationEnabled: Boolean = true,
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

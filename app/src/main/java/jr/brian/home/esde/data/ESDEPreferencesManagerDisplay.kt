@@ -237,6 +237,18 @@ fun ESDEPreferencesManager.setSafTreeUri(systemName: String, treeUriString: Stri
     prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
 }
 
+/**
+ * Toggle whether ES-DE gamelist.xml decorates the filesystem scan. Off means
+ * the library shows exactly the ROMs on disk, titled from their filenames, and
+ * gamelist.xml is not read. Callers must trigger a library rebuild after
+ * flipping this — the flag changes what the ROM index looks like on the next
+ * scan, not what is already in memory.
+ */
+fun ESDEPreferencesManager.setGamelistDecorationEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(gamelistDecorationEnabled = enabled)
+    prefs.edit { putBoolean(jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED, enabled) }
+}
+
 /** Removes the persisted SAF tree URI for [systemName], if any. */
 fun ESDEPreferencesManager.clearSafTreeUri(systemName: String) {
     val existing = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return

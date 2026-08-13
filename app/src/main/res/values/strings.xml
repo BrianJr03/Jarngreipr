@@ -166,6 +166,9 @@
     <string name="system_customize_storage_valid_result">Found %1$d of %2$d ROMs</string>
     <string name="system_customize_storage_zero_result">Found 0 of %1$d — this may be the wrong folder</string>
     <string name="system_customize_storage_no_games">No scanned ROMs for this system to verify against</string>
+    <string name="esde_settings_section_library">Library</string>
+    <string name="esde_settings_gamelist_decoration_title">Read gamelist.xml</string>
+    <string name="esde_settings_gamelist_decoration_description">Decorate the scanned ROM list with titles, descriptions, and box art from ES-DE\'s gamelist.xml. When off the library is built from filenames alone — same games, no XML reads. Flip and refresh the library to apply.</string>
     <string name="frontend_reorder_hint">Reorder mode — D-pad to move • A to confirm • B to cancel</string>
     <string name="frontend_open_customize_hint">START / hold A  •  Customize</string>
     <string name="frontend_enable_title">Enable frontend</string>

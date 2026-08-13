@@ -11,13 +11,6 @@ import jr.brian.home.esde.data.setSafTreeUri
 import jr.brian.home.esde.model.GameInfo
 import java.io.File
 
-/** Case-fold + collapse variant dash characters so gamelist/disk naming quirks match. */
-private fun normalizeName(name: String): String {
-    val sb = StringBuilder(name.length)
-    for (ch in name) sb.append(if (ch == '–' || ch == '—' || ch == '−') '-' else ch)
-    return sb.toString().lowercase()
-}
-
 fun gameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 

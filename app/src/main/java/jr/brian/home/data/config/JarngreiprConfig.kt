@@ -64,7 +64,11 @@ data class JarngreiprConfig(
         //      and frontendSystemTileScale / frontendGameTileScale (tile-size
         //      multiplier 1.0..1.3 controlling row width and grid columns). Older
         //      blobs decode with defaults (Center, 1.0f) via ignoreUnknownKeys.
-        const val CONFIG_VERSION = 19
+        // v20: added RomSearchConfig.gamelistDecorationEnabled — toggle for
+        //      whether ES-DE gamelist.xml decorates the filesystem scan. Older
+        //      blobs decode with the default (true) via ignoreUnknownKeys,
+        //      preserving pre-toggle behaviour.
+        const val CONFIG_VERSION = 20
     }
 }
 
@@ -285,7 +289,8 @@ data class RomSearchConfig(
     val frontendSystemRowAlignment: String = "Center",
     val frontendGameRowAlignment: String = "Center",
     val frontendSystemTileScale: Float = 1.0f,
-    val frontendGameTileScale: Float = 1.0f
+    val frontendGameTileScale: Float = 1.0f,
+    val gamelistDecorationEnabled: Boolean = true
 )
 
 @Serializable

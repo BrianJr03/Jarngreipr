@@ -5,8 +5,8 @@ import jr.brian.home.esde.model.GameInfo
 
 /**
  * Map a [GameImageType] to the per-type path on [GameInfo] populated by
- * [RomListParser] (and matched in shape by the inline build in
- * `ESDEViewModel.updateForGame`). The mapping matches `RomListParser`'s
+ * [GamelistMetadataSource] (and matched in shape by the inline build in
+ * `ESDEViewModel.updateForGame`). The mapping matches the metadata source's
  * resolve functions one-to-one — `Covers` ↔ `FOLDER_COVERS` ↔ `artworkPath`,
  * `MixImages` ↔ `FOLDER_MIXIMAGES` ↔ `miximagePath`, etc.
  *
