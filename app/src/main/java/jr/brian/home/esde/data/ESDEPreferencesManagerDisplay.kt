@@ -224,15 +224,23 @@ fun ESDEPreferencesManager.removeRomsPath(path: String) {
     }
 }
 
-/** Returns the persisted SAF tree URI string for the given SD card volume ID, or null. */
-fun ESDEPreferencesManager.getSafTreeUri(volumeId: String): String? {
+/** Returns the persisted SAF tree URI string for [systemName], or null. */
+fun ESDEPreferencesManager.getSafTreeUri(systemName: String): String? {
     val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
-    return try { JSONObject(json).optString(volumeId, null) } catch (_: Exception) { null }
+    return try { JSONObject(json).optString(systemName, null) } catch (_: Exception) { null }
 }
 
-/** Persists a SAF tree URI for the given SD card volume ID. */
-fun ESDEPreferencesManager.setSafTreeUri(volumeId: String, treeUriString: String) {
+/** Persists a SAF tree URI for [systemName]. */
+fun ESDEPreferencesManager.setSafTreeUri(systemName: String, treeUriString: String) {
     val json = try { JSONObject(prefs.getString(KEY_SAF_TREE_URIS, null) ?: "{}") } catch (_: Exception) { JSONObject() }
-    json.put(volumeId, treeUriString)
+    json.put(systemName, treeUriString)
+    prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
+}
+
+/** Removes the persisted SAF tree URI for [systemName], if any. */
+fun ESDEPreferencesManager.clearSafTreeUri(systemName: String) {
+    val existing = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return
+    val json = try { JSONObject(existing) } catch (_: Exception) { return }
+    json.remove(systemName)
     prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
 }
