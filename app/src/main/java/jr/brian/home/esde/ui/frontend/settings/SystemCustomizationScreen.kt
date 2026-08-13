@@ -1,6 +1,8 @@
 package jr.brian.home.esde.ui.frontend.settings
 
 import android.content.Intent
+import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -29,7 +31,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,19 +55,32 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.clearSafTreeUri
+import jr.brian.home.esde.data.getSafTreeUri
+import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.esde.util.buildAetherDocUri
+import jr.brian.home.esde.util.persistSafTreeForSystem
+import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SystemCustomizationScreen(
     systemName: String,
     customization: SystemCustomization,
+    esdePrefs: ESDEPreferencesManager,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
     onDismiss: () -> Unit,
     onChange: (SystemCustomization) -> Unit,
     onReset: () -> Unit,
@@ -73,7 +90,11 @@ fun SystemCustomizationScreen(
         entries = SystemCustomizationCategory.entries,
         initial = SystemCustomizationCategory.BACKGROUND
     )
-    val rowCount = rowCountFor(cursor.selectedCategory)
+    val storageRowState = rememberStorageRowState(
+        systemName = systemName,
+        esdePrefs = esdePrefs,
+    )
+    val rowCount = rowCountFor(cursor.selectedCategory, storageRowState.hasTree)
     val rootFocus = remember { FocusRequester() }
     var hasFocus by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
@@ -123,6 +144,11 @@ fun SystemCustomizationScreen(
                     category = cursor.selectedCategory,
                     customization = customization,
                     focusedRow = if (cursor.focusOnRail) -1 else cursor.focusedRow,
+                    storageRowState = storageRowState,
+                    systemName = systemName,
+                    gamesForSystem = gamesForSystem,
+                    romsPaths = romsPaths,
+                    esdePrefs = esdePrefs,
                     onChange = onChange,
                     onReset = onReset,
                     onEnterReorder = onEnterReorder
@@ -132,10 +158,15 @@ fun SystemCustomizationScreen(
     }
 }
 
-private fun rowCountFor(category: SystemCustomizationCategory): Int = when (category) {
+private fun rowCountFor(
+    category: SystemCustomizationCategory,
+    storageHasTree: Boolean,
+): Int = when (category) {
     SystemCustomizationCategory.BACKGROUND -> 3
     SystemCustomizationCategory.COLOR -> 6
     SystemCustomizationCategory.ACTIONS -> 2
+    // Pick row + optional Clear row.
+    SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
 }
 
 @Composable
@@ -143,6 +174,11 @@ private fun CustomizationRowPane(
     category: SystemCustomizationCategory,
     customization: SystemCustomization,
     focusedRow: Int,
+    storageRowState: StorageRowState,
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
     onChange: (SystemCustomization) -> Unit,
     onReset: () -> Unit,
     onEnterReorder: () -> Unit
@@ -165,6 +201,11 @@ private fun CustomizationRowPane(
                 category = category,
                 customization = customization,
                 focusedRow = focusedRow,
+                storageRowState = storageRowState,
+                systemName = systemName,
+                gamesForSystem = gamesForSystem,
+                romsPaths = romsPaths,
+                esdePrefs = esdePrefs,
                 onChange = onChange,
                 onReset = onReset,
                 onEnterReorder = onEnterReorder
@@ -196,6 +237,11 @@ private fun CustomizationRows(
     category: SystemCustomizationCategory,
     customization: SystemCustomization,
     focusedRow: Int,
+    storageRowState: StorageRowState,
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
     onChange: (SystemCustomization) -> Unit,
     onReset: () -> Unit,
     onEnterReorder: () -> Unit
@@ -215,6 +261,14 @@ private fun CustomizationRows(
             focusedRow = focusedRow,
             onReset = onReset,
             onEnterReorder = onEnterReorder
+        )
+        SystemCustomizationCategory.STORAGE -> StorageRows(
+            systemName = systemName,
+            state = storageRowState,
+            gamesForSystem = gamesForSystem,
+            romsPaths = romsPaths,
+            esdePrefs = esdePrefs,
+            focusedRow = focusedRow,
         )
     }
 }
@@ -546,9 +600,270 @@ private const val BRIGHT_STEP = 0.02f
 private const val ALPHA_STEP = 0.05f
 private const val RESET_DISARM_MS = 3000L
 
+/** Sample size for the launch-through validation. Larger sizes just make the picker slower. */
+private const val STORAGE_VALIDATION_SAMPLE = 50
+
 private val BACKGROUND_MIME_TYPES = arrayOf(
     "image/png",
     "image/jpeg",
     "image/webp",
     "image/gif"
 )
+
+// region STORAGE
+
+/**
+ * Local state for the storage rows: the current tree URI (or null), the last
+ * validation outcome, and a bump counter so a fresh pick re-runs validation.
+ */
+private class StorageRowState(
+    initialTreeUri: String?,
+) {
+    var treeUri by mutableStateOf(initialTreeUri)
+    var validation by mutableStateOf<StorageValidation>(StorageValidation.Idle)
+    val hasTree: Boolean get() = treeUri != null
+}
+
+private sealed interface StorageValidation {
+    data object Idle : StorageValidation
+    data object Running : StorageValidation
+    data class Result(val found: Int, val total: Int) : StorageValidation
+    data object NoGames : StorageValidation
+}
+
+@Composable
+private fun rememberStorageRowState(
+    systemName: String,
+    esdePrefs: ESDEPreferencesManager,
+): StorageRowState {
+    return remember(systemName) {
+        StorageRowState(initialTreeUri = esdePrefs.getSafTreeUri(systemName))
+    }
+}
+
+@Composable
+private fun StorageRows(
+    systemName: String,
+    state: StorageRowState,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+    focusedRow: Int,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val validate: (Uri) -> Unit = validate@{ treeUri ->
+        if (gamesForSystem.isEmpty()) {
+            state.validation = StorageValidation.NoGames
+            return@validate
+        }
+        state.validation = StorageValidation.Running
+        scope.launch {
+            val outcome = withContext(Dispatchers.IO) {
+                validateSafTree(
+                    context = context,
+                    systemName = systemName,
+                    treeUri = treeUri,
+                    games = gamesForSystem,
+                    romsPaths = romsPaths,
+                    esdePrefs = esdePrefs,
+                )
+            }
+            state.validation = outcome
+        }
+    }
+
+    val picker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { treeUri ->
+        if (treeUri != null) {
+            persistSafTreeForSystem(context, esdePrefs, systemName, treeUri)
+            state.treeUri = treeUri.toString()
+            validate(treeUri)
+        }
+    }
+
+    val pickFocused = focusedRow == 0
+    val clearFocused = focusedRow == 1
+
+    StoragePickerRow(
+        currentPath = state.treeUri?.let { readableFolderPath(it) },
+        focused = pickFocused,
+        onActivate = { picker.launch(state.treeUri?.toUri()) },
+        validation = state.validation,
+    )
+    if (state.hasTree) {
+        ClearStorageRow(
+            focused = clearFocused,
+            onActivate = {
+                esdePrefs.clearSafTreeUri(systemName)
+                state.treeUri = null
+                state.validation = StorageValidation.Idle
+            },
+        )
+    }
+}
+
+@Composable
+private fun StoragePickerRow(
+    currentPath: String?,
+    focused: Boolean,
+    onActivate: () -> Unit,
+    validation: StorageValidation,
+) {
+    ActivateOnConfirm(focused = focused, onActivate = onActivate)
+
+    val title = stringResource(R.string.system_customize_storage_folder_title)
+    val actionLabel = if (currentPath != null) {
+        stringResource(R.string.system_customize_storage_folder_change)
+    } else {
+        stringResource(R.string.system_customize_storage_folder_choose)
+    }
+    val subtitle = currentPath ?: stringResource(R.string.system_customize_storage_folder_none)
+    val statusLine = validationLine(validation)
+
+    StorageRowCard(
+        title = title,
+        subtitle = subtitle,
+        action = actionLabel,
+        status = statusLine,
+        focused = focused,
+    )
+}
+
+@Composable
+private fun ClearStorageRow(focused: Boolean, onActivate: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ToggleSetting(
+            title = stringResource(R.string.system_customize_storage_clear),
+            description = stringResource(R.string.system_customize_storage_clear_description),
+            checked = false,
+            showToggle = false,
+            onClick = onActivate,
+            focused = focused,
+        )
+        ActivateOnConfirm(focused = focused, onActivate = onActivate)
+    }
+}
+
+@Composable
+private fun StorageRowCard(
+    title: String,
+    subtitle: String,
+    action: String,
+    status: String?,
+    focused: Boolean,
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(focused))
+            .background(brush = subtleCardGradient(focused), shape = shape)
+            .border(
+                width = if (focused) 2.dp else 0.dp,
+                color = if (focused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = shape
+            )
+            .clip(shape)
+            .revealWhenFocused(focused)
+            .padding(16.dp),
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = subtitle,
+            color = Color.White.copy(alpha = 0.75f),
+            fontSize = 13.sp
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = action,
+            color = Color.Gray,
+            fontSize = 13.sp
+        )
+        if (status != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = status,
+                color = ThemePrimaryColor,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun validationLine(validation: StorageValidation): String? = when (validation) {
+    StorageValidation.Idle -> null
+    StorageValidation.Running -> stringResource(R.string.system_customize_storage_validating)
+    StorageValidation.NoGames -> stringResource(R.string.system_customize_storage_no_games)
+    is StorageValidation.Result -> {
+        if (validation.found == 0) {
+            stringResource(R.string.system_customize_storage_zero_result, validation.total)
+        } else {
+            stringResource(
+                R.string.system_customize_storage_valid_result,
+                validation.found,
+                validation.total,
+            )
+        }
+    }
+}
+
+/** primary:Roms/ps2 → /storage/emulated/0/Roms/ps2. Volume-scoped ids stay verbatim. */
+private fun readableFolderPath(treeUriString: String): String? {
+    val treeUri = runCatching { treeUriString.toUri() }.getOrNull() ?: return null
+    val docId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+        ?: return treeUriString
+    return when {
+        docId.startsWith("primary:") -> "/storage/emulated/0/${docId.removePrefix("primary:")}"
+        docId.contains(":") -> {
+            val (volume, rel) = docId.split(":", limit = 2)
+            "/storage/$volume/$rel"
+        }
+        else -> docId
+    }
+}
+
+/**
+ * Resolves up to [STORAGE_VALIDATION_SAMPLE] games through the same pipeline the
+ * launcher uses, then queries each resulting document URI for COLUMN_DOCUMENT_ID.
+ * The count that comes back tells the user whether the picked tree is the one
+ * their emulator will also be reading from.
+ */
+private fun validateSafTree(
+    context: android.content.Context,
+    systemName: String,
+    treeUri: Uri,
+    games: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+): StorageValidation {
+    val sample = games.take(STORAGE_VALIDATION_SAMPLE)
+    if (sample.isEmpty()) return StorageValidation.NoGames
+    val treeUriString = treeUri.toString()
+    val getTreeUri = { name: String -> if (name == systemName) treeUriString else esdePrefs.getSafTreeUri(name) }
+    var found = 0
+    for (game in sample) {
+        val romPath = resolveRomPath(game, romsPaths) ?: continue
+        val docUri = buildAetherDocUri(systemName, romPath, getTreeUri, context) ?: continue
+        val exists = runCatching {
+            context.contentResolver.query(
+                docUri,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                null, null, null,
+            )?.use { it.moveToFirst() } == true
+        }.getOrDefault(false)
+        if (exists) found++
+    }
+    return StorageValidation.Result(found = found, total = sample.size)
+}
+
+// endregion

@@ -561,10 +561,16 @@ private fun SystemsRoute(
 
     val activeCustomizeTarget = customizingSystem
     if (activeCustomizeTarget != null) {
+        val gamesForSystem = remember(allGames, activeCustomizeTarget) {
+            allGames.filter { it.systemName.equals(activeCustomizeTarget, ignoreCase = true) }
+        }
         SystemCustomizationScreen(
             systemName = activeCustomizeTarget,
             customization = customizations[activeCustomizeTarget]
                 ?: jr.brian.home.esde.model.SystemCustomization(),
+            esdePrefs = esdePrefs,
+            gamesForSystem = gamesForSystem,
+            romsPaths = esdeState.romsPaths,
             onDismiss = { customizingSystem = null },
             onChange = { updated -> esdePrefs.setSystemCustomization(activeCustomizeTarget, updated) },
             onReset = {

@@ -2,6 +2,7 @@ package jr.brian.home.esde.ui.frontend.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Tune
@@ -31,5 +32,11 @@ enum class SystemCustomizationCategory(
         titleRes = R.string.system_customize_category_actions_title,
         summaryRes = R.string.system_customize_category_actions_summary,
         icon = Icons.Rounded.Tune
+    ),
+    STORAGE(
+        id = "storage",
+        titleRes = R.string.system_customize_category_storage_title,
+        summaryRes = R.string.system_customize_category_storage_summary,
+        icon = Icons.Rounded.FolderOpen
     )
 }
