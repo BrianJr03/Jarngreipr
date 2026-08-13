@@ -70,12 +70,12 @@ private fun Modifier.frontendControlKeys(
 ): Modifier = onPreviewKeyEvent { keyEvent ->
     val code = keyEvent.nativeKeyEvent.keyCode
     if (code != AndroidKeyEvent.KEYCODE_BUTTON_Y &&
-        code != AndroidKeyEvent.KEYCODE_BUTTON_SELECT
+        code != AndroidKeyEvent.KEYCODE_BUTTON_START
     ) return@onPreviewKeyEvent false
     if (keyEvent.type == KeyEventType.KeyDown) {
         when (code) {
             AndroidKeyEvent.KEYCODE_BUTTON_Y -> onSearch()
-            AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> onOpenSettings()
+            AndroidKeyEvent.KEYCODE_BUTTON_START -> onOpenSettings()
         }
     }
     true
@@ -607,7 +607,7 @@ private fun handleSystemsRouteKey(
                 onReorderMove(1); true
             }
             AndroidKeyEvent.KEYCODE_BUTTON_A, AndroidKeyEvent.KEYCODE_DPAD_CENTER,
-            AndroidKeyEvent.KEYCODE_ENTER, AndroidKeyEvent.KEYCODE_BUTTON_START -> {
+            AndroidKeyEvent.KEYCODE_ENTER -> {
                 onReorderConfirm(); true
             }
             AndroidKeyEvent.KEYCODE_BUTTON_B, AndroidKeyEvent.KEYCODE_BACK -> {
@@ -618,8 +618,8 @@ private fun handleSystemsRouteKey(
     }
     return when (code) {
         AndroidKeyEvent.KEYCODE_BUTTON_Y -> { onSearch(); true }
-        AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> { onOpenSettings(); true }
-        AndroidKeyEvent.KEYCODE_BUTTON_START -> { onCustomizeFocused(); true }
+        AndroidKeyEvent.KEYCODE_BUTTON_START -> { onOpenSettings(); true }
+        AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> { onCustomizeFocused(); true }
         else -> false
     }
 }
@@ -696,12 +696,6 @@ private fun FrontendAffordanceHints(
             )
         } else {
             Text(
-                text = stringResource(R.string.frontend_open_settings_hint),
-                color = ThemeAccentColor.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
                 text = stringResource(R.string.frontend_open_customize_hint),
                 color = ThemeAccentColor.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.labelMedium
@@ -709,6 +703,12 @@ private fun FrontendAffordanceHints(
             Spacer(Modifier.weight(1f))
             Text(
                 text = stringResource(R.string.frontend_open_search_hint),
+                color = ThemeAccentColor.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelMedium
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.frontend_open_settings_hint),
                 color = ThemeAccentColor.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.labelMedium
             )

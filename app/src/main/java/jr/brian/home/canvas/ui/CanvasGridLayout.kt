@@ -74,7 +74,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-private val CanvasOuterPadding = 8.dp
+private val CanvasOuterPadding = 12.dp
 private val CanvasCellSpacing = 8.dp
 private val CanvasResizeHandleSize = 28.dp
 private val CanvasDeleteHandleSize = 28.dp
