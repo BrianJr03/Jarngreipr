@@ -416,6 +416,45 @@ class RomPathUtilsTest {
 
     // endregion
 
+    // region deriveRomsRoot
+
+    @Test
+    fun `deriveRomsRoot uses picked dir when its name does not match the system`() {
+        // User picked the parent that contains the system subfolder — treat it as-is.
+        assertEquals(
+            "/storage/emulated/0/Roms",
+            deriveRomsRoot("/storage/emulated/0/Roms", "ps2"),
+        )
+    }
+
+    @Test
+    fun `deriveRomsRoot uses parent when picked dir is named after the system`() {
+        // User picked Roms/ps2 directly — the ROMs root is Roms.
+        assertEquals(
+            "/storage/emulated/0/Roms",
+            deriveRomsRoot("/storage/emulated/0/Roms/ps2", "ps2"),
+        )
+    }
+
+    @Test
+    fun `deriveRomsRoot matches system name case-insensitively`() {
+        // ES-DE folder conventions are lower-case, but the platform is not.
+        assertEquals(
+            "/storage/emulated/0/Roms",
+            deriveRomsRoot("/storage/emulated/0/Roms/PS2", "ps2"),
+        )
+    }
+
+    @Test
+    fun `deriveRomsRoot with null systemName returns picked dir verbatim`() {
+        assertEquals(
+            "/storage/emulated/0/Roms/ps2",
+            deriveRomsRoot("/storage/emulated/0/Roms/ps2", null),
+        )
+    }
+
+    // endregion
+
     private fun game(path: String, systemName: String) = GameInfo(
         path = path,
         name = File(path).nameWithoutExtension,
