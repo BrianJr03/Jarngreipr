@@ -17,8 +17,15 @@ sealed interface RomLaunchContract {
      * matching, so a receiver that only reads the extra never sees it. This
      * avoids setting `intent.data`, which some builds (Dolphin, DuckStation,
      * AetherSX2) treat as an unexpected argument and reject.
+     *
+     * [action] is the intent action to fire. Defaults to VIEW; set to MAIN for
+     * emulators whose public entry point sits behind an ACTION_MAIN filter
+     * (AetherSX2 / NetherSX2, matching ES-DE's shipped es_systems.xml).
      */
-    data class UriExtra(val key: String) : RomLaunchContract
+    data class UriExtra(
+        val key: String,
+        val action: String = android.content.Intent.ACTION_VIEW,
+    ) : RomLaunchContract
 
     /** A raw shared-storage path under a documented extra key. */
     data class PathExtra(val key: String) : RomLaunchContract
@@ -96,15 +103,15 @@ object EmulatorRegistry {
         // %ROMSAF% here); these builds cannot read a raw /storage path under
         // scoped storage, nor a FileProvider URI from an unrelated authority.
         EmulatorSpec("xyz.aethersx2.android", "AetherSX2", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath"),
+            RomLaunchContract.UriExtra("bootPath", android.content.Intent.ACTION_MAIN),
             listOf("iso", "bin", "elf", "chd", "cso", "gz"),
             needsExternalStorageUri = true),
         EmulatorSpec("xyz.aethersx2.tturnip", "NetherSX2 Turnip", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath"),
+            RomLaunchContract.UriExtra("bootPath", android.content.Intent.ACTION_MAIN),
             listOf("iso", "bin", "elf", "chd", "cso", "gz"),
             needsExternalStorageUri = true),
         EmulatorSpec("xyz.aethersx2.cturnip", "NetherSX2 Turnip Classic", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath"),
+            RomLaunchContract.UriExtra("bootPath", android.content.Intent.ACTION_MAIN),
             listOf("iso", "bin", "elf", "chd", "cso", "gz"),
             needsExternalStorageUri = true),
         EmulatorSpec("net.pcsx2.pcsx2", "PCSX2", "net.pcsx2.pcsx2.NativeActivity",

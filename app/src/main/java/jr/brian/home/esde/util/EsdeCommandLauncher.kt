@@ -419,6 +419,13 @@ object EsdeCommandLauncher {
                 Log.w(TAG, "grantUriPermission($packageName, $contentUri) failed", e)
             }
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Match the registry path: ClipData forwards the read grant to
+            // receivers that only consult the extra, without altering intent
+            // matching. Only attached when the command did not already set
+            // intent.data — that path already carries the grant on its own.
+            if (intent.data == null) {
+                intent.clipData = android.content.ClipData.newRawUri("ROM", contentUri!!)
+            }
         }
 
         return intent
@@ -464,10 +471,10 @@ object EsdeCommandLauncher {
             Log.w(TAG, "grantUriPermission($packageName, $contentUri) failed", e)
         }
 
-        val action = if (contract == RomLaunchContract.RetroArch) {
-            Intent.ACTION_MAIN
-        } else {
-            Intent.ACTION_VIEW
+        val action = when (contract) {
+            RomLaunchContract.RetroArch -> Intent.ACTION_MAIN
+            is RomLaunchContract.UriExtra -> contract.action
+            else -> Intent.ACTION_VIEW
         }
 
         return Intent(action).apply {
@@ -495,6 +502,7 @@ object EsdeCommandLauncher {
                     clipData = android.content.ClipData.newRawUri("ROM", contentUri)
                     addFlags(
                         Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
                             Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
                 }
