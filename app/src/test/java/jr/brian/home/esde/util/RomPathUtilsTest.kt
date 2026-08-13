@@ -1,7 +1,10 @@
 package jr.brian.home.esde.util
 
+import jr.brian.home.esde.model.GameInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -309,6 +312,115 @@ class RomPathUtilsTest {
     }
 
     // endregion
+
+    // region resolveRomPath
+
+    @Test
+    fun `resolveRomPath preserves a subdirectory`() {
+        val root = tempFolder.newFolder("Roms")
+        val rom = File(root, "ps2/Disc1/Game.iso")
+        rom.parentFile?.mkdirs()
+        rom.writeText("stub")
+
+        val hit = resolveRomPath(
+            game("./Disc1/Game.iso", "ps2"),
+            listOf(root.absolutePath),
+        )
+
+        assertEquals(rom.absolutePath, hit)
+    }
+
+    @Test
+    fun `resolveRomPath preserves an ES-DE directory-as-file m3u path`() {
+        // ./Xenogears.m3u/Xenogears.m3u — the inner file inside the m3u directory.
+        // The PSP/PS2 short-circuit used to collapse this to `Xenogears.m3u` on
+        // disk, breaking multi-disc games.
+        val root = tempFolder.newFolder("Roms")
+        val rom = File(root, "ps2/Xenogears.m3u/Xenogears.m3u")
+        rom.parentFile?.mkdirs()
+        rom.writeText("disc1.chd\ndisc2.chd\n")
+
+        val hit = resolveRomPath(
+            game("./Xenogears.m3u/Xenogears.m3u", "ps2"),
+            listOf(root.absolutePath),
+        )
+
+        assertEquals(rom.absolutePath, hit)
+    }
+
+    @Test
+    fun `resolveRomPath finds a ROM under the second entry of romsPaths`() {
+        val primary = tempFolder.newFolder("Primary")
+        val secondary = tempFolder.newFolder("Secondary")
+        val rom = File(secondary, "ps2/Game.chd")
+        rom.parentFile?.mkdirs()
+        rom.writeText("stub")
+
+        val hit = resolveRomPath(
+            game("./Game.chd", "ps2"),
+            listOf(primary.absolutePath, secondary.absolutePath),
+        )
+
+        assertEquals(rom.absolutePath, hit)
+    }
+
+    @Test
+    fun `resolveRomPath treats PSP and PS2 identically`() {
+        // Guards against re-coupling. Same rom-shape under both systems should
+        // resolve the same way — neither may keep an arbitrary short-circuit
+        // the other doesn't share.
+        val root = tempFolder.newFolder("Roms")
+        val ps2Rom = File(root, "ps2/Disc1/Game.iso")
+        ps2Rom.parentFile?.mkdirs()
+        ps2Rom.writeText("stub")
+        val pspRom = File(root, "psp/Disc1/Game.iso")
+        pspRom.parentFile?.mkdirs()
+        pspRom.writeText("stub")
+
+        val ps2Hit = resolveRomPath(
+            game("./Disc1/Game.iso", "ps2"),
+            listOf(root.absolutePath),
+        )
+        val pspHit = resolveRomPath(
+            game("./Disc1/Game.iso", "psp"),
+            listOf(root.absolutePath),
+        )
+
+        assertEquals(ps2Rom.absolutePath, ps2Hit)
+        assertEquals(pspRom.absolutePath, pspHit)
+        assertTrue(
+            "PSP and PS2 must not diverge in resolveRomPath",
+            ps2Hit!!.endsWith("ps2/Disc1/Game.iso") &&
+                pspHit!!.endsWith("psp/Disc1/Game.iso"),
+        )
+    }
+
+    @Test
+    fun `resolveRomPath falls back to primary-root canonical path when nothing exists`() {
+        // Preserves the "permission timing" fallback: File.exists() can lie
+        // for paths our process cannot stat, and returning null would break
+        // launch for a ROM the emulator can still open via SAF.
+        val root = tempFolder.newFolder("Roms")
+
+        val hit = resolveRomPath(
+            game("./Ghost.chd", "ps2"),
+            listOf(root.absolutePath),
+        )
+
+        assertNotNull(hit)
+        assertEquals(
+            File(root, "ps2/Ghost.chd").absolutePath,
+            hit,
+        )
+    }
+
+    // endregion
+
+    private fun game(path: String, systemName: String) = GameInfo(
+        path = path,
+        name = File(path).nameWithoutExtension,
+        systemName = systemName,
+    )
 
     private fun writeMedia(root: File, relative: String): File {
         val file = File(root, relative)

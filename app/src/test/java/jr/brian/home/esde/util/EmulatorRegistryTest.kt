@@ -45,6 +45,21 @@ class EmulatorRegistryTest {
     }
 
     @Test
+    fun `suffixed NetherSX2 package inherits needsExternalStorageUri`() {
+        // A rebuild of NetherSX2 published as `xyz.aethersx2.tturnip.<suffix>`
+        // must resolve to the same launch contract as the base row — else the
+        // launcher skips the ExternalStorageProvider URI path and hands the
+        // emulator something it cannot read.
+        val spec = EmulatorRegistry.resolve("xyz.aethersx2.tturnip.nightly")
+        assertNotNull(spec)
+        assertEquals("xyz.aethersx2.tturnip", spec!!.packageName)
+        assertTrue(
+            "Suffixed variant must inherit needsExternalStorageUri",
+            spec.needsExternalStorageUri,
+        )
+    }
+
+    @Test
     fun `candidatesForExtension puts RetroArch after dedicated emulators for nds`() {
         val context = mockContextWithInstalled(
             "me.magnum.melonds",

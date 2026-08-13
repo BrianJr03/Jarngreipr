@@ -67,6 +67,10 @@ android {
             )
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 androidComponents {
@@ -157,6 +161,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.robolectric)
 
     // Android testing dependencies
     androidTestImplementation(libs.kotlinx.coroutines.test)
