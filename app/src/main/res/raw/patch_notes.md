@@ -11,6 +11,7 @@
 
 **Frontend Improvements**
  - Fixed issue where ROMs wouldn't launch if name of ROM differed from name in gamelist.xml
+   - This applies to Canvas and Jarngreipr Frontend
  - Added Frontend Settings, allowing for customization of top screen list of games/systems.
  - ENABLE in `Settings -> Extras -> Enable frontend`
 
