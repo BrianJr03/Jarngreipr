@@ -477,7 +477,11 @@ object EsdeCommandLauncher {
                 is RomLaunchContract.UriExtra -> {
                     grant()
                     putExtra(contract.key, contentUri.toString())
-                    if (contract.mirrorToData) data = contentUri
+                    // ClipData carries the read grant without polluting
+                    // intent.data (which some receivers reject); it is not used
+                    // for intent matching, so a receiver that only reads its
+                    // own extra is unaffected.
+                    clipData = android.content.ClipData.newRawUri("ROM", contentUri)
                     addFlags(
                         Intent.FLAG_ACTIVITY_CLEAR_TASK or
                             Intent.FLAG_GRANT_READ_URI_PERMISSION

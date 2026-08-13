@@ -12,12 +12,13 @@ sealed interface RomLaunchContract {
     /**
      * The content URI, as a string, under a documented extra key.
      *
-     * [mirrorToData] also puts the URI in `intent.data` so
-     * FLAG_GRANT_READ_URI_PERMISSION forwards the grant — extras alone do not
-     * carry a grant. Emulators that read only the extra and choke on unexpected
-     * data (Dolphin, DuckStation today) set it false.
+     * The read grant is carried on `intent.clipData` — `FLAG_GRANT_READ_URI_PERMISSION`
+     * forwards to any URI in the clip, and ClipData is not used for intent
+     * matching, so a receiver that only reads the extra never sees it. This
+     * avoids setting `intent.data`, which some builds (Dolphin, DuckStation,
+     * AetherSX2) treat as an unexpected argument and reject.
      */
-    data class UriExtra(val key: String, val mirrorToData: Boolean = false) : RomLaunchContract
+    data class UriExtra(val key: String) : RomLaunchContract
 
     /** A raw shared-storage path under a documented extra key. */
     data class PathExtra(val key: String) : RomLaunchContract
@@ -84,17 +85,17 @@ object EmulatorRegistry {
             listOf("iso", "bin", "chd", "cso")),
 
         // ---- PS2 -----------------------------------------------------------
-        // bootPath must be a URI string (ES-DE passes %ROMSAF% here); these
-        // builds cannot read a raw /storage path under scoped storage. The URI
-        // is mirrored into data so the read grant travels with it.
+        // bootPath must be an ExternalStorageProvider document URI (ES-DE passes
+        // %ROMSAF% here); these builds cannot read a raw /storage path under
+        // scoped storage, nor a FileProvider URI from an unrelated authority.
         EmulatorSpec("xyz.aethersx2.android", "AetherSX2", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath", mirrorToData = true),
+            RomLaunchContract.UriExtra("bootPath"),
             listOf("iso", "bin", "elf", "chd", "cso", "gz")),
         EmulatorSpec("xyz.aethersx2.tturnip", "NetherSX2 Turnip", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath", mirrorToData = true),
+            RomLaunchContract.UriExtra("bootPath"),
             listOf("iso", "bin", "elf", "chd", "cso", "gz")),
         EmulatorSpec("xyz.aethersx2.cturnip", "NetherSX2 Turnip Classic", AETHER_ACTIVITY,
-            RomLaunchContract.UriExtra("bootPath", mirrorToData = true),
+            RomLaunchContract.UriExtra("bootPath"),
             listOf("iso", "bin", "elf", "chd", "cso", "gz")),
         EmulatorSpec("net.pcsx2.pcsx2", "PCSX2", "net.pcsx2.pcsx2.NativeActivity",
             extensions = listOf("iso", "bin", "elf", "chd", "cso", "gz")),
