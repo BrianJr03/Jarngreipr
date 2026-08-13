@@ -39,7 +39,7 @@ fun LaunchFailure.message(): String = when (this) {
     LaunchFailure.NoEmulatorConfigured -> "No emulator set for this game — pick one from its details"
     is LaunchFailure.NoHandler -> hint ?: "$packageName wouldn't accept this ROM"
     is LaunchFailure.UnreadableRom ->
-        "$packageName can't read this ROM — re-pick your ROMs folder in the SAF prompt so the grant applies to the emulator too"
+        "$packageName didn't accept this ROM — check that both this app and the emulator have access to the ROMs folder"
     is LaunchFailure.Unknown -> "Failed to launch: ${cause.message}"
 }
 
@@ -210,9 +210,9 @@ class RomGameLauncher(
             }
         }
 
-        // Issue the per-file read grant here so verifyReadable can confirm it
-        // landed. The intent builders call grantUriPermission again for the
-        // same (pkg, uri) — that is idempotent.
+        // Issue the per-file read grant here so any downstream diagnostic can
+        // observe the outcome. The intent builders call grantUriPermission
+        // again for the same (pkg, uri) — that is idempotent.
         if (effectiveContentUri.scheme == "content") {
             try {
                 context.grantUriPermission(
@@ -225,10 +225,7 @@ class RomGameLauncher(
             }
         }
 
-        if (!verifyReadable(context, pkg, effectiveContentUri)) {
-            fail(context, LaunchFailure.UnreadableRom(pkg, effectiveContentUri))
-            return
-        }
+        warnIfNotObviouslyReadable(context, pkg, effectiveContentUri)
 
         if (useSavedCommand) {
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
@@ -334,8 +331,14 @@ class RomGameLauncher(
             EsdeCommandLauncher.undocumentedHint(intent.`package` ?: ""),
         )
     } catch (e: SecurityException) {
+        // The receiver refused, typically because our URI grant did not carry
+        // and it also lacked its own way to open the file. Callers see the
+        // "check that both apps have access" message.
         Log.w(TAG, "Not permitted to start ${intent.component}", e)
-        LaunchFailure.Unknown(e)
+        val pkg = intent.`package` ?: intent.component?.packageName
+        val uri = intent.data ?: intent.clipData?.getItemAt(0)?.uri
+        if (pkg != null && uri != null) LaunchFailure.UnreadableRom(pkg, uri)
+        else LaunchFailure.Unknown(e)
     } catch (e: IllegalStateException) {
         // Some ROMs report a refused display placement this way rather than as a
         // SecurityException. Uncaught it escapes the whole launch path.
@@ -366,17 +369,22 @@ class RomGameLauncher(
     }
 
     /**
-     * Confirms the document URI resolves and the target package holds a read
-     * grant on it. `startActivity` returns success even when the emulator will
-     * later fail to open the URI, so surfacing this as a launch-time failure
-     * turns a black-screen bug report into a self-service fix.
+     * Advisory diagnostic — never blocks the launch. Two things can go wrong
+     * that we might be able to inspect from here:
      *
-     * Non-content URIs (file://, FileProvider from our own authority) skip the
-     * resolver check — the emulator will hit its own storage-permission path
-     * for those and the granting model here does not apply.
+     * - The document URI doesn't resolve in our ContentResolver. That can mean
+     *   the file is gone or our persisted grant is stale.
+     * - checkUriPermission returns anything other than GRANTED for the target
+     *   package's uid. That only means no per-URI grant has been recorded for
+     *   this exact URI — the emulator may still open the file via its own
+     *   persisted tree grant on a different tree, or via broad storage access
+     *   on an older target SDK.
+     *
+     * Either signal is worth writing to logcat so a real failure downstream
+     * has context, but neither is grounds for refusing to start the activity.
      */
-    private fun verifyReadable(context: Context, pkg: String, uri: Uri): Boolean {
-        if (uri.scheme != "content") return true
+    private fun warnIfNotObviouslyReadable(context: Context, pkg: String, uri: Uri) {
+        if (uri.scheme != "content") return
         val resolves = try {
             context.contentResolver.query(
                 uri,
@@ -384,26 +392,27 @@ class RomGameLauncher(
                 null, null, null
             )?.use { it.moveToFirst() } == true
         } catch (e: Exception) {
-            Log.w(TAG, "Query for $uri failed", e)
-            false
+            Log.w(TAG, "Query for $uri failed — launching anyway", e)
+            return
         }
         if (!resolves) {
-            Log.w(TAG, "URI $uri did not resolve — grant is stale or file is gone")
-            return false
+            Log.w(TAG, "URI $uri did not resolve in our resolver — launching anyway; " +
+                "the emulator may still read it via its own tree grant")
+            return
         }
         val uid = try {
             context.packageManager.getPackageUid(pkg, 0)
         } catch (e: PackageManager.NameNotFoundException) {
-            Log.w(TAG, "Cannot resolve uid for $pkg", e)
-            return false
+            Log.w(TAG, "Cannot resolve uid for $pkg — launching anyway", e)
+            return
         }
         val granted = context.checkUriPermission(
             uri, -1, uid, Intent.FLAG_GRANT_READ_URI_PERMISSION
         ) == PackageManager.PERMISSION_GRANTED
         if (!granted) {
-            Log.w(TAG, "Grant on $uri did not land on $pkg (uid $uid)")
+            Log.w(TAG, "No per-URI grant recorded for $pkg on $uri — launching anyway; " +
+                "the emulator may still read via its own tree grant or all-files access")
         }
-        return granted
     }
 
     private fun fail(context: Context, failure: LaunchFailure) {
