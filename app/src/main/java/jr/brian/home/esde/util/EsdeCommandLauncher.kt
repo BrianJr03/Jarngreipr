@@ -15,7 +15,15 @@ import java.io.File
 data class EmulatorOption(
     val packageName: String,
     val displayName: String,
-    val command: String? = null
+    val command: String? = null,
+    /**
+     * Extension the command's file-content extra is namespaced against, or null
+     * when the command is extension-agnostic. Distinct commands for one package
+     * can require different extensions (Steam app id vs GameHub-internal id);
+     * the picker uses this to mark, but not filter, options whose extension
+     * does not match the ROM.
+     */
+    val requiredExtension: String? = null,
 )
 
 object EsdeCommandLauncher {
@@ -52,6 +60,7 @@ object EsdeCommandLauncher {
         ),
         "CITRA" to listOf(
             "org.citra.citra_emu/org.citra.citra_emu.ui.main.MainActivity",
+            "org.citra.citra_emu.canary/org.citra.citra_emu.ui.main.MainActivity",
             "org.citra_emu.citra/org.citra.citra_emu.ui.main.MainActivity"
         ),
         "AZAHARPLUS" to listOf(
@@ -118,6 +127,7 @@ object EsdeCommandLauncher {
         ),
         "MUPEN64PLUS" to listOf(
             "org.mupen64plusae.v3.fzurita/org.mupen64plusae.v3.fzurita.SplashActivity",
+            "org.mupen64plusae.v3.alpha/paulscode.android.mupen64plusae.SplashActivity",
             "paulscode.android.mupen64plusae/paulscode.android.mupen64plusae.SplashActivity"
         ),
         "CEMU" to listOf(
@@ -290,6 +300,32 @@ object EsdeCommandLauncher {
         return extensions
     }
 
+    /**
+     * Extra keys whose value carries a namespaced ID rather than a file path,
+     * mapped to the extension the app writes that ID into. A `.steam` file
+     * holds a Steam app ID; a `.localgameid` file holds a GameHub-internal ID.
+     * The picker uses this to detect commands whose expected content does not
+     * match the ROM's extension and de-emphasise them, without filtering — a
+     * misinferred mapping should not hide the only working option.
+     *
+     * Add a new entry here when introducing a command whose extra reads a
+     * different ID namespace.
+     */
+    private val EXTRA_KEY_TO_REQUIRED_EXTENSION: Map<String, String> = mapOf(
+        "localGameId" to "localgameid",
+        "steamAppId" to "steam",
+        "app_id" to "steam",
+    )
+
+    private fun requiredExtensionFor(command: String): String? {
+        val extraRegex = Regex("""%EXTRA(?:INTEGER|BOOL)?_([^%]+)%""")
+        for (match in extraRegex.findAll(command)) {
+            val key = match.groupValues[1]
+            EXTRA_KEY_TO_REQUIRED_EXTENSION[key]?.let { return it }
+        }
+        return null
+    }
+
     fun getCompatibleEmulatorsFromSystem(
         context: Context,
         systemName: String,
@@ -309,7 +345,10 @@ object EsdeCommandLauncher {
         if (commands.isEmpty()) return emptyList()
         val emulatorRegex = Regex("""%EMULATOR_([^%]+)%""")
         val result = mutableListOf<EmulatorOption>()
-        val seenPackages = mutableSetOf<String>()
+        // Dedupe by (package, command) so two distinct commands that share one
+        // package — e.g. GameHub Lite reading a Steam id vs a local id — both
+        // survive. Package-only dedupe would silently drop the second.
+        val seenPackageCommands = mutableSetOf<Pair<String, String>>()
         for ((label, command) in commands) {
             val emulatorName = emulatorRegex.find(command)?.groupValues?.get(1) ?: continue
             val allEntries =
@@ -321,8 +360,15 @@ object EsdeCommandLauncher {
                     EmulatorRegistry.isInstalled(context, pkg)
             } ?: continue
             val packageName = installedEntry.substringBefore("/")
-            if (seenPackages.add(packageName)) {
-                result.add(EmulatorOption(packageName, label, command))
+            if (seenPackageCommands.add(packageName to command)) {
+                result.add(
+                    EmulatorOption(
+                        packageName = packageName,
+                        displayName = label,
+                        command = command,
+                        requiredExtension = requiredExtensionFor(command),
+                    )
+                )
             }
         }
         return result

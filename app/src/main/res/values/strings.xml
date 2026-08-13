@@ -22,6 +22,7 @@
     <string name="rom_detail_change_folder">Change Folder</string>
     <string name="rom_emulator_picker_title">Select Emulator</string>
     <string name="rom_emulator_none_found">No compatible emulators installed</string>
+    <string name="rom_emulator_expects_extension">Expects .%1$s</string>
     <string name="rom_detail_hide">Hide</string>
     <string name="rom_detail_unhide">Unhide</string>
     <string name="rom_detail_apply">Apply</string>
@@ -43,6 +44,7 @@
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
     <string name="rom_search_experimental_got_it">Got it</string>
     <string name="frontend_no_systems">No systems found</string>
+    <string name="frontend_loading_msg">Initializing Jarngreipr Frontend</string>
     <string name="frontend_open_search">Search</string>
     <string name="frontend_open_search_hint">Y • Search</string>
     <string name="frontend_open_settings_hint">START • Settings</string>

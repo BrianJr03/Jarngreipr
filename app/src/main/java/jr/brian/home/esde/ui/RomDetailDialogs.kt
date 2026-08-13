@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.util.EmulatorOption
 import jr.brian.home.esde.util.EsdeCommandLauncher
 import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -48,7 +49,10 @@ internal fun EmulatorPickerDialog(
     val context = LocalContext.current
     var showAppPicker by remember { mutableStateOf(false) }
 
-    val emulators = remember(game.systemName) {
+    val romExtension = remember(game.romAbsolutePath, game.path) {
+        File(game.romAbsolutePath ?: game.path).extension
+    }
+    val emulators = remember(game.systemName, romExtension) {
         val findRulesFile =
             File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
                 if (f.exists()) f
@@ -64,8 +68,7 @@ internal fun EmulatorPickerDialog(
             context, game.systemName, esSystemsFile, customRules
         )
         val fromExtension = EsdeCommandLauncher.getCompatibleEmulators(
-            context,
-            File(game.romAbsolutePath ?: game.path).extension
+            context, romExtension
         )
         val seenPackages = fromSystem.map { it.packageName }.toHashSet()
         fromSystem + fromExtension.filter { it.packageName !in seenPackages }
@@ -110,19 +113,14 @@ internal fun EmulatorPickerDialog(
                     )
                 } else {
                     emulators.forEach { emulator ->
-                        TextButton(
-                            onClick = {
+                        EmulatorPickerRow(
+                            emulator = emulator,
+                            romExtension = romExtension,
+                            onSelected = {
                                 onEmulatorSelected(emulator.packageName, emulator.command)
                                 onDismiss()
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = emulator.displayName,
-                                color = Color.White,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                            }
+                        )
                     }
                 }
                 HorizontalDivider(
@@ -145,6 +143,39 @@ internal fun EmulatorPickerDialog(
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Text(stringResource(R.string.rom_detail_close))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmulatorPickerRow(
+    emulator: EmulatorOption,
+    romExtension: String,
+    onSelected: () -> Unit
+) {
+    val extensionMismatch = emulator.requiredExtension != null &&
+        !emulator.requiredExtension.equals(romExtension, ignoreCase = true)
+    TextButton(
+        onClick = onSelected,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = emulator.displayName,
+                color = if (extensionMismatch) Color.White.copy(alpha = 0.55f) else Color.White,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (extensionMismatch) {
+                Text(
+                    text = stringResource(
+                        R.string.rom_emulator_expects_extension,
+                        emulator.requiredExtension!!,
+                    ),
+                    color = Color.White.copy(alpha = 0.55f),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

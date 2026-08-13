@@ -56,15 +56,22 @@ class AppPositionManager(context: Context) {
         val bottomFlingDisabledKey = "${KEY_BOTTOM_FLING_DISABLED}_$pageIndex"
         val positionsKey = "${KEY_POSITIONS}_$pageIndex"
 
-        val isFreeMode = prefs.getBoolean(freeModeKey, false)
-        val isDragLocked = prefs.getBoolean(dragLockedKey, true)
-        val isScrollDisabled = prefs.getBoolean(scrollDisabledKey, false)
-        val isBottomFlingDisabled = prefs.getBoolean(bottomFlingDisabledKey, false)
-
-        _isFreeModeByPage.value += (pageIndex to isFreeMode)
-        _isDragLockedByPage.value += (pageIndex to isDragLocked)
-        _isScrollDisabledByPage.value += (pageIndex to isScrollDisabled)
-        _isBottomFlingDisabledByPage.value += (pageIndex to isBottomFlingDisabled)
+        // Only surface entries that were explicitly persisted. Preloading a
+        // default value for every page turns reorderPages / removePage into an
+        // O(all-pages) shift instead of an O(explicit-pages) shift, and leaves
+        // stale entries around for pages that never had a value set.
+        if (prefs.contains(freeModeKey)) {
+            _isFreeModeByPage.value += (pageIndex to prefs.getBoolean(freeModeKey, false))
+        }
+        if (prefs.contains(dragLockedKey)) {
+            _isDragLockedByPage.value += (pageIndex to prefs.getBoolean(dragLockedKey, true))
+        }
+        if (prefs.contains(scrollDisabledKey)) {
+            _isScrollDisabledByPage.value += (pageIndex to prefs.getBoolean(scrollDisabledKey, false))
+        }
+        if (prefs.contains(bottomFlingDisabledKey)) {
+            _isBottomFlingDisabledByPage.value += (pageIndex to prefs.getBoolean(bottomFlingDisabledKey, false))
+        }
 
         val positionsJson = prefs.getString(positionsKey, null) ?: return
         val pagePositions = mutableStateMapOf<String, AppPosition>()

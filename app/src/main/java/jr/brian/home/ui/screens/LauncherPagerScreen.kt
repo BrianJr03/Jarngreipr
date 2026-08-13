@@ -176,6 +176,7 @@ fun LauncherPagerScreen(
         }
         if (totalPages == 0) {
             homeTabManager.setHomeTabIndex(0)
+            pageTypeManager.ensureDefaultPage()
         }
         // After a reorder, snap the pager to wherever the current home tab now lives.
         val homeIdx = homeTabManager.homeTabIndex.value

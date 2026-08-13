@@ -19,5 +19,6 @@
    - Scraper for Rom media
    - More Customization Options
    - More Emulator support
+   - GameHub, GameHub Lite, and Game Native support
 
 2.7.0

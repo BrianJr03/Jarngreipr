@@ -7,10 +7,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -88,10 +91,19 @@ internal fun SystemGrid(
         )
     ) {
         when {
-            isLoading -> CircularProgressIndicator(
+            isLoading -> Column(
                 modifier = Modifier.align(Alignment.Center),
-                color = ThemeAccentColor
-            )
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = ThemeAccentColor
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.frontend_loading_msg),
+                    color = ThemeAccentColor
+                )
+            }
 
             systems.isEmpty() -> Text(
                 text = stringResource(R.string.frontend_no_systems),
@@ -177,7 +189,8 @@ private fun SystemTileCard(
             .fillMaxWidth()
             .aspectRatio(1f)
             .graphicsLayer {
-                translationY = (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
+                translationY =
+                    (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
                 scaleX = scale
                 scaleY = scale
                 clip = false
@@ -278,7 +291,11 @@ private fun DefaultSystemLogoContent(systemName: String) {
     }
     var hasError by remember(logoModel) { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().padding(FrontendTokens.Spacing.S)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(FrontendTokens.Spacing.S)
+    ) {
         if (hasError) {
             SystemTileTextFallback(systemName = systemName)
         } else {

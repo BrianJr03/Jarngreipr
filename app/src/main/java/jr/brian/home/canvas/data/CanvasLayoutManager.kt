@@ -264,21 +264,20 @@ class CanvasLayoutManager(context: Context) {
     /**
      * Cold-load every page once at construction. Pages whose stored JSON is in
      * a legacy (v1) shape are migrated in place and the migrated v2 blob is
-     * written back so subsequent loads are zero-cost. Every loaded layout is
-     * also passed through [reconcileReserved] so items that pre-date the "+"
-     * reservation (or that were placed before the reservation extended to the
-     * horizontal arrangement) are bumped out of the reserved corner; if that
-     * relocates anything we persist the corrected layout.
+     * written back so subsequent loads are zero-cost. Loaded layouts pass
+     * through as-is: the user's stored positions survive exactly, even if an
+     * item happens to overlap the "+" reserved cell. Reconciliation runs on
+     * explicit mutations ([setGrid], [setMenuButtonVisible]) instead, so
+     * users see items relocated only when they've changed a layout knob —
+     * not silently on every launch.
      */
     private fun loadAndMigrateAll(): Map<Int, CanvasLayout> {
         val result = mutableMapOf<Int, CanvasLayout>()
         for (pageIndex in 0 until MAX_PAGES) {
             val raw = prefs.getString(layoutKey(pageIndex), null) ?: continue
             val (layout, wroteMigration) = loadOrMigrate(raw) ?: continue
-            val reconciled = reconcileReserved(layout)
-            val mustPersist = wroteMigration || reconciled != layout
-            result[pageIndex] = reconciled
-            if (mustPersist) persist(pageIndex, reconciled)
+            result[pageIndex] = layout
+            if (wroteMigration) persist(pageIndex, layout)
         }
         return result
     }

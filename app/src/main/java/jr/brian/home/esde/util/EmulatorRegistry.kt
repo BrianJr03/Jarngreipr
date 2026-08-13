@@ -88,6 +88,8 @@ object EmulatorRegistry {
             RomLaunchContract.RetroArch, RETRO_EXTS, isFrontEnd = true),
         EmulatorSpec("com.retroarch", "RetroArch", RETRO_ACTIVITY,
             RomLaunchContract.RetroArch, RETRO_EXTS, isFrontEnd = true),
+        EmulatorSpec("com.swordfish.lemuroid", "Lemuroid",
+            extensions = RETRO_EXTS, isFrontEnd = true),
 
         // ---- PSP -----------------------------------------------------------
         EmulatorSpec("org.ppsspp.ppsspp", "PPSSPP", "org.ppsspp.ppsspp.PpssppActivity",
@@ -120,21 +122,40 @@ object EmulatorRegistry {
             extensions = listOf("iso", "bin", "chd", "cso")),
         EmulatorSpec("com.sbro.emucorex", "EmuCoreX", "com.sbro.emucorex.MainActivity",
             extensions = listOf("iso", "bin", "chd", "cso")),
+        EmulatorSpec("com.play.emu", "Play!",
+            extensions = listOf("iso", "bin", "chd", "cso", "gz", "elf")),
 
         // ---- PSX -----------------------------------------------------------
         EmulatorSpec("com.github.stenzek.duckstation", "DuckStation",
             "com.github.stenzek.duckstation.EmulationActivity",
             RomLaunchContract.UriExtra("bootPath"),
             listOf("bin", "cue", "img", "iso", "chd", "pbp", "exe", "psexe", "m3u")),
+        EmulatorSpec("com.epsxe.ePSXe", "ePSXe",
+            extensions = listOf("bin", "cue", "img", "iso", "chd", "pbp", "exe", "psexe", "m3u")),
+        EmulatorSpec("com.emulator.fpse", "FPse",
+            extensions = listOf("bin", "cue", "img", "iso", "chd", "pbp", "m3u")),
+        EmulatorSpec("com.emulator.fpse64", "FPse64",
+            extensions = listOf("bin", "cue", "img", "iso", "chd", "pbp", "m3u")),
 
         // ---- Nintendo home consoles -----------------------------------------
         EmulatorSpec("org.dolphinemu.dolphinemu", "Dolphin",
             "org.dolphinemu.dolphinemu.ui.main.MainActivity",
             RomLaunchContract.UriExtra("AutoStartFile"),
             listOf("gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz")),
+        // MMJR builds have no documented ROM-launch extra: give the default
+        // ContentUriView contract a chance rather than refusing outright, since
+        // these builds are the most likely to have quietly gained a VIEW filter.
+        EmulatorSpec("org.dolphinemu.dolphinemu.mmjr", "Dolphin MMJR",
+            extensions = listOf("gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz")),
+        EmulatorSpec("org.mmjr.dolphinemu", "Dolphin MMJR (fork)",
+            extensions = listOf("gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz")),
         EmulatorSpec("info.cemu.cemu", "CEMU",
             extensions = listOf("wud", "wux", "iso", "rpx", "wua", "wad")),
         EmulatorSpec("net.rpcs3.rpcs3", "RPCS3", "net.rpcs3.rpcs3.MainActivity",
+            extensions = listOf("pkg", "iso", "bin", "ps3")),
+        EmulatorSpec("aenu.aps3e", "aPS3e",
+            extensions = listOf("pkg", "iso", "bin", "ps3")),
+        EmulatorSpec("aenu.aps3e.premium", "aPS3e Premium",
             extensions = listOf("pkg", "iso", "bin", "ps3")),
 
         // ---- N64 -------------------------------------------------------------
@@ -150,6 +171,9 @@ object EmulatorRegistry {
         EmulatorSpec("paulscode.android.mupen64plusae", "Mupen64Plus AE",
             "paulscode.android.mupen64plusae.SplashActivity",
             extensions = listOf("n64", "v64", "z64", "zip")),
+        EmulatorSpec("org.mupen64plusae.v3.alpha", "Mupen64Plus AE Alpha",
+            "paulscode.android.mupen64plusae.SplashActivity",
+            extensions = listOf("n64", "v64", "z64", "zip")),
 
         // ---- DS / 3DS ---------------------------------------------------------
         EmulatorSpec("me.magnum.melonds", "melonDS",
@@ -159,12 +183,22 @@ object EmulatorRegistry {
             extensions = listOf("nds", "bin", "zip")),
         EmulatorSpec("com.hydra.noods", "NooDS", "com.hydra.noods.MainActivity",
             extensions = listOf("nds", "gba")),
+        EmulatorSpec("us.rewrite.nds", "Rewrite DS",
+            extensions = listOf("nds")),
         EmulatorSpec("io.github.lime3ds.android", "Azahar (Play build)",
             "org.citra.citra_emu.activities.EmulationActivity",
             extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
         EmulatorSpec("org.azahar_emu.azahar", "Azahar",
             extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
         EmulatorSpec("org.citra.citra_emu", "Citra",
+            extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
+        EmulatorSpec("org.citra.citra_emu.canary", "Citra Canary",
+            extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
+        EmulatorSpec("org.citra.emu", "Citra MMJ",
+            extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
+        EmulatorSpec("io.github.mandarine3ds.mandarine", "Mandarine",
+            extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
+        EmulatorSpec("com.panda3ds.pandroid", "Panda3DS",
             extensions = listOf("3ds", "cia", "cxi", "app", "cci")),
 
         // ---- Switch ------------------------------------------------------------
@@ -175,11 +209,17 @@ object EmulatorRegistry {
             extensions = listOf("nsp", "xci", "nca", "nso")),
         EmulatorSpec("org.yuzu.yuzu_emu", "Yuzu",
             extensions = listOf("nsp", "xci", "nca", "nso")),
+        EmulatorSpec("org.yuzu.yuzu_emu.ea", "Yuzu EA",
+            extensions = listOf("nsp", "xci", "nca", "nso")),
         EmulatorSpec("org.ryujinx.android", "Ryujinx",
             extensions = listOf("nsp", "xci", "nca", "nso")),
         EmulatorSpec("org.citron.citron_emu", "Citron",
             extensions = listOf("nsp", "xci", "nca", "nso")),
         EmulatorSpec("org.sudachi.sudachi_emu", "Sudachi",
+            extensions = listOf("nsp", "xci", "nca", "nso")),
+        EmulatorSpec("org.stratoemu.strato", "Strato",
+            extensions = listOf("nsp", "xci", "nca", "nso")),
+        EmulatorSpec("skyline.emu", "Skyline",
             extensions = listOf("nsp", "xci", "nca", "nso")),
 
         // ---- Handhelds ---------------------------------------------------------
@@ -206,10 +246,86 @@ object EmulatorRegistry {
         EmulatorSpec("com.sky.SkyEmu", "SkyEmu", "com.sky.SkyEmu.MainActivity",
             extensions = listOf("gba", "gb", "gbc", "nds")),
 
+        // ---- explusalpha .emu family --------------------------------------------
+        EmulatorSpec("com.explusalpha.A2600Emu", "A2600.emu",
+            "com.explusalpha.A2600Emu.MainActivity",
+            extensions = listOf("a26", "bin", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.C64Emu", "C64.emu",
+            "com.explusalpha.C64Emu.MainActivity",
+            extensions = listOf("d64", "t64", "prg", "tap", "crt", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.LynxEmu", "Lynx.emu",
+            "com.explusalpha.LynxEmu.MainActivity",
+            extensions = listOf("lnx", "lyx", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.MdEmu", "MD.emu",
+            "com.explusalpha.MdEmu.MainActivity",
+            extensions = listOf("md", "smd", "gen", "bin", "32x", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.MsxEmu", "MSX.emu",
+            "com.explusalpha.MsxEmu.MainActivity",
+            extensions = listOf("rom", "mx1", "mx2", "dsk", "cas", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.NeoEmu", "NEO.emu",
+            "com.explusalpha.NeoEmu.MainActivity",
+            extensions = listOf("neo", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.NesEmu", "NES.emu",
+            "com.explusalpha.NesEmu.MainActivity",
+            extensions = listOf("nes", "fds", "unf", "unif", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.NgpEmu", "NGP.emu",
+            "com.explusalpha.NgpEmu.MainActivity",
+            extensions = listOf("ngp", "ngc", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.PceEmu", "PCE.emu",
+            "com.explusalpha.PceEmu.MainActivity",
+            extensions = listOf("pce", "sgx", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.Saturn", "Saturn.emu",
+            "com.explusalpha.Saturn.MainActivity",
+            extensions = listOf("cue", "bin", "iso", "chd", "mds", "ccd", "img", "m3u")),
+        EmulatorSpec("com.explusalpha.Snes9xPlus", "Snes9x+",
+            "com.explusalpha.Snes9xPlus.MainActivity",
+            extensions = listOf("sfc", "smc", "fig", "swc", "zip", "7z")),
+        EmulatorSpec("com.explusalpha.SwanEmu", "Swan.emu",
+            "com.explusalpha.SwanEmu.MainActivity",
+            extensions = listOf("ws", "wsc", "zip", "7z")),
+
+        // ---- FMS Ltd. classic-computer emulators --------------------------------
+        EmulatorSpec("com.fms.colem", "ColEm",
+            extensions = listOf("rom", "col", "zip")),
+        EmulatorSpec("com.fms.colem.deluxe", "ColEm Deluxe",
+            extensions = listOf("rom", "col", "zip")),
+        EmulatorSpec("com.fms.fmsx", "fMSX",
+            extensions = listOf("rom", "mx1", "mx2", "dsk", "cas", "zip")),
+        EmulatorSpec("com.fms.fmsx.deluxe", "fMSX Deluxe",
+            extensions = listOf("rom", "mx1", "mx2", "dsk", "cas", "zip")),
+        EmulatorSpec("com.fms.ines.free", "iNES Free",
+            extensions = listOf("nes", "fds", "unf", "zip")),
+        EmulatorSpec("com.fms.mg", "Master Gear",
+            extensions = listOf("sms", "gg", "zip")),
+        EmulatorSpec("com.fms.speccy", "Speccy",
+            extensions = listOf("tap", "tzx", "z80", "sna", "dsk", "trd", "scl", "zip")),
+        EmulatorSpec("com.fms.speccy.deluxe", "Speccy Deluxe",
+            extensions = listOf("tap", "tzx", "z80", "sna", "dsk", "trd", "scl", "zip")),
+
+        // ---- John emulators (John GBA / GBC / NES family) -----------------------
+        EmulatorSpec("com.johnemulators.johngba", "John GBA",
+            extensions = listOf("gba", "zip", "7z")),
+        EmulatorSpec("com.johnemulators.johngbac", "John GBAC",
+            extensions = listOf("gba", "gb", "gbc", "zip", "7z")),
+        EmulatorSpec("com.johnemulators.johngbalite", "John GBA Lite",
+            extensions = listOf("gba", "zip", "7z")),
+        EmulatorSpec("com.johnemulators.johngbc", "John GBC",
+            extensions = listOf("gb", "gbc", "zip", "7z")),
+        EmulatorSpec("com.johnemulators.johngbclite", "John GBC Lite",
+            extensions = listOf("gb", "gbc", "zip", "7z")),
+        EmulatorSpec("com.johnemulators.johnness", "John NESS",
+            extensions = listOf("nes", "fds", "unf", "zip", "7z")),
+
         // ---- PC / Windows -------------------------------------------------------
         // Launched by shortcut, not by executable: a Windows program needs a Wine
         // prefix, driver and DLL overrides, and the .desktop file is what names
         // all of that. Set the game up in Winlator once, then it launches here.
+        EmulatorSpec("com.winlator", "Winlator",
+            "com.winlator.XServerDisplayActivity",
+            RomLaunchContract.PathExtra("shortcut_path")),
+        EmulatorSpec("com.loki.winlator", "Winlator Loki",
+            "com.winlator.cmod.XServerDisplayActivity",
+            RomLaunchContract.PathExtra("shortcut_path")),
         EmulatorSpec("com.winlator.cmod", "Winlator Cmod", "com.winlator.MainActivity",
             RomLaunchContract.PathExtra("shortcut_path")),
         EmulatorSpec("com.winlator.ludashi", "Winlator Ludashi", "com.winlator.MainActivity",
@@ -221,10 +337,49 @@ object EmulatorRegistry {
         EmulatorSpec("app.gamenative", "GameNative", "app.gamenative.MainActivity",
             RomLaunchContract.Undocumented(
                 "GameNative launches by Steam app id; set the game up there first.")),
+        // GameHub Lite ships under two application ids sharing one activity —
+        // one looks like a rename, the other a rebuild. Both are registered so
+        // whichever the user has installed resolves; the picker's dedupe
+        // (package + command) still keeps the two GameHub Lite commands
+        // (Steam id vs local id) distinct within a single system. Extensions
+        // are listed for picker correctness — the launcher hands the app an id
+        // read from the file's contents, not a file path.
+        EmulatorSpec("gamehub.lite", "GameHub Lite",
+            "com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity",
+            RomLaunchContract.Undocumented(
+                "GameHub Lite launches by Steam app id or local game id; set the game up there first."),
+            extensions = listOf("steam", "localgameid")),
+        EmulatorSpec("com.xj.landscape.launcher", "GameHub Lite (Landscape)",
+            "com.xj.landscape.launcher.ui.gamedetail.GameDetailActivity",
+            RomLaunchContract.Undocumented(
+                "GameHub Lite launches by Steam app id or local game id; set the game up there first."),
+            extensions = listOf("steam", "localgameid")),
 
-        // ---- Misc ---------------------------------------------------------------
+        // ---- Dreamcast ----------------------------------------------------------
         EmulatorSpec("org.flycast.Flycast", "Flycast",
             extensions = listOf("gdi", "cdi", "chd", "cue", "bin", "dat", "zip", "7z")),
+        EmulatorSpec("com.flycast.emulator", "Flycast Emulator",
+            extensions = listOf("gdi", "cdi", "chd", "cue", "bin", "dat", "zip", "7z")),
+        EmulatorSpec("com.reicast.emulator", "Reicast",
+            extensions = listOf("gdi", "cdi", "chd", "cue", "bin", "dat", "zip", "7z")),
+        EmulatorSpec("io.recompiled.redream", "reDream",
+            extensions = listOf("gdi", "cdi", "chd", "cue", "bin", "iso")),
+
+        // ---- Saturn -------------------------------------------------------------
+        EmulatorSpec("org.uoyabause.uranus", "Yaba Sanshiro",
+            extensions = listOf("iso", "cue", "bin", "chd", "mds", "ccd", "img", "m3u")),
+
+        // ---- Vita ---------------------------------------------------------------
+        EmulatorSpec("org.vita3k.emulator", "Vita3K",
+            extensions = listOf("vpk")),
+
+        // ---- Arcade -------------------------------------------------------------
+        EmulatorSpec("com.seleuco.mame4droid", "MAME4droid",
+            extensions = listOf("zip", "7z", "chd")),
+        EmulatorSpec("com.seleuco.mame4d2024", "MAME4droid 2024",
+            extensions = listOf("zip", "7z", "chd")),
+
+        // ---- Misc ---------------------------------------------------------------
         EmulatorSpec("org.scummvm.scummvm", "ScummVM",
             launchContract = RomLaunchContract.Undocumented(
                 "ScummVM may need the game's folder adding in its own library first.")),
