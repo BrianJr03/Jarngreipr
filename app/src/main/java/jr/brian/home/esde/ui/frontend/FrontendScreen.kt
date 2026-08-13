@@ -263,11 +263,15 @@ private fun GamesRoute(
     }
 
     var focusedGame by remember(system) { mutableStateOf<GameInfo?>(null) }
-    val focusBackgroundUri = if (
-        esdeState.frontendFocusBackgroundEnabled &&
-        esdeState.frontendFocusBackgroundGames
-    ) {
-        focusedGame?.heroBackgroundPath()
+    // Focus events only fire on *change*, so nothing sets this on first composition.
+    // Fall back to the game the grid seeds focus onto (same index it uses) until a
+    // real focus event arrives, so the hero background paints on frame one instead
+    // of after the first D-pad press.
+    val effectiveFocusedGame = focusedGame ?: filteredGames.getOrNull(initialGameIndex)
+    val focusBackgroundActive =
+        esdeState.frontendFocusBackgroundEnabled && esdeState.frontendFocusBackgroundGames
+    val focusBackgroundUri = if (focusBackgroundActive) {
+        effectiveFocusedGame?.heroBackgroundPath()
     } else null
 
     Surface(
@@ -296,13 +300,14 @@ private fun GamesRoute(
         Box(modifier = Modifier.fillMaxSize()) {
             FrontendFocusBackground(
                 focusedUri = focusBackgroundUri,
-                dimAlpha = esdeState.frontendFocusBackgroundDim
+                dimAlpha = esdeState.frontendFocusBackgroundDim,
+                fallbackColor = if (focusBackgroundActive) OledBackgroundColor else Color.Transparent
             )
             FrontendRomGrid(
                 games = filteredGames,
                 isLoading = isLoading,
                 isHiddenMode = false,
-                backgroundTransparent = esdeState.romSearchUseWallpaper || focusBackgroundUri != null,
+                backgroundTransparent = esdeState.romSearchUseWallpaper || focusBackgroundActive,
                 cardMediaType = esdeState.romSearchCardMediaType,
                 focusAnimationEnabled = esdeState.romSearchDiscSpin,
                 focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
@@ -384,11 +389,17 @@ private fun SystemsRoute(
     var focusedSystemName by remember { mutableStateOf<String?>(null) }
 
     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
-    val focusBackgroundUri = if (
-        esdeState.frontendFocusBackgroundEnabled &&
-        esdeState.frontendFocusBackgroundSystems
-    ) {
-        focusedSystemName?.let { customizations[it]?.focusBackgroundUri }
+    // Focus events only fire on *change*, so nothing sets focusedSystemName on the
+    // very first composition. Fall back to the tile the grid is about to seed focus
+    // onto (same index SystemGrid is given via initialRealIndex) until a real focus
+    // event arrives. initialSystemIndex is remember(workingOrder)-keyed above, so
+    // this self-corrects when the list resolves after loading.
+    val effectiveFocusedSystem = focusedSystemName
+        ?: workingOrder.getOrNull(initialSystemIndex)?.systemName
+    val focusBackgroundActive =
+        esdeState.frontendFocusBackgroundEnabled && esdeState.frontendFocusBackgroundSystems
+    val focusBackgroundUri = if (focusBackgroundActive) {
+        effectiveFocusedSystem?.let { customizations[it]?.focusBackgroundUri }
     } else null
 
     // Back / B button on Systems is intentionally inert (kiosk behaviour) — the
@@ -443,14 +454,15 @@ private fun SystemsRoute(
     ) {
         FrontendFocusBackground(
             focusedUri = focusBackgroundUri,
-            dimAlpha = esdeState.frontendFocusBackgroundDim
+            dimAlpha = esdeState.frontendFocusBackgroundDim,
+            fallbackColor = if (focusBackgroundActive) OledBackgroundColor else Color.Transparent
         )
         SystemGrid(
             systems = workingOrder,
             isLoading = isLoading,
             layout = layout,
             initialRealIndex = initialSystemIndex,
-            backgroundTransparent = useWallpaper || focusBackgroundUri != null,
+            backgroundTransparent = useWallpaper || focusBackgroundActive,
             customizations = customizations,
             reorderingSystem = reorderingSystem,
             onSystemFocused = { tile ->

@@ -27,21 +27,27 @@ private const val FOCUS_DEBOUNCE_MS = 150L
 /**
  * Full-screen backdrop that follows focus. Pass [focusedUri] on every focus
  * change; the composable debounces internally so rapid D-pad scrolling only
- * decodes the item the user lands on. When [focusedUri] is null (feature off
- * or no art available), nothing is rendered.
+ * decodes the item the user lands on. [fallbackColor] paints the null branch
+ * when the feature is on but the focused item has no art — callers pass
+ * OledBackgroundColor there so the grid can stay transparent without exposing
+ * a black flash to whatever is behind.
  */
 @Composable
 fun FrontendFocusBackground(
     focusedUri: String?,
     dimAlpha: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fallbackColor: Color = Color.Transparent
 ) {
     var debouncedUri by remember { mutableStateOf(focusedUri) }
     LaunchedEffect(focusedUri) {
         if (focusedUri == null) {
             debouncedUri = null
         } else if (focusedUri != debouncedUri) {
-            delay(FOCUS_DEBOUNCE_MS)
+            // Debounce protects rapid D-pad scrolling from decoding every item
+            // passed over. There is nothing to protect when we haven't shown
+            // anything yet — seed the first non-null value immediately.
+            if (debouncedUri != null) delay(FOCUS_DEBOUNCE_MS)
             debouncedUri = focusedUri
         }
     }
@@ -53,7 +59,7 @@ fun FrontendFocusBackground(
         modifier = modifier.fillMaxSize()
     ) { currentUri ->
         if (currentUri == null) {
-            Box(modifier = Modifier.fillMaxSize())
+            Box(modifier = Modifier.fillMaxSize().background(fallbackColor))
         } else {
             FocusBackgroundImage(uri = currentUri, dimAlpha = dimAlpha)
         }

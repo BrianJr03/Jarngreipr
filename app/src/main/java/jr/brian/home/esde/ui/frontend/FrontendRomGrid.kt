@@ -59,10 +59,6 @@ internal fun FrontendRomGrid(
 ) {
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        onFocusedGameChanged(games.getOrNull(initialRealIndex))
-    }
-
     RomResultsGrid(
         games = games,
         isLoading = isLoading,
