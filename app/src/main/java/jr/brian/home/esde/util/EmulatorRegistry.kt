@@ -53,6 +53,13 @@ data class EmulatorSpec(
     val launchContract: RomLaunchContract = RomLaunchContract.ContentUriView,
     val extensions: List<String> = emptyList(),
     val isFrontEnd: Boolean = false,
+    /**
+     * The emulator can only read an ExternalStorageProvider document URI (not a
+     * FileProvider URI from another authority, not a raw path). Callers must
+     * build the URI via [buildAetherDocUri] and forward the persisted tree
+     * grant so multi-file ROMs (.cue+.bin, .m3u+chunks) can resolve siblings.
+     */
+    val needsExternalStorageUri: Boolean = false,
 )
 
 object EmulatorRegistry {
@@ -90,13 +97,16 @@ object EmulatorRegistry {
         // scoped storage, nor a FileProvider URI from an unrelated authority.
         EmulatorSpec("xyz.aethersx2.android", "AetherSX2", AETHER_ACTIVITY,
             RomLaunchContract.UriExtra("bootPath"),
-            listOf("iso", "bin", "elf", "chd", "cso", "gz")),
+            listOf("iso", "bin", "elf", "chd", "cso", "gz"),
+            needsExternalStorageUri = true),
         EmulatorSpec("xyz.aethersx2.tturnip", "NetherSX2 Turnip", AETHER_ACTIVITY,
             RomLaunchContract.UriExtra("bootPath"),
-            listOf("iso", "bin", "elf", "chd", "cso", "gz")),
+            listOf("iso", "bin", "elf", "chd", "cso", "gz"),
+            needsExternalStorageUri = true),
         EmulatorSpec("xyz.aethersx2.cturnip", "NetherSX2 Turnip Classic", AETHER_ACTIVITY,
             RomLaunchContract.UriExtra("bootPath"),
-            listOf("iso", "bin", "elf", "chd", "cso", "gz")),
+            listOf("iso", "bin", "elf", "chd", "cso", "gz"),
+            needsExternalStorageUri = true),
         EmulatorSpec("net.pcsx2.pcsx2", "PCSX2", "net.pcsx2.pcsx2.NativeActivity",
             extensions = listOf("iso", "bin", "elf", "chd", "cso", "gz")),
         EmulatorSpec("com.armsx2", "ARMSX2 Refresh", "com.armsx2.Main",

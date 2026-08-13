@@ -176,11 +176,10 @@ class RomGameLauncher(
             return
         }
 
-        val aetherFamilyPkg = pkg == "xyz.aethersx2.android" ||
-            pkg == "xyz.aethersx2.tturnip" ||
-            pkg == "xyz.aethersx2.cturnip"
+        val needsExternalStorageUri =
+            EmulatorRegistry.resolve(pkg)?.needsExternalStorageUri == true
 
-        val effectiveContentUri: Uri = if (aetherFamilyPkg) {
+        val effectiveContentUri: Uri = if (needsExternalStorageUri) {
             val aetherSafUri = buildAetherDocUri(
                 game.systemName, romPath, esdePrefs::getSafTreeUri, context
             )
@@ -198,7 +197,7 @@ class RomGameLauncher(
         // entry-point file. A per-file URI grant only covers the file we point it at, so forward
         // our persistable tree grant too — the emulator can then resolve references inside the
         // same ROM directory.
-        if (aetherFamilyPkg) {
+        if (needsExternalStorageUri) {
             esdePrefs.getSafTreeUri(game.systemName)?.let { treeUriStr ->
                 try {
                     context.grantUriPermission(
