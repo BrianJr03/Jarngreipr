@@ -170,8 +170,8 @@ fun CanvasOptionsMenuContent(
     }
 
     val rows: List<List<GridItem>> = buildList {
-        addAll(mainItems.chunked(3))
         if (launchItems.isNotEmpty()) add(launchItems)
+        addAll(mainItems.chunked(3))
     }
     val flatItems: List<GridItem> = rows.flatten()
     val rowStartOffsets: List<Int> = rows.runningFold(0) { acc, row -> acc + row.size }

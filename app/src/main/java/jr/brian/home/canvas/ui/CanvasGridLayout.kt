@@ -342,61 +342,71 @@ private suspend fun PointerInputScope.handleMoveDrag(
     commit: (LayoutSnapshot) -> Unit
 ) {
     var rawOffset = Offset.Zero
-    detectDragGesturesAfterLongPress(
-        onDragStart = {
-            val baseline = latestState.value.layout.toSnapshot()
-            val baseRect = baseline.placements[itemId] ?: return@detectDragGesturesAfterLongPress
-            rawOffset = Offset.Zero
-            pointerOffsetState.value = IntOffset.Zero
-            setGestureState(
-                CanvasGestureState(
-                    mode = CanvasGestureState.Mode.Move,
-                    draggedId = itemId,
-                    baseline = baseline,
-                    baselineRect = baseRect
-                )
-            )
-        },
-        onDrag = { change, dragAmount ->
-            change.consume()
-            rawOffset += dragAmount
-            val current = getGestureState() ?: return@detectDragGesturesAfterLongPress
-            val cellPx = cellPlusSpacingPxState.value
-            val cellDeltaCol = if (cellPx > 0f) (rawOffset.x / cellPx).roundToInt() else 0
-            val cellDeltaRow = if (cellPx > 0f) (rawOffset.y / cellPx).roundToInt() else 0
-            val target = GridCell(
-                current.baselineRect.col + cellDeltaCol,
-                current.baselineRect.row + cellDeltaRow
-            )
-            // Live per-frame pointer offset — separate State<> so this update
-            // doesn't churn gestureState (which would recompose the whole grid).
-            pointerOffsetState.value =
-                IntOffset(rawOffset.x.roundToInt(), rawOffset.y.roundToInt())
-            val targetRect = current.baselineRect.withOrigin(target.col, target.row)
-            // Solver re-run only on cell-boundary crossings, per §0.
-            if (targetRect != current.targetRect) {
-                val result = GridSolver.solveMove(
-                    baseline = current.baseline,
-                    itemId = itemId,
-                    target = target,
-                    reservedRects = reservedRectsForActive(latestState.value.layout)
-                )
+    try {
+        detectDragGesturesAfterLongPress(
+            onDragStart = {
+                val baseline = latestState.value.layout.toSnapshot()
+                val baseRect = baseline.placements[itemId] ?: return@detectDragGesturesAfterLongPress
+                rawOffset = Offset.Zero
+                pointerOffsetState.value = IntOffset.Zero
                 setGestureState(
-                    current.copy(previewSnapshot = result.snapshot, targetRect = targetRect)
+                    CanvasGestureState(
+                        mode = CanvasGestureState.Mode.Move,
+                        draggedId = itemId,
+                        baseline = baseline,
+                        baselineRect = baseRect
+                    )
                 )
+            },
+            onDrag = { change, dragAmount ->
+                change.consume()
+                rawOffset += dragAmount
+                val current = getGestureState() ?: return@detectDragGesturesAfterLongPress
+                val cellPx = cellPlusSpacingPxState.value
+                val cellDeltaCol = if (cellPx > 0f) (rawOffset.x / cellPx).roundToInt() else 0
+                val cellDeltaRow = if (cellPx > 0f) (rawOffset.y / cellPx).roundToInt() else 0
+                val target = GridCell(
+                    current.baselineRect.col + cellDeltaCol,
+                    current.baselineRect.row + cellDeltaRow
+                )
+                // Live per-frame pointer offset — separate State<> so this update
+                // doesn't churn gestureState (which would recompose the whole grid).
+                pointerOffsetState.value =
+                    IntOffset(rawOffset.x.roundToInt(), rawOffset.y.roundToInt())
+                val targetRect = current.baselineRect.withOrigin(target.col, target.row)
+                // Solver re-run only on cell-boundary crossings, per §0.
+                if (targetRect != current.targetRect) {
+                    val result = GridSolver.solveMove(
+                        baseline = current.baseline,
+                        itemId = itemId,
+                        target = target,
+                        reservedRects = reservedRectsForActive(latestState.value.layout)
+                    )
+                    setGestureState(
+                        current.copy(previewSnapshot = result.snapshot, targetRect = targetRect)
+                    )
+                }
+            },
+            onDragEnd = {
+                val current = getGestureState()
+                if (current != null) commit(current.previewSnapshot)
+                pointerOffsetState.value = IntOffset.Zero
+                setGestureState(null)
+            },
+            onDragCancel = {
+                pointerOffsetState.value = IntOffset.Zero
+                setGestureState(null)
             }
-        },
-        onDragEnd = {
-            val current = getGestureState()
-            if (current != null) commit(current.previewSnapshot)
-            pointerOffsetState.value = IntOffset.Zero
+        )
+    } finally {
+        // If the coroutine is cancelled mid-gesture (screen sleep, pointerInput
+        // re-key, composition dispose) the detector's onDragEnd/onDragCancel
+        // never fires — leaving the tile stuck at 1.05x scale with alpha 0.92.
+        if (getGestureState()?.draggedId == itemId) {
             setGestureState(null)
-        },
-        onDragCancel = {
             pointerOffsetState.value = IntOffset.Zero
-            setGestureState(null)
         }
-    )
+    }
 }
 
 private suspend fun PointerInputScope.handleResizeDrag(
@@ -409,59 +419,67 @@ private suspend fun PointerInputScope.handleResizeDrag(
     commit: (LayoutSnapshot) -> Unit
 ) {
     var rawOffset = Offset.Zero
-    detectDragGestures(
-        onDragStart = {
-            val baseline = latestState.value.layout.toSnapshot()
-            val baseRect = baseline.placements[itemId] ?: return@detectDragGestures
-            val (minC, minR) = resolveMinSpans()
-            rawOffset = Offset.Zero
-            setGestureState(
-                CanvasGestureState(
-                    mode = CanvasGestureState.Mode.Resize,
-                    draggedId = itemId,
-                    baseline = baseline,
-                    baselineRect = baseRect,
-                    minColSpan = minC,
-                    minRowSpan = minR
+    try {
+        detectDragGestures(
+            onDragStart = {
+                val baseline = latestState.value.layout.toSnapshot()
+                val baseRect = baseline.placements[itemId] ?: return@detectDragGestures
+                val (minC, minR) = resolveMinSpans()
+                rawOffset = Offset.Zero
+                setGestureState(
+                    CanvasGestureState(
+                        mode = CanvasGestureState.Mode.Resize,
+                        draggedId = itemId,
+                        baseline = baseline,
+                        baselineRect = baseRect,
+                        minColSpan = minC,
+                        minRowSpan = minR
+                    )
                 )
-            )
-        },
-        onDrag = { change, dragAmount ->
-            change.consume()
-            rawOffset += dragAmount
-            val current = getGestureState() ?: return@detectDragGestures
-            val cellPx = cellPlusSpacingPxState.value
-            val deltaCol = if (cellPx > 0f) (rawOffset.x / cellPx).roundToInt() else 0
-            val deltaRow = if (cellPx > 0f) (rawOffset.y / cellPx).roundToInt() else 0
-            val newColSpan =
-                (current.baselineRect.colSpan + deltaCol).coerceAtLeast(current.minColSpan)
-            val newRowSpan =
-                (current.baselineRect.rowSpan + deltaRow).coerceAtLeast(current.minRowSpan)
-            val newRect = current.baselineRect.withSize(newColSpan, newRowSpan)
-            setGestureState(
-                if (newRect != current.targetRect) {
-                    val result = GridSolver.solveResize(
-                        baseline = current.baseline,
-                        itemId = itemId,
-                        newRect = newRect,
-                        minColSpan = current.minColSpan,
-                        minRowSpan = current.minRowSpan,
-                        reservedRects = reservedRectsForActive(latestState.value.layout)
-                    )
-                    current.copy(
-                        previewSnapshot = result.snapshot,
-                        targetRect = newRect
-                    )
-                } else current
-            )
-        },
-        onDragEnd = {
-            val current = getGestureState()
-            if (current != null) commit(current.previewSnapshot)
+            },
+            onDrag = { change, dragAmount ->
+                change.consume()
+                rawOffset += dragAmount
+                val current = getGestureState() ?: return@detectDragGestures
+                val cellPx = cellPlusSpacingPxState.value
+                val deltaCol = if (cellPx > 0f) (rawOffset.x / cellPx).roundToInt() else 0
+                val deltaRow = if (cellPx > 0f) (rawOffset.y / cellPx).roundToInt() else 0
+                val newColSpan =
+                    (current.baselineRect.colSpan + deltaCol).coerceAtLeast(current.minColSpan)
+                val newRowSpan =
+                    (current.baselineRect.rowSpan + deltaRow).coerceAtLeast(current.minRowSpan)
+                val newRect = current.baselineRect.withSize(newColSpan, newRowSpan)
+                setGestureState(
+                    if (newRect != current.targetRect) {
+                        val result = GridSolver.solveResize(
+                            baseline = current.baseline,
+                            itemId = itemId,
+                            newRect = newRect,
+                            minColSpan = current.minColSpan,
+                            minRowSpan = current.minRowSpan,
+                            reservedRects = reservedRectsForActive(latestState.value.layout)
+                        )
+                        current.copy(
+                            previewSnapshot = result.snapshot,
+                            targetRect = newRect
+                        )
+                    } else current
+                )
+            },
+            onDragEnd = {
+                val current = getGestureState()
+                if (current != null) commit(current.previewSnapshot)
+                setGestureState(null)
+            },
+            onDragCancel = { setGestureState(null) }
+        )
+    } finally {
+        // See handleMoveDrag: external cancellation skips onDragEnd/onDragCancel,
+        // stranding the tile at 1.05x scale until something else clears state.
+        if (getGestureState()?.draggedId == itemId) {
             setGestureState(null)
-        },
-        onDragCancel = { setGestureState(null) }
-    )
+        }
+    }
 }
 
 @Composable
