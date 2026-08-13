@@ -105,30 +105,34 @@ fun findFirstMedia(
 fun resolveRomPath(game: GameInfo, romsPaths: List<String>): String? {
     if (game.romAbsolutePath != null) return game.romAbsolutePath
     val allPaths = romsPaths + listOf("/storage/emulated/0/Roms")
+    // The relative path is preserved verbatim: game.path is ES-DE's own entry
+    // (e.g. `./Disc1/Game.iso`, `./Xenogears.m3u/Xenogears.m3u`). Reducing it
+    // to the basename breaks multi-disc games under the "directories
+    // interpreted as files" convention that mediaBasenameCandidates handles.
+    val relativePath = game.path.removePrefix("./")
     val filename = File(game.path).name
 
-    // PSP and PS2: build path directly — no existence check, since File.exists() can
-    // return false for these paths even when the file is there (permission timing).
-    if (game.systemName.equals("psp", ignoreCase = true) ||
-        game.systemName.equals("ps2", ignoreCase = true)
-    ) {
-        val root = allPaths.firstOrNull() ?: "/storage/emulated/0/Roms"
-        return File(root, "${game.systemName}/$filename").absolutePath
-    }
-
     for (root in allPaths) {
-        File(root, "${game.systemName}/${game.path}").let { if (it.exists()) return it.absolutePath }
+        File(root, "${game.systemName}/$relativePath").let { if (it.exists()) return it.absolutePath }
         File(root, "${game.systemName}/$filename").let { if (it.exists()) return it.absolutePath }
-        File(root, game.path).let { if (it.exists()) return it.absolutePath }
+        File(root, relativePath).let { if (it.exists()) return it.absolutePath }
         File(root, filename).let { if (it.exists()) return it.absolutePath }
         File(root).listFiles()
             ?.firstOrNull { it.isDirectory && it.name.equals(game.systemName, ignoreCase = true) }
             ?.let { systemDir ->
-                File(systemDir, game.path).let { if (it.exists()) return it.absolutePath }
+                File(systemDir, relativePath).let { if (it.exists()) return it.absolutePath }
                 File(systemDir, filename).let { if (it.exists()) return it.absolutePath }
             }
     }
-    return null
+
+    // No candidate exists on disk. Under scoped storage, File.exists() can
+    // report false for a path our process cannot stat even though the emulator
+    // can open it via SAF — historically observed for PSP and PS2 folders. As
+    // a last resort, return the primary-root canonical path so the caller can
+    // build a SAF document URI from it. When even that is wrong, the URI
+    // verification in RomGameLauncher.verifyReadable surfaces a clear failure.
+    val primaryRoot = allPaths.firstOrNull() ?: return null
+    return File(primaryRoot, "${game.systemName}/$relativePath").absolutePath
 }
 
 fun sdCardVolumeId(absolutePath: String): String? {
