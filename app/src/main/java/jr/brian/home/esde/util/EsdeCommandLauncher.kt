@@ -61,7 +61,12 @@ object EsdeCommandLauncher {
             "net.rpcs3.rpcs3/net.rpcs3.rpcs3.MainActivity"
         ),
         "AETHERSX2" to listOf(
-            "xyz.aethersx2.android/xyz.aethersx2.android.EmulationActivity"
+            "xyz.aethersx2.android/xyz.aethersx2.android.EmulationActivity",
+            // Fall back to the NetherSX2 rebuilds if only they are installed;
+            // a user picking the "AetherSX2" command shouldn't hit
+            // "no rule installed" when a compatible fork is present.
+            "xyz.aethersx2.tturnip/xyz.aethersx2.android.EmulationActivity",
+            "xyz.aethersx2.cturnip/xyz.aethersx2.android.EmulationActivity"
         ),
         "NETHERSX2-TURNIP" to listOf(
             "xyz.aethersx2.tturnip/xyz.aethersx2.android.EmulationActivity"
@@ -215,6 +220,8 @@ object EsdeCommandLauncher {
                 "%EMULATOR_NETHERSX2-TURNIP% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.MAIN %EXTRA_bootPath%=%ROMSAF%",
             "NetherSX2-Turnip Classic" to
                 "%EMULATOR_NETHERSX2-TURNIP-CLASSIC% %ACTIVITY_CLEAR_TASK% %ACTIVITY_CLEAR_TOP% %ACTION%=android.intent.action.MAIN %EXTRA_bootPath%=%ROMSAF%",
+            "PCSX2" to
+                "%EMULATOR_PCSX2% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%",
             "ARMSX2 Refresh" to
                 "%EMULATOR_ARMSX2R% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%",
             "EmuCoreX" to
