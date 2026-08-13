@@ -5,6 +5,9 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.addRomsPath
+import jr.brian.home.esde.data.setSafTreeUri
 import jr.brian.home.esde.model.GameInfo
 import java.io.File
 
@@ -133,6 +136,60 @@ fun resolveRomPath(game: GameInfo, romsPaths: List<String>): String? {
     // verification in RomGameLauncher.verifyReadable surfaces a clear failure.
     val primaryRoot = allPaths.firstOrNull() ?: return null
     return File(primaryRoot, "${game.systemName}/$relativePath").absolutePath
+}
+
+/**
+ * The ROMs-root directory implied by picking [pickedDir] for [systemName].
+ *
+ * If the picked directory's own name matches the system, treat its parent as
+ * the ROMs root — the user picked `Roms/ps2` and expected the launcher to
+ * search under `Roms`. Otherwise take the picked directory verbatim — the
+ * user picked `Roms` itself and expected the system subdirectory to be looked
+ * up beneath it.
+ */
+fun deriveRomsRoot(pickedDir: String, systemName: String?): String {
+    if (systemName == null) return pickedDir
+    val picked = File(pickedDir)
+    return if (picked.name.equals(systemName, ignoreCase = true)) {
+        picked.parent ?: pickedDir
+    } else {
+        pickedDir
+    }
+}
+
+/**
+ * Persists a picked SAF tree URI for [systemName]:
+ *  - takes a persistable read grant,
+ *  - stores the URI as the system's per-system tree,
+ *  - registers the ROMs root implied by [deriveRomsRoot] when the picked
+ *    tree is on primary storage (the only case where the on-disk path is
+ *    unambiguous).
+ *
+ * Consolidates the previously-duplicated OpenDocumentTree callbacks in
+ * RomSearchResultsActivity and FrontEndActivity. Callers that only need
+ * partial behaviour (e.g. deliberate picker in settings, no launch to chain
+ * off) still use the whole function — the persisted grant and the derived
+ * root should not drift.
+ */
+fun persistSafTreeForSystem(
+    context: Context,
+    esdePrefs: ESDEPreferencesManager,
+    systemName: String?,
+    treeUri: Uri,
+) {
+    context.contentResolver.takePersistableUriPermission(
+        treeUri,
+        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+    )
+    val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+    if (treeDocId?.startsWith("primary:") == true) {
+        val rel = treeDocId.removePrefix("primary:")
+        val pickedDir = "/storage/emulated/0/$rel"
+        esdePrefs.addRomsPath(deriveRomsRoot(pickedDir, systemName))
+    }
+    if (systemName != null) {
+        esdePrefs.setSafTreeUri(systemName, treeUri.toString())
+    }
 }
 
 fun sdCardVolumeId(absolutePath: String): String? {

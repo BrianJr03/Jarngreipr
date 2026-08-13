@@ -4,7 +4,6 @@ import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.provider.Settings
 import android.view.KeyEvent as AndroidKeyEvent
 import android.widget.Toast
@@ -60,6 +59,7 @@ import jr.brian.home.esde.model.PlatformImageFolderType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
+import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.model.rom.toGameInfo
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
@@ -106,31 +106,9 @@ class RomSearchResultsActivity : ComponentActivity() {
             pendingFolderChangeSystem = null
             return@registerForActivityResult
         }
-        contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val systemName =
             pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
-
-        val treeDocId = try {
-            DocumentsContract.getTreeDocumentId(treeUri)
-        } catch (_: Exception) {
-            null
-        }
-
-        if (treeDocId?.startsWith("primary:") == true) {
-            val rel = treeDocId.removePrefix("primary:")
-            val pickedDir = "/storage/emulated/0/$rel"
-            val romsRoot = if (systemName != null &&
-                File(pickedDir).name.equals(systemName, ignoreCase = true)
-            ) {
-                File(pickedDir).parent ?: pickedDir
-            } else {
-                pickedDir
-            }
-            esdePrefs.addRomsPath(romsRoot)
-            if (systemName != null) esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        } else if (systemName != null) {
-            esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        }
+        persistSafTreeForSystem(this, esdePrefs, systemName, treeUri)
 
         romLauncher.pendingGameLaunch?.let { (game, ctx) ->
             val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
