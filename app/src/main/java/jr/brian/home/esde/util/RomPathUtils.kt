@@ -177,8 +177,9 @@ fun buildAetherDocUri(
     }
 
     // Return the direct URI when we can't verify (no context), or when it resolves. Otherwise
-    // walk the tree once to find the file by normalized name — handles case differences and
-    // typographic dashes between gamelist entries and on-disk filenames.
+    // probe the expected parent directory before falling back to a bounded tree walk —
+    // handles case differences and typographic dashes between gamelist entries and on-disk
+    // filenames without doing multi-second I/O on the launch tap for a large ROM tree.
     if (context == null || direct == null) return direct
     val exists = runCatching {
         context.contentResolver.query(direct, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)
@@ -188,14 +189,64 @@ fun buildAetherDocUri(
 
     val target = normalizeName(File(romAbsPath).name)
     val root = DocumentFile.fromTreeUri(context, treeUri) ?: return direct
-    return findByNormalizedName(root, target) ?: direct
+
+    val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+    val expectedParent = expectedParentSegments(treeDocId, documentId)
+    if (expectedParent != null) {
+        findInDirectory(root, expectedParent, target)?.let { return it }
+    }
+
+    return findByNormalizedName(root, target, depthRemaining = SAF_WALK_MAX_DEPTH) ?: direct
 }
 
-private fun findByNormalizedName(dir: DocumentFile, target: String): Uri? {
+/**
+ * Depth cap for the fallback walk over the SAF tree. Real ROM libraries rarely nest
+ * more than a couple of levels below the system folder (e.g. `System/Genre/Game.iso`
+ * or `System/Multi-disc/Game.m3u/Disc1.bin`), so a small bound covers the observed
+ * layouts without turning the launch tap into multi-second UI jank on a large tree.
+ */
+private const val SAF_WALK_MAX_DEPTH = 3
+
+/**
+ * Path segments from the tree root to the file's expected parent, computed by
+ * stripping the tree's own document id off the constructed direct-child id.
+ * Returns null when the direct id doesn't sit under the tree root (unusual, but
+ * possible if the caller passed a mismatched treeUri).
+ */
+private fun expectedParentSegments(treeDocId: String?, documentId: String): List<String>? {
+    if (treeDocId == null) return null
+    if (!documentId.startsWith("$treeDocId/")) return null
+    val relative = documentId.removePrefix("$treeDocId/")
+    val parent = relative.substringBeforeLast('/', "")
+    return if (parent.isEmpty()) emptyList() else parent.split('/')
+}
+
+private fun findInDirectory(
+    root: DocumentFile,
+    segments: List<String>,
+    target: String,
+): Uri? {
+    var current: DocumentFile = root
+    for (segment in segments) {
+        val normalized = normalizeName(segment)
+        val next = current.listFiles().firstOrNull {
+            it.isDirectory && it.name?.let(::normalizeName) == normalized
+        } ?: return null
+        current = next
+    }
+    return current.listFiles().firstOrNull {
+        it.isFile && it.name?.let(::normalizeName) == target
+    }?.uri
+}
+
+private fun findByNormalizedName(dir: DocumentFile, target: String, depthRemaining: Int): Uri? {
+    if (depthRemaining < 0) return null
     for (child in dir.listFiles()) {
         val name = child.name ?: continue
         if (child.isFile && normalizeName(name) == target) return child.uri
-        if (child.isDirectory) findByNormalizedName(child, target)?.let { return it }
+        if (child.isDirectory) {
+            findByNormalizedName(child, target, depthRemaining - 1)?.let { return it }
+        }
     }
     return null
 }
