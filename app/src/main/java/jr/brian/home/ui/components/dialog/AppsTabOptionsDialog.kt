@@ -70,7 +70,7 @@ fun AppsTabOptionsDialog(
     currentRomDisplayPreference: DisplayPreference? = null,
     onRomDisplayPreferenceChange: ((DisplayPreference) -> Unit)? = null
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

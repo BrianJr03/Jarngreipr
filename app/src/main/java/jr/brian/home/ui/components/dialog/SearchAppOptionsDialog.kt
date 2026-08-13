@@ -41,7 +41,7 @@ fun SearchAppOptionsDialog(
     promptForDisplayOnLaunch: Boolean = false,
     onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

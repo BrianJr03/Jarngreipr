@@ -98,6 +98,8 @@ sealed class CanvasItem {
         override val id: String,
         val imageType: GameImageType? = null,
         val contentScale: EsdeContentScale? = null,
+        val backgroundColorArgb: Long? = null,
+        val backgroundCornerRadiusDp: Int? = null,
         @Deprecated("Use imageType. Kept for one-release migration of older saves.")
         val artType: EsdeArtType? = null
     ) : CanvasItem() {
@@ -126,6 +128,20 @@ sealed class CanvasItem {
                 GameImageType.Marquee -> EsdeContentScale.FIT
                 else -> EsdeContentScale.CROP
             }
+
+        /**
+         * Default corner radius applied when the tile has a background color set
+         * but no explicit radius. Matches the standard tile shape used across
+         * canvas surfaces.
+         */
+        val resolvedBackgroundCornerRadiusDp: Int
+            get() = backgroundCornerRadiusDp ?: DEFAULT_BACKGROUND_CORNER_RADIUS_DP
+
+        companion object {
+            const val DEFAULT_BACKGROUND_CORNER_RADIUS_DP = 12
+            const val MIN_BACKGROUND_CORNER_RADIUS_DP = 0
+            const val MAX_BACKGROUND_CORNER_RADIUS_DP = 48
+        }
     }
 
     /**

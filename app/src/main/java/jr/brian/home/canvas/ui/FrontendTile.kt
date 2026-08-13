@@ -119,7 +119,11 @@ fun FrontendTile(
         )
     }
 
-    val shape = RoundedCornerShape(12.dp)
+    val backgroundColor = resolved.raw.backgroundColorArgb?.let { Color(it) }
+    val shape = RoundedCornerShape(
+        if (backgroundColor != null) resolved.raw.resolvedBackgroundCornerRadiusDp.dp
+        else 12.dp
+    )
 
     Box(
         modifier = modifier
@@ -128,10 +132,10 @@ fun FrontendTile(
             .onFocusChanged { isFocused = it.isFocused }
             .clip(shape)
             .then(
-                if (imageData == null) {
-                    Modifier.background(brush = emptyArtBrush())
-                } else {
-                    Modifier
+                when {
+                    backgroundColor != null -> Modifier.background(color = backgroundColor)
+                    imageData == null -> Modifier.background(brush = emptyArtBrush())
+                    else -> Modifier
                 }
             )
             .then(

@@ -77,6 +77,61 @@ class JarngreiprConfigRoundTripTest {
     }
 
     @Test
+    fun `pre-split config carries its combined dim onto both new fields`() {
+        // A v17-or-earlier export only has frontendFocusBackgroundDim; the two per-scope
+        // fields don't exist in the JSON. After decode they land at their data-class
+        // defaults (0.55f). ImportExportManager treats "new field at default AND legacy
+        // differs" as the pre-split case and prefers the legacy value for both scopes.
+        val preSplit = """
+            {
+              "version": 17,
+              "feature": {
+                "romSearch": {
+                  "frontendFocusBackgroundDim": 0.8
+                }
+              }
+            }
+        """.trimIndent()
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(preSplit)
+
+        @Suppress("DEPRECATION")
+        val legacyDim = decoded.feature.romSearch.frontendFocusBackgroundDim
+        assertEquals(0.8f, legacyDim, 0.0001f)
+        // Per-scope fields absent from the JSON: they materialize at their defaults,
+        // and ImportExportManager falls back to the legacy value for both scopes.
+        assertEquals(0.55f, decoded.feature.romSearch.frontendFocusBackgroundDimSystems, 0.0001f)
+        assertEquals(0.55f, decoded.feature.romSearch.frontendFocusBackgroundDimGames, 0.0001f)
+
+        val systemsDim = decoded.feature.romSearch.frontendFocusBackgroundDimSystems.let { new ->
+            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
+        }
+        val gamesDim = decoded.feature.romSearch.frontendFocusBackgroundDimGames.let { new ->
+            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
+        }
+        assertEquals(0.8f, systemsDim, 0.0001f)
+        assertEquals(0.8f, gamesDim, 0.0001f)
+    }
+
+    @Test
+    fun `post-split config round-trips independent dim values`() {
+        val original = JarngreiprConfig(
+            feature = FeatureConfig(
+                romSearch = RomSearchConfig(
+                    frontendFocusBackgroundDimSystems = 0.2f,
+                    frontendFocusBackgroundDimGames = 0.9f
+                )
+            )
+        )
+
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<JarngreiprConfig>(encoded)
+
+        assertEquals(0.2f, decoded.feature.romSearch.frontendFocusBackgroundDimSystems, 0.0001f)
+        assertEquals(0.9f, decoded.feature.romSearch.frontendFocusBackgroundDimGames, 0.0001f)
+    }
+
+    @Test
     fun `unknown layout string resolves to null via the runCatching guard`() {
         // ImportExportManager applies the layout enum with:
         //   runCatching { FrontendLayout.valueOf(name) }.getOrNull()?.let { setter(it) }

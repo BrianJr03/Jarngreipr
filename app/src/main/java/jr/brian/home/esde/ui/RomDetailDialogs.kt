@@ -34,7 +34,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.EsdeCommandLauncher
-import jr.brian.home.ui.components.dialog.DimmedBottomSheet
+import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import java.io.File
@@ -82,7 +82,7 @@ internal fun EmulatorPickerDialog(
         )
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -170,7 +170,7 @@ private fun AppPickerDialog(
             .sortedBy { it.first.lowercase() }
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -223,7 +223,7 @@ internal fun RetroArchCorePickerDialog(
         EsdeCommandLauncher.getInstalledCores(context)
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -296,7 +296,7 @@ fun MediaTypePickerDialog(
     onSelectedForSystem: (RomSearchCardMediaType?) -> Unit = {}
 ) {
     var scopeAllSystem by remember { mutableStateOf(false) }
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

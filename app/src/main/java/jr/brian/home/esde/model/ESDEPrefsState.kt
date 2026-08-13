@@ -262,7 +262,14 @@ data class ESDEPrefsState(
     val frontendFocusBackgroundEnabled: Boolean = false,
     val frontendFocusBackgroundSystems: Boolean = true,
     val frontendFocusBackgroundGames: Boolean = true,
-    val frontendFocusBackgroundDim: Float = 0.55f,
+    val frontendFocusBackgroundDimSystems: Float = 0.55f,
+    val frontendFocusBackgroundDimGames: Float = 0.55f,
+    val frontendTransition: FrontendTransition = FrontendTransition.Default,
+    val frontendTransitionMs: Int = FRONTEND_TRANSITION_MS_DEFAULT,
+    val frontendSystemRowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
+    val frontendGameRowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
+    val frontendSystemTileScale: Float = FRONTEND_TILE_SCALE_MIN,
+    val frontendGameTileScale: Float = FRONTEND_TILE_SCALE_MIN,
     val canvasContinuousSpinRoms: Set<String> = emptySet()
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f

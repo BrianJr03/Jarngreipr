@@ -16,11 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -29,11 +34,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.ImageLoader
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.theme.OledBackgroundColor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun FrontendSettingsScreen(
@@ -43,10 +56,35 @@ fun FrontendSettingsScreen(
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val cursor = rememberFrontendSettingsState()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val imageLoader = LocalESDEImageLoader.current
+    val refreshRunning by romSearchViewModel.isLoading.collectAsStateWithLifecycle()
+    var lastRefreshResult by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    val refreshScope = rememberCoroutineScope()
+    val onRefresh: () -> Unit = remember(romSearchViewModel, imageLoader) {
+        {
+            refreshLibrary(
+                scope = refreshScope,
+                imageLoader = imageLoader,
+                viewModel = romSearchViewModel,
+                onDone = { games, systems -> lastRefreshResult = games to systems }
+            )
+        }
+    }
 
     val rowCount = rowCountFor(cursor.selectedCategory)
     val rootFocus = remember { FocusRequester() }
+    var hasFocus by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
+    // Any focusable subtree underneath us (e.g. the grid the overlay draws over)
+    // can steal focus when it recomposes. Yield a frame so the thief's requestFocus
+    // retries settle, then reclaim it.
+    LaunchedEffect(hasFocus) {
+        if (!hasFocus) {
+            withFrameNanos { }
+            runCatching { rootFocus.requestFocus() }
+        }
+    }
 
     val registerHorizontal = remember(cursor) {
         { claims: Boolean -> cursor.registerHorizontal(claims) }
@@ -62,6 +100,7 @@ fun FrontendSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .focusRequester(rootFocus)
+                .onFocusChanged { state -> hasFocus = state.hasFocus }
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -86,7 +125,10 @@ fun FrontendSettingsScreen(
                     onOpenSystemFilter = {
                         onDismiss()
                         onOpenSystemFilter()
-                    }
+                    },
+                    refreshRunning = refreshRunning,
+                    lastRefreshResult = lastRefreshResult,
+                    onRefresh = onRefresh
                 )
             }
         }
@@ -94,10 +136,27 @@ fun FrontendSettingsScreen(
 }
 
 private fun rowCountFor(category: FrontendSettingsCategory): Int = when (category) {
-    FrontendSettingsCategory.LAYOUT -> 2
-    FrontendSettingsCategory.MEDIA -> 5
-    FrontendSettingsCategory.FEEL -> 3
+    FrontendSettingsCategory.LAYOUT -> 6
+    FrontendSettingsCategory.MEDIA -> 6
+    FrontendSettingsCategory.FEEL -> 5
     FrontendSettingsCategory.SYSTEMS -> 1
+    FrontendSettingsCategory.SCRAPING -> 3
+}
+
+private fun refreshLibrary(
+    scope: CoroutineScope,
+    imageLoader: ImageLoader,
+    viewModel: RomSearchViewModel,
+    onDone: (games: Int, systems: Int) -> Unit
+) {
+    if (viewModel.isLoading.value) return
+    scope.launch {
+        // Clear Coil caches so scraped art at paths Coil has already tried (and possibly
+        // cached as a miss) is re-fetched from disk.
+        imageLoader.memoryCache?.clear()
+        withContext(Dispatchers.IO) { imageLoader.diskCache?.clear() }
+        viewModel.refreshGames(onComplete = onDone)
+    }
 }
 
 @Composable
@@ -106,7 +165,10 @@ private fun RowPaneContainer(
     prefsState: ESDEPrefsState,
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int,
-    onOpenSystemFilter: () -> Unit
+    onOpenSystemFilter: () -> Unit,
+    refreshRunning: Boolean,
+    lastRefreshResult: Pair<Int, Int>?,
+    onRefresh: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -127,7 +189,10 @@ private fun RowPaneContainer(
                 prefsState = prefsState,
                 prefsManager = prefsManager,
                 focusedRow = focusedRow,
-                onOpenSystemFilter = onOpenSystemFilter
+                onOpenSystemFilter = onOpenSystemFilter,
+                refreshRunning = refreshRunning,
+                lastRefreshResult = lastRefreshResult,
+                onRefresh = onRefresh
             )
         }
     }

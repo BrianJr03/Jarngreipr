@@ -112,7 +112,7 @@ fun FolderContentsDialog(
     val hasExternalDisplay = rememberHasExternalDisplay()
     val displayChooser = rememberDisplayChooser()
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

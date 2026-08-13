@@ -109,7 +109,7 @@ private fun DisplayChooserDialog(
     onPick: (DisplayPreference) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

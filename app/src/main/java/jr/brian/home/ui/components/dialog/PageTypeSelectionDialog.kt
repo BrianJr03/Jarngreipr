@@ -42,7 +42,7 @@ fun PageTypeSelectionDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = modifier
                 .fillMaxWidth()

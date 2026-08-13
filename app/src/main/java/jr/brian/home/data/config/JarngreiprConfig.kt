@@ -45,7 +45,26 @@ data class JarngreiprConfig(
         //      feature; SystemCustomization.focusBackgroundUri for a per-system full-screen
         //      backdrop distinct from the tile-level backgroundUri. Older blobs decode
         //      with defaults (both routes on, no focus URI) via ignoreUnknownKeys.
-        const val CONFIG_VERSION = 15
+        // v16: added RomSearchConfig.frontendTransition + frontendTransitionMs for the
+        //      Systems <-> Games route transition preset and its duration. Older blobs
+        //      decode with the default preset ("Fade") and default 280ms via
+        //      ignoreUnknownKeys.
+        // v17: added CanvasItem.EsdeArtItem.backgroundColorArgb + backgroundCornerRadiusDp
+        //      for the optional background-box customization on ES-DE Display tiles.
+        //      Older blobs decode with both fields null (no background) via
+        //      ignoreUnknownKeys, preserving the pre-toggle transparent rendering.
+        // v18: split RomSearchConfig.frontendFocusBackgroundDim into
+        //      frontendFocusBackgroundDimSystems / frontendFocusBackgroundDimGames so
+        //      the two routes can be dimmed independently. The old field is kept
+        //      (deprecated) and still written on export so v17-and-earlier builds can
+        //      still read a config exported now; import falls back to it for pre-split
+        //      configs.
+        // v19: added RomSearchConfig.frontendSystemRowAlignment /
+        //      frontendGameRowAlignment (row-mode vertical anchor: Top/Center/Bottom)
+        //      and frontendSystemTileScale / frontendGameTileScale (tile-size
+        //      multiplier 1.0..1.3 controlling row width and grid columns). Older
+        //      blobs decode with defaults (Center, 1.0f) via ignoreUnknownKeys.
+        const val CONFIG_VERSION = 19
     }
 }
 
@@ -257,7 +276,16 @@ data class RomSearchConfig(
     val frontendFocusBackgroundEnabled: Boolean = false,
     val frontendFocusBackgroundSystems: Boolean = true,
     val frontendFocusBackgroundGames: Boolean = true,
-    val frontendFocusBackgroundDim: Float = 0.55f
+    @Deprecated("Split into frontendFocusBackgroundDimSystems / frontendFocusBackgroundDimGames; retained for import of pre-split configs")
+    val frontendFocusBackgroundDim: Float = 0.55f,
+    val frontendFocusBackgroundDimSystems: Float = 0.55f,
+    val frontendFocusBackgroundDimGames: Float = 0.55f,
+    val frontendTransition: String = "Fade",
+    val frontendTransitionMs: Int = 280,
+    val frontendSystemRowAlignment: String = "Center",
+    val frontendGameRowAlignment: String = "Center",
+    val frontendSystemTileScale: Float = 1.0f,
+    val frontendGameTileScale: Float = 1.0f
 )
 
 @Serializable

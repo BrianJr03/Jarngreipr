@@ -114,7 +114,7 @@ fun TabsDialog(
         )
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = modifier
                 .fillMaxWidth()

@@ -44,7 +44,6 @@ object FrontendTokens {
         const val Primary = 1f
         const val Secondary = 0.72f
         const val Tertiary = 0.45f
-        const val Unfocused = 0.6f
         const val Faint = 0.3f
     }
 

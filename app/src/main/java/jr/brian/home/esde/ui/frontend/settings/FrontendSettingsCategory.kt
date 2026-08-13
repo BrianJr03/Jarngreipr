@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Animation
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 import jr.brian.home.R
@@ -38,5 +39,11 @@ enum class FrontendSettingsCategory(
         titleRes = R.string.frontend_settings_category_systems_title,
         summaryRes = R.string.frontend_settings_category_systems_summary,
         icon = Icons.Rounded.Tune
+    ),
+    SCRAPING(
+        id = "scraping",
+        titleRes = R.string.frontend_settings_scraping_title,
+        summaryRes = R.string.frontend_settings_scraping_summary,
+        icon = Icons.Rounded.Sync
     )
 }

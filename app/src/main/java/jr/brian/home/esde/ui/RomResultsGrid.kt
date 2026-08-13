@@ -69,10 +69,14 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.model.gridColumnsForScale
+import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
 import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -119,6 +123,8 @@ internal fun RomResultsGrid(
     initialRealIndex: Int = 0
 ) {
     val context = LocalContext.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
@@ -167,15 +173,18 @@ internal fun RomResultsGrid(
                         )
                     }
                 } else null
+                val scale = prefs.frontendGameTileScale
                 FocusableTileLayout(
                     items = displayedGames,
                     layout = layout,
-                    columns = NUM_COLS,
+                    columns = gridColumnsForScale(scale),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         horizontal = FrontendTokens.Spacing.M,
                         vertical = FrontendTokens.Spacing.XL
                     ),
+                    rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
+                    rowAlignment = prefs.frontendGameRowAlignment,
                     initialRealIndex = initialRealIndex,
                     focusResetKey = focusResetKey,
                     onItemFocused = { game -> onGameFocused(game) },

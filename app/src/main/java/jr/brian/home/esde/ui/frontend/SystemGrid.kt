@@ -37,13 +37,13 @@ import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.SystemCustomization
+import jr.brian.home.esde.model.gridColumnsForScale
 import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.LocalESDEImageLoader
@@ -71,6 +71,7 @@ internal fun SystemGrid(
     layout: FrontendLayout,
     modifier: Modifier = Modifier,
     initialRealIndex: Int = 0,
+    focusResetKey: Any? = null,
     backgroundTransparent: Boolean = false,
     customizations: Map<String, SystemCustomization> = emptyMap(),
     reorderingSystem: String? = null,
@@ -78,6 +79,9 @@ internal fun SystemGrid(
     onSystemSelected: (SystemTile) -> Unit = {},
     onSystemLongPressed: (SystemTile) -> Unit = {}
 ) {
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
+
     Box(
         modifier = modifier.then(
             if (backgroundTransparent) Modifier else Modifier.background(OledBackgroundColor)
@@ -100,16 +104,24 @@ internal fun SystemGrid(
                 val systemKey by remember(systems) {
                     derivedStateOf { systems.joinToString("|") { it.systemName } }
                 }
+                val combinedFocusResetKey by remember(systemKey, focusResetKey) {
+                    derivedStateOf {
+                        if (focusResetKey == null) systemKey else "$systemKey|$focusResetKey"
+                    }
+                }
+                val scale = prefs.frontendSystemTileScale
                 FocusableTileLayout(
                     items = systems,
                     layout = layout,
-                    columns = NUM_COLS,
+                    columns = gridColumnsForScale(scale),
                     contentPadding = PaddingValues(
                         horizontal = FrontendTokens.Spacing.L,
                         vertical = FrontendTokens.Spacing.XL
                     ),
+                    rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
+                    rowAlignment = prefs.frontendSystemRowAlignment,
                     initialRealIndex = initialRealIndex,
-                    focusResetKey = systemKey,
+                    focusResetKey = combinedFocusResetKey,
                     onItemFocused = { tile -> tile?.let(onSystemFocused) },
                     itemKey = { _, tile -> tile.systemName }
                 ) { _, tile, focusRequester, isFocused, onFocused ->
@@ -151,7 +163,6 @@ private fun SystemTileCard(
         ),
         label = "systemTileFocus"
     )
-    val tileAlpha = lerp(FrontendTokens.Alpha.Unfocused, FrontendTokens.Alpha.Primary, focusProgress)
     val floatPhase = focusFloatPhase(isFocused)
     val floatAmplitude = rememberFloatAmplitude()
 
@@ -169,7 +180,6 @@ private fun SystemTileCard(
                 translationY = (-FOCUS_LIFT.toPx() + floatAmplitude.toPx() * floatPhase) * focusProgress
                 scaleX = scale
                 scaleY = scale
-                alpha = tileAlpha
                 clip = false
             }
             .padding(TILE_INSET)

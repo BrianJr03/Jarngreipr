@@ -2,7 +2,9 @@ package jr.brian.home.esde.ui.frontend
 
 import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -177,37 +180,64 @@ private fun FrontendRouteHost(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
 
-    when (val currentRoute = route) {
-        is FrontendRoute.Games -> GamesRoute(
-            system = currentRoute.system,
-            allGames = allGames,
-            isLoading = isLoading,
-            esdeState = esdeState,
-            esdePrefs = esdePrefs,
-            viewModel = viewModel,
-            romSearchStateHolder = romSearchStateHolder,
-            frontendSelectionStateHolder = frontendSelectionStateHolder,
-            managers = managers,
-            romLauncher = romLauncher,
-            appDisplayPreferenceManager = appDisplayPreferenceManager,
-            onChangeFolder = onChangeFolder
-        )
+    AnimatedContent(
+        targetState = route,
+        transitionSpec = {
+            val forward = initialState is FrontendRoute.Systems &&
+                    targetState is FrontendRoute.Games
+            esdeState.frontendTransition.transform(forward, esdeState.frontendTransitionMs)
+        },
+        // Key on route TYPE so navigating between two Games routes (if that ever
+        // happens) does not re-trigger the transition. Systems is a singleton.
+        contentKey = { it is FrontendRoute.Games },
+        label = "frontendRoute"
+    ) { currentRoute ->
+        // AnimatedContent keeps BOTH routes composed for the duration of the
+        // transition. FocusableTileLayout retries requestFocus() a few times on
+        // (re)composition, so the outgoing route can steal focus back from the
+        // incoming one mid-transition. Block focus on the non-target route.
+        //
+        // The receiver's `transition` tracks EnterExitState: the incoming pane's
+        // targetState is Visible, the outgoing pane's is PostExit.
+        val isTarget = this.transition.targetState == EnterExitState.Visible
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .focusProperties { canFocus = isTarget }
+        ) {
+            when (currentRoute) {
+                is FrontendRoute.Games -> GamesRoute(
+                    system = currentRoute.system,
+                    allGames = allGames,
+                    isLoading = isLoading,
+                    esdeState = esdeState,
+                    esdePrefs = esdePrefs,
+                    viewModel = viewModel,
+                    romSearchStateHolder = romSearchStateHolder,
+                    frontendSelectionStateHolder = frontendSelectionStateHolder,
+                    managers = managers,
+                    romLauncher = romLauncher,
+                    appDisplayPreferenceManager = appDisplayPreferenceManager,
+                    onChangeFolder = onChangeFolder
+                )
 
-        is FrontendRoute.Systems -> SystemsRoute(
-            allGames = allGames,
-            isLoading = isLoading,
-            hiddenGames = esdeState.hiddenGames,
-            hiddenSystems = esdeState.hiddenSystems,
-            layout = esdeState.systemLayout,
-            useWallpaper = esdeState.romSearchUseWallpaper,
-            customizations = esdeState.systemCustomizations,
-            systemOrder = esdeState.systemOrder,
-            hintsVisible = esdeState.frontendHintsVisible,
-            esdePrefs = esdePrefs,
-            viewModel = viewModel,
-            romSearchStateHolder = romSearchStateHolder,
-            frontendSelectionStateHolder = frontendSelectionStateHolder
-        )
+                is FrontendRoute.Systems -> SystemsRoute(
+                    allGames = allGames,
+                    isLoading = isLoading,
+                    hiddenGames = esdeState.hiddenGames,
+                    hiddenSystems = esdeState.hiddenSystems,
+                    layout = esdeState.systemLayout,
+                    useWallpaper = esdeState.romSearchUseWallpaper,
+                    customizations = esdeState.systemCustomizations,
+                    systemOrder = esdeState.systemOrder,
+                    hintsVisible = esdeState.frontendHintsVisible,
+                    esdePrefs = esdePrefs,
+                    viewModel = viewModel,
+                    romSearchStateHolder = romSearchStateHolder,
+                    frontendSelectionStateHolder = frontendSelectionStateHolder
+                )
+            }
+        }
     }
 }
 
@@ -243,15 +273,21 @@ private fun GamesRoute(
         filteredGames.firstOrNull()?.let { viewModel.updateFocusedGame(it) }
     }
 
-    val initialGameIndex = remember(filteredGames, system) {
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showSystemFilter by remember { mutableStateOf(false) }
+    // Any overlay drawn on top of the grid holds focus for its whole lifetime;
+    // the grid underneath must stop competing so its focus-reset retries don't
+    // steal focus back mid-recompose. On dismiss the key change re-seeds focus
+    // onto the tile the user was on before the overlay opened.
+    val overlayVisible = showSettingsDialog || showSystemFilter
+
+    val initialGameIndex = remember(filteredGames, system, overlayVisible) {
         val target = romSearchStateHolder.lastFocusedGameBySystem.value[system]
         filteredGames.indexOfFirst { it.path == target }.takeIf { it >= 0 } ?: 0
     }
 
-    val focusResetKey = remember(system) { system }
+    val focusResetKey = remember(system, overlayVisible) { "$system|$overlayVisible" }
 
-    var showSettingsDialog by remember { mutableStateOf(false) }
-    var showSystemFilter by remember { mutableStateOf(false) }
     val allSystemNames = rememberAllSystemNames(allGames = allGames)
 
     BackHandler {
@@ -297,10 +333,14 @@ private fun GamesRoute(
                 }
             }
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .focusProperties { canFocus = !overlayVisible }
+        ) {
             FrontendFocusBackground(
                 focusedUri = focusBackgroundUri,
-                dimAlpha = esdeState.frontendFocusBackgroundDim,
+                dimAlpha = esdeState.frontendFocusBackgroundDimGames,
                 fallbackColor = if (focusBackgroundActive) OledBackgroundColor else Color.Transparent
             )
             FrontendRomGrid(
@@ -378,15 +418,22 @@ private fun SystemsRoute(
     var workingOrder by remember(baseSystems, systemOrder) {
         mutableStateOf(applySystemOrder(baseSystems, systemOrder))
     }
-    val initialSystemIndex = remember(workingOrder) {
-        val target = romSearchStateHolder.lastFocusedSystem.value
-        workingOrder.indexOfFirst { it.systemName == target }.takeIf { it >= 0 } ?: 0
-    }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showSystemFilter by remember { mutableStateOf(false) }
     var customizingSystem by remember { mutableStateOf<String?>(null) }
     var reorderingSystem by remember { mutableStateOf<String?>(null) }
     var focusedSystemName by remember { mutableStateOf<String?>(null) }
+
+    // Any overlay drawn on top of the grid holds focus for its whole lifetime;
+    // the grid underneath must stop competing so its focus-reset retries don't
+    // steal focus back mid-recompose. On dismiss the key change re-seeds focus
+    // onto the tile the user was on before the overlay opened.
+    val overlayVisible = showSettingsDialog || showSystemFilter || customizingSystem != null
+
+    val initialSystemIndex = remember(workingOrder, overlayVisible) {
+        val target = romSearchStateHolder.lastFocusedSystem.value
+        workingOrder.indexOfFirst { it.systemName == target }.takeIf { it >= 0 } ?: 0
+    }
 
     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
     // Focus events only fire on *change*, so nothing sets focusedSystemName on the
@@ -420,6 +467,7 @@ private fun SystemsRoute(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .focusProperties { canFocus = !overlayVisible }
             .onPreviewKeyEvent { keyEvent ->
                 handleSystemsRouteKey(
                     keyEvent = keyEvent,
@@ -454,7 +502,7 @@ private fun SystemsRoute(
     ) {
         FrontendFocusBackground(
             focusedUri = focusBackgroundUri,
-            dimAlpha = esdeState.frontendFocusBackgroundDim,
+            dimAlpha = esdeState.frontendFocusBackgroundDimSystems,
             fallbackColor = if (focusBackgroundActive) OledBackgroundColor else Color.Transparent
         )
         SystemGrid(
@@ -462,6 +510,7 @@ private fun SystemsRoute(
             isLoading = isLoading,
             layout = layout,
             initialRealIndex = initialSystemIndex,
+            focusResetKey = overlayVisible,
             backgroundTransparent = useWallpaper || focusBackgroundActive,
             customizations = customizations,
             reorderingSystem = reorderingSystem,

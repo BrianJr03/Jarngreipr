@@ -82,17 +82,44 @@ class RomSearchViewModel @Inject constructor(
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
-            val prefsState = esdePreferencesManager.state.value
-            val games = RomListParser.parseAllSystems(
-                esdeRootPath = rootPath,
-                mediaPaths = mediaPaths,
-                romsPaths = prefsState.romsPaths,
-                systemEmulatorMap = prefsState.systemAppMap
-            )
-            store.allGames.value = games.sortedWith(
-                compareBy({ it.name.lowercase() }, { it.systemName.trim() })
-            )
+            parseAndStore(rootPath)
             store.isLoading.value = false
         }
+    }
+
+    /**
+     * Force a re-parse, bypassing the [loadGames] idempotency guard. Used by the
+     * settings refresh action after the user has scraped or added ROMs externally.
+     * Still no-ops when a parse is already in flight so a double-press cannot run two
+     * concurrent parses over the same [RomSearchStateHolder.allGames].
+     *
+     * [onComplete] is invoked when the parse finishes and receives the resulting game
+     * and system counts so the caller can surface them in the UI.
+     */
+    fun refreshGames(onComplete: (games: Int, systems: Int) -> Unit = { _, _ -> }) {
+        if (store.isLoading.value) return
+        val rootPath = esdeRootPath ?: return
+        store.isLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val (games, systems) = parseAndStore(rootPath)
+            store.isLoading.value = false
+            onComplete(games, systems)
+        }
+    }
+
+    private suspend fun parseAndStore(rootPath: String): Pair<Int, Int> {
+        val prefsState = esdePreferencesManager.state.value
+        val games = RomListParser.parseAllSystems(
+            esdeRootPath = rootPath,
+            mediaPaths = mediaPaths,
+            romsPaths = prefsState.romsPaths,
+            systemEmulatorMap = prefsState.systemAppMap
+        )
+        val sorted = games.sortedWith(
+            compareBy({ it.name.lowercase() }, { it.systemName.trim() })
+        )
+        store.allGames.value = sorted
+        val systemCount = sorted.mapTo(mutableSetOf()) { it.systemName }.size
+        return sorted.size to systemCount
     }
 }

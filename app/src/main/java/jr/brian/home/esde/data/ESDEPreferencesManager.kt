@@ -7,7 +7,14 @@ import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MAX
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MIN
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_DEFAULT
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_MAX
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_MIN
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.FrontendRowAlignment
+import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
@@ -136,7 +143,14 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_GAME_ROW_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_GAME_TILE_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_ROW_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_TILE_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS
@@ -146,6 +160,12 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
+
+// Legacy key from the pre-split build, when a single dim value applied to both
+// system and game focus backgrounds. Read-only, used solely by loadState() to
+// migrate existing installs onto the two new per-scope keys — do not write to
+// this key or expose it elsewhere.
+private const val KEY_FRONTEND_FOCUS_BACKGROUND_DIM_LEGACY = "frontend_focus_background_dim"
 
 class ESDEPreferencesManager(context: Context) {
     internal val prefs: SharedPreferences = context.getSharedPreferences(
@@ -395,6 +415,13 @@ class ESDEPreferencesManager(context: Context) {
             ?.let { runCatching { customizationJson.decodeFromString<List<String>>(it) }.getOrNull() }
             ?: emptyList()
 
+        // Users on the pre-split build have one combined value. Seed both new keys
+        // from it so their configured dim carries over instead of snapping back to
+        // 0.55f. Falls back to the default when the legacy key is absent.
+        val legacyFocusBackgroundDim = prefs
+            .getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_LEGACY, 0.55f)
+            .coerceIn(0f, 1f)
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -554,7 +581,25 @@ class ESDEPreferencesManager(context: Context) {
             frontendFocusBackgroundEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED, false),
             frontendFocusBackgroundSystems = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS, true),
             frontendFocusBackgroundGames = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_GAMES, true),
-            frontendFocusBackgroundDim = prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM, 0.55f).coerceIn(0f, 1f),
+            frontendFocusBackgroundDimSystems =
+                prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS, legacyFocusBackgroundDim).coerceIn(0f, 1f),
+            frontendFocusBackgroundDimGames =
+                prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES, legacyFocusBackgroundDim).coerceIn(0f, 1f),
+            frontendTransition = FrontendTransition.fromStoredName(
+                prefs.getString(KEY_FRONTEND_TRANSITION, null)
+            ),
+            frontendTransitionMs = prefs.getInt(KEY_FRONTEND_TRANSITION_MS, FRONTEND_TRANSITION_MS_DEFAULT)
+                .coerceIn(FRONTEND_TRANSITION_MS_MIN, FRONTEND_TRANSITION_MS_MAX),
+            frontendSystemRowAlignment = prefs.getString(KEY_FRONTEND_SYSTEM_ROW_ALIGNMENT, null)
+                ?.let { stored -> FrontendRowAlignment.entries.firstOrNull { it.name == stored } }
+                ?: FrontendRowAlignment.Center,
+            frontendGameRowAlignment = prefs.getString(KEY_FRONTEND_GAME_ROW_ALIGNMENT, null)
+                ?.let { stored -> FrontendRowAlignment.entries.firstOrNull { it.name == stored } }
+                ?: FrontendRowAlignment.Center,
+            frontendSystemTileScale = prefs.getFloat(KEY_FRONTEND_SYSTEM_TILE_SCALE, FRONTEND_TILE_SCALE_MIN)
+                .coerceIn(FRONTEND_TILE_SCALE_MIN, FRONTEND_TILE_SCALE_MAX),
+            frontendGameTileScale = prefs.getFloat(KEY_FRONTEND_GAME_TILE_SCALE, FRONTEND_TILE_SCALE_MIN)
+                .coerceIn(FRONTEND_TILE_SCALE_MIN, FRONTEND_TILE_SCALE_MAX),
             canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->

@@ -442,22 +442,34 @@ fun UnifiedCanvasTab(
 
     if (pickEsdeArtVisible) {
         val defaultType = GameImageType.Fanart
-        CanvasEsdeArtChooserDialog(
+        CanvasEsdeArtChooserSheet(
             initialType = defaultType,
             initialContentScale = defaultEsdeContentScaleFor(defaultType),
+            initialBackgroundColorArgb = null,
+            initialBackgroundCornerRadiusDp = null,
             titleRes = R.string.canvas_esde_picker_title,
-            onConfirm = { imageType, scale -> viewModel.addEsdeArtItem(imageType, scale) },
+            onConfirm = { imageType, scale, bgArgb, cornerDp ->
+                viewModel.addEsdeArtItem(imageType, scale, bgArgb, cornerDp)
+            },
             onDismiss = { pickEsdeArtVisible = false }
         )
     }
 
     esdeArtRetypeTarget?.let { target ->
-        CanvasEsdeArtChooserDialog(
+        CanvasEsdeArtChooserSheet(
             initialType = target.raw.resolvedImageType,
             initialContentScale = target.raw.resolvedContentScale,
+            initialBackgroundColorArgb = target.raw.backgroundColorArgb,
+            initialBackgroundCornerRadiusDp = target.raw.backgroundCornerRadiusDp,
             titleRes = R.string.canvas_esde_chooser_title,
-            onConfirm = { imageType, scale ->
-                viewModel.updateEsdeArtItem(target.raw.id, imageType, scale)
+            onConfirm = { imageType, scale, bgArgb, cornerDp ->
+                viewModel.updateEsdeArtItem(
+                    id = target.raw.id,
+                    imageType = imageType,
+                    contentScale = scale,
+                    backgroundColorArgb = bgArgb,
+                    backgroundCornerRadiusDp = cornerDp
+                )
             },
             onDismiss = { esdeArtRetypeTarget = null }
         )
