@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -326,6 +327,12 @@ fun UnifiedCanvasTab(
             visible = uiState.layout.editMode,
             onDone = { viewModel.setEditMode(false) },
             modifier = Modifier.align(Alignment.BottomEnd)
+        )
+
+        CanvasEditModeTidyFab(
+            visible = uiState.layout.editMode,
+            onTidy = { viewModel.compactLayout() },
+            modifier = Modifier.align(Alignment.BottomStart)
         )
 
         NotificationShade(
@@ -714,6 +721,27 @@ private fun CanvasEditModeDoneFab(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = stringResource(R.string.common_done)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CanvasEditModeTidyFab(
+    visible: Boolean,
+    onTidy: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn() + fadeIn(),
+        exit = scaleOut() + fadeOut(),
+        modifier = modifier.padding(16.dp)
+    ) {
+        FloatingActionButton(onClick = onTidy) {
+            Icon(
+                imageVector = Icons.Default.CleaningServices,
+                contentDescription = stringResource(R.string.canvas_tidy_label)
             )
         }
     }

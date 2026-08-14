@@ -22,6 +22,7 @@ import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalGlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeButtonManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalIconPackManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
@@ -121,6 +122,7 @@ fun ManagerContainer.ManagerCompositionLocalProvider(content: @Composable () -> 
         LocalJinglesManager provides feature.jinglesManager,
         LocalBgMusicManager provides feature.bgMusicManager,
         LocalPinnedRomManager provides feature.pinnedRomManager,
+        LocalHomeButtonManager provides feature.homeButtonManager,
         
         // System Integration
         LocalNotificationManager provides system.notificationManager,

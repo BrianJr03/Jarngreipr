@@ -68,7 +68,11 @@ data class JarngreiprConfig(
         //      whether ES-DE gamelist.xml decorates the filesystem scan. Older
         //      blobs decode with the default (true) via ignoreUnknownKeys,
         //      preserving pre-toggle behaviour.
-        const val CONFIG_VERSION = 20
+        // v21: added FeatureConfig.homeButton for the "Home Button Interception"
+        //      toggle. Older blobs decode with the default (off) via
+        //      ignoreUnknownKeys — matching the pre-toggle behaviour of a device
+        //      that has never had interception enabled.
+        const val CONFIG_VERSION = 21
     }
 }
 
@@ -199,7 +203,13 @@ data class FeatureConfig(
     val floatyMode: FloatyModeConfig = FloatyModeConfig(),
     val jingles: JinglesConfig = JinglesConfig(),
     val bgMusic: BgMusicConfig = BgMusicConfig(),
-    val romSearch: RomSearchConfig = RomSearchConfig()
+    val romSearch: RomSearchConfig = RomSearchConfig(),
+    val homeButton: HomeButtonConfig = HomeButtonConfig()
+)
+
+@Serializable
+data class HomeButtonConfig(
+    val interceptionEnabled: Boolean = false
 )
 
 @Serializable

@@ -18,6 +18,7 @@ import jr.brian.home.data.FloatyModeManager
 import jr.brian.home.data.GameKonfettiManager
 import jr.brian.home.data.QuickDeleteManager
 import jr.brian.home.data.GridSettingsManager
+import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.data.HomeTabManager
 import jr.brian.home.data.IconPackManager
 import jr.brian.home.data.OnboardingManager
@@ -270,5 +271,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): CanvasLayoutManager {
         return CanvasLayoutManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHomeButtonManager(
+        @ApplicationContext context: Context
+    ): HomeButtonManager {
+        return HomeButtonManager(context)
     }
 }
