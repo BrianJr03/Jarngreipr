@@ -5,6 +5,7 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.data.ManagerContainer
@@ -46,6 +48,7 @@ import jr.brian.home.esde.data.unhideGame
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.ui.frontend.FrontendTokens
 import jr.brian.home.esde.ui.frontend.rememberFilteredGames
 import jr.brian.home.esde.ui.frontend.rememberRomSearchQueryState
 import jr.brian.home.esde.util.gameKey
@@ -278,6 +281,17 @@ private fun RomSearchSheetBody(
                     onDismiss()
                 },
                 onDetailsVisibleChanged = { detailsVisible = it },
+                // Zero top so focused tiles at the top edge don't clip against
+                // the sheet's top; small bottom keeps a hair of breathing room
+                // above the keyboard. Overrides the default XL padding on
+                // both edges (used by the full-screen frontend, which has
+                // more headroom).
+                contentPadding = PaddingValues(
+                    start = FrontendTokens.Spacing.M,
+                    end = FrontendTokens.Spacing.M,
+                    top = 0.dp,
+                    bottom = FrontendTokens.Spacing.S,
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

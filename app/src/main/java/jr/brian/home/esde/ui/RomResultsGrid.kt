@@ -121,6 +121,10 @@ internal fun RomResultsGrid(
     focusResetKey: Any? = Unit,
     initialRealIndex: Int = 0,
     onDetailsVisibleChanged: (Boolean) -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = FrontendTokens.Spacing.M,
+        vertical = FrontendTokens.Spacing.XL
+    ),
 ) {
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
@@ -183,10 +187,7 @@ internal fun RomResultsGrid(
                     layout = layout,
                     columns = gridColumnsForScale(scale),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        horizontal = FrontendTokens.Spacing.M,
-                        vertical = FrontendTokens.Spacing.XL
-                    ),
+                    contentPadding = contentPadding,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
                     rowAlignment = prefs.frontendGameRowAlignment,
                     initialRealIndex = initialRealIndex,
