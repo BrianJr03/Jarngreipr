@@ -449,7 +449,7 @@ fun UnifiedCanvasTab(
 
     if (pickEsdeArtVisible) {
         val defaultType = GameImageType.Fanart
-        CanvasEsdeArtChooserSheet(
+        CanvasFrontendArtChooserSheet(
             initialType = defaultType,
             initialContentScale = defaultEsdeContentScaleFor(defaultType),
             initialBackgroundColorArgb = null,
@@ -463,7 +463,7 @@ fun UnifiedCanvasTab(
     }
 
     esdeArtRetypeTarget?.let { target ->
-        CanvasEsdeArtChooserSheet(
+        CanvasFrontendArtChooserSheet(
             initialType = target.raw.resolvedImageType,
             initialContentScale = target.raw.resolvedContentScale,
             initialBackgroundColorArgb = target.raw.backgroundColorArgb,

@@ -154,6 +154,22 @@ object EsdeCommandLauncher {
         ),
         "WINLATOR-PROOT" to listOf(
             "com.winlator.proot/com.winlator.MainActivity"
+        ),
+        "X1-BOX" to listOf(
+            "com.izzy2lost.x1box/com.izzy2lost.x1box.LauncherActivity"
+        ),
+        "HAKUX" to listOf(
+            "com.rfandango.haku_x/com.rfandango.haku_x.LauncherActivity"
+        ),
+        "AX360E" to listOf(
+            "aenu.ax360e/aenu.ax360e.EmulatorActivity",
+            "aenu.ax360e.free/aenu.ax360e.EmulatorActivity"
+        ),
+        "X360MOBILE" to listOf(
+            "emu.x360.mobile/emu.x360.mobile.X360MobileGameLaunchActivity"
+        ),
+        "XENDROID" to listOf(
+            "xendroid.compose/xendroid.compose.EmulatorHostActivity"
         )
     )
 
@@ -244,6 +260,20 @@ object EsdeCommandLauncher {
                 "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_steamAppId%=%INJECT%=%ROM%",
             "GameHub Lite (Local)" to
                 "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_localGameId%=%INJECT%=%ROM%"
+        ),
+        "xbox" to listOf(
+            "X1 BOX" to
+                "%EMULATOR_X1-BOX% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%",
+            "hakuX" to
+                "%EMULATOR_HAKUX% %ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%"
+        ),
+        "xbox360" to listOf(
+            "aX360e" to
+                "%EMULATOR_AX360E% %ACTION%=aenu.intent.action.AX360E %EXTRA_game_uri%=%ROMSAF%",
+            "X360 Mobile" to
+                "%EMULATOR_X360MOBILE% %DATA%=%ROMSAF%",
+            "XenDroid" to
+                "%EMULATOR_XENDROID% %DATA%=%ROMSAF%"
         ),
         "windows" to listOf(
             "Winlator Cmod" to

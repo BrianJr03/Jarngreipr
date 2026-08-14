@@ -431,6 +431,95 @@ class EmulatorRegistryTest {
             // Arcade
             "com.seleuco.mame4droid",
             "com.seleuco.mame4d2024",
+            // Xbox / Xbox 360
+            "com.izzy2lost.x1box",
+            "com.rfandango.haku_x",
+            "aenu.ax360e",
+            "aenu.ax360e.free",
+            "xendroid.compose",
+            "emu.x360.mobile",
+        )
+    }
+
+    // ---- xbox / xbox360 --------------------------------------------------------
+
+    @Test
+    fun `aX360e row uses custom action UriExtra with game_uri key`() {
+        val spec = EmulatorRegistry.resolve("aenu.ax360e")
+        assertNotNull(spec)
+        assertEquals("aenu.ax360e.EmulatorActivity", spec!!.activityName)
+        val contract = spec.launchContract
+        assertTrue(
+            "aX360e must use a UriExtra contract, not the default ContentUriView",
+            contract is RomLaunchContract.UriExtra,
+        )
+        contract as RomLaunchContract.UriExtra
+        assertEquals("game_uri", contract.key)
+        assertEquals("aenu.intent.action.AX360E", contract.action)
+    }
+
+    @Test
+    fun `systemExtensionsFallback for xbox360 returns iso xex zar`() {
+        assertEquals(
+            setOf("iso", "xex", "zar"),
+            EsdeCommandLauncher.systemExtensionsFallback("xbox360"),
+        )
+    }
+
+    @Test
+    fun `systemExtensionsFallback for xbox returns the union of X1 BOX and hakuX extensions`() {
+        assertEquals(
+            setOf("iso", "xiso", "cso", "cci"),
+            EsdeCommandLauncher.systemExtensionsFallback("xbox"),
+        )
+    }
+
+    @Test
+    fun `xbox360 system offers aX360e, X360 Mobile, and XenDroid in built-in order`() {
+        val context = mockContextWithInstalled(
+            "aenu.ax360e",
+            "emu.x360.mobile",
+            "xendroid.compose",
+        )
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf("aX360e", "X360 Mobile", "XenDroid"),
+            options.map { it.displayName },
+        )
+        assertEquals(
+            listOf("aenu.ax360e", "emu.x360.mobile", "xendroid.compose"),
+            options.map { it.packageName },
+        )
+    }
+
+    @Test
+    fun `xbox360 falls back to aX360e Free when only the free build is installed`() {
+        // The AX360E find rule lists the paid package first and the .free
+        // package second; if only .free is present, the command still needs to
+        // resolve — otherwise a legitimate open-source install shows "no rule".
+        val context = mockContextWithInstalled("aenu.ax360e.free")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        assertEquals(1, options.size)
+        assertEquals("aX360e", options[0].displayName)
+        assertEquals("aenu.ax360e.free", options[0].packageName)
+    }
+
+    @Test
+    fun `xbox system offers X1 BOX and hakuX in built-in order`() {
+        val context = mockContextWithInstalled(
+            "com.izzy2lost.x1box",
+            "com.rfandango.haku_x",
+        )
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf("X1 BOX", "hakuX"),
+            options.map { it.displayName },
         )
     }
 }

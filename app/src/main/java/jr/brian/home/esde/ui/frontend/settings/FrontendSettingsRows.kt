@@ -92,6 +92,8 @@ internal fun FrontendSettingsRows(
             onOpenSystemFilter = onOpenSystemFilter
         )
         FrontendSettingsCategory.SCRAPING -> ScrapingRows(
+            prefsState = prefsState,
+            prefsManager = prefsManager,
             focusedRow = focusedRow,
             refreshRunning = refreshRunning,
             lastRefreshResult = lastRefreshResult,
@@ -272,27 +274,12 @@ private fun MediaRows(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int
 ) {
-    val secondaryFocused = focusedRow == 0
-    val focusBgFocused = focusedRow == 1
-    val useSystemsFocused = focusedRow == 2
-    val systemsDimFocused = focusedRow == 3
-    val useGamesFocused = focusedRow == 4
-    val gamesDimFocused = focusedRow == 5
-    val secondaryEnabled = prefsState.secondaryMediaEnabled
+    val focusBgFocused = focusedRow == 0
+    val useSystemsFocused = focusedRow == 1
+    val systemsDimFocused = focusedRow == 2
+    val useGamesFocused = focusedRow == 3
+    val gamesDimFocused = focusedRow == 4
     val focusBgEnabled = prefsState.frontendFocusBackgroundEnabled
-
-    SettingsRowSlot(
-        focused = secondaryFocused,
-        onActivate = { prefsManager.setSecondaryMediaEnabled(!secondaryEnabled) }
-    ) {
-        ToggleSetting(
-            title = stringResource(R.string.secondary_media_title),
-            description = stringResource(R.string.secondary_media_description),
-            checked = secondaryEnabled,
-            onCheckedChange = prefsManager::setSecondaryMediaEnabled,
-            focused = secondaryFocused
-        )
-    }
 
     SettingsRowSlot(
         focused = focusBgFocused,
@@ -617,14 +604,18 @@ private fun SystemsRows(
 
 @Composable
 private fun ScrapingRows(
+    prefsState: ESDEPrefsState,
+    prefsManager: ESDEPreferencesManager,
     focusedRow: Int,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
 ) {
     val refreshFocused = focusedRow == 0
-    val screenScraperFocused = focusedRow == 1
-    val steamGridDbFocused = focusedRow == 2
+    val secondaryFocused = focusedRow == 1
+    val screenScraperFocused = focusedRow == 2
+    val steamGridDbFocused = focusedRow == 3
+    val secondaryEnabled = prefsState.secondaryMediaEnabled
 
     val trailing = when {
         refreshRunning -> stringResource(R.string.frontend_settings_refresh_running)
@@ -642,6 +633,19 @@ private fun ScrapingRows(
             trailingLabel = trailing,
             showProgress = refreshRunning,
             focused = refreshFocused
+        )
+    }
+
+    SettingsRowSlot(
+        focused = secondaryFocused,
+        onActivate = { prefsManager.setSecondaryMediaEnabled(!secondaryEnabled) }
+    ) {
+        ToggleSetting(
+            title = stringResource(R.string.secondary_media_title),
+            description = stringResource(R.string.secondary_media_description),
+            checked = secondaryEnabled,
+            onCheckedChange = prefsManager::setSecondaryMediaEnabled,
+            focused = secondaryFocused
         )
     }
 

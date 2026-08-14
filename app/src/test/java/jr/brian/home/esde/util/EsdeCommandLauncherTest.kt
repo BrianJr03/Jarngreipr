@@ -86,6 +86,49 @@ class EsdeCommandLauncherTest {
     }
 
     @Test
+    fun `aX360e command intent has custom action, game_uri extra, ClipData, and read-grant flag`() {
+        val context = contextWithInstalled("aenu.ax360e")
+        val romUri: Uri = Uri.parse(
+            "content://com.android.externalstorage.documents/tree/" +
+                "primary%3ARoms%2Fxbox360/document/primary%3ARoms%2Fxbox360%2FGame.iso"
+        )
+        val command =
+            "%EMULATOR_AX360E% %ACTION%=aenu.intent.action.AX360E " +
+                "%EXTRA_game_uri%=%ROMSAF%"
+        val intent = EsdeCommandLauncher.buildIntent(
+            launchCommand = command,
+            romAbsPath = "/storage/emulated/0/Roms/xbox360/Game.iso",
+            context = context,
+            contentUri = romUri,
+        )
+        assertNotNull("Saved-command build must succeed for aX360e", intent)
+        intent!!
+
+        // Custom action from the emulator's own intent-filter — VIEW would be
+        // silently ignored by the receiver that matches only on this action.
+        assertEquals("aenu.intent.action.AX360E", intent.action)
+        // Extra key is the URI string, matching %EXTRA_game_uri%=%ROMSAF%.
+        assertEquals(romUri.toString(), intent.getStringExtra("game_uri"))
+        // No %DATA%, so intent.data must not be set — an unexpected URI in
+        // .data would divert some builds away from the extra-driven code path.
+        assertNull(intent.data)
+        // ClipData carries the read grant so a receiver reading only the
+        // extra can still resolve the URI under scoped storage.
+        assertNotNull("ClipData must be populated to forward the grant", intent.clipData)
+        assertEquals(1, intent.clipData!!.itemCount)
+        assertEquals(romUri, intent.clipData!!.getItemAt(0).uri)
+        assertTrue(
+            "FLAG_GRANT_READ_URI_PERMISSION must be set",
+            intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0,
+        )
+        assertEquals("aenu.ax360e", intent.component!!.packageName)
+        assertEquals(
+            "aenu.ax360e.EmulatorActivity",
+            intent.component!!.className,
+        )
+    }
+
+    @Test
     fun `AetherSX2 registry and saved-command intents agree on the essentials`() {
         val context = contextWithInstalled("xyz.aethersx2.android")
 

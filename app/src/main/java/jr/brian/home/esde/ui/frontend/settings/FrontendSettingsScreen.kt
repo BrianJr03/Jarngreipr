@@ -129,10 +129,10 @@ fun FrontendSettingsScreen(
 
 private fun rowCountFor(category: FrontendSettingsCategory): Int = when (category) {
     FrontendSettingsCategory.LAYOUT -> 6
-    FrontendSettingsCategory.MEDIA -> 6
+    FrontendSettingsCategory.MEDIA -> 5
     FrontendSettingsCategory.FEEL -> 5
     FrontendSettingsCategory.SYSTEMS -> 2
-    FrontendSettingsCategory.SCRAPING -> 3
+    FrontendSettingsCategory.SCRAPING -> 4
 }
 
 private fun refreshLibrary(

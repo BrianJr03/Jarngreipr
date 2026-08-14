@@ -158,6 +158,32 @@ object EmulatorRegistry {
         EmulatorSpec("aenu.aps3e.premium", "aPS3e Premium",
             extensions = listOf("pkg", "iso", "bin", "ps3")),
 
+        // ---- Xbox / Xbox 360 --------------------------------------------------
+        // X1 BOX and hakuX are xemu-based ports for the original Xbox; their
+        // LauncherActivity accepts a content-URI VIEW intent.
+        EmulatorSpec("com.izzy2lost.x1box", "X1 BOX",
+            "com.izzy2lost.x1box.LauncherActivity",
+            extensions = listOf("iso", "xiso", "cso", "cci")),
+        EmulatorSpec("com.rfandango.haku_x", "hakuX",
+            "com.rfandango.haku_x.LauncherActivity",
+            extensions = listOf("iso", "xiso", "cso", "cci")),
+        // aX360e (Xenia-canary port) mirrors aPS3e's contract shape but under
+        // its own action + `game_uri` extra, matching ES-DE's bundled command.
+        EmulatorSpec("aenu.ax360e", "aX360e",
+            "aenu.ax360e.EmulatorActivity",
+            RomLaunchContract.UriExtra("game_uri", "aenu.intent.action.AX360E"),
+            listOf("iso", "xex", "zar")),
+        EmulatorSpec("aenu.ax360e.free", "aX360e Free",
+            "aenu.ax360e.EmulatorActivity",
+            RomLaunchContract.UriExtra("game_uri", "aenu.intent.action.AX360E"),
+            listOf("iso", "xex", "zar")),
+        EmulatorSpec("xendroid.compose", "XenDroid",
+            "xendroid.compose.EmulatorHostActivity",
+            extensions = listOf("iso", "xex", "zar")),
+        EmulatorSpec("emu.x360.mobile", "X360 Mobile",
+            "emu.x360.mobile.X360MobileGameLaunchActivity",
+            extensions = listOf("iso", "xex", "zar")),
+
         // ---- N64 -------------------------------------------------------------
         // FZ kept its parent's paulscode namespace when it changed application
         // id, so one component serves the family. Without it the intent resolves
