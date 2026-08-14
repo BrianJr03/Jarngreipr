@@ -221,7 +221,9 @@ private fun SelectedTargetSubtitle(
     selectedTarget: HomeTarget,
     frontendEnabled: Boolean,
 ) {
-    val option = HomeTargetOptions.first { it.target == selectedTarget }
+    // firstOrNull because a user with a legacy stored HomeTarget (e.g. TOP,
+    // now removed from HomeTargetOptions) would otherwise crash here.
+    val option = HomeTargetOptions.firstOrNull { it.target == selectedTarget } ?: return
     val subtitleRes = if (option.target == HomeTarget.BOTH && !frontendEnabled) {
         R.string.home_target_option_both_disabled_subtitle
     } else {
@@ -333,11 +335,6 @@ private data class MainScreenOption(
 
 private val HomeTargetOptions = listOf(
     HomeTargetOption(
-        target = HomeTarget.TOP,
-        labelRes = R.string.home_target_option_top,
-        subtitleRes = R.string.home_target_option_top_subtitle,
-    ),
-    HomeTargetOption(
         target = HomeTarget.BOTTOM,
         labelRes = R.string.home_target_option_bottom,
         subtitleRes = R.string.home_target_option_bottom_subtitle,
@@ -350,10 +347,6 @@ private val HomeTargetOptions = listOf(
 )
 
 private val MainScreenOptions = listOf(
-    MainScreenOption(
-        screen = MainScreen.TOP,
-        labelRes = R.string.home_main_screen_option_top,
-    ),
     MainScreenOption(
         screen = MainScreen.BOTTOM,
         labelRes = R.string.home_main_screen_option_bottom,
