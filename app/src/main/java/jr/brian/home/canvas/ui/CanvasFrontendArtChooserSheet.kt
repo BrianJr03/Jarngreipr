@@ -74,7 +74,7 @@ private val FrontendBackgroundPresetColors: List<Long> = listOf(
  * then [onDismiss], so the sheet always closes on a successful selection.
  */
 @Composable
-fun CanvasEsdeArtChooserSheet(
+fun CanvasFrontendArtChooserSheet(
     initialType: GameImageType,
     initialContentScale: EsdeContentScale,
     initialBackgroundColorArgb: Long?,
@@ -299,15 +299,18 @@ private fun BackgroundSwatchGrid(
     onColorSelected: (Long?) -> Unit
 ) {
     val rows = FrontendBackgroundPresetColors.chunked(6)
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    // 8dp matches the rest of the sheet — top-level sections use spacedBy(16),
+    // section header→content uses spacedBy(8), chip rows use spacedBy(8). The
+    // grid was on its own 12dp rhythm which read as inconsistent gaps.
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NoBackgroundSwatch(
                 isSelected = selectedArgb == null,
                 onClick = { onColorSelected(null) }
             )
         }
         rows.forEach { rowColors ->
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 rowColors.forEach { argb ->
                     BackgroundColorSwatch(
                         color = Color(argb),
