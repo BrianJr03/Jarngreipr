@@ -36,6 +36,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.RomGameLauncher
 import jr.brian.home.esde.ui.RomSearchSheet
+import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.Shortcut
@@ -487,7 +488,7 @@ fun MainContent(
         }
     }
 
-    if (showRomSearchSheet) {
+    SlideInVertically(visible = showRomSearchSheet) {
         RomSearchSheet(
             esdePrefs = esdePreferencesManager,
             romLauncher = romLauncher,
