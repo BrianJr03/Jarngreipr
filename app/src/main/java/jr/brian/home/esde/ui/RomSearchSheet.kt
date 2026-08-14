@@ -40,6 +40,7 @@ import jr.brian.home.esde.data.setGameMediaType
 import jr.brian.home.esde.data.setSystemMediaType
 import jr.brian.home.esde.data.unhideAllGames
 import jr.brian.home.esde.data.unhideGame
+import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.ui.frontend.rememberFilteredGames
@@ -180,6 +181,10 @@ private fun RomSearchSheetBody(
             RomResultsGrid(
                 games = filteredGames,
                 isLoading = isLoading,
+                // Single horizontal row so ROM art renders large — the sheet
+                // shares vertical space with the on-screen keyboard, so a full
+                // grid would shrink tiles to unreadable sizes.
+                layout = FrontendLayout.Row,
                 focusResetKey = focusResetCounter,
                 isHiddenMode = queryState.isHiddenMode,
                 cardMediaType = esdeState.romSearchCardMediaType,
