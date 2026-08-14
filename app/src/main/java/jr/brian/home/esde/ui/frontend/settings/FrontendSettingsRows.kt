@@ -65,6 +65,7 @@ internal fun FrontendSettingsRows(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int,
     onOpenSystemFilter: () -> Unit,
+    onOpenAddSystems: () -> Unit,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
@@ -87,6 +88,7 @@ internal fun FrontendSettingsRows(
         )
         FrontendSettingsCategory.SYSTEMS -> SystemsRows(
             focusedRow = focusedRow,
+            onOpenAddSystems = onOpenAddSystems,
             onOpenSystemFilter = onOpenSystemFilter
         )
         FrontendSettingsCategory.SCRAPING -> ScrapingRows(
@@ -586,9 +588,21 @@ private fun ChoiceRowCard(
 @Composable
 private fun SystemsRows(
     focusedRow: Int,
+    onOpenAddSystems: () -> Unit,
     onOpenSystemFilter: () -> Unit
 ) {
-    val filterFocused = focusedRow == 0
+    val addFocused = focusedRow == 0
+    val filterFocused = focusedRow == 1
+    SettingsRowSlot(focused = addFocused, onActivate = onOpenAddSystems) {
+        ToggleSetting(
+            title = stringResource(R.string.frontend_settings_add_systems_title),
+            description = stringResource(R.string.frontend_settings_add_systems_description),
+            checked = false,
+            showToggle = false,
+            onClick = onOpenAddSystems,
+            focused = addFocused
+        )
+    }
     SettingsRowSlot(focused = filterFocused, onActivate = onOpenSystemFilter) {
         ToggleSetting(
             title = stringResource(R.string.frontend_settings_filter_systems_title),

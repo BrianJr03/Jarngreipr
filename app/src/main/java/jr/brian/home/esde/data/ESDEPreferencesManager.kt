@@ -117,6 +117,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_FOLDER_MAPPINGS
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
@@ -301,6 +303,11 @@ class ESDEPreferencesManager(context: Context) {
                 emptyList()
             }
         }
+
+        val systemFolderMappings: List<SystemFolderMapping> = prefs.getString(KEY_SYSTEM_FOLDER_MAPPINGS, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<List<SystemFolderMapping>>(it) }.getOrNull() }
+            ?: emptyList()
 
         val systemAppMapJson = prefs.getString(KEY_SYSTEM_APP_MAP, null)
         val systemAppMap: Map<String, String?> = if (!systemAppMapJson.isNullOrEmpty()) {
@@ -490,6 +497,7 @@ class ESDEPreferencesManager(context: Context) {
             selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
             wallpaperToggleTarget = wallpaperToggleTarget,
             romsPaths = romsPaths,
+            systemFolderMappings = systemFolderMappings,
             systemAppMap = systemAppMap,
             systemLaunchTriggerMap = systemLaunchTriggerMap,
             systemTopScreenSet = systemTopScreenSet,

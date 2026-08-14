@@ -24,6 +24,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATHS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_FOLDER_MAPPINGS
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_FLOATY_APP_COUNT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
@@ -221,6 +223,62 @@ fun ESDEPreferencesManager.removeRomsPath(path: String) {
         prefs.edit { remove(KEY_ROMS_PATHS) }
     } else {
         prefs.edit { putString(KEY_ROMS_PATHS, JSONArray(updated).toString()) }
+    }
+}
+
+/**
+ * Returns the mapping for [systemName] if one has been declared, or null.
+ * When a mapping exists it is the authoritative source of the folder we scan
+ * and launch through — callers reading a SAF tree URI for [systemName]
+ * should already see the mapping's URI via [setSafTreeUri] on add.
+ */
+fun ESDEPreferencesManager.getSystemFolderMapping(systemName: String): SystemFolderMapping? =
+    state.value.systemFolderMappings.firstOrNull {
+        it.systemName.equals(systemName, ignoreCase = true)
+    }
+
+fun ESDEPreferencesManager.addSystemFolderMapping(mapping: SystemFolderMapping) {
+    val existing = _state.value.systemFolderMappings
+    val filtered = existing.filterNot {
+        it.systemName.equals(mapping.systemName, ignoreCase = true) &&
+                it.treeUri == mapping.treeUri
+    }
+    val updated = filtered + mapping
+    _state.value = _state.value.copy(systemFolderMappings = updated)
+    prefs.edit {
+        putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(updated))
+    }
+}
+
+/**
+ * Replace the entire mapping list. Used by import/export to restore a
+ * previously saved set atomically without triggering per-item state churn.
+ */
+fun ESDEPreferencesManager.setAllSystemFolderMappings(mappings: List<SystemFolderMapping>) {
+    _state.value = _state.value.copy(systemFolderMappings = mappings)
+    if (mappings.isEmpty()) {
+        prefs.edit { remove(KEY_SYSTEM_FOLDER_MAPPINGS) }
+    } else {
+        prefs.edit {
+            putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(mappings))
+        }
+    }
+}
+
+fun ESDEPreferencesManager.removeSystemFolderMapping(mapping: SystemFolderMapping) {
+    val existing = _state.value.systemFolderMappings
+    val updated = existing.filterNot {
+        it.systemName.equals(mapping.systemName, ignoreCase = true) &&
+                it.treeUri == mapping.treeUri
+    }
+    if (updated.size == existing.size) return
+    _state.value = _state.value.copy(systemFolderMappings = updated)
+    if (updated.isEmpty()) {
+        prefs.edit { remove(KEY_SYSTEM_FOLDER_MAPPINGS) }
+    } else {
+        prefs.edit {
+            putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(updated))
+        }
     }
 }
 

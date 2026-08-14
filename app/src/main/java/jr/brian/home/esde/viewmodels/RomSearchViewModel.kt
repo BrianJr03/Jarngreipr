@@ -16,6 +16,7 @@ import jr.brian.home.esde.util.GamelistMetadataSource
 import jr.brian.home.esde.util.NoOpMetadataSource
 import jr.brian.home.esde.util.RomIndexBuilder
 import jr.brian.home.esde.util.RomMetadataSource
+import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.Dispatchers
@@ -135,7 +136,11 @@ class RomSearchViewModel @Inject constructor(
     ): Pair<Int, Int> {
         val prefsState = esdePreferencesManager.state.value
         val decorationEnabled = prefsState.gamelistDecorationEnabled
-        val invalidationKey = buildInvalidationKey(prefsState.romsPaths, decorationEnabled)
+        val invalidationKey = buildInvalidationKey(
+            romsPaths = prefsState.romsPaths,
+            decorationEnabled = decorationEnabled,
+            mappings = prefsState.systemFolderMappings,
+        )
 
         // Hard invalidate when the roots or decoration flag changed under us,
         // or when the caller asked for it. A per-system stamp check is not
@@ -163,18 +168,31 @@ class RomSearchViewModel @Inject constructor(
             }
 
         // Discover every candidate system by walking each root's immediate
-        // children — cheap, one-level listFiles per root, no recursion.
-        val candidateSystems = prefsState.romsPaths.flatMap { root ->
+        // children — cheap, one-level listFiles per root, no recursion — plus
+        // every explicit mapping the user has declared.
+        val rootCandidates = prefsState.romsPaths.flatMap { root ->
             File(root).listFiles()?.filter { it.isDirectory }?.map { it.name } ?: emptyList()
-        }.distinct()
+        }
+        val mappingCandidates = prefsState.systemFolderMappings.map { it.systemName }
+        val candidateSystems = (rootCandidates + mappingCandidates).distinct()
+
+        val perSystemExtensions = esSystemsFile
+            .takeIf { it.exists() }
+            ?.let(RomScanner::parseSystemExtensions)
+            .orEmpty()
 
         val nextCache = HashMap<String, SystemCacheEntry>()
         for (systemName in candidateSystems) {
+            val resolvedExtensions =
+                RomScanner.extensionsFor(systemName, perSystemExtensions)
             val liveStamp = RomIndexBuilder.stamp(
                 systemName = systemName,
                 romsPaths = prefsState.romsPaths,
                 esdeRootPath = rootPath,
                 decorationEnabled = decorationEnabled,
+                systemFolderMappings = prefsState.systemFolderMappings,
+                context = context,
+                resolvedExtensions = resolvedExtensions,
             ) ?: continue
             val existing = cached[systemName]
             if (existing != null && existing.stamp.matches(liveStamp)) {
@@ -186,6 +204,8 @@ class RomSearchViewModel @Inject constructor(
                 romsPaths = prefsState.romsPaths,
                 esSystemsFile = esSystemsFile.takeIf { it.exists() },
                 metadataSource = metadataSource,
+                systemFolderMappings = prefsState.systemFolderMappings,
+                context = context,
                 emulatorPackage = prefsState.systemAppMap[systemName],
             )
             if (games.isNotEmpty()) {
@@ -206,10 +226,20 @@ class RomSearchViewModel @Inject constructor(
     /**
      * Fingerprint of the inputs that must invalidate every cache entry at once.
      * Per-system stamp checks handle within-system drift; this catches
-     * across-system changes (roots reordered, decoration flipped).
+     * across-system changes (roots reordered, decoration flipped, a mapping
+     * added or removed — mapping list changes can shift which systems exist).
      */
     private fun buildInvalidationKey(
         romsPaths: List<String>,
         decorationEnabled: Boolean,
-    ): String = romsPaths.joinToString("|") + "||decoration=$decorationEnabled"
+        mappings: List<jr.brian.home.esde.model.SystemFolderMapping>,
+    ): String = buildString {
+        append(romsPaths.joinToString("|"))
+        append("||decoration=$decorationEnabled")
+        append("||mappings=")
+        append(
+            mappings.sortedBy { it.systemName + it.treeUri }
+                .joinToString(",") { "${it.systemName}=${it.treeUri}" }
+        )
+    }
 }

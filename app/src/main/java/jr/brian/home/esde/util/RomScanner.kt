@@ -1,7 +1,11 @@
 package jr.brian.home.esde.util
 
+import android.content.Context
 import android.util.Log
 import android.util.Xml
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.EsdeCommandLauncher.systemExtensionsFallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -51,24 +55,38 @@ object RomScanner {
     private const val WALK_MAX_DEPTH = 6
 
     /**
-     * Walk every configured ROMs root × every system directory beneath it.
+     * Walk every configured ROMs root × every system directory beneath it, and
+     * every user-declared [systemFolderMappings] entry.
+     *
+     * Mapped folders are always walked via SAF so a single code path covers
+     * internal and SD storage; the [File] walk is retained only for the
+     * scanning-root case where it already works. Extensions for a mapped folder
+     * are resolved from the mapping's declared [SystemFolderMapping.systemName],
+     * not from the folder's name — the whole point of the feature is that the
+     * folder can be named anything.
+     *
+     * When a system appears in both a root and a mapping, results are merged
+     * and mapping entries win the first-wins dedup — explicit user intent
+     * beats an incidentally-named root directory.
      *
      * @param romsPaths ordered list of ROMs roots (primary first). Duplicates dropped.
      * @param esSystemsFile parsed for `<extension>` per system when present. When
      *   null or the file is missing, the extension set for each system is built
      *   transitively from [EmulatorRegistry] × [EsdeCommandLauncher] rules.
+     * @param systemFolderMappings user-declared "this folder is system X" entries.
+     * @param context required to walk mapped folders via [DocumentFile]. When
+     *   null the mappings are skipped so unit tests that only exercise the
+     *   [File] path stay valid.
      * @return games grouped by system name. Systems with no ROMs are omitted from
      *   the map so a caller iterating it does not see empty entries.
      */
     suspend fun scan(
         romsPaths: List<String>,
         esSystemsFile: File? = null,
+        systemFolderMappings: List<SystemFolderMapping> = emptyList(),
+        context: Context? = null,
     ): Map<String, List<ScannedRom>> = withContext(Dispatchers.IO) {
         val roots = romsPaths.distinct().map(::File).filter { it.exists() && it.isDirectory }
-        if (roots.isEmpty()) {
-            Log.d(TAG, "No usable ROMs roots; scan is empty")
-            return@withContext emptyMap()
-        }
         val perSystemExtensions = esSystemsFile
             ?.takeIf { it.exists() }
             ?.let(::parseSystemExtensions)
@@ -86,7 +104,7 @@ object RomScanner {
                 .map { root to it }
         }
 
-        coroutineScope {
+        val rootScans = coroutineScope {
             systemsPerRoot.map { (root, systemDir) ->
                 async {
                     val systemName = systemDir.name
@@ -94,15 +112,43 @@ object RomScanner {
                     scanSystem(root, systemDir, systemName, extensions)
                 }
             }.awaitAll()
-        }
-            .flatten()
-            .groupBy { it.systemName }
-            .mapValues { (_, roms) ->
-                // First-root-wins dedup by relativePath.
-                val seen = HashSet<String>(roms.size)
-                roms.filter { seen.add(it.relativePath) }
+        }.flatten()
+
+        val mappedScans = if (context != null && systemFolderMappings.isNotEmpty()) {
+            coroutineScope {
+                systemFolderMappings.map { mapping ->
+                    async {
+                        val extensions = extensionsFor(mapping.systemName, perSystemExtensions)
+                        scanMapping(context, mapping, extensions)
+                    }
+                }.awaitAll()
+            }.flatten()
+        } else {
+            if (systemFolderMappings.isNotEmpty() && context == null) {
+                Log.w(TAG, "Skipping ${systemFolderMappings.size} mapping(s): no Context provided")
             }
-            .filterValues { it.isNotEmpty() }
+            emptyList()
+        }
+
+        if (rootScans.isEmpty() && mappedScans.isEmpty()) {
+            Log.d(TAG, "No usable ROMs roots or mappings; scan is empty")
+            return@withContext emptyMap()
+        }
+
+        val mappedBySystem = mappedScans.groupBy { it.systemName }
+        val rootedBySystem = rootScans.groupBy { it.systemName }
+        val allSystems = mappedBySystem.keys + rootedBySystem.keys
+
+        allSystems.associateWith { systemName ->
+            // Mapping entries take precedence over root entries with the same
+            // relativePath: the user explicitly pointed at that folder, so its
+            // hit wins the incidentally-named root directory's.
+            val mapped = mappedBySystem[systemName].orEmpty()
+            val rooted = rootedBySystem[systemName].orEmpty()
+            val ordered = mapped + rooted
+            val seen = HashSet<String>(ordered.size)
+            ordered.filter { seen.add(it.relativePath) }
+        }.filterValues { it.isNotEmpty() }
     }
 
     private fun scanSystem(
@@ -164,6 +210,96 @@ object RomScanner {
         )
     }
 
+    private fun scanMapping(
+        context: Context,
+        mapping: SystemFolderMapping,
+        extensions: Set<String>,
+    ): List<ScannedRom> {
+        val treeUri = runCatching { mapping.treeUri.toUri() }.getOrNull() ?: return emptyList()
+        val root = DocumentFile.fromTreeUri(context, treeUri) ?: return emptyList()
+        val rootPath = mapping.displayPath.trimEnd('/')
+        val out = mutableListOf<ScannedRom>()
+        safWalk(
+            dir = root,
+            currentSegments = emptyList(),
+            systemName = mapping.systemName,
+            rootPath = rootPath,
+            extensions = extensions,
+            out = out,
+            depthRemaining = WALK_MAX_DEPTH,
+        )
+        return out
+    }
+
+    private fun safWalk(
+        dir: DocumentFile,
+        currentSegments: List<String>,
+        systemName: String,
+        rootPath: String,
+        extensions: Set<String>,
+        out: MutableList<ScannedRom>,
+        depthRemaining: Int,
+    ) {
+        if (depthRemaining < 0) return
+        val children = try {
+            dir.listFiles()
+        } catch (e: Exception) {
+            Log.w(TAG, "SAF listFiles failed for ${dir.uri}", e)
+            return
+        }
+        for (child in children) {
+            val name = child.name ?: continue
+            if (name.startsWith(".") || name in SKIPPED_NAMES) continue
+
+            val childSegments = currentSegments + name
+            if (child.isDirectory) {
+                if (name.hasRomExtension(extensions)) {
+                    out += safScanned(
+                        systemName = systemName,
+                        rootPath = rootPath,
+                        segments = childSegments,
+                        isDirectoryAsFile = true,
+                    )
+                } else {
+                    safWalk(
+                        dir = child,
+                        currentSegments = childSegments,
+                        systemName = systemName,
+                        rootPath = rootPath,
+                        extensions = extensions,
+                        out = out,
+                        depthRemaining = depthRemaining - 1,
+                    )
+                }
+            } else if (child.isFile) {
+                if (name.hasRomExtension(extensions)) {
+                    out += safScanned(
+                        systemName = systemName,
+                        rootPath = rootPath,
+                        segments = childSegments,
+                        isDirectoryAsFile = false,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun safScanned(
+        systemName: String,
+        rootPath: String,
+        segments: List<String>,
+        isDirectoryAsFile: Boolean,
+    ): ScannedRom {
+        val relative = segments.joinToString("/")
+        val absolute = if (rootPath.isEmpty()) "/$relative" else "$rootPath/$relative"
+        return ScannedRom(
+            systemName = systemName,
+            absolutePath = absolute,
+            relativePath = relative,
+            isDirectoryAsFile = isDirectoryAsFile,
+        )
+    }
+
     private fun String.hasRomExtension(extensions: Set<String>): Boolean {
         val ext = substringAfterLast('.', "").lowercase()
         if (ext.isEmpty()) return false
@@ -176,7 +312,7 @@ object RomScanner {
      * es_systems.xml; falls back to the union of extensions across every emulator
      * the registry lists for this system, built transitively.
      */
-    private fun extensionsFor(systemName: String, perSystem: Map<String, Set<String>>): Set<String> {
+    internal fun extensionsFor(systemName: String, perSystem: Map<String, Set<String>>): Set<String> {
         perSystem[systemName]?.takeIf { it.isNotEmpty() }?.let { return it }
         return systemExtensionsFallback(systemName)
     }
@@ -186,7 +322,7 @@ object RomScanner {
      * as a single dot-prefixed space-separated string (e.g. `.iso .bin .chd`) — we
      * strip the leading dot and lowercase for matching.
      */
-    private fun parseSystemExtensions(esSystemsFile: File): Map<String, Set<String>> {
+    internal fun parseSystemExtensions(esSystemsFile: File): Map<String, Set<String>> {
         val result = mutableMapOf<String, Set<String>>()
         try {
             val parser = Xml.newPullParser()

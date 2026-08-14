@@ -175,9 +175,8 @@ fun persistSafTreeForSystem(
         android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
     )
     val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
-    if (treeDocId?.startsWith("primary:") == true) {
-        val rel = treeDocId.removePrefix("primary:")
-        val pickedDir = "/storage/emulated/0/$rel"
+    val pickedDir = treeDocId?.let(::documentIdToStoragePath)
+    if (pickedDir != null) {
         esdePrefs.addRomsPath(deriveRomsRoot(pickedDir, systemName))
     }
     if (systemName != null) {
@@ -189,6 +188,68 @@ fun sdCardVolumeId(absolutePath: String): String? {
     val withoutStorage = absolutePath.removePrefix("/storage/")
     val volumeId = withoutStorage.substringBefore('/')
     return if (volumeId == "emulated" || volumeId.isEmpty()) null else volumeId
+}
+
+/**
+ * Split a SAF tree document ID into its (volumeId, relativePath) parts.
+ *
+ * `primary:Roms/ps2`     → `("primary", "Roms/ps2")`
+ * `1A2B-3C4D:Roms/ps2`   → `("1A2B-3C4D", "Roms/ps2")`
+ * `primary:`             → `("primary", "")`
+ *
+ * Returns null when the ID lacks a colon or the volume part is empty. This
+ * is the single source of truth used by both [documentIdToStoragePath] and
+ * [storagePathToDocumentId] so persistence and launch paths cannot drift.
+ */
+fun splitTreeDocId(treeDocId: String): Pair<String, String>? {
+    val idx = treeDocId.indexOf(':')
+    if (idx <= 0) return null
+    val volumeId = treeDocId.substring(0, idx)
+    val relative = treeDocId.substring(idx + 1)
+    if (volumeId.isEmpty()) return null
+    return volumeId to relative
+}
+
+/**
+ * Absolute /storage path for a SAF tree document ID.
+ *
+ * `primary:a/b`     → `/storage/emulated/0/a/b`
+ * `1A2B-3C4D:a/b`   → `/storage/1A2B-3C4D/a/b`
+ *
+ * This is the inverse of [storagePathToDocumentId] and the ES-DE-side of
+ * [sdCardVolumeId] — anything that constructs a real path from a tree ID or a
+ * scanner-visible path must go through this function so the two directions
+ * stay consistent.
+ */
+fun documentIdToStoragePath(treeDocId: String): String? {
+    val (volumeId, relative) = splitTreeDocId(treeDocId) ?: return null
+    val root = if (volumeId == "primary") "/storage/emulated/0" else "/storage/$volumeId"
+    return if (relative.isEmpty()) root else "$root/${relative.trimStart('/')}"
+}
+
+/**
+ * Storage-relative document ID for an absolute path. Inverse of
+ * [documentIdToStoragePath].
+ *
+ * `/storage/emulated/0/a/b`   → `primary:a/b`
+ * `/storage/1A2B-3C4D/a/b`    → `1A2B-3C4D:a/b`
+ *
+ * Returns null for a path that isn't under `/storage/`.
+ */
+fun storagePathToDocumentId(absolutePath: String): String? {
+    return when {
+        absolutePath.startsWith("/storage/emulated/0/") ->
+            "primary:${absolutePath.removePrefix("/storage/emulated/0/")}"
+        absolutePath == "/storage/emulated/0" -> "primary:"
+        absolutePath.startsWith("/storage/") -> {
+            val rest = absolutePath.removePrefix("/storage/")
+            val volume = rest.substringBefore('/')
+            if (volume.isEmpty() || volume == "emulated") return null
+            val relative = rest.removePrefix(volume).removePrefix("/")
+            "$volume:$relative"
+        }
+        else -> null
+    }
 }
 
 fun buildSafDocumentUri(
@@ -212,14 +273,7 @@ fun buildAetherDocUri(
 ): Uri? {
     val treeUriStr = getSafTreeUri(systemName) ?: return null
     val treeUri = treeUriStr.toUri()
-    val documentId = when {
-        romAbsPath.startsWith("/storage/emulated/0/") ->
-            "primary:${romAbsPath.removePrefix("/storage/emulated/0/")}"
-        else -> {
-            val volId = sdCardVolumeId(romAbsPath) ?: return null
-            "$volId:${romAbsPath.removePrefix("/storage/$volId/")}"
-        }
-    }
+    val documentId = storagePathToDocumentId(romAbsPath) ?: return null
     val direct = try {
         DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
     } catch (_: Exception) {

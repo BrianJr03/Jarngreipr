@@ -1,6 +1,7 @@
 package jr.brian.home.data.config
 
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.SystemFolderMapping
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -162,5 +163,50 @@ class JarngreiprConfigRoundTripTest {
         }.getOrNull()
         assertNull(resolvedSystem)
         assertNull(resolvedGame)
+    }
+
+    @Test
+    fun `system folder mappings round-trip through the config`() {
+        // v22: user-declared "this folder is system X" entries have to survive an
+        // export/import so a user restoring a backup keeps their SD-card systems.
+        val original = JarngreiprConfig(
+            system = SystemConfig(
+                systemFolderMappings = listOf(
+                    SystemFolderMapping(
+                        systemName = "ps2",
+                        treeUri = "content://com.android.externalstorage.documents/tree/1A2B-3C4D%3AMyGames",
+                        displayPath = "/storage/1A2B-3C4D/MyGames",
+                    ),
+                    SystemFolderMapping(
+                        systemName = "snes",
+                        treeUri = "content://com.android.externalstorage.documents/tree/primary%3AGames",
+                        displayPath = "/storage/emulated/0/Games",
+                    ),
+                )
+            )
+        )
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(json.encodeToString(original))
+        assertEquals(2, decoded.system.systemFolderMappings.size)
+        val ps2 = decoded.system.systemFolderMappings.first { it.systemName == "ps2" }
+        assertEquals("/storage/1A2B-3C4D/MyGames", ps2.displayPath)
+    }
+
+    @Test
+    fun `pre-v22 config decodes with empty system folder mappings`() {
+        // Backwards-compat guard: a config exported before the field existed
+        // must still import — the field materializes at its empty default.
+        val preV22 = """
+            {
+              "version": 21,
+              "system": {
+                "hiddenSystems": ["ps2"]
+              }
+            }
+        """.trimIndent()
+
+        val decoded = json.decodeFromString<JarngreiprConfig>(preV22)
+        assertTrue(decoded.system.systemFolderMappings.isEmpty())
+        assertEquals(listOf("ps2"), decoded.system.hiddenSystems)
     }
 }

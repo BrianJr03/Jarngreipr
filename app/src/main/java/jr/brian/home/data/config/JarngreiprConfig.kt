@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.esde.model.SystemCustomization
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
@@ -72,7 +73,12 @@ data class JarngreiprConfig(
         //      toggle. Older blobs decode with the default (off) via
         //      ignoreUnknownKeys — matching the pre-toggle behaviour of a device
         //      that has never had interception enabled.
-        const val CONFIG_VERSION = 21
+        // v22: added SystemConfig.systemFolderMappings for the Frontend "Add
+        //      Systems" screen — user-declared "this folder is system X"
+        //      entries used to map arbitrary folders (including SD-card ones)
+        //      to systems. Older blobs decode with the empty default via
+        //      ignoreUnknownKeys, matching pre-feature behaviour.
+        const val CONFIG_VERSION = 22
     }
 }
 
@@ -310,5 +316,6 @@ data class RomSearchConfig(
 data class SystemConfig(
     val badgesVisible: Boolean = true,
     val shadeTabPage: Int = 0,
-    val hiddenSystems: List<String> = emptyList()
+    val hiddenSystems: List<String> = emptyList(),
+    val systemFolderMappings: List<SystemFolderMapping> = emptyList()
 )

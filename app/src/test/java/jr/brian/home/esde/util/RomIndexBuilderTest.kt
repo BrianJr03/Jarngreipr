@@ -191,6 +191,68 @@ class RomIndexBuilderTest {
         assertFalse(stamp.decorationEnabled)
     }
 
+    @Test
+    fun `stamp records resolved extension set so a change invalidates cache`() {
+        // The stamp used to observe only filesystem inputs, so a change to the
+        // extension resolution (registry update, es_systems.xml edit) would
+        // leave a stale entry in place. Include the resolved set on the stamp
+        // to catch that.
+        val roms = tempFolder.newFolder("Roms")
+        File(roms, "psx").mkdirs()
+
+        val before = RomIndexBuilder.stamp(
+            systemName = "psx",
+            romsPaths = listOf(roms.absolutePath),
+            esdeRootPath = null,
+            decorationEnabled = false,
+            resolvedExtensions = setOf("iso", "bin"),
+        )!!
+        val after = RomIndexBuilder.stamp(
+            systemName = "psx",
+            romsPaths = listOf(roms.absolutePath),
+            esdeRootPath = null,
+            decorationEnabled = false,
+            resolvedExtensions = setOf("iso", "bin", "chd"),
+        )!!
+        assertFalse(
+            "Changing the resolved extension set must invalidate the cache",
+            before.matches(after),
+        )
+    }
+
+    @Test
+    fun `stamp records mapping tree URIs so add or remove invalidates cache`() {
+        // A mapped folder's mtime doesn't change when the mapping itself does.
+        // The mapping URI set on the stamp is what catches an add/remove/repoint.
+        val roms = tempFolder.newFolder("Roms")
+        File(roms, "ps2").mkdirs()
+
+        val without = RomIndexBuilder.stamp(
+            systemName = "ps2",
+            romsPaths = listOf(roms.absolutePath),
+            esdeRootPath = null,
+            decorationEnabled = false,
+            systemFolderMappings = emptyList(),
+        )!!
+        val withMapping = RomIndexBuilder.stamp(
+            systemName = "ps2",
+            romsPaths = listOf(roms.absolutePath),
+            esdeRootPath = null,
+            decorationEnabled = false,
+            systemFolderMappings = listOf(
+                jr.brian.home.esde.model.SystemFolderMapping(
+                    systemName = "ps2",
+                    treeUri = "content://com.android.externalstorage.documents/tree/primary%3AMyGames",
+                    displayPath = "/storage/emulated/0/MyGames",
+                )
+            ),
+        )!!
+        assertFalse(
+            "Adding a mapping for the system must invalidate the cache",
+            without.matches(withMapping),
+        )
+    }
+
     private fun writeRom(root: File, relative: String): File {
         val file = File(root, relative)
         file.parentFile?.mkdirs()

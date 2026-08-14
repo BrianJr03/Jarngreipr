@@ -313,7 +313,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     private fun buildSystemConfig() = SystemConfig(
         badgesVisible = managers.system.notificationManager.badgesVisible,
         shadeTabPage = managers.system.notificationManager.shadeTabPage,
-        hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList()
+        hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList(),
+        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings
     )
 
     // ── Import ──────────────────────────────────────────────────────────────
@@ -604,6 +605,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         }
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
         managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
+        managers.feature.esdePreferencesManager.setAllSystemFolderMappings(config.systemFolderMappings)
     }
 
     fun encodeToJson(config: JarngreiprConfig): String =

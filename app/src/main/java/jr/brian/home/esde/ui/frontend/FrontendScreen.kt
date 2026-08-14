@@ -23,12 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -49,6 +51,7 @@ import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.RomGameLauncher
+import jr.brian.home.esde.ui.frontend.settings.AddSystemsScreen
 import jr.brian.home.esde.ui.frontend.settings.FrontendSettingsScreen
 import jr.brian.home.esde.ui.frontend.settings.SystemCustomizationScreen
 import jr.brian.home.esde.util.heroBackgroundPath
@@ -66,9 +69,11 @@ private const val ANIM_EXIT_MS = 180
 private const val ANDROID_APPS_SYSTEM = "androidapps"
 
 private fun Modifier.frontendControlKeys(
+    overlayVisible: Boolean,
     onSearch: () -> Unit,
     onOpenSettings: () -> Unit
 ): Modifier = onPreviewKeyEvent { keyEvent ->
+    if (overlayVisible) return@onPreviewKeyEvent false
     val code = keyEvent.nativeKeyEvent.keyCode
     if (code != AndroidKeyEvent.KEYCODE_BUTTON_Y &&
         code != AndroidKeyEvent.KEYCODE_BUTTON_START
@@ -276,23 +281,39 @@ private fun GamesRoute(
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showSystemFilter by remember { mutableStateOf(false) }
-    // Any overlay drawn on top of the grid holds focus for its whole lifetime;
-    // the grid underneath must stop competing so its focus-reset retries don't
-    // steal focus back mid-recompose. On dismiss the key change re-seeds focus
-    // onto the tile the user was on before the overlay opened.
-    val overlayVisible = showSettingsDialog || showSystemFilter
+    var showAddSystems by remember { mutableStateOf(false) }
+    // Any overlay drawn on top of the grid holds focus for its whole lifetime.
+    // On open we drop focus explicitly so the grid stops receiving events; on
+    // close the reset tick below re-seeds focus onto the tile the user was on
+    // before the overlay opened.
+    val overlayVisible = showSettingsDialog || showSystemFilter || showAddSystems
 
-    val initialGameIndex = remember(filteredGames, system, overlayVisible) {
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(overlayVisible) {
+        if (overlayVisible) focusManager.clearFocus(force = true)
+    }
+
+    // Only bump on the true→false edge — bumping on open would race the
+    // overlay's own focus request and sometimes leave focus on the grid.
+    var overlayCloseTick by remember { mutableIntStateOf(0) }
+    var previousOverlayVisible by remember { mutableStateOf(overlayVisible) }
+    LaunchedEffect(overlayVisible) {
+        if (previousOverlayVisible && !overlayVisible) overlayCloseTick++
+        previousOverlayVisible = overlayVisible
+    }
+
+    val initialGameIndex = remember(filteredGames, system, overlayCloseTick) {
         val target = romSearchStateHolder.lastFocusedGameBySystem.value[system]
         filteredGames.indexOfFirst { it.path == target }.takeIf { it >= 0 } ?: 0
     }
 
-    val focusResetKey = remember(system, overlayVisible) { "$system|$overlayVisible" }
+    val focusResetKey = remember(system, overlayCloseTick) { "$system|$overlayCloseTick" }
 
     val allSystemNames = rememberAllSystemNames(allGames = allGames)
 
     BackHandler {
         when {
+            showAddSystems -> showAddSystems = false
             showSystemFilter -> showSystemFilter = false
             showSettingsDialog -> showSettingsDialog = false
             else -> viewModel.navigateTo(FrontendRoute.Systems)
@@ -321,10 +342,12 @@ private fun GamesRoute(
         modifier = Modifier
             .fillMaxSize()
             .frontendControlKeys(
+                overlayVisible = overlayVisible,
                 onSearch = { romSearchStateHolder.showSearchKeyboardSignal.tryEmit(Unit) },
                 onOpenSettings = { showSettingsDialog = true }
             )
             .onPreviewKeyEvent { keyEvent ->
+                if (overlayVisible) return@onPreviewKeyEvent false
                 if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (keyEvent.nativeKeyEvent.keyCode) {
                     // Hack: catch back at the preview stage so neither the focus
@@ -388,7 +411,18 @@ private fun GamesRoute(
             onOpenSystemFilter = {
                 showSettingsDialog = false
                 showSystemFilter = true
+            },
+            onOpenAddSystems = {
+                showSettingsDialog = false
+                showAddSystems = true
             }
+        )
+    }
+    if (showAddSystems) {
+        AddSystemsScreen(
+            esdePrefs = esdePrefs,
+            knownSystemSuggestions = allSystemNames,
+            onDismiss = { showAddSystems = false }
         )
     }
     if (showSystemFilter) {
@@ -430,17 +464,33 @@ private fun SystemsRoute(
     }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showSystemFilter by remember { mutableStateOf(false) }
+    var showAddSystems by remember { mutableStateOf(false) }
     var customizingSystem by remember { mutableStateOf<String?>(null) }
     var reorderingSystem by remember { mutableStateOf<String?>(null) }
     var focusedSystemName by remember { mutableStateOf<String?>(null) }
 
-    // Any overlay drawn on top of the grid holds focus for its whole lifetime;
-    // the grid underneath must stop competing so its focus-reset retries don't
-    // steal focus back mid-recompose. On dismiss the key change re-seeds focus
-    // onto the tile the user was on before the overlay opened.
-    val overlayVisible = showSettingsDialog || showSystemFilter || customizingSystem != null
+    // Any overlay drawn on top of the grid holds focus for its whole lifetime.
+    // On open we drop focus explicitly so the grid stops receiving events; on
+    // close the reset tick below re-seeds focus onto the tile the user was on
+    // before the overlay opened.
+    val overlayVisible = showSettingsDialog || showSystemFilter || showAddSystems ||
+        customizingSystem != null
 
-    val initialSystemIndex = remember(workingOrder, overlayVisible) {
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(overlayVisible) {
+        if (overlayVisible) focusManager.clearFocus(force = true)
+    }
+
+    // Only bump on the true→false edge — bumping on open would race the
+    // overlay's own focus request and sometimes leave focus on the grid.
+    var overlayCloseTick by remember { mutableIntStateOf(0) }
+    var previousOverlayVisible by remember { mutableStateOf(overlayVisible) }
+    LaunchedEffect(overlayVisible) {
+        if (previousOverlayVisible && !overlayVisible) overlayCloseTick++
+        previousOverlayVisible = overlayVisible
+    }
+
+    val initialSystemIndex = remember(workingOrder, overlayCloseTick) {
         val target = romSearchStateHolder.lastFocusedSystem.value
         workingOrder.indexOfFirst { it.systemName == target }.takeIf { it >= 0 } ?: 0
     }
@@ -469,6 +519,7 @@ private fun SystemsRoute(
                 reorderingSystem = null
             }
             customizingSystem != null -> customizingSystem = null
+            showAddSystems -> showAddSystems = false
             showSystemFilter -> showSystemFilter = false
             showSettingsDialog -> showSettingsDialog = false
         }
@@ -479,6 +530,7 @@ private fun SystemsRoute(
             .fillMaxSize()
             .focusProperties { canFocus = !overlayVisible }
             .onPreviewKeyEvent { keyEvent ->
+                if (overlayVisible) return@onPreviewKeyEvent false
                 handleSystemsRouteKey(
                     keyEvent = keyEvent,
                     reorderingSystem = reorderingSystem,
@@ -520,7 +572,7 @@ private fun SystemsRoute(
             isLoading = isLoading,
             layout = layout,
             initialRealIndex = initialSystemIndex,
-            focusResetKey = overlayVisible,
+            focusResetKey = overlayCloseTick,
             backgroundTransparent = useWallpaper || focusBackgroundActive,
             customizations = customizations,
             reorderingSystem = reorderingSystem,
@@ -555,7 +607,18 @@ private fun SystemsRoute(
             onOpenSystemFilter = {
                 showSettingsDialog = false
                 showSystemFilter = true
+            },
+            onOpenAddSystems = {
+                showSettingsDialog = false
+                showAddSystems = true
             }
+        )
+    }
+    if (showAddSystems) {
+        AddSystemsScreen(
+            esdePrefs = esdePrefs,
+            knownSystemSuggestions = allSystemNames,
+            onDismiss = { showAddSystems = false }
         )
     }
     if (showSystemFilter) {

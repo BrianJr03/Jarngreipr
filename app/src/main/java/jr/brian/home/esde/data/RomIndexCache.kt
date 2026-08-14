@@ -110,7 +110,7 @@ data class SystemCacheEntry(
 )
 
 /**
- * The inputs that produced a system's cache entry. [isValid] compares against
+ * The inputs that produced a system's cache entry. [matches] compares against
  * a live stamp built from the current state — inequality on any field
  * invalidates this one system only.
  */
@@ -128,6 +128,20 @@ data class SystemStamp(
      * coincidence.
      */
     val romsRootUsed: String,
+    /**
+     * Persisted SAF tree URIs for this system's user-declared mappings. A
+     * mapped directory's mtime doesn't change when the mapping itself does,
+     * so we key on the URI set here — add/remove/repoint a mapping and this
+     * one system's cache misses. Sorted to keep the equality check stable.
+     */
+    val mappingTreeUris: List<String> = emptyList(),
+    /**
+     * Resolved ROM extension set for this system. The stamp otherwise observes
+     * only filesystem inputs, so a change to extension resolution (registry
+     * update, es_systems.xml edit) would leave a stale entry in place. Sorted
+     * for stable equality.
+     */
+    val resolvedExtensions: List<String> = emptyList(),
 ) {
     fun matches(other: SystemStamp): Boolean = this == other
 }

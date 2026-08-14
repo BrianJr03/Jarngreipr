@@ -20,12 +20,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -51,7 +49,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun FrontendSettingsScreen(
     onDismiss: () -> Unit,
-    onOpenSystemFilter: () -> Unit = {}
+    onOpenSystemFilter: () -> Unit = {},
+    onOpenAddSystems: () -> Unit = {}
 ) {
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
@@ -74,17 +73,7 @@ fun FrontendSettingsScreen(
 
     val rowCount = rowCountFor(cursor.selectedCategory)
     val rootFocus = remember { FocusRequester() }
-    var hasFocus by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
-    // Any focusable subtree underneath us (e.g. the grid the overlay draws over)
-    // can steal focus when it recomposes. Yield a frame so the thief's requestFocus
-    // retries settle, then reclaim it.
-    LaunchedEffect(hasFocus) {
-        if (!hasFocus) {
-            withFrameNanos { }
-            runCatching { rootFocus.requestFocus() }
-        }
-    }
 
     val registerHorizontal = remember(cursor) {
         { claims: Boolean -> cursor.registerHorizontal(claims) }
@@ -100,7 +89,6 @@ fun FrontendSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .focusRequester(rootFocus)
-                .onFocusChanged { state -> hasFocus = state.hasFocus }
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -126,6 +114,10 @@ fun FrontendSettingsScreen(
                         onDismiss()
                         onOpenSystemFilter()
                     },
+                    onOpenAddSystems = {
+                        onDismiss()
+                        onOpenAddSystems()
+                    },
                     refreshRunning = refreshRunning,
                     lastRefreshResult = lastRefreshResult,
                     onRefresh = onRefresh
@@ -139,7 +131,7 @@ private fun rowCountFor(category: FrontendSettingsCategory): Int = when (categor
     FrontendSettingsCategory.LAYOUT -> 6
     FrontendSettingsCategory.MEDIA -> 6
     FrontendSettingsCategory.FEEL -> 5
-    FrontendSettingsCategory.SYSTEMS -> 1
+    FrontendSettingsCategory.SYSTEMS -> 2
     FrontendSettingsCategory.SCRAPING -> 3
 }
 
@@ -166,6 +158,7 @@ private fun RowPaneContainer(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int,
     onOpenSystemFilter: () -> Unit,
+    onOpenAddSystems: () -> Unit,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
@@ -190,6 +183,7 @@ private fun RowPaneContainer(
                 prefsManager = prefsManager,
                 focusedRow = focusedRow,
                 onOpenSystemFilter = onOpenSystemFilter,
+                onOpenAddSystems = onOpenAddSystems,
                 refreshRunning = refreshRunning,
                 lastRefreshResult = lastRefreshResult,
                 onRefresh = onRefresh

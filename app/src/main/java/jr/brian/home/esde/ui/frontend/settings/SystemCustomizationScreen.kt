@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +41,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -58,6 +56,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.clearSafTreeUri
 import jr.brian.home.esde.data.getSafTreeUri
+import jr.brian.home.esde.data.getSystemFolderMapping
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.components.ToggleSetting
@@ -94,19 +93,16 @@ fun SystemCustomizationScreen(
         systemName = systemName,
         esdePrefs = esdePrefs,
     )
-    val rowCount = rowCountFor(cursor.selectedCategory, storageRowState.hasTree)
+    // A mapping owns the SAF tree for this system and disables the pick /
+    // clear rows on the storage tab. Reflect that in the row count so D-pad
+    // navigation doesn't advance past what's rendered.
+    val storageEditable = esdePrefs.getSystemFolderMapping(systemName) == null
+    val rowCount = rowCountFor(
+        cursor.selectedCategory,
+        storageRowState.hasTree && storageEditable,
+    )
     val rootFocus = remember { FocusRequester() }
-    var hasFocus by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
-    // Any focusable subtree underneath us (e.g. the grid the overlay draws over)
-    // can steal focus when it recomposes. Yield a frame so the thief's requestFocus
-    // retries settle, then reclaim it.
-    LaunchedEffect(hasFocus) {
-        if (!hasFocus) {
-            withFrameNanos { }
-            runCatching { rootFocus.requestFocus() }
-        }
-    }
 
     val registerHorizontal = remember(cursor) {
         { claims: Boolean -> cursor.registerHorizontal(claims) }
@@ -122,7 +118,6 @@ fun SystemCustomizationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .focusRequester(rootFocus)
-                .onFocusChanged { state -> hasFocus = state.hasFocus }
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -687,13 +682,25 @@ private fun StorageRows(
     val pickFocused = focusedRow == 0
     val clearFocused = focusedRow == 1
 
+    // When a mapping exists for this system, it is the authoritative source
+    // of the SAF tree URI — both the mapping and this row write the same
+    // per-system key, so letting the user re-pick here would silently
+    // clobber the mapping. Show the mapping's folder and point the user at
+    // the Add Systems screen instead.
+    val mapping = esdePrefs.getSystemFolderMapping(systemName)
+    val managedByMapping = mapping != null
+
     StoragePickerRow(
-        currentPath = state.treeUri?.let { readableFolderPath(it) },
+        currentPath = mapping?.displayPath ?: state.treeUri?.let { readableFolderPath(it) },
         focused = pickFocused,
-        onActivate = { picker.launch(state.treeUri?.toUri()) },
+        onActivate = {
+            if (!managedByMapping) picker.launch(state.treeUri?.toUri())
+        },
         validation = state.validation,
+        managedElsewhereLabel = if (managedByMapping)
+            stringResource(R.string.add_systems_managed_here) else null,
     )
-    if (state.hasTree) {
+    if (state.hasTree && !managedByMapping) {
         ClearStorageRow(
             focused = clearFocused,
             onActivate = {
@@ -711,14 +718,19 @@ private fun StoragePickerRow(
     focused: Boolean,
     onActivate: () -> Unit,
     validation: StorageValidation,
+    managedElsewhereLabel: String? = null,
 ) {
-    ActivateOnConfirm(focused = focused, onActivate = onActivate)
+    // When managed elsewhere, an A-press must be inert — otherwise picking
+    // from here would silently clobber the Add Systems mapping.
+    if (managedElsewhereLabel == null) {
+        ActivateOnConfirm(focused = focused, onActivate = onActivate)
+    }
 
     val title = stringResource(R.string.system_customize_storage_folder_title)
-    val actionLabel = if (currentPath != null) {
-        stringResource(R.string.system_customize_storage_folder_change)
-    } else {
-        stringResource(R.string.system_customize_storage_folder_choose)
+    val actionLabel = when {
+        managedElsewhereLabel != null -> managedElsewhereLabel
+        currentPath != null -> stringResource(R.string.system_customize_storage_folder_change)
+        else -> stringResource(R.string.system_customize_storage_folder_choose)
     }
     val subtitle = currentPath ?: stringResource(R.string.system_customize_storage_folder_none)
     val statusLine = validationLine(validation)
@@ -817,19 +829,12 @@ private fun validationLine(validation: StorageValidation): String? = when (valid
     }
 }
 
-/** primary:Roms/ps2 → /storage/emulated/0/Roms/ps2. Volume-scoped ids stay verbatim. */
+/** primary:Roms/ps2 → /storage/emulated/0/Roms/ps2. Volume-scoped ids resolve to /storage/<volume>/rel. */
 private fun readableFolderPath(treeUriString: String): String? {
     val treeUri = runCatching { treeUriString.toUri() }.getOrNull() ?: return null
     val docId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
         ?: return treeUriString
-    return when {
-        docId.startsWith("primary:") -> "/storage/emulated/0/${docId.removePrefix("primary:")}"
-        docId.contains(":") -> {
-            val (volume, rel) = docId.split(":", limit = 2)
-            "/storage/$volume/$rel"
-        }
-        else -> docId
-    }
+    return jr.brian.home.esde.util.documentIdToStoragePath(docId) ?: docId
 }
 
 /**

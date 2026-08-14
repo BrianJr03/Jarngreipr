@@ -90,6 +90,7 @@ object ESDEPreferencesConstants {
     const val KEY_HIDDEN_GAMES = "hidden_games"
     const val KEY_HIDDEN_SYSTEMS = "hidden_systems"
     const val KEY_SAF_TREE_URIS = "saf_tree_uris"
+    const val KEY_SYSTEM_FOLDER_MAPPINGS = "system_folder_mappings"
     const val KEY_ROM_SEARCH_USE_WALLPAPER = "rom_search_use_wallpaper"
     const val KEY_ROM_SEARCH_CARD_MEDIA_TYPE = "rom_search_card_media_type"
     const val KEY_ROM_SEARCH_GAME_MEDIA_MAP = "rom_search_game_media_map"

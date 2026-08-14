@@ -221,6 +221,7 @@ data class ESDEPrefsState(
     val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper,
 
     val romsPaths: List<String> = emptyList(),
+    val systemFolderMappings: List<SystemFolderMapping> = emptyList(),
     val systemAppMap: Map<String, String?> = emptyMap(),
     val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
     val systemTopScreenSet: Set<String> = emptySet(),
