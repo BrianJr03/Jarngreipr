@@ -19,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -168,6 +171,11 @@ private fun RomSearchSheetBody(
 
     val keyboardFocusRequesters = remember { SnapshotStateMap<Int, FocusRequester>() }
 
+    // Details overlay owns the whole sheet — the keyboard would only compete
+    // for focus and space. Hide it while RomResultsGrid's details panel is up
+    // and restore it when the user backs out.
+    var detailsVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -269,21 +277,44 @@ private fun RomSearchSheetBody(
                     onChangeFolder(game)
                     onDismiss()
                 },
+                onDetailsVisibleChanged = { detailsVisible = it },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        // Same on-screen keyboard AppSearchScreen uses. showAtKey exposes `@`
-        // so gamepad users can type `@hidden`, `@android`, `@<platform>`
-        // without an IME popup. Flip-layout / navigate-to-search / settings
-        // shortcuts are hidden — this sheet doesn't own those flows.
-        QwertyKeyboard(
-            searchQuery = query,
-            onQueryChange = { query = it },
-            keyboardFocusRequesters = keyboardFocusRequesters,
-            showFlipLayoutButton = false,
-            showAtKey = true,
-            showController = false,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (!detailsVisible) {
+            // Same on-screen keyboard AppSearchScreen uses. showAtKey exposes
+            // `@` so gamepad users can type `@hidden`, `@android`,
+            // `@<platform>` without an IME popup. Flip-layout / navigate-to-
+            // search / settings shortcuts are hidden — this sheet doesn't
+            // own those flows.
+            //
+            // Sheet-only 10% height trim: graphicsLayer scales the pixels
+            // (bottom-anchored so the query bar stays at the top of the
+            // section), layout reports 90% of measured height back to the
+            // parent Column so grid.weight(1f) actually gains the 10%. The
+            // QwertyKeyboard composable itself is untouched — this doesn't
+            // affect any other place that uses it.
+            QwertyKeyboard(
+                searchQuery = query,
+                onQueryChange = { query = it },
+                keyboardFocusRequesters = keyboardFocusRequesters,
+                showFlipLayoutButton = false,
+                showAtKey = true,
+                showController = false,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleY = 0.9f
+                        transformOrigin = TransformOrigin(0.5f, 0f)
+                    }
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        val trimmedHeight = (placeable.height * 0.9f).toInt()
+                        layout(placeable.width, trimmedHeight) {
+                            placeable.place(0, 0)
+                        }
+                    },
+            )
+        }
     }
 }

@@ -119,7 +119,8 @@ internal fun RomResultsGrid(
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
     focusResetKey: Any? = Unit,
-    initialRealIndex: Int = 0
+    initialRealIndex: Int = 0,
+    onDetailsVisibleChanged: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
@@ -128,6 +129,10 @@ internal fun RomResultsGrid(
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(selectedGame) {
+        onDetailsVisibleChanged(selectedGame != null)
+    }
 
     BackHandler(enabled = selectedGame != null && !showEmulatorPicker && !showCorePicker) {
         selectedGame = null
