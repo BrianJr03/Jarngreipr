@@ -240,32 +240,37 @@ private fun MainScreenPicker(
     selected: MainScreen,
     onSelected: (MainScreen) -> Unit,
 ) {
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = stringResource(R.string.home_main_screen_title),
-        color = Color.White,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold
-    )
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        text = stringResource(R.string.home_main_screen_description),
-        color = Color.Gray,
-        fontSize = 12.sp
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        MainScreenOptions.forEach { option ->
-            SegmentedChip(
-                label = stringResource(option.labelRes),
-                isSelected = option.screen == selected,
-                enabled = true,
-                onClick = { onSelected(option.screen) },
-                modifier = Modifier.weight(1f)
-            )
+    // Wrap in a Column: AnimatedVisibility's content slot measures a single
+    // child, so emitting bare siblings here stacked them on top of each other
+    // (title/description/chip row all overlapping).
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.home_main_screen_title),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.home_main_screen_description),
+            color = Color.Gray,
+            fontSize = 12.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MainScreenOptions.forEach { option ->
+                SegmentedChip(
+                    label = stringResource(option.labelRes),
+                    isSelected = option.screen == selected,
+                    enabled = true,
+                    onClick = { onSelected(option.screen) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
