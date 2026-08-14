@@ -274,6 +274,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 fileUri = f.bgMusicManager.singleFileUri,
                 volume = f.bgMusicManager.vol
             ),
+            homeButton = HomeButtonConfig(
+                interceptionEnabled = f.homeButtonManager.interceptionEnabled.value
+            ),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
@@ -586,6 +589,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
+
+        f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

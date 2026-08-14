@@ -7,6 +7,7 @@ import android.hardware.display.DisplayManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import jr.brian.home.MainActivity
 import jr.brian.home.esde.ui.FrontEndActivity
 
 /**
@@ -36,6 +37,35 @@ fun launchFrontend(context: Context) {
     }
     val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
     context.startActivity(intent, options.toBundle())
+}
+
+/**
+ * Brings [MainActivity] to the front on the external/bottom display when one exists,
+ * falling back to a plain launch on the primary display otherwise. When [frontendEnabled]
+ * and a bottom display is present, also fires [FrontEndActivity] on the top display
+ * (unless it is already running).
+ *
+ * Callable from any [Context] — Activity, Service, or Application — because it only
+ * uses [Intent.FLAG_ACTIVITY_NEW_TASK] and never touches Activity-only APIs.
+ */
+fun routeHome(context: Context, frontendEnabled: Boolean) {
+    val bottomId = resolveBottomDisplayId(context)
+    if (bottomId == null || !frontendEnabled) {
+        context.startActivity(
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        return
+    }
+
+    context.startActivity(
+        Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
+        ActivityOptions.makeBasic()
+            .apply { launchDisplayId = bottomId }
+            .toBundle()
+    )
+    if (!FrontEndActivity.isRunning) launchFrontend(context)
 }
 
 /**

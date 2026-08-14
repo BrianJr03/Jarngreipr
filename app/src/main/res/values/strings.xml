@@ -200,7 +200,7 @@
     <string name="rom_options_continuous_spin">Continuous spin</string>
     <string name="rom_options_continuous_spin_description">Continuously rotate this disc\'s artwork on the Canvas.</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
-    <string name="accessibility_service_description">Allows the Home Launcher to open recent apps screen</string>
+    <string name="accessibility_service_description">Lets Jarngreipr intercept the hardware Home button so the launcher can be routed to the external display on dual-screen handhelds. No screen content is read.</string>
 
     <string name="keyboard_button_select">Select Button</string>
     <string name="keyboard_button_d_pad">D-Pad</string>
@@ -1787,4 +1787,19 @@
     <string name="faq_rss_adb_question">How do I grant Notification Access via ADB (no PC needed)?</string>
     <string name="faq_rss_adb_answer">You can run ADB commands directly on your Android device using Termux from F-Droid (not the Play Store version).\n\n1. Install Termux from f-droid.org\n2. Open Termux and run: pkg update &amp;&amp; pkg install android-tools\n3. Go to Settings → Developer Options → enable Wireless Debugging\n4. Tap "Pair device with pairing code" — note the IP, pairing port, and code shown\n5. In Termux: adb pair IP:PAIRPORT then enter the code when prompted\n6. Then: adb connect IP:DEBUGPORT (the debug port shown on the main Wireless Debugging screen)\n7. Finally run the command below\n\nNotification access persists across reinstalls of this app.</string>
     <string name="faq_rss_adb_command">adb shell cmd notification allow_listener jr.brian.home/jr.brian.home.service.AppNotificationListenerService</string>
+
+    <!-- Home Button Interception -->
+    <string name="home_interception_title">Home Button Interception</string>
+    <string name="home_interception_description">Route the hardware Home button to bring Jarngreipr forward on the external display, even when another app is the current default home.</string>
+    <string name="home_interception_permission_required">Permission required — grant accessibility access</string>
+    <string name="home_interception_dialog_title">Take over the Home button?</string>
+    <string name="home_interception_dialog_body_generic">Jarngreipr will use accessibility access to intercept the hardware Home button and bring MainActivity forward on the external display.\n\nIf another Home-button app (like Mjolnir) is enabled, it must be disabled first — two apps intercepting the same key cause double launches or dropped presses.</string>
+    <string name="home_interception_dialog_body_mjolnir">Jarngreipr will use accessibility access to intercept the hardware Home button and bring MainActivity forward on the external display.\n\nMjolnir is installed on this device. Disable its accessibility service before continuing — two apps intercepting the same key cause double launches or dropped presses.</string>
+    <string name="home_interception_dialog_open_accessibility">Open Accessibility Settings</string>
+    <string name="home_interception_dialog_continue">Continue</string>
+    <string name="home_interception_dialog_cancel">Cancel</string>
+    <string name="home_interception_channel_name">Home Button Interception</string>
+    <string name="home_interception_channel_description">Keeps the launcher process alive so hardware Home presses can be intercepted.</string>
+    <string name="home_interception_notification_title">Home Button Interception Active</string>
+    <string name="home_interception_notification_text">Jarngreipr is listening for Home presses.</string>
 </resources>
