@@ -529,7 +529,7 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
-            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, true),
+            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, false),
             romSearchCardMediaType = prefs.getString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, null)
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
                 ?: RomSearchCardMediaType.PhysicalMedia,

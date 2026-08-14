@@ -232,7 +232,7 @@ data class ESDEPrefsState(
     val gameCoreMap: Map<String, String> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
     val hiddenSystems: Set<String> = emptySet(),
-    val romSearchUseWallpaper: Boolean = true,
+    val romSearchUseWallpaper: Boolean = false,
     val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     val romSearchGameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
