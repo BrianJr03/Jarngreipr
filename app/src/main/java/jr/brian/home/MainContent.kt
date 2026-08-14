@@ -208,8 +208,12 @@ fun MainContent(
     var showRomSearchSheet by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         romSearchStateHolder.showSearchKeyboardSignal.collect {
-            romSearchStateHolder.openedFromFrontend.value = true
-            showRomSearchSheet = true
+            if (showRomSearchSheet) {
+                showRomSearchSheet = false
+            } else {
+                romSearchStateHolder.openedFromFrontend.value = true
+                showRomSearchSheet = true
+            }
         }
     }
 

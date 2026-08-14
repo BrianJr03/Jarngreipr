@@ -2,6 +2,7 @@ package jr.brian.home.esde.ui
 
 import android.content.Intent
 import android.provider.Settings
+import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -99,7 +103,20 @@ fun RomSearchSheet(
     BackHandler(onBack = onDismiss)
     Surface(
         color = OledBackgroundColor,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            // Y toggles: the frontend's Y opens this sheet, and once focus
+            // shifts to the hosting activity, pressing Y again here dismisses
+            // it. Intercept at the preview stage so descendants can't swallow
+            // it first.
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown &&
+                    keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_Y
+                ) {
+                    onDismiss()
+                    true
+                } else false
+            },
     ) {
         RomSearchSheetBody(
             esdePrefs = esdePrefs,
