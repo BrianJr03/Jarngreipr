@@ -44,6 +44,7 @@
     <string name="rom_search_experimental_message">This feature reads your ES-DE library and launches games directly from the home screen.\n\nNot every emulator is supported yet — if yours isn\'t working, please open a GitHub issue so it can be added.\n\nGitHub: github.com/BrianJr03/Jarngreipr</string>
     <string name="rom_search_experimental_got_it">Got it</string>
     <string name="frontend_no_systems">No systems found</string>
+    <string name="frontend_no_games">No games found</string>
     <string name="frontend_loading_msg">Initializing Jarngreipr Frontend</string>
     <string name="frontend_open_search">Search</string>
     <string name="frontend_open_search_hint">Y • Search</string>
@@ -1828,9 +1829,9 @@
     <string name="home_target_option_top">Top</string>
     <string name="home_target_option_top_subtitle">Launcher on the top screen only</string>
     <string name="home_target_option_bottom">Bottom</string>
-    <string name="home_target_option_bottom_subtitle">Launcher on the bottom screen only</string>
+    <string name="home_target_option_bottom_subtitle">Main launcher on the bottom screen only</string>
     <string name="home_target_option_both">Both</string>
-    <string name="home_target_option_both_subtitle">Launcher on one screen, ES-DE frontend on the other</string>
+    <string name="home_target_option_both_subtitle">Main launcher on bottom screen, Frontend on the top screen</string>
     <string name="home_target_option_both_disabled_subtitle">Enable the frontend to use the Both option</string>
     <string name="home_main_screen_title">Main Screen</string>
     <string name="home_main_screen_description">Which screen the launcher occupies (and takes focus) in Both mode.</string>
