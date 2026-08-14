@@ -125,6 +125,7 @@ internal fun RomResultsGrid(
         horizontal = FrontendTokens.Spacing.M,
         vertical = FrontendTokens.Spacing.XL
     ),
+    focusIndicationEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
@@ -206,6 +207,7 @@ internal fun RomResultsGrid(
                             isFocusAnimationDisabled = isFocusAnimationDisabled(game),
                             flipEnabled = focusAnimationEnabled,
                             flipDisabledForGame = isFocusAnimationDisabled(game),
+                            focusIndicationEnabled = focusIndicationEnabled,
                             onClick = {
                                 val isAndroid =
                                     game.systemName.equals("androidgames", ignoreCase = true) ||

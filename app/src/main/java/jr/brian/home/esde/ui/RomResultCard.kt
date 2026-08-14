@@ -82,7 +82,11 @@ internal fun RomResultCard(
     isFocusAnimationDisabled: Boolean = false,
     flipEnabled: Boolean = false,
     flipDisabledForGame: Boolean = false,
-    focusAnimationDelayMs: Int = 150
+    focusAnimationDelayMs: Int = 150,
+    // When false: no focus scale, no lift, no border color change. Touch-first
+    // callers (the search sheet) pass this — a pointer user doesn't need focus
+    // ink and the scaled-up tile was clipping against neighbors.
+    focusIndicationEnabled: Boolean = true,
 ) {
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
@@ -93,7 +97,7 @@ internal fun RomResultCard(
     val focusHapticEnabled = prefs.frontendFocusHapticEnabled
     var isFocused by remember { mutableStateOf(false) }
     var isFocusedDelayed by remember { mutableStateOf(false) }
-    val scale = animatedFocusedScale(isFocused)
+    val scale = if (focusIndicationEnabled) animatedFocusedScale(isFocused) else 1f
 
     LaunchedEffect(isFocused) {
         if (isFocused) {
@@ -152,7 +156,7 @@ internal fun RomResultCard(
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
     val focusProgress by animateFloatAsState(
-        targetValue = if (isFocused) 1f else 0f,
+        targetValue = if (focusIndicationEnabled && isFocused) 1f else 0f,
         animationSpec = tween(
             durationMillis = FrontendTokens.Motion.FocusMs,
             easing = FrontendTokens.Motion.Easing

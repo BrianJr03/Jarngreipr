@@ -292,6 +292,10 @@ private fun RomSearchSheetBody(
                     top = 0.dp,
                     bottom = FrontendTokens.Spacing.S,
                 ),
+                // Touch-first sheet: no scale/lift/border-ink on focus. Cards
+                // stay a constant size so a finger tap can't be foiled by a
+                // moving target.
+                focusIndicationEnabled = false,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
