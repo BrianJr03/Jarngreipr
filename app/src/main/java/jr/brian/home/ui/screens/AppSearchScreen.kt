@@ -39,7 +39,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.extensions.combinedClickWithHaptic
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -141,9 +144,11 @@ private fun VerticalSearchLayout(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
-            AppGrid(
+            if (filteredApps.isEmpty()) AppSearchEmptyState()
+            else AppGrid(
                 apps = filteredApps,
                 modifier = Modifier.fillMaxSize()
             )
@@ -190,9 +195,11 @@ private fun HorizontalSearchLayout(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
         ) {
-            HorizontalAppGrid(
+            if (filteredApps.isEmpty()) AppSearchEmptyState()
+            else HorizontalAppGrid(
                 apps = filteredApps,
                 showAppNames = !showSpecialCharRow,
                 modifier = Modifier.fillMaxSize()
@@ -520,4 +527,13 @@ private fun AppGridItem(
         Spacer(Modifier.height(4.dp))
         app.AppName()
     }
+}
+
+@Composable
+private fun AppSearchEmptyState() {
+    Text(
+        text = stringResource(R.string.app_search_no_results),
+        color = Color.White.copy(alpha = 0.6f),
+        fontSize = 14.sp,
+    )
 }

@@ -4,6 +4,7 @@
     <!-- ROM Search -->
     <string name="rom_search_icon_description">Rom Search</string>
     <string name="rom_search_no_results">No games found</string>
+    <string name="app_search_no_results">No apps found</string>
     <string name="rom_detail_system">System</string>
     <string name="rom_detail_genre">Genre</string>
     <string name="rom_detail_developer">Developer</string>
