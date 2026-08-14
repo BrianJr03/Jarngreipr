@@ -4,7 +4,6 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.ui.components.focusableSettingCard
 import jr.brian.home.model.HomeTarget
-import jr.brian.home.model.MainScreen
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalHomeButtonManager
@@ -51,9 +49,7 @@ import jr.brian.home.util.ThorDetection
 
 /**
  * Extras-section child of the Home Button Interception toggle. Lets the user
- * pick which display responds to a hardware Home press: TOP, BOTTOM, or BOTH.
- * When BOTH is selected a companion `MainScreen` picker chooses which display
- * hosts `MainActivity` (and takes focus).
+ * pick which display responds to a hardware Home press: BOTTOM or BOTH.
  *
  * The whole selector is dimmed and non-interactive when Home interception is
  * disabled or when no external display is connected — both of those cases
@@ -72,7 +68,6 @@ fun HomeTargetSelectorItem() {
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val interceptionEnabled by homeButtonManager.interceptionEnabled.collectAsStateWithLifecycle()
     val storedTarget by homeButtonManager.homeTarget.collectAsStateWithLifecycle()
-    val mainScreen by homeButtonManager.mainScreen.collectAsStateWithLifecycle()
     val esdeState by esdePreferencesManager.state.collectAsStateWithLifecycle()
     val frontendEnabled = esdeState.frontendEnabled
 
@@ -94,8 +89,6 @@ fun HomeTargetSelectorItem() {
         selectedTarget = effectiveTarget,
         frontendEnabled = frontendEnabled,
         onTargetSelected = { homeButtonManager.setHomeTarget(it) },
-        mainScreen = mainScreen,
-        onMainScreenSelected = { homeButtonManager.setMainScreen(it) },
     )
 }
 
@@ -139,8 +132,6 @@ private fun HomeTargetCard(
     selectedTarget: HomeTarget,
     frontendEnabled: Boolean,
     onTargetSelected: (HomeTarget) -> Unit,
-    mainScreen: MainScreen,
-    onMainScreenSelected: (MainScreen) -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -182,13 +173,6 @@ private fun HomeTargetCard(
             selectedTarget = selectedTarget,
             frontendEnabled = frontendEnabled,
         )
-
-        AnimatedVisibility(visible = enabled && selectedTarget == HomeTarget.BOTH && frontendEnabled) {
-            MainScreenPicker(
-                selected = mainScreen,
-                onSelected = onMainScreenSelected,
-            )
-        }
     }
 }
 
@@ -235,46 +219,6 @@ private fun SelectedTargetSubtitle(
         color = Color.White.copy(alpha = 0.75f),
         fontSize = 12.sp,
     )
-}
-
-@Composable
-private fun MainScreenPicker(
-    selected: MainScreen,
-    onSelected: (MainScreen) -> Unit,
-) {
-    // Wrap in a Column: AnimatedVisibility's content slot measures a single
-    // child, so emitting bare siblings here stacked them on top of each other
-    // (title/description/chip row all overlapping).
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.home_main_screen_title),
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = stringResource(R.string.home_main_screen_description),
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MainScreenOptions.forEach { option ->
-                SegmentedChip(
-                    label = stringResource(option.labelRes),
-                    isSelected = option.screen == selected,
-                    enabled = true,
-                    onClick = { onSelected(option.screen) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
 }
 
 @Composable
@@ -328,11 +272,6 @@ private data class HomeTargetOption(
     val subtitleRes: Int,
 )
 
-private data class MainScreenOption(
-    val screen: MainScreen,
-    val labelRes: Int,
-)
-
 private val HomeTargetOptions = listOf(
     HomeTargetOption(
         target = HomeTarget.BOTTOM,
@@ -343,12 +282,5 @@ private val HomeTargetOptions = listOf(
         target = HomeTarget.BOTH,
         labelRes = R.string.home_target_option_both,
         subtitleRes = R.string.home_target_option_both_subtitle,
-    ),
-)
-
-private val MainScreenOptions = listOf(
-    MainScreenOption(
-        screen = MainScreen.BOTTOM,
-        labelRes = R.string.home_main_screen_option_bottom,
     ),
 )
