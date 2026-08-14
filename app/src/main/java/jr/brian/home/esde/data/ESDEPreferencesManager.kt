@@ -529,7 +529,15 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
-            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, false),
+            // Hardcoded off: ROM search has moved to the bottom-display sheet
+            // ([jr.brian.home.esde.ui.RomSearchSheet]) where the wallpaper
+            // backdrop makes no sense. The frontend on the top display also
+            // uses this flag for its own backdrop, and we want the OLED
+            // background there too. Any legacy `true` persisted value is
+            // ignored — users who had the toggle on lose the setting because
+            // the screen it affected (RomSearchScreen/RomSearchResultsActivity)
+            // is no longer reachable from the UI.
+            romSearchUseWallpaper = false,
             romSearchCardMediaType = prefs.getString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, null)
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
                 ?: RomSearchCardMediaType.PhysicalMedia,
