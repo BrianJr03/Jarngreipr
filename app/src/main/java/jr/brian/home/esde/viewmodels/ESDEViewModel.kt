@@ -72,6 +72,7 @@ class ESDEViewModel @Inject constructor(
     val cleanupManager: ESDECleanupManager,
     private val bgMusicManager: BgMusicManager,
     private val romSearchStateHolder: RomSearchStateHolder,
+    private val wallpaperStateHolder: WallpaperStateHolder,
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
@@ -89,7 +90,13 @@ class ESDEViewModel @Inject constructor(
             return File(scriptsPath).parentFile?.absolutePath
         }
 
-    private val _wallpaperState = mutableStateOf(createInitialState())
+    // Backed by [WallpaperStateHolder] (process-wide singleton) so both
+    // MainActivity and FrontEndActivity read the same live ES-DE state. The
+    // holder is seeded with an empty [WallpaperState]; overwrite on first
+    // construction so cold-boot defaults still come from [createInitialState].
+    private val _wallpaperState = wallpaperStateHolder.state.also {
+        if (it.value == WallpaperState()) it.value = createInitialState()
+    }
     val wallpaperState: State<WallpaperState> = _wallpaperState
 
     private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()

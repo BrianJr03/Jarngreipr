@@ -29,9 +29,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScreensaverBehavior
+import jr.brian.home.esde.ui.RomGameLauncher
+import jr.brian.home.esde.ui.RomSearchSheet
 import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.Shortcut
@@ -90,6 +94,9 @@ import androidx.compose.ui.graphics.Color as GraphicsColor
 @Composable
 fun MainContent(
     romSearchStateHolder: RomSearchStateHolder,
+    managers: ManagerContainer,
+    romLauncher: RomGameLauncher,
+    onChangeFolder: (GameInfo) -> Unit,
     hideLauncherUI: Boolean = false,
     triggerMarqueePressShortcut: Boolean = false,
     onMarqueePressShortcutHandled: () -> Unit = {},
@@ -193,10 +200,15 @@ fun MainContent(
         }
     }
 
+    // Frontend Y-button emits this signal; the new sheet on this display
+    // replaces the old full-screen RomSearchScreen keyboard flow. The legacy
+    // Routes.ROM_SEARCH route stays wired for any other caller that still
+    // navigates directly.
+    var showRomSearchSheet by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         romSearchStateHolder.showSearchKeyboardSignal.collect {
             romSearchStateHolder.openedFromFrontend.value = true
-            navController.navigate(Routes.ROM_SEARCH)
+            showRomSearchSheet = true
         }
     }
 
@@ -473,5 +485,17 @@ fun MainContent(
                 )
             }
         }
+    }
+
+    if (showRomSearchSheet) {
+        RomSearchSheet(
+            esdePrefs = esdePreferencesManager,
+            romLauncher = romLauncher,
+            romSearchStateHolder = romSearchStateHolder,
+            mainViewModel = mainViewModel,
+            managers = managers,
+            onChangeFolder = onChangeFolder,
+            onDismiss = { showRomSearchSheet = false },
+        )
     }
 }

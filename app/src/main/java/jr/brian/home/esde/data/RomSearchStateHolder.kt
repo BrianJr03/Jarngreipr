@@ -18,6 +18,16 @@ class RomSearchStateHolder @Inject constructor() {
     val screenDismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val gameLaunchSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showSearchKeyboardSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the on-screen keyboard (rendered in MainActivity on the bottom
+     * display) needs the results grid to appear over the frontend on the top display.
+     * FrontEndActivity collects this and launches RomSearchResultsActivity itself, so
+     * the results activity ends up on FrontEndActivity's own task rather than being
+     * pushed across from MainActivity — the cross-task launch was what destroyed
+     * FrontEndActivity and blanked MainActivity during the Y → back cycle.
+     */
+    val showRomSearchResultsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
 

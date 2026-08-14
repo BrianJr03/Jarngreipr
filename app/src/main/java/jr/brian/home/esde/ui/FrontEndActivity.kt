@@ -1,6 +1,7 @@
 package jr.brian.home.esde.ui
 
 import jr.brian.home.esde.data.*
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -10,6 +11,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,9 +26,11 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.WallpaperStateHolder
 import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.ui.frontend.FrontendScreen
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
@@ -53,6 +58,9 @@ class FrontEndActivity : ComponentActivity() {
 
     @Inject
     lateinit var frontendSelectionStateHolder: FrontendSelectionStateHolder
+
+    @Inject
+    lateinit var wallpaperStateHolder: WallpaperStateHolder
 
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
@@ -130,6 +138,7 @@ class FrontEndActivity : ComponentActivity() {
         romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
         observeFrontendEnabledFlag()
+        observeShowRomSearchResultsSignal()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -142,20 +151,30 @@ class FrontEndActivity : ComponentActivity() {
             LauncherTheme {
                 BackHandler {}
                 managers.ManagerCompositionLocalProvider {
-                    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                    FrontendScreen(
-                        esdePrefs = esdePrefs,
-                        viewModel = viewModel,
-                        mainViewModel = mainViewModel,
-                        romSearchStateHolder = romSearchStateHolder,
-                        frontendSelectionStateHolder = frontendSelectionStateHolder,
-                        managers = managers,
-                        romLauncher = romLauncher,
-                        appDisplayPreferenceManager = appDisplayPreferenceManager,
-                        onFinishImmediately = { finish() },
-                        onSignalGameLaunch = ::signalGameLaunch,
-                        onChangeFolder = ::launchSafPickerForGame
-                    )
+                    // Mirror MainActivity: read the shared holder inside the
+                    // composable so the read is tracked, then re-provide the
+                    // current value. Any consumer under FrontEndActivity (e.g.
+                    // FrontendTile inside a canvas widget) now sees the same
+                    // live state MainActivity's ES-DE event listener writes to.
+                    val wallpaperState by wallpaperStateHolder.state
+                    CompositionLocalProvider(
+                        LocalEsdeWallpaperState provides wallpaperState
+                    ) {
+                        val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+                        FrontendScreen(
+                            esdePrefs = esdePrefs,
+                            viewModel = viewModel,
+                            mainViewModel = mainViewModel,
+                            romSearchStateHolder = romSearchStateHolder,
+                            frontendSelectionStateHolder = frontendSelectionStateHolder,
+                            managers = managers,
+                            romLauncher = romLauncher,
+                            appDisplayPreferenceManager = appDisplayPreferenceManager,
+                            onFinishImmediately = { finish() },
+                            onSignalGameLaunch = ::signalGameLaunch,
+                            onChangeFolder = ::launchSafPickerForGame
+                        )
+                    }
                 }
             }
         }
@@ -168,6 +187,31 @@ class FrontEndActivity : ComponentActivity() {
                     .map { it.frontendEnabled }
                     .distinctUntilChanged()
                     .collect { enabled -> if (!enabled) finish() }
+            }
+        }
+    }
+
+    /**
+     * The keyboard on the bottom display used to start [RomSearchResultsActivity]
+     * itself, from MainActivity's context, using FLAG_ACTIVITY_NEW_TASK on the top
+     * displayId. That cross-display / cross-task launch destroyed this activity and
+     * blanked MainActivity during the Y → back cycle. Now the keyboard emits a
+     * signal and we start the results activity on our own task on the display we
+     * already own — finishing it pops back to this activity without a recreate.
+     */
+    private fun observeShowRomSearchResultsSignal() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                romSearchStateHolder.showRomSearchResultsSignal.collect {
+                    val intent = Intent(
+                        this@FrontEndActivity,
+                        RomSearchResultsActivity::class.java
+                    ).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, true)
+                    }
+                    startActivity(intent)
+                }
             }
         }
     }
