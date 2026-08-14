@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -196,7 +197,19 @@ private fun FrontendRouteHost(
         // Key on route TYPE so navigating between two Games routes (if that ever
         // happens) does not re-trigger the transition. Systems is a singleton.
         contentKey = { it is FrontendRoute.Games },
-        label = "frontendRoute"
+        label = "frontendRoute",
+        // SystemsRoute's outer Box is transparent unless the focus background
+        // is active, and during the Systems↔Games cross-fade both panels have
+        // transparent regions. Without an opaque backer here the activity
+        // window's underlying (system) wallpaper flashes through on scroll and
+        // during transition. Leave it transparent only when the user has
+        // explicitly opted into the ES-DE wallpaper as the frontend backdrop.
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                if (esdeState.romSearchUseWallpaper) Color.Transparent
+                else OledBackgroundColor
+            )
     ) { currentRoute ->
         // AnimatedContent keeps BOTH routes composed for the duration of the
         // transition. FocusableTileLayout retries requestFocus() a few times on
