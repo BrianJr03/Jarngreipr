@@ -2,13 +2,13 @@ package jr.brian.home.esde.ui
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,14 +47,14 @@ import jr.brian.home.esde.ui.frontend.rememberRomSearchQueryState
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.ui.components.QwertyKeyboard
-import jr.brian.home.ui.theme.OledCardColor
+import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.viewmodels.MainViewModel
 import java.io.File
 
 private const val ANDROID_APPS_SYSTEM = "androidapps"
 
 /**
- * ROM search as a bottom sheet on the bottom display (mirror of
+ * ROM search as a full-screen overlay on the bottom display (mirror of
  * [jr.brian.home.ui.screens.AppSearchScreen] for apps). Reuses [RomResultsGrid]
  * so tap → [RomGameLauncher.launchGame] and long-press → [RomDetailScreen]
  * pick up all the existing PS2/SAF/grant behavior.
@@ -64,10 +64,15 @@ private const val ANDROID_APPS_SYSTEM = "androidapps"
  * same on-screen [QwertyKeyboard] AppSearchScreen uses, so gamepad D-pad text
  * entry works without an IME popup.
  *
+ * NOT a `ModalBottomSheet`: that renders inside a Dialog, which swaps
+ * `LocalContext` to a `ContextThemeWrapper`. `QwertyKeyboard` internally
+ * does `LocalContext.current as ComponentActivity` (for `hiltViewModel`) and
+ * crashes with a `ClassCastException` under that wrapper. A plain [Surface]
+ * kept in the host activity's composition preserves the activity context.
+ *
  * All `@` command flags come from [rememberRomSearchQueryState] — the same
  * function the legacy activity now calls — so the two paths cannot drift.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RomSearchSheet(
     esdePrefs: ESDEPreferencesManager,
@@ -78,11 +83,10 @@ fun RomSearchSheet(
     onChangeFolder: (GameInfo) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = OledCardColor,
+    BackHandler(onBack = onDismiss)
+    Surface(
+        color = OledBackgroundColor,
+        modifier = Modifier.fillMaxSize(),
     ) {
         RomSearchSheetBody(
             esdePrefs = esdePrefs,
