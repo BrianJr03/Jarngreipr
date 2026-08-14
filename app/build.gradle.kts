@@ -162,6 +162,7 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 
     // Android testing dependencies
     androidTestImplementation(libs.kotlinx.coroutines.test)

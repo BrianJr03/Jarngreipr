@@ -19,6 +19,8 @@ import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.model.BackButtonShortcut
+import jr.brian.home.model.HomeTarget
+import jr.brian.home.model.MainScreen
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.model.WakeMethod
@@ -275,7 +277,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 volume = f.bgMusicManager.vol
             ),
             homeButton = HomeButtonConfig(
-                interceptionEnabled = f.homeButtonManager.interceptionEnabled.value
+                interceptionEnabled = f.homeButtonManager.interceptionEnabled.value,
+                homeTarget = f.homeButtonManager.homeTarget.value?.name,
+                mainScreen = f.homeButtonManager.mainScreen.value.name,
             ),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
@@ -592,6 +596,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
 
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
+        HomeTarget.entries.firstOrNull { it.name == config.homeButton.homeTarget }
+            ?.let { f.homeButtonManager.setHomeTarget(it) }
+        f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

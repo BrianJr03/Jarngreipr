@@ -73,9 +73,12 @@ class HomeInterceptorService : AccessibilityService() {
     }
 
     private fun routeToLauncher() {
+        val frontendEnabled = esdePreferencesManager.state.value.frontendEnabled
         routeHome(
             context = applicationContext,
-            frontendEnabled = esdePreferencesManager.state.value.frontendEnabled
+            target = homeButtonManager.resolveHomeTarget(frontendEnabled),
+            mainScreen = homeButtonManager.mainScreen.value,
+            frontendEnabled = frontendEnabled,
         )
     }
 

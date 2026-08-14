@@ -78,7 +78,13 @@ data class JarngreiprConfig(
         //      entries used to map arbitrary folders (including SD-card ones)
         //      to systems. Older blobs decode with the empty default via
         //      ignoreUnknownKeys, matching pre-feature behaviour.
-        const val CONFIG_VERSION = 22
+        // v23: added HomeButtonConfig.homeTarget / mainScreen for the display
+        //      target selector under Home Button Interception. Older blobs
+        //      decode with both fields null via ignoreUnknownKeys — a null
+        //      target means "use the runtime migration default"
+        //      (BOTH-when-frontend-enabled, else BOTTOM), matching the
+        //      pre-selector routing behaviour.
+        const val CONFIG_VERSION = 23
     }
 }
 
@@ -215,7 +221,16 @@ data class FeatureConfig(
 
 @Serializable
 data class HomeButtonConfig(
-    val interceptionEnabled: Boolean = false
+    val interceptionEnabled: Boolean = false,
+    /**
+     * Persisted [jr.brian.home.model.HomeTarget] name, or `null` for
+     * pre-selector exports. `null` is preserved on import so
+     * [jr.brian.home.data.HomeButtonManager.resolveHomeTarget] can still apply
+     * its `frontendEnabled`-derived migration default.
+     */
+    val homeTarget: String? = null,
+    /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */
+    val mainScreen: String = "BOTTOM"
 )
 
 @Serializable
