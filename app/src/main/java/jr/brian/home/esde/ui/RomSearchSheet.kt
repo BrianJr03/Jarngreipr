@@ -299,6 +299,7 @@ private fun RomSearchSheetBody(
                 onQueryChange = { query = it },
                 keyboardFocusRequesters = keyboardFocusRequesters,
                 showFlipLayoutButton = false,
+                showSpecialCharRow = false,
                 showAtKey = true,
                 showController = false,
                 modifier = Modifier
