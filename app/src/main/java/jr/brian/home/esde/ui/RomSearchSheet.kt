@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,15 +19,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import jr.brian.home.R
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
@@ -188,7 +194,18 @@ private fun RomSearchSheetBody(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
+            if (!isLoading && filteredGames.isEmpty()) {
+                // Also covers the "no ROMs indexed yet" case — same message
+                // reads correctly for both empty-library and empty-query.
+                Text(
+                    text = stringResource(R.string.rom_search_no_results),
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                )
+                return@Box
+            }
             RomResultsGrid(
                 games = filteredGames,
                 isLoading = isLoading,
