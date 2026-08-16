@@ -174,7 +174,12 @@
     <string name="system_customize_category_color_title">Color</string>
     <string name="system_customize_category_color_summary">Pick a solid color behind the tile — or keep it clear.</string>
     <string name="system_customize_category_actions_title">Actions</string>
-    <string name="system_customize_category_actions_summary">Reorder this system in the grid, or clear its customization.</string>
+    <string name="system_customize_category_actions_summary">Rescan this system\'s ROMs, reorder it in the grid, or clear its customization.</string>
+    <string name="system_customize_refresh_title">Refresh ROMs</string>
+    <string name="system_customize_refresh_description">Rescan the ROM folder for this system.</string>
+    <string name="system_customize_refresh_running">Refreshing…</string>
+    <string name="system_customize_refresh_result">%1$d games</string>
+    <string name="system_customize_refresh_empty">No games found</string>
     <string name="system_customize_category_storage_title">Storage</string>
     <string name="system_customize_category_storage_summary">Point Jarngreipr at the same ROMs folder the emulator uses. When the two agree, launches read the file without a second prompt.</string>
     <string name="system_customize_storage_folder_title">ROM folder</string>

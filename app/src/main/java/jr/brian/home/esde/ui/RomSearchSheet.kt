@@ -4,6 +4,9 @@ import android.content.Intent
 import android.provider.Settings
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -100,7 +103,10 @@ fun RomSearchSheet(
     onChangeFolder: (GameInfo) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BackHandler(onBack = onDismiss)
+    var showSettings by remember { mutableStateOf(false) }
+    BackHandler {
+        if (showSettings) showSettings = false else onDismiss()
+    }
     Surface(
         color = OledBackgroundColor,
         modifier = Modifier
@@ -108,25 +114,36 @@ fun RomSearchSheet(
             // Y toggles: the frontend's Y opens this sheet, and once focus
             // shifts to the hosting activity, pressing Y again here dismisses
             // it. Intercept at the preview stage so descendants can't swallow
-            // it first.
+            // it first. When the settings overlay is up, Y backs out of it
+            // instead so the user isn't kicked all the way out.
             .onPreviewKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown &&
                     keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_Y
                 ) {
-                    onDismiss()
+                    if (showSettings) showSettings = false else onDismiss()
                     true
                 } else false
             },
     ) {
-        RomSearchSheetBody(
-            esdePrefs = esdePrefs,
-            romLauncher = romLauncher,
-            romSearchStateHolder = romSearchStateHolder,
-            mainViewModel = mainViewModel,
-            managers = managers,
-            onChangeFolder = onChangeFolder,
-            onDismiss = onDismiss,
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            RomSearchSheetBody(
+                esdePrefs = esdePrefs,
+                romLauncher = romLauncher,
+                romSearchStateHolder = romSearchStateHolder,
+                mainViewModel = mainViewModel,
+                managers = managers,
+                onChangeFolder = onChangeFolder,
+                onDismiss = onDismiss,
+                onOpenSettings = { showSettings = true },
+            )
+            AnimatedVisibility(
+                visible = showSettings,
+                enter = slideInHorizontally { it },
+                exit = slideOutHorizontally { it },
+            ) {
+                RomSearchSettingsScreen(onBack = { showSettings = false })
+            }
+        }
     }
 }
 
@@ -139,6 +156,7 @@ private fun RomSearchSheetBody(
     managers: ManagerContainer,
     onChangeFolder: (GameInfo) -> Unit,
     onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val allGames by romSearchStateHolder.allGames.collectAsStateWithLifecycle()
@@ -354,6 +372,8 @@ private fun RomSearchSheetBody(
                 showSpecialCharRow = false,
                 showAtKey = true,
                 showController = false,
+                showSettings = true,
+                onOpenRomSearchSettings = onOpenSettings,
                 modifier = Modifier
                     .fillMaxWidth()
                     .graphicsLayer {

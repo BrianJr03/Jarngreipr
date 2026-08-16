@@ -1,7 +1,10 @@
 package jr.brian.home.esde.ui
 
 import jr.brian.home.esde.data.*
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -69,6 +72,7 @@ class FrontEndActivity : ComponentActivity() {
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
     private var gameLaunched = false
+    private var mediaMountReceiver: BroadcastReceiver? = null
 
     private val safTreeLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -115,6 +119,8 @@ class FrontEndActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaMountReceiver?.let { runCatching { unregisterReceiver(it) } }
+        mediaMountReceiver = null
         if (gameLaunched) {
             romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
         }
@@ -137,6 +143,7 @@ class FrontEndActivity : ComponentActivity() {
         )
         romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
+        registerMediaMountReceiver()
         observeFrontendEnabledFlag()
         observeShowRomSearchResultsSignal()
         @Suppress("DEPRECATION")
@@ -178,6 +185,32 @@ class FrontEndActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Kick a re-scan when a removable volume finishes mounting. The launcher
+     * runs as HOME, so its first scan often races the SD card mount at boot
+     * and comes back "degraded" — the ViewModel keeps the cached SD systems
+     * in place, and this receiver is what lets it actually rebuild once vold
+     * catches up, so the user never has to open Settings → Refresh Library.
+     *
+     * `ACTION_MEDIA_MOUNTED` requires a `file` data scheme; declaring it
+     * without would silently receive nothing.
+     */
+    private fun registerMediaMountReceiver() {
+        if (mediaMountReceiver != null) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_MEDIA_MOUNTED) {
+                    romSearchViewModel.retryIfLastScanWasDegraded()
+                }
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_MEDIA_MOUNTED).apply {
+            addDataScheme("file")
+        }
+        registerReceiver(receiver, filter)
+        mediaMountReceiver = receiver
     }
 
     private fun observeFrontendEnabledFlag() {

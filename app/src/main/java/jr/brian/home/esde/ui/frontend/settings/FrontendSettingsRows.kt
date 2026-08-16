@@ -665,8 +665,13 @@ private fun ScrapingRows(
     }
 }
 
+/**
+ * Shared refresh-row card: title + description + optional trailing label with
+ * a spinner while work is in flight. Reused by [SystemCustomizationScreen]'s
+ * per-system refresh so both refresh rows look identical.
+ */
 @Composable
-private fun ActionRowCard(
+internal fun ActionRowCard(
     title: String,
     description: String,
     trailingLabel: String?,

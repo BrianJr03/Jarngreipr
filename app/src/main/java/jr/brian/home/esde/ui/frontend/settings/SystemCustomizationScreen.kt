@@ -50,6 +50,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import jr.brian.home.R
@@ -64,10 +67,12 @@ import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.util.buildAetherDocUri
 import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.subtleCardGradient
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -159,7 +164,8 @@ private fun rowCountFor(
 ): Int = when (category) {
     SystemCustomizationCategory.BACKGROUND -> 3
     SystemCustomizationCategory.COLOR -> 6
-    SystemCustomizationCategory.ACTIONS -> 2
+    // Refresh + Reorder + Reset.
+    SystemCustomizationCategory.ACTIONS -> 3
     // Pick row + optional Clear row.
     SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
 }
@@ -253,6 +259,7 @@ private fun CustomizationRows(
             onChange = onChange
         )
         SystemCustomizationCategory.ACTIONS -> ActionRows(
+            systemName = systemName,
             focusedRow = focusedRow,
             onReset = onReset,
             onEnterReorder = onEnterReorder
@@ -518,12 +525,16 @@ private fun ColorRows(
 
 @Composable
 private fun ActionRows(
+    systemName: String,
     focusedRow: Int,
     onReset: () -> Unit,
     onEnterReorder: () -> Unit
 ) {
-    val reorderFocused = focusedRow == 0
-    val resetFocused = focusedRow == 1
+    val refreshFocused = focusedRow == 0
+    val reorderFocused = focusedRow == 1
+    val resetFocused = focusedRow == 2
+
+    RefreshSystemRow(systemName = systemName, focused = refreshFocused)
 
     Box(modifier = Modifier.fillMaxWidth()) {
         ActivateOnConfirm(focused = reorderFocused, onActivate = onEnterReorder)
@@ -538,6 +549,81 @@ private fun ActionRows(
     }
 
     ResetRow(focused = resetFocused, onReset = onReset)
+}
+
+@Composable
+private fun RefreshSystemRow(systemName: String, focused: Boolean) {
+    // hiltViewModel() may hand back a different RomSearchViewModel instance
+    // than the frontend uses, but RomSearchStateHolder is @Singleton — the
+    // grid's collectAsState still observes the fresh allGames written here.
+    val viewModel: RomSearchViewModel = hiltViewModel()
+    val imageLoader = LocalESDEImageLoader.current
+    val refreshRunning by viewModel.isLoading.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    // null distinguishes "no refresh yet" (show nothing) from the finished-with-0
+    // case, which reads as "No games found". Keyed on systemName so long-pressing
+    // a different tile doesn't carry a stale count forward.
+    var lastCount by remember(systemName) { mutableStateOf<Int?>(null) }
+
+    val trailing = when {
+        refreshRunning -> stringResource(R.string.system_customize_refresh_running)
+        lastCount == 0 -> stringResource(R.string.system_customize_refresh_empty)
+        lastCount != null -> stringResource(R.string.system_customize_refresh_result, lastCount!!)
+        else -> null
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(focused)
+    ) {
+        // Compose ActivateOnConfirm unconditionally and gate the *body* on
+        // refreshRunning. Conditionally composing it would reset the
+        // remembered activation tick each time the spinner flips, making a
+        // press landing on the exact frame the refresh finishes ambiguous
+        // (fires vs. drops depending on recomposition order).
+        ActivateOnConfirm(focused = focused) {
+            if (!refreshRunning) {
+                triggerSystemRefresh(
+                    systemName = systemName,
+                    viewModel = viewModel,
+                    imageLoader = imageLoader,
+                    scope = scope,
+                    onDone = { games -> lastCount = if (games == 0) -1 else games },
+                )
+            }
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_refresh_title),
+            description = stringResource(R.string.system_customize_refresh_description),
+            trailingLabel = trailing,
+            showProgress = refreshRunning,
+            focused = focused
+        )
+    }
+}
+
+private fun triggerSystemRefresh(
+    systemName: String,
+    viewModel: RomSearchViewModel,
+    imageLoader: ImageLoader,
+    scope: CoroutineScope,
+    onDone: (games: Int) -> Unit,
+) {
+    if (viewModel.isLoading.value) return
+    scope.launch {
+        // Freshly-scraped art often lives at paths Coil already tried and
+        // cached as a miss, so wipe both caches before the rebuild republishes
+        // allGames. Disk clear runs on IO to match FrontendSettingsScreen's
+        // refreshLibrary().
+        //
+        // The disk cache is cleared wholesale, not per key — Coil keys by
+        // model string and the newly-scraped media paths aren't known until
+        // after the scan, so there's nothing narrower to evict against. The
+        // cost is a re-decode of other systems' art, not a re-scan.
+        imageLoader.memoryCache?.clear()
+        withContext(Dispatchers.IO) { imageLoader.diskCache?.clear() }
+        viewModel.refreshSystem(systemName = systemName, onComplete = onDone)
+    }
 }
 
 @Composable
