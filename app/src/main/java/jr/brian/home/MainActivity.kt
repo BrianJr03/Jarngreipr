@@ -118,6 +118,13 @@ class MainActivity : ComponentActivity() {
 
     private var navigateToThemeShare by mutableStateOf(false)
 
+    // Tracked across repeatOnLifecycle restarts so the STARTED re-entry after a
+    // sleep/wake doesn't re-launch FrontEndActivity onto the top display and
+    // displace whatever foreign app the user had running there. We only want to
+    // fire launchFrontendIfEnabled on a real false → true transition (or the
+    // null → true cold-start edge).
+    private var lastObservedFrontendEnabled: Boolean? = null
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
@@ -369,7 +376,11 @@ class MainActivity : ComponentActivity() {
                 esdePreferencesManager.state
                     .map { it.frontendEnabled }
                     .distinctUntilChanged()
-                    .collect { enabled -> if (enabled) launchFrontendIfEnabled() }
+                    .collect { enabled ->
+                        val previous = lastObservedFrontendEnabled
+                        lastObservedFrontendEnabled = enabled
+                        if (enabled && previous != true) launchFrontendIfEnabled()
+                    }
             }
         }
     }
