@@ -77,11 +77,27 @@ object ESDEMediaConstants {
     )
 
     /**
-     * Returns the system name to use for media lookups.
-     * Maps variant systems to their parent systems where media is typically stored.
+     * ES-DE's automatic collections are reported on `system-select` with the
+     * short names `all`, `favorites`, and `recent`, but the bundled logo/image
+     * assets are shipped under the `auto-*` names ES-DE itself uses on disk
+     * (see `assets/system_logos/auto-*.svg`). Keep this map separate from
+     * [SYSTEM_MEDIA_ALIASES], which is for hardware variants (e.g. snes-msu1).
+     */
+    val AUTO_COLLECTION_ASSET_NAMES = mapOf(
+        "all" to "auto-allgames",
+        "favorites" to "auto-favorites",
+        "recent" to "auto-lastplayed",
+    )
+
+    /**
+     * Returns the system name to use for media lookups. Auto collections are
+     * remapped to their `auto-*` asset names first, then hardware variants are
+     * folded into their parent systems where media is typically stored.
      */
     fun getMediaSystemName(systemName: String): String {
-        return SYSTEM_MEDIA_ALIASES[systemName] ?: systemName
+        return AUTO_COLLECTION_ASSET_NAMES[systemName]
+            ?: SYSTEM_MEDIA_ALIASES[systemName]
+            ?: systemName
     }
 
     /** Systems that use disc-based physical media. Used for the disc spin animation. */
