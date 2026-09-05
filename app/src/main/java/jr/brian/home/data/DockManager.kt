@@ -67,7 +67,15 @@ class DockManager(context: Context) {
             currentDockApps.add("")
         }
 
-        if (currentDockApps.count { it.isNotEmpty() } >= _maxDockApps.value) return
+        // If the slot already holds a value (including a stale package left
+        // over from an uninstall) the write is a replacement, not an add — the
+        // populated count doesn't grow, so the max check doesn't apply. Without
+        // this exemption, taps on visually-empty stale slots silently no-op
+        // whenever the dock's populated count is at max.
+        val isReplacingExistingSlot = currentDockApps[position].isNotEmpty()
+        if (!isReplacingExistingSlot &&
+            currentDockApps.count { it.isNotEmpty() } >= _maxDockApps.value
+        ) return
         if (currentDockApps.contains(packageName)) return
 
         currentDockApps[position] = packageName

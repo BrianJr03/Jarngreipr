@@ -87,7 +87,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 backButtonShortcut = ps.backButtonShortcut.value.name,
                 backButtonShortcutAppPackage = ps.backButtonShortcutAppPackage.value,
                 poweredOffBrightness = ps.poweredOffBrightness.value,
-                appDrawerFilterByPage = ps.appDrawerFilterByPage.value
+                appDrawerFilterByPage = ps.appDrawerFilterByPage.value,
+                pagerSwipeSensitivity = ps.pagerSwipeSensitivity.value
             ),
             selectedIconPackage = ui.iconPackManager.selectedIconPack.first(),
             wallpaper = WallpaperConfig(
@@ -365,6 +366,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.powerSettingsManager.setBackButtonShortcutAppPackage(ps.backButtonShortcutAppPackage)
         ui.powerSettingsManager.setPoweredOffBrightness(ps.poweredOffBrightness)
         ui.powerSettingsManager.setAppDrawerFilterByPage(ps.appDrawerFilterByPage)
+        ui.powerSettingsManager.setPagerSwipeSensitivity(ps.pagerSwipeSensitivity)
 
         ui.iconPackManager.setSelectedIconPack(config.selectedIconPackage)
 

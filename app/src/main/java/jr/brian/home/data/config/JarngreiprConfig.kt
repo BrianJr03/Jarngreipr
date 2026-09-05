@@ -84,7 +84,11 @@ data class JarngreiprConfig(
         //      target means "use the runtime migration default"
         //      (BOTH-when-frontend-enabled, else BOTTOM), matching the
         //      pre-selector routing behaviour.
-        const val CONFIG_VERSION = 23
+        // v24: added PowerSettingsConfig.pagerSwipeSensitivity for the tab-
+        //      swipe sensitivity slider (0..100). Older blobs decode with
+        //      the default (0 = Compose default snap threshold) via
+        //      ignoreUnknownKeys, matching pre-slider behaviour.
+        const val CONFIG_VERSION = 24
     }
 }
 
@@ -126,7 +130,8 @@ data class PowerSettingsConfig(
     val backButtonShortcut: String = "NONE",
     val backButtonShortcutAppPackage: String? = null,
     val poweredOffBrightness: Int = 40,
-    val appDrawerFilterByPage: Boolean = false
+    val appDrawerFilterByPage: Boolean = false,
+    val pagerSwipeSensitivity: Int = 0
 )
 
 @Serializable
