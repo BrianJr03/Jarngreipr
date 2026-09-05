@@ -150,6 +150,7 @@ fun AppDrawerTab(
     val lastOffset = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.offset ?: 0
     val settingsIconFocusRequester = remember { FocusRequester() }
     val menuIconFocusRequester = remember { FocusRequester() }
+    val dockFocusRequester = remember { FocusRequester() }
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
     val appFocusRequesters = rememberFocusRequesterMap()
     val appDrawerOptionsDialogState = rememberDialogState<Unit>()
@@ -312,7 +313,11 @@ fun AppDrawerTab(
                             onEmptySlotLongClick = { position ->
                                 dockManager.removeEmptySlot(position)
                             },
-                            onDockPositioned = onDockPositioned
+                            onDockPositioned = onDockPositioned,
+                            firstItemFocusRequester = dockFocusRequester,
+                            onNavigateUp = {
+                                runCatching { menuIconFocusRequester.requestFocus() }
+                            },
                         )
                     }
                 }

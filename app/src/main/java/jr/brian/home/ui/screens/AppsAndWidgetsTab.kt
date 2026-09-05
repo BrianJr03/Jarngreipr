@@ -214,6 +214,7 @@ fun AppsAndWidgetsTab(
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
     val settingsIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val dockFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
     val gridState = rememberLazyGridState()
 
@@ -414,7 +415,11 @@ fun AppsAndWidgetsTab(
                 onEmptySlotLongClick = { position ->
                     dockManager.removeEmptySlot(position)
                 },
-                onDockPositioned = onDockPositioned
+                onDockPositioned = onDockPositioned,
+                firstItemFocusRequester = dockFocusRequester,
+                onNavigateUp = {
+                    runCatching { settingsIconFocusRequester.requestFocus() }
+                },
             )
         }
 

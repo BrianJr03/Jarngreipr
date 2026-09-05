@@ -66,7 +66,8 @@ fun AppsTabContent(
     scrollEnabled: Boolean = true,
     pinnedRoms: List<PinnedRomInfo> = emptyList(),
     onRomClick: (PinnedRomInfo) -> Unit = {},
-    onRomRemove: (PinnedRomInfo) -> Unit = {}
+    onRomRemove: (PinnedRomInfo) -> Unit = {},
+    onNavigateDownFromGrid: () -> Unit = {},
 ) {
     val gridSettingsManager = LocalGridSettingsManager.current
     val rows = gridSettingsManager.rowCount
@@ -146,6 +147,7 @@ fun AppsTabContent(
                 appFocusRequesters = appFocusRequesters,
                 onFocusChanged = onAppFocusChanged,
                 onNavigateLeft = {},
+                onNavigateDown = onNavigateDownFromGrid,
                 onAppClick = onAppClick,
                 onAppLongClick = onAppLongClick,
                 onAppDoubleClick = onAppDoubleClick,

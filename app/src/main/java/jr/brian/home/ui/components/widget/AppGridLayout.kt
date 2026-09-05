@@ -39,6 +39,10 @@ fun AppGridLayout(
     appFocusRequesters: SnapshotStateMap<Int, FocusRequester>,
     onFocusChanged: (Int) -> Unit = {},
     onNavigateLeft: () -> Unit = {},
+    // Invoked when DPAD_DOWN is pressed on a cell in the last populated row and
+    // there's no further row to move into. Lets the parent hand focus off to
+    // something below the grid (e.g. the dock).
+    onNavigateDown: () -> Unit = {},
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
     onAppDoubleClick: (AppInfo) -> Unit = {},
@@ -101,6 +105,8 @@ fun AppGridLayout(
                             gridState.animateScrollToItem(nextIndex)
                         }
                         appFocusRequesters[nextIndex]?.requestFocus()
+                    } else {
+                        onNavigateDown()
                     }
                 },
                 onNavigateLeft = {

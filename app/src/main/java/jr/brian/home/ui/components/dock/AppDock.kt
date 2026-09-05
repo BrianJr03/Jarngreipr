@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -32,6 +34,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import jr.brian.home.ui.extensions.handleDPadNavigation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.DockSize
@@ -57,7 +60,14 @@ fun AppDock(
     onAppLongClick: (AppInfo) -> Unit,
     onEmptySlotClick: (Int) -> Unit,
     onEmptySlotLongClick: (Int) -> Unit,
-    onDockPositioned: ((Float) -> Unit)? = null
+    onDockPositioned: ((Float) -> Unit)? = null,
+    // Attached to slot 0 so callers can programmatically move D-pad focus into
+    // the dock (e.g. when DPAD_DOWN falls off the last row of the app grid).
+    firstItemFocusRequester: FocusRequester? = null,
+    // Invoked when a dock icon receives DPAD_UP. Callers wire this back to
+    // whatever should regain focus above the dock (typically the last-focused
+    // grid item). Nullable so we don't swallow the key when no target exists.
+    onNavigateUp: (() -> Unit)? = null,
 ) {
     val dockManager = LocalDockManager.current
     val dockPackageNames by dockManager.dockApps.collectAsStateWithLifecycle()
@@ -99,19 +109,24 @@ fun AppDock(
                     }
 
                     key(packageName ?: "empty_$i") {
+                        val slotFocusRequester = firstItemFocusRequester?.takeIf { i == 0 }
                         if (app != null) {
                             DockAppItem(
                                 app = app,
                                 size = dockSize,
                                 onClick = { onAppClick(app) },
                                 onDoubleClick = { onAppDoubleClick(app) },
-                                onLongClick = { onAppLongClick(app) }
+                                onLongClick = { onAppLongClick(app) },
+                                focusRequester = slotFocusRequester,
+                                onNavigateUp = onNavigateUp,
                             )
                         } else {
                             DockEmptySlot(
                                 size = dockSize,
                                 onClick = { onEmptySlotClick(i) },
-                                onLongClick = { onEmptySlotLongClick(i) }
+                                onLongClick = { onEmptySlotLongClick(i) },
+                                focusRequester = slotFocusRequester,
+                                onNavigateUp = onNavigateUp,
                             )
                         }
                     }
@@ -128,7 +143,9 @@ private fun DockAppItem(
     size: DockSize,
     onClick: () -> Unit,
     onDoubleClick: () -> Unit = {},
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    focusRequester: FocusRequester? = null,
+    onNavigateUp: (() -> Unit)? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
@@ -148,6 +165,7 @@ private fun DockAppItem(
                 alpha = enterAlpha
             )
             .scale(animatedFocusedScale(isFocused))
+            .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
             .onFocusChanged { isFocused = it.isFocused }
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
@@ -165,6 +183,7 @@ private fun DockAppItem(
                 onDoubleClick = onDoubleClick,
                 onLongClick = onLongClick
             )
+            .handleDPadNavigation(onNavigateUp = onNavigateUp)
             .focusable(),
         contentAlignment = Alignment.Center
     ) {
@@ -183,7 +202,9 @@ private fun DockAppItem(
 private fun DockEmptySlot(
     size: DockSize,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    focusRequester: FocusRequester? = null,
+    onNavigateUp: (() -> Unit)? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
@@ -202,6 +223,7 @@ private fun DockEmptySlot(
                 alpha = enterAlpha
             )
             .scale(animatedFocusedScale(isFocused))
+            .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
             .onFocusChanged { isFocused = it.isFocused }
             .background(
                 color = OledCardColor.copy(alpha = 0.3f),
@@ -222,6 +244,7 @@ private fun DockEmptySlot(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
+            .handleDPadNavigation(onNavigateUp = onNavigateUp)
             .focusable(),
         contentAlignment = Alignment.Center
     ) {}
