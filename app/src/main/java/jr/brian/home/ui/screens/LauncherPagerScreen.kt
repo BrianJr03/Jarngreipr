@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -125,6 +126,7 @@ fun LauncherPagerScreen(
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
     val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
     val appDrawerFilterByPage by powerSettingsManager.appDrawerFilterByPage.collectAsStateWithLifecycle()
+    val pagerSwipeSensitivity by powerSettingsManager.pagerSwipeSensitivity.collectAsStateWithLifecycle()
 
     var resizePageIndex by remember { mutableIntStateOf(0) }
     var showResizeScreen by remember { mutableStateOf(false) }
@@ -296,6 +298,17 @@ fun LauncherPagerScreen(
                 }
             }
 
+            // Map sensitivity 0..100 → snapPositionalThreshold 0.5..0.15.
+            // Lower threshold = shorter finger travel needed to commit to the
+            // next page; useful on the mjolnir secondary display where touch
+            // sampling feels less responsive.
+            val snapPositionalThreshold =
+                0.5f - (pagerSwipeSensitivity.coerceIn(0, 100) / 100f) * 0.35f
+            val pagerFlingBehavior = PagerDefaults.flingBehavior(
+                state = pagerState,
+                snapPositionalThreshold = snapPositionalThreshold,
+            )
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -303,6 +316,7 @@ fun LauncherPagerScreen(
                     .graphicsLayer { alpha = pagerAlpha },
                 beyondViewportPageCount = 2,
                 userScrollEnabled = pagerVisible,
+                flingBehavior = pagerFlingBehavior,
             ) { page ->
                 val pageType =
                     if (page < pageTypes.size) pageTypes[page] else PageType.APPS_TAB

@@ -39,6 +39,9 @@ class PowerSettingsManager(context: Context) {
     private val _appDrawerFilterByPage = MutableStateFlow(loadAppDrawerFilterByPage())
     val appDrawerFilterByPage: StateFlow<Boolean> = _appDrawerFilterByPage.asStateFlow()
 
+    private val _pagerSwipeSensitivity = MutableStateFlow(loadPagerSwipeSensitivity())
+    val pagerSwipeSensitivity: StateFlow<Int> = _pagerSwipeSensitivity.asStateFlow()
+
     private fun loadPowerButtonVisibility(): Boolean {
         return prefs.getBoolean(KEY_POWER_BUTTON_VISIBLE, false)
     }
@@ -83,6 +86,10 @@ class PowerSettingsManager(context: Context) {
 
     private fun loadAppDrawerFilterByPage(): Boolean {
         return prefs.getBoolean(KEY_APP_DRAWER_FILTER_BY_PAGE, false)
+    }
+
+    private fun loadPagerSwipeSensitivity(): Int {
+        return prefs.getInt(KEY_PAGER_SWIPE_SENSITIVITY, DEFAULT_PAGER_SWIPE_SENSITIVITY)
     }
 
     fun setPowerButtonVisibility(visible: Boolean) {
@@ -158,6 +165,15 @@ class PowerSettingsManager(context: Context) {
         }
     }
 
+    fun setPagerSwipeSensitivity(value: Int) {
+        val coerced = value.coerceIn(MIN_PAGER_SWIPE_SENSITIVITY, MAX_PAGER_SWIPE_SENSITIVITY)
+        _pagerSwipeSensitivity.value = coerced
+        prefs.edit().apply {
+            putInt(KEY_PAGER_SWIPE_SENSITIVITY, coerced)
+            apply()
+        }
+    }
+
     fun resetBackButtonShortcut() {
         _backButtonShortcut.value = BackButtonShortcut.NONE
         _backButtonShortcutAppPackage.value = null
@@ -179,8 +195,12 @@ class PowerSettingsManager(context: Context) {
         private const val KEY_BACK_BUTTON_SHORTCUT_APP_PACKAGE = "back_button_shortcut_app_package"
         private const val KEY_POWERED_OFF_BRIGHTNESS = "powered_off_brightness"
         private const val KEY_APP_DRAWER_FILTER_BY_PAGE = "app_drawer_filter_by_page"
+        private const val KEY_PAGER_SWIPE_SENSITIVITY = "pager_swipe_sensitivity"
         const val DEFAULT_POWERED_OFF_BRIGHTNESS = 40
         const val MIN_POWERED_OFF_BRIGHTNESS = 5
         const val MAX_POWERED_OFF_BRIGHTNESS = 100
+        const val DEFAULT_PAGER_SWIPE_SENSITIVITY = 0
+        const val MIN_PAGER_SWIPE_SENSITIVITY = 0
+        const val MAX_PAGER_SWIPE_SENSITIVITY = 100
     }
 }

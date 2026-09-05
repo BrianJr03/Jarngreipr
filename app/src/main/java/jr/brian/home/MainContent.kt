@@ -263,8 +263,20 @@ fun MainContent(
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
+                    Intent.ACTION_PACKAGE_REMOVED -> {
+                        // EXTRA_REPLACING is true during an update — the app
+                        // is not really going away, so we leave the dock slot
+                        // alone. Only drop the package on a true uninstall,
+                        // otherwise the dock would clear on every update.
+                        val isReplacing =
+                            intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
+                        val pkg = intent.data?.schemeSpecificPart
+                        if (!isReplacing && pkg != null) {
+                            managers.feature.dockManager.removeAppFromDock(pkg)
+                        }
+                        context?.let { mainViewModel.loadAllApps(it) }
+                    }
                     Intent.ACTION_PACKAGE_ADDED,
-                    Intent.ACTION_PACKAGE_REMOVED,
                     Intent.ACTION_PACKAGE_CHANGED -> {
                         context?.let { mainViewModel.loadAllApps(it) }
                     }
