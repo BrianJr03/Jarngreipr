@@ -7,6 +7,7 @@
 **Improvements**
 - You can now reach the dock with the D-pad. Press down from the app grid to focus dock icons, and up to return
 - Added a Swipe Sensitivity slider in `Settings → Layout settings → Swipe Sensitivity` that applies when swiping through Tabs
+- You can now tap an empty slot in the dock preview (`Settings → Dock`) to add an app to it
 
 **Coming Soon**
  - More updates on Jarngreipr Frontend including

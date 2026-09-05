@@ -36,7 +36,8 @@ import jr.brian.home.ui.theme.managers.LocalDockManager
 fun SwappableDockPreview(
     apps: List<AppInfo>,
     dockColor: Color,
-    dockSize: DockSize
+    dockSize: DockSize,
+    onEmptySlotClick: (Int) -> Unit = {},
 ) {
     val dockManager = LocalDockManager.current
     val dockPackageNames by dockManager.dockApps.collectAsStateWithLifecycle()
@@ -47,12 +48,11 @@ fun SwappableDockPreview(
     fun handleAppClick(index: Int) {
         val currentDockApps = dockPackageNames
         if (currentDockApps[index].isEmpty()) {
-            if (swapModeEnabled && selectedIndex == index) {
-                swapModeEnabled = false
-                selectedIndex = -1
-            } else {
-                selectedIndex = index
-            }
+            // Cancel any in-progress swap so state is clean when the picker
+            // returns — the user's mental model shifts from "reorder" to "add".
+            swapModeEnabled = false
+            selectedIndex = -1
+            onEmptySlotClick(index)
             return
         }
 
