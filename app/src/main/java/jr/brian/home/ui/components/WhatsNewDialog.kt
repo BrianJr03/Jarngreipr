@@ -58,7 +58,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
-import jr.brian.home.ui.components.dialog.DimmedBottomSheet
+import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.components.konfetti.KonfettiPreset
 import jr.brian.home.ui.extensions.clickWithHaptic
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -76,7 +76,7 @@ fun WhatsNewDialog(
 //    var konfettiTrigger by remember { mutableIntStateOf(0) }
 //    var isKonfettiPlaying by remember { mutableStateOf(selectedPreset != KonfettiPreset.NONE) }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier

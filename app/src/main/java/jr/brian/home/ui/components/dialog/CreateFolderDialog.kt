@@ -96,7 +96,7 @@ fun CreateFolderDialog(
         selectedApps.size == allApps.size && allApps.isNotEmpty()
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

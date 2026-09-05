@@ -326,22 +326,22 @@ class BgMusicManager @Inject constructor(
         nextMediaPlayer?.runCatching { release() }
         nextMediaPlayer = null
 
-        mediaPlayer = buildFolderPlayer(uri).also { player ->
-            player.setOnPreparedListener { mp ->
-                if (!requestAudioFocus()) return@setOnPreparedListener
-                if (isMuted) {
-                    // Start then immediately pause — keeps player in a valid,
-                    // resumable state without sending any audio to the mixer.
-                    mp.start()
-                    mp.pause()
-                    isMutePaused = true
-                } else {
-                    mp.start()
-                    // Start pre-buffering the next track now that playback is live
-                    prebufferNextFolderTrack()
-                }
+        val player = buildFolderPlayer(uri) ?: return
+        player.setOnPreparedListener { mp ->
+            if (!requestAudioFocus()) return@setOnPreparedListener
+            if (isMuted) {
+                mp.start()
+                mp.pause()
+                isMutePaused = true
+            } else {
+                mp.start()
+                prebufferNextFolderTrack()
             }
-            player.prepareAsync()
+        }
+        mediaPlayer = player
+        if (!player.prepareAsyncSafely()) {
+            mediaPlayer = null
+            player.runCatching { release() }
         }
     }
 
@@ -356,12 +356,17 @@ class BgMusicManager @Inject constructor(
         val nextUri = playlist[nextIndex]
 
         nextMediaPlayer?.runCatching { release() }
-        nextMediaPlayer = buildFolderPlayer(nextUri).also { next ->
-            next.setOnPreparedListener { preparedNext ->
-                // Chain: when the current track ends, the OS starts preparedNext seamlessly
-                mediaPlayer?.setNextMediaPlayer(preparedNext)
-            }
-            next.prepareAsync()
+        val next = buildFolderPlayer(nextUri) ?: run {
+            nextMediaPlayer = null
+            return
+        }
+        next.setOnPreparedListener { preparedNext ->
+            mediaPlayer?.setNextMediaPlayer(preparedNext)
+        }
+        nextMediaPlayer = next
+        if (!next.prepareAsyncSafely()) {
+            nextMediaPlayer = null
+            next.runCatching { release() }
         }
     }
 
@@ -369,35 +374,38 @@ class BgMusicManager @Inject constructor(
      * Builds a [MediaPlayer] for folder playback.
      * The completion listener advances state and pre-buffers the track after next.
      */
-    private fun buildFolderPlayer(uri: Uri): MediaPlayer {
-        return MediaPlayer().apply {
-            runCatching {
-                setDataSource(context, uri)
-                setVolume(effectiveVolume(), effectiveVolume())
+    private fun buildFolderPlayer(uri: Uri): MediaPlayer? {
+        val player = MediaPlayer()
+        val configured = player.runCatching {
+            setDataSource(context, uri)
+            setVolume(effectiveVolume(), effectiveVolume())
 
-                // onCompletion fires after the OS transitions to the next player,
-                // so at this point nextMediaPlayer IS the current player.
-                setOnCompletionListener {
-                    mediaPlayer?.runCatching { release() }
-                    mediaPlayer = nextMediaPlayer
-                    nextMediaPlayer = null
-                    if (playlist.isNotEmpty()) {
-                        currentIndex = (currentIndex + 1) % playlist.size
-                        // Only pre-buffer if not muted (no point buffering if paused)
-                        if (!isMuted) prebufferNextFolderTrack()
-                    }
-                }
-
-                setOnErrorListener { _, _, _ ->
-                    // Skip broken track and try the next one
-                    if (playlist.isNotEmpty()) {
-                        currentIndex = (currentIndex + 1) % playlist.size
-                        playFolderTrack(playlist[currentIndex])
-                    }
-                    true
+            // onCompletion fires after the OS transitions to the next player,
+            // so at this point nextMediaPlayer IS the current player.
+            setOnCompletionListener {
+                mediaPlayer?.runCatching { release() }
+                mediaPlayer = nextMediaPlayer
+                nextMediaPlayer = null
+                if (playlist.isNotEmpty()) {
+                    currentIndex = (currentIndex + 1) % playlist.size
+                    if (!isMuted) prebufferNextFolderTrack()
                 }
             }
+
+            setOnErrorListener { _, _, _ ->
+                if (playlist.isNotEmpty()) {
+                    currentIndex = (currentIndex + 1) % playlist.size
+                    playFolderTrack(playlist[currentIndex])
+                }
+                true
+            }
+        }.isSuccess
+
+        if (!configured) {
+            player.runCatching { release() }
+            return null
         }
+        return player
     }
 
     /**
@@ -409,35 +417,39 @@ class BgMusicManager @Inject constructor(
     private fun startSingleFilePlayback() {
         val uri = singleFileUri?.toUri() ?: return
 
-        // Build the primary player
         mediaPlayer?.runCatching { release() }
         nextMediaPlayer?.runCatching { release() }
         nextMediaPlayer = null
 
-        mediaPlayer = buildSingleFilePlayer(uri).also { primary ->
-            primary.setOnPreparedListener { mp ->
-                if (!requestAudioFocus()) return@setOnPreparedListener
+        val primary = buildSingleFilePlayer(uri) ?: return
+        primary.setOnPreparedListener { mp ->
+            if (!requestAudioFocus()) return@setOnPreparedListener
 
-                if (isMuted) {
-                    // Start then immediately pause — keeps player resumable
-                    // without sending any audio to the mixer.
-                    mp.start()
-                    mp.pause()
-                    isMutePaused = true
-                } else {
-                    // Build and prepare the looper before primary starts so it
-                    // is ready to be chained immediately after prepare.
-                    val looper = buildSingleFilePlayer(uri).also { next ->
-                        next.setOnPreparedListener { preparedNext ->
-                            mp.setNextMediaPlayer(preparedNext)
-                        }
-                        next.prepareAsync()
+            if (isMuted) {
+                mp.start()
+                mp.pause()
+                isMutePaused = true
+            } else {
+                // Build and prepare the looper before primary starts so it
+                // is ready to be chained immediately after prepare.
+                val looper = buildSingleFilePlayer(uri)
+                if (looper != null) {
+                    looper.setOnPreparedListener { preparedNext ->
+                        mp.setNextMediaPlayer(preparedNext)
                     }
                     nextMediaPlayer = looper
-                    mp.start()
+                    if (!looper.prepareAsyncSafely()) {
+                        nextMediaPlayer = null
+                        looper.runCatching { release() }
+                    }
                 }
+                mp.start()
             }
-            primary.prepareAsync()
+        }
+        mediaPlayer = primary
+        if (!primary.prepareAsyncSafely()) {
+            mediaPlayer = null
+            primary.runCatching { release() }
         }
     }
 
@@ -446,32 +458,42 @@ class BgMusicManager @Inject constructor(
      * On completion, the active players are rotated and a fresh player
      * is buffered for the next loop iteration.
      */
-    private fun buildSingleFilePlayer(uri: Uri): MediaPlayer {
-        return MediaPlayer().apply {
-            runCatching {
-                setDataSource(context, uri)
-                setVolume(effectiveVolume(), effectiveVolume())
+    private fun buildSingleFilePlayer(uri: Uri): MediaPlayer? {
+        val player = MediaPlayer()
+        val configured = player.runCatching {
+            setDataSource(context, uri)
+            setVolume(effectiveVolume(), effectiveVolume())
 
-                setOnCompletionListener {
-                    // Rotate: nextMediaPlayer becomes the active one
-                    mediaPlayer?.runCatching { release() }
-                    mediaPlayer = nextMediaPlayer
-                    nextMediaPlayer = null
+            setOnCompletionListener {
+                mediaPlayer?.runCatching { release() }
+                mediaPlayer = nextMediaPlayer
+                nextMediaPlayer = null
 
-                    // Only buffer next if not muted
-                    if (!isMuted) {
-                        val next = buildSingleFilePlayer(uri).also { fresh ->
-                            fresh.setOnPreparedListener { preparedFresh ->
-                                mediaPlayer?.setNextMediaPlayer(preparedFresh)
-                            }
-                            fresh.prepareAsync()
+                if (!isMuted) {
+                    val fresh = buildSingleFilePlayer(uri)
+                    if (fresh != null) {
+                        fresh.setOnPreparedListener { preparedFresh ->
+                            mediaPlayer?.setNextMediaPlayer(preparedFresh)
                         }
-                        nextMediaPlayer = next
+                        nextMediaPlayer = fresh
+                        if (!fresh.prepareAsyncSafely()) {
+                            nextMediaPlayer = null
+                            fresh.runCatching { release() }
+                        }
                     }
                 }
-
-                setOnErrorListener { _, _, _ -> true }
             }
+
+            setOnErrorListener { _, _, _ -> true }
+        }.isSuccess
+
+        if (!configured) {
+            player.runCatching { release() }
+            return null
         }
+        return player
     }
+
+    private fun MediaPlayer.prepareAsyncSafely(): Boolean =
+        runCatching { prepareAsync() }.isSuccess
 }

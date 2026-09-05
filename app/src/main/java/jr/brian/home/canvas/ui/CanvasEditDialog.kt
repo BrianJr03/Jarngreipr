@@ -61,6 +61,7 @@ fun ColumnScope.EditCanvasContent(
     onOrientationChanged: (CanvasScrollOrientation) -> Unit,
     onGridChanged: (columns: Int, rows: Int) -> Unit,
     onEditModeChanged: (Boolean) -> Unit,
+    onMenuButtonVisibilityChanged: (Boolean) -> Unit,
     onTidy: () -> Unit,
     onDismiss: () -> Unit = {}
 ) {
@@ -68,6 +69,9 @@ fun ColumnScope.EditCanvasContent(
     var columns by remember(layout.verticalColumns) { mutableStateOf(layout.verticalColumns) }
     var rows by remember(layout.horizontalRows) { mutableStateOf(layout.horizontalRows) }
     var editMode by remember(layout.editMode) { mutableStateOf(layout.editMode) }
+    var menuButtonVisible by remember(layout.menuButtonVisible) {
+        mutableStateOf(layout.menuButtonVisible)
+    }
 
     var isWallpaperExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -93,6 +97,14 @@ fun ColumnScope.EditCanvasContent(
                 onToggle = {
                     editMode = it
                     onEditModeChanged(it)
+                }
+            )
+
+            MenuButtonVisibilityToggle(
+                visible = menuButtonVisible,
+                onToggle = {
+                    menuButtonVisible = it
+                    onMenuButtonVisibilityChanged(it)
                 }
             )
 
@@ -172,6 +184,46 @@ private fun TidyControl(onTidy: () -> Unit) {
         )
         Text(
             text = stringResource(R.string.canvas_tidy_hint),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
+private fun MenuButtonVisibilityToggle(
+    visible: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.canvas_menu_button_label),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OrientationChip(
+                label = stringResource(R.string.canvas_edit_mode_on),
+                isSelected = visible,
+                onClick = { onToggle(true) },
+                modifier = Modifier.weight(1f)
+            )
+            OrientationChip(
+                label = stringResource(R.string.canvas_edit_mode_off),
+                isSelected = !visible,
+                onClick = { onToggle(false) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Text(
+            text = stringResource(
+                if (visible) R.string.canvas_menu_button_visible_hint
+                else R.string.canvas_menu_button_hidden_hint
+            ),
             color = Color.White.copy(alpha = 0.6f),
             fontSize = 12.sp
         )

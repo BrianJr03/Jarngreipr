@@ -45,7 +45,7 @@ import jr.brian.home.esde.model.WarningType
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedBottomSheet
+import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 
@@ -64,7 +64,7 @@ fun SetupWizardDialog(
     onWarningContinue: () -> Unit,
     onWarningChooseAgain: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = {}) {
+    AppBottomSheet(onDismissRequest = {}) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

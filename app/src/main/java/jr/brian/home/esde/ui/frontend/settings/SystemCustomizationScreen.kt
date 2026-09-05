@@ -1,0 +1,960 @@
+package jr.brian.home.esde.ui.frontend.settings
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.DocumentsContract
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import jr.brian.home.R
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.clearSafTreeUri
+import jr.brian.home.esde.data.getSafTreeUri
+import jr.brian.home.esde.data.getSystemFolderMapping
+import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.model.SystemCustomization
+import jr.brian.home.esde.ui.components.ToggleSetting
+import jr.brian.home.esde.util.LocalESDEImageLoader
+import jr.brian.home.esde.util.buildAetherDocUri
+import jr.brian.home.esde.util.persistSafTreeForSystem
+import jr.brian.home.esde.util.resolveRomPath
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.ui.animations.animatedFocusedScale
+import jr.brian.home.ui.colors.subtleCardGradient
+import jr.brian.home.ui.theme.OledBackgroundColor
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+@Composable
+fun SystemCustomizationScreen(
+    systemName: String,
+    customization: SystemCustomization,
+    esdePrefs: ESDEPreferencesManager,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    onDismiss: () -> Unit,
+    onChange: (SystemCustomization) -> Unit,
+    onReset: () -> Unit,
+    onEnterReorder: () -> Unit
+) {
+    val cursor = rememberRailCursorState(
+        entries = SystemCustomizationCategory.entries,
+        initial = SystemCustomizationCategory.BACKGROUND
+    )
+    val storageRowState = rememberStorageRowState(
+        systemName = systemName,
+        esdePrefs = esdePrefs,
+    )
+    // A mapping owns the SAF tree for this system and disables the pick /
+    // clear rows on the storage tab. Reflect that in the row count so D-pad
+    // navigation doesn't advance past what's rendered.
+    val storageEditable = esdePrefs.getSystemFolderMapping(systemName) == null
+    val rowCount = rowCountFor(
+        cursor.selectedCategory,
+        storageRowState.hasTree && storageEditable,
+    )
+    val rootFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
+
+    val registerHorizontal = remember(cursor) {
+        { claims: Boolean -> cursor.registerHorizontal(claims) }
+    }
+
+    CompositionLocalProvider(
+        LocalRowActivation provides cursor.activationTick,
+        LocalRowStep provides cursor.horizontalStep,
+        LocalHorizontalRowRegistration provides registerHorizontal
+    ) {
+        Surface(
+            color = OledBackgroundColor,
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(rootFocus)
+                .focusTarget()
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    cursor.handleKey(
+                        keyCode = event.nativeKeyEvent.keyCode,
+                        rowCount = rowCount,
+                        onClose = onDismiss
+                    )
+                }
+        ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                CategoryRail(
+                    headerText = systemName.uppercase(),
+                    entries = SystemCustomizationCategory.entries,
+                    selected = cursor.selectedCategory,
+                    railHasFocus = cursor.focusOnRail
+                )
+                CustomizationRowPane(
+                    category = cursor.selectedCategory,
+                    customization = customization,
+                    focusedRow = if (cursor.focusOnRail) -1 else cursor.focusedRow,
+                    storageRowState = storageRowState,
+                    systemName = systemName,
+                    gamesForSystem = gamesForSystem,
+                    romsPaths = romsPaths,
+                    esdePrefs = esdePrefs,
+                    onChange = onChange,
+                    onReset = onReset,
+                    onEnterReorder = onEnterReorder
+                )
+            }
+        }
+    }
+}
+
+private fun rowCountFor(
+    category: SystemCustomizationCategory,
+    storageHasTree: Boolean,
+): Int = when (category) {
+    SystemCustomizationCategory.BACKGROUND -> 3
+    SystemCustomizationCategory.COLOR -> 6
+    // Refresh + Reorder + Reset.
+    SystemCustomizationCategory.ACTIONS -> 3
+    // Pick row + optional Clear row.
+    SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
+}
+
+@Composable
+private fun CustomizationRowPane(
+    category: SystemCustomizationCategory,
+    customization: SystemCustomization,
+    focusedRow: Int,
+    storageRowState: StorageRowState,
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+    onChange: (SystemCustomization) -> Unit,
+    onReset: () -> Unit,
+    onEnterReorder: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 12.dp, end = 16.dp, bottom = 16.dp)
+    ) {
+        PaneHeader(category = category)
+        Spacer(Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(PaddingValues(end = 4.dp)),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            CustomizationRows(
+                category = category,
+                customization = customization,
+                focusedRow = focusedRow,
+                storageRowState = storageRowState,
+                systemName = systemName,
+                gamesForSystem = gamesForSystem,
+                romsPaths = romsPaths,
+                esdePrefs = esdePrefs,
+                onChange = onChange,
+                onReset = onReset,
+                onEnterReorder = onEnterReorder
+            )
+        }
+    }
+}
+
+@Composable
+private fun PaneHeader(category: SystemCustomizationCategory) {
+    Column {
+        Text(
+            text = stringResource(category.titleRes),
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = stringResource(category.summaryRes),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 13.sp
+        )
+    }
+}
+
+@Composable
+private fun CustomizationRows(
+    category: SystemCustomizationCategory,
+    customization: SystemCustomization,
+    focusedRow: Int,
+    storageRowState: StorageRowState,
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+    onChange: (SystemCustomization) -> Unit,
+    onReset: () -> Unit,
+    onEnterReorder: () -> Unit
+) {
+    when (category) {
+        SystemCustomizationCategory.BACKGROUND -> BackgroundRows(
+            customization = customization,
+            focusedRow = focusedRow,
+            onChange = onChange
+        )
+        SystemCustomizationCategory.COLOR -> ColorRows(
+            customization = customization,
+            focusedRow = focusedRow,
+            onChange = onChange
+        )
+        SystemCustomizationCategory.ACTIONS -> ActionRows(
+            systemName = systemName,
+            focusedRow = focusedRow,
+            onReset = onReset,
+            onEnterReorder = onEnterReorder
+        )
+        SystemCustomizationCategory.STORAGE -> StorageRows(
+            systemName = systemName,
+            state = storageRowState,
+            gamesForSystem = gamesForSystem,
+            romsPaths = romsPaths,
+            esdePrefs = esdePrefs,
+            focusedRow = focusedRow,
+        )
+    }
+}
+
+@Composable
+private fun BackgroundRows(
+    customization: SystemCustomization,
+    focusedRow: Int,
+    onChange: (SystemCustomization) -> Unit
+) {
+    val tileFocused = focusedRow == 0
+    val focusBgFocused = focusedRow == 1
+    val showNameFocused = focusedRow == 2
+
+    BackgroundPickerRow(
+        title = stringResource(R.string.frontend_customize_tile_background_title),
+        chooseLabel = stringResource(R.string.frontend_customize_choose_background),
+        changeLabel = stringResource(R.string.frontend_customize_change_background),
+        uri = customization.backgroundUri,
+        focused = tileFocused,
+        onChangeUri = { onChange(customization.copy(backgroundUri = it)) }
+    )
+
+    BackgroundPickerRow(
+        title = stringResource(R.string.frontend_customize_focus_background_section),
+        chooseLabel = stringResource(R.string.frontend_customize_choose_focus_background),
+        changeLabel = stringResource(R.string.frontend_customize_change_focus_background),
+        uri = customization.focusBackgroundUri,
+        focused = focusBgFocused,
+        onChangeUri = { onChange(customization.copy(focusBackgroundUri = it)) }
+    )
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ActivateOnConfirm(focused = showNameFocused) {
+            onChange(customization.copy(showName = !customization.showName))
+        }
+        ToggleSetting(
+            title = stringResource(R.string.frontend_customize_show_name),
+            description = stringResource(R.string.frontend_customize_show_name_description),
+            checked = customization.showName,
+            onCheckedChange = { onChange(customization.copy(showName = it)) },
+            focused = showNameFocused
+        )
+    }
+}
+
+@Composable
+private fun BackgroundPickerRow(
+    title: String,
+    chooseLabel: String,
+    changeLabel: String,
+    uri: String?,
+    focused: Boolean,
+    onChangeUri: (String?) -> Unit
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { picked ->
+        if (picked != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    picked,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            onChangeUri(picked.toString())
+        }
+    }
+
+    val hasUri = uri != null
+    ActivateOnConfirm(focused = focused) { launcher.launch(BACKGROUND_MIME_TYPES) }
+
+    if (hasUri) {
+        RegisterForHorizontalSteps(focused)
+        StepOnHorizontal(focused) { delta ->
+            if (delta > 0) onChangeUri(null)
+        }
+    }
+
+    val removeLabel = stringResource(R.string.frontend_customize_remove_trailing)
+    BackgroundPickerCard(
+        title = title,
+        primaryLabel = if (hasUri) changeLabel else chooseLabel,
+        trailingLabel = if (hasUri) removeLabel else null,
+        previewUri = uri,
+        focused = focused
+    )
+}
+
+@Composable
+private fun BackgroundPickerCard(
+    title: String,
+    primaryLabel: String,
+    trailingLabel: String?,
+    previewUri: String?,
+    focused: Boolean
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(focused))
+            .background(brush = subtleCardGradient(focused), shape = shape)
+            .border(
+                width = if (focused) 2.dp else 0.dp,
+                color = if (focused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = shape
+            )
+            .clip(shape)
+            .revealWhenFocused(focused)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BackgroundPickerThumbnail(uri = previewUri)
+        if (previewUri != null) Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = primaryLabel,
+                color = Color.Gray,
+                fontSize = 13.sp
+            )
+        }
+        if (trailingLabel != null) {
+            Text(
+                text = trailingLabel,
+                color = ThemePrimaryColor,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun BackgroundPickerThumbnail(uri: String?) {
+    if (uri == null) return
+    val context = LocalContext.current
+    val imageLoader = LocalESDEImageLoader.current
+    val shape = RoundedCornerShape(8.dp)
+    AsyncImage(
+        model = ImageRequest.Builder(context).data(uri).build(),
+        imageLoader = imageLoader,
+        contentDescription = null,
+        modifier = Modifier
+            .size(48.dp)
+            .clip(shape)
+            .background(Color.Black.copy(alpha = 0.4f), shape)
+    )
+}
+
+@Composable
+private fun ColorRows(
+    customization: SystemCustomization,
+    focusedRow: Int,
+    onChange: (SystemCustomization) -> Unit
+) {
+    val current = customization.solidColorArgb
+    val channels = argbToChannels(current)
+
+    val commit: (ColorChannels) -> Unit = { updated ->
+        val argb = channelsToArgb(updated)
+        onChange(customization.copy(solidColorArgb = argb))
+    }
+
+    val defaultFocused = focusedRow == 0
+    val transparentFocused = focusedRow == 1
+    val hueFocused = focusedRow == 2
+    val satFocused = focusedRow == 3
+    val brightFocused = focusedRow == 4
+    val alphaFocused = focusedRow == 5
+
+    ColorPreviewSwatch(channels = channels)
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ActivateOnConfirm(focused = defaultFocused) {
+            onChange(customization.copy(solidColorArgb = null))
+        }
+        ColorPresetRow(
+            title = stringResource(R.string.frontend_customize_color_default),
+            focused = defaultFocused,
+            isSelected = current == null,
+            isTransparent = false,
+            isDefault = true
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ActivateOnConfirm(focused = transparentFocused) {
+            onChange(customization.copy(solidColorArgb = SystemCustomization.TRANSPARENT_ARGB))
+        }
+        ColorPresetRow(
+            title = stringResource(R.string.frontend_customize_color_transparent),
+            focused = transparentFocused,
+            isSelected = current == SystemCustomization.TRANSPARENT_ARGB,
+            isTransparent = true,
+            isDefault = false
+        )
+    }
+
+    ColorChannelStepperRow(
+        title = stringResource(R.string.frontend_customize_channel_hue),
+        focused = hueFocused,
+        normalizedValue = channels.hueDegrees / 360f,
+        displayValue = stringResource(R.string.frontend_customize_channel_hue_value, channels.hueDegrees.toInt()),
+        onStep = { delta ->
+            val next = (channels.hueDegrees + delta * HUE_STEP).let {
+                val wrapped = it % 360f
+                if (wrapped < 0f) wrapped + 360f else wrapped
+            }
+            commit(channels.copy(hueDegrees = next))
+        }
+    )
+    ColorChannelStepperRow(
+        title = stringResource(R.string.frontend_customize_channel_saturation),
+        focused = satFocused,
+        normalizedValue = channels.saturation,
+        displayValue = stringResource(R.string.frontend_customize_channel_percent, (channels.saturation * 100).toInt()),
+        onStep = { delta ->
+            val next = (channels.saturation + delta * SAT_STEP).coerceIn(0f, 1f)
+            commit(channels.copy(saturation = next))
+        }
+    )
+    ColorChannelStepperRow(
+        title = stringResource(R.string.frontend_customize_channel_brightness),
+        focused = brightFocused,
+        normalizedValue = channels.brightness,
+        displayValue = stringResource(R.string.frontend_customize_channel_percent, (channels.brightness * 100).toInt()),
+        onStep = { delta ->
+            val next = (channels.brightness + delta * BRIGHT_STEP).coerceIn(0f, 1f)
+            commit(channels.copy(brightness = next))
+        }
+    )
+    ColorChannelStepperRow(
+        title = stringResource(R.string.frontend_customize_channel_opacity),
+        focused = alphaFocused,
+        normalizedValue = channels.alpha,
+        displayValue = stringResource(R.string.frontend_customize_channel_percent, (channels.alpha * 100).toInt()),
+        onStep = { delta ->
+            val next = (channels.alpha + delta * ALPHA_STEP).coerceIn(0f, 1f)
+            commit(channels.copy(alpha = next))
+        }
+    )
+}
+
+@Composable
+private fun ActionRows(
+    systemName: String,
+    focusedRow: Int,
+    onReset: () -> Unit,
+    onEnterReorder: () -> Unit
+) {
+    val refreshFocused = focusedRow == 0
+    val reorderFocused = focusedRow == 1
+    val resetFocused = focusedRow == 2
+
+    RefreshSystemRow(systemName = systemName, focused = refreshFocused)
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ActivateOnConfirm(focused = reorderFocused, onActivate = onEnterReorder)
+        ToggleSetting(
+            title = stringResource(R.string.frontend_customize_reorder),
+            description = stringResource(R.string.frontend_customize_reorder_description),
+            checked = false,
+            showToggle = false,
+            onClick = onEnterReorder,
+            focused = reorderFocused
+        )
+    }
+
+    ResetRow(focused = resetFocused, onReset = onReset)
+}
+
+@Composable
+private fun RefreshSystemRow(systemName: String, focused: Boolean) {
+    // hiltViewModel() may hand back a different RomSearchViewModel instance
+    // than the frontend uses, but RomSearchStateHolder is @Singleton — the
+    // grid's collectAsState still observes the fresh allGames written here.
+    val viewModel: RomSearchViewModel = hiltViewModel()
+    val imageLoader = LocalESDEImageLoader.current
+    val refreshRunning by viewModel.isLoading.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    // null distinguishes "no refresh yet" (show nothing) from the finished-with-0
+    // case, which reads as "No games found". Keyed on systemName so long-pressing
+    // a different tile doesn't carry a stale count forward.
+    var lastCount by remember(systemName) { mutableStateOf<Int?>(null) }
+
+    val trailing = when {
+        refreshRunning -> stringResource(R.string.system_customize_refresh_running)
+        lastCount == 0 -> stringResource(R.string.system_customize_refresh_empty)
+        lastCount != null -> stringResource(R.string.system_customize_refresh_result, lastCount!!)
+        else -> null
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(focused)
+    ) {
+        // Compose ActivateOnConfirm unconditionally and gate the *body* on
+        // refreshRunning. Conditionally composing it would reset the
+        // remembered activation tick each time the spinner flips, making a
+        // press landing on the exact frame the refresh finishes ambiguous
+        // (fires vs. drops depending on recomposition order).
+        ActivateOnConfirm(focused = focused) {
+            if (!refreshRunning) {
+                triggerSystemRefresh(
+                    systemName = systemName,
+                    viewModel = viewModel,
+                    imageLoader = imageLoader,
+                    scope = scope,
+                    onDone = { games -> lastCount = if (games == 0) -1 else games },
+                )
+            }
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_refresh_title),
+            description = stringResource(R.string.system_customize_refresh_description),
+            trailingLabel = trailing,
+            showProgress = refreshRunning,
+            focused = focused
+        )
+    }
+}
+
+private fun triggerSystemRefresh(
+    systemName: String,
+    viewModel: RomSearchViewModel,
+    imageLoader: ImageLoader,
+    scope: CoroutineScope,
+    onDone: (games: Int) -> Unit,
+) {
+    if (viewModel.isLoading.value) return
+    scope.launch {
+        // Freshly-scraped art often lives at paths Coil already tried and
+        // cached as a miss, so wipe both caches before the rebuild republishes
+        // allGames. Disk clear runs on IO to match FrontendSettingsScreen's
+        // refreshLibrary().
+        //
+        // The disk cache is cleared wholesale, not per key — Coil keys by
+        // model string and the newly-scraped media paths aren't known until
+        // after the scan, so there's nothing narrower to evict against. The
+        // cost is a re-decode of other systems' art, not a re-scan.
+        imageLoader.memoryCache?.clear()
+        withContext(Dispatchers.IO) { imageLoader.diskCache?.clear() }
+        viewModel.refreshSystem(systemName = systemName, onComplete = onDone)
+    }
+}
+
+@Composable
+private fun ResetRow(focused: Boolean, onReset: () -> Unit) {
+    var armed by remember { mutableStateOf(false) }
+    var armedTick by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(focused) {
+        if (!focused) armed = false
+    }
+
+    LaunchedEffect(armedTick) {
+        if (armed) {
+            delay(RESET_DISARM_MS)
+            armed = false
+        }
+    }
+
+    ActivateOnConfirm(focused = focused) {
+        if (armed) {
+            onReset()
+            armed = false
+        } else {
+            armed = true
+            armedTick += 1
+        }
+    }
+
+    val title = if (armed) {
+        stringResource(R.string.frontend_customize_reset_confirm)
+    } else {
+        stringResource(R.string.frontend_customize_reset)
+    }
+    val description = if (armed) {
+        stringResource(R.string.frontend_customize_reset_confirm_description)
+    } else {
+        stringResource(R.string.frontend_customize_reset_description)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ToggleSetting(
+            title = title,
+            description = description,
+            checked = false,
+            showToggle = false,
+            onClick = {},
+            focused = focused
+        )
+    }
+}
+
+private const val HUE_STEP = 5f
+private const val SAT_STEP = 0.02f
+private const val BRIGHT_STEP = 0.02f
+private const val ALPHA_STEP = 0.05f
+private const val RESET_DISARM_MS = 3000L
+
+/** Sample size for the launch-through validation. Larger sizes just make the picker slower. */
+private const val STORAGE_VALIDATION_SAMPLE = 50
+
+private val BACKGROUND_MIME_TYPES = arrayOf(
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif"
+)
+
+// region STORAGE
+
+/**
+ * Local state for the storage rows: the current tree URI (or null), the last
+ * validation outcome, and a bump counter so a fresh pick re-runs validation.
+ */
+private class StorageRowState(
+    initialTreeUri: String?,
+) {
+    var treeUri by mutableStateOf(initialTreeUri)
+    var validation by mutableStateOf<StorageValidation>(StorageValidation.Idle)
+    val hasTree: Boolean get() = treeUri != null
+}
+
+private sealed interface StorageValidation {
+    data object Idle : StorageValidation
+    data object Running : StorageValidation
+    data class Result(val found: Int, val total: Int) : StorageValidation
+    data object NoGames : StorageValidation
+}
+
+@Composable
+private fun rememberStorageRowState(
+    systemName: String,
+    esdePrefs: ESDEPreferencesManager,
+): StorageRowState {
+    return remember(systemName) {
+        StorageRowState(initialTreeUri = esdePrefs.getSafTreeUri(systemName))
+    }
+}
+
+@Composable
+private fun StorageRows(
+    systemName: String,
+    state: StorageRowState,
+    gamesForSystem: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+    focusedRow: Int,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val validate: (Uri) -> Unit = validate@{ treeUri ->
+        if (gamesForSystem.isEmpty()) {
+            state.validation = StorageValidation.NoGames
+            return@validate
+        }
+        state.validation = StorageValidation.Running
+        scope.launch {
+            val outcome = withContext(Dispatchers.IO) {
+                validateSafTree(
+                    context = context,
+                    systemName = systemName,
+                    treeUri = treeUri,
+                    games = gamesForSystem,
+                    romsPaths = romsPaths,
+                    esdePrefs = esdePrefs,
+                )
+            }
+            state.validation = outcome
+        }
+    }
+
+    val picker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { treeUri ->
+        if (treeUri != null) {
+            persistSafTreeForSystem(context, esdePrefs, systemName, treeUri)
+            state.treeUri = treeUri.toString()
+            validate(treeUri)
+        }
+    }
+
+    val pickFocused = focusedRow == 0
+    val clearFocused = focusedRow == 1
+
+    // When a mapping exists for this system, it is the authoritative source
+    // of the SAF tree URI — both the mapping and this row write the same
+    // per-system key, so letting the user re-pick here would silently
+    // clobber the mapping. Show the mapping's folder and point the user at
+    // the Add Systems screen instead.
+    val mapping = esdePrefs.getSystemFolderMapping(systemName)
+    val managedByMapping = mapping != null
+
+    StoragePickerRow(
+        currentPath = mapping?.displayPath ?: state.treeUri?.let { readableFolderPath(it) },
+        focused = pickFocused,
+        onActivate = {
+            if (!managedByMapping) picker.launch(state.treeUri?.toUri())
+        },
+        validation = state.validation,
+        managedElsewhereLabel = if (managedByMapping)
+            stringResource(R.string.add_systems_managed_here) else null,
+    )
+    if (state.hasTree && !managedByMapping) {
+        ClearStorageRow(
+            focused = clearFocused,
+            onActivate = {
+                esdePrefs.clearSafTreeUri(systemName)
+                state.treeUri = null
+                state.validation = StorageValidation.Idle
+            },
+        )
+    }
+}
+
+@Composable
+private fun StoragePickerRow(
+    currentPath: String?,
+    focused: Boolean,
+    onActivate: () -> Unit,
+    validation: StorageValidation,
+    managedElsewhereLabel: String? = null,
+) {
+    // When managed elsewhere, an A-press must be inert — otherwise picking
+    // from here would silently clobber the Add Systems mapping.
+    if (managedElsewhereLabel == null) {
+        ActivateOnConfirm(focused = focused, onActivate = onActivate)
+    }
+
+    val title = stringResource(R.string.system_customize_storage_folder_title)
+    val actionLabel = when {
+        managedElsewhereLabel != null -> managedElsewhereLabel
+        currentPath != null -> stringResource(R.string.system_customize_storage_folder_change)
+        else -> stringResource(R.string.system_customize_storage_folder_choose)
+    }
+    val subtitle = currentPath ?: stringResource(R.string.system_customize_storage_folder_none)
+    val statusLine = validationLine(validation)
+
+    StorageRowCard(
+        title = title,
+        subtitle = subtitle,
+        action = actionLabel,
+        status = statusLine,
+        focused = focused,
+    )
+}
+
+@Composable
+private fun ClearStorageRow(focused: Boolean, onActivate: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ToggleSetting(
+            title = stringResource(R.string.system_customize_storage_clear),
+            description = stringResource(R.string.system_customize_storage_clear_description),
+            checked = false,
+            showToggle = false,
+            onClick = onActivate,
+            focused = focused,
+        )
+        ActivateOnConfirm(focused = focused, onActivate = onActivate)
+    }
+}
+
+@Composable
+private fun StorageRowCard(
+    title: String,
+    subtitle: String,
+    action: String,
+    status: String?,
+    focused: Boolean,
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(animatedFocusedScale(focused))
+            .background(brush = subtleCardGradient(focused), shape = shape)
+            .border(
+                width = if (focused) 2.dp else 0.dp,
+                color = if (focused) ThemePrimaryColor.copy(alpha = 0.5f) else Color.Transparent,
+                shape = shape
+            )
+            .clip(shape)
+            .revealWhenFocused(focused)
+            .padding(16.dp),
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = subtitle,
+            color = Color.White.copy(alpha = 0.75f),
+            fontSize = 13.sp
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = action,
+            color = Color.Gray,
+            fontSize = 13.sp
+        )
+        if (status != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = status,
+                color = ThemePrimaryColor,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun validationLine(validation: StorageValidation): String? = when (validation) {
+    StorageValidation.Idle -> null
+    StorageValidation.Running -> stringResource(R.string.system_customize_storage_validating)
+    StorageValidation.NoGames -> stringResource(R.string.system_customize_storage_no_games)
+    is StorageValidation.Result -> {
+        if (validation.found == 0) {
+            stringResource(R.string.system_customize_storage_zero_result, validation.total)
+        } else {
+            stringResource(
+                R.string.system_customize_storage_valid_result,
+                validation.found,
+                validation.total,
+            )
+        }
+    }
+}
+
+/** primary:Roms/ps2 → /storage/emulated/0/Roms/ps2. Volume-scoped ids resolve to /storage/<volume>/rel. */
+private fun readableFolderPath(treeUriString: String): String? {
+    val treeUri = runCatching { treeUriString.toUri() }.getOrNull() ?: return null
+    val docId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+        ?: return treeUriString
+    return jr.brian.home.esde.util.documentIdToStoragePath(docId) ?: docId
+}
+
+/**
+ * Resolves up to [STORAGE_VALIDATION_SAMPLE] games through the same pipeline the
+ * launcher uses, then queries each resulting document URI for COLUMN_DOCUMENT_ID.
+ * The count that comes back tells the user whether the picked tree is the one
+ * their emulator will also be reading from.
+ */
+private fun validateSafTree(
+    context: android.content.Context,
+    systemName: String,
+    treeUri: Uri,
+    games: List<GameInfo>,
+    romsPaths: List<String>,
+    esdePrefs: ESDEPreferencesManager,
+): StorageValidation {
+    val sample = games.take(STORAGE_VALIDATION_SAMPLE)
+    if (sample.isEmpty()) return StorageValidation.NoGames
+    val treeUriString = treeUri.toString()
+    val getTreeUri = { name: String -> if (name == systemName) treeUriString else esdePrefs.getSafTreeUri(name) }
+    var found = 0
+    for (game in sample) {
+        val romPath = resolveRomPath(game, romsPaths) ?: continue
+        val docUri = buildAetherDocUri(systemName, romPath, getTreeUri, context) ?: continue
+        val exists = runCatching {
+            context.contentResolver.query(
+                docUri,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                null, null, null,
+            )?.use { it.moveToFirst() } == true
+        }.getOrDefault(false)
+        if (exists) found++
+    }
+    return StorageValidation.Result(found = found, total = sample.size)
+}
+
+// endregion

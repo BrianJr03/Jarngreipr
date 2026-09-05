@@ -1,8 +1,13 @@
 package jr.brian.home.esde.util
 
+import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
+import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.addRomsPath
+import jr.brian.home.esde.data.setSafTreeUri
 import jr.brian.home.esde.model.GameInfo
 import java.io.File
 
@@ -96,36 +101,155 @@ fun findFirstMedia(
 fun resolveRomPath(game: GameInfo, romsPaths: List<String>): String? {
     if (game.romAbsolutePath != null) return game.romAbsolutePath
     val allPaths = romsPaths + listOf("/storage/emulated/0/Roms")
+    // The relative path is preserved verbatim: game.path is ES-DE's own entry
+    // (e.g. `./Disc1/Game.iso`, `./Xenogears.m3u/Xenogears.m3u`). Reducing it
+    // to the basename breaks multi-disc games under the "directories
+    // interpreted as files" convention that mediaBasenameCandidates handles.
+    val relativePath = game.path.removePrefix("./")
     val filename = File(game.path).name
 
-    // PSP and PS2: build path directly — no existence check, since File.exists() can
-    // return false for these paths even when the file is there (permission timing).
-    if (game.systemName.equals("psp", ignoreCase = true) ||
-        game.systemName.equals("ps2", ignoreCase = true)
-    ) {
-        val root = allPaths.firstOrNull() ?: "/storage/emulated/0/Roms"
-        return File(root, "${game.systemName}/$filename").absolutePath
-    }
-
     for (root in allPaths) {
-        File(root, "${game.systemName}/${game.path}").let { if (it.exists()) return it.absolutePath }
+        File(root, "${game.systemName}/$relativePath").let { if (it.exists()) return it.absolutePath }
         File(root, "${game.systemName}/$filename").let { if (it.exists()) return it.absolutePath }
-        File(root, game.path).let { if (it.exists()) return it.absolutePath }
+        File(root, relativePath).let { if (it.exists()) return it.absolutePath }
         File(root, filename).let { if (it.exists()) return it.absolutePath }
         File(root).listFiles()
             ?.firstOrNull { it.isDirectory && it.name.equals(game.systemName, ignoreCase = true) }
             ?.let { systemDir ->
-                File(systemDir, game.path).let { if (it.exists()) return it.absolutePath }
+                File(systemDir, relativePath).let { if (it.exists()) return it.absolutePath }
                 File(systemDir, filename).let { if (it.exists()) return it.absolutePath }
             }
     }
-    return null
+
+    // No candidate exists on disk. Under scoped storage, File.exists() can
+    // report false for a path our process cannot stat even though the emulator
+    // can open it via SAF — historically observed for PSP and PS2 folders. As
+    // a last resort, return the primary-root canonical path so the caller can
+    // build a SAF document URI from it. When even that is wrong, the URI
+    // verification in RomGameLauncher.verifyReadable surfaces a clear failure.
+    val primaryRoot = allPaths.firstOrNull() ?: return null
+    return File(primaryRoot, "${game.systemName}/$relativePath").absolutePath
+}
+
+/**
+ * The ROMs-root directory implied by picking [pickedDir] for [systemName].
+ *
+ * If the picked directory's own name matches the system, treat its parent as
+ * the ROMs root — the user picked `Roms/ps2` and expected the launcher to
+ * search under `Roms`. Otherwise take the picked directory verbatim — the
+ * user picked `Roms` itself and expected the system subdirectory to be looked
+ * up beneath it.
+ */
+fun deriveRomsRoot(pickedDir: String, systemName: String?): String {
+    if (systemName == null) return pickedDir
+    val picked = File(pickedDir)
+    return if (picked.name.equals(systemName, ignoreCase = true)) {
+        picked.parent ?: pickedDir
+    } else {
+        pickedDir
+    }
+}
+
+/**
+ * Persists a picked SAF tree URI for [systemName]:
+ *  - takes a persistable read grant,
+ *  - stores the URI as the system's per-system tree,
+ *  - registers the ROMs root implied by [deriveRomsRoot] when the picked
+ *    tree is on primary storage (the only case where the on-disk path is
+ *    unambiguous).
+ *
+ * Consolidates the previously-duplicated OpenDocumentTree callbacks in
+ * RomSearchResultsActivity and FrontEndActivity. Callers that only need
+ * partial behaviour (e.g. deliberate picker in settings, no launch to chain
+ * off) still use the whole function — the persisted grant and the derived
+ * root should not drift.
+ */
+fun persistSafTreeForSystem(
+    context: Context,
+    esdePrefs: ESDEPreferencesManager,
+    systemName: String?,
+    treeUri: Uri,
+) {
+    context.contentResolver.takePersistableUriPermission(
+        treeUri,
+        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+    )
+    val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+    val pickedDir = treeDocId?.let(::documentIdToStoragePath)
+    if (pickedDir != null) {
+        esdePrefs.addRomsPath(deriveRomsRoot(pickedDir, systemName))
+    }
+    if (systemName != null) {
+        esdePrefs.setSafTreeUri(systemName, treeUri.toString())
+    }
 }
 
 fun sdCardVolumeId(absolutePath: String): String? {
     val withoutStorage = absolutePath.removePrefix("/storage/")
     val volumeId = withoutStorage.substringBefore('/')
     return if (volumeId == "emulated" || volumeId.isEmpty()) null else volumeId
+}
+
+/**
+ * Split a SAF tree document ID into its (volumeId, relativePath) parts.
+ *
+ * `primary:Roms/ps2`     → `("primary", "Roms/ps2")`
+ * `1A2B-3C4D:Roms/ps2`   → `("1A2B-3C4D", "Roms/ps2")`
+ * `primary:`             → `("primary", "")`
+ *
+ * Returns null when the ID lacks a colon or the volume part is empty. This
+ * is the single source of truth used by both [documentIdToStoragePath] and
+ * [storagePathToDocumentId] so persistence and launch paths cannot drift.
+ */
+fun splitTreeDocId(treeDocId: String): Pair<String, String>? {
+    val idx = treeDocId.indexOf(':')
+    if (idx <= 0) return null
+    val volumeId = treeDocId.substring(0, idx)
+    val relative = treeDocId.substring(idx + 1)
+    if (volumeId.isEmpty()) return null
+    return volumeId to relative
+}
+
+/**
+ * Absolute /storage path for a SAF tree document ID.
+ *
+ * `primary:a/b`     → `/storage/emulated/0/a/b`
+ * `1A2B-3C4D:a/b`   → `/storage/1A2B-3C4D/a/b`
+ *
+ * This is the inverse of [storagePathToDocumentId] and the ES-DE-side of
+ * [sdCardVolumeId] — anything that constructs a real path from a tree ID or a
+ * scanner-visible path must go through this function so the two directions
+ * stay consistent.
+ */
+fun documentIdToStoragePath(treeDocId: String): String? {
+    val (volumeId, relative) = splitTreeDocId(treeDocId) ?: return null
+    val root = if (volumeId == "primary") "/storage/emulated/0" else "/storage/$volumeId"
+    return if (relative.isEmpty()) root else "$root/${relative.trimStart('/')}"
+}
+
+/**
+ * Storage-relative document ID for an absolute path. Inverse of
+ * [documentIdToStoragePath].
+ *
+ * `/storage/emulated/0/a/b`   → `primary:a/b`
+ * `/storage/1A2B-3C4D/a/b`    → `1A2B-3C4D:a/b`
+ *
+ * Returns null for a path that isn't under `/storage/`.
+ */
+fun storagePathToDocumentId(absolutePath: String): String? {
+    return when {
+        absolutePath.startsWith("/storage/emulated/0/") ->
+            "primary:${absolutePath.removePrefix("/storage/emulated/0/")}"
+        absolutePath == "/storage/emulated/0" -> "primary:"
+        absolutePath.startsWith("/storage/") -> {
+            val rest = absolutePath.removePrefix("/storage/")
+            val volume = rest.substringBefore('/')
+            if (volume.isEmpty() || volume == "emulated") return null
+            val relative = rest.removePrefix(volume).removePrefix("/")
+            "$volume:$relative"
+        }
+        else -> null
+    }
 }
 
 fun buildSafDocumentUri(
@@ -144,21 +268,89 @@ fun buildSafDocumentUri(
 fun buildAetherDocUri(
     systemName: String,
     romAbsPath: String,
-    getSafTreeUri: (String) -> String?
+    getSafTreeUri: (String) -> String?,
+    context: Context? = null
 ): Uri? {
     val treeUriStr = getSafTreeUri(systemName) ?: return null
     val treeUri = treeUriStr.toUri()
-    val documentId = when {
-        romAbsPath.startsWith("/storage/emulated/0/") ->
-            "primary:${romAbsPath.removePrefix("/storage/emulated/0/")}"
-        else -> {
-            val volId = sdCardVolumeId(romAbsPath) ?: return null
-            "$volId:${romAbsPath.removePrefix("/storage/$volId/")}"
-        }
-    }
-    return try {
+    val documentId = storagePathToDocumentId(romAbsPath) ?: return null
+    val direct = try {
         DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
     } catch (_: Exception) {
         null
     }
+
+    // Return the direct URI when we can't verify (no context), or when it resolves. Otherwise
+    // probe the expected parent directory before falling back to a bounded tree walk —
+    // handles case differences and typographic dashes between gamelist entries and on-disk
+    // filenames without doing multi-second I/O on the launch tap for a large ROM tree.
+    if (context == null || direct == null) return direct
+    val exists = runCatching {
+        context.contentResolver.query(direct, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)
+            ?.use { it.moveToFirst() } == true
+    }.getOrDefault(false)
+    if (exists) return direct
+
+    val target = normalizeName(File(romAbsPath).name)
+    val root = DocumentFile.fromTreeUri(context, treeUri) ?: return direct
+
+    val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+    val expectedParent = expectedParentSegments(treeDocId, documentId)
+    if (expectedParent != null) {
+        findInDirectory(root, expectedParent, target)?.let { return it }
+    }
+
+    return findByNormalizedName(root, target, depthRemaining = SAF_WALK_MAX_DEPTH) ?: direct
+}
+
+/**
+ * Depth cap for the fallback walk over the SAF tree. Real ROM libraries rarely nest
+ * more than a couple of levels below the system folder (e.g. `System/Genre/Game.iso`
+ * or `System/Multi-disc/Game.m3u/Disc1.bin`), so a small bound covers the observed
+ * layouts without turning the launch tap into multi-second UI jank on a large tree.
+ */
+private const val SAF_WALK_MAX_DEPTH = 3
+
+/**
+ * Path segments from the tree root to the file's expected parent, computed by
+ * stripping the tree's own document id off the constructed direct-child id.
+ * Returns null when the direct id doesn't sit under the tree root (unusual, but
+ * possible if the caller passed a mismatched treeUri).
+ */
+private fun expectedParentSegments(treeDocId: String?, documentId: String): List<String>? {
+    if (treeDocId == null) return null
+    if (!documentId.startsWith("$treeDocId/")) return null
+    val relative = documentId.removePrefix("$treeDocId/")
+    val parent = relative.substringBeforeLast('/', "")
+    return if (parent.isEmpty()) emptyList() else parent.split('/')
+}
+
+private fun findInDirectory(
+    root: DocumentFile,
+    segments: List<String>,
+    target: String,
+): Uri? {
+    var current: DocumentFile = root
+    for (segment in segments) {
+        val normalized = normalizeName(segment)
+        val next = current.listFiles().firstOrNull {
+            it.isDirectory && it.name?.let(::normalizeName) == normalized
+        } ?: return null
+        current = next
+    }
+    return current.listFiles().firstOrNull {
+        it.isFile && it.name?.let(::normalizeName) == target
+    }?.uri
+}
+
+private fun findByNormalizedName(dir: DocumentFile, target: String, depthRemaining: Int): Uri? {
+    if (depthRemaining < 0) return null
+    for (child in dir.listFiles()) {
+        val name = child.name ?: continue
+        if (child.isFile && normalizeName(name) == target) return child.uri
+        if (child.isDirectory) {
+            findByNormalizedName(child, target, depthRemaining - 1)?.let { return it }
+        }
+    }
+    return null
 }

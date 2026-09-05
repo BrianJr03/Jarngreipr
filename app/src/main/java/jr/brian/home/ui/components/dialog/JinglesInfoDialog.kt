@@ -49,7 +49,7 @@ fun JinglesInfoDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val haptic = LocalHapticFeedback.current
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

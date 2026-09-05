@@ -77,13 +77,16 @@ internal fun RomResultCard(
     onLongClick: () -> Unit,
     onFocused: () -> Unit = {},
     focusRequester: FocusRequester = remember { FocusRequester() },
-    onToggleKeyboard: () -> Unit = {},
     mediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     focusAnimationEnabled: Boolean = false,
     isFocusAnimationDisabled: Boolean = false,
     flipEnabled: Boolean = false,
     flipDisabledForGame: Boolean = false,
-    focusAnimationDelayMs: Int = 150
+    focusAnimationDelayMs: Int = 150,
+    // When false: no focus scale, no lift, no border color change. Touch-first
+    // callers (the search sheet) pass this — a pointer user doesn't need focus
+    // ink and the scaled-up tile was clipping against neighbors.
+    focusIndicationEnabled: Boolean = true,
 ) {
     val imageLoader = LocalESDEImageLoader.current
     val context = LocalContext.current
@@ -94,7 +97,7 @@ internal fun RomResultCard(
     val focusHapticEnabled = prefs.frontendFocusHapticEnabled
     var isFocused by remember { mutableStateOf(false) }
     var isFocusedDelayed by remember { mutableStateOf(false) }
-    val scale = animatedFocusedScale(isFocused)
+    val scale = if (focusIndicationEnabled) animatedFocusedScale(isFocused) else 1f
 
     LaunchedEffect(isFocused) {
         if (isFocused) {
@@ -153,7 +156,7 @@ internal fun RomResultCard(
     val hasImage = imageData != null || appIcon != null
     val shape = RoundedCornerShape(8.dp)
     val focusProgress by animateFloatAsState(
-        targetValue = if (isFocused) 1f else 0f,
+        targetValue = if (focusIndicationEnabled && isFocused) 1f else 0f,
         animationSpec = tween(
             durationMillis = FrontendTokens.Motion.FocusMs,
             easing = FrontendTokens.Motion.Easing
@@ -187,18 +190,23 @@ internal fun RomResultCard(
                 }
             }
             .onKeyEvent { keyEvent ->
-                when (keyEvent.type) {
-                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onToggleKeyboard()
-                        true
-                    }
-
-                    KeyEventType.KeyUp if keyEvent.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START -> {
+                val code = keyEvent.nativeKeyEvent.keyCode
+                when {
+                    keyEvent.type == KeyEventType.KeyUp &&
+                            code == AndroidKeyEvent.KEYCODE_BUTTON_SELECT -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
                         true
                     }
+
+                    // Swallow held confirm keys so combinedClickable's onLongClick
+                    // never fires from the gamepad. Touch long-press still works —
+                    // it goes through pointer input, not onKeyEvent.
+                    keyEvent.type == KeyEventType.KeyDown &&
+                            keyEvent.nativeKeyEvent.repeatCount > 0 &&
+                            (code == AndroidKeyEvent.KEYCODE_BUTTON_A ||
+                                    code == AndroidKeyEvent.KEYCODE_DPAD_CENTER ||
+                                    code == AndroidKeyEvent.KEYCODE_ENTER) -> true
 
                     else -> false
                 }

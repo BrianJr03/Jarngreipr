@@ -37,9 +37,11 @@ fun SearchAppOptionsDialog(
     onAppInfoClick: () -> Unit,
     onDisplayPreferenceChange: (DisplayPreference) -> Unit,
     onRenameClick: () -> Unit = {},
-    hasExternalDisplay: Boolean = false
+    hasExternalDisplay: Boolean = false,
+    promptForDisplayOnLaunch: Boolean = false,
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +95,9 @@ fun SearchAppOptionsDialog(
                 onDisplayPreferenceChange = onDisplayPreferenceChange,
                 onRenameClick = onRenameClick,
                 hasExternalDisplay = hasExternalDisplay,
-                onDismiss = onDismiss
+                onDismiss = onDismiss,
+                promptForDisplayOnLaunch = promptForDisplayOnLaunch,
+                onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
             )
         }
     }

@@ -69,10 +69,14 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
+import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
+import jr.brian.home.esde.model.gridColumnsForScale
+import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
 import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -109,20 +113,31 @@ internal fun RomResultsGrid(
     onHideGame: (GameInfo) -> Unit = {},
     onUnhideGame: (GameInfo) -> Unit = {},
     onUnhideAllGames: (List<GameInfo>) -> Unit = {},
-    onToggleHintAndKeyboard: () -> Unit = {},
     onAndroidAppInfo: (GameInfo) -> Unit = {},
     isRetroArchGame: (GameInfo) -> Boolean = { false },
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
     focusResetKey: Any? = Unit,
-    initialRealIndex: Int = 0
+    initialRealIndex: Int = 0,
+    onDetailsVisibleChanged: (Boolean) -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = FrontendTokens.Spacing.M,
+        vertical = FrontendTokens.Spacing.XL
+    ),
+    focusIndicationEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
+    val prefsManager = LocalESDEPreferencesManager.current
+    val prefs by prefsManager.state.collectAsStateWithLifecycle()
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(selectedGame) {
+        onDetailsVisibleChanged(selectedGame != null)
+    }
 
     BackHandler(enabled = selectedGame != null && !showEmulatorPicker && !showCorePicker) {
         selectedGame = null
@@ -167,15 +182,15 @@ internal fun RomResultsGrid(
                         )
                     }
                 } else null
+                val scale = prefs.frontendGameTileScale
                 FocusableTileLayout(
                     items = displayedGames,
                     layout = layout,
-                    columns = NUM_COLS,
+                    columns = gridColumnsForScale(scale),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        horizontal = FrontendTokens.Spacing.M,
-                        vertical = FrontendTokens.Spacing.XL
-                    ),
+                    contentPadding = contentPadding,
+                    rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
+                    rowAlignment = prefs.frontendGameRowAlignment,
                     initialRealIndex = initialRealIndex,
                     focusResetKey = focusResetKey,
                     onItemFocused = { game -> onGameFocused(game) },
@@ -192,6 +207,7 @@ internal fun RomResultsGrid(
                             isFocusAnimationDisabled = isFocusAnimationDisabled(game),
                             flipEnabled = focusAnimationEnabled,
                             flipDisabledForGame = isFocusAnimationDisabled(game),
+                            focusIndicationEnabled = focusIndicationEnabled,
                             onClick = {
                                 val isAndroid =
                                     game.systemName.equals("androidgames", ignoreCase = true) ||
@@ -224,8 +240,7 @@ internal fun RomResultsGrid(
                                 if (isAndroid) onAndroidAppInfo(game)
                                 else selectedGame = game
                             },
-                            onFocused = onFocused,
-                            onToggleKeyboard = onToggleHintAndKeyboard
+                            onFocused = onFocused
                         )
                     }
                 }

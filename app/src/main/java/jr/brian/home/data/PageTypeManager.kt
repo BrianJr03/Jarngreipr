@@ -16,15 +16,6 @@ class PageTypeManager(context: Context) {
 
     private fun loadPageTypes(): List<PageType> {
         val count = prefs.getInt(KEY_PAGE_COUNT, 0)
-        if (count == 0) {
-            val defaultType = PageType.APPS_TAB
-            prefs.edit().apply {
-                putInt(KEY_PAGE_COUNT, 1)
-                putString("${KEY_PAGE_TYPE_PREFIX}0", defaultType.name)
-                apply()
-            }
-            return listOf(defaultType)
-        }
         return (0 until count).map { index ->
             val typeString = prefs.getString("${KEY_PAGE_TYPE_PREFIX}$index", null)
             if (typeString != null) {
@@ -37,6 +28,17 @@ class PageTypeManager(context: Context) {
                 PageType.APPS_TAB
             }
         }
+    }
+
+    /**
+     * First-launch bootstrap: seed a single APPS_TAB when no pages exist. Kept
+     * separate from [loadPageTypes] so the load path is a pure read — reorder
+     * and removePage callers that transiently leave the state empty don't
+     * accidentally resurrect a default page.
+     */
+    fun ensureDefaultPage() {
+        if (_pageTypes.value.isNotEmpty()) return
+        addPage(PageType.APPS_TAB)
     }
 
     fun addPage(type: PageType) {

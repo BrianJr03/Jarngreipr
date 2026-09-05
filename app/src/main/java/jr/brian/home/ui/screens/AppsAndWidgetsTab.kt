@@ -67,6 +67,7 @@ import jr.brian.home.esde.ui.components.SyncLogoPositionLock
 import jr.brian.home.ui.theme.managers.LocalPinnedRomManager
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import jr.brian.home.ui.extensions.blockAllNavigation
 import jr.brian.home.ui.extensions.blockHorizontalNavigation
@@ -152,6 +153,7 @@ fun AppsAndWidgetsTab(
 
     val pinnedRomManager = LocalPinnedRomManager.current
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
     val pinnedRoms by pinnedRomManager.getPinnedRoms(pageIndex, TAB_TYPE_WIDGETS)
         .collectAsStateWithLifecycle(initialValue = emptyList())
@@ -212,6 +214,7 @@ fun AppsAndWidgetsTab(
     val isPowerButtonVisible by powerSettingsManager.powerButtonVisible.collectAsStateWithLifecycle()
 
     val settingsIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val dockFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
     val gridState = rememberLazyGridState()
 
@@ -392,10 +395,10 @@ fun AppsAndWidgetsTab(
                 onAppClick = { app ->
                     val displayPreference =
                         appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = { app ->
@@ -412,7 +415,11 @@ fun AppsAndWidgetsTab(
                 onEmptySlotLongClick = { position ->
                     dockManager.removeEmptySlot(position)
                 },
-                onDockPositioned = onDockPositioned
+                onDockPositioned = onDockPositioned,
+                firstItemFocusRequester = dockFocusRequester,
+                onNavigateUp = {
+                    runCatching { settingsIconFocusRequester.requestFocus() }
+                },
             )
         }
 
@@ -680,4 +687,6 @@ fun AppsAndWidgetsTab(
             )
         }
     }
+
+    displayChooser.DialogIfNeeded()
 }

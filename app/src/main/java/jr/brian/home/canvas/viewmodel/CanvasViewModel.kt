@@ -51,27 +51,36 @@ class CanvasViewModel @Inject constructor(
      * render time and renders [imageType] for that game. Placement is
      * auto-computed into both arrangements via [canvasLayoutManager.addItem].
      */
-    fun addEsdeArtItem(imageType: GameImageType, contentScale: EsdeContentScale) {
+    fun addEsdeArtItem(
+        imageType: GameImageType,
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
+    ) {
         val pageIndex = boundPage() ?: return
         canvasLayoutManager.addItem(
             pageIndex = pageIndex,
             item = CanvasItem.EsdeArtItem(
                 id = "esde-${imageType.name.lowercase()}-${UUID.randomUUID()}",
                 imageType = imageType,
-                contentScale = contentScale
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
             )
         )
     }
 
     /**
-     * Replace an existing ES-DE Display tile's [imageType] and [contentScale]
-     * in place. Routed through [canvasLayoutManager.addItem] with the same id,
-     * which preserves the tile's per-orientation placements.
+     * Replace an existing ES-DE Display tile's [imageType], [contentScale], and
+     * background choices in place. Routed through [canvasLayoutManager.addItem]
+     * with the same id, which preserves the tile's per-orientation placements.
      */
     fun updateEsdeArtItem(
         id: String,
         imageType: GameImageType,
-        contentScale: EsdeContentScale
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
     ) {
         val pageIndex = boundPage() ?: return
         canvasLayoutManager.addItem(
@@ -79,7 +88,9 @@ class CanvasViewModel @Inject constructor(
             item = CanvasItem.EsdeArtItem(
                 id = id,
                 imageType = imageType,
-                contentScale = contentScale
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
             )
         )
     }
@@ -311,6 +322,10 @@ class CanvasViewModel @Inject constructor(
 
     fun setEditMode(enabled: Boolean) {
         boundPage()?.let { canvasLayoutManager.setEditMode(it, enabled) }
+    }
+
+    fun setMenuButtonVisible(visible: Boolean) {
+        boundPage()?.let { canvasLayoutManager.setMenuButtonVisible(it, visible) }
     }
 
     init {

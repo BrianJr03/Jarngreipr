@@ -46,11 +46,14 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MAX
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MIN
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.FrontendRowAlignment
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 
-private val DEFAULT_ROW_TILE_WIDTH = 250.dp
+internal val DEFAULT_ROW_TILE_WIDTH = 250.dp
 private const val FOCUS_RESET_RETRIES = 3
 private const val FOCUS_RESET_RETRY_DELAY_MS = 80L
 
@@ -77,6 +80,7 @@ fun <T> FocusableTileLayout(
     ),
     itemSpacing: Dp = FrontendTokens.Spacing.S,
     rowItemWidth: Dp = DEFAULT_ROW_TILE_WIDTH,
+    rowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
     /**
      * Initial focus index in *real* items space (0..items.lastIndex). Row mode
      * translates this onto the virtual list internally. Callers use this to
@@ -114,7 +118,11 @@ fun <T> FocusableTileLayout(
             modifier = modifier,
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
-            rowItemWidth = rowItemWidth,
+            rowItemWidth = rowItemWidth.coerceIn(
+                DEFAULT_ROW_TILE_WIDTH * FRONTEND_TILE_SCALE_MIN,
+                DEFAULT_ROW_TILE_WIDTH * FRONTEND_TILE_SCALE_MAX
+            ),
+            rowAlignment = rowAlignment,
             initialRealIndex = initialRealIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0)),
             focusResetKey = focusResetKey,
             onItemFocused = onItemFocused,
@@ -266,6 +274,7 @@ private fun <T> RowLayout(
     contentPadding: PaddingValues,
     itemSpacing: Dp,
     rowItemWidth: Dp,
+    rowAlignment: FrontendRowAlignment,
     initialRealIndex: Int,
     focusResetKey: Any?,
     onItemFocused: (T?) -> Unit,
@@ -340,6 +349,11 @@ private fun <T> RowLayout(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val sidePadding = ((maxWidth - rowItemWidth) / 2).coerceAtLeast(0.dp)
+        val verticalAlignment = when (rowAlignment) {
+            FrontendRowAlignment.Top -> Alignment.Top
+            FrontendRowAlignment.Center -> Alignment.CenterVertically
+            FrontendRowAlignment.Bottom -> Alignment.Bottom
+        }
         LazyRow(
             state = rowState,
             modifier = Modifier
@@ -347,9 +361,14 @@ private fun <T> RowLayout(
                 .focusRequester(containerFocus)
                 .focusable()
                 .rowDpadHandler(::moveFocus),
-            contentPadding = PaddingValues(horizontal = sidePadding),
+            contentPadding = PaddingValues(
+                start = sidePadding,
+                end = sidePadding,
+                top = contentPadding.calculateTopPadding(),
+                bottom = contentPadding.calculateBottomPadding()
+            ),
             horizontalArrangement = Arrangement.spacedBy(itemSpacing),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = verticalAlignment
         ) {
             if (header != null) {
                 item { header() }

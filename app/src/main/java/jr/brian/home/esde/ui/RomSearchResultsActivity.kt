@@ -4,7 +4,6 @@ import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.provider.Settings
 import android.view.KeyEvent as AndroidKeyEvent
 import android.widget.Toast
@@ -60,6 +59,7 @@ import jr.brian.home.esde.model.PlatformImageFolderType
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.hiddenGameKey
+import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.model.rom.toGameInfo
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
@@ -106,31 +106,9 @@ class RomSearchResultsActivity : ComponentActivity() {
             pendingFolderChangeSystem = null
             return@registerForActivityResult
         }
-        contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val systemName =
             pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
-
-        val treeDocId = try {
-            DocumentsContract.getTreeDocumentId(treeUri)
-        } catch (_: Exception) {
-            null
-        }
-
-        if (treeDocId?.startsWith("primary:") == true) {
-            val rel = treeDocId.removePrefix("primary:")
-            val pickedDir = "/storage/emulated/0/$rel"
-            val romsRoot = if (systemName != null &&
-                File(pickedDir).name.equals(systemName, ignoreCase = true)
-            ) {
-                File(pickedDir).parent ?: pickedDir
-            } else {
-                pickedDir
-            }
-            esdePrefs.addRomsPath(romsRoot)
-            if (systemName != null) esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        } else if (systemName != null) {
-            esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        }
+        persistSafTreeForSystem(this, esdePrefs, systemName, treeUri)
 
         romLauncher.pendingGameLaunch?.let { (game, ctx) ->
             val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
@@ -141,7 +119,14 @@ class RomSearchResultsActivity : ComponentActivity() {
     }
 
     override fun finish() {
-        if (fromFrontend && !gameLaunched) {
+        // Safety net for back-from-search: normally FrontEndActivity starts this
+        // activity itself (see FrontEndActivity.observeShowRomSearchResultsSignal)
+        // so finishing just pops back to a live frontend. If FrontEndActivity was
+        // torn down anyway — e.g. the singleTask MainActivity was pulled forward
+        // and reshuffled the stack — relaunch it here so the top display is not
+        // left blank. No-op when the frontend is still running or a game launch
+        // is in flight.
+        if (fromFrontend && !gameLaunched && !FrontEndActivity.isRunning) {
             launchFrontend(this)
         }
         super.finish()
@@ -168,7 +153,6 @@ class RomSearchResultsActivity : ComponentActivity() {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -337,37 +321,19 @@ class RomSearchResultsActivity : ComponentActivity() {
                         if (romSearchShowAllAndroidApps) mainViewModel.loadAllApps(context)
                     }
 
-                    val isHiddenMode = queryTrimmed.equals("@hidden", ignoreCase = true)
-                    val isAndroidMode = romSearchShowAllAndroidApps && (
-                            queryTrimmed.equals("@android", ignoreCase = true) ||
-                                    queryTrimmed.startsWith("@android ", ignoreCase = true)
-                            )
-                    val androidModeFilter =
-                        if (isAndroidMode && queryTrimmed.length > "@android ".length - 1)
-                            queryTrimmed.drop("@android ".length).trim()
-                        else ""
-                    val isPlatformMode =
-                        !isHiddenMode && !isAndroidMode && queryTrimmed.startsWith("@")
-                    val platformSearch =
-                        if (isPlatformMode) queryTrimmed.removePrefix("@") else null
-                    val allPlatforms = remember(allGames) {
-                        allGames.map { it.systemName }.distinct().sorted()
-                    }
-                    val platformSuggestions = remember(platformSearch, allPlatforms, allGames, hiddenGames) {
-                        platformSearch?.let { text ->
-                            val candidates = if (text.isBlank()) allPlatforms
-                            else allPlatforms.filter { it.contains(text, ignoreCase = true) }
-                            candidates.filter { platform ->
-                                allGames.any { game ->
-                                    game.systemName.equals(platform, ignoreCase = true) &&
-                                            hiddenGameKey(game) !in hiddenGames
-                                }
-                            }
-                        } ?: emptyList()
-                    }
-                    val selectedPlatform = remember(platformSearch, allPlatforms) {
-                        allPlatforms.firstOrNull { it.equals(platformSearch, ignoreCase = true) }
-                    }
+                    val queryState = jr.brian.home.esde.ui.frontend.rememberRomSearchQueryState(
+                        queryTrimmed = queryTrimmed,
+                        romSearchShowAllAndroidApps = romSearchShowAllAndroidApps,
+                        allGames = allGames,
+                        hiddenGames = hiddenGames,
+                    )
+                    val isHiddenMode = queryState.isHiddenMode
+                    val isAndroidMode = queryState.isAndroidMode
+                    val androidModeFilter = queryState.androidModeFilter
+                    val isPlatformMode = queryState.isPlatformMode
+                    val platformSearch = queryState.platformSearch
+                    val platformSuggestions = queryState.platformSuggestions
+                    val selectedPlatform = queryState.selectedPlatform
                     val allAndroidApps =
                         remember(romSearchShowAllAndroidApps, homeUiState.allApps) {
                             if (!romSearchShowAllAndroidApps) emptyList()
@@ -703,11 +669,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
                                     onUnhideAllGames = { games ->
                                         esdePrefs.unhideAllGames(games.map { hiddenGameKey(it) })
-                                    },
-                                    onToggleHintAndKeyboard = {
-                                        val newVisible = !romSearchStateHolder.hintAndKbVisible.value
-                                        romSearchStateHolder.hintAndKbVisible.value = newVisible
-                                        esdePrefs.setRomSearchHintsKbVisible(newVisible)
                                     },
                                     onAndroidAppInfo = { game ->
                                         val pkg = game.path.trimEnd('/').removeSuffix(".app")

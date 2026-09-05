@@ -94,7 +94,6 @@ fun RomSearchScreen(
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val focusedGame by viewModel.focusedGame.collectAsStateWithLifecycle()
-    // val hintAndKbVisible by viewModel.hintAndKbVisible.collectAsStateWithLifecycle()
 
     var showSpecialCharRow by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -106,7 +105,7 @@ fun RomSearchScreen(
     LaunchedEffect(Unit) {
         jinglesManager.stop()
         viewModel.loadGames()
-        launchResultsActivity(context, fromFrontend = fromFrontend)
+        openResults(context, viewModel, fromFrontend = fromFrontend)
     }
 
     LaunchedEffect(Unit) {
@@ -119,7 +118,6 @@ fun RomSearchScreen(
     DisposableEffect(Unit) {
         onDispose {
             viewModel.clearState()
-            viewModel.resetHintAndKbVisibility()
             viewModel.stateHolder.openedFromFrontend.value = false
         }
     }
@@ -183,7 +181,7 @@ fun RomSearchScreen(
                                 onNavigateToSearch()
                             },
                             onAtClick = { viewModel.updateQuery("$query@") },
-                            onReopenResults = { launchResultsActivity(context, fromFrontend = fromFrontend) },
+                            onReopenResults = { openResults(context, viewModel, fromFrontend = fromFrontend) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -214,24 +212,6 @@ private fun RomSearchControlHints(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        Row(
-//            horizontalArrangement = Arrangement.spacedBy(4.dp),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Icon(
-//                imageVector = Icons.Default.Keyboard,
-//                contentDescription = null,
-//                tint = ThemePrimaryColor.copy(alpha = 0.5f),
-//                modifier = Modifier.size(16.dp)
-//            )
-//            Text(
-//                text = stringResource(R.string.rom_search_hint_keyboard),
-//                color = ThemePrimaryColor.copy(alpha = 0.5f),
-//                fontSize = 14.sp,
-//                fontWeight = FontWeight.Medium
-//            )
-//        }
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -377,10 +357,28 @@ private fun MarqueeDisplay(game: GameInfo?) {
     }
 }
 
-private fun launchResultsActivity(context: Context, fromFrontend: Boolean) {
+/**
+ * Two paths open the results grid:
+ * - From the frontend: the keyboard lives on the bottom display but the results
+ *   must overlay the frontend on the top display. Starting the activity from the
+ *   bottom-display context with FLAG_ACTIVITY_NEW_TASK on a foreign displayId
+ *   shuffled tasks between displays and destroyed FrontEndActivity. Signal instead;
+ *   FrontEndActivity itself starts the results activity on its own task.
+ * - From elsewhere (apps tab, canvas): keep the plain startActivity — those callers
+ *   are not on the top display and there is no frontend task to preserve.
+ */
+private fun openResults(
+    context: Context,
+    viewModel: RomSearchViewModel,
+    fromFrontend: Boolean
+) {
+    if (fromFrontend) {
+        viewModel.stateHolder.showRomSearchResultsSignal.tryEmit(Unit)
+        return
+    }
     val intent = Intent(context, RomSearchResultsActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, fromFrontend)
+        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, false)
     }
     val options = ActivityOptions.makeBasic()
     options.launchDisplayId = PRIMARY_DISPLAY_ID

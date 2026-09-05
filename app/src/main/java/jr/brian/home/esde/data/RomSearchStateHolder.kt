@@ -5,6 +5,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,9 +18,18 @@ class RomSearchStateHolder @Inject constructor() {
     val screenDismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val gameLaunchSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showSearchKeyboardSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the on-screen keyboard (rendered in MainActivity on the bottom
+     * display) needs the results grid to appear over the frontend on the top display.
+     * FrontEndActivity collects this and launches RomSearchResultsActivity itself, so
+     * the results activity ends up on FrontEndActivity's own task rather than being
+     * pushed across from MainActivity — the cross-task launch was what destroyed
+     * FrontEndActivity and blanked MainActivity during the Y → back cycle.
+     */
+    val showRomSearchResultsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
-    val hintAndKbVisible = MutableStateFlow(true)
 
     val isSelectMode = MutableStateFlow(false)
     val pendingSelectPageIndex = MutableStateFlow(-1)
@@ -41,4 +51,23 @@ class RomSearchStateHolder @Inject constructor() {
      * Games(system), focus restores to the game they launched rather than tile 0.
      */
     val lastFocusedGameBySystem = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /**
+     * Lookup by (system name, ES-DE-style path or filename) against the built
+     * index. Used by callers that historically re-parsed gamelist.xml on
+     * demand — the ROM index already carries scraped titles, descriptions,
+     * and art, so consulting it costs nothing and avoids repeated XML parses.
+     *
+     * Matches on `game.path` first (may be `./Foo.iso` or `./Sub/Foo.iso`), then
+     * on filename basename. Returns null when the index has no entry for the
+     * filename, which is the same signal the old regex-based reader gave.
+     */
+    fun findGame(systemName: String, filename: String): GameInfo? {
+        val games = allGames.value.filter { it.systemName.equals(systemName, ignoreCase = true) }
+        if (games.isEmpty()) return null
+        val normalized = filename.removePrefix("./").trim()
+        games.firstOrNull { it.path.removePrefix("./") == normalized }?.let { return it }
+        val basename = File(normalized).name
+        return games.firstOrNull { File(it.path).name == basename }
+    }
 }

@@ -22,6 +22,7 @@ import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.DockSettingsItem
 import jr.brian.home.ui.components.settings.GridColumnSelectorItem
 import jr.brian.home.ui.components.settings.SnapModeSelector
+import jr.brian.home.ui.components.settings.SwipeSensitivitySliderItem
 import jr.brian.home.ui.components.settings.ThorSettingsItem
 import jr.brian.home.ui.components.settings.VisibilitySettingsItem
 import jr.brian.home.esde.ui.components.CollapsibleSection
@@ -123,6 +124,8 @@ fun LayoutSection(
             checked = appDrawerFilterByPage,
             onCheckedChange = { powerSettingsManager.setAppDrawerFilterByPage(it) }
         )
+
+        SwipeSensitivitySliderItem()
 
         ToggleSetting(
             title = stringResource(R.string.settings_layout_icon_snap),

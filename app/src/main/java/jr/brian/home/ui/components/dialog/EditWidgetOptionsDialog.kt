@@ -46,7 +46,7 @@ fun EditWidgetOptionsDialog(
     onResize: () -> Unit,
     onSwap: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

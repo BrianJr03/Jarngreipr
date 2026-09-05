@@ -48,7 +48,7 @@ fun NotificationAccessDialog(
     onOpenAppSettings: () -> Unit,
     onNeverAskAgain: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

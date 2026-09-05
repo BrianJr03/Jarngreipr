@@ -41,6 +41,12 @@ data class CanvasLayout(
     val horizontalArrangement: Map<String, GridRect> = emptyMap(),
     /** When true, long-press starts a drag-to-reorder gesture; when false it opens the remove dialog. */
     val editMode: Boolean = false,
+    /**
+     * When true, the inline menu tile is rendered and its cell is reserved. When
+     * false, the tile is hidden and the cell is freed for user items; long-press
+     * on the empty canvas area still opens the menu (see [CanvasGridLayout]).
+     */
+    val menuButtonVisible: Boolean = true,
     val version: Int = CURRENT_VERSION
 ) {
     /** Arrangement map for the orientation currently rendered. */

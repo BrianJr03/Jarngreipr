@@ -2,6 +2,7 @@ package jr.brian.home.data.config
 
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.esde.model.SystemCustomization
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
 import kotlinx.serialization.Serializable
@@ -34,7 +35,60 @@ data class JarngreiprConfig(
         // v11: added RomSearchConfig.frontendFocusHapticEnabled for the frontend focus-tick
         //      haptic toggle (applies to both system and game cards).
         // v12: added SystemConfig.hiddenSystems for the Frontend "Filter Systems" sheet.
-        const val CONFIG_VERSION = 12
+        // v13: added CanvasLayout.menuButtonVisible for per-page toggle of the inline
+        //      menu tile. Older blobs decode with the default (true) via
+        //      ignoreUnknownKeys, matching the pre-toggle behavior.
+        // v14: added UiConfig.promptForDisplayOnLaunch — set of package names that
+        //      surface a display chooser on tap. Older blobs decode with the empty
+        //      default (no prompting), matching pre-toggle behavior.
+        // v15: added RomSearchConfig.frontendFocusBackgroundSystems and
+        //      frontendFocusBackgroundGames per-route toggles for the focus-background
+        //      feature; SystemCustomization.focusBackgroundUri for a per-system full-screen
+        //      backdrop distinct from the tile-level backgroundUri. Older blobs decode
+        //      with defaults (both routes on, no focus URI) via ignoreUnknownKeys.
+        // v16: added RomSearchConfig.frontendTransition + frontendTransitionMs for the
+        //      Systems <-> Games route transition preset and its duration. Older blobs
+        //      decode with the default preset ("Fade") and default 280ms via
+        //      ignoreUnknownKeys.
+        // v17: added CanvasItem.EsdeArtItem.backgroundColorArgb + backgroundCornerRadiusDp
+        //      for the optional background-box customization on ES-DE Display tiles.
+        //      Older blobs decode with both fields null (no background) via
+        //      ignoreUnknownKeys, preserving the pre-toggle transparent rendering.
+        // v18: split RomSearchConfig.frontendFocusBackgroundDim into
+        //      frontendFocusBackgroundDimSystems / frontendFocusBackgroundDimGames so
+        //      the two routes can be dimmed independently. The old field is kept
+        //      (deprecated) and still written on export so v17-and-earlier builds can
+        //      still read a config exported now; import falls back to it for pre-split
+        //      configs.
+        // v19: added RomSearchConfig.frontendSystemRowAlignment /
+        //      frontendGameRowAlignment (row-mode vertical anchor: Top/Center/Bottom)
+        //      and frontendSystemTileScale / frontendGameTileScale (tile-size
+        //      multiplier 1.0..1.3 controlling row width and grid columns). Older
+        //      blobs decode with defaults (Center, 1.0f) via ignoreUnknownKeys.
+        // v20: added RomSearchConfig.gamelistDecorationEnabled — toggle for
+        //      whether ES-DE gamelist.xml decorates the filesystem scan. Older
+        //      blobs decode with the default (true) via ignoreUnknownKeys,
+        //      preserving pre-toggle behaviour.
+        // v21: added FeatureConfig.homeButton for the "Home Button Interception"
+        //      toggle. Older blobs decode with the default (off) via
+        //      ignoreUnknownKeys — matching the pre-toggle behaviour of a device
+        //      that has never had interception enabled.
+        // v22: added SystemConfig.systemFolderMappings for the Frontend "Add
+        //      Systems" screen — user-declared "this folder is system X"
+        //      entries used to map arbitrary folders (including SD-card ones)
+        //      to systems. Older blobs decode with the empty default via
+        //      ignoreUnknownKeys, matching pre-feature behaviour.
+        // v23: added HomeButtonConfig.homeTarget / mainScreen for the display
+        //      target selector under Home Button Interception. Older blobs
+        //      decode with both fields null via ignoreUnknownKeys — a null
+        //      target means "use the runtime migration default"
+        //      (BOTH-when-frontend-enabled, else BOTTOM), matching the
+        //      pre-selector routing behaviour.
+        // v24: added PowerSettingsConfig.pagerSwipeSensitivity for the tab-
+        //      swipe sensitivity slider (0..100). Older blobs decode with
+        //      the default (0 = Compose default snap threshold) via
+        //      ignoreUnknownKeys, matching pre-slider behaviour.
+        const val CONFIG_VERSION = 24
     }
 }
 
@@ -42,6 +96,7 @@ data class JarngreiprConfig(
 data class UiConfig(
     val gridSettings: GridSettingsConfig = GridSettingsConfig(),
     val appDisplayPreferences: Map<String, String> = emptyMap(),
+    val promptForDisplayOnLaunch: Set<String> = emptySet(),
     val powerSettings: PowerSettingsConfig = PowerSettingsConfig(),
     val selectedIconPackage: String? = null,
     val wallpaper: WallpaperConfig = WallpaperConfig(),
@@ -75,7 +130,8 @@ data class PowerSettingsConfig(
     val backButtonShortcut: String = "NONE",
     val backButtonShortcutAppPackage: String? = null,
     val poweredOffBrightness: Int = 40,
-    val appDrawerFilterByPage: Boolean = false
+    val appDrawerFilterByPage: Boolean = false,
+    val pagerSwipeSensitivity: Int = 0
 )
 
 @Serializable
@@ -164,7 +220,22 @@ data class FeatureConfig(
     val floatyMode: FloatyModeConfig = FloatyModeConfig(),
     val jingles: JinglesConfig = JinglesConfig(),
     val bgMusic: BgMusicConfig = BgMusicConfig(),
-    val romSearch: RomSearchConfig = RomSearchConfig()
+    val romSearch: RomSearchConfig = RomSearchConfig(),
+    val homeButton: HomeButtonConfig = HomeButtonConfig()
+)
+
+@Serializable
+data class HomeButtonConfig(
+    val interceptionEnabled: Boolean = false,
+    /**
+     * Persisted [jr.brian.home.model.HomeTarget] name, or `null` for
+     * pre-selector exports. `null` is preserved on import so
+     * [jr.brian.home.data.HomeButtonManager.resolveHomeTarget] can still apply
+     * its `frontendEnabled`-derived migration default.
+     */
+    val homeTarget: String? = null,
+    /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */
+    val mainScreen: String = "BOTTOM"
 )
 
 @Serializable
@@ -229,6 +300,9 @@ data class BgMusicConfig(
 
 @Serializable
 data class RomSearchConfig(
+    // Retained for import compatibility with older exports. The feature it
+    // gated (SELECT-toggled on-screen keyboard hints) was removed; value is
+    // read but no longer applied.
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
@@ -241,12 +315,27 @@ data class RomSearchConfig(
     val canvasContinuousSpinRoms: Set<String> = emptySet(),
     val gameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
-    val frontendFocusHapticEnabled: Boolean = true
+    val frontendFocusHapticEnabled: Boolean = true,
+    val frontendFocusBackgroundEnabled: Boolean = false,
+    val frontendFocusBackgroundSystems: Boolean = true,
+    val frontendFocusBackgroundGames: Boolean = true,
+    @Deprecated("Split into frontendFocusBackgroundDimSystems / frontendFocusBackgroundDimGames; retained for import of pre-split configs")
+    val frontendFocusBackgroundDim: Float = 0.55f,
+    val frontendFocusBackgroundDimSystems: Float = 0.55f,
+    val frontendFocusBackgroundDimGames: Float = 0.55f,
+    val frontendTransition: String = "Fade",
+    val frontendTransitionMs: Int = 280,
+    val frontendSystemRowAlignment: String = "Center",
+    val frontendGameRowAlignment: String = "Center",
+    val frontendSystemTileScale: Float = 1.0f,
+    val frontendGameTileScale: Float = 1.0f,
+    val gamelistDecorationEnabled: Boolean = true
 )
 
 @Serializable
 data class SystemConfig(
     val badgesVisible: Boolean = true,
     val shadeTabPage: Int = 0,
-    val hiddenSystems: List<String> = emptyList()
+    val hiddenSystems: List<String> = emptyList(),
+    val systemFolderMappings: List<SystemFolderMapping> = emptyList()
 )

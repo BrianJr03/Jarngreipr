@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.data.DockSize
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.dialog.DockAppSelectionDialog
 import jr.brian.home.ui.components.settings.ScreenHeader
 import jr.brian.home.ui.components.settings.SettingCard
 import jr.brian.home.ui.components.dock.ColorOption
@@ -47,6 +48,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalDockManager
 import jr.brian.home.ui.util.ColorOptions
+import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -69,6 +71,8 @@ fun AppDockSettingsScreen(
     
     val currentSlotCount = dockApps.size
     val canAddMoreSlots = currentSlotCount < maxDockApps
+
+    val addAppDialogState = rememberDialogState<Int>()
 
     BackHandler {
         onDismiss()
@@ -160,7 +164,10 @@ fun AppDockSettingsScreen(
                                     SwappableDockPreview(
                                         apps = allApps,
                                         dockColor = dockColor,
-                                        dockSize = dockSize
+                                        dockSize = dockSize,
+                                        onEmptySlotClick = { position ->
+                                            addAppDialogState.show(position)
+                                        },
                                     )
                                 }
                             }
@@ -311,6 +318,22 @@ fun AppDockSettingsScreen(
                     }
                 }
             }
+        }
+    }
+
+    addAppDialogState.item?.let { position ->
+        if (addAppDialogState.isVisible) {
+            val availableApps = allApps.filter { app ->
+                !dockManager.isAppInDock(app.packageName)
+            }
+            DockAppSelectionDialog(
+                apps = availableApps,
+                onAppSelected = { app ->
+                    dockManager.addAppToDock(app.packageName, position)
+                    addAppDialogState.dismiss()
+                },
+                onDismiss = addAppDialogState::dismiss,
+            )
         }
     }
 }

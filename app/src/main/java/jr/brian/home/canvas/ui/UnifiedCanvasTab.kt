@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -66,6 +67,7 @@ import jr.brian.home.ui.components.dialog.ConfirmationDialog
 import jr.brian.home.ui.components.dialog.CreateFolderDialog
 import jr.brian.home.ui.components.dialog.CustomIconDialog
 import jr.brian.home.ui.components.dialog.FolderContentsDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.components.dialog.PinnedRomOptionsDialog
 import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.settings.displayName
@@ -173,6 +175,7 @@ fun UnifiedCanvasTab(
     var customIconTarget by remember { mutableStateOf<AppInfo?>(null) }
     var renameTarget by remember { mutableStateOf<AppInfo?>(null) }
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     // Hoisted so the floating add icon can fade based on grid scroll.
     val canvasScrollState = rememberScrollState()
@@ -245,10 +248,10 @@ fun UnifiedCanvasTab(
                 handleTap(
                     resolved = it,
                     onLaunchApp = { app ->
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = appDisplayPreferenceManager
+                            currentPreference = appDisplayPreferenceManager
                                 .getAppDisplayPreference(app.packageName)
                         )
                     },
@@ -324,6 +327,12 @@ fun UnifiedCanvasTab(
             visible = uiState.layout.editMode,
             onDone = { viewModel.setEditMode(false) },
             modifier = Modifier.align(Alignment.BottomEnd)
+        )
+
+        CanvasEditModeTidyFab(
+            visible = uiState.layout.editMode,
+            onTidy = { viewModel.compactLayout() },
+            modifier = Modifier.align(Alignment.BottomStart)
         )
 
         NotificationShade(
@@ -412,6 +421,7 @@ fun UnifiedCanvasTab(
             onOrientationChanged = viewModel::setOrientation,
             onGridChanged = viewModel::setGrid,
             onEditModeChanged = viewModel::setEditMode,
+            onMenuButtonVisibilityChanged = viewModel::setMenuButtonVisible,
             onTidy = { viewModel.compactLayout() },
             onSettingsClick = onSettingsClick,
             onDeletePage = onDeletePage,
@@ -439,22 +449,34 @@ fun UnifiedCanvasTab(
 
     if (pickEsdeArtVisible) {
         val defaultType = GameImageType.Fanart
-        CanvasEsdeArtChooserDialog(
+        CanvasFrontendArtChooserSheet(
             initialType = defaultType,
             initialContentScale = defaultEsdeContentScaleFor(defaultType),
+            initialBackgroundColorArgb = null,
+            initialBackgroundCornerRadiusDp = null,
             titleRes = R.string.canvas_esde_picker_title,
-            onConfirm = { imageType, scale -> viewModel.addEsdeArtItem(imageType, scale) },
+            onConfirm = { imageType, scale, bgArgb, cornerDp ->
+                viewModel.addEsdeArtItem(imageType, scale, bgArgb, cornerDp)
+            },
             onDismiss = { pickEsdeArtVisible = false }
         )
     }
 
     esdeArtRetypeTarget?.let { target ->
-        CanvasEsdeArtChooserDialog(
+        CanvasFrontendArtChooserSheet(
             initialType = target.raw.resolvedImageType,
             initialContentScale = target.raw.resolvedContentScale,
+            initialBackgroundColorArgb = target.raw.backgroundColorArgb,
+            initialBackgroundCornerRadiusDp = target.raw.backgroundCornerRadiusDp,
             titleRes = R.string.canvas_esde_chooser_title,
-            onConfirm = { imageType, scale ->
-                viewModel.updateEsdeArtItem(target.raw.id, imageType, scale)
+            onConfirm = { imageType, scale, bgArgb, cornerDp ->
+                viewModel.updateEsdeArtItem(
+                    id = target.raw.id,
+                    imageType = imageType,
+                    contentScale = scale,
+                    backgroundColorArgb = bgArgb,
+                    backgroundCornerRadiusDp = cornerDp
+                )
             },
             onDismiss = { esdeArtRetypeTarget = null }
         )
@@ -629,6 +651,17 @@ fun UnifiedCanvasTab(
             onEditCanvas = {
                 appOptionsTarget = null
                 onEditCanvas()
+            },
+            onOpenCanvasMenu = {
+                appOptionsTarget = null
+                addDialogStartInEdit = false
+                addDialogVisible = true
+            },
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager
+                    .setPromptForDisplayOnLaunch(app.packageName, enabled)
             }
         )
     }
@@ -648,6 +681,8 @@ fun UnifiedCanvasTab(
             onDismiss = { renameTarget = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 
     if (showCanvasOnboarding) {
         CanvasOnboardingOverlay(
@@ -686,6 +721,27 @@ private fun CanvasEditModeDoneFab(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = stringResource(R.string.common_done)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CanvasEditModeTidyFab(
+    visible: Boolean,
+    onTidy: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn() + fadeIn(),
+        exit = scaleOut() + fadeOut(),
+        modifier = modifier.padding(16.dp)
+    ) {
+        FloatingActionButton(onClick = onTidy) {
+            Icon(
+                imageVector = Icons.Default.CleaningServices,
+                contentDescription = stringResource(R.string.canvas_tidy_label)
             )
         }
     }

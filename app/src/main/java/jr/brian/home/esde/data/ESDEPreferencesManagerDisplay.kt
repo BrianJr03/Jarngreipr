@@ -24,6 +24,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_POWER_EVENTS_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_RANDOM_SYSTEM_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROMS_PATHS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_FOLDER_MAPPINGS
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_BEHAVIOR
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSAVER_FLOATY_APP_COUNT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SELECT_BUTTON_WALLPAPER_TOGGLE
@@ -224,15 +226,91 @@ fun ESDEPreferencesManager.removeRomsPath(path: String) {
     }
 }
 
-/** Returns the persisted SAF tree URI string for the given SD card volume ID, or null. */
-fun ESDEPreferencesManager.getSafTreeUri(volumeId: String): String? {
-    val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
-    return try { JSONObject(json).optString(volumeId, null) } catch (_: Exception) { null }
+/**
+ * Returns the mapping for [systemName] if one has been declared, or null.
+ * When a mapping exists it is the authoritative source of the folder we scan
+ * and launch through — callers reading a SAF tree URI for [systemName]
+ * should already see the mapping's URI via [setSafTreeUri] on add.
+ */
+fun ESDEPreferencesManager.getSystemFolderMapping(systemName: String): SystemFolderMapping? =
+    state.value.systemFolderMappings.firstOrNull {
+        it.systemName.equals(systemName, ignoreCase = true)
+    }
+
+fun ESDEPreferencesManager.addSystemFolderMapping(mapping: SystemFolderMapping) {
+    val existing = _state.value.systemFolderMappings
+    val filtered = existing.filterNot {
+        it.systemName.equals(mapping.systemName, ignoreCase = true) &&
+                it.treeUri == mapping.treeUri
+    }
+    val updated = filtered + mapping
+    _state.value = _state.value.copy(systemFolderMappings = updated)
+    prefs.edit {
+        putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(updated))
+    }
 }
 
-/** Persists a SAF tree URI for the given SD card volume ID. */
-fun ESDEPreferencesManager.setSafTreeUri(volumeId: String, treeUriString: String) {
+/**
+ * Replace the entire mapping list. Used by import/export to restore a
+ * previously saved set atomically without triggering per-item state churn.
+ */
+fun ESDEPreferencesManager.setAllSystemFolderMappings(mappings: List<SystemFolderMapping>) {
+    _state.value = _state.value.copy(systemFolderMappings = mappings)
+    if (mappings.isEmpty()) {
+        prefs.edit { remove(KEY_SYSTEM_FOLDER_MAPPINGS) }
+    } else {
+        prefs.edit {
+            putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(mappings))
+        }
+    }
+}
+
+fun ESDEPreferencesManager.removeSystemFolderMapping(mapping: SystemFolderMapping) {
+    val existing = _state.value.systemFolderMappings
+    val updated = existing.filterNot {
+        it.systemName.equals(mapping.systemName, ignoreCase = true) &&
+                it.treeUri == mapping.treeUri
+    }
+    if (updated.size == existing.size) return
+    _state.value = _state.value.copy(systemFolderMappings = updated)
+    if (updated.isEmpty()) {
+        prefs.edit { remove(KEY_SYSTEM_FOLDER_MAPPINGS) }
+    } else {
+        prefs.edit {
+            putString(KEY_SYSTEM_FOLDER_MAPPINGS, customizationJson.encodeToString(updated))
+        }
+    }
+}
+
+/** Returns the persisted SAF tree URI string for [systemName], or null. */
+fun ESDEPreferencesManager.getSafTreeUri(systemName: String): String? {
+    val json = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return null
+    return try { JSONObject(json).optString(systemName, null) } catch (_: Exception) { null }
+}
+
+/** Persists a SAF tree URI for [systemName]. */
+fun ESDEPreferencesManager.setSafTreeUri(systemName: String, treeUriString: String) {
     val json = try { JSONObject(prefs.getString(KEY_SAF_TREE_URIS, null) ?: "{}") } catch (_: Exception) { JSONObject() }
-    json.put(volumeId, treeUriString)
+    json.put(systemName, treeUriString)
+    prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
+}
+
+/**
+ * Toggle whether ES-DE gamelist.xml decorates the filesystem scan. Off means
+ * the library shows exactly the ROMs on disk, titled from their filenames, and
+ * gamelist.xml is not read. Callers must trigger a library rebuild after
+ * flipping this — the flag changes what the ROM index looks like on the next
+ * scan, not what is already in memory.
+ */
+fun ESDEPreferencesManager.setGamelistDecorationEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(gamelistDecorationEnabled = enabled)
+    prefs.edit { putBoolean(jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED, enabled) }
+}
+
+/** Removes the persisted SAF tree URI for [systemName], if any. */
+fun ESDEPreferencesManager.clearSafTreeUri(systemName: String) {
+    val existing = prefs.getString(KEY_SAF_TREE_URIS, null) ?: return
+    val json = try { JSONObject(existing) } catch (_: Exception) { return }
+    json.remove(systemName)
     prefs.edit { putString(KEY_SAF_TREE_URIS, json.toString()) }
 }

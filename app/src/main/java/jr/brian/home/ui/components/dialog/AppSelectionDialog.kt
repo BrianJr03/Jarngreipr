@@ -66,7 +66,7 @@ fun AppSelectionDialog(
     onMultiSelectConfirm: (List<AppInfo>) -> Unit = {}
 ) {
     val selected = remember { mutableStateMapOf<String, AppInfo>() }
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

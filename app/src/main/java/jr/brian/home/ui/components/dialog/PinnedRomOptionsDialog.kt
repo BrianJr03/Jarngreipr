@@ -90,7 +90,7 @@ fun PinnedRomOptionsDialog(
         mutableFloatStateOf(currentIconSize ?: ROM_DEFAULT_ICON_SIZE)
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -605,7 +605,7 @@ fun RomCustomIconPickerDialog(
     onRomSelected: (PinnedRomInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -82,6 +83,7 @@ import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.NotificationShade
 import jr.brian.home.ui.util.rememberBottomFlingTrigger
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberTopFlingTrigger
 import jr.brian.home.viewmodels.NowPlayingViewModel
@@ -137,6 +139,7 @@ fun AppsTab(
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
 
     val esdePrefsState by esdePrefsManager.state.collectAsStateWithLifecycle()
+    val displayChooser = rememberDisplayChooser()
     SyncLogoPositionLock(esdePrefsState, esdePrefsManager)
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val folders by folderManager.getFolders(pageIndex)
@@ -207,6 +210,7 @@ fun AppsTab(
 
     val appFocusRequesters = rememberFocusRequesterMap()
     var savedAppIndex by remember { mutableIntStateOf(0) }
+    val dockFocusRequester = remember { FocusRequester() }
 
     val isTabAnimationEnabled = tabAnimationManager.isTabAnimationEnabled
     val interactionSource = remember { MutableInteractionSource() }
@@ -334,6 +338,14 @@ fun AppsTab(
                 onRenameClick = {
                     renameDialogState.show(appInfo)
                     appOptionsDialogState.dismiss()
+                },
+                promptForDisplayOnLaunch = appDisplayPreferenceManager
+                    .getPromptForDisplayOnLaunch(appInfo.packageName),
+                onPromptForDisplayOnLaunchChange = { enabled ->
+                    appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                        appInfo.packageName,
+                        enabled
+                    )
                 }
             )
         }
@@ -500,6 +512,8 @@ fun AppsTab(
         )
     }
 
+    displayChooser.DialogIfNeeded()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -553,10 +567,10 @@ fun AppsTab(
                         } else {
                             DisplayPreference.CURRENT_DISPLAY
                         }
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = displayPreference
+                            currentPreference = displayPreference
                         )
                     },
                     onAppLongClick = { app ->
@@ -611,7 +625,14 @@ fun AppsTab(
                     onRomRemove = { rom ->
                         pinnedRomManager.removePinnedRom(pageIndex, rom.key)
                         appPositionManager.removePosition(pageIndex, rom.key)
-                    }
+                    },
+                    onNavigateDownFromGrid = {
+                        // Guarded: the requester is only attached while the
+                        // dock is composed (AnimatedVisibility below). When the
+                        // dock is hidden, the call throws and we silently drop
+                        // the down-key rather than moving focus nowhere.
+                        runCatching { dockFocusRequester.requestFocus() }
+                    },
                 )
             }
 
@@ -626,16 +647,20 @@ fun AppsTab(
             ) {
                 AppDock(
                     apps = appsUnfiltered,
+                    firstItemFocusRequester = dockFocusRequester,
+                    onNavigateUp = {
+                        runCatching { appFocusRequesters[savedAppIndex]?.requestFocus() }
+                    },
                     onAppClick = { app ->
                         val displayPreference = if (hasExternalDisplay) {
                             appDisplayPreferenceManager.getAppDisplayPreference(app.packageName)
                         } else {
                             DisplayPreference.CURRENT_DISPLAY
                         }
-                        launchApp(
+                        displayChooser.launch(
                             context = context,
                             packageName = app.packageName,
-                            displayPreference = displayPreference
+                            currentPreference = displayPreference
                         )
                     },
                     onAppDoubleClick = { app ->

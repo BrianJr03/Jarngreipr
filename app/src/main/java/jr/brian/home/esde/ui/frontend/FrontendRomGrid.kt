@@ -1,17 +1,39 @@
 package jr.brian.home.esde.ui.frontend
 
-import jr.brian.home.esde.data.*
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
+import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.clearGameMediaType
+import jr.brian.home.esde.data.clearSystemMediaType
+import jr.brian.home.esde.data.disableFocusAnimation
+import jr.brian.home.esde.data.enableFocusAnimation
+import jr.brian.home.esde.data.getGameCore
+import jr.brian.home.esde.data.getGameEmulator
+import jr.brian.home.esde.data.getGameLaunchCommand
+import jr.brian.home.esde.data.hideGame
+import jr.brian.home.esde.data.setGameCore
+import jr.brian.home.esde.data.setGameEmulator
+import jr.brian.home.esde.data.setGameLaunchCommand
+import jr.brian.home.esde.data.setGameMediaType
+import jr.brian.home.esde.data.setSystemMediaType
+import jr.brian.home.esde.data.unhideAllGames
+import jr.brian.home.esde.data.unhideGame
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
@@ -53,9 +75,15 @@ internal fun FrontendRomGrid(
      * restore focus.
      */
     system: String? = null,
-    initialRealIndex: Int = 0
+    initialRealIndex: Int = 0,
+    onFocusedGameChanged: (GameInfo?) -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    if (!isLoading && games.isEmpty() && !isHiddenMode) {
+        EmptyGamesMessage(modifier = modifier)
+        return
+    }
 
     RomResultsGrid(
         games = games,
@@ -119,6 +147,7 @@ internal fun FrontendRomGrid(
         },
         onGameFocused = { game ->
             viewModel.updateFocusedGame(game)
+            onFocusedGameChanged(game)
             if (game != null) {
                 managers.feature.jinglesManager.onGameSelected(File(game.path).name)
                 frontendSelectionStateHolder.selectGame(game)
@@ -133,11 +162,6 @@ internal fun FrontendRomGrid(
         onUnhideGame = { game -> esdePrefs.unhideGame(hiddenGameKey(game)) },
         onUnhideAllGames = { gamesToUnhide ->
             esdePrefs.unhideAllGames(gamesToUnhide.map { hiddenGameKey(it) })
-        },
-        onToggleHintAndKeyboard = {
-            val newVisible = !romSearchStateHolder.hintAndKbVisible.value
-            romSearchStateHolder.hintAndKbVisible.value = newVisible
-            esdePrefs.setRomSearchHintsKbVisible(newVisible)
         },
         onAndroidAppInfo = { game ->
             val pkg = game.path.trimEnd('/').removeSuffix(".app")
@@ -164,4 +188,15 @@ internal fun FrontendRomGrid(
         },
         onChangeFolder = onChangeFolder
     )
+}
+
+@Composable
+private fun EmptyGamesMessage(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = stringResource(R.string.frontend_no_games),
+            color = Color.White.copy(alpha = 0.5f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }

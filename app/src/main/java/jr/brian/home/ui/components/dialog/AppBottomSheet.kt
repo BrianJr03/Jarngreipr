@@ -24,7 +24,7 @@ import jr.brian.home.ui.theme.managers.WallpaperType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DimmedBottomSheet(
+fun AppBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     skipPartiallyExpanded: Boolean = true,
@@ -52,14 +52,14 @@ fun DimmedBottomSheet(
         sheetState = sheetState,
         containerColor = OledCardColor,
         scrimColor = scrimColor,
-        dragHandle = { DimmedBottomSheetDragHandle() },
+        dragHandle = { AppBottomSheetDragHandle() },
         modifier = modifier,
         content = content
     )
 }
 
 @Composable
-private fun DimmedBottomSheetDragHandle() {
+private fun AppBottomSheetDragHandle() {
     Box(
         modifier = Modifier
             .padding(vertical = 12.dp)

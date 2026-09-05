@@ -221,6 +221,7 @@ data class ESDEPrefsState(
     val wallpaperToggleTarget: WallpaperToggleTarget = WallpaperToggleTarget.SystemWallpaper,
 
     val romsPaths: List<String> = emptyList(),
+    val systemFolderMappings: List<SystemFolderMapping> = emptyList(),
     val systemAppMap: Map<String, String?> = emptyMap(),
     val systemLaunchTriggerMap: Map<String, SystemLaunchTrigger> = emptyMap(),
     val systemTopScreenSet: Set<String> = emptySet(),
@@ -231,7 +232,7 @@ data class ESDEPrefsState(
     val gameCoreMap: Map<String, String> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
     val hiddenSystems: Set<String> = emptySet(),
-    val romSearchUseWallpaper: Boolean = true,
+    val romSearchUseWallpaper: Boolean = false,
     val romSearchCardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     val romSearchGameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
@@ -249,7 +250,6 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesFolderUri: String? = null,
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
     val romSearchDetailImageHeightDp: Int = 240,
-    val romSearchHintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val systemLayout: FrontendLayout = FrontendLayout.Grid,
@@ -259,7 +259,25 @@ data class ESDEPrefsState(
     val frontendHintsVisible: Boolean = true,
     val frontendFloatIntensity: Float = 1f,
     val frontendFocusHapticEnabled: Boolean = true,
-    val canvasContinuousSpinRoms: Set<String> = emptySet()
+    val frontendFocusBackgroundEnabled: Boolean = false,
+    val frontendFocusBackgroundSystems: Boolean = true,
+    val frontendFocusBackgroundGames: Boolean = true,
+    val frontendFocusBackgroundDimSystems: Float = 0.55f,
+    val frontendFocusBackgroundDimGames: Float = 0.55f,
+    val frontendTransition: FrontendTransition = FrontendTransition.Default,
+    val frontendTransitionMs: Int = FRONTEND_TRANSITION_MS_DEFAULT,
+    val frontendSystemRowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
+    val frontendGameRowAlignment: FrontendRowAlignment = FrontendRowAlignment.Center,
+    val frontendSystemTileScale: Float = FRONTEND_TILE_SCALE_MIN,
+    val frontendGameTileScale: Float = FRONTEND_TILE_SCALE_MIN,
+    val canvasContinuousSpinRoms: Set<String> = emptySet(),
+    /**
+     * When true (default), gamelist.xml decorates the filesystem scan with
+     * scraped titles, descriptions, and box-art. When false the library is
+     * built from filenames alone — same games, filename-derived titles, no
+     * XML reads. Users adopting a scraper other than ES-DE will turn this off.
+     */
+    val gamelistDecorationEnabled: Boolean = true,
 ) {
     val dimmingLevelFloat: Float get() = dimmingLevel / 100f
     val appDrawerOpacityFloat: Float get() = appDrawerOpacity / 100f

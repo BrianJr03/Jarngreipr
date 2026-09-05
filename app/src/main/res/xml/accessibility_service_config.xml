@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/accessibility_service_description"
-    android:accessibilityEventTypes="typeAllMask"
-    android:accessibilityFlags="flagDefault"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFlags="flagDefault|flagRequestFilterKeyEvents"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:canPerformGestures="true" />
+    android:canPerformGestures="false"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="false" />

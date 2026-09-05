@@ -100,6 +100,15 @@ fun FrontendTile(
             GameImageType.Marquee -> state.logoPath
             else -> state.currentImagePath
         }
+        // Final fallback: the focused game's marquee, when the chosen type
+        // has no art AND system-level art is empty. Marquee is the most
+        // reliably-scraped asset in ES-DE libraries, so it's a decent stand-
+        // in that keeps the tile from dropping to the gradient placeholder.
+        // Skip when imageType is already Marquee — retrying the same lookup
+        // buys nothing and would just be redundant.
+        ?: if (imageType != GameImageType.Marquee)
+            state.currentGame?.imagePathFor(GameImageType.Marquee)
+        else null
 
     // Sticky: when a game launches, ES-DE state may clear (currentGame/logoPath/
     // currentImagePath all null). Keep the most recent artwork instead of
@@ -119,7 +128,11 @@ fun FrontendTile(
         )
     }
 
-    val shape = RoundedCornerShape(12.dp)
+    val backgroundColor = resolved.raw.backgroundColorArgb?.let { Color(it) }
+    val shape = RoundedCornerShape(
+        if (backgroundColor != null) resolved.raw.resolvedBackgroundCornerRadiusDp.dp
+        else 12.dp
+    )
 
     Box(
         modifier = modifier
@@ -128,10 +141,10 @@ fun FrontendTile(
             .onFocusChanged { isFocused = it.isFocused }
             .clip(shape)
             .then(
-                if (imageData == null) {
-                    Modifier.background(brush = emptyArtBrush())
-                } else {
-                    Modifier
+                when {
+                    backgroundColor != null -> Modifier.background(color = backgroundColor)
+                    imageData == null -> Modifier.background(brush = emptyArtBrush())
+                    else -> Modifier
                 }
             )
             .then(

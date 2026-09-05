@@ -40,7 +40,6 @@ import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_IMAGE_FALLBACKS
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
 import jr.brian.home.esde.util.ESDEMediaConstants.SYSTEM_LOGOS_ASSET_PATH
 import jr.brian.home.esde.util.ESDEMediaConstants.VIDEO_EXTENSIONS
-import jr.brian.home.esde.util.GamelistParser
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
 import jr.brian.home.esde.util.mediaCandidatePaths
@@ -71,7 +70,9 @@ class ESDEViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val cleanupHelper: ESDECleanupHelper,
     val cleanupManager: ESDECleanupManager,
-    private val bgMusicManager: BgMusicManager
+    private val bgMusicManager: BgMusicManager,
+    private val romSearchStateHolder: RomSearchStateHolder,
+    private val wallpaperStateHolder: WallpaperStateHolder,
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
@@ -89,7 +90,13 @@ class ESDEViewModel @Inject constructor(
             return File(scriptsPath).parentFile?.absolutePath
         }
 
-    private val _wallpaperState = mutableStateOf(createInitialState())
+    // Backed by [WallpaperStateHolder] (process-wide singleton) so both
+    // MainActivity and FrontEndActivity read the same live ES-DE state. The
+    // holder is seeded with an empty [WallpaperState]; overwrite on first
+    // construction so cold-boot defaults still come from [createInitialState].
+    private val _wallpaperState = wallpaperStateHolder.state.also {
+        if (it.value == WallpaperState()) it.value = createInitialState()
+    }
     val wallpaperState: State<WallpaperState> = _wallpaperState
 
     private val _videoLaunchEvent = MutableSharedFlow<VideoLaunchEvent>()
@@ -266,13 +273,7 @@ class ESDEViewModel @Inject constructor(
         currentGameFilename = gameFilename
         isViewingGame = true
 
-        val gameDescription = esdeRootPath?.let { rootPath ->
-            GamelistParser.getGameDescription(
-                esdeRootPath = rootPath,
-                systemName = systemName,
-                gameFilename = gameFilename
-            )
-        }
+        val gameDescription = romSearchStateHolder.findGame(systemName, gameFilename)?.description
 
         _wallpaperState.value = _wallpaperState.value.copy(
             currentImagePath = getGameImagePath(systemName, gameFilename),
@@ -521,11 +522,12 @@ class ESDEViewModel @Inject constructor(
             gameFilename = gameFilename,
             extensions = IMAGE_EXTENSIONS
         )
-        // Prefer the scraped name from gamelist.xml; fall back to the file
-        // stem so the canvas placeholder never shows a raw path/extension.
-        val displayName = esdeRootPath?.let { root ->
-            GamelistParser.getGameName(root, systemName, gameFilename)
-        } ?: File(gameFilename).nameWithoutExtension
+        // Prefer the scraped name from the built ROM index (which sources it
+        // from gamelist.xml or, later, another metadata provider); fall back
+        // to the file stem so the canvas placeholder never shows a raw path
+        // or extension.
+        val displayName = romSearchStateHolder.findGame(systemName, gameFilename)?.name
+            ?: File(gameFilename).nameWithoutExtension
         return GameInfo(
             path = gameFilename,
             name = displayName,

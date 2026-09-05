@@ -1,10 +1,12 @@
 package jr.brian.home.esde.ui
 
 import jr.brian.home.esde.data.*
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -12,6 +14,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -25,10 +29,13 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.WallpaperStateHolder
 import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.ui.frontend.FrontendScreen
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.util.gameKey
+import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
@@ -55,6 +62,9 @@ class FrontEndActivity : ComponentActivity() {
     @Inject
     lateinit var frontendSelectionStateHolder: FrontendSelectionStateHolder
 
+    @Inject
+    lateinit var wallpaperStateHolder: WallpaperStateHolder
+
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val romSearchViewModel: RomSearchViewModel by viewModels()
@@ -62,6 +72,7 @@ class FrontEndActivity : ComponentActivity() {
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
     private var gameLaunched = false
+    private var mediaMountReceiver: BroadcastReceiver? = null
 
     private val safTreeLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -74,27 +85,9 @@ class FrontEndActivity : ComponentActivity() {
             pendingFolderChangeSystem = null
             return
         }
-        contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         val systemName =
             pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
-
-        val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
-
-        if (treeDocId?.startsWith("primary:") == true) {
-            val rel = treeDocId.removePrefix("primary:")
-            val pickedDir = "/storage/emulated/0/$rel"
-            val romsRoot = if (systemName != null &&
-                File(pickedDir).name.equals(systemName, ignoreCase = true)
-            ) {
-                File(pickedDir).parent ?: pickedDir
-            } else {
-                pickedDir
-            }
-            esdePrefs.addRomsPath(romsRoot)
-            if (systemName != null) esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        } else if (systemName != null) {
-            esdePrefs.setSafTreeUri(systemName, treeUri.toString())
-        }
+        persistSafTreeForSystem(this, esdePrefs, systemName, treeUri)
 
         romLauncher.pendingGameLaunch?.let { (game, ctx) ->
             val pkg = esdePrefs.getGameEmulator(gameKey(game)) ?: game.emulatorPackage ?: game.path
@@ -126,6 +119,8 @@ class FrontEndActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        mediaMountReceiver?.let { runCatching { unregisterReceiver(it) } }
+        mediaMountReceiver = null
         if (gameLaunched) {
             romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
         }
@@ -146,10 +141,11 @@ class FrontEndActivity : ComponentActivity() {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.hintAndKbVisible.value = esdePrefs.state.value.romSearchHintsKbVisible
         romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
+        registerMediaMountReceiver()
         observeFrontendEnabledFlag()
+        observeShowRomSearchResultsSignal()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -162,23 +158,59 @@ class FrontEndActivity : ComponentActivity() {
             LauncherTheme {
                 BackHandler {}
                 managers.ManagerCompositionLocalProvider {
-                    val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                    FrontendScreen(
-                        esdePrefs = esdePrefs,
-                        viewModel = viewModel,
-                        mainViewModel = mainViewModel,
-                        romSearchStateHolder = romSearchStateHolder,
-                        frontendSelectionStateHolder = frontendSelectionStateHolder,
-                        managers = managers,
-                        romLauncher = romLauncher,
-                        appDisplayPreferenceManager = appDisplayPreferenceManager,
-                        onFinishImmediately = { finish() },
-                        onSignalGameLaunch = ::signalGameLaunch,
-                        onChangeFolder = ::launchSafPickerForGame
-                    )
+                    // Mirror MainActivity: read the shared holder inside the
+                    // composable so the read is tracked, then re-provide the
+                    // current value. Any consumer under FrontEndActivity (e.g.
+                    // FrontendTile inside a canvas widget) now sees the same
+                    // live state MainActivity's ES-DE event listener writes to.
+                    val wallpaperState by wallpaperStateHolder.state
+                    CompositionLocalProvider(
+                        LocalEsdeWallpaperState provides wallpaperState
+                    ) {
+                        val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+                        FrontendScreen(
+                            esdePrefs = esdePrefs,
+                            viewModel = viewModel,
+                            mainViewModel = mainViewModel,
+                            romSearchStateHolder = romSearchStateHolder,
+                            frontendSelectionStateHolder = frontendSelectionStateHolder,
+                            managers = managers,
+                            romLauncher = romLauncher,
+                            appDisplayPreferenceManager = appDisplayPreferenceManager,
+                            onFinishImmediately = { finish() },
+                            onSignalGameLaunch = ::signalGameLaunch,
+                            onChangeFolder = ::launchSafPickerForGame
+                        )
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Kick a re-scan when a removable volume finishes mounting. The launcher
+     * runs as HOME, so its first scan often races the SD card mount at boot
+     * and comes back "degraded" — the ViewModel keeps the cached SD systems
+     * in place, and this receiver is what lets it actually rebuild once vold
+     * catches up, so the user never has to open Settings → Refresh Library.
+     *
+     * `ACTION_MEDIA_MOUNTED` requires a `file` data scheme; declaring it
+     * without would silently receive nothing.
+     */
+    private fun registerMediaMountReceiver() {
+        if (mediaMountReceiver != null) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_MEDIA_MOUNTED) {
+                    romSearchViewModel.retryIfLastScanWasDegraded()
+                }
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_MEDIA_MOUNTED).apply {
+            addDataScheme("file")
+        }
+        registerReceiver(receiver, filter)
+        mediaMountReceiver = receiver
     }
 
     private fun observeFrontendEnabledFlag() {
@@ -188,6 +220,31 @@ class FrontEndActivity : ComponentActivity() {
                     .map { it.frontendEnabled }
                     .distinctUntilChanged()
                     .collect { enabled -> if (!enabled) finish() }
+            }
+        }
+    }
+
+    /**
+     * The keyboard on the bottom display used to start [RomSearchResultsActivity]
+     * itself, from MainActivity's context, using FLAG_ACTIVITY_NEW_TASK on the top
+     * displayId. That cross-display / cross-task launch destroyed this activity and
+     * blanked MainActivity during the Y → back cycle. Now the keyboard emits a
+     * signal and we start the results activity on our own task on the display we
+     * already own — finishing it pops back to this activity without a recreate.
+     */
+    private fun observeShowRomSearchResultsSignal() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                romSearchStateHolder.showRomSearchResultsSignal.collect {
+                    val intent = Intent(
+                        this@FrontEndActivity,
+                        RomSearchResultsActivity::class.java
+                    ).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        putExtra(RomSearchResultsActivity.EXTRA_FROM_FRONTEND, true)
+                    }
+                    startActivity(intent)
+                }
             }
         }
     }

@@ -16,7 +16,11 @@ import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
 import jr.brian.home.data.SnapMode
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.FrontendRowAlignment
+import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.model.BackButtonShortcut
+import jr.brian.home.model.HomeTarget
+import jr.brian.home.model.MainScreen
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.model.WakeMethod
@@ -73,6 +77,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 shadeAccentColorArgb = ui.gridSettingsManager.shadeAccentColorArgb
             ),
             appDisplayPreferences = ui.appDisplayPreferenceManager.getAllPreferences(),
+            promptForDisplayOnLaunch = ui.appDisplayPreferenceManager.getPromptForDisplayPackages(),
             powerSettings = PowerSettingsConfig(
                 powerButtonVisible = ps.powerButtonVisible.value,
                 quickDeleteVisible = ps.quickDeleteVisible.value,
@@ -82,7 +87,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 backButtonShortcut = ps.backButtonShortcut.value.name,
                 backButtonShortcutAppPackage = ps.backButtonShortcutAppPackage.value,
                 poweredOffBrightness = ps.poweredOffBrightness.value,
-                appDrawerFilterByPage = ps.appDrawerFilterByPage.value
+                appDrawerFilterByPage = ps.appDrawerFilterByPage.value,
+                pagerSwipeSensitivity = ps.pagerSwipeSensitivity.value
             ),
             selectedIconPackage = ui.iconPackManager.selectedIconPack.first(),
             wallpaper = WallpaperConfig(
@@ -219,6 +225,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         return result
     }
 
+    @Suppress("DEPRECATION")
     private fun buildFeatureConfig(): FeatureConfig {
         val f = managers.feature
         return FeatureConfig(
@@ -270,8 +277,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 fileUri = f.bgMusicManager.singleFileUri,
                 volume = f.bgMusicManager.vol
             ),
+            homeButton = HomeButtonConfig(
+                interceptionEnabled = f.homeButtonManager.interceptionEnabled.value,
+                homeTarget = f.homeButtonManager.homeTarget.value?.name,
+                mainScreen = f.homeButtonManager.mainScreen.value.name,
+            ),
             romSearch = RomSearchConfig(
-                hintsKbVisible = f.esdePreferencesManager.state.value.romSearchHintsKbVisible,
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
@@ -283,7 +294,23 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
                 systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
-                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled
+                frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
+                frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
+                frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
+                frontendFocusBackgroundGames = f.esdePreferencesManager.state.value.frontendFocusBackgroundGames,
+                // Legacy field is intentionally kept in the export payload so a config
+                // exported by this build can still be read by pre-split builds; seed it
+                // from the systems value as a reasonable single-value approximation.
+                frontendFocusBackgroundDim = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimSystems,
+                frontendFocusBackgroundDimSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimSystems,
+                frontendFocusBackgroundDimGames = f.esdePreferencesManager.state.value.frontendFocusBackgroundDimGames,
+                frontendTransition = f.esdePreferencesManager.state.value.frontendTransition.name,
+                frontendTransitionMs = f.esdePreferencesManager.state.value.frontendTransitionMs,
+                frontendSystemRowAlignment = f.esdePreferencesManager.state.value.frontendSystemRowAlignment.name,
+                frontendGameRowAlignment = f.esdePreferencesManager.state.value.frontendGameRowAlignment.name,
+                frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
+                frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
+                gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
             )
         )
     }
@@ -291,7 +318,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     private fun buildSystemConfig() = SystemConfig(
         badgesVisible = managers.system.notificationManager.badgesVisible,
         shadeTabPage = managers.system.notificationManager.shadeTabPage,
-        hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList()
+        hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList(),
+        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings
     )
 
     // ── Import ──────────────────────────────────────────────────────────────
@@ -326,6 +354,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.gridSettingsManager.setShadeAccentColorArgb(config.gridSettings.shadeAccentColorArgb)
 
         ui.appDisplayPreferenceManager.restoreAllPreferences(config.appDisplayPreferences)
+        ui.appDisplayPreferenceManager.restorePromptForDisplayPackages(config.promptForDisplayOnLaunch)
 
         val ps = config.powerSettings
         ui.powerSettingsManager.setPowerButtonVisibility(ps.powerButtonVisible)
@@ -337,6 +366,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.powerSettingsManager.setBackButtonShortcutAppPackage(ps.backButtonShortcutAppPackage)
         ui.powerSettingsManager.setPoweredOffBrightness(ps.poweredOffBrightness)
         ui.powerSettingsManager.setAppDrawerFilterByPage(ps.appDrawerFilterByPage)
+        ui.powerSettingsManager.setPagerSwipeSensitivity(ps.pagerSwipeSensitivity)
 
         ui.iconPackManager.setSelectedIconPack(config.selectedIconPackage)
 
@@ -461,6 +491,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun applyFeatureConfig(config: FeatureConfig) {
         val f = managers.feature
 
@@ -518,7 +549,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             volume = bgMusic.volume
         )
 
-        f.esdePreferencesManager.setRomSearchHintsKbVisible(config.romSearch.hintsKbVisible)
+        // config.romSearch.hintsKbVisible intentionally ignored — the feature it
+        // gated was removed. The field stays on RomSearchConfig so older exports
+        // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
@@ -533,7 +566,46 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
         f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
+        f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
+        f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)
+        f.esdePreferencesManager.setFrontendFocusBackgroundGames(config.romSearch.frontendFocusBackgroundGames)
+        // Pre-split configs carry only the deprecated combined field; new configs
+        // carry the per-scope fields. When the per-scope field is at its default and
+        // the legacy field differs, prefer the legacy — that's the case where a v17
+        // (or older) config was exported before the split existed.
+        @Suppress("DEPRECATION")
+        val legacyDim = config.romSearch.frontendFocusBackgroundDim
+        val systemsDim = config.romSearch.frontendFocusBackgroundDimSystems.let { new ->
+            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
+        }
+        val gamesDim = config.romSearch.frontendFocusBackgroundDimGames.let { new ->
+            if (new == 0.55f && legacyDim != 0.55f) legacyDim else new
+        }
+        f.esdePreferencesManager.setFrontendFocusBackgroundDimSystems(systemsDim)
+        f.esdePreferencesManager.setFrontendFocusBackgroundDimGames(gamesDim)
+        f.esdePreferencesManager.setFrontendTransition(
+            FrontendTransition.fromStoredName(config.romSearch.frontendTransition)
+        )
+        f.esdePreferencesManager.setFrontendTransitionMs(config.romSearch.frontendTransitionMs)
+        f.esdePreferencesManager.setFrontendSystemRowAlignment(
+            resolveRowAlignment(config.romSearch.frontendSystemRowAlignment)
+        )
+        f.esdePreferencesManager.setFrontendGameRowAlignment(
+            resolveRowAlignment(config.romSearch.frontendGameRowAlignment)
+        )
+        f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
+        f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
+        f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
+
+        f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
+        HomeTarget.entries.firstOrNull { it.name == config.homeButton.homeTarget }
+            ?.let { f.homeButtonManager.setHomeTarget(it) }
+        f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
     }
+
+    private fun resolveRowAlignment(stored: String): FrontendRowAlignment =
+        FrontendRowAlignment.entries.firstOrNull { it.name == stored }
+            ?: FrontendRowAlignment.Center
 
     private fun applySystemConfig(config: SystemConfig) {
         val sys = managers.system
@@ -542,6 +614,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         }
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
         managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
+        managers.feature.esdePreferencesManager.setAllSystemFolderMappings(config.systemFolderMappings)
     }
 
     fun encodeToJson(config: JarngreiprConfig): String =

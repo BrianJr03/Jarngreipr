@@ -74,7 +74,6 @@ import jr.brian.home.ui.theme.managers.LocalCustomIconManager
 import jr.brian.home.ui.theme.managers.LocalFolderManager
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 import kotlinx.coroutines.launch
@@ -111,8 +110,9 @@ fun FolderContentsDialog(
     var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -260,10 +260,10 @@ fun FolderContentsDialog(
                                     } else {
                                         DisplayPreference.CURRENT_DISPLAY
                                     }
-                                    launchApp(
+                                    displayChooser.launch(
                                         context = context,
                                         packageName = app.packageName,
-                                        displayPreference = displayPreference
+                                        currentPreference = displayPreference
                                     )
                                     onDismiss()
                                 },
@@ -365,6 +365,14 @@ fun FolderContentsDialog(
             onRenameClick = {
                 appForRename = app
                 selectedAppForOptions = null
+            },
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
             }
         )
     }
@@ -401,6 +409,8 @@ fun FolderContentsDialog(
             onDismiss = backgroundDialogState::dismiss
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @OptIn(ExperimentalFoundationApi::class)

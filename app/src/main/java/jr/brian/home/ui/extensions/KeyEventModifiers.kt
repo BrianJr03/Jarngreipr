@@ -274,17 +274,20 @@ fun Modifier.handleShoulderButtons(
     onRightShoulder: (() -> Unit)? = null,
 ): Modifier {
     return this.onKeyEvent { event ->
-        when {
-            event.type == KeyEventType.KeyDown &&
-                    (event.key == Key.ButtonL1 || event.key == Key.ButtonL2) &&
-                    onLeftShoulder != null -> {
+        // Ignore auto-repeat: analog triggers on some handhelds (Ayn Thor L2/R2)
+        // fire a burst of KeyDown events per pull, which otherwise compound into
+        // multi-page jumps instead of a single page step.
+        if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+        if (event.nativeKeyEvent.repeatCount != 0) return@onKeyEvent false
+        when (event.key) {
+            Key.ButtonL1, Key.ButtonL2 -> {
+                if (onLeftShoulder == null) return@onKeyEvent false
                 onLeftShoulder()
                 true
             }
 
-            event.type == KeyEventType.KeyDown &&
-                    (event.key == Key.ButtonR1 || event.key == Key.ButtonR2) &&
-                    onRightShoulder != null -> {
+            Key.ButtonR1, Key.ButtonR2 -> {
+                if (onRightShoulder == null) return@onKeyEvent false
                 onRightShoulder()
                 true
             }

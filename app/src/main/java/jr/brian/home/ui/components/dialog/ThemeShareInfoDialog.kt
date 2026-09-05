@@ -39,7 +39,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 fun ThemeShareInfoDialog(
     onDismiss: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

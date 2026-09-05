@@ -44,7 +44,7 @@ import jr.brian.home.model.PhysicalButton
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedBottomSheet
+import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.StatusOrange
 import jr.brian.home.ui.theme.StatusYellow
 import jr.brian.home.ui.theme.ThemePrimaryColor
@@ -55,7 +55,7 @@ fun ButtonMappingDialog(
     onButtonSelected: (PhysicalButton) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -158,7 +158,7 @@ private fun ButtonMappingOption(
 fun GamePadHelpDialog(
     onDismiss: () -> Unit
 ) {
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

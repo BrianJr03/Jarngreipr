@@ -5,6 +5,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -57,7 +59,12 @@ import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemLaunchTrigger
 import jr.brian.home.esde.ui.ESDEWallpaperContainer
 import jr.brian.home.esde.ui.FrontEndActivity
+import jr.brian.home.esde.ui.RomGameLauncher
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
+import jr.brian.home.esde.util.gameKey
+import jr.brian.home.esde.util.persistSafTreeForSystem
+import jr.brian.home.esde.util.resolveRomPath
+import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.viewmodels.ESDEViewModel
 import jr.brian.home.model.LetterBurstState
 import jr.brian.home.model.VideoLaunchEvent
@@ -111,9 +118,67 @@ class MainActivity : ComponentActivity() {
 
     private var navigateToThemeShare by mutableStateOf(false)
 
+    // Tracked across repeatOnLifecycle restarts so the STARTED re-entry after a
+    // sleep/wake doesn't re-launch FrontEndActivity onto the top display and
+    // displace whatever foreign app the user had running there. We only want to
+    // fire launchFrontendIfEnabled on a real false → true transition (or the
+    // null → true cold-start edge).
+    private var lastObservedFrontendEnabled: Boolean? = null
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ -> }
+
+    // ROM search sheet lives on this activity (bottom display) — needs its own
+    // RomGameLauncher so tap-to-launch and change-folder flows work without
+    // hopping activities. Same wiring FrontEndActivity uses.
+    private lateinit var romLauncher: RomGameLauncher
+    private var pendingFolderChangeSystem: String? = null
+
+    private val safTreeLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { treeUri -> handleSafTreeResult(treeUri) }
+
+    private fun handleSafTreeResult(treeUri: Uri?) {
+        if (treeUri == null) {
+            Toast.makeText(this, "Folder access denied", Toast.LENGTH_SHORT).show()
+            romLauncher.pendingGameLaunch = null
+            pendingFolderChangeSystem = null
+            return
+        }
+        val systemName =
+            pendingFolderChangeSystem ?: romLauncher.pendingGameLaunch?.first?.systemName
+        persistSafTreeForSystem(this, esdePreferencesManager, systemName, treeUri)
+
+        romLauncher.pendingGameLaunch?.let { (game, ctx) ->
+            val pkg = esdePreferencesManager.getGameEmulator(gameKey(game))
+                ?: game.emulatorPackage ?: game.path
+            romLauncher.launchGame(
+                game,
+                ctx,
+                managers.ui.appDisplayPreferenceManager.getAppDisplayPreference(pkg)
+            )
+        }
+        romLauncher.pendingGameLaunch = null
+        pendingFolderChangeSystem = null
+    }
+
+    private fun launchSafPickerForGame(game: GameInfo) {
+        pendingFolderChangeSystem = game.systemName
+        val romPath = resolveRomPath(game, esdePreferencesManager.state.value.romsPaths)
+        val hint = romPath?.let {
+            val dir = File(it).parent ?: "/storage/emulated/0"
+            "content://com.android.externalstorage.documents/document/${
+                Uri.encode("primary:${dir.removePrefix("/storage/emulated/0/")}")
+            }".toUri()
+        }
+        safTreeLauncher.launch(hint)
+    }
+
+    private fun signalGameLaunch() {
+        managers.feature.jinglesManager.onGameLaunched()
+        romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
+    }
 
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,6 +190,13 @@ class MainActivity : ComponentActivity() {
         ) {
             permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
         }
+
+        romLauncher = RomGameLauncher(
+            activity = this,
+            esdePrefs = esdePreferencesManager,
+            onSignalGameLaunch = ::signalGameLaunch,
+            onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
+        )
 
         managers.feature.esdeEventManager.startWatching()
         managers.feature.esdeEventManager.startPolling()
@@ -223,6 +295,9 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 MainContent(
                                     romSearchStateHolder = romSearchStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    onChangeFolder = ::launchSafPickerForGame,
                                     triggerMarqueePressShortcut = triggerMarqueePressShortcut,
                                     onMarqueePressShortcutHandled = {
                                         triggerMarqueePressShortcut = false
@@ -301,7 +376,11 @@ class MainActivity : ComponentActivity() {
                 esdePreferencesManager.state
                     .map { it.frontendEnabled }
                     .distinctUntilChanged()
-                    .collect { enabled -> if (enabled) launchFrontendIfEnabled() }
+                    .collect { enabled ->
+                        val previous = lastObservedFrontendEnabled
+                        lastObservedFrontendEnabled = enabled
+                        if (enabled && previous != true) launchFrontendIfEnabled()
+                    }
             }
         }
     }

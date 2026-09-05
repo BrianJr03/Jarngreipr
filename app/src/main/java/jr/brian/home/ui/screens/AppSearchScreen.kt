@@ -39,7 +39,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.ui.extensions.combinedClickWithHaptic
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
@@ -50,6 +53,7 @@ import jr.brian.home.ui.components.VerticalKeyboard
 import jr.brian.home.ui.components.apps.AppIconImage
 import jr.brian.home.ui.components.dialog.RenameAppDialog
 import jr.brian.home.ui.components.dialog.SearchAppOptionsDialog
+import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.components.onboarding.SearchOnboardingOverlay
 import jr.brian.home.ui.components.settings.AppName
 import jr.brian.home.ui.theme.OledBackgroundColor
@@ -59,7 +63,6 @@ import jr.brian.home.ui.theme.managers.LocalIconShapeManager
 import jr.brian.home.ui.theme.managers.LocalCustomAppNameManager
 import jr.brian.home.ui.theme.managers.LocalSearchLayoutManager
 import jr.brian.home.ui.util.rememberHasExternalDisplay
-import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.util.openAppInfo
 
@@ -141,9 +144,11 @@ private fun VerticalSearchLayout(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
-            AppGrid(
+            if (filteredApps.isEmpty()) AppSearchEmptyState()
+            else AppGrid(
                 apps = filteredApps,
                 modifier = Modifier.fillMaxSize()
             )
@@ -190,9 +195,11 @@ private fun HorizontalSearchLayout(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
         ) {
-            HorizontalAppGrid(
+            if (filteredApps.isEmpty()) AppSearchEmptyState()
+            else HorizontalAppGrid(
                 apps = filteredApps,
                 showAppNames = !showSpecialCharRow,
                 modifier = Modifier.fillMaxSize()
@@ -234,6 +241,7 @@ private fun AppGrid(
     var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -251,10 +259,10 @@ private fun AppGrid(
                     } else {
                         DisplayPreference.CURRENT_DISPLAY
                     }
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = {
@@ -291,7 +299,15 @@ private fun AppGrid(
                 appForRename = app
                 selectedApp = null
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
+            }
         )
     }
 
@@ -302,6 +318,8 @@ private fun AppGrid(
             onDismiss = { appForRename = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -317,6 +335,7 @@ private fun HorizontalAppGrid(
     var appForRename by remember { mutableStateOf<AppInfo?>(null) }
 
     val hasExternalDisplay = rememberHasExternalDisplay()
+    val displayChooser = rememberDisplayChooser()
 
     LazyHorizontalGrid(
         rows = GridCells.Fixed(2),
@@ -337,10 +356,10 @@ private fun HorizontalAppGrid(
                     } else {
                         DisplayPreference.CURRENT_DISPLAY
                     }
-                    launchApp(
+                    displayChooser.launch(
                         context = context,
                         packageName = app.packageName,
-                        displayPreference = displayPreference
+                        currentPreference = displayPreference
                     )
                 },
                 onAppDoubleClick = {
@@ -377,7 +396,15 @@ private fun HorizontalAppGrid(
                 appForRename = app
                 selectedApp = null
             },
-            hasExternalDisplay = hasExternalDisplay
+            hasExternalDisplay = hasExternalDisplay,
+            promptForDisplayOnLaunch = appDisplayPreferenceManager
+                .getPromptForDisplayOnLaunch(app.packageName),
+            onPromptForDisplayOnLaunchChange = { enabled ->
+                appDisplayPreferenceManager.setPromptForDisplayOnLaunch(
+                    app.packageName,
+                    enabled
+                )
+            }
         )
     }
 
@@ -388,6 +415,8 @@ private fun HorizontalAppGrid(
             onDismiss = { appForRename = null }
         )
     }
+
+    displayChooser.DialogIfNeeded()
 }
 
 @Composable
@@ -498,4 +527,13 @@ private fun AppGridItem(
         Spacer(Modifier.height(4.dp))
         app.AppName()
     }
+}
+
+@Composable
+private fun AppSearchEmptyState() {
+    Text(
+        text = stringResource(R.string.app_search_no_results),
+        color = Color.White.copy(alpha = 0.6f),
+        fontSize = 14.sp,
+    )
 }

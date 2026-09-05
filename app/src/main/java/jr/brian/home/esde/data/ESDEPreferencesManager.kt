@@ -7,7 +7,14 @@ import androidx.compose.ui.graphics.toArgb
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.model.ESDEPrefsState
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MAX
+import jr.brian.home.esde.model.FRONTEND_TILE_SCALE_MIN
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_DEFAULT
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_MAX
+import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_MIN
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.model.FrontendRowAlignment
+import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.esde.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
@@ -110,6 +117,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_FOLDER_MAPPINGS
+import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLPAPER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
@@ -136,12 +145,29 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_HINTS_VISIBLE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_GAME_ROW_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_GAME_TILE_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_ROW_ALIGNMENT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_TILE_SCALE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_MS
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HINTS_KB_VISIBLE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
+
+// Legacy key from the pre-split build, when a single dim value applied to both
+// system and game focus backgrounds. Read-only, used solely by loadState() to
+// migrate existing installs onto the two new per-scope keys — do not write to
+// this key or expose it elsewhere.
+private const val KEY_FRONTEND_FOCUS_BACKGROUND_DIM_LEGACY = "frontend_focus_background_dim"
 
 class ESDEPreferencesManager(context: Context) {
     internal val prefs: SharedPreferences = context.getSharedPreferences(
@@ -278,6 +304,11 @@ class ESDEPreferencesManager(context: Context) {
             }
         }
 
+        val systemFolderMappings: List<SystemFolderMapping> = prefs.getString(KEY_SYSTEM_FOLDER_MAPPINGS, null)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { customizationJson.decodeFromString<List<SystemFolderMapping>>(it) }.getOrNull() }
+            ?: emptyList()
+
         val systemAppMapJson = prefs.getString(KEY_SYSTEM_APP_MAP, null)
         val systemAppMap: Map<String, String?> = if (!systemAppMapJson.isNullOrEmpty()) {
             try {
@@ -391,6 +422,13 @@ class ESDEPreferencesManager(context: Context) {
             ?.let { runCatching { customizationJson.decodeFromString<List<String>>(it) }.getOrNull() }
             ?: emptyList()
 
+        // Users on the pre-split build have one combined value. Seed both new keys
+        // from it so their configured dim carries over instead of snapping back to
+        // 0.55f. Falls back to the default when the legacy key is absent.
+        val legacyFocusBackgroundDim = prefs
+            .getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_LEGACY, 0.55f)
+            .coerceIn(0f, 1f)
+
         return ESDEPrefsState(
             animationStyle = animationStyle,
             animationDuration = prefs.getInt(KEY_ANIMATION_DURATION, 300),
@@ -459,6 +497,7 @@ class ESDEPreferencesManager(context: Context) {
             selectButtonWallpaperToggle = prefs.getBoolean(KEY_SELECT_BUTTON_WALLPAPER_TOGGLE, false),
             wallpaperToggleTarget = wallpaperToggleTarget,
             romsPaths = romsPaths,
+            systemFolderMappings = systemFolderMappings,
             systemAppMap = systemAppMap,
             systemLaunchTriggerMap = systemLaunchTriggerMap,
             systemTopScreenSet = systemTopScreenSet,
@@ -490,7 +529,15 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
-            romSearchUseWallpaper = prefs.getBoolean(KEY_ROM_SEARCH_USE_WALLPAPER, true),
+            // Hardcoded off: ROM search has moved to the bottom-display sheet
+            // ([jr.brian.home.esde.ui.RomSearchSheet]) where the wallpaper
+            // backdrop makes no sense. The frontend on the top display also
+            // uses this flag for its own backdrop, and we want the OLED
+            // background there too. Any legacy `true` persisted value is
+            // ignored — users who had the toggle on lose the setting because
+            // the screen it affected (RomSearchScreen/RomSearchResultsActivity)
+            // is no longer reachable from the UI.
+            romSearchUseWallpaper = false,
             romSearchCardMediaType = prefs.getString(KEY_ROM_SEARCH_CARD_MEDIA_TYPE, null)
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }
                 ?: RomSearchCardMediaType.PhysicalMedia,
@@ -533,7 +580,6 @@ class ESDEPreferencesManager(context: Context) {
                 ?.let { runCatching { PlatformImageFolderType.valueOf(it) }.getOrNull() }
                 ?: PlatformImageFolderType.Default,
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
-            romSearchHintsKbVisible = prefs.getBoolean(KEY_ROM_SEARCH_HINTS_KB_VISIBLE, true),
             frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
             secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
             systemLayout = prefs.getString(KEY_SYSTEM_LAYOUT, null)
@@ -547,6 +593,28 @@ class ESDEPreferencesManager(context: Context) {
             frontendHintsVisible = prefs.getBoolean(KEY_FRONTEND_HINTS_VISIBLE, true),
             frontendFloatIntensity = prefs.getFloat(KEY_FRONTEND_FLOAT_INTENSITY, 1f).coerceIn(0f, 3f),
             frontendFocusHapticEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_HAPTIC_ENABLED, true),
+            frontendFocusBackgroundEnabled = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_ENABLED, false),
+            frontendFocusBackgroundSystems = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_SYSTEMS, true),
+            frontendFocusBackgroundGames = prefs.getBoolean(KEY_FRONTEND_FOCUS_BACKGROUND_GAMES, true),
+            frontendFocusBackgroundDimSystems =
+                prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS, legacyFocusBackgroundDim).coerceIn(0f, 1f),
+            frontendFocusBackgroundDimGames =
+                prefs.getFloat(KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES, legacyFocusBackgroundDim).coerceIn(0f, 1f),
+            frontendTransition = FrontendTransition.fromStoredName(
+                prefs.getString(KEY_FRONTEND_TRANSITION, null)
+            ),
+            frontendTransitionMs = prefs.getInt(KEY_FRONTEND_TRANSITION_MS, FRONTEND_TRANSITION_MS_DEFAULT)
+                .coerceIn(FRONTEND_TRANSITION_MS_MIN, FRONTEND_TRANSITION_MS_MAX),
+            frontendSystemRowAlignment = prefs.getString(KEY_FRONTEND_SYSTEM_ROW_ALIGNMENT, null)
+                ?.let { stored -> FrontendRowAlignment.entries.firstOrNull { it.name == stored } }
+                ?: FrontendRowAlignment.Center,
+            frontendGameRowAlignment = prefs.getString(KEY_FRONTEND_GAME_ROW_ALIGNMENT, null)
+                ?.let { stored -> FrontendRowAlignment.entries.firstOrNull { it.name == stored } }
+                ?: FrontendRowAlignment.Center,
+            frontendSystemTileScale = prefs.getFloat(KEY_FRONTEND_SYSTEM_TILE_SCALE, FRONTEND_TILE_SCALE_MIN)
+                .coerceIn(FRONTEND_TILE_SCALE_MIN, FRONTEND_TILE_SCALE_MAX),
+            frontendGameTileScale = prefs.getFloat(KEY_FRONTEND_GAME_TILE_SCALE, FRONTEND_TILE_SCALE_MIN)
+                .coerceIn(FRONTEND_TILE_SCALE_MIN, FRONTEND_TILE_SCALE_MAX),
             canvasContinuousSpinRoms = prefs.getString(KEY_CANVAS_CONTINUOUS_SPIN_ROMS, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
@@ -554,7 +622,8 @@ class ESDEPreferencesManager(context: Context) {
                         val arr = JSONArray(json)
                         (0 until arr.length()).map { arr.getString(it) }.toSet()
                     } catch (_: Exception) { emptySet() }
-                } ?: emptySet()
+                } ?: emptySet(),
+            gamelistDecorationEnabled = prefs.getBoolean(KEY_GAMELIST_DECORATION_ENABLED, true),
         )
     }
 

@@ -58,7 +58,7 @@ import jr.brian.home.model.widget.WidgetProviderInfo
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.colors.borderBrush
 import jr.brian.home.ui.colors.cardGradient
-import jr.brian.home.ui.components.dialog.DimmedBottomSheet
+import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 
@@ -107,7 +107,7 @@ fun CanvasWidgetPickerDialog(
         }
     }
 
-    DimmedBottomSheet(onDismissRequest = onDismiss) {
+    AppBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
