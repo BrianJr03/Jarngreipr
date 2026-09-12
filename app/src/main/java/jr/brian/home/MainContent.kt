@@ -39,6 +39,7 @@ import jr.brian.home.esde.ui.RomSearchSheet
 import jr.brian.home.ui.animations.SlideInVertically
 import jr.brian.home.esde.ui.video.VideoPresentationManager
 import jr.brian.home.esde.viewmodels.ESDEViewModel
+import jr.brian.home.model.PageType
 import jr.brian.home.model.Shortcut
 import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
@@ -122,6 +123,8 @@ fun MainContent(
     val esdePreferencesManager = LocalESDEPreferencesManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val appVisibilityManager = LocalAppVisibilityManager.current
+    val pageTypeManager = managers.page.pageTypeManager
+    val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val esdePrefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
     val hiddenAppsByPage by appVisibilityManager.hiddenAppsByPage.collectAsStateWithLifecycle()
@@ -161,6 +164,18 @@ fun MainContent(
 
     LaunchedEffect(Unit) {
         bgMusicManager.resumeIfConfigured()
+    }
+
+    LaunchedEffect(uiState.allAppsUnfiltered, pageTypes) {
+        if (uiState.isLoading) return@LaunchedEffect
+        val installed = uiState.allAppsUnfiltered.map { it.packageName }.toSet()
+        val homePageIndices = pageTypes.mapIndexedNotNull { index, type ->
+            when (type) {
+                PageType.APPS_TAB, PageType.APPS_AND_WIDGETS_TAB -> index
+                else -> null
+            }
+        }
+        appVisibilityManager.onInstalledAppsLoaded(installed, homePageIndices)
     }
 
     LaunchedEffect(Unit) {

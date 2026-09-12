@@ -574,6 +574,76 @@ class AppVisibilityManagerTest {
     }
 
     @Test
+    fun `onInstalledAppsLoaded first run seeds known packages and hides nothing`() = runTest {
+        // Given: known_packages key absent from prefs (fresh install / upgrade)
+        manager.setNewAppsVisibleByDefault(false)
+
+        // When: initial load enumerates existing apps
+        manager.onInstalledAppsLoaded(
+            installedPackages = setOf("com.existing1", "com.existing2"),
+            pageIndices = listOf(0, 1, 2)
+        )
+
+        // Then: known set is seeded and no app is hidden on any page
+        assertEquals(emptySet<String>(), manager.getHiddenApps(0))
+        assertEquals(emptySet<String>(), manager.getHiddenApps(1))
+        assertEquals(emptySet<String>(), manager.getHiddenApps(2))
+        verify { editor.putString("known_packages", any()) }
+    }
+
+    @Test
+    fun `onInstalledAppsLoaded hides newly installed app on every home page when flag is false`() = runTest {
+        // Given: prior known set already seeded
+        manager.setNewAppsVisibleByDefault(false)
+        manager.onInstalledAppsLoaded(setOf("com.existing"), listOf(0, 1))
+
+        // When: a brand new package appears
+        manager.onInstalledAppsLoaded(
+            installedPackages = setOf("com.existing", "com.new"),
+            pageIndices = listOf(0, 1)
+        )
+
+        // Then: the new package is hidden on both home pages; existing untouched
+        assertTrue(manager.isAppHidden(0, "com.new"))
+        assertTrue(manager.isAppHidden(1, "com.new"))
+        assertFalse(manager.isAppHidden(0, "com.existing"))
+        assertFalse(manager.isAppHidden(1, "com.existing"))
+    }
+
+    @Test
+    fun `onInstalledAppsLoaded leaves newly installed app visible when flag is true`() = runTest {
+        // Given: flag is true (the default), known set seeded
+        manager.onInstalledAppsLoaded(setOf("com.existing"), listOf(0, 1))
+
+        // When: a brand new package appears
+        manager.onInstalledAppsLoaded(
+            installedPackages = setOf("com.existing", "com.new"),
+            pageIndices = listOf(0, 1)
+        )
+
+        // Then: the new package is NOT hidden on any page
+        assertFalse(manager.isAppHidden(0, "com.new"))
+        assertFalse(manager.isAppHidden(1, "com.new"))
+    }
+
+    @Test
+    fun `onInstalledAppsLoaded treats reinstalled package as new`() = runTest {
+        // Given: flag is off, a package was installed and then uninstalled
+        manager.setNewAppsVisibleByDefault(false)
+        manager.onInstalledAppsLoaded(setOf("com.foo"), listOf(0))
+        manager.onInstalledAppsLoaded(installedPackages = emptySet(), pageIndices = listOf(0))
+
+        // When: the package is reinstalled
+        manager.onInstalledAppsLoaded(
+            installedPackages = setOf("com.foo"),
+            pageIndices = listOf(0)
+        )
+
+        // Then: it is treated as new and hidden on the home page
+        assertTrue(manager.isAppHidden(0, "com.foo"))
+    }
+
+    @Test
     fun `loads multiple pages on initialization`() = runTest {
         // Given: Data on multiple pages in prefs
         prefsData["hidden_apps_0"] = "com.app1"
