@@ -143,4 +143,50 @@ class HomeLaunchPlannerTest {
             )
         }
     }
+
+    @Test
+    fun `launcher plan with frontend off inherits the caller's display`() {
+        val plan = planLauncherHomeLaunches(
+            bottomDisplayId = bottomId,
+            frontendEnabled = false,
+        )
+
+        assertEquals(
+            "displayId==null lets Android place MainActivity on whichever display the external launcher targeted — the v2.7.1 behaviour Mjolnir depends on",
+            listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null)),
+            plan
+        )
+    }
+
+    @Test
+    fun `launcher plan with no external display always inherits the caller's display`() {
+        listOf(true, false).forEach { frontendEnabled ->
+            val plan = planLauncherHomeLaunches(
+                bottomDisplayId = null,
+                frontendEnabled = frontendEnabled,
+            )
+            assertEquals(
+                "single-display devices should always collapse to an inheriting MainActivity launch (frontendEnabled=$frontendEnabled)",
+                listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null)),
+                plan
+            )
+        }
+    }
+
+    @Test
+    fun `launcher plan with frontend on fires MainActivity on bottom and FrontEndActivity on top`() {
+        val plan = planLauncherHomeLaunches(
+            bottomDisplayId = bottomId,
+            frontendEnabled = true,
+        )
+
+        assertEquals(
+            "frontend-on launcher path should reproduce v2.7.1's dual-launch: MainActivity on the bottom, FrontEndActivity on the top",
+            listOf(
+                HomeLaunch(HomeLaunchActivity.MAIN, bottomId),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
+            ),
+            plan
+        )
+    }
 }

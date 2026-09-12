@@ -147,12 +147,66 @@ fun routeHome(
     mainScreen: MainScreen,
     frontendEnabled: Boolean,
 ) {
-    val plan = planHomeLaunches(
-        bottomDisplayId = resolveBottomDisplayId(context),
-        target = target,
-        mainScreen = mainScreen,
-        frontendEnabled = frontendEnabled,
+    dispatchPlan(
+        context,
+        planHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            target = target,
+            mainScreen = mainScreen,
+            frontendEnabled = frontendEnabled,
+        ),
     )
+}
+
+/**
+ * Launcher-path planner: what [routeHomeFromLauncher] should fire when
+ * [jr.brian.home.HomeRouterActivity] is entered from the LAUNCHER intent
+ * (an external launcher like Mjolnir, or the system when Jarngreipr is the
+ * default home).
+ *
+ * Deliberately ignores [HomeTarget] / [MainScreen] — those are governed by
+ * the "Home Button Interception" setting, which only applies to
+ * [jr.brian.home.service.HomeInterceptorService] (the accessibility path).
+ * The router activity's job is to preserve v2.7.1's caller-display behaviour
+ * so external launchers can route Jarngreipr to whichever display they asked
+ * for.
+ *
+ *  - No external display (or frontend disabled) → single MainActivity launch
+ *    with `displayId == null`. Because no explicit `launchDisplayId` is set,
+ *    Android puts MainActivity on the same display HomeRouterActivity was
+ *    started on — i.e. the display the external launcher targeted.
+ *  - Frontend enabled + external display → MainActivity on the bottom
+ *    display plus FrontEndActivity on the top display, matching v2.7.1's
+ *    dual-launch behaviour when the frontend is on.
+ */
+fun planLauncherHomeLaunches(
+    bottomDisplayId: Int?,
+    frontendEnabled: Boolean,
+): List<HomeLaunch> {
+    if (bottomDisplayId == null || !frontendEnabled) {
+        return listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
+    }
+    return listOf(
+        HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
+        HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
+    )
+}
+
+/**
+ * Routes a launcher-entry Home press. See [planLauncherHomeLaunches] for the
+ * rule; this is the [Context]-aware wrapper that actually fires the intents.
+ */
+fun routeHomeFromLauncher(context: Context, frontendEnabled: Boolean) {
+    dispatchPlan(
+        context,
+        planLauncherHomeLaunches(
+            bottomDisplayId = resolveBottomDisplayId(context),
+            frontendEnabled = frontendEnabled,
+        ),
+    )
+}
+
+private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
     plan.forEach { launch ->
         when (launch.activity) {
             HomeLaunchActivity.MAIN -> dispatchMain(context, launch.displayId)
