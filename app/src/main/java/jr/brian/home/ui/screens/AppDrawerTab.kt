@@ -71,7 +71,6 @@ import jr.brian.home.ui.components.settings.displayName
 import jr.brian.home.ui.components.dialog.rememberDisplayChooser
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
 import jr.brian.home.ui.theme.managers.LocalDockManager
-import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalHomeTabManager
 import jr.brian.home.ui.theme.managers.LocalPageCountManager
 import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
@@ -118,22 +117,18 @@ fun AppDrawerTab(
 ) {
     val context = LocalContext.current
     val dockManager = LocalDockManager.current
-    val gridSettingsManager = LocalGridSettingsManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
     val displayChooser = rememberDisplayChooser()
-    val rows = gridSettingsManager.rowCount
     val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
     val isHeaderVisible by powerSettingsManager.headerVisible.collectAsStateWithLifecycle()
-    val unlimitedMode = gridSettingsManager.unlimitedMode
-    val maxAppsPerPage = if (unlimitedMode) Int.MAX_VALUE else columns * rows
     val showAppDrawer = remember { mutableStateOf(false) }
     val homeTabDialogState = rememberDialogState<Unit>()
     val drawerOptionsDialogState = rememberDialogState<Unit>()
     val dockAppSelectionDialogState = rememberDialogState<Int>()
     val dockAppOptionsDialogState = rememberDialogState<AppInfo>()
 
-    val filteredApps = remember(apps, maxAppsPerPage) {
+    val filteredApps = remember(apps) {
         apps.sortedBy { it.label.uppercase() }
     }
 
