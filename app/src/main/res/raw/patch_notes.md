@@ -1,5 +1,6 @@
 **Bug Fixes**
 - Fixed the app drawer not showing all apps due to grid size settings
+- Fixed external launchers (e.g. Mjolnir) being unable to open Jarngreipr on the top screen
 
 **Improvements**
 `Settings → Layout`
