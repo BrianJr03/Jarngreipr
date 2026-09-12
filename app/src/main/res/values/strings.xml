@@ -724,10 +724,14 @@
     <string name="thor_fact_50">Thor will take nine steps after slaying the serpent before falling dead.</string>
 
     <!-- Home Tab Selection -->
-    <string name="home_tab_dialog_title">Tabs</string>
+    <string name="home_tab_dialog_title">Tabs &amp; Home Page</string>
+    <string name="home_tab_dialog_description">The home page is where the launcher opens on startup.</string>
+    <string name="home_tab_set_as_home">Set as home</string>
     <string name="home_tab_widget_page">Page %1$d</string>
     <string name="home_tab_select">Select</string>
     <string name="home_tab_add_page">Add Tab</string>
+    <string name="settings_layout_home_page">Home Page</string>
+    <string name="settings_layout_home_page_current">Current: Page %1$d</string>
     <string name="home_tab_delete_page_title">Delete Page</string>
     <string name="home_tab_delete_page_message">Are you sure you want to delete Page %1$d? All widgets on this page will be removed.</string>
     <string name="home_tab_delete_confirm">@string/common_delete</string>

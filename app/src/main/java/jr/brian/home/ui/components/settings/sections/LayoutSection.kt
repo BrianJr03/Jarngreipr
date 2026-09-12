@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -16,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.PageType
 import jr.brian.home.model.app.AppInfo
+import jr.brian.home.ui.components.dialog.HomeTabSelectionDialog
 import jr.brian.home.ui.components.settings.AppDrawerFabSettingsItem
 import jr.brian.home.ui.components.settings.BackButtonShortcutItem
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
@@ -29,8 +32,12 @@ import jr.brian.home.esde.ui.components.CollapsibleSection
 import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.theme.managers.LocalAppPositionManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
+import jr.brian.home.ui.theme.managers.LocalHomeTabManager
+import jr.brian.home.ui.theme.managers.LocalPageCountManager
+import jr.brian.home.ui.theme.managers.LocalPageOrderCoordinator
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
 import jr.brian.home.ui.theme.managers.LocalPowerSettingsManager
+import kotlinx.coroutines.launch
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_APP_DRAWER_FAB
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_BACK_BUTTON
 import jr.brian.home.util.SettingsScreenUtil.EXPANDED_GRID
@@ -51,10 +58,40 @@ fun LayoutSection(
     val appPositionManager = LocalAppPositionManager.current
     val powerSettingsManager = LocalPowerSettingsManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
+    val homeTabManager = LocalHomeTabManager.current
+    val pageCountManager = LocalPageCountManager.current
+    val pageOrderCoordinator = LocalPageOrderCoordinator.current
     val transitionAnimationLabel = gridSettingsManager.tabTransitionAnimationName.ifEmpty { "None" }
     val pageTypes by pageTypeManager.pageTypes.collectAsStateWithLifecycle()
     val scrollDisabledByPage by appPositionManager.isScrollDisabledByPage.collectAsStateWithLifecycle()
     val appDrawerFilterByPage by powerSettingsManager.appDrawerFilterByPage.collectAsStateWithLifecycle()
+    val currentHomeTabIndex by homeTabManager.homeTabIndex.collectAsStateWithLifecycle()
+    var showHomeTabDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    if (showHomeTabDialog) {
+        HomeTabSelectionDialog(
+            currentTabIndex = currentHomeTabIndex,
+            totalPages = pageTypes.size,
+            onTabSelected = { index -> homeTabManager.setHomeTabIndex(index) },
+            onDismiss = { showHomeTabDialog = false },
+            onDeletePage = { pageIndex -> pageTypeManager.removePage(pageIndex) },
+            onAddPage = { pageType ->
+                pageTypeManager.addPage(pageType)
+                pageCountManager.addPage()
+            },
+            pageTypes = pageTypes,
+            onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
+                coroutineScope.launch {
+                    pageOrderCoordinator.reorder(
+                        newOrder = newOrder,
+                        oldIndicesInNewOrder = oldIndicesInNewOrder,
+                        newCurrentTabIndex = newCurrentTabIndex
+                    )
+                }
+            }
+        )
+    }
 
     CollapsibleSettingsSection(
         title = stringResource(id = R.string.settings_section_layout),
@@ -102,6 +139,18 @@ fun LayoutSection(
             showToggle = false,
             onClick = { onNavigateToTransitionAnimations() },
             icon = Icons.Default.Animation
+        )
+
+        ToggleSetting(
+            title = stringResource(R.string.settings_layout_home_page),
+            description = stringResource(
+                R.string.settings_layout_home_page_current,
+                currentHomeTabIndex + 1
+            ),
+            checked = false,
+            showToggle = false,
+            onClick = { showHomeTabDialog = true },
+            icon = Icons.Default.Home
         )
 
         ThorSettingsItem(

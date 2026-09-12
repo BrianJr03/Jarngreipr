@@ -429,6 +429,13 @@ fun AppDrawerTab(
                 },
                 pageTypes = pageTypes,
                 onNavigateToSearch = onNavigateToSearch,
+                onNavigateToPage = { index ->
+                    pagerState?.let { state ->
+                        coroutineScope.launch {
+                            state.animateScrollToPage(index)
+                        }
+                    }
+                },
                 onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
                     coroutineScope.launch {
                         pageOrderCoordinator.reorder(

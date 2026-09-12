@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -67,12 +68,13 @@ fun TabsDialog(
     currentTabIndex: Int,
     totalPages: Int,
     modifier: Modifier = Modifier,
-    onTabSelected: (Int) -> Unit,
+    onSetHomeTab: (Int) -> Unit,
     onDismiss: () -> Unit,
     onDeletePage: (Int) -> Unit,
     onAddPage: (PageType) -> Unit,
     pageTypes: List<PageType> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToPage: (Int) -> Unit = {},
     onReorderPages: (newOrder: List<PageType>, oldIndicesInNewOrder: List<Int>, newCurrentTabIndex: Int) -> Unit = { _, _, _ -> }
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Int?>(null) }
@@ -168,6 +170,13 @@ fun TabsDialog(
                     }
                 }
 
+                Text(
+                    text = stringResource(R.string.home_tab_dialog_description),
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
                 // ── Tab list with drag-to-reorder ────────────────────────
                 localIndexed.forEachIndexed { listPos, (originalIndex, pageType) ->
                     val pageLabel = when (pageType) {
@@ -207,12 +216,17 @@ fun TabsDialog(
                                 listPos + 1,
                                 pageLabel
                             ),
-                            isSelected = isHomeTab,
+                            isHomeTab = isHomeTab,
+                            showSetAsHome = totalPages > 1 && !isHomeTab && !isDragging,
                             showDelete = totalPages > 1 && !isDragging,
                             showDragHandle = totalPages > 1,
                             isDragging = isDragging,
                             onClick = {
-                                onTabSelected(originalIndex)
+                                onNavigateToPage(originalIndex)
+                                onDismiss()
+                            },
+                            onSetAsHome = {
+                                onSetHomeTab(originalIndex)
                                 onDismiss()
                             },
                             onDelete = { showDeleteConfirmation = originalIndex },
@@ -283,11 +297,13 @@ fun TabsDialog(
 @Composable
 private fun TabOption(
     text: String,
-    isSelected: Boolean,
+    isHomeTab: Boolean,
+    showSetAsHome: Boolean,
     showDelete: Boolean,
     showDragHandle: Boolean,
     isDragging: Boolean,
     onClick: () -> Unit,
+    onSetAsHome: () -> Unit,
     onDelete: () -> Unit,
     dragHandleModifier: Modifier = Modifier,
     modifier: Modifier = Modifier
@@ -349,6 +365,25 @@ private fun TabOption(
                 }
             }
 
+            // Set-as-home button
+            if (showSetAsHome) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 2.dp)
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onSetAsHome() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Home,
+                        contentDescription = stringResource(R.string.home_tab_set_as_home),
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
             // Delete button
             if (showDelete) {
                 Box(
@@ -370,7 +405,7 @@ private fun TabOption(
         }
 
         // Home indicator badge
-        if (isSelected) {
+        if (isHomeTab) {
             val offset = Pair(
                 first = if (isFocused) (-18).dp else (-10).dp,
                 second = if (isFocused) (-12).dp else (-8).dp
@@ -458,18 +493,20 @@ fun HomeTabSelectionDialog(
     onAddPage: (PageType) -> Unit,
     pageTypes: List<PageType> = emptyList(),
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToPage: (Int) -> Unit = {},
     onReorderPages: (newOrder: List<PageType>, oldIndicesInNewOrder: List<Int>, newCurrentTabIndex: Int) -> Unit = { _, _, _ -> }
 ) {
     TabsDialog(
         currentTabIndex = currentTabIndex,
         totalPages = totalPages,
         modifier = modifier,
-        onTabSelected = onTabSelected,
+        onSetHomeTab = onTabSelected,
         onDismiss = onDismiss,
         onDeletePage = onDeletePage,
         onAddPage = onAddPage,
         pageTypes = pageTypes,
         onNavigateToSearch = onNavigateToSearch,
+        onNavigateToPage = onNavigateToPage,
         onReorderPages = onReorderPages
     )
 }

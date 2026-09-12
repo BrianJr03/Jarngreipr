@@ -325,6 +325,11 @@ private fun OptionsHeaderRow(
             },
             pageTypes = pageTypes,
             onNavigateToSearch = onNavigateToSearch,
+            onNavigateToPage = { index ->
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(index)
+                }
+            },
             onReorderPages = { newOrder, oldIndicesInNewOrder, newCurrentTabIndex ->
                 coroutineScope.launch {
                     pageOrderCoordinator.reorder(
