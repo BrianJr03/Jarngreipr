@@ -3,11 +3,15 @@
 - Fixed an issue where waking the device always took you to Home on the top screen if Jarngreipr Frontend was enabled**
 - Fixed shoulder buttons jumping straight to the first or last tab instead of moving one tab at a time
 - Fixed an issue where an empty dock slot left by an uninstalled app couldn't be filled by tapping it
+- Fixed the app drawer silently cutting off after the first grid page
 
 **Improvements**
 - You can now reach the dock with the D-pad. Press down from the app grid to focus dock icons, and up to return
 - Added a Swipe Sensitivity slider in `Settings → Layout settings → Swipe Sensitivity` that applies when swiping through Tabs
 - You can now tap an empty slot in the dock preview (`Settings → Dock`) to add an app to it
+- Added a "New App Visibility" toggle so newly installed apps can stay hidden from home pages
+- Redesigned the Tabs dialog so tapping a tab no longer changes your Home Page — use "Set as home" instead
+- Added a Home Page shortcut under `Settings → Layout`
 
 **Coming Soon**
  - More updates on Jarngreipr Frontend including
