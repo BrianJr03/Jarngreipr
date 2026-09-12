@@ -11,23 +11,27 @@ import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.HomeButtonManager
+import jr.brian.home.data.VolumeChordManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.ui.util.routeHome
+import jr.brian.home.util.ThorVolume
 import javax.inject.Inject
 
 /**
- * Optional accessibility-based override for the hardware Home button.
+ * Accessibility service for two AYN Thor-specific key features:
  *
- * Additive to [jr.brian.home.HomeRouterActivity] — never a replacement. On stock
- * AOSP, `PhoneWindowManager` consumes `KEYCODE_HOME` before input dispatch reaches
- * accessibility key filtering, so this service's `onKeyEvent` is never invoked
- * and Home falls through to the router activity as normal. On the AYN Thor the
- * firmware surfaces the hardware Home button as a plain key event, giving this
- * service a chance to run and route [jr.brian.home.MainActivity] to the external
- * display even when Jarngreipr is not the current default home.
+ * 1. Hardware Home-button interception — routes [jr.brian.home.MainActivity] to
+ *    the external display even when Jarngreipr isn't the current default home.
+ *    See [HomeKeyEventFilter] for the pure filtering logic.
+ * 2. Select + Volume Up/Down chord — adjusts the bottom screen's independent
+ *    volume via [ThorVolume]. See [VolumeChordKeyFilter].
  *
- * See [HomeKeyEventFilter] for the pure filtering logic. This class layers Hilt
- * injection, the ESDE frontend gate, and main-thread dispatch on top.
+ * Both features are additive to [jr.brian.home.HomeRouterActivity]: on stock
+ * AOSP, `PhoneWindowManager` consumes `KEYCODE_HOME` before input dispatch
+ * reaches accessibility key filtering, so the Home path here is a no-op and
+ * Home falls through to the router activity. The Thor firmware surfaces the
+ * hardware Home button as a plain key event, giving this service a chance to
+ * run.
  */
 @AndroidEntryPoint
 class HomeInterceptorService : AccessibilityService() {
@@ -38,11 +42,16 @@ class HomeInterceptorService : AccessibilityService() {
     @Inject
     lateinit var esdePreferencesManager: ESDEPreferencesManager
 
+    @Inject
+    lateinit var volumeChordManager: VolumeChordManager
+
     private val filter = HomeKeyEventFilter()
+    private val volumeChordFilter = VolumeChordKeyFilter()
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        volumeChordFilter.reset()
         isRunning = true
     }
 
@@ -61,6 +70,15 @@ class HomeInterceptorService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        when (val r = volumeChordFilter.onKey(event, volumeChordManager.chordEnabled.value)) {
+            is VolumeChordKeyFilter.Result.AdjustBottom -> {
+                ThorVolume.adjustBottom(applicationContext, r.delta)
+                return true
+            }
+            VolumeChordKeyFilter.Result.Consume -> return true
+            VolumeChordKeyFilter.Result.PassThrough -> Unit
+        }
+
         val enabled = homeButtonManager.interceptionEnabled.value
         if (!filter.shouldConsume(event, enabled)) {
             return super.onKeyEvent(event)

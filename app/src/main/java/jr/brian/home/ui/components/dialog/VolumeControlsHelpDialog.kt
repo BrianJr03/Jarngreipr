@@ -75,16 +75,12 @@ fun VolumeControlsHelpDialog(
                 }
                 
                 HelpSection(
-                    title = stringResource(R.string.volume_controls_help_section_permission),
+                    title = stringResource(R.string.volume_controls_help_section_chord),
                     steps = listOf(
-                        stringResource(R.string.control_pad_help_termux_1),
-                        stringResource(R.string.control_pad_help_termux_2),
-                        stringResource(R.string.control_pad_help_termux_3),
-                        stringResource(R.string.control_pad_help_termux_4),
-                        stringResource(R.string.control_pad_help_termux_5),
-                        stringResource(R.string.control_pad_help_termux_6),
-                        stringResource(R.string.volume_controls_help_termux_note),
-                        stringResource(R.string.volume_controls_help_finish)
+                        stringResource(R.string.volume_controls_help_chord_1),
+                        stringResource(R.string.volume_controls_help_chord_2),
+                        stringResource(R.string.volume_controls_help_chord_3),
+                        stringResource(R.string.volume_controls_help_chord_4)
                     )
                 )
                 

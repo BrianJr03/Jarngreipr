@@ -282,6 +282,9 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 homeTarget = f.homeButtonManager.homeTarget.value?.name,
                 mainScreen = f.homeButtonManager.mainScreen.value.name,
             ),
+            volumeChord = VolumeChordConfig(
+                chordEnabled = f.volumeChordManager.chordEnabled.value,
+            ),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
@@ -601,6 +604,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         HomeTarget.entries.firstOrNull { it.name == config.homeButton.homeTarget }
             ?.let { f.homeButtonManager.setHomeTarget(it) }
         f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
+
+        f.volumeChordManager.setChordEnabled(config.volumeChord.chordEnabled)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

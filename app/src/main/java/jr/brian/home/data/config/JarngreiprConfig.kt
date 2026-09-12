@@ -88,7 +88,11 @@ data class JarngreiprConfig(
         //      swipe sensitivity slider (0..100). Older blobs decode with
         //      the default (0 = Compose default snap threshold) via
         //      ignoreUnknownKeys, matching pre-slider behaviour.
-        const val CONFIG_VERSION = 24
+        // v25: added FeatureConfig.volumeChord for the AYN Thor Select+Volume
+        //      chord toggle (adjusts the bottom screen's independent volume).
+        //      Older blobs decode with the default (off) via
+        //      ignoreUnknownKeys, matching pre-toggle behaviour.
+        const val CONFIG_VERSION = 25
     }
 }
 
@@ -221,7 +225,13 @@ data class FeatureConfig(
     val jingles: JinglesConfig = JinglesConfig(),
     val bgMusic: BgMusicConfig = BgMusicConfig(),
     val romSearch: RomSearchConfig = RomSearchConfig(),
-    val homeButton: HomeButtonConfig = HomeButtonConfig()
+    val homeButton: HomeButtonConfig = HomeButtonConfig(),
+    val volumeChord: VolumeChordConfig = VolumeChordConfig()
+)
+
+@Serializable
+data class VolumeChordConfig(
+    val chordEnabled: Boolean = false
 )
 
 @Serializable

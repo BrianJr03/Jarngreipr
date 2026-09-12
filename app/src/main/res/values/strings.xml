@@ -224,7 +224,7 @@
     <string name="rom_options_continuous_spin">Continuous spin</string>
     <string name="rom_options_continuous_spin_description">Continuously rotate this disc\'s artwork on the Canvas.</string>
     <string name="tile_theme_sharing_label">Theme Sharing</string>
-    <string name="accessibility_service_description">Lets Jarngreipr intercept the hardware Home button so the launcher can be routed to the external display on dual-screen handhelds. No screen content is read.</string>
+    <string name="accessibility_service_description">Lets Jarngreipr intercept the hardware Home button so the launcher can be routed to the external display on dual-screen handhelds, and route the Select + Volume chord to the AYN Thor\'s bottom-screen volume. No screen content is read.</string>
 
     <string name="keyboard_button_select">Select Button</string>
     <string name="keyboard_button_d_pad">D-Pad</string>
@@ -1119,7 +1119,7 @@
     <string name="volume_controls_help_termux_note">Use Termux (optional) or connect via USB to run ADB commands</string>
     <string name="volume_controls_help_finish">After granting permission, return here to use the volume sliders</string>
     <string name="volume_controls_help_note_title">Note</string>
-    <string name="volume_controls_help_note">Secondary screen volume control requires WRITE_SECURE_SETTINGS permission. This is a system-level permission that can only be granted via ADB.</string>
+    <string name="volume_controls_help_note">Bottom-screen volume writes to a Thor firmware setting. Jarngreipr needs \"Modify system settings\" special access — user-grantable, no ADB or root required.</string>
     <string name="back_button_shortcut_volume_controls">@string/common_volume_controls</string>
 
     <!-- Backup & Restore -->
@@ -1181,6 +1181,22 @@
     <string name="volume_bottom_screen">Bottom Screen Volume</string>
     <string name="volume_down_description">Volume Down</string>
     <string name="volume_up_description">Volume Up</string>
+
+    <!-- Bottom-screen volume: WRITE_SETTINGS special-access prompt -->
+    <string name="volume_bottom_write_settings_title">Enable bottom-screen volume control</string>
+    <string name="volume_bottom_write_settings_body">To control the bottom screen\'s volume, Jarngreipr needs the \"Modify system settings\" special access. Tap below to grant it — no ADB or root required.</string>
+    <string name="volume_bottom_write_settings_action">Grant Modify System Settings</string>
+
+    <!-- Select + Volume chord toggle -->
+    <string name="volume_chord_title">Select + Volume chord</string>
+    <string name="volume_chord_description">Hold the Select button and press Volume Up/Down to adjust the bottom screen\'s volume. Volume alone still adjusts the top screen as usual.</string>
+    <string name="volume_chord_needs_accessibility">Enable the Jarngreipr accessibility service — the chord runs through key filtering.</string>
+    <string name="volume_chord_needs_write_settings">Grant the \"Modify system settings\" special access so Jarngreipr can write the bottom-screen volume level.</string>
+    <string name="volume_controls_help_section_chord">Select + Volume chord</string>
+    <string name="volume_controls_help_chord_1">Enable the accessibility service (Jarngreipr → On) so the chord can run globally, even from inside a game.</string>
+    <string name="volume_controls_help_chord_2">Grant \"Modify system settings\" so Jarngreipr can write the bottom-screen volume level.</string>
+    <string name="volume_controls_help_chord_3">Turn the \"Select + Volume chord\" toggle on.</string>
+    <string name="volume_controls_help_chord_4">Hold Select + press Volume Up/Down to adjust the bottom screen. Volume alone still controls the top screen.</string>
 
     <!-- ESDE Setup Wizard -->
     <string name="esde_setup_close">@string/common_close</string>
@@ -1824,10 +1840,10 @@
     <string name="home_interception_dialog_open_accessibility">Open Accessibility Settings</string>
     <string name="home_interception_dialog_continue">Continue</string>
     <string name="home_interception_dialog_cancel">Cancel</string>
-    <string name="home_interception_channel_name">Home Button Interception</string>
-    <string name="home_interception_channel_description">Keeps the launcher process alive so hardware Home presses can be intercepted.</string>
-    <string name="home_interception_notification_title">Home Button Interception Active</string>
-    <string name="home_interception_notification_text">Jarngreipr is listening for Home presses.</string>
+    <string name="home_interception_channel_name">Button Press Interceptor</string>
+    <string name="home_interception_channel_description">Keeps the launcher process alive so hardware button presses (Home button, Select + Volume chord) can be intercepted.</string>
+    <string name="home_interception_notification_title">Button Press Interceptor Active</string>
+    <string name="home_interception_notification_text">Jarngreipr is listening for hardware button presses.</string>
 
     <!-- Home target selector -->
     <string name="home_target_title">Home Press Target</string>

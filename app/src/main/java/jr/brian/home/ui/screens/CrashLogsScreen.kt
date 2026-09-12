@@ -51,6 +51,7 @@ import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.util.rememberDialogState
 import jr.brian.home.util.CrashLogger
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 @Composable
 fun CrashLogsScreen(
@@ -82,7 +83,7 @@ fun CrashLogsScreen(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ScreenHeader(onBackClick = onDismiss)
-                
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -101,11 +102,13 @@ fun CrashLogsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val reportIssueUri =
+                            stringResource(R.string.crash_logs_report_issue_url).toUri()
                         Button(
                             onClick = {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse(context.getString(R.string.crash_logs_report_issue_url))
+                                    reportIssueUri
                                 )
                                 context.startActivity(intent)
                             },

@@ -18,12 +18,15 @@ import jr.brian.home.R
 
 /**
  * Minimal foreground service whose only job is to keep the app process alive so
- * [HomeInterceptorService] is less likely to be killed by aggressive OEM battery
- * management on these dual-screen handhelds.
+ * [HomeInterceptorService] — which now handles both hardware Home routing and
+ * the AYN Thor's Select + Volume chord — is less likely to be killed by
+ * aggressive OEM battery management on these dual-screen handhelds.
  *
  * Lifecycle is tied 1:1 to the "Home Button Interception" toggle:
  * [start] when the toggle flips on, [stop] when it flips off. This service does
- * NOT own the toggle state — it only reacts to it.
+ * NOT own the toggle state — it only reacts to it. Volume-chord users who leave
+ * Home interception off do not get the keep-alive; the chord still works while
+ * the accessibility service is bound, but is more vulnerable to being killed.
  */
 @AndroidEntryPoint
 class HomeInterceptionKeepAliveService : Service() {

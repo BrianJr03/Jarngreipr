@@ -32,5 +32,6 @@ data class FeatureManagers @Inject constructor(
     val bgMusicManager: BgMusicManager,
     @param:ESDEImageLoader val esdeImageLoader: ImageLoader,
     val pinnedRomManager: PinnedRomManager,
-    val homeButtonManager: HomeButtonManager
+    val homeButtonManager: HomeButtonManager,
+    val volumeChordManager: VolumeChordManager
 )
