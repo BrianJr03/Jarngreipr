@@ -64,7 +64,12 @@ fun TabContent(
     onFolderClick: (Folder) -> Unit,
     pinnedRoms: List<PinnedRomInfo> = emptyList(),
     onRomClick: (PinnedRomInfo) -> Unit = {},
-    onRomLongClick: (PinnedRomInfo) -> Unit = {}
+    onRomLongClick: (PinnedRomInfo) -> Unit = {},
+    // Fires when DPAD_DOWN is pressed on the header settings icon. Kept as a
+    // separate hook (rather than reusing the header's implicit onNavigateToGrid)
+    // because the widget-only page has no in-grid focus target and the caller
+    // needs to route straight to the dock.
+    onNavigateDownFromHeader: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -86,7 +91,8 @@ fun TabContent(
             pageIndicatorBorderColor = pageIndicatorBorderColor,
             onNavigateToSearch = onNavigateToSearch,
             onSwapModeDisabled = onSwapModeDisabled,
-            onEditModeToggle = onEditModeToggle
+            onEditModeToggle = onEditModeToggle,
+            onNavigateDownFromHeader = onNavigateDownFromHeader
         )
 
         WidgetsAndAppsGrid(
@@ -132,7 +138,8 @@ fun TabHeader(
     pageIndicatorBorderColor: Color,
     onNavigateToSearch: () -> Unit,
     onSwapModeDisabled: () -> Unit,
-    onEditModeToggle: () -> Unit
+    onEditModeToggle: () -> Unit,
+    onNavigateDownFromHeader: () -> Unit = {}
 ) {
     when {
         swapModeEnabled -> {
@@ -162,7 +169,7 @@ fun TabHeader(
                     trailingIconContentDescription = null,
                     onTrailingIconClick = onShowOptionsDialog,
                     trailingIconFocusRequester = addWidgetIconFocusRequester,
-                    onNavigateToGrid = {},
+                    onNavigateToGrid = onNavigateDownFromHeader,
                     onNavigateFromGrid = {
                         addWidgetIconFocusRequester.requestFocus()
                     },

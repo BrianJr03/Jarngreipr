@@ -32,7 +32,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -215,6 +221,10 @@ fun AppsAndWidgetsTab(
 
     val settingsIconFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val dockFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    // Tracks whether focus currently lives in the dock so the tab-level DPAD_DOWN
+    // fallback below doesn't yank focus back to slot 0 when the user is already
+    // moving around inside the dock.
+    var isFocusInDock by remember { mutableStateOf(false) }
 
     val gridState = rememberLazyGridState()
 
@@ -285,6 +295,21 @@ fun AppsAndWidgetsTab(
             .scale(pressScale)
             .offset(y = offsetY)
             .windowInsetsPadding(WindowInsets.statusBars)
+            // Widgets rendered via AndroidView don't take Compose focus, so on a
+            // widget-only page there's no in-grid target for DPAD_DOWN. This
+            // fallback runs after descendants (post-consumption) — it fires when
+            // nothing else handled the key, routing focus into the dock. Guarded
+            // on isFocusInDock so DPAD_DOWN inside the dock doesn't loop back to
+            // slot 0.
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown ||
+                    event.key != Key.DirectionDown
+                ) return@onKeyEvent false
+                if (isFocusInDock) return@onKeyEvent false
+                if (!isDockVisible || !isDockVisibleOnPage) return@onKeyEvent false
+                runCatching { dockFocusRequester.requestFocus() }
+                    .isSuccess
+            }
             .then(
                 if (widgetPickerDialogState.isVisible ||
                     addOptionsDialogState.isVisible ||
@@ -361,6 +386,12 @@ fun AppsAndWidgetsTab(
                     swapSourceWidgetId = widgetId
                 },
                 onFolderClick = folderContentsDialogState::show,
+                onNavigateDownFromHeader = {
+                    // Guarded: the dock requester is only attached while the dock is
+                    // composed (AnimatedVisibility below). Silent when the dock is
+                    // hidden rather than crashing on an unattached requester.
+                    runCatching { dockFocusRequester.requestFocus() }
+                },
                 pinnedRoms = pinnedRoms,
                 onRomClick = { rom ->
                     romSearchViewModel.requestRomLaunch(rom)
@@ -420,6 +451,7 @@ fun AppsAndWidgetsTab(
                 onNavigateUp = {
                     runCatching { settingsIconFocusRequester.requestFocus() }
                 },
+                modifier = Modifier.onFocusEvent { isFocusInDock = it.hasFocus },
             )
         }
 
