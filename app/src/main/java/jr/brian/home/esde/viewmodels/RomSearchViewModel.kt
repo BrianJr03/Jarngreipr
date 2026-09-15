@@ -58,6 +58,7 @@ class RomSearchViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
     val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
+    val openEsdeSettingsSignal: SharedFlow<Unit> = store.openEsdeSettingsSignal.asSharedFlow()
     val pendingRomForPin: StateFlow<Pair<Int, GameInfo>?> = store.pendingRomForPin.asStateFlow()
     val stateHolder: RomSearchStateHolder = store
 

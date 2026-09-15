@@ -1,11 +1,5 @@
 **Bug Fixes**
-- Fixed the app drawer not showing all apps due to grid size settings
-- Fixed external launchers (e.g. Mjolnir) being unable to open Jarngreipr on the top screen
-
-**Improvements**
-`Settings → Layout`
-   - Added a "New App Visibility" toggle so newly installed apps can stay hidden from home pages
-   - Added a Home Page shortcut allowing you to set your Home Tab
+- Fixed ROM Search showing only Android apps when your ROM library isn't set up — you'll now see a clear message with a shortcut to ES-DE Settings
 
 **Coming Soon**
  - More updates on Jarngreipr Frontend including
@@ -14,4 +8,4 @@
    - More Emulator support
    - GameHub, GameHub Lite, and Game Native support
 
-2.8.0
+2.8.1

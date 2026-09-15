@@ -19,9 +19,21 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +47,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -43,6 +59,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
@@ -596,6 +615,16 @@ class RomSearchResultsActivity : ComponentActivity() {
                                         viewModel.updateFocusedGame(game)
                                     }
                                 }
+                                if (!isLoading && allGames.isEmpty() && !isAndroidMode) {
+                                    EmptyRomLibraryState(
+                                        onOpenSettings = {
+                                            romSearchStateHolder.openEsdeSettingsSignal.tryEmit(Unit)
+                                            romSearchStateHolder.screenDismissSignal.tryEmit(Unit)
+                                            dismiss()
+                                        }
+                                    )
+                                    return@Surface
+                                }
                                 RomResultsGrid(
                                     games = filteredGames,
                                     isLoading = isLoading,
@@ -735,5 +764,73 @@ class RomSearchResultsActivity : ComponentActivity() {
     private fun signalGameLaunch() {
         gameLaunched = true
         managers.feature.jinglesManager.onGameLaunched()
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun EmptyRomLibraryState(onOpenSettings: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.VideogameAsset,
+                contentDescription = null,
+                tint = ThemeAccentColor,
+                modifier = Modifier.size(56.dp)
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.rom_search_empty_library_title),
+                color = Color.White.copy(alpha = 0.95f),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(R.string.rom_search_empty_library_message),
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(24.dp))
+            EmptyStateActionButton(
+                label = stringResource(R.string.rom_search_empty_library_action),
+                onClick = onOpenSettings
+            )
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun EmptyStateActionButton(label: String, onClick: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+    var isFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        runCatching { focusRequester.requestFocus() }
+    }
+    Box(
+        modifier = Modifier
+            .scale(if (isFocused) 1.05f else 1f)
+            .focusRequester(focusRequester)
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .clickable { onClick() }
+            .background(
+                color = if (isFocused) ThemeAccentColor else OledCardColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

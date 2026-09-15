@@ -86,6 +86,7 @@ import java.io.File
 fun RomSearchScreen(
     onDismiss: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToEsdeSettings: () -> Unit = {},
     viewModel: RomSearchViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -112,6 +113,12 @@ fun RomSearchScreen(
         viewModel.screenDismissSignal.collect {
             viewModel.dismiss()
             onDismiss()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.openEsdeSettingsSignal.collect {
+            onNavigateToEsdeSettings()
         }
     }
 

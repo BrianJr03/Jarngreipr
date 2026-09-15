@@ -738,6 +738,12 @@ fun NavGraphBuilder.romSearchScreen(
                     showScreen = false
                     navController.navigate(Routes.APP_SEARCH)
                 },
+                onNavigateToEsdeSettings = {
+                    showScreen = false
+                    jinglesManager.stop()
+                    navController.popBackStack()
+                    navController.navigate(Routes.ESDE_SETTINGS)
+                },
                 onDismiss = {
                     showScreen = false
                     jinglesManager.stop()

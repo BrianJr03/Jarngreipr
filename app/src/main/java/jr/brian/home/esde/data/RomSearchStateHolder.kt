@@ -20,6 +20,15 @@ class RomSearchStateHolder @Inject constructor() {
     val showSearchKeyboardSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /**
+     * Emitted when the empty-library CTA is tapped inside RomSearchResultsActivity
+     * (top display). RomSearchScreen (bottom display) collects it and asks the nav
+     * host to route to ES-DE Settings after tearing down the search flow — a
+     * cross-activity signal is the only way, since ESDESettingsScreen is a
+     * navController destination on MainActivity's bottom display.
+     */
+    val openEsdeSettingsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
      * Emitted when the on-screen keyboard (rendered in MainActivity on the bottom
      * display) needs the results grid to appear over the frontend on the top display.
      * FrontEndActivity collects this and launches RomSearchResultsActivity itself, so
