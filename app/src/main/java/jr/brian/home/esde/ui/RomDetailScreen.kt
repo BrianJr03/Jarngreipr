@@ -75,7 +75,8 @@ internal fun RomDetailScreen(
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
     discSpinEnabled: Boolean = false,
     discSpinDisabled: Boolean = false,
-    onToggleDiscSpin: () -> Unit = {}
+    onToggleDiscSpin: () -> Unit = {},
+    showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
     val imageLoader = LocalESDEImageLoader.current
@@ -268,16 +269,17 @@ internal fun RomDetailScreen(
                 }
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+            if (showActionRow) {
+                HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!isHidden) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isHidden) {
                     TextButton(
                         onClick = onChangeCore,
                         modifier = Modifier.focusRequester(focusRequester)
@@ -347,6 +349,7 @@ internal fun RomDetailScreen(
                         Text(stringResource(R.string.rom_detail_unhide), color = ThemeAccentColor)
                     }
                 }
+            }
             }
         }
     }

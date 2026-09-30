@@ -81,7 +81,8 @@ fun CanvasFrontendArtChooserSheet(
     initialBackgroundCornerRadiusDp: Int?,
     titleRes: Int,
     onConfirm: (GameImageType, EsdeContentScale, Long?, Int?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRemove: (() -> Unit)? = null
 ) {
     var selected by remember(initialType) { mutableStateOf(initialType) }
     var selectedScale by remember(initialContentScale) { mutableStateOf(initialContentScale) }
@@ -134,6 +135,17 @@ fun CanvasFrontendArtChooserSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
             ) {
+                if (onRemove != null) {
+                    HeaderActionButton(
+                        label = stringResource(R.string.canvas_remove_item_title),
+                        isPrimary = false,
+                        enabled = true,
+                        onClick = {
+                            onRemove()
+                            onDismiss()
+                        }
+                    )
+                }
                 HeaderActionButton(
                     label = stringResource(R.string.canvas_picker_cancel),
                     isPrimary = false,

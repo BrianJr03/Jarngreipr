@@ -149,6 +149,14 @@ fun ESDEWallpaperContainer(
     val logoVisibilityAnimation = prefsState.logoVisibilityAnimation
     val logoChangeAnimation = prefsState.logoChangeAnimation
 
+    // Boolean-not-GameInfo so the RomDetail overlay stays live-bound to
+    // state.currentGame and updates as the user scrolls games without
+    // needing to close/reopen. Mirrors the canvas FrontendTile tap flow.
+    var showLogoRomDetail by remember { mutableStateOf(false) }
+    val onLogoSingleTap: () -> Unit = {
+        if (state.currentGame != null) showLogoRomDetail = true
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -219,6 +227,7 @@ fun ESDEWallpaperContainer(
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
                 openMarqueeShortcut = null,
+                onSingleTap = onLogoSingleTap,
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
@@ -242,6 +251,7 @@ fun ESDEWallpaperContainer(
                 state = state,
                 pagerScrollProgress = pagerScrollProgress,
                 openMarqueeShortcut = onOpenMarqueeShortcut,
+                onSingleTap = onLogoSingleTap,
                 dockTopY = dockTopY,
                 isFreePosition = isFreePosition,
                 isDraggable = isMarqueeDraggable,
@@ -293,6 +303,20 @@ fun ESDEWallpaperContainer(
 
         if (showEsdeBackground && (state.isGameRunning || state.isScreensaverActive)) {
             DimmingOverlay(alpha = effectiveDimmingLevel)
+        }
+
+        if (showLogoRomDetail) {
+            val focusedGame = state.currentGame
+            if (focusedGame != null) {
+                RomDetailScreen(
+                    game = focusedGame,
+                    onDismiss = { showLogoRomDetail = false },
+                    onLaunch = { showLogoRomDetail = false },
+                    showActionRow = false
+                )
+            } else {
+                LaunchedEffect(Unit) { showLogoRomDetail = false }
+            }
         }
     }
 }
@@ -428,7 +452,8 @@ private fun BoxScope.AnimatedLogo(
     onOffsetChange: ((Float, Float) -> Unit)? = null,
     minWidthPercent: Float = 0.5f,
     visibilityAnimationEnabled: Boolean = true,
-    changeAnimationEnabled: Boolean = true
+    changeAnimationEnabled: Boolean = true,
+    onSingleTap: (() -> Unit)? = null
 ) {
     val isUsingDefaultBackground = state.currentImagePath == null
     val density = LocalDensity.current
@@ -569,7 +594,8 @@ private fun BoxScope.AnimatedLogo(
                     animationDuration = state.animationDuration,
                     animationScale = state.animationScale,
                     onClick = if (isFreePosition) openMarqueeShortcut else null,
-                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null
+                    onLongClick = if (!isFreePosition) openMarqueeShortcut else null,
+                    onSingleTap = onSingleTap
                 )
             }
         }
@@ -586,7 +612,8 @@ private fun MarqueeImage(
     animationDuration: Int = 300,
     animationScale: Float = 0.9f,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onSingleTap: (() -> Unit)? = null
 ) {
     if (marqueePath == null) return
 
@@ -595,7 +622,8 @@ private fun MarqueeImage(
             videoPath = marqueePath,
             modifier = modifier,
             onClick = onClick,
-            onLongClick = onLongClick
+            onLongClick = onLongClick,
+            onSingleTap = onSingleTap
         )
         return
     }
@@ -640,8 +668,12 @@ private fun MarqueeImage(
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = {},
-                onDoubleClick = { onClick?.invoke() },
+                onClick = { onSingleTap?.invoke() },
+                // Only wire double-click when the caller actually wants it —
+                // otherwise combinedClickable delays onClick by the double-tap
+                // timeout (~300ms) just to disambiguate a gesture that has no
+                // handler, and the RomDetail tap feels dead.
+                onDoubleClick = onClick?.let { { it() } },
                 onLongClick = { onLongClick?.invoke() }
             ),
         contentScale = ContentScale.Fit
@@ -750,7 +782,8 @@ private fun MarqueeVideo(
     videoPath: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onSingleTap: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -826,8 +859,8 @@ private fun MarqueeVideo(
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = {},
-                onDoubleClick = { onClick?.invoke() },
+                onClick = { onSingleTap?.invoke() },
+                onDoubleClick = onClick?.let { { it() } },
                 onLongClick = { onLongClick?.invoke() }
             )
     )

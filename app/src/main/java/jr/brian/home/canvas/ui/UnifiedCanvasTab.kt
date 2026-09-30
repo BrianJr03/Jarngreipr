@@ -53,6 +53,8 @@ import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.esde.model.GameImageType
+import jr.brian.home.esde.ui.RomDetailScreen
+import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.canvas.viewmodel.CanvasViewModel
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
 import jr.brian.home.esde.ui.RomSearchResultsActivity
@@ -153,6 +155,11 @@ fun UnifiedCanvasTab(
     var pickWidgetVisible by remember { mutableStateOf(false) }
     var pickEsdeArtVisible by remember { mutableStateOf(false) }
     var esdeArtRetypeTarget by remember { mutableStateOf<ResolvedCanvasItem.EsdeArt?>(null) }
+    // Boolean-not-GameInfo: keeps the RomDetail overlay live-bound to the
+    // currently-focused ES-DE game so it stays in sync while the user scrolls
+    // through games without closing/reopening.
+    var showCanvasRomDetail by remember { mutableStateOf(false) }
+    val wallpaperState = LocalEsdeWallpaperState.current
     // Set from the tap handler and add-menu, read by the launcher's callback so
     // the pick result routes to the right tile. Cleared after every pick
     // (success or cancel). Using a plain var is fine — writes happen before
@@ -244,31 +251,34 @@ fun UnifiedCanvasTab(
         CanvasGrid(
             state = uiState,
             scrollState = canvasScrollState,
-            onTap = {
-                handleTap(
-                    resolved = it,
-                    onLaunchApp = { app ->
-                        displayChooser.launch(
-                            context = context,
-                            packageName = app.packageName,
-                            currentPreference = appDisplayPreferenceManager
-                                .getAppDisplayPreference(app.packageName)
-                        )
-                    },
-                    onOpenRss = { rssSheetVisible = true },
-                    onOpenFolder = { folder -> folderToOpen = folder },
-                    onLaunchRom = { rom ->
-                        launchPinnedRom(
-                            context = context,
-                            rom = rom,
-                            romSearchViewModel = romSearchViewModel,
-                            displayPreference = appDisplayPreferenceManager
-                                .getAppDisplayPreference(rom.key)
-                        )
-                    },
-                    onChangeEsdeArtType = { esdeArt -> esdeArtRetypeTarget = esdeArt },
-                    onPickPhotoContainer = { photo -> launchPhotoPickerFor(photo.raw.id) }
-                )
+            onTap = { resolved ->
+                if (resolved is ResolvedCanvasItem.EsdeArt) {
+                    if (wallpaperState.currentGame != null) showCanvasRomDetail = true
+                } else {
+                    handleTap(
+                        resolved = resolved,
+                        onLaunchApp = { app ->
+                            displayChooser.launch(
+                                context = context,
+                                packageName = app.packageName,
+                                currentPreference = appDisplayPreferenceManager
+                                    .getAppDisplayPreference(app.packageName)
+                            )
+                        },
+                        onOpenRss = { rssSheetVisible = true },
+                        onOpenFolder = { folder -> folderToOpen = folder },
+                        onLaunchRom = { rom ->
+                            launchPinnedRom(
+                                context = context,
+                                rom = rom,
+                                romSearchViewModel = romSearchViewModel,
+                                displayPreference = appDisplayPreferenceManager
+                                    .getAppDisplayPreference(rom.key)
+                            )
+                        },
+                        onPickPhotoContainer = { photo -> launchPhotoPickerFor(photo.raw.id) }
+                    )
+                }
             },
             onLongPress = { resolved ->
                 when (resolved) {
@@ -277,6 +287,9 @@ fun UnifiedCanvasTab(
 
                     is ResolvedCanvasItem.Rom if resolved.info != null ->
                         romOptionsTarget = resolved
+
+                    is ResolvedCanvasItem.EsdeArt ->
+                        esdeArtRetypeTarget = resolved
 
                     else -> pendingRemoval = resolved
                 }
@@ -478,8 +491,28 @@ fun UnifiedCanvasTab(
                     backgroundCornerRadiusDp = cornerDp
                 )
             },
+            onRemove = {
+                pendingRemoval = target
+                esdeArtRetypeTarget = null
+            },
             onDismiss = { esdeArtRetypeTarget = null }
         )
+    }
+
+    if (showCanvasRomDetail) {
+        val focusedGame = wallpaperState.currentGame
+        if (focusedGame != null) {
+            RomDetailScreen(
+                game = focusedGame,
+                onDismiss = { showCanvasRomDetail = false },
+                onLaunch = { showCanvasRomDetail = false },
+                showActionRow = false
+            )
+        } else {
+            // Focus moved from a game back to a system — auto-dismiss so the
+            // overlay doesn't get stuck showing a stale game.
+            LaunchedEffect(Unit) { showCanvasRomDetail = false }
+        }
     }
 
     if (pickWidgetVisible) {
@@ -779,7 +812,6 @@ private fun handleTap(
     onOpenRss: () -> Unit,
     onOpenFolder: (ResolvedCanvasItem.Folder) -> Unit,
     onLaunchRom: (PinnedRomInfo) -> Unit,
-    onChangeEsdeArtType: (ResolvedCanvasItem.EsdeArt) -> Unit,
     onPickPhotoContainer: (ResolvedCanvasItem.PhotoContainer) -> Unit
 ) {
     when (resolved) {
@@ -794,7 +826,11 @@ private fun handleTap(
             // Music tile owns its own tap handling (artwork → NowPlayingDialog,
             // transport buttons drive playback). The canvas-level onTap is a no-op.
         }
-        is ResolvedCanvasItem.EsdeArt -> onChangeEsdeArtType(resolved)
+        is ResolvedCanvasItem.EsdeArt -> {
+            // ES-DE tiles route their tap in the calling scope because the
+            // decision depends on the live wallpaper state (game focused vs
+            // system focused). Not handled here.
+        }
         is ResolvedCanvasItem.PhotoContainer -> onPickPhotoContainer(resolved)
     }
 }

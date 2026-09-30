@@ -109,6 +109,7 @@ enum class OverlayMediaType(val folderName: String, val displayName: String) {
     Marquees("marquees", "Marquees"),
     ThreeDBoxes("3dboxes", "3D Boxes"),
     Covers("covers", "Covers"),
+    PhysicalMedia("physicalmedia", "Physical Media"),
     Screenshots("screenshots", "Screenshots"),
     Fanart("fanart", "Fanart"),
     MixImages("miximages", "Miximages");

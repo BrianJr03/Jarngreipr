@@ -522,15 +522,27 @@ class ESDEViewModel @Inject constructor(
             gameFilename = gameFilename,
             extensions = IMAGE_EXTENSIONS
         )
-        // Prefer the scraped name from the built ROM index (which sources it
-        // from gamelist.xml or, later, another metadata provider); fall back
-        // to the file stem so the canvas placeholder never shows a raw path
-        // or extension.
-        val displayName = romSearchStateHolder.findGame(systemName, gameFilename)?.name
-            ?: File(gameFilename).nameWithoutExtension
+        // Prefer the scraped record from the built ROM index (name plus
+        // description / genre / developer / publisher / players / rating /
+        // play stats sourced from gamelist.xml or another metadata provider).
+        // Fall back to the file stem so the canvas placeholder never shows a
+        // raw path or extension.
+        val indexed = romSearchStateHolder.findGame(systemName, gameFilename)
+        val displayName = indexed?.name ?: File(gameFilename).nameWithoutExtension
         return GameInfo(
             path = gameFilename,
             name = displayName,
+            description = indexed?.description,
+            rating = indexed?.rating ?: 0f,
+            releaseDate = indexed?.releaseDate,
+            developer = indexed?.developer,
+            publisher = indexed?.publisher,
+            genre = indexed?.genre,
+            players = indexed?.players,
+            isFavorite = indexed?.isFavorite == true,
+            playCount = indexed?.playCount ?: 0,
+            playTimeMinutes = indexed?.playTimeMinutes ?: 0,
+            lastPlayed = indexed?.lastPlayed,
             systemName = systemName,
             artworkPath = media(FOLDER_COVERS),
             physicalMediaPath = media(FOLDER_PHYSICALMEDIA),
@@ -544,7 +556,10 @@ class ESDEViewModel @Inject constructor(
             screenshotPath = media(FOLDER_SCREENSHOTS),
             fanartPath = media(FOLDER_FANART),
             titlescreenPath = media(FOLDER_TITLESCREENS),
-            miximagePath = media(FOLDER_MIXIMAGES)
+            miximagePath = media(FOLDER_MIXIMAGES),
+            emulatorPackage = indexed?.emulatorPackage,
+            romAbsolutePath = indexed?.romAbsolutePath,
+            launchCommand = indexed?.launchCommand
         )
     }
 

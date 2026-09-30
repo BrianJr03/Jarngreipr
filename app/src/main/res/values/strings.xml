@@ -1300,6 +1300,7 @@
     <string name="esde_settings_overlay_marquees">Logos</string>
     <string name="esde_settings_overlay_3dboxes">3D Boxes</string>
     <string name="esde_settings_overlay_covers">Covers</string>
+    <string name="esde_settings_overlay_physicalmedia">@string/rom_media_physical_media</string>
     <string name="esde_settings_overlay_screenshots">@string/common_screenshots</string>
     <string name="esde_settings_overlay_fanart">@string/common_fanart</string>
     <string name="esde_settings_overlay_miximages">Mix</string>
