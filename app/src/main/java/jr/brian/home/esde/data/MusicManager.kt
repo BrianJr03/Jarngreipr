@@ -14,6 +14,8 @@ import jr.brian.home.data.BgMusicManager
 import jr.brian.home.esde.model.MusicSource
 import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.util.ESDEMediaConstants.getMediaSystemName
+import jr.brian.home.util.closeAudioEffectSession
+import jr.brian.home.util.openAudioEffectSession
 import java.io.File
 
 /**
@@ -35,6 +37,8 @@ class MusicManager(
     private val prefsManager: ESDEPreferencesManager,
     private val bgMusicManager: BgMusicManager
 ) : MusicController {
+
+    private val appContext: Context = context.applicationContext
 
     companion object {
         private const val TAG = "MusicManager"
@@ -475,7 +479,7 @@ class MusicManager(
         volumeFadeRunnable?.let { handler.removeCallbacks(it) }
 
         // Release player
-        musicPlayer?.release()
+        musicPlayer?.let { releasePlayerWithBroadcast(it) }
         musicPlayer = null
 
         currentMusicSource = null
@@ -639,7 +643,7 @@ class MusicManager(
         // Fade out then stop
         fadeVolume(currentVolume, 0f, CROSS_FADE_DURATION) {
             musicPlayer?.stop()
-            musicPlayer?.release()
+            musicPlayer?.let { releasePlayerWithBroadcast(it) }
             musicPlayer = null
             currentMusicSource = null
             currentPlaylist = emptyList()
@@ -720,7 +724,7 @@ class MusicManager(
                         // Fade complete - release old player
                         try {
                             oldPlayer.stop()
-                            oldPlayer.release()
+                            releasePlayerWithBroadcast(oldPlayer)
                             Log.d(TAG, "Old player released after fade")
                         } catch (e: Exception) {
                             Log.d(TAG, "Error releasing old player: ${e.message}")
@@ -733,7 +737,7 @@ class MusicManager(
             // Old player exists but isn't playing - release it immediately
             Log.d(TAG, "Releasing old player (not playing)")
             try {
-                oldPlayer.release()
+                releasePlayerWithBroadcast(oldPlayer)
             } catch (e: Exception) {
                 Log.d(TAG, "Error releasing old player: ${e.message}")
             }
@@ -793,13 +797,14 @@ class MusicManager(
 
         try {
             // Release old player
-            musicPlayer?.release()
+            musicPlayer?.let { releasePlayerWithBroadcast(it) }
 
             // Create new player
             musicPlayer = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
                 setOnPreparedListener { mp ->
                     Log.d(TAG, "Track prepared, starting playback")
+                    appContext.openAudioEffectSession(mp.audioSessionId)
                     if (isMuted) {
                         // Start then immediately pause so the player is ready to resume
                         // when unmuted, without sending any audio to the mixer.
@@ -1194,6 +1199,19 @@ class MusicManager(
         val audioFiles = scanAudioFilesRecursively(dir, excludeSystemsFolder = excludeSystems)
 
         return audioFiles.isNotEmpty()
+    }
+
+    private fun releasePlayerWithBroadcast(player: MediaPlayer) {
+        val sessionId = try {
+            player.audioSessionId
+        } catch (_: IllegalStateException) {
+            0
+        }
+        appContext.closeAudioEffectSession(sessionId)
+        try {
+            player.release()
+        } catch (_: Exception) {
+        }
     }
 
     private fun shouldCrossFade(

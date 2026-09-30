@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
+import jr.brian.home.util.closeAudioEffectSession
+import jr.brian.home.util.openAudioEffectSession
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.net.toUri
@@ -214,8 +216,8 @@ class BgMusicManager @Inject constructor(
     fun stopPlayback() {
         isIntendedToPlay = false
         isMutePaused = false
-        mediaPlayer?.runCatching { if (isPlaying) stop(); release() }
-        nextMediaPlayer?.runCatching { release() }
+        mediaPlayer?.releaseAndCloseSession()
+        nextMediaPlayer?.releaseAndCloseSession()
         mediaPlayer = null
         nextMediaPlayer = null
         abandonAudioFocus()
@@ -322,13 +324,14 @@ class BgMusicManager @Inject constructor(
      * to be chained via [MediaPlayer.setNextMediaPlayer].
      */
     private fun playFolderTrack(uri: Uri) {
-        mediaPlayer?.runCatching { release() }
-        nextMediaPlayer?.runCatching { release() }
+        mediaPlayer?.releaseAndCloseSession()
+        nextMediaPlayer?.releaseAndCloseSession()
         nextMediaPlayer = null
 
         val player = buildFolderPlayer(uri) ?: return
         player.setOnPreparedListener { mp ->
             if (!requestAudioFocus()) return@setOnPreparedListener
+            context.openAudioEffectSession(mp.audioSessionId)
             if (isMuted) {
                 mp.start()
                 mp.pause()
@@ -341,7 +344,7 @@ class BgMusicManager @Inject constructor(
         mediaPlayer = player
         if (!player.prepareAsyncSafely()) {
             mediaPlayer = null
-            player.runCatching { release() }
+            player.releaseAndCloseSession()
         }
     }
 
@@ -355,18 +358,19 @@ class BgMusicManager @Inject constructor(
         val nextIndex = (currentIndex + 1) % playlist.size
         val nextUri = playlist[nextIndex]
 
-        nextMediaPlayer?.runCatching { release() }
+        nextMediaPlayer?.releaseAndCloseSession()
         val next = buildFolderPlayer(nextUri) ?: run {
             nextMediaPlayer = null
             return
         }
         next.setOnPreparedListener { preparedNext ->
+            context.openAudioEffectSession(preparedNext.audioSessionId)
             mediaPlayer?.setNextMediaPlayer(preparedNext)
         }
         nextMediaPlayer = next
         if (!next.prepareAsyncSafely()) {
             nextMediaPlayer = null
-            next.runCatching { release() }
+            next.releaseAndCloseSession()
         }
     }
 
@@ -383,7 +387,7 @@ class BgMusicManager @Inject constructor(
             // onCompletion fires after the OS transitions to the next player,
             // so at this point nextMediaPlayer IS the current player.
             setOnCompletionListener {
-                mediaPlayer?.runCatching { release() }
+                mediaPlayer?.releaseAndCloseSession()
                 mediaPlayer = nextMediaPlayer
                 nextMediaPlayer = null
                 if (playlist.isNotEmpty()) {
@@ -402,7 +406,7 @@ class BgMusicManager @Inject constructor(
         }.isSuccess
 
         if (!configured) {
-            player.runCatching { release() }
+            player.releaseAndCloseSession()
             return null
         }
         return player
@@ -417,13 +421,14 @@ class BgMusicManager @Inject constructor(
     private fun startSingleFilePlayback() {
         val uri = singleFileUri?.toUri() ?: return
 
-        mediaPlayer?.runCatching { release() }
-        nextMediaPlayer?.runCatching { release() }
+        mediaPlayer?.releaseAndCloseSession()
+        nextMediaPlayer?.releaseAndCloseSession()
         nextMediaPlayer = null
 
         val primary = buildSingleFilePlayer(uri) ?: return
         primary.setOnPreparedListener { mp ->
             if (!requestAudioFocus()) return@setOnPreparedListener
+            context.openAudioEffectSession(mp.audioSessionId)
 
             if (isMuted) {
                 mp.start()
@@ -435,12 +440,13 @@ class BgMusicManager @Inject constructor(
                 val looper = buildSingleFilePlayer(uri)
                 if (looper != null) {
                     looper.setOnPreparedListener { preparedNext ->
+                        context.openAudioEffectSession(preparedNext.audioSessionId)
                         mp.setNextMediaPlayer(preparedNext)
                     }
                     nextMediaPlayer = looper
                     if (!looper.prepareAsyncSafely()) {
                         nextMediaPlayer = null
-                        looper.runCatching { release() }
+                        looper.releaseAndCloseSession()
                     }
                 }
                 mp.start()
@@ -449,7 +455,7 @@ class BgMusicManager @Inject constructor(
         mediaPlayer = primary
         if (!primary.prepareAsyncSafely()) {
             mediaPlayer = null
-            primary.runCatching { release() }
+            primary.releaseAndCloseSession()
         }
     }
 
@@ -465,7 +471,7 @@ class BgMusicManager @Inject constructor(
             setVolume(effectiveVolume(), effectiveVolume())
 
             setOnCompletionListener {
-                mediaPlayer?.runCatching { release() }
+                mediaPlayer?.releaseAndCloseSession()
                 mediaPlayer = nextMediaPlayer
                 nextMediaPlayer = null
 
@@ -473,12 +479,13 @@ class BgMusicManager @Inject constructor(
                     val fresh = buildSingleFilePlayer(uri)
                     if (fresh != null) {
                         fresh.setOnPreparedListener { preparedFresh ->
+                            context.openAudioEffectSession(preparedFresh.audioSessionId)
                             mediaPlayer?.setNextMediaPlayer(preparedFresh)
                         }
                         nextMediaPlayer = fresh
                         if (!fresh.prepareAsyncSafely()) {
                             nextMediaPlayer = null
-                            fresh.runCatching { release() }
+                            fresh.releaseAndCloseSession()
                         }
                     }
                 }
@@ -488,7 +495,7 @@ class BgMusicManager @Inject constructor(
         }.isSuccess
 
         if (!configured) {
-            player.runCatching { release() }
+            player.releaseAndCloseSession()
             return null
         }
         return player
@@ -496,4 +503,10 @@ class BgMusicManager @Inject constructor(
 
     private fun MediaPlayer.prepareAsyncSafely(): Boolean =
         runCatching { prepareAsync() }.isSuccess
+
+    private fun MediaPlayer.releaseAndCloseSession() {
+        val sessionId = runCatching { audioSessionId }.getOrDefault(0)
+        context.closeAudioEffectSession(sessionId)
+        runCatching { release() }
+    }
 }
