@@ -32,8 +32,13 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.scraper.model.ScrapeState
+import jr.brian.home.esde.ui.components.ScraperGuardDialog
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.esde.viewmodels.ScraperViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,8 +88,17 @@ internal fun RomDetailScreen(
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
+    val scraperViewModel: ScraperViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
+    val scrapeRunning = scrapeState is ScrapeState.Running
     var showMediaTypePicker by remember { mutableStateOf(false) }
     var showResizeDialog by remember { mutableStateOf(false) }
+    var showScraperGuard by remember { mutableStateOf(false) }
+
+    if (showScraperGuard) {
+        ScraperGuardDialog(onDismiss = { showScraperGuard = false })
+    }
 
     if (showMediaTypePicker) {
         MediaTypePickerDialog(
@@ -308,6 +322,27 @@ internal fun RomDetailScreen(
                                 color = ThemeAccentColor
                             )
                         }
+                    }
+                    TextButton(
+                        enabled = !scrapeRunning,
+                        onClick = {
+                            if (!scraperViewModel.hasEnabledScraper()) {
+                                showScraperGuard = true
+                            } else {
+                                scraperViewModel.scrapeGame(game) {
+                                    romSearchViewModel.refreshSystem(game.systemName)
+                                }
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = if (scrapeRunning) {
+                                stringResource(R.string.rom_detail_scrape_running)
+                            } else {
+                                stringResource(R.string.rom_detail_scrape)
+                            },
+                            color = ThemeAccentColor
+                        )
                     }
                     TextButton(onClick = { showMediaTypePicker = true }) {
                         Text(

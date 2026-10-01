@@ -3,18 +3,12 @@ package jr.brian.home.esde.ui.frontend
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import jr.brian.home.esde.model.GameInfo
-import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.hiddenGameKey
-
-private const val ANDROID_APPS_SYSTEM = "androidapps"
 
 @Composable
 fun rememberFilteredGames(
     allGames: List<GameInfo>,
     hiddenGames: Set<String>,
-    hideNoMetadata: Boolean,
-    hideNoImage: Boolean,
-    cardMediaType: RomSearchCardMediaType,
     forcedPlatform: String? = null,
     queryTrimmed: String = "",
     selectedPlatform: String? = null,
@@ -39,9 +33,6 @@ fun rememberFilteredGames(
         androidModeFilter,
         allAndroidApps,
         hiddenGames,
-        hideNoMetadata,
-        hideNoImage,
-        cardMediaType,
         autoFilterPlatform,
         forcedPlatform
     ) {
@@ -63,8 +54,6 @@ fun rememberFilteredGames(
         list
             .distinctBy { it.name.lowercase() }
             .filterHiddenIfNeeded(effectiveHiddenMode, hiddenGames)
-            .filterMissingImageIfNeeded(hideNoImage, effectiveHiddenMode, cardMediaType)
-            .filterMissingMetadataIfNeeded(hideNoMetadata, effectiveHiddenMode)
     }
 }
 
@@ -127,38 +116,3 @@ private fun List<GameInfo>.filterHiddenIfNeeded(
     hiddenGames: Set<String>
 ): List<GameInfo> = if (isHiddenMode) this
 else filter { hiddenGameKey(it) !in hiddenGames }
-
-private fun List<GameInfo>.filterMissingImageIfNeeded(
-    hideNoImage: Boolean,
-    isHiddenMode: Boolean,
-    cardMediaType: RomSearchCardMediaType
-): List<GameInfo> {
-    if (!hideNoImage || isHiddenMode) return this
-    return filter { game ->
-        if (game.systemName.equals(ANDROID_APPS_SYSTEM, ignoreCase = true)) return@filter true
-        game.resolveCardMediaPath(cardMediaType) != null
-    }
-}
-
-private fun List<GameInfo>.filterMissingMetadataIfNeeded(
-    hideNoMetadata: Boolean,
-    isHiddenMode: Boolean
-): List<GameInfo> {
-    if (!hideNoMetadata || isHiddenMode) return this
-    return filter { game ->
-        game.systemName.equals(ANDROID_APPS_SYSTEM, ignoreCase = true) ||
-                game.description != null || game.genre != null ||
-                game.developer != null || game.publisher != null ||
-                game.rating > 0f
-    }
-}
-
-private fun GameInfo.resolveCardMediaPath(type: RomSearchCardMediaType): String? = when (type) {
-    RomSearchCardMediaType.PhysicalMedia -> physicalMediaPath ?: artworkPath
-    RomSearchCardMediaType.Covers -> artworkPath ?: physicalMediaPath
-    RomSearchCardMediaType.Screenshots -> screenshotPath ?: physicalMediaPath ?: artworkPath
-    RomSearchCardMediaType.Fanart -> fanartPath ?: physicalMediaPath ?: artworkPath
-    RomSearchCardMediaType.TitleScreens -> titlescreenPath ?: physicalMediaPath ?: artworkPath
-    RomSearchCardMediaType.Marquee -> marqueeImagePath ?: physicalMediaPath ?: artworkPath
-    RomSearchCardMediaType.MixImages -> miximagePath ?: physicalMediaPath ?: artworkPath
-}

@@ -10,8 +10,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IM
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DELAY_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_METADATA
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_AUTO_FILTER
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
@@ -80,16 +78,6 @@ fun ESDEPreferencesManager.setAllSystemMediaMap(map: Map<String, String>) {
     } else {
         prefs.edit { putString(KEY_ROM_SEARCH_SYSTEM_MEDIA_MAP, JSONObject(map).toString()) }
     }
-}
-
-fun ESDEPreferencesManager.setRomSearchHideNoMetadata(enabled: Boolean) {
-    _state.value = _state.value.copy(romSearchHideNoMetadata = enabled)
-    prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, enabled) }
-}
-
-fun ESDEPreferencesManager.setRomSearchHideNoImage(enabled: Boolean) {
-    _state.value = _state.value.copy(romSearchHideNoImage = enabled)
-    prefs.edit { putBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, enabled) }
 }
 
 fun ESDEPreferencesManager.setRomSearchDiscSpin(enabled: Boolean) {

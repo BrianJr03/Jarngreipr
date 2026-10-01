@@ -20,6 +20,7 @@ import jr.brian.home.esde.util.RomIndexBuilder
 import jr.brian.home.esde.util.RomMetadataSource
 import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.mediaRoots
+import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
@@ -36,6 +37,7 @@ class RomSearchViewModel @Inject constructor(
     private val esdePreferencesManager: ESDEPreferencesManager,
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder,
+    private val scraperCoordinator: ScraperCoordinator,
 ) : ViewModel() {
     private val cache = RomIndexCache(context)
     /**
@@ -84,7 +86,9 @@ class RomSearchViewModel @Inject constructor(
             val primary = state.customMediaPath ?: setupPreferences.mediaPath
             val secondary = if (state.secondaryMediaEnabled)
                 SetupPreferences.RETRO_HRAI_PATH else null
-            return mediaRoots(primary, secondary)
+            val tertiary = if (state.jarngreiprMediaEnabled)
+                scraperCoordinator.scrapedRoot() else null
+            return mediaRoots(primary, secondary, tertiary)
         }
 
     fun updateQuery(q: String) {

@@ -164,8 +164,8 @@ private fun rowCountFor(
 ): Int = when (category) {
     SystemCustomizationCategory.BACKGROUND -> 3
     SystemCustomizationCategory.COLOR -> 6
-    // Refresh + Reorder + Reset.
-    SystemCustomizationCategory.ACTIONS -> 3
+    // Refresh + Scrape + Reorder + Reset.
+    SystemCustomizationCategory.ACTIONS -> 4
     // Pick row + optional Clear row.
     SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
 }
@@ -531,10 +531,13 @@ private fun ActionRows(
     onEnterReorder: () -> Unit
 ) {
     val refreshFocused = focusedRow == 0
-    val reorderFocused = focusedRow == 1
-    val resetFocused = focusedRow == 2
+    val scrapeFocused = focusedRow == 1
+    val reorderFocused = focusedRow == 2
+    val resetFocused = focusedRow == 3
 
     RefreshSystemRow(systemName = systemName, focused = refreshFocused)
+
+    ScrapeSystemRow(systemName = systemName, focused = scrapeFocused)
 
     Box(modifier = Modifier.fillMaxWidth()) {
         ActivateOnConfirm(focused = reorderFocused, onActivate = onEnterReorder)
@@ -549,6 +552,47 @@ private fun ActionRows(
     }
 
     ResetRow(focused = resetFocused, onReset = onReset)
+}
+
+@Composable
+private fun ScrapeSystemRow(systemName: String, focused: Boolean) {
+    val scraperViewModel: jr.brian.home.esde.viewmodels.ScraperViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
+    val isRunning = scrapeState is jr.brian.home.esde.scraper.model.ScrapeState.Running
+    var showScraperGuard by remember { mutableStateOf(false) }
+
+    if (showScraperGuard) {
+        jr.brian.home.esde.ui.components.ScraperGuardDialog(onDismiss = { showScraperGuard = false })
+    }
+
+    val trailing = (scrapeState as? jr.brian.home.esde.scraper.model.ScrapeState.Running)
+        ?.let { stringResource(R.string.system_customize_scrape_running, it.done, it.total) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(focused)
+    ) {
+        ActivateOnConfirm(focused = focused) {
+            if (!isRunning) {
+                if (!scraperViewModel.hasEnabledScraper()) {
+                    showScraperGuard = true
+                } else {
+                    scraperViewModel.scrapeSystem(systemName) {
+                        romSearchViewModel.refreshSystem(systemName)
+                    }
+                }
+            }
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_scrape_title),
+            description = stringResource(R.string.system_customize_scrape_description),
+            trailingLabel = trailing,
+            showProgress = isRunning,
+            focused = focused
+        )
+    }
 }
 
 @Composable

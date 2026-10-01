@@ -284,8 +284,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                     val cardMediaType = esdeState.romSearchCardMediaType
                     val gameMediaMap = esdeState.romSearchGameMediaMap
                     val systemMediaMap = esdeState.systemMediaMap
-                    val hideNoMetadata = esdeState.romSearchHideNoMetadata
-                    val hideNoImage = esdeState.romSearchHideNoImage
                     val focusAnimationEnabled = esdeState.romSearchDiscSpin
                     val focusAnimationDisabledGames = esdeState.romSearchFocusAnimationDisabledGames
 
@@ -376,9 +374,6 @@ class RomSearchResultsActivity : ComponentActivity() {
                         androidModeFilter,
                         allAndroidApps,
                         hiddenGames,
-                        hideNoMetadata,
-                        hideNoImage,
-                        cardMediaType,
                         autoFilterPlatform
                     ) {
                         if (isAndroidMode) return@remember if (androidModeFilter.isBlank()) allAndroidApps
@@ -441,50 +436,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                             }
                         }
                         val deduped = list.distinctBy { it.name.lowercase() }
-                        val visibleList = if (isHiddenMode) deduped
+                        if (isHiddenMode) deduped
                         else deduped.filter { hiddenGameKey(it) !in hiddenGames }
-                        var result = visibleList
-                        if (hideNoImage && !isHiddenMode) {
-                            result = result.filter { game ->
-                                if (game.systemName.equals(
-                                        "androidapps",
-                                        ignoreCase = true
-                                    )
-                                ) return@filter true
-                                val resolvedPath = when (cardMediaType) {
-                                    RomSearchCardMediaType.PhysicalMedia -> game.physicalMediaPath
-                                        ?: game.artworkPath
-
-                                    RomSearchCardMediaType.Covers -> game.artworkPath
-                                        ?: game.physicalMediaPath
-
-                                    RomSearchCardMediaType.Screenshots -> game.screenshotPath
-                                        ?: game.physicalMediaPath ?: game.artworkPath
-
-                                    RomSearchCardMediaType.Fanart -> game.fanartPath
-                                        ?: game.physicalMediaPath ?: game.artworkPath
-
-                                    RomSearchCardMediaType.TitleScreens -> game.titlescreenPath
-                                        ?: game.physicalMediaPath ?: game.artworkPath
-
-                                    RomSearchCardMediaType.Marquee -> game.marqueeImagePath
-                                        ?: game.physicalMediaPath ?: game.artworkPath
-
-                                    RomSearchCardMediaType.MixImages -> game.miximagePath
-                                        ?: game.physicalMediaPath ?: game.artworkPath
-                                }
-                                resolvedPath != null
-                            }
-                        }
-                        if (hideNoMetadata && !isHiddenMode) {
-                            result = result.filter { game ->
-                                game.systemName.equals("androidapps", ignoreCase = true) ||
-                                        game.description != null || game.genre != null ||
-                                        game.developer != null || game.publisher != null ||
-                                        game.rating > 0f
-                            }
-                        }
-                        result
                     }
 
                     val dropdownVisible = isPlatformMode && selectedPlatform == null &&

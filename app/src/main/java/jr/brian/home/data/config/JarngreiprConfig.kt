@@ -88,7 +88,12 @@ data class JarngreiprConfig(
         //      swipe sensitivity slider (0..100). Older blobs decode with
         //      the default (0 = Compose default snap threshold) via
         //      ignoreUnknownKeys, matching pre-slider behaviour.
-        const val CONFIG_VERSION = 24
+        // v25: added RomSearchConfig.scraper (ScraperConfig) — ScreenScraper
+        //      + SteamGridDB credentials, per-backend enable toggles, media-
+        //      type selections, and an optional concurrency override. Older
+        //      blobs decode with ScraperConfig() defaults (both backends off,
+        //      empty credentials) via ignoreUnknownKeys.
+        const val CONFIG_VERSION = 25
     }
 }
 
@@ -306,6 +311,7 @@ data class RomSearchConfig(
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
+    val jarngreiprMediaEnabled: Boolean = true,
     val systemLayout: String = "Grid",
     val gameLayout: String = "Grid",
     val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
@@ -329,7 +335,22 @@ data class RomSearchConfig(
     val frontendGameRowAlignment: String = "Center",
     val frontendSystemTileScale: Float = 1.0f,
     val frontendGameTileScale: Float = 1.0f,
-    val gamelistDecorationEnabled: Boolean = true
+    val gamelistDecorationEnabled: Boolean = true,
+    val scraper: ScraperConfig = ScraperConfig()
+)
+
+@Serializable
+data class ScraperConfig(
+    val screenScraperEnabled: Boolean = false,
+    val screenScraperDevId: String = "",
+    val screenScraperDevPassword: String = "",
+    val screenScraperUserId: String = "",
+    val screenScraperUserPassword: String = "",
+    val screenScraperMediaTypes: Set<String> = emptySet(),
+    val steamGridDbEnabled: Boolean = false,
+    val steamGridDbApiKey: String = "",
+    val steamGridDbMediaTypes: Set<String> = emptySet(),
+    val concurrencyOverride: Int = 0
 )
 
 @Serializable

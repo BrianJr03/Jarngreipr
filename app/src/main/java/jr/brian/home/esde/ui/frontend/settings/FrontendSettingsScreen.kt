@@ -50,7 +50,9 @@ import kotlinx.coroutines.withContext
 fun FrontendSettingsScreen(
     onDismiss: () -> Unit,
     onOpenSystemFilter: () -> Unit = {},
-    onOpenAddSystems: () -> Unit = {}
+    onOpenAddSystems: () -> Unit = {},
+    onOpenScreenScraperSettings: () -> Unit = {},
+    onOpenSteamGridDbSettings: () -> Unit = {}
 ) {
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
@@ -118,6 +120,14 @@ fun FrontendSettingsScreen(
                         onDismiss()
                         onOpenAddSystems()
                     },
+                    onOpenScreenScraperSettings = {
+                        onDismiss()
+                        onOpenScreenScraperSettings()
+                    },
+                    onOpenSteamGridDbSettings = {
+                        onDismiss()
+                        onOpenSteamGridDbSettings()
+                    },
                     refreshRunning = refreshRunning,
                     lastRefreshResult = lastRefreshResult,
                     onRefresh = onRefresh
@@ -132,7 +142,7 @@ private fun rowCountFor(category: FrontendSettingsCategory): Int = when (categor
     FrontendSettingsCategory.MEDIA -> 5
     FrontendSettingsCategory.FEEL -> 5
     FrontendSettingsCategory.SYSTEMS -> 2
-    FrontendSettingsCategory.SCRAPING -> 4
+    FrontendSettingsCategory.SCRAPING -> 5
 }
 
 private fun refreshLibrary(
@@ -159,6 +169,8 @@ private fun RowPaneContainer(
     focusedRow: Int,
     onOpenSystemFilter: () -> Unit,
     onOpenAddSystems: () -> Unit,
+    onOpenScreenScraperSettings: () -> Unit,
+    onOpenSteamGridDbSettings: () -> Unit,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
@@ -184,6 +196,8 @@ private fun RowPaneContainer(
                 focusedRow = focusedRow,
                 onOpenSystemFilter = onOpenSystemFilter,
                 onOpenAddSystems = onOpenAddSystems,
+                onOpenScreenScraperSettings = onOpenScreenScraperSettings,
+                onOpenSteamGridDbSettings = onOpenSteamGridDbSettings,
                 refreshRunning = refreshRunning,
                 lastRefreshResult = lastRefreshResult,
                 onRefresh = onRefresh

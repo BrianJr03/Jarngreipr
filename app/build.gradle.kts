@@ -150,6 +150,9 @@ dependencies {
     implementation(libs.ping)
     implementation(libs.ping.nearby)
 
+    // OkHttp (artwork scraping)
+    implementation(libs.okhttp)
+
     // AndroidX TV
     implementation(libs.androidx.tv.foundation) {
         exclude(group = "androidx.compose.foundation")

@@ -192,9 +192,6 @@ private fun RomSearchSheetBody(
     val filteredGames = rememberFilteredGames(
         allGames = allGames,
         hiddenGames = esdeState.hiddenGames,
-        hideNoMetadata = esdeState.romSearchHideNoMetadata,
-        hideNoImage = esdeState.romSearchHideNoImage,
-        cardMediaType = esdeState.romSearchCardMediaType,
         queryTrimmed = queryTrimmed,
         selectedPlatform = queryState.selectedPlatform,
         isPlatformMode = queryState.isPlatformMode,
