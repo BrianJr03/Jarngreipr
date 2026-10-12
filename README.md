@@ -1,9 +1,15 @@
 # Járngreipr 🧤
 
-![Total Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/total?style=flat-square)
-![Latest Release Downloads](https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/latest/total?style=flat-square)
-![Version](https://img.shields.io/github/v/release/BrianJr03/Jarngreipr)
-![Android](https://img.shields.io/badge/Android-13%2B-green)
+<p align="center">
+  <a href="https://github.com/BrianJr03/Jarngreipr/releases"><img src="https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/total?style=flat&label=downloads&color=4F8FD0" alt="Total downloads"/></a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/BrianJr03/Jarngreipr/releases/latest"><img src="https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/latest/total?style=flat&label=downloads%20%40%20latest&color=4F8FD0" alt="Downloads for the latest release"/></a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/BrianJr03/Jarngreipr/releases/latest"><img src="https://img.shields.io/github/v/release/BrianJr03/Jarngreipr?style=flat&label=version&color=C46A2A" alt="Latest version"/></a>
+  &nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/Android-13%2B-brightgreen?style=flat" alt="Android 13+"/>
+</p>
+
 <!-- ![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg) -->
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U6U21UGZT3)
