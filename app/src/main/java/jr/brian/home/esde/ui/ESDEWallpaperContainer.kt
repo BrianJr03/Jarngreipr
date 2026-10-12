@@ -64,6 +64,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.delay
 import jr.brian.home.esde.model.AnimationStyle
 import jr.brian.home.esde.model.BackgroundScaleMode
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
@@ -75,10 +76,15 @@ import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val DEFAULT_BACKGROUND_PATH = "file:///android_asset/fallback/black.png"
 
 private val MARQUEE_VIDEO_EXTENSIONS = setOf("mp4", "mkv", "avi", "wmv", "mov", "webm")
+
+private const val MARQUEE_VIDEO_SETTLE_MS = 150L
+
+private const val MARQUEE_VIDEO_SLOT_KEY = "__marquee_video_slot__"
 
 private fun String.isMarqueeVideoPath(): Boolean {
     val lower = substringAfterLast('.', "").lowercase()
@@ -562,6 +568,12 @@ private fun BoxScope.AnimatedLogo(
             val minWidth = (state.marqueeWidth * minWidthPercent).dp
             AnimatedContent(
                 targetState = logoPath,
+                // Collapse all video marquees to one key so the MarqueeVideo
+                // composable stays mounted across focus changes — otherwise
+                // each path swap would tear down and rebuild ExoPlayer here.
+                contentKey = { path ->
+                    if (path?.isMarqueeVideoPath() == true) MARQUEE_VIDEO_SLOT_KEY else path
+                },
                 transitionSpec = {
                     if (changeAnimationEnabled) {
                         scaleIn(
@@ -787,24 +799,29 @@ private fun MarqueeVideo(
 ) {
     val context = LocalContext.current
 
-    val videoUri = remember(videoPath) {
-        when {
-            videoPath.startsWith("content://") -> videoPath.toUri()
-            else -> Uri.fromFile(File(videoPath))
+    // One player for the lifetime of this composable — recreating per focused
+    // tile was tearing down MediaCodec on every scroll tick, stalling the UI
+    // and racing the outgoing render's VSync callback (Choreographer NPE on
+    // ExoPlayer:Playback, Android 13).
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = Player.REPEAT_MODE_ALL
+            volume = 0f
+            playWhenReady = true
         }
     }
 
-    val exoPlayer = remember(videoPath) {
-        ExoPlayer.Builder(context).build().apply {
-            try {
-                setMediaItem(MediaItem.fromUri(videoUri))
-                repeatMode = Player.REPEAT_MODE_ALL
-                volume = 0f
-                prepare()
-                playWhenReady = true
-            } catch (e: Exception) {
-                android.util.Log.e("MarqueeVideo", "Failed to load video: $videoPath", e)
-            }
+    LaunchedEffect(videoPath) {
+        delay(MARQUEE_VIDEO_SETTLE_MS.milliseconds)
+        val uri = when {
+            videoPath.startsWith("content://") -> videoPath.toUri()
+            else -> Uri.fromFile(File(videoPath))
+        }
+        try {
+            exoPlayer.setMediaItem(MediaItem.fromUri(uri))
+            exoPlayer.prepare()
+        } catch (e: Exception) {
+            android.util.Log.e("MarqueeVideo", "Failed to load video: $videoPath", e)
         }
     }
 
@@ -823,7 +840,7 @@ private fun MarqueeVideo(
         }
     }
 
-    DisposableEffect(videoPath) {
+    DisposableEffect(Unit) {
         onDispose {
             exoPlayer.release()
         }

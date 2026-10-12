@@ -583,18 +583,10 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     isLoading = isLoading,
                                     focusResetKey = focusResetCounter,
                                     isHiddenMode = isHiddenMode,
-                                    backgroundTransparent = romSearchUseWallpaper,
                                     cardMediaType = cardMediaType,
                                     focusAnimationEnabled = focusAnimationEnabled,
                                     focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
                                     isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
-                                    onToggleGameDiscSpin = { game ->
-                                        val key = gameKey(game)
-                                        if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(
-                                            key
-                                        )
-                                        else esdePrefs.disableFocusAnimation(key)
-                                    },
                                     getGameMediaType = { game ->
                                         gameMediaMap[gameKey(game)]
                                             ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }

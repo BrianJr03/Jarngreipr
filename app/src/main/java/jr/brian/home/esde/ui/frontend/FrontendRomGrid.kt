@@ -21,8 +21,6 @@ import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.clearGameMediaType
 import jr.brian.home.esde.data.clearSystemMediaType
-import jr.brian.home.esde.data.disableFocusAnimation
-import jr.brian.home.esde.data.enableFocusAnimation
 import jr.brian.home.esde.data.getGameCore
 import jr.brian.home.esde.data.getGameEmulator
 import jr.brian.home.esde.data.getGameLaunchCommand
@@ -92,16 +90,10 @@ internal fun FrontendRomGrid(
         focusResetKey = focusResetKey,
         initialRealIndex = initialRealIndex,
         isHiddenMode = isHiddenMode,
-        backgroundTransparent = backgroundTransparent,
         cardMediaType = cardMediaType,
         focusAnimationEnabled = focusAnimationEnabled,
         focusAnimationDelayMs = focusAnimationDelayMs,
         isFocusAnimationDisabled = { game -> gameKey(game) in focusAnimationDisabledGames },
-        onToggleGameDiscSpin = { game ->
-            val key = gameKey(game)
-            if (key in focusAnimationDisabledGames) esdePrefs.enableFocusAnimation(key)
-            else esdePrefs.disableFocusAnimation(key)
-        },
         getGameMediaType = { game ->
             gameMediaMap[gameKey(game)]
                 ?.let { runCatching { RomSearchCardMediaType.valueOf(it) }.getOrNull() }

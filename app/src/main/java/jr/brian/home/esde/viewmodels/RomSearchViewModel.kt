@@ -14,11 +14,13 @@ import jr.brian.home.esde.data.SystemCacheEntry
 import jr.brian.home.esde.data.SystemStamp
 import jr.brian.home.esde.data.computeRootAvailability
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.util.CompositeMetadataSource
 import jr.brian.home.esde.util.GamelistMetadataSource
 import jr.brian.home.esde.util.NoOpMetadataSource
 import jr.brian.home.esde.util.RomIndexBuilder
 import jr.brian.home.esde.util.RomMetadataSource
 import jr.brian.home.esde.util.RomScanner
+import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -173,16 +175,34 @@ class RomSearchViewModel @Inject constructor(
      * rederived from it after the write so a partial rebuild can't leave the
      * two out of sync.
      */
+    /**
+     * Composes the metadata layer the index builder sees. ES-DE's gamelist.xml
+     * stays authoritative (via [GamelistMetadataSource]); [SidecarMetadataSource]
+     * fills nulls with scraper-written JSON under `scrapedRoot()`. When gamelist
+     * decoration is off we drop both — the user explicitly opted out of
+     * decoration, and layering sidecars on would re-enable it through the
+     * back door.
+     */
+    private fun buildMetadataSource(
+        decorationEnabled: Boolean,
+        rootPath: String,
+        mediaPaths: List<String>,
+    ): RomMetadataSource {
+        if (!decorationEnabled) return NoOpMetadataSource
+        val gamelist = GamelistMetadataSource(esdeRootPath = rootPath, mediaPaths = mediaPaths)
+        val sidecar = SidecarMetadataSource(scrapedRoot = scraperCoordinator.scrapedRoot())
+        return CompositeMetadataSource(primary = gamelist, fallback = sidecar)
+    }
+
     private suspend fun rebuildSystemIntoCache(systemName: String, rootPath: String): Int {
         val prefsState = esdePreferencesManager.state.value
         val decorationEnabled = prefsState.gamelistDecorationEnabled
         val esSystemsFile = File(rootPath, "custom_systems/es_systems.xml")
-        val metadataSource: RomMetadataSource =
-            if (decorationEnabled) {
-                GamelistMetadataSource(esdeRootPath = rootPath, mediaPaths = mediaPaths)
-            } else {
-                NoOpMetadataSource
-            }
+        val metadataSource: RomMetadataSource = buildMetadataSource(
+            decorationEnabled = decorationEnabled,
+            rootPath = rootPath,
+            mediaPaths = mediaPaths,
+        )
         val perSystemExtensions = esSystemsFile
             .takeIf { it.exists() }
             ?.let(RomScanner::parseSystemExtensions)
@@ -288,12 +308,11 @@ class RomSearchViewModel @Inject constructor(
         lastScanWasDegraded = availability.anyMissing
 
         val esSystemsFile = File(rootPath, "custom_systems/es_systems.xml")
-        val metadataSource: RomMetadataSource =
-            if (decorationEnabled) {
-                GamelistMetadataSource(esdeRootPath = rootPath, mediaPaths = mediaPaths)
-            } else {
-                NoOpMetadataSource
-            }
+        val metadataSource: RomMetadataSource = buildMetadataSource(
+            decorationEnabled = decorationEnabled,
+            rootPath = rootPath,
+            mediaPaths = mediaPaths,
+        )
 
         // Discover every candidate system by walking each root's immediate
         // children — cheap, one-level listFiles per root, no recursion — plus

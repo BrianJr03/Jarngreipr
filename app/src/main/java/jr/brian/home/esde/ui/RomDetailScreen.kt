@@ -31,9 +31,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.scraper.model.ScrapeState
 import jr.brian.home.esde.ui.components.ScraperGuardDialog
@@ -57,7 +61,6 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -78,9 +81,6 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
-    discSpinEnabled: Boolean = false,
-    discSpinDisabled: Boolean = false,
-    onToggleDiscSpin: () -> Unit = {},
     showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -92,6 +92,7 @@ internal fun RomDetailScreen(
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
     val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
     val scrapeRunning = scrapeState is ScrapeState.Running
+    val scrapeScope = rememberCoroutineScope()
     var showMediaTypePicker by remember { mutableStateOf(false) }
     var showResizeDialog by remember { mutableStateOf(false) }
     var showScraperGuard by remember { mutableStateOf(false) }
@@ -330,7 +331,16 @@ internal fun RomDetailScreen(
                                 showScraperGuard = true
                             } else {
                                 scraperViewModel.scrapeGame(game) {
-                                    romSearchViewModel.refreshSystem(game.systemName)
+                                    // Clear Coil caches so the just-written art
+                                    // replaces any null/404 the loader already
+                                    // cached under the game's path keys.
+                                    scrapeScope.launch {
+                                        imageLoader.memoryCache?.clear()
+                                        withContext(Dispatchers.IO) {
+                                            imageLoader.diskCache?.clear()
+                                        }
+                                        romSearchViewModel.refreshSystem(game.systemName)
+                                    }
                                 }
                             }
                         }

@@ -1,7 +1,6 @@
 package jr.brian.home.esde.ui
 
 import android.net.Uri
-import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -11,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,11 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import jr.brian.home.esde.ui.frontend.FrontendTokens
@@ -38,7 +31,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,12 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -83,7 +71,6 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.OledCardColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.ui.util.animatedColor
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.items as lazyRowItems
 import androidx.compose.foundation.lazy.itemsIndexed as lazyRowItemsIndexed
@@ -94,15 +81,13 @@ private const val NUM_COLS = 4
 internal fun RomResultsGrid(
     games: List<GameInfo>,
     isLoading: Boolean,
-    layout: FrontendLayout = FrontendLayout.Grid,
     modifier: Modifier = Modifier,
+    layout: FrontendLayout = FrontendLayout.Grid,
     isHiddenMode: Boolean = false,
-    backgroundTransparent: Boolean = false,
     cardMediaType: RomSearchCardMediaType = RomSearchCardMediaType.PhysicalMedia,
     focusAnimationEnabled: Boolean = false,
     focusAnimationDelayMs: Int = 150,
     isFocusAnimationDisabled: (GameInfo) -> Boolean = { false },
-    onToggleGameDiscSpin: (GameInfo) -> Unit = {},
     getGameMediaType: (GameInfo) -> RomSearchCardMediaType? = { null },
     onSetGameMediaType: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
     onSetMediaTypeForSystem: (GameInfo, RomSearchCardMediaType?) -> Unit = { _, _ -> },
@@ -278,10 +263,7 @@ internal fun RomResultsGrid(
                         selectedGame = null
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
-                    onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
-                    discSpinEnabled = focusAnimationEnabled,
-                    discSpinDisabled = isFocusAnimationDisabled(game),
-                    onToggleDiscSpin = { onToggleGameDiscSpin(game) }
+                    onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) }
                 )
             }
         }

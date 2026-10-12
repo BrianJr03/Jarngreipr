@@ -558,8 +558,10 @@ private fun ActionRows(
 private fun ScrapeSystemRow(systemName: String, focused: Boolean) {
     val scraperViewModel: jr.brian.home.esde.viewmodels.ScraperViewModel = hiltViewModel()
     val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val imageLoader = LocalESDEImageLoader.current
     val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
     val isRunning = scrapeState is jr.brian.home.esde.scraper.model.ScrapeState.Running
+    val scope = rememberCoroutineScope()
     var showScraperGuard by remember { mutableStateOf(false) }
 
     if (showScraperGuard) {
@@ -580,7 +582,16 @@ private fun ScrapeSystemRow(systemName: String, focused: Boolean) {
                     showScraperGuard = true
                 } else {
                     scraperViewModel.scrapeSystem(systemName) {
-                        romSearchViewModel.refreshSystem(systemName)
+                        // Clear Coil caches so the just-written art replaces
+                        // any null/404 the loader already cached under the
+                        // games' path keys.
+                        scope.launch {
+                            imageLoader.memoryCache?.clear()
+                            withContext(Dispatchers.IO) {
+                                imageLoader.diskCache?.clear()
+                            }
+                            romSearchViewModel.refreshSystem(systemName)
+                        }
                     }
                 }
             }
