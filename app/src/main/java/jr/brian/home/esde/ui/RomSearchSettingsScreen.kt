@@ -243,18 +243,6 @@ internal fun RomSearchSettingsScreen(onBack: () -> Unit) {
                             checked = state.romSearchUseWallpaper,
                             onCheckedChange = { prefsManager.setRomSearchUseWallpaper(it) }
                         )
-                        ToggleSetting(
-                            title = stringResource(R.string.rom_search_settings_hide_no_image_title),
-                            description = stringResource(R.string.rom_search_settings_hide_no_image_description),
-                            checked = state.romSearchHideNoImage,
-                            onCheckedChange = { prefsManager.setRomSearchHideNoImage(it) }
-                        )
-                        ToggleSetting(
-                            title = stringResource(R.string.rom_search_settings_hide_no_metadata_title),
-                            description = stringResource(R.string.rom_search_settings_hide_no_metadata_description),
-                            checked = state.romSearchHideNoMetadata,
-                            onCheckedChange = { prefsManager.setRomSearchHideNoMetadata(it) }
-                        )
                         // ToggleSetting(
                         //     title = stringResource(R.string.rom_search_settings_platform_auto_filter_title),
                         //     description = stringResource(R.string.rom_search_settings_platform_auto_filter_description),

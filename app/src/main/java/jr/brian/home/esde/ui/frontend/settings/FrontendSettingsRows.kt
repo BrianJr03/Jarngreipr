@@ -41,6 +41,7 @@ import jr.brian.home.esde.data.setFrontendSystemTileScale
 import jr.brian.home.esde.data.setFrontendTransition
 import jr.brian.home.esde.data.setFrontendTransitionMs
 import jr.brian.home.esde.data.setGameLayout
+import jr.brian.home.esde.data.setJarngreiprMediaEnabled
 import jr.brian.home.esde.data.setSecondaryMediaEnabled
 import jr.brian.home.esde.data.setSystemLayout
 import jr.brian.home.esde.model.ESDEPrefsState
@@ -66,6 +67,8 @@ internal fun FrontendSettingsRows(
     focusedRow: Int,
     onOpenSystemFilter: () -> Unit,
     onOpenAddSystems: () -> Unit,
+    onOpenScreenScraperSettings: () -> Unit,
+    onOpenSteamGridDbSettings: () -> Unit,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
     onRefresh: () -> Unit
@@ -97,7 +100,9 @@ internal fun FrontendSettingsRows(
             focusedRow = focusedRow,
             refreshRunning = refreshRunning,
             lastRefreshResult = lastRefreshResult,
-            onRefresh = onRefresh
+            onRefresh = onRefresh,
+            onOpenScreenScraperSettings = onOpenScreenScraperSettings,
+            onOpenSteamGridDbSettings = onOpenSteamGridDbSettings
         )
     }
 }
@@ -609,13 +614,17 @@ private fun ScrapingRows(
     focusedRow: Int,
     refreshRunning: Boolean,
     lastRefreshResult: Pair<Int, Int>?,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onOpenScreenScraperSettings: () -> Unit,
+    onOpenSteamGridDbSettings: () -> Unit
 ) {
     val refreshFocused = focusedRow == 0
     val secondaryFocused = focusedRow == 1
-    val screenScraperFocused = focusedRow == 2
-    val steamGridDbFocused = focusedRow == 3
+    val jarngreiprFocused = focusedRow == 2
+    val screenScraperFocused = focusedRow == 3
+    val steamGridDbFocused = focusedRow == 4
     val secondaryEnabled = prefsState.secondaryMediaEnabled
+    val jarngreiprEnabled = prefsState.jarngreiprMediaEnabled
 
     val trailing = when {
         refreshRunning -> stringResource(R.string.frontend_settings_refresh_running)
@@ -649,18 +658,73 @@ private fun ScrapingRows(
         )
     }
 
-    SettingsRowSlot(focused = screenScraperFocused, enabled = false, onActivate = {}) {
-        ComingSoonRow(
+    SettingsRowSlot(
+        focused = jarngreiprFocused,
+        onActivate = { prefsManager.setJarngreiprMediaEnabled(!jarngreiprEnabled) }
+    ) {
+        ToggleSetting(
+            title = stringResource(R.string.jarngreipr_media_title),
+            description = stringResource(R.string.jarngreipr_media_description),
+            checked = jarngreiprEnabled,
+            onCheckedChange = prefsManager::setJarngreiprMediaEnabled,
+            focused = jarngreiprFocused
+        )
+    }
+
+    SettingsRowSlot(focused = screenScraperFocused, onActivate = onOpenScreenScraperSettings) {
+        ScraperEntryRow(
             title = stringResource(R.string.frontend_settings_screenscraper_title),
             description = stringResource(R.string.frontend_settings_screenscraper_description),
+            enabled = prefsState.screenScraperEnabled,
             focused = screenScraperFocused
         )
     }
-    SettingsRowSlot(focused = steamGridDbFocused, enabled = false, onActivate = {}) {
-        ComingSoonRow(
+    SettingsRowSlot(focused = steamGridDbFocused, onActivate = onOpenSteamGridDbSettings) {
+        ScraperEntryRow(
             title = stringResource(R.string.frontend_settings_steamgriddb_title),
             description = stringResource(R.string.frontend_settings_steamgriddb_description),
+            enabled = prefsState.steamGridDbEnabled,
             focused = steamGridDbFocused
+        )
+    }
+}
+
+@Composable
+private fun ScraperEntryRow(
+    title: String,
+    description: String,
+    enabled: Boolean,
+    focused: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusableSettingCard(focused)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = description,
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 12.sp
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = stringResource(
+                if (enabled) R.string.scraper_status_on else R.string.scraper_status_off
+            ),
+            color = if (enabled) ThemePrimaryColor else Color.White.copy(alpha = 0.4f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -723,39 +787,3 @@ internal fun ActionRowCard(
     }
 }
 
-@Composable
-private fun ComingSoonRow(
-    title: String,
-    description: String,
-    focused: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusableSettingCard(focused)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = description,
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 12.sp
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = stringResource(R.string.frontend_settings_coming_soon),
-            color = ThemePrimaryColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}

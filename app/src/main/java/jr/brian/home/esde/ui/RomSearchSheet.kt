@@ -45,8 +45,6 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.clearGameMediaType
 import jr.brian.home.esde.data.clearSystemMediaType
-import jr.brian.home.esde.data.disableFocusAnimation
-import jr.brian.home.esde.data.enableFocusAnimation
 import jr.brian.home.esde.data.getGameCore
 import jr.brian.home.esde.data.getGameEmulator
 import jr.brian.home.esde.data.getGameLaunchCommand
@@ -192,9 +190,6 @@ private fun RomSearchSheetBody(
     val filteredGames = rememberFilteredGames(
         allGames = allGames,
         hiddenGames = esdeState.hiddenGames,
-        hideNoMetadata = esdeState.romSearchHideNoMetadata,
-        hideNoImage = esdeState.romSearchHideNoImage,
-        cardMediaType = esdeState.romSearchCardMediaType,
         queryTrimmed = queryTrimmed,
         selectedPlatform = queryState.selectedPlatform,
         isPlatformMode = queryState.isPlatformMode,
@@ -255,12 +250,6 @@ private fun RomSearchSheetBody(
                 focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,
                 isFocusAnimationDisabled = { game ->
                     gameKey(game) in esdeState.romSearchFocusAnimationDisabledGames
-                },
-                onToggleGameDiscSpin = { game ->
-                    val key = gameKey(game)
-                    if (key in esdeState.romSearchFocusAnimationDisabledGames)
-                        esdePrefs.enableFocusAnimation(key)
-                    else esdePrefs.disableFocusAnimation(key)
                 },
                 getGameMediaType = { game ->
                     esdeState.romSearchGameMediaMap[gameKey(game)]

@@ -17,11 +17,22 @@ fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 /**
  * Builds the ordered list of media roots the resolvers should search.
  * The primary (ES-DE) root always comes first; a non-blank secondary
- * (e.g. RetroHrai!) is appended when enabled. Duplicates are dropped so
- * a misconfigured secondary pointing at the same dir doesn't double the work.
+ * (e.g. RetroHrai!) is appended when enabled. A non-blank tertiary
+ * (typically the in-app scraped-media cache) is appended last so scraped
+ * art fills gaps the user's on-disk media doesn't cover. Duplicates are
+ * dropped so a misconfigured secondary pointing at the same dir doesn't
+ * double the work.
  */
-fun mediaRoots(primary: String, secondary: String?): List<String> =
-    listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() })
+fun mediaRoots(
+    primary: String,
+    secondary: String?,
+    tertiary: String? = null
+): List<String> =
+    listOfNotNull(
+        primary,
+        secondary?.takeIf { it.isNotBlank() },
+        tertiary?.takeIf { it.isNotBlank() }
+    )
         .map { it.trimEnd('/') }
         .distinct()
 

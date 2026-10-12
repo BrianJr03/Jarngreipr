@@ -15,6 +15,8 @@ import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
 import jr.brian.home.data.SnapMode
+import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
+import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
@@ -285,6 +287,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
+                jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
                 systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
                 gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
                 systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
@@ -311,6 +314,18 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
                 frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
                 gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
+                scraper = ScraperConfig(
+                    screenScraperEnabled = f.esdePreferencesManager.state.value.screenScraperEnabled,
+                    screenScraperDevId = f.esdePreferencesManager.state.value.screenScraperDevId,
+                    screenScraperDevPassword = f.esdePreferencesManager.state.value.screenScraperDevPassword,
+                    screenScraperUserId = f.esdePreferencesManager.state.value.screenScraperUserId,
+                    screenScraperUserPassword = f.esdePreferencesManager.state.value.screenScraperUserPassword,
+                    screenScraperMediaTypes = f.esdePreferencesManager.state.value.screenScraperMediaTypes,
+                    steamGridDbEnabled = f.esdePreferencesManager.state.value.steamGridDbEnabled,
+                    steamGridDbApiKey = f.esdePreferencesManager.state.value.steamGridDbApiKey,
+                    steamGridDbMediaTypes = f.esdePreferencesManager.state.value.steamGridDbMediaTypes,
+                    concurrencyOverride = f.esdePreferencesManager.state.value.scraperConcurrencyOverride
+                )
             )
         )
     }
@@ -554,6 +569,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
+        f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
         runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
             ?.let { f.esdePreferencesManager.setSystemLayout(it) }
         runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
@@ -596,6 +612,22 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendSystemTileScale(config.romSearch.frontendSystemTileScale)
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
+
+        val scraper = config.romSearch.scraper
+        f.esdePreferencesManager.setScreenScraperEnabled(scraper.screenScraperEnabled)
+        f.esdePreferencesManager.setScreenScraperDevId(scraper.screenScraperDevId)
+        f.esdePreferencesManager.setScreenScraperDevPassword(scraper.screenScraperDevPassword)
+        f.esdePreferencesManager.setScreenScraperUserId(scraper.screenScraperUserId)
+        f.esdePreferencesManager.setScreenScraperUserPassword(scraper.screenScraperUserPassword)
+        f.esdePreferencesManager.setScreenScraperMediaTypes(
+            scraper.screenScraperMediaTypes.ifEmpty { DEFAULT_SCREENSCRAPER_MEDIA_TYPES }
+        )
+        f.esdePreferencesManager.setSteamGridDbEnabled(scraper.steamGridDbEnabled)
+        f.esdePreferencesManager.setSteamGridDbApiKey(scraper.steamGridDbApiKey)
+        f.esdePreferencesManager.setSteamGridDbMediaTypes(
+            scraper.steamGridDbMediaTypes.ifEmpty { DEFAULT_STEAMGRIDDB_MEDIA_TYPES }
+        )
+        f.esdePreferencesManager.setScraperConcurrencyOverride(scraper.concurrencyOverride)
 
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
         HomeTarget.entries.firstOrNull { it.name == config.homeButton.homeTarget }

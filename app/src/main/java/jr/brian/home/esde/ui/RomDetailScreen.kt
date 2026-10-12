@@ -31,9 +31,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.scraper.model.ScrapeState
+import jr.brian.home.esde.ui.components.ScraperGuardDialog
+import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.esde.viewmodels.ScraperViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +61,6 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.util.ESDEMediaConstants
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -73,9 +81,6 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
-    discSpinEnabled: Boolean = false,
-    discSpinDisabled: Boolean = false,
-    onToggleDiscSpin: () -> Unit = {},
     showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -83,8 +88,18 @@ internal fun RomDetailScreen(
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
     val prefsState by prefsManager.state.collectAsStateWithLifecycle()
+    val scraperViewModel: ScraperViewModel = hiltViewModel()
+    val romSearchViewModel: RomSearchViewModel = hiltViewModel()
+    val scrapeState by scraperViewModel.state.collectAsStateWithLifecycle()
+    val scrapeRunning = scrapeState is ScrapeState.Running
+    val scrapeScope = rememberCoroutineScope()
     var showMediaTypePicker by remember { mutableStateOf(false) }
     var showResizeDialog by remember { mutableStateOf(false) }
+    var showScraperGuard by remember { mutableStateOf(false) }
+
+    if (showScraperGuard) {
+        ScraperGuardDialog(onDismiss = { showScraperGuard = false })
+    }
 
     if (showMediaTypePicker) {
         MediaTypePickerDialog(
@@ -308,6 +323,36 @@ internal fun RomDetailScreen(
                                 color = ThemeAccentColor
                             )
                         }
+                    }
+                    TextButton(
+                        enabled = !scrapeRunning,
+                        onClick = {
+                            if (!scraperViewModel.hasEnabledScraper()) {
+                                showScraperGuard = true
+                            } else {
+                                scraperViewModel.scrapeGame(game) {
+                                    // Clear Coil caches so the just-written art
+                                    // replaces any null/404 the loader already
+                                    // cached under the game's path keys.
+                                    scrapeScope.launch {
+                                        imageLoader.memoryCache?.clear()
+                                        withContext(Dispatchers.IO) {
+                                            imageLoader.diskCache?.clear()
+                                        }
+                                        romSearchViewModel.refreshSystem(game.systemName)
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = if (scrapeRunning) {
+                                stringResource(R.string.rom_detail_scrape_running)
+                            } else {
+                                stringResource(R.string.rom_detail_scrape)
+                            },
+                            color = ThemeAccentColor
+                        )
                     }
                     TextButton(onClick = { showMediaTypePicker = true }) {
                         Text(

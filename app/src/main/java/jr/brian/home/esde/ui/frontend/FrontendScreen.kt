@@ -53,6 +53,8 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.RomGameLauncher
 import jr.brian.home.esde.ui.frontend.settings.AddSystemsScreen
+import jr.brian.home.esde.ui.frontend.settings.ScreenScraperSettingsScreen
+import jr.brian.home.esde.ui.frontend.settings.SteamGridDbSettingsScreen
 import jr.brian.home.esde.ui.frontend.settings.FrontendSettingsScreen
 import jr.brian.home.esde.ui.frontend.settings.SystemCustomizationScreen
 import jr.brian.home.esde.util.heroBackgroundPath
@@ -282,9 +284,6 @@ private fun GamesRoute(
     val filteredGames = rememberFilteredGames(
         allGames = allGames,
         hiddenGames = esdeState.hiddenGames,
-        hideNoMetadata = esdeState.romSearchHideNoMetadata,
-        hideNoImage = esdeState.romSearchHideNoImage,
-        cardMediaType = esdeState.romSearchCardMediaType,
         forcedPlatform = system
     )
 
@@ -295,11 +294,14 @@ private fun GamesRoute(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showSystemFilter by remember { mutableStateOf(false) }
     var showAddSystems by remember { mutableStateOf(false) }
+    var showScreenScraperSettings by remember { mutableStateOf(false) }
+    var showSteamGridDbSettings by remember { mutableStateOf(false) }
     // Any overlay drawn on top of the grid holds focus for its whole lifetime.
     // On open we drop focus explicitly so the grid stops receiving events; on
     // close the reset tick below re-seeds focus onto the tile the user was on
     // before the overlay opened.
-    val overlayVisible = showSettingsDialog || showSystemFilter || showAddSystems
+    val overlayVisible = showSettingsDialog || showSystemFilter || showAddSystems ||
+        showScreenScraperSettings || showSteamGridDbSettings
 
     val focusManager = LocalFocusManager.current
     LaunchedEffect(overlayVisible) {
@@ -428,6 +430,14 @@ private fun GamesRoute(
             onOpenAddSystems = {
                 showSettingsDialog = false
                 showAddSystems = true
+            },
+            onOpenScreenScraperSettings = {
+                showSettingsDialog = false
+                showScreenScraperSettings = true
+            },
+            onOpenSteamGridDbSettings = {
+                showSettingsDialog = false
+                showSteamGridDbSettings = true
             }
         )
     }
@@ -436,6 +446,16 @@ private fun GamesRoute(
             esdePrefs = esdePrefs,
             knownSystemSuggestions = allSystemNames,
             onDismiss = { showAddSystems = false }
+        )
+    }
+    if (showScreenScraperSettings) {
+        ScreenScraperSettingsScreen(
+            onDismiss = { showScreenScraperSettings = false }
+        )
+    }
+    if (showSteamGridDbSettings) {
+        SteamGridDbSettingsScreen(
+            onDismiss = { showSteamGridDbSettings = false }
         )
     }
     if (showSystemFilter) {
@@ -478,6 +498,8 @@ private fun SystemsRoute(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showSystemFilter by remember { mutableStateOf(false) }
     var showAddSystems by remember { mutableStateOf(false) }
+    var showScreenScraperSettings by remember { mutableStateOf(false) }
+    var showSteamGridDbSettings by remember { mutableStateOf(false) }
     var customizingSystem by remember { mutableStateOf<String?>(null) }
     var reorderingSystem by remember { mutableStateOf<String?>(null) }
     var focusedSystemName by remember { mutableStateOf<String?>(null) }
@@ -487,6 +509,7 @@ private fun SystemsRoute(
     // close the reset tick below re-seeds focus onto the tile the user was on
     // before the overlay opened.
     val overlayVisible = showSettingsDialog || showSystemFilter || showAddSystems ||
+        showScreenScraperSettings || showSteamGridDbSettings ||
         customizingSystem != null
 
     val focusManager = LocalFocusManager.current
@@ -624,6 +647,14 @@ private fun SystemsRoute(
             onOpenAddSystems = {
                 showSettingsDialog = false
                 showAddSystems = true
+            },
+            onOpenScreenScraperSettings = {
+                showSettingsDialog = false
+                showScreenScraperSettings = true
+            },
+            onOpenSteamGridDbSettings = {
+                showSettingsDialog = false
+                showSteamGridDbSettings = true
             }
         )
     }
@@ -632,6 +663,16 @@ private fun SystemsRoute(
             esdePrefs = esdePrefs,
             knownSystemSuggestions = allSystemNames,
             onDismiss = { showAddSystems = false }
+        )
+    }
+    if (showScreenScraperSettings) {
+        ScreenScraperSettingsScreen(
+            onDismiss = { showScreenScraperSettings = false }
+        )
+    }
+    if (showSteamGridDbSettings) {
+        SteamGridDbSettingsScreen(
+            onDismiss = { showSteamGridDbSettings = false }
         )
     }
     if (showSystemFilter) {

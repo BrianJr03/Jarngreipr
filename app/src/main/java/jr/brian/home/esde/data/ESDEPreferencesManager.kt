@@ -123,8 +123,6 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_USE_WALLP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_CARD_MEDIA_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_GAME_MEDIA_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_SYSTEM_MEDIA_MAP
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_METADATA
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_HIDE_NO_IMAGE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_FOCUS_ANIMATION_SPIN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_BLACK_BACKGROUND
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_LOGO_VISIBILITY_ANIMATION
@@ -139,6 +137,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
@@ -159,6 +158,18 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKG
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAMELIST_DECORATION_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCRAPER_CONCURRENCY_OVERRIDE
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_DEV_ID
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_DEV_PASSWORD
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_MEDIA_TYPES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_USER_ID
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SCREENSCRAPER_USER_PASSWORD
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_STEAMGRIDDB_API_KEY
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_STEAMGRIDDB_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_STEAMGRIDDB_MEDIA_TYPES
+import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
+import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
 import org.json.JSONArray
 import org.json.JSONObject
@@ -557,8 +568,6 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
-            romSearchHideNoMetadata = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_METADATA, false),
-            romSearchHideNoImage = prefs.getBoolean(KEY_ROM_SEARCH_HIDE_NO_IMAGE, false),
             romSearchDiscSpin = prefs.getBoolean(KEY_ROM_FOCUS_ANIMATION_SPIN, false),
             romSearchBlackBackground = prefs.getBoolean(KEY_ROM_SEARCH_BLACK_BACKGROUND, true),
             romSearchFocusAnimationDisabledGames = prefs.getString(KEY_ROM_SEARCH_FOCUS_ANIMATION_DISABLED_GAMES, null)
@@ -582,6 +591,7 @@ class ESDEPreferencesManager(context: Context) {
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
             frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
             secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
+            jarngreiprMediaEnabled = prefs.getBoolean(KEY_JARNGREIPR_MEDIA_ENABLED, true),
             systemLayout = prefs.getString(KEY_SYSTEM_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
                 ?: FrontendLayout.Grid,
@@ -624,7 +634,34 @@ class ESDEPreferencesManager(context: Context) {
                     } catch (_: Exception) { emptySet() }
                 } ?: emptySet(),
             gamelistDecorationEnabled = prefs.getBoolean(KEY_GAMELIST_DECORATION_ENABLED, true),
+            screenScraperEnabled = prefs.getBoolean(KEY_SCREENSCRAPER_ENABLED, false),
+            screenScraperDevId = prefs.getString(KEY_SCREENSCRAPER_DEV_ID, "").orEmpty(),
+            screenScraperDevPassword = prefs.getString(KEY_SCREENSCRAPER_DEV_PASSWORD, "").orEmpty(),
+            screenScraperUserId = prefs.getString(KEY_SCREENSCRAPER_USER_ID, "").orEmpty(),
+            screenScraperUserPassword = prefs.getString(KEY_SCREENSCRAPER_USER_PASSWORD, "").orEmpty(),
+            screenScraperMediaTypes = readMediaTypeSet(
+                prefs.getString(KEY_SCREENSCRAPER_MEDIA_TYPES, null),
+                DEFAULT_SCREENSCRAPER_MEDIA_TYPES
+            ),
+            steamGridDbEnabled = prefs.getBoolean(KEY_STEAMGRIDDB_ENABLED, false),
+            steamGridDbApiKey = prefs.getString(KEY_STEAMGRIDDB_API_KEY, "").orEmpty(),
+            steamGridDbMediaTypes = readMediaTypeSet(
+                prefs.getString(KEY_STEAMGRIDDB_MEDIA_TYPES, null),
+                DEFAULT_STEAMGRIDDB_MEDIA_TYPES
+            ),
+            scraperConcurrencyOverride = prefs.getInt(KEY_SCRAPER_CONCURRENCY_OVERRIDE, 0)
+                .coerceIn(0, 16),
         )
+    }
+
+    private fun readMediaTypeSet(raw: String?, default: Set<String>): Set<String> {
+        if (raw.isNullOrEmpty()) return default
+        return try {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { arr.getString(it) }.toSet()
+        } catch (_: Exception) {
+            default
+        }
     }
 
 }

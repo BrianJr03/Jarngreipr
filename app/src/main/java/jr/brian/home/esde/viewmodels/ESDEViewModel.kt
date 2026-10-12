@@ -44,6 +44,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.findFirstMedia
 import jr.brian.home.esde.util.mediaCandidatePaths
 import jr.brian.home.esde.util.mediaRoots
+import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.esde.model.WallpaperState
 import jr.brian.home.model.VideoLaunchEvent
 import jr.brian.home.model.state.DeleteResult
@@ -73,15 +74,17 @@ class ESDEViewModel @Inject constructor(
     private val bgMusicManager: BgMusicManager,
     private val romSearchStateHolder: RomSearchStateHolder,
     private val wallpaperStateHolder: WallpaperStateHolder,
+    private val scraperCoordinator: ScraperCoordinator,
 ) : ViewModel() {
     private val systemImageCache = mutableMapOf<String, String?>()
 
     private val mediaPaths: List<String>
         get() {
-            val primary = prefs.state.value.customMediaPath ?: setupPreferences.mediaPath
-            val secondary = if (prefs.state.value.secondaryMediaEnabled)
-                SetupPreferences.RETRO_HRAI_PATH else null
-            return mediaRoots(primary, secondary)
+            val s = prefs.state.value
+            val primary = s.customMediaPath ?: setupPreferences.mediaPath
+            val secondary = if (s.secondaryMediaEnabled) SetupPreferences.RETRO_HRAI_PATH else null
+            val tertiary = if (s.jarngreiprMediaEnabled) scraperCoordinator.scrapedRoot() else null
+            return mediaRoots(primary, secondary, tertiary)
         }
 
     private val esdeRootPath: String?

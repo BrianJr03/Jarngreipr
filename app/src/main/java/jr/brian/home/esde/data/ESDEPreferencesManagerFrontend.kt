@@ -25,6 +25,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_TILE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
@@ -41,6 +42,11 @@ fun ESDEPreferencesManager.setFrontendEnabled(enabled: Boolean) {
 fun ESDEPreferencesManager.setSecondaryMediaEnabled(enabled: Boolean) {
     _state.value = _state.value.copy(secondaryMediaEnabled = enabled)
     prefs.edit { putBoolean(KEY_SECONDARY_MEDIA_ENABLED, enabled) }
+}
+
+fun ESDEPreferencesManager.setJarngreiprMediaEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(jarngreiprMediaEnabled = enabled)
+    prefs.edit { putBoolean(KEY_JARNGREIPR_MEDIA_ENABLED, enabled) }
 }
 
 fun ESDEPreferencesManager.setSystemLayout(layout: FrontendLayout) {
