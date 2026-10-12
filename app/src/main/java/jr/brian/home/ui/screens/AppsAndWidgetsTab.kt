@@ -311,14 +311,17 @@ fun AppsAndWidgetsTab(
                     .isSuccess
             }
             .then(
-                if (widgetPickerDialogState.isVisible ||
-                    addOptionsDialogState.isVisible ||
-                    appSelectionDialogState.isVisible ||
-                    swapModeEnabled
-                ) {
-                    Modifier.blockAllNavigation()
-                } else {
-                    Modifier.blockHorizontalNavigation()
+                when {
+                    widgetPickerDialogState.isVisible ||
+                        addOptionsDialogState.isVisible ||
+                        appSelectionDialogState.isVisible ||
+                        swapModeEnabled -> Modifier.blockAllNavigation()
+                    // When focus is in the dock, let DPAD_LEFT/RIGHT bubble past
+                    // this blocker so the dock Row's default focus traversal can
+                    // move between dock items. Otherwise, keep swallowing them so
+                    // widgets/grid cells don't cross-navigate horizontally.
+                    isFocusInDock -> Modifier
+                    else -> Modifier.blockHorizontalNavigation()
                 }
             )
             .then(

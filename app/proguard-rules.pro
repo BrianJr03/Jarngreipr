@@ -79,3 +79,20 @@
 -keep class androidx.compose.runtime.** { *; }
 -keep class androidx.compose.ui.** { *; }
 -dontwarn androidx.compose.**
+
+# ========== SHIZUKU USER SERVICES ==========
+# Shizuku's ServiceStarter instantiates these reflectively via Class.newInstance()
+# in a separate process. The app itself never calls their constructors, so without
+# these rules R8 renames the class and strips the no-arg constructor, and the
+# service process crashes with InstantiationException.
+-keep class jr.brian.home.util.shizuku.InputService { <init>(); }
+-keep class jr.brian.home.service.ShellService { <init>(); }
+
+# AIDL-generated interfaces and their Stub/Proxy inner classes carry the
+# binder descriptor and onTransact dispatch used across the Shizuku process
+# boundary. Keep them intact so future R8 passes can't shrink methods the
+# IPC relies on.
+-keep class jr.brian.home.IInputService { *; }
+-keep class jr.brian.home.IInputService$* { *; }
+-keep class jr.brian.home.IShellService { *; }
+-keep class jr.brian.home.IShellService$* { *; }
