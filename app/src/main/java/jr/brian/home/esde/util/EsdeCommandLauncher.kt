@@ -356,6 +356,38 @@ object EsdeCommandLauncher {
         return null
     }
 
+    /**
+     * The built-in command for [systemName] whose emulator resolves to [pkg]
+     * and whose required extension matches [romExtension] (or that is
+     * extension-agnostic). Returns null if nothing matches.
+     *
+     * This exists for emulators marked [RomLaunchContract.Undocumented] whose
+     * launch cannot be reconstructed from the generic ContentUriView fallback:
+     * GameHub Lite reads the game id from an extra populated by `%INJECT%=%ROM%`,
+     * which the fallback has no way to produce. Without this, a user who picked
+     * only the emulator (and never a specific command) lands on an empty
+     * `GameDetailActivity` with a "Get Game" button and no game loaded.
+     */
+    fun autoSelectBuiltinCommand(
+        systemName: String,
+        pkg: String,
+        romExtension: String,
+    ): String? {
+        val commands = BUILTIN_SYSTEM_COMMANDS[systemName] ?: return null
+        val emulatorRegex = Regex("""%EMULATOR_([^%]+)%""")
+        for ((_, command) in commands) {
+            val emulatorName = emulatorRegex.find(command)?.groupValues?.get(1) ?: continue
+            val entries = BUILTIN_RULES[emulatorName] ?: continue
+            val matchesPkg = entries.any { it.substringBefore("/") == pkg }
+            if (!matchesPkg) continue
+            val required = requiredExtensionFor(command)
+            if (required == null || required.equals(romExtension, ignoreCase = true)) {
+                return command
+            }
+        }
+        return null
+    }
+
     fun getCompatibleEmulatorsFromSystem(
         context: Context,
         systemName: String,

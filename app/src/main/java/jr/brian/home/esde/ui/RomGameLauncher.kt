@@ -15,6 +15,7 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.EmulatorRegistry
 import jr.brian.home.esde.util.EsdeCommandLauncher
+import jr.brian.home.esde.util.RomLaunchContract
 import jr.brian.home.esde.util.buildAetherDocUri
 import jr.brian.home.esde.util.buildSafDocumentUri
 import jr.brian.home.esde.util.gameKey
@@ -231,6 +232,24 @@ class RomGameLauncher(
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
             if (savedCommand != null) {
                 launchWithSavedCommand(context, savedCommand, romPath, effectiveContentUri)
+                return
+            }
+        }
+
+        // Undocumented emulators (currently GameHub Lite) need a specific ID
+        // extra sourced from the ROM file's contents. The generic
+        // buildRomIntentFromPackage path below produces an ACTION_VIEW intent
+        // with no such extra — the activity opens empty ("Get Game"), which
+        // reads as "launched to the wrong screen". Pick the built-in command
+        // for this (system, pkg, extension) tuple instead.
+        if (EmulatorRegistry.resolve(pkg)?.launchContract is RomLaunchContract.Undocumented) {
+            val romExt = File(romPath).extension
+            val autoCommand = EsdeCommandLauncher.autoSelectBuiltinCommand(
+                game.systemName, pkg, romExt
+            )
+            if (autoCommand != null) {
+                Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
+                launchWithSavedCommand(context, autoCommand, romPath, effectiveContentUri)
                 return
             }
         }
