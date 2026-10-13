@@ -327,6 +327,7 @@ data class RomSearchConfig(
     val canvasContinuousSpinRoms: Set<String> = emptySet(),
     val gameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
+    val gameCompanionMap: Map<String, String> = emptyMap(),
     val frontendFocusHapticEnabled: Boolean = true,
     val frontendFocusBackgroundEnabled: Boolean = false,
     val frontendFocusBackgroundSystems: Boolean = true,

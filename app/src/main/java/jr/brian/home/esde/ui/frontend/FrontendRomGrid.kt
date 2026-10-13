@@ -179,6 +179,9 @@ internal fun FrontendRomGrid(
             )
         },
         onChangeFolder = onChangeFolder,
+        onPickCompanion = { game ->
+            romSearchStateHolder.showCompanionPickerSignal.tryEmit(game)
+        },
         onEditInfo = { game ->
             romSearchStateHolder.showEditInfoPickerSignal.tryEmit(game)
         }

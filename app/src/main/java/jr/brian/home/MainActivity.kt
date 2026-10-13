@@ -194,6 +194,7 @@ class MainActivity : ComponentActivity() {
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePreferencesManager,
+            appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )

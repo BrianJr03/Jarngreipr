@@ -2,6 +2,7 @@ package jr.brian.home.esde.data
 
 import androidx.core.content.edit
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMPANION_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
@@ -45,6 +46,41 @@ fun ESDEPreferencesManager.setGameCore(gameKey: String, corePath: String) {
 
 fun ESDEPreferencesManager.getGameCore(gameKey: String): String? {
     return state.value.gameCoreMap[gameKey]
+}
+
+fun ESDEPreferencesManager.setGameCompanion(gameKey: String, packageName: String) {
+    val updated = _state.value.gameCompanionMap.toMutableMap()
+    updated[gameKey] = packageName
+    _state.value = _state.value.copy(gameCompanionMap = updated)
+    val json = JSONObject()
+    updated.forEach { (k, v) -> json.put(k, v) }
+    prefs.edit { putString(KEY_GAME_COMPANION_MAP, json.toString()) }
+}
+
+fun ESDEPreferencesManager.clearGameCompanion(gameKey: String) {
+    val updated = _state.value.gameCompanionMap.toMutableMap()
+    if (updated.remove(gameKey) == null) return
+    _state.value = _state.value.copy(gameCompanionMap = updated)
+    if (updated.isEmpty()) {
+        prefs.edit { remove(KEY_GAME_COMPANION_MAP) }
+    } else {
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_GAME_COMPANION_MAP, json.toString()) }
+    }
+}
+
+fun ESDEPreferencesManager.getGameCompanion(gameKey: String): String? {
+    return state.value.gameCompanionMap[gameKey]
+}
+
+fun ESDEPreferencesManager.setAllGameCompanionMap(map: Map<String, String>) {
+    _state.value = _state.value.copy(gameCompanionMap = map)
+    if (map.isEmpty()) {
+        prefs.edit { remove(KEY_GAME_COMPANION_MAP) }
+    } else {
+        prefs.edit { putString(KEY_GAME_COMPANION_MAP, JSONObject(map).toString()) }
+    }
 }
 
 fun ESDEPreferencesManager.hideGame(gameKey: String) {

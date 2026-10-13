@@ -114,6 +114,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMPANION_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_SYSTEMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SAF_TREE_URIS
@@ -533,6 +534,14 @@ class ESDEPreferencesManager(context: Context) {
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
             gameCoreMap = prefs.getString(KEY_GAME_CORE_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            gameCompanionMap = prefs.getString(KEY_GAME_COMPANION_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
                     try {

@@ -22,9 +22,11 @@ import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.util.sdCardVolumeId
 import android.content.pm.PackageManager
+import android.hardware.display.DisplayManager
 import android.provider.DocumentsContract
 import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import java.io.File
 
 sealed interface LaunchFailure {
@@ -47,9 +49,29 @@ fun LaunchFailure.message(): String = when (this) {
 class RomGameLauncher(
     private val activity: ComponentActivity,
     private val esdePrefs: ESDEPreferencesManager,
+    private val appDisplayPreferenceManager: AppDisplayPreferenceManager,
     private val onSignalGameLaunch: () -> Unit,
     private val onLaunchSafPicker: (Uri?) -> Unit
 ) {
+
+    private fun maybeLaunchCompanion(game: GameInfo, context: Context) {
+        val pkg = esdePrefs.getGameCompanion(gameKey(game)) ?: return
+        val installed = runCatching {
+            context.packageManager.getLaunchIntentForPackage(pkg) != null
+        }.getOrDefault(false)
+        if (!installed) return
+        val pref = appDisplayPreferenceManager.getAppDisplayPreference(pkg)
+        val hasExternalDisplay = runCatching {
+            val dm = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
+            (dm?.displays?.size ?: 1) > 1
+        }.getOrDefault(false)
+        if (hasExternalDisplay) {
+            launchAppOnOppositeDisplay(context, pkg, pref)
+        } else {
+            launchApp(context, pkg, pref)
+        }
+    }
+
     var pendingGameLaunch: Pair<GameInfo, Context>? = null
 
     fun resolveAndroidAppByLabel(label: String): Intent? {
@@ -98,6 +120,7 @@ class RomGameLauncher(
             val intent = activity.packageManager.getLaunchIntentForPackage(key)
                 ?: resolveAndroidAppByLabel(key)
             if (intent != null) {
+                maybeLaunchCompanion(game, context)
                 onSignalGameLaunch()
                 launchApp(
                     context = context,
@@ -231,6 +254,7 @@ class RomGameLauncher(
         if (useSavedCommand) {
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
             if (savedCommand != null) {
+                maybeLaunchCompanion(game, context)
                 launchWithSavedCommand(context, savedCommand, romPath, effectiveContentUri)
                 return
             }
@@ -249,6 +273,7 @@ class RomGameLauncher(
             )
             if (autoCommand != null) {
                 Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
+                maybeLaunchCompanion(game, context)
                 launchWithSavedCommand(context, autoCommand, romPath, effectiveContentUri)
                 return
             }
@@ -264,6 +289,7 @@ class RomGameLauncher(
                 pkg, romPath, effectiveContentUri, context, corePath, withComponent = false
             ),
         )
+        maybeLaunchCompanion(game, context)
         onSignalGameLaunch()
         val failure = startFirstThatOpens(candidates, pkg)
         if (failure != null) {

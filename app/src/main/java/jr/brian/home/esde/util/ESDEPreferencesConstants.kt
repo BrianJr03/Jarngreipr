@@ -87,6 +87,7 @@ object ESDEPreferencesConstants {
     const val KEY_GAME_EMULATOR_MAP = "game_emulator_map"
     const val KEY_GAME_COMMAND_MAP = "game_command_map"
     const val KEY_GAME_CORE_MAP = "game_core_map"
+    const val KEY_GAME_COMPANION_MAP = "game_companion_map"
     const val KEY_HIDDEN_GAMES = "hidden_games"
     const val KEY_HIDDEN_SYSTEMS = "hidden_systems"
     const val KEY_SAF_TREE_URIS = "saf_tree_uris"

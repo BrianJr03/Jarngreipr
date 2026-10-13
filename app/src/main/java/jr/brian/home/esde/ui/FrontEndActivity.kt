@@ -138,6 +138,7 @@ class FrontEndActivity : ComponentActivity() {
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
+            appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )

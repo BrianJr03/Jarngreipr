@@ -39,11 +39,19 @@ class RomSearchStateHolder @Inject constructor() {
     val showRomSearchResultsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /**
-     * Emitted when the Edit Info button on a game's detail screen is tapped
-     * on the top display (FrontEndActivity). The modal bottom-sheet form has
+     * Emitted when the Companion button on a game's detail screen is tapped on
+     * the top display (FrontEndActivity). The modal bottom-sheet picker needs
      * to render on the bottom display (MainActivity) — FrontEndActivity's
-     * edge-to-edge + hidden-system-bars window config traps the sheet.
-     * Payload is the game to edit.
+     * edge-to-edge + hidden-system-bars window config traps the sheet. Payload
+     * is the game whose companion-app mapping should be set when a pick lands.
+     */
+    val showCompanionPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the Edit Info button on a game's detail screen is tapped on
+     * the top display. Same reason as [showCompanionPickerSignal] — the modal
+     * bottom-sheet form has to render on the bottom display (MainActivity) or
+     * FrontEndActivity's hidden-system-bars window traps it.
      */
     val showEditInfoPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)

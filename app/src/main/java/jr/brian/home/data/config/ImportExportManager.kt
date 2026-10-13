@@ -297,6 +297,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
                 systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
+                gameCompanionMap = f.esdePreferencesManager.state.value.gameCompanionMap,
                 frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
                 frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
                 frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
@@ -581,6 +582,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
+        f.esdePreferencesManager.setAllGameCompanionMap(config.romSearch.gameCompanionMap)
         f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)

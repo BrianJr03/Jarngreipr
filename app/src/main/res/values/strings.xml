@@ -24,6 +24,9 @@
     <string name="rom_detail_resize_image">Resize Image</string>
     <string name="rom_detail_close">Close</string>
     <string name="rom_detail_pick_emulator">Pick Emulator</string>
+    <string name="rom_detail_companion">Companion</string>
+    <string name="rom_detail_companion_set">Companion: %1$s</string>
+    <string name="rom_detail_companion_cleared">Companion cleared</string>
     <string name="rom_detail_change_core">Change Core</string>
     <string name="rom_detail_change_folder">Change Folder</string>
     <string name="rom_detail_edit_info">Edit Info</string>

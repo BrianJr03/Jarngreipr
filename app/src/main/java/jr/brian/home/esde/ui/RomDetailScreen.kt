@@ -2,8 +2,16 @@ package jr.brian.home.esde.ui
 
 import jr.brian.home.esde.data.*
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -66,6 +74,7 @@ import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
 import java.io.File
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RomDetailScreen(
     game: GameInfo,
@@ -81,6 +90,10 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
+    companionPackage: String? = null,
+    companionLabel: String? = null,
+    onPickCompanion: () -> Unit = {},
+    onClearCompanion: () -> Unit = {},
     onEditInfo: () -> Unit = {},
     showActionRow: Boolean = true
 ) {
@@ -370,6 +383,12 @@ internal fun RomDetailScreen(
                             color = ThemeAccentColor
                         )
                     }
+                    CompanionRowButton(
+                        companionPackage = companionPackage,
+                        companionLabel = companionLabel,
+                        onPickCompanion = onPickCompanion,
+                        onClearCompanion = onClearCompanion
+                    )
                     TextButton(onClick = { showResizeDialog = true }) {
                         Text(
                             stringResource(R.string.rom_detail_resize_image),
@@ -404,5 +423,52 @@ internal fun RomDetailScreen(
             }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CompanionRowButton(
+    companionPackage: String?,
+    companionLabel: String?,
+    onPickCompanion: () -> Unit,
+    onClearCompanion: () -> Unit
+) {
+    val label = if (companionPackage != null) {
+        stringResource(
+            R.string.rom_detail_companion_set,
+            companionLabel ?: companionPackage
+        )
+    } else {
+        stringResource(R.string.rom_detail_companion)
+    }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val stateBg by animateColorAsState(
+        targetValue = when {
+            isFocused -> ThemeAccentColor.copy(alpha = 0.12f)
+            isHovered -> ThemeAccentColor.copy(alpha = 0.08f)
+            else -> Color.Transparent
+        },
+        label = "companionButtonStateLayer"
+    )
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(stateBg)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.material3.ripple(),
+                onClick = onPickCompanion,
+                onLongClick = onClearCompanion
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = label,
+            color = ThemeAccentColor,
+            style = MaterialTheme.typography.labelLarge
+        )
     }
 }

@@ -32,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.setGameCompanion
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.RomGameLauncher
@@ -216,10 +217,35 @@ fun MainContent(
         }
     }
 
-    // Edit Info sheet is hosted here because FrontEndActivity's window
-    // config (edge-to-edge + hidden system bars) traps ModalBottomSheet.
-    // The top-display button only emits a signal; the sheet itself and its
-    // viewmodel calls run on this activity.
+    // FrontEndActivity on the top display can't host a ModalBottomSheet reliably
+    // (edge-to-edge + hidden system bars traps it). The Companion-app picker
+    // emits this signal across activities so the AppSelectionDialog opens on the
+    // bottom display where the sheet renders correctly.
+    var companionPickerFor by remember { mutableStateOf<GameInfo?>(null) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showCompanionPickerSignal.collect { game ->
+            companionPickerFor = game
+        }
+    }
+
+    companionPickerFor?.let { game ->
+        jr.brian.home.ui.components.dialog.AppSelectionDialog(
+            apps = uiState.allAppsUnfiltered,
+            onAppSelected = { app ->
+                esdePreferencesManager.setGameCompanion(
+                    jr.brian.home.esde.util.gameKey(game),
+                    app.packageName
+                )
+                companionPickerFor = null
+            },
+            onDismiss = { companionPickerFor = null },
+            multiSelect = false
+        )
+    }
+
+    // Edit Info sheet is hosted here for the same reason — FrontEndActivity's
+    // window config traps ModalBottomSheet. The top-display button only emits
+    // a signal; the sheet itself and its viewmodel calls run on this activity.
     var editInfoFor by remember { mutableStateOf<GameInfo?>(null) }
     LaunchedEffect(Unit) {
         romSearchStateHolder.showEditInfoPickerSignal.collect { game ->

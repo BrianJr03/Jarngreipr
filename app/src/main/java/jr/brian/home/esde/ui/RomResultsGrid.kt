@@ -60,6 +60,7 @@ import coil.request.ImageRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
+import jr.brian.home.esde.data.clearGameCompanion
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.gameKey
@@ -104,6 +105,7 @@ internal fun RomResultsGrid(
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
+    onPickCompanion: (GameInfo) -> Unit = {},
     onEditInfo: (GameInfo) -> Unit = {},
     focusResetKey: Any? = Unit,
     initialRealIndex: Int = 0,
@@ -256,6 +258,13 @@ internal fun RomResultsGrid(
             exit = slideOutHorizontally(tween(200)) { it } + fadeOut(tween(200))
         ) {
             selectedGame?.let { game ->
+                val companionPkg = prefs.gameCompanionMap[gameKey(game)]
+                val companionLabel = companionPkg?.let { pkg ->
+                    runCatching {
+                        val info = context.packageManager.getApplicationInfo(pkg, 0)
+                        context.packageManager.getApplicationLabel(info).toString()
+                    }.getOrNull()
+                }
                 RomDetailScreen(
                     game = game,
                     isHidden = isHiddenMode,
@@ -282,6 +291,17 @@ internal fun RomResultsGrid(
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
                     onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
+                    companionPackage = companionPkg,
+                    companionLabel = companionLabel,
+                    onPickCompanion = { onPickCompanion(game) },
+                    onClearCompanion = {
+                        prefsManager.clearGameCompanion(gameKey(game))
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.rom_detail_companion_cleared),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                     onEditInfo = { onEditInfo(game) }
                 )
             }
