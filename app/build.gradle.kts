@@ -16,8 +16,8 @@ android {
         applicationId = "jr.brian.home"
         minSdk = 33
         targetSdk = 37
-        versionCode = 1
-        versionName = "2.8.3"
+        versionCode = 2
+        versionName = "2.9.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
