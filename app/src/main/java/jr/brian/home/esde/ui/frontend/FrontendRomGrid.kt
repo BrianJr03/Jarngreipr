@@ -178,7 +178,10 @@ internal fun FrontendRomGrid(
                 appDisplayPreferenceManager.getAppDisplayPreference(pkg)
             )
         },
-        onChangeFolder = onChangeFolder
+        onChangeFolder = onChangeFolder,
+        onEditInfo = { game ->
+            romSearchStateHolder.showEditInfoPickerSignal.tryEmit(game)
+        }
     )
 }
 

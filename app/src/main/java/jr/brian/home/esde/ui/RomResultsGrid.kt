@@ -62,6 +62,7 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.model.gridColumnsForScale
 import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
@@ -103,6 +104,7 @@ internal fun RomResultsGrid(
     hasSavedCore: (GameInfo) -> Boolean = { false },
     onCoreSelected: (GameInfo, String, String) -> Unit = { _, _, _ -> },
     onChangeFolder: (GameInfo) -> Unit = {},
+    onEditInfo: (GameInfo) -> Unit = {},
     focusResetKey: Any? = Unit,
     initialRealIndex: Int = 0,
     onDetailsVisibleChanged: (Boolean) -> Unit = {},
@@ -115,10 +117,22 @@ internal fun RomResultsGrid(
     val context = LocalContext.current
     val prefsManager = LocalESDEPreferencesManager.current
     val prefs by prefsManager.state.collectAsStateWithLifecycle()
+    val romSearchViewModel: jr.brian.home.esde.viewmodels.RomSearchViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val allGames by romSearchViewModel.stateHolder.allGames.collectAsStateWithLifecycle()
     var selectedGame by remember { mutableStateOf<GameInfo?>(null) }
     var showEmulatorPicker by remember { mutableStateOf(false) }
     var showCorePicker by remember { mutableStateOf(false) }
     var hiddenPlatformFilter by remember { mutableStateOf<String?>(null) }
+
+    // Re-point selectedGame at its fresh instance after any index refresh so
+    // the detail screen reflects a just-saved override (writeUserOverride →
+    // refreshSystem → allGames) without the user having to close and reopen.
+    LaunchedEffect(allGames) {
+        val current = selectedGame ?: return@LaunchedEffect
+        val currentKey = gameKey(current)
+        val fresh = allGames.firstOrNull { gameKey(it) == currentKey }
+        if (fresh != null && fresh !== current) selectedGame = fresh
+    }
 
     LaunchedEffect(selectedGame) {
         onDetailsVisibleChanged(selectedGame != null)
@@ -267,7 +281,8 @@ internal fun RomResultsGrid(
                         selectedGame = null
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
-                    onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) }
+                    onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
+                    onEditInfo = { onEditInfo(game) }
                 )
             }
         }

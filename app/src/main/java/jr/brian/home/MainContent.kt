@@ -216,6 +216,37 @@ fun MainContent(
         }
     }
 
+    // Edit Info sheet is hosted here because FrontEndActivity's window
+    // config (edge-to-edge + hidden system bars) traps ModalBottomSheet.
+    // The top-display button only emits a signal; the sheet itself and its
+    // viewmodel calls run on this activity.
+    var editInfoFor by remember { mutableStateOf<GameInfo?>(null) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showEditInfoPickerSignal.collect { game ->
+            editInfoFor = game
+        }
+    }
+
+    editInfoFor?.let { game ->
+        val romSearchViewModel: jr.brian.home.esde.viewmodels.RomSearchViewModel = hiltViewModel()
+        jr.brian.home.esde.ui.EditGameInfoDialog(
+            game = game,
+            loadExisting = { romSearchViewModel.readUserOverride(game) },
+            copyImage = { slot, uri ->
+                romSearchViewModel.copyUserOverrideImage(game, slot, uri)
+            },
+            onSave = { override ->
+                romSearchViewModel.writeUserOverride(game, override)
+                editInfoFor = null
+            },
+            onClear = {
+                romSearchViewModel.clearUserOverride(game)
+                editInfoFor = null
+            },
+            onDismiss = { editInfoFor = null }
+        )
+    }
+
     // Frontend Y-button emits this signal; the new sheet on this display
     // replaces the old full-screen RomSearchScreen keyboard flow. The legacy
     // Routes.ROM_SEARCH route stays wired for any other caller that still

@@ -93,7 +93,13 @@ data class JarngreiprConfig(
         //      type selections, and an optional concurrency override. Older
         //      blobs decode with ScraperConfig() defaults (both backends off,
         //      empty credentials) via ignoreUnknownKeys.
-        const val CONFIG_VERSION = 25
+        // v26: added RomSearchConfig.userMetadata (UserMetadataConfig) — a
+        //      master toggle for the Edit Info sheet's manual overrides.
+        //      The override blobs themselves live on disk at
+        //      `<scrapedRoot>/<system>/.jarngreipr_user/` and are not inlined
+        //      in config. Older blobs decode with UserMetadataConfig() default
+        //      (enabled = true) via ignoreUnknownKeys.
+        const val CONFIG_VERSION = 26
     }
 }
 
@@ -336,7 +342,13 @@ data class RomSearchConfig(
     val frontendSystemTileScale: Float = 1.0f,
     val frontendGameTileScale: Float = 1.0f,
     val gamelistDecorationEnabled: Boolean = true,
-    val scraper: ScraperConfig = ScraperConfig()
+    val scraper: ScraperConfig = ScraperConfig(),
+    val userMetadata: UserMetadataConfig = UserMetadataConfig()
+)
+
+@Serializable
+data class UserMetadataConfig(
+    val enabled: Boolean = true
 )
 
 @Serializable

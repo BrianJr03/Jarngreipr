@@ -81,6 +81,7 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
+    onEditInfo: () -> Unit = {},
     showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -372,6 +373,12 @@ internal fun RomDetailScreen(
                     TextButton(onClick = { showResizeDialog = true }) {
                         Text(
                             stringResource(R.string.rom_detail_resize_image),
+                            color = ThemeAccentColor
+                        )
+                    }
+                    TextButton(onClick = onEditInfo) {
+                        Text(
+                            stringResource(R.string.rom_detail_edit_info),
                             color = ThemeAccentColor
                         )
                     }

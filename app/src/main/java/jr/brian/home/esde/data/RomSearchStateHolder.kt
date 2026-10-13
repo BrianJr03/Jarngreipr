@@ -37,6 +37,15 @@ class RomSearchStateHolder @Inject constructor() {
      * FrontEndActivity and blanked MainActivity during the Y → back cycle.
      */
     val showRomSearchResultsSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted when the Edit Info button on a game's detail screen is tapped
+     * on the top display (FrontEndActivity). The modal bottom-sheet form has
+     * to render on the bottom display (MainActivity) — FrontEndActivity's
+     * edge-to-edge + hidden-system-bars window config traps the sheet.
+     * Payload is the game to edit.
+     */
+    val showEditInfoPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
 

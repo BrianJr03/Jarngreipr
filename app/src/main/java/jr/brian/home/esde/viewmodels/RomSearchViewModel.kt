@@ -1,6 +1,7 @@
 package jr.brian.home.esde.viewmodels
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,10 +16,13 @@ import jr.brian.home.esde.data.SystemCacheEntry
 import jr.brian.home.esde.data.SystemStamp
 import jr.brian.home.esde.data.computeRootAvailability
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.scraper.sidecar.UserMetadataOverride
+import jr.brian.home.esde.scraper.sidecar.UserMetadataOverrideStore
 import jr.brian.home.esde.util.CompositeMetadataSource
 import jr.brian.home.esde.util.GamelistMetadataSource
 import jr.brian.home.esde.util.MediaFallbackMetadataSource
 import jr.brian.home.esde.util.NoOpMetadataSource
+import jr.brian.home.esde.util.UserOverrideMetadataSource
 import jr.brian.home.esde.util.RomIndexBuilder
 import jr.brian.home.esde.util.RomMetadataSource
 import jr.brian.home.esde.util.RomScanner
@@ -177,6 +181,74 @@ class RomSearchViewModel @Inject constructor(
     }
 
     /**
+     * Returns the override currently persisted for [game], or `null` when the
+     * user has never written one. Called off the main thread from the Edit
+     * Info sheet to prefill the form.
+     */
+    fun readUserOverride(game: GameInfo): UserMetadataOverride? {
+        val basename = File(game.path).nameWithoutExtension.ifBlank { return null }
+        return UserMetadataOverrideStore.read(
+            scrapedRoot = scraperCoordinator.scrapedRoot(),
+            systemName = game.systemName,
+            basename = basename,
+        )
+    }
+
+    /**
+     * Persists an override for [game] and triggers a system refresh so the
+     * UI sees the new metadata. Writing an [override] whose fields are all
+     * null is equivalent to [clearUserOverride].
+     */
+    fun writeUserOverride(game: GameInfo, override: UserMetadataOverride, onComplete: () -> Unit = {}) {
+        val basename = File(game.path).nameWithoutExtension.ifBlank {
+            onComplete()
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            UserMetadataOverrideStore.write(
+                scrapedRoot = scraperCoordinator.scrapedRoot(),
+                systemName = game.systemName,
+                basename = basename,
+                override = override,
+            )
+            refreshSystem(game.systemName) { onComplete() }
+        }
+    }
+
+    /** Deletes the override + any copied images for [game], then refreshes. */
+    fun clearUserOverride(game: GameInfo, onComplete: () -> Unit = {}) {
+        val basename = File(game.path).nameWithoutExtension.ifBlank {
+            onComplete()
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            UserMetadataOverrideStore.delete(
+                scrapedRoot = scraperCoordinator.scrapedRoot(),
+                systemName = game.systemName,
+                basename = basename,
+            )
+            refreshSystem(game.systemName) { onComplete() }
+        }
+    }
+
+    /**
+     * Copies a user-picked image into the override image directory and returns
+     * its absolute path, suitable for storing on a [UserMetadataOverride].
+     * Returns `null` on IO failure.
+     */
+    fun copyUserOverrideImage(game: GameInfo, slot: String, sourceUri: Uri): String? {
+        val basename = File(game.path).nameWithoutExtension.ifBlank { return null }
+        return UserMetadataOverrideStore.copyImage(
+            context = context,
+            scrapedRoot = scraperCoordinator.scrapedRoot(),
+            systemName = game.systemName,
+            basename = basename,
+            slot = slot,
+            sourceUri = sourceUri,
+        )
+    }
+
+    /**
      * Runs one system through the same scan → stamp → cache-merge pipeline
      * [parseAndStore] uses per system, but without the stamp-matches short
      * circuit. Returns the resulting game count.
@@ -186,14 +258,17 @@ class RomSearchViewModel @Inject constructor(
      * two out of sync.
      */
     /**
-     * Composes the metadata layer the index builder sees. ES-DE's gamelist.xml
-     * stays authoritative (via [GamelistMetadataSource]); [SidecarMetadataSource]
-     * fills text nulls with scraper-written JSON under `scrapedRoot()`;
-     * [MediaFallbackMetadataSource] fills image-path nulls for scans no
-     * gamelist entry decorates (PC shortcuts the user never scraped in ES-DE
-     * are the canonical case). When gamelist decoration is off we drop all
-     * three — the user explicitly opted out of decoration, and layering
-     * anything on would re-enable it through the back door.
+     * Composes the metadata layer the index builder sees. User overrides
+     * (via [UserOverrideMetadataSource], written through the Edit Info sheet)
+     * sit at the top and win on any field they set. Below them ES-DE's
+     * gamelist.xml stays authoritative (via [GamelistMetadataSource]);
+     * [SidecarMetadataSource] fills text nulls with scraper-written JSON
+     * under `scrapedRoot()`; [MediaFallbackMetadataSource] fills image-path
+     * nulls for scans no gamelist entry decorates (PC shortcuts the user
+     * never scraped in ES-DE are the canonical case). When gamelist
+     * decoration is off we drop all four — the user explicitly opted out
+     * of decoration, and layering anything on would re-enable it through
+     * the back door.
      */
     private fun buildMetadataSource(
         decorationEnabled: Boolean,
@@ -201,16 +276,21 @@ class RomSearchViewModel @Inject constructor(
         mediaPaths: List<String>,
     ): RomMetadataSource {
         if (!decorationEnabled) return NoOpMetadataSource
+        val scrapedRoot = scraperCoordinator.scrapedRoot()
+        val userOverrides = UserOverrideMetadataSource(scrapedRoot = scrapedRoot)
         val gamelist = GamelistMetadataSource(
             esdeRootPath = rootPath,
             mediaPaths = mediaPaths,
             parseCacheDir = context.filesDir,
         )
-        val sidecar = SidecarMetadataSource(scrapedRoot = scraperCoordinator.scrapedRoot())
+        val sidecar = SidecarMetadataSource(scrapedRoot = scrapedRoot)
         val mediaFallback = MediaFallbackMetadataSource(mediaPaths = mediaPaths)
         return CompositeMetadataSource(
-            primary = CompositeMetadataSource(primary = gamelist, fallback = sidecar),
-            fallback = mediaFallback,
+            primary = userOverrides,
+            fallback = CompositeMetadataSource(
+                primary = CompositeMetadataSource(primary = gamelist, fallback = sidecar),
+                fallback = mediaFallback,
+            ),
         )
     }
 
