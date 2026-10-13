@@ -99,7 +99,13 @@ data class JarngreiprConfig(
         //      `<scrapedRoot>/<system>/.jarngreipr_user/` and are not inlined
         //      in config. Older blobs decode with UserMetadataConfig() default
         //      (enabled = true) via ignoreUnknownKeys.
-        const val CONFIG_VERSION = 26
+        // v27: HomeButtonConfig.homeTarget is now ignored on import and no
+        //      longer written on export — Home press routing is driven by
+        //      gestures (single/double/long press) instead of a stored target.
+        //      The field is retained in the schema with its null default so
+        //      older blobs still decode via ignoreUnknownKeys; the value is
+        //      simply never consulted.
+        const val CONFIG_VERSION = 27
     }
 }
 
@@ -239,10 +245,11 @@ data class FeatureConfig(
 data class HomeButtonConfig(
     val interceptionEnabled: Boolean = false,
     /**
-     * Persisted [jr.brian.home.model.HomeTarget] name, or `null` for
-     * pre-selector exports. `null` is preserved on import so
-     * [jr.brian.home.data.HomeButtonManager.resolveHomeTarget] can still apply
-     * its `frontendEnabled`-derived migration default.
+     * Legacy field from the v23 target-selector era. Routing is now driven
+     * by gestures (single / double / long press) instead of a persisted
+     * target, so this value is retained in the schema purely so older blobs
+     * continue to decode via `ignoreUnknownKeys`. It is never read on
+     * import nor written on export.
      */
     val homeTarget: String? = null,
     /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */

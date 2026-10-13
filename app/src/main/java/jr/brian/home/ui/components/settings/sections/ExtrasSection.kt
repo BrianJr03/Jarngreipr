@@ -28,8 +28,8 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
+import jr.brian.home.ui.components.settings.HomeGesturesInfoCard
 import jr.brian.home.ui.components.settings.HomeInterceptionSettingItem
-import jr.brian.home.ui.components.settings.HomeTargetSelectorItem
 import jr.brian.home.ui.components.settings.SettingItem
 import jr.brian.home.ui.theme.managers.LocalFloatyModeManager
 import jr.brian.home.ui.theme.managers.LocalPageTypeManager
@@ -66,7 +66,7 @@ fun ExtrasSection(
 
             HomeInterceptionSettingItem()
 
-            HomeTargetSelectorItem()
+            HomeGesturesInfoCard()
 
             SettingItem(
                 title = stringResource(R.string.settings_whats_new_title),

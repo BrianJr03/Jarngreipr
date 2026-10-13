@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityEvent
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.model.HomeTarget
 import jr.brian.home.ui.util.routeHome
 import javax.inject.Inject
 
@@ -26,8 +27,10 @@ import javax.inject.Inject
  * service a chance to run and route [jr.brian.home.MainActivity] to the external
  * display even when Jarngreipr is not the current default home.
  *
- * See [HomeKeyEventFilter] for the pure filtering logic. This class layers Hilt
- * injection, the ESDE frontend gate, and main-thread dispatch on top.
+ * See [HomeKeyEventFilter] for the pure matching logic and
+ * [HomeGestureStateMachine] for the gesture classification (single / double /
+ * long). This class layers Hilt injection, the ESDE frontend gate, Handler-based
+ * timer scheduling, and main-thread dispatch on top.
  */
 @AndroidEntryPoint
 class HomeInterceptorService : AccessibilityService() {
@@ -39,7 +42,11 @@ class HomeInterceptorService : AccessibilityService() {
     lateinit var esdePreferencesManager: ESDEPreferencesManager
 
     private val filter = HomeKeyEventFilter()
+    private val gestureStateMachine = HomeGestureStateMachine()
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var longPressRunnable: Runnable? = null
+    private var doubleTapRunnable: Runnable? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -48,6 +55,8 @@ class HomeInterceptorService : AccessibilityService() {
 
     override fun onDestroy() {
         isRunning = false
+        cancelLongPressTimer()
+        cancelDoubleTapTimer()
         super.onDestroy()
     }
 
@@ -65,18 +74,70 @@ class HomeInterceptorService : AccessibilityService() {
         if (!filter.shouldConsume(event, enabled)) {
             return super.onKeyEvent(event)
         }
-
-        if (filter.shouldRouteHome(event, enabled)) {
-            mainHandler.post { routeToLauncher() }
+        when (event.action) {
+            KeyEvent.ACTION_DOWN -> handleDown()
+            KeyEvent.ACTION_UP -> handleUp()
         }
         return true
     }
 
-    private fun routeToLauncher() {
+    private fun handleDown() {
+        // Guard against repeat events during a single hold — a long-press timer
+        // scheduled here is cancelled on the matching UP, so a non-null runnable
+        // means the same hold already scheduled its timer.
+        if (longPressRunnable != null) return
+        gestureStateMachine.onDown()
+        val runnable = Runnable {
+            longPressRunnable = null
+            gestureStateMachine.onLongPressTimer()?.let { route(it) }
+        }
+        longPressRunnable = runnable
+        mainHandler.postDelayed(runnable, HomeGestureStateMachine.LONG_PRESS_MS)
+    }
+
+    private fun handleUp() {
+        cancelLongPressTimer()
+        val gesture = gestureStateMachine.onUp()
+        if (gesture != null) {
+            // DOUBLE_PRESS fires here — kill the pending single-tap window
+            // left over from the first tap so we don't later route BOTTOM too.
+            cancelDoubleTapTimer()
+            route(gesture)
+            return
+        }
+        scheduleDoubleTapTimer()
+    }
+
+    private fun scheduleDoubleTapTimer() {
+        cancelDoubleTapTimer()
+        val runnable = Runnable {
+            doubleTapRunnable = null
+            gestureStateMachine.onDoubleTapTimer()?.let { route(it) }
+        }
+        doubleTapRunnable = runnable
+        mainHandler.postDelayed(runnable, HomeGestureStateMachine.DOUBLE_TAP_WINDOW_MS)
+    }
+
+    private fun cancelLongPressTimer() {
+        longPressRunnable?.let { mainHandler.removeCallbacks(it) }
+        longPressRunnable = null
+    }
+
+    private fun cancelDoubleTapTimer() {
+        doubleTapRunnable?.let { mainHandler.removeCallbacks(it) }
+        doubleTapRunnable = null
+    }
+
+    private fun route(gesture: HomeGestureStateMachine.Gesture) {
+        val target = when (gesture) {
+            HomeGestureStateMachine.Gesture.SINGLE_PRESS -> HomeTarget.BOTTOM
+            HomeGestureStateMachine.Gesture.DOUBLE_PRESS -> HomeTarget.TOP
+            HomeGestureStateMachine.Gesture.LONG_PRESS -> HomeTarget.BOTH
+        }
         val frontendEnabled = esdePreferencesManager.state.value.frontendEnabled
         routeHome(
             context = applicationContext,
-            target = homeButtonManager.resolveHomeTarget(frontendEnabled),
+            target = target,
             mainScreen = homeButtonManager.mainScreen.value,
             frontendEnabled = frontendEnabled,
         )
