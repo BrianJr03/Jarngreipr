@@ -47,19 +47,32 @@ class RomIndexCache(context: Context) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     /**
+     * In-memory mirror of what's on disk. Lets repeated [loadAll] calls within
+     * one process (e.g. the two-phase paint-then-reconcile pass plus a later
+     * [refreshSystem]) skip re-reading every `*.json` file and re-decoding
+     * every entry. Updated in lockstep with every [saveAll] / [invalidateAll]
+     * so the mirror can never drift from disk.
+     */
+    @Volatile
+    private var snapshot: Map<String, SystemCacheEntry>? = null
+
+    /**
      * Load the cache. Returns whatever entries decoded cleanly; systems whose
      * blob fails to parse are simply omitted so a partially corrupt cache does
      * not block a startup.
      */
     suspend fun loadAll(): Map<String, SystemCacheEntry> = withContext(Dispatchers.IO) {
+        snapshot?.let { return@withContext it }
         val files = cacheDir.listFiles()?.filter { it.isFile && it.extension == "json" }.orEmpty()
-        buildMap {
+        val built = buildMap {
             for (file in files) {
                 val name = file.nameWithoutExtension
                 val entry = decodeOrNull(file) ?: continue
                 put(name, entry)
             }
         }
+        snapshot = built
+        built
     }
 
     /**
@@ -79,11 +92,13 @@ class RomIndexCache(context: Context) {
                     .writeText(json.encodeToString(SystemCacheEntry.serializer(), entry))
             }.onFailure { Log.w(TAG, "Failed to persist cache for $systemName", it) }
         }
+        snapshot = systems.toMap()
     }
 
     /** Nukes the entire persisted cache. Used as the hard invalidate. */
     suspend fun invalidateAll() = withContext(Dispatchers.IO) {
         cacheDir.listFiles()?.forEach { it.delete() }
+        snapshot = emptyMap()
     }
 
     private fun decodeOrNull(file: File): SystemCacheEntry? = runCatching {

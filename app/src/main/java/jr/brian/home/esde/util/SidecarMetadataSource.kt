@@ -29,11 +29,12 @@ class SidecarMetadataSource(
         scans: List<ScannedRom>,
     ): Map<ScannedRom, RomMetadata> {
         if (scans.isEmpty()) return emptyMap()
+        val all = GameMetadataSidecarStore.readAllForSystem(scrapedRoot, systemName)
+        if (all.isEmpty()) return emptyMap()
         val result = HashMap<ScannedRom, RomMetadata>()
         for (scan in scans) {
             val basename = File(scan.relativePath).nameWithoutExtension.ifBlank { continue }
-            val sidecar = GameMetadataSidecarStore.read(scrapedRoot, systemName, basename)
-                ?: continue
+            val sidecar = all[basename] ?: continue
             result[scan] = RomMetadata(
                 description = sidecar.description,
                 rating = sidecar.rating ?: 0f,
