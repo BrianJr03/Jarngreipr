@@ -17,6 +17,7 @@ import jr.brian.home.esde.data.computeRootAvailability
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.CompositeMetadataSource
 import jr.brian.home.esde.util.GamelistMetadataSource
+import jr.brian.home.esde.util.MediaFallbackMetadataSource
 import jr.brian.home.esde.util.NoOpMetadataSource
 import jr.brian.home.esde.util.RomIndexBuilder
 import jr.brian.home.esde.util.RomMetadataSource
@@ -187,10 +188,12 @@ class RomSearchViewModel @Inject constructor(
     /**
      * Composes the metadata layer the index builder sees. ES-DE's gamelist.xml
      * stays authoritative (via [GamelistMetadataSource]); [SidecarMetadataSource]
-     * fills nulls with scraper-written JSON under `scrapedRoot()`. When gamelist
-     * decoration is off we drop both — the user explicitly opted out of
-     * decoration, and layering sidecars on would re-enable it through the
-     * back door.
+     * fills text nulls with scraper-written JSON under `scrapedRoot()`;
+     * [MediaFallbackMetadataSource] fills image-path nulls for scans no
+     * gamelist entry decorates (PC shortcuts the user never scraped in ES-DE
+     * are the canonical case). When gamelist decoration is off we drop all
+     * three — the user explicitly opted out of decoration, and layering
+     * anything on would re-enable it through the back door.
      */
     private fun buildMetadataSource(
         decorationEnabled: Boolean,
@@ -204,7 +207,11 @@ class RomSearchViewModel @Inject constructor(
             parseCacheDir = context.filesDir,
         )
         val sidecar = SidecarMetadataSource(scrapedRoot = scraperCoordinator.scrapedRoot())
-        return CompositeMetadataSource(primary = gamelist, fallback = sidecar)
+        val mediaFallback = MediaFallbackMetadataSource(mediaPaths = mediaPaths)
+        return CompositeMetadataSource(
+            primary = CompositeMetadataSource(primary = gamelist, fallback = sidecar),
+            fallback = mediaFallback,
+        )
     }
 
     private suspend fun rebuildSystemIntoCache(systemName: String, rootPath: String): Int {

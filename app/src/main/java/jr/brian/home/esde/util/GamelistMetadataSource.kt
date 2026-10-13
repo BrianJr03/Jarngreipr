@@ -31,7 +31,7 @@ internal fun normalizeName(name: String): String {
 
 /**
  * Reads ES-DE gamelist.xml files and joins each `<game>` entry to a scanned
- * ROM by relative path (exact → basename → normalized basename, in that order).
+ * ROM by relative path (exact → basename → normalized basename → stem, in that order).
  * A gamelist entry with no matching scan is dropped — the scanner is the source
  * of truth, and a decoration we cannot attach to a real file is meaningless.
  *
@@ -239,11 +239,16 @@ class GamelistMetadataSource(
     }
 
     /**
-     * Path-precedence matcher: exact → basename → normalized basename. Deliberately
-     * NOT fuzzy — `Foo (USA).iso` and `Foo (Europe).iso` are different discs, and
-     * silently booting the wrong one is worse than showing an undecorated entry.
-     * A scan is claimed by the first match; subsequent claims on the same scan
-     * return null (a gamelist duplicate cannot decorate an already-attached scan).
+     * Path-precedence matcher: exact → basename → normalized basename → stem.
+     * Deliberately NOT fuzzy — `Foo (USA).iso` and `Foo (Europe).iso` are
+     * different discs, and silently booting the wrong one is worse than
+     * showing an undecorated entry. The stem tier matches extension-less
+     * basenames (e.g. gamelist `./Game.steam` vs on-disk `Game.localgameid`)
+     * and is restricted to stems that are unambiguous across the scan set,
+     * so disc variants that share a stem but differ by extension still fall
+     * through. A scan is claimed by the first match; subsequent claims on
+     * the same scan return null (a gamelist duplicate cannot decorate an
+     * already-attached scan).
      */
     private class ScanMatcher(scans: List<ScannedRom>) {
         private val claimed = HashSet<String>(scans.size)
@@ -255,11 +260,16 @@ class GamelistMetadataSource(
         private val byNormalizedBasename: Map<String, ScannedRom> =
             scans.groupBy { normalizeName(File(it.relativePath).name) }
                 .mapValues { it.value.first() }
+        private val byStem: Map<String, ScannedRom> =
+            scans.groupBy { normalizeName(File(it.relativePath).nameWithoutExtension) }
+                .filterValues { it.size == 1 }
+                .mapValues { it.value.first() }
 
         fun match(gamelistPath: String): ScannedRom? {
             val candidate = byRelative[gamelistPath]
                 ?: byBasename[File(gamelistPath).name]
                 ?: byNormalizedBasename[normalizeName(File(gamelistPath).name)]
+                ?: byStem[normalizeName(File(gamelistPath).nameWithoutExtension)]
                 ?: return null
             return if (claimed.add(candidate.absolutePath)) candidate else null
         }
