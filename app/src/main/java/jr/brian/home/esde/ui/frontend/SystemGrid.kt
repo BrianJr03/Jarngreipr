@@ -91,7 +91,11 @@ internal fun SystemGrid(
         )
     ) {
         when {
-            isLoading -> Column(
+            // Only show the spinner when there's nothing to render yet — the
+            // reconcile pass keeps `isLoading` true while it publishes systems
+            // incrementally, and sitting on a spinner over an already-painted
+            // cached list is exactly the "minutes to load" symptom we're fixing.
+            isLoading && systems.isEmpty() -> Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

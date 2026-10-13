@@ -145,7 +145,11 @@ internal fun RomResultsGrid(
         )
     ) {
         when {
-            isLoading -> {
+            // Only block on the spinner when there is literally nothing to
+            // render. An in-progress scan over a non-empty (even if stale)
+            // list should keep the grid visible — the reconcile pass updates
+            // games in place as systems finish rebuilding.
+            isLoading && displayedGames.isEmpty() -> {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = ThemeAccentColor

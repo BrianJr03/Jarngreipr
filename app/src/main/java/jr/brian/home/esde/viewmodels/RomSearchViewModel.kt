@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomIndexCache
 import jr.brian.home.esde.data.RomSearchStateHolder
+import jr.brian.home.esde.data.RootAvailability
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.data.SystemCacheEntry
 import jr.brian.home.esde.data.SystemStamp
@@ -25,12 +26,20 @@ import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 @HiltViewModel
@@ -189,7 +198,11 @@ class RomSearchViewModel @Inject constructor(
         mediaPaths: List<String>,
     ): RomMetadataSource {
         if (!decorationEnabled) return NoOpMetadataSource
-        val gamelist = GamelistMetadataSource(esdeRootPath = rootPath, mediaPaths = mediaPaths)
+        val gamelist = GamelistMetadataSource(
+            esdeRootPath = rootPath,
+            mediaPaths = mediaPaths,
+            parseCacheDir = context.filesDir,
+        )
         val sidecar = SidecarMetadataSource(scrapedRoot = scraperCoordinator.scrapedRoot())
         return CompositeMetadataSource(primary = gamelist, fallback = sidecar)
     }
@@ -265,7 +278,7 @@ class RomSearchViewModel @Inject constructor(
     internal suspend fun parseAndStore(
         rootPath: String,
         forceRescan: Boolean,
-    ): Pair<Int, Int> {
+    ): Pair<Int, Int> = coroutineScope {
         val prefsState = esdePreferencesManager.state.value
         val decorationEnabled = prefsState.gamelistDecorationEnabled
         val invalidationKey = buildInvalidationKey(
@@ -283,13 +296,6 @@ class RomSearchViewModel @Inject constructor(
         lastInvalidationKey = invalidationKey
 
         val cached = if (hardInvalidate) emptyMap() else cache.loadAll()
-
-        // Paint the cached list first so the UI has something while we reconcile.
-        if (cached.isNotEmpty()) {
-            store.allGames.value = cached.values
-                .flatMap { it.games }
-                .sortedWith(compareBy({ it.name.lowercase() }, { it.systemName.trim() }))
-        }
 
         val availability = computeRootAvailability(
             romsPaths = prefsState.romsPaths,
@@ -331,66 +337,130 @@ class RomSearchViewModel @Inject constructor(
             ?.let(RomScanner::parseSystemExtensions)
             .orEmpty()
 
-        val nextCache = HashMap<String, SystemCacheEntry>()
-        for (systemName in candidateSystems) {
-            val resolvedExtensions =
-                RomScanner.extensionsFor(systemName, perSystemExtensions)
-            val liveStamp = RomIndexBuilder.stamp(
-                systemName = systemName,
-                romsPaths = prefsState.romsPaths,
-                esdeRootPath = rootPath,
-                decorationEnabled = decorationEnabled,
-                systemFolderMappings = prefsState.systemFolderMappings,
-                context = context,
-                resolvedExtensions = resolvedExtensions,
-            )
-            if (liveStamp == null) {
-                // The scan couldn't observe this system anywhere. Only drop it
-                // when we actually looked at every configured source — if the
-                // source that produced the cached entry is unreachable right
-                // now, carry the entry forward instead of destroying the index.
-                cached[systemName]
-                    ?.takeIf { availability.cachedEntryIsFromUnavailableSource(it) }
-                    ?.let { nextCache[systemName] = it }
-                continue
-            }
-            val existing = cached[systemName]
-            if (existing != null && existing.stamp.matches(liveStamp)) {
-                nextCache[systemName] = existing
-                continue
-            }
-            val games = RomIndexBuilder.buildForSystem(
-                systemName = systemName,
-                romsPaths = prefsState.romsPaths,
-                esSystemsFile = esSystemsFile.takeIf { it.exists() },
-                metadataSource = metadataSource,
-                systemFolderMappings = prefsState.systemFolderMappings,
-                context = context,
-                emulatorPackage = prefsState.systemAppMap[systemName],
-            )
-            if (games.isNotEmpty()) {
-                nextCache[systemName] = SystemCacheEntry(stamp = liveStamp, games = games)
-            } else {
-                // A non-null stamp with zero games is ambiguous: it's the
-                // fully-mounted "user deleted every ROM" case AND the mapped-
-                // system-on-unmounted-SAF case (the mapping fallback returns a
-                // non-null stamp with mtime 0 / count 0 rather than null). Use
-                // the same availability veto as the null-stamp branch so the
-                // second case never destroys the index.
-                cached[systemName]
-                    ?.takeIf { availability.cachedEntryIsFromUnavailableSource(it) }
-                    ?.let { nextCache[systemName] = it }
+        // Seed `nextCache` with the cached snapshot so incremental publishes
+        // never regress below the painted cache. Each system's rebuild then
+        // either replaces its entry (fresh games), removes it (confirmed
+        // gone), or leaves the cached entry in place (source unavailable).
+        // The UI reads `allGames` and renders whatever's there — the user
+        // sees cached games instantly and watches rebuilt systems replace
+        // them live instead of staring at a spinner for the full reconcile.
+        val nextCache = ConcurrentHashMap<String, SystemCacheEntry>().apply { putAll(cached) }
+        val publishLock = Mutex()
+        val semaphore = Semaphore(RECONCILE_PARALLELISM)
+
+        suspend fun publishIncremental() {
+            publishLock.withLock {
+                store.allGames.value = nextCache.values
+                    .flatMap { it.games }
+                    .sortedWith(compareBy({ it.name.lowercase() }, { it.systemName.trim() }))
             }
         }
 
-        cache.saveAll(nextCache)
+        // Prime the UI with the seeded snapshot before any worker fires. The
+        // spinner gate in `SystemGrid`/`RomResultsGrid` is now `isLoading &&
+        // items.isEmpty()`, so a cached paint flips the view off the spinner
+        // immediately.
+        if (cached.isNotEmpty()) publishIncremental()
+
+        val jobs = candidateSystems.map { systemName ->
+            async(Dispatchers.IO) {
+                semaphore.withPermit {
+                    runCatching {
+                        reconcileSystem(
+                            systemName = systemName,
+                            cached = cached,
+                            nextCache = nextCache,
+                            availability = availability,
+                            prefsState = prefsState,
+                            rootPath = rootPath,
+                            esSystemsFile = esSystemsFile,
+                            metadataSource = metadataSource,
+                            perSystemExtensions = perSystemExtensions,
+                            decorationEnabled = decorationEnabled,
+                        )
+                    }.onFailure { Log.w(TAG, "Reconcile failed for $systemName", it) }
+                    publishIncremental()
+                }
+            }
+        }
+        jobs.awaitAll()
+
+        cache.saveAll(nextCache.toMap())
 
         val sorted = nextCache.values
             .flatMap { it.games }
             .sortedWith(compareBy({ it.name.lowercase() }, { it.systemName.trim() }))
         store.allGames.value = sorted
         val systemCount = sorted.mapTo(mutableSetOf()) { it.systemName }.size
-        return sorted.size to systemCount
+        sorted.size to systemCount
+    }
+
+    /**
+     * Reconcile one system against the live filesystem, mutating [nextCache]
+     * in place. [nextCache] starts seeded with the cached snapshot, so a
+     * `remove` here is how we signal a confirmed drop and an untouched entry
+     * is how we carry the cache forward (SD card unmounted, no live stamp to
+     * compare against).
+     */
+    private suspend fun reconcileSystem(
+        systemName: String,
+        cached: Map<String, SystemCacheEntry>,
+        nextCache: ConcurrentHashMap<String, SystemCacheEntry>,
+        availability: RootAvailability,
+        prefsState: jr.brian.home.esde.model.ESDEPrefsState,
+        rootPath: String,
+        esSystemsFile: File,
+        metadataSource: RomMetadataSource,
+        perSystemExtensions: Map<String, Set<String>>,
+        decorationEnabled: Boolean,
+    ) {
+        val resolvedExtensions = RomScanner.extensionsFor(systemName, perSystemExtensions)
+        val liveStamp = RomIndexBuilder.stamp(
+            systemName = systemName,
+            romsPaths = prefsState.romsPaths,
+            esdeRootPath = rootPath,
+            decorationEnabled = decorationEnabled,
+            systemFolderMappings = prefsState.systemFolderMappings,
+            context = context,
+            resolvedExtensions = resolvedExtensions,
+        )
+        if (liveStamp == null) {
+            // The scan couldn't observe this system anywhere. Only drop it
+            // when we actually looked at every configured source — if the
+            // source that produced the cached entry is unreachable right
+            // now, carry the entry forward (which it already is via seed).
+            val existing = cached[systemName]
+            if (existing != null && !availability.cachedEntryIsFromUnavailableSource(existing)) {
+                nextCache.remove(systemName)
+            }
+            return
+        }
+        val existing = cached[systemName]
+        if (existing != null && existing.stamp.matches(liveStamp)) {
+            // Unchanged; nothing to do — the seeded entry is still valid.
+            return
+        }
+        val games = RomIndexBuilder.buildForSystem(
+            systemName = systemName,
+            romsPaths = prefsState.romsPaths,
+            esSystemsFile = esSystemsFile.takeIf { it.exists() },
+            metadataSource = metadataSource,
+            systemFolderMappings = prefsState.systemFolderMappings,
+            context = context,
+            emulatorPackage = prefsState.systemAppMap[systemName],
+        )
+        if (games.isNotEmpty()) {
+            nextCache[systemName] = SystemCacheEntry(stamp = liveStamp, games = games)
+            return
+        }
+        // Non-null stamp with zero games is ambiguous: it's the "user deleted
+        // every ROM" case AND the mapped-system-on-unmounted-SAF case (the
+        // mapping fallback returns a non-null stamp with mtime 0 / count 0
+        // rather than null). Use the same availability veto as the null-stamp
+        // branch so the second case never destroys the index.
+        if (existing != null && !availability.cachedEntryIsFromUnavailableSource(existing)) {
+            nextCache.remove(systemName)
+        }
     }
 
     /**
@@ -438,5 +508,13 @@ class RomSearchViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "RomSearchViewModel"
+
+        /**
+         * Max concurrent per-system reconciles. Bounded because each worker
+         * walks SAF / filesystem and parses XML; 4 keeps IO busy without
+         * thrashing. `Dispatchers.IO`'s pool is much larger, so this is the
+         * only backpressure stopping ~50 systems from scanning in parallel.
+         */
+        private const val RECONCILE_PARALLELISM = 4
     }
 }
