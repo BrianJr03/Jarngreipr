@@ -1896,11 +1896,11 @@
     <string name="home_gestures_card_description">Press the hardware Home button in different ways to pick which display wakes.</string>
     <string name="home_gestures_card_disabled_interception_off">Enable Home Button Interception above to use these gestures.</string>
     <string name="home_gestures_card_disabled_no_external">No external display connected — all gestures route to the primary display.</string>
-    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use the long-press gesture — otherwise long press falls back to the bottom screen.</string>
+    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use the double-press and long-press gestures — otherwise double press does nothing and long press falls back to the bottom screen.</string>
     <string name="home_gestures_single_press_label">Press once</string>
     <string name="home_gestures_single_press_detail">Launcher on the bottom screen</string>
     <string name="home_gestures_double_press_label">Double press</string>
-    <string name="home_gestures_double_press_detail">Launcher on the top screen</string>
+    <string name="home_gestures_double_press_detail">Frontend on the top screen</string>
     <string name="home_gestures_long_press_label">Long press</string>
     <string name="home_gestures_long_press_detail">Launcher on bottom + Frontend on top</string>
     <string name="home_main_screen_title">Main Screen</string>

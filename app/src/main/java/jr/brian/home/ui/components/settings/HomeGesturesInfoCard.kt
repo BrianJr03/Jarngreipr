@@ -42,7 +42,7 @@ import jr.brian.home.util.ThorDetection
  * handled by [jr.brian.home.service.HomeInterceptorService]:
  *
  *  - press once  → launcher on bottom
- *  - double press → launcher on top
+ *  - double press → frontend on top (requires frontend to be enabled)
  *  - long press  → launcher on bottom + frontend on top
  *
  * Replaces the earlier BOTTOM/BOTH chip selector — the three gestures are

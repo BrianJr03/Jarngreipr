@@ -13,6 +13,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.model.HomeTarget
+import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.ui.util.routeHome
 import javax.inject.Inject
 
@@ -129,11 +131,15 @@ class HomeInterceptorService : AccessibilityService() {
     }
 
     private fun route(gesture: HomeGestureStateMachine.Gesture) {
-        val target = when (gesture) {
-            HomeGestureStateMachine.Gesture.SINGLE_PRESS -> HomeTarget.BOTTOM
-            HomeGestureStateMachine.Gesture.DOUBLE_PRESS -> HomeTarget.TOP
-            HomeGestureStateMachine.Gesture.LONG_PRESS -> HomeTarget.BOTH
+        when (gesture) {
+            HomeGestureStateMachine.Gesture.SINGLE_PRESS -> routeViaHomeTarget(HomeTarget.BOTTOM)
+            HomeGestureStateMachine.Gesture.DOUBLE_PRESS ->
+                launchFrontend(applicationContext, PRIMARY_DISPLAY_ID)
+            HomeGestureStateMachine.Gesture.LONG_PRESS -> routeViaHomeTarget(HomeTarget.BOTH)
         }
+    }
+
+    private fun routeViaHomeTarget(target: HomeTarget) {
         val frontendEnabled = esdePreferencesManager.state.value.frontendEnabled
         routeHome(
             context = applicationContext,

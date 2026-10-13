@@ -10,12 +10,16 @@ package jr.brian.home.service
  * [onDoubleTapTimer]. That split keeps this class unit-testable without
  * pulling in `Looper` or Robolectric handler scheduling.
  *
- * The three gestures map 1:1 to [jr.brian.home.model.HomeTarget] values at
- * the service's routing layer:
+ * The three gestures are translated by the service's routing layer into:
  *
- *  - [Gesture.SINGLE_PRESS] → BOTTOM
- *  - [Gesture.DOUBLE_PRESS] → TOP
- *  - [Gesture.LONG_PRESS]   → BOTH
+ *  - [Gesture.SINGLE_PRESS] → [jr.brian.home.model.HomeTarget.BOTTOM]
+ *    (launcher on the bottom display)
+ *  - [Gesture.DOUBLE_PRESS] → FrontEndActivity launched on the primary (top)
+ *    display, bypassing [jr.brian.home.model.HomeTarget] so MainActivity
+ *    (which is `singleTask`) is not yanked off the bottom display
+ *  - [Gesture.LONG_PRESS]   → [jr.brian.home.model.HomeTarget.BOTH]
+ *    (launcher + frontend on both displays, with focus governed by the
+ *    user's main-screen setting)
  */
 internal class HomeGestureStateMachine {
     enum class Gesture { SINGLE_PRESS, DOUBLE_PRESS, LONG_PRESS }
