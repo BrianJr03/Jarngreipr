@@ -54,27 +54,6 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Install fixed debug keystore (if present)
-        id: debug_signing
-        env:
-          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
-        run: |
-          mkdir -p "$HOME/.android"
-          if [ -n "${DEBUG_KEYSTORE_BASE64:-}" ]; then
-            printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$HOME/.android/debug.keystore"
-            echo "present=true" >> "$GITHUB_OUTPUT"
-            echo "Fixed debug keystore installed."
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "::warning title=Ephemeral debug keystore::DEBUG_KEYSTORE_BASE64 missing; each run signs debug APKs with a different key."
-            {
-              echo "### Debug signing"
-              echo ""
-              echo "- Debug: **ephemeral** keystore (DEBUG_KEYSTORE_BASE64 missing). Later installs over the previous debug build will fail with INSTALL_FAILED_UPDATE_INCOMPATIBLE."
-              echo "- Fix: generate a stable debug keystore locally and add it as a repo secret named DEBUG_KEYSTORE_BASE64."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Assemble debug + release APKs
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -133,8 +112,6 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Cleanup keystores
+      - name: Cleanup release keystore
         if: always()
-        run: |
-          rm -f "${GITHUB_WORKSPACE}/release.keystore"
-          rm -f "$HOME/.android/debug.keystore"
+        run: rm -f "${GITHUB_WORKSPACE}/release.keystore"
