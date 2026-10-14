@@ -38,7 +38,7 @@ esac
 NO_TRIGGER=0
 if [ "${3:-}" = "--no-trigger" ]; then NO_TRIGGER=1; fi
 
-FLAVOR_PREF="${CI_APK_FLAVOR:-standard}"
+FLAVOR_PREF="${CI_APK_FLAVOR:-hidden}"
 
 die() { echo "error: $*" >&2; exit 1; }
 log() { echo "==> $*"; }

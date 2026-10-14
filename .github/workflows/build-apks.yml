@@ -69,7 +69,7 @@ jobs:
               "-Pandroid.injected.signing.key.password=${KEY_PASSWORD}"
             )
           fi
-          ./gradlew assembleDebug assembleRelease --stacktrace "${SIGN_ARGS[@]}"
+          ./gradlew assembleHiddenDebug assembleHiddenRelease --stacktrace "${SIGN_ARGS[@]}"
 
       - name: Collect APKs
         env:
