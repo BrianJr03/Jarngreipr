@@ -59,6 +59,8 @@ fun IconPackBrowseDialog(
     onIconChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val customIconSuccessMessage = stringResource(R.string.app_options_custom_icon_success)
+    val customIconErrorMessage = stringResource(R.string.app_options_custom_icon_error)
     val scope = rememberCoroutineScope()
 
     val iconPackManager = LocalIconPackManager.current
@@ -104,7 +106,7 @@ fun IconPackBrowseDialog(
                     if (result.isSuccess) {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.app_options_custom_icon_success),
+                            customIconSuccessMessage,
                             Toast.LENGTH_SHORT
                         ).show()
                         onIconChanged()
@@ -112,7 +114,7 @@ fun IconPackBrowseDialog(
                     } else {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.app_options_custom_icon_error),
+                            customIconErrorMessage,
                             Toast.LENGTH_SHORT
                         ).show()
                     }

@@ -57,6 +57,7 @@ fun CrashLogsScreen(
     onDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val reportIssueUrl = stringResource(R.string.crash_logs_report_issue_url)
     val scope = rememberCoroutineScope()
     val crashDetailDialogState = rememberDialogState<CrashLog>()
     val clearDialogState = rememberDialogState<Unit>()
@@ -105,7 +106,7 @@ fun CrashLogsScreen(
                             onClick = {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse(context.getString(R.string.crash_logs_report_issue_url))
+                                    Uri.parse(reportIssueUrl)
                                 )
                                 context.startActivity(intent)
                             },

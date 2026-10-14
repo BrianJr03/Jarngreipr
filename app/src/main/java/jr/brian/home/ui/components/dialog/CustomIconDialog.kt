@@ -63,6 +63,9 @@ fun CustomIconDialog(
     onIconChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val customIconSuccessMessage = stringResource(R.string.app_options_custom_icon_success)
+    val customIconErrorMessage = stringResource(R.string.app_options_custom_icon_error)
+    val customIconRemovedMessage = stringResource(R.string.app_options_custom_icon_removed)
     val customIconManager = LocalCustomIconManager.current
     val globalIconRefreshManager = LocalGlobalIconRefreshManager.current
     val scope = rememberCoroutineScope()
@@ -97,7 +100,7 @@ fun CustomIconDialog(
                 if (result.isSuccess) {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.app_options_custom_icon_success),
+                        customIconSuccessMessage,
                         Toast.LENGTH_SHORT
                     ).show()
                     hasCustomIcon = true
@@ -106,7 +109,7 @@ fun CustomIconDialog(
                 } else {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.app_options_custom_icon_error),
+                        customIconErrorMessage,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -210,7 +213,7 @@ fun CustomIconDialog(
                                 if (removed) {
                                     Toast.makeText(
                                         context,
-                                        context.getString(R.string.app_options_custom_icon_removed),
+                                        customIconRemovedMessage,
                                         Toast.LENGTH_SHORT
                                     ).show()
                                     hasCustomIcon = false

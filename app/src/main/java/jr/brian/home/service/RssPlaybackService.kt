@@ -3,6 +3,7 @@ package jr.brian.home.service
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -29,6 +30,7 @@ class RssPlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
         player.addListener(object : Player.Listener {
+            @UnstableApi
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 if (openedAudioSessionId != 0 && openedAudioSessionId != audioSessionId) {
                     closeAudioEffectSession(openedAudioSessionId)

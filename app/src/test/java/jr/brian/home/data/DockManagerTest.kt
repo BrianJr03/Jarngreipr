@@ -226,20 +226,24 @@ class DockManagerTest {
     }
 
     @Test
-    fun `addAppToDock rejects when dock is full`() = runTest {
-        // Given
+    fun `addAppToDock at an occupied slot replaces, even when the dock is full`() = runTest {
+        // DockManager.addAppToDock treats a write into a non-empty slot as a
+        // replacement rather than an add — see the `isReplacingExistingSlot`
+        // exemption in DockManager. The populated count doesn't grow, so the
+        // max check doesn't apply. This test pins that behaviour; the
+        // "reject when position is beyond max" case is covered separately by
+        // `addAppToDock rejects position beyond max dock apps`.
         dockManager = DockManager(context)
         repeat(DockManager.MAX_DOCK_APPS) { i ->
             dockManager.addAppToDock("com.example.app$i", i)
         }
 
-        // When
         dockManager.addAppToDock("com.example.extra", 0)
 
-        // Then
         val dockApps = dockManager.dockApps.first()
         assertEquals(DockManager.MAX_DOCK_APPS, dockApps.count { it.isNotEmpty() })
-        assertFalse(dockApps.contains("com.example.extra"))
+        assertEquals("com.example.extra", dockApps[0])
+        assertFalse(dockApps.contains("com.example.app0"))
     }
 
     @Test

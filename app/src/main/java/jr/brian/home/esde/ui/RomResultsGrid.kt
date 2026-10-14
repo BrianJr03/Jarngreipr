@@ -117,6 +117,7 @@ internal fun RomResultsGrid(
     focusIndicationEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
+    val romDetailCompanionClearedMessage = stringResource(R.string.rom_detail_companion_cleared)
     val prefsManager = LocalESDEPreferencesManager.current
     val prefs by prefsManager.state.collectAsStateWithLifecycle()
     val romSearchViewModel: jr.brian.home.esde.viewmodels.RomSearchViewModel = androidx.hilt.navigation.compose.hiltViewModel()
@@ -298,7 +299,7 @@ internal fun RomResultsGrid(
                         prefsManager.clearGameCompanion(gameKey(game))
                         Toast.makeText(
                             context,
-                            context.getString(R.string.rom_detail_companion_cleared),
+                            romDetailCompanionClearedMessage,
                             Toast.LENGTH_SHORT
                         ).show()
                     },

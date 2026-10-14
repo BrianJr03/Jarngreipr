@@ -85,6 +85,7 @@ fun FolderBackgroundDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val folderBackgroundImageErrorMessage = stringResource(R.string.folder_background_image_error)
     val folderManager = LocalFolderManager.current
     val scope = rememberCoroutineScope()
 
@@ -110,7 +111,7 @@ fun FolderBackgroundDialog(
                 } else {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.folder_background_image_error),
+                        folderBackgroundImageErrorMessage,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
