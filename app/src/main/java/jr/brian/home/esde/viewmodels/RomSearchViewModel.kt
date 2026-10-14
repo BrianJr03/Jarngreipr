@@ -29,8 +29,11 @@ import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.scraper.ScraperCoordinator
+import jr.brian.home.di.ApplicationScope
 import jr.brian.home.model.rom.PinnedRomInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -44,6 +47,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -55,6 +59,7 @@ class RomSearchViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder,
     private val scraperCoordinator: ScraperCoordinator,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val cache = RomIndexCache(context)
     /**
@@ -129,9 +134,18 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value || store.allGames.value.isNotEmpty()) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            parseAndStore(rootPath, forceRescan = false)
-            store.isLoading.value = false
+        // Scan on the application-scoped supervisor, not viewModelScope: the
+        // activity hosting the frontend gets finish()'d by RomGameLauncher
+        // every time a game launches, which cancels viewModelScope mid-parse
+        // and used to leave the @Singleton isLoading flag stuck at true for
+        // the life of the process. The finally in NonCancellable makes sure
+        // the flag is reset even if the scope itself is cancelled.
+        applicationScope.launch {
+            try {
+                parseAndStore(rootPath, forceRescan = false)
+            } finally {
+                withContext(NonCancellable) { store.isLoading.value = false }
+            }
         }
     }
 
@@ -147,9 +161,16 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            val (games, systems) = parseAndStore(rootPath, forceRescan = true)
-            store.isLoading.value = false
+        applicationScope.launch {
+            var games = 0
+            var systems = 0
+            try {
+                val result = parseAndStore(rootPath, forceRescan = true)
+                games = result.first
+                systems = result.second
+            } finally {
+                withContext(NonCancellable) { store.isLoading.value = false }
+            }
             onComplete(games, systems)
         }
     }
@@ -173,11 +194,11 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
+        applicationScope.launch {
             val count = try {
                 rebuildSystemIntoCache(systemName, rootPath)
             } finally {
-                store.isLoading.value = false
+                withContext(NonCancellable) { store.isLoading.value = false }
             }
             onComplete(count)
         }
@@ -586,9 +607,12 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            parseAndStore(rootPath, forceRescan = false)
-            store.isLoading.value = false
+        applicationScope.launch {
+            try {
+                parseAndStore(rootPath, forceRescan = false)
+            } finally {
+                withContext(NonCancellable) { store.isLoading.value = false }
+            }
         }
     }
 

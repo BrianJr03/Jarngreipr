@@ -13,8 +13,15 @@ import jr.brian.home.esde.data.addRomsPath
 import jr.brian.home.esde.data.setGamelistDecorationEnabled
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.scraper.ScraperCoordinator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -53,6 +60,7 @@ class RomSearchViewModelDegradedScanTest {
     private lateinit var setupPrefs: SetupPreferences
     private lateinit var stateHolder: RomSearchStateHolder
     private lateinit var vm: RomSearchViewModel
+    private lateinit var applicationScope: CoroutineScope
 
     // Used only for SEEDING the on-disk cache before each scan. Reads after the
     // scan go through a fresh RomIndexCache(app) so they bypass this instance's
@@ -94,13 +102,20 @@ class RomSearchViewModelDegradedScanTest {
             every { it.scrapedRoot() } returns
                 File(tempFolder.root, "Jarngreipr Media").absolutePath
         }
+        applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         vm = RomSearchViewModel(
             context = app,
             esdePreferencesManager = esdePrefs,
             setupPreferences = setupPrefs,
             store = stateHolder,
             scraperCoordinator = scraperCoordinator,
+            applicationScope = applicationScope,
         )
+    }
+
+    @After
+    fun tearDown() {
+        if (::applicationScope.isInitialized) applicationScope.cancel()
     }
 
     @Test
@@ -185,6 +200,46 @@ class RomSearchViewModelDegradedScanTest {
             "psx entry must reflect the newly mounted directory, not the seeded stub",
             psxGames.single().name == "Metal Gear",
         )
+    }
+
+    @Test
+    fun `cancelling the application scope mid-scan still clears isLoading`() = runBlocking {
+        // Regression for the "stuck loading forever" bug: FrontEndActivity gets
+        // finish()'d every time RomGameLauncher launches a game. Previously the
+        // scan ran on viewModelScope and the @Singleton isLoading flag never
+        // flipped back when the scope was cancelled. The fix moves the scan to
+        // an app-scoped supervisor and wraps the launches in try/finally with
+        // NonCancellable. This exercises the fix end-to-end: start loadGames,
+        // cancel the application scope while the scan is still running, and
+        // require isLoading to flip back to false.
+        val root = tempFolder.newFolder("Roms").also {
+            // A few directories so the per-system fan-out has something to do
+            // while we race in the cancel below.
+            writeRom(it, "nes/Mario.nes")
+            writeRom(it, "snes/Zelda.sfc")
+            writeRom(it, "psx/Metal Gear.chd")
+        }
+        esdePrefs.addRomsPath(root.absolutePath)
+
+        vm.loadGames()
+        // Give the launch a chance to flip isLoading to true before we cancel —
+        // otherwise we'd be asserting on the initial value, not the invariant.
+        var sawTrue = false
+        repeat(200) {
+            if (stateHolder.isLoading.value) { sawTrue = true; return@repeat }
+            kotlinx.coroutines.delay(5)
+        }
+        assertTrue("loadGames must flip isLoading on before we test the finally", sawTrue)
+
+        applicationScope.cancel()
+
+        // Reset ran under NonCancellable, so the state flow must settle to
+        // false. Pull it through `.first { !it }` with a generous bound to
+        // avoid relying on fuzzy sleeps.
+        val finalLoading = kotlinx.coroutines.withTimeout(5_000) {
+            stateHolder.isLoading.first { !it }
+        }
+        assertFalse("isLoading must be reset after cancellation", finalLoading)
     }
 
     private fun psxEntry(sourceRoot: String): SystemCacheEntry = SystemCacheEntry(
