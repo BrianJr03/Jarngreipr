@@ -229,9 +229,11 @@ class EmulatorRegistryTest {
             val spec = EmulatorRegistry.resolve(pkg)
             assertNotNull(spec)
             assertEquals("org.ppsspp.ppsspp.PpssppActivity", spec!!.activityName)
+            val contract = spec.launchContract
             assertTrue(
                 "$pkg must use the default ContentUriView contract",
-                spec.launchContract === RomLaunchContract.ContentUriView,
+                contract is RomLaunchContract.ContentUriView &&
+                    contract.action == android.content.Intent.ACTION_VIEW,
             )
         }
     }
@@ -521,6 +523,31 @@ class EmulatorRegistryTest {
         assertEquals(
             "emu.x360mobile.com.MainActivity",
             EmulatorRegistry.resolve("emu.x360mobile.com")!!.activityName,
+        )
+    }
+
+    @Test
+    fun `xendroid uses its custom intent action instead of ACTION_VIEW`() {
+        // EmulatorHostActivity declares a VIEW filter but only boots a ROM on
+        // its own action — a plain VIEW opens the activity to a black screen.
+        val contract = EmulatorRegistry.resolve("xendroid.compose")!!.launchContract
+        assertTrue(
+            "XenDroid must use ContentUriView with its custom action",
+            contract is RomLaunchContract.ContentUriView &&
+                contract.action == "xendroid.intent.action.xendroid",
+        )
+    }
+
+    @Test
+    fun `xbox360 XenDroid built-in command carries its custom intent action`() {
+        val context = mockContextWithInstalled("xendroid.compose")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        val xendroid = options.single { it.displayName == "XenDroid" }
+        assertTrue(
+            "XenDroid command must set %ACTION%=xendroid.intent.action.xendroid",
+            xendroid.command!!.contains("%ACTION%=xendroid.intent.action.xendroid"),
         )
     }
 

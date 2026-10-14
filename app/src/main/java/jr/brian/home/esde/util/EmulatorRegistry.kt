@@ -6,8 +6,16 @@ import android.content.Context
 /** The exact public intent shape an emulator accepts for a ROM launch. */
 sealed interface RomLaunchContract {
 
-    /** ACTION_VIEW carrying the content URI as intent data. The common case. */
-    data object ContentUriView : RomLaunchContract
+    /**
+     * The content URI as intent data under [action] (default: ACTION_VIEW).
+     *
+     * Most emulators register a VIEW filter; a few (XenDroid) register their
+     * own action and only start the ROM on that action, treating VIEW as a
+     * cold launch of the host activity. [action] lets those cases override.
+     */
+    data class ContentUriView(
+        val action: String = android.content.Intent.ACTION_VIEW,
+    ) : RomLaunchContract
 
     /**
      * The content URI, as a string, under a documented extra key.
@@ -57,7 +65,7 @@ data class EmulatorSpec(
     val packageName: String,
     val displayName: String,
     val activityName: String? = null,
-    val launchContract: RomLaunchContract = RomLaunchContract.ContentUriView,
+    val launchContract: RomLaunchContract = RomLaunchContract.ContentUriView(),
     val extensions: List<String> = emptyList(),
     val isFrontEnd: Boolean = false,
     /**
@@ -177,8 +185,12 @@ object EmulatorRegistry {
             "aenu.ax360e.EmulatorActivity",
             RomLaunchContract.UriExtra("game_uri", "aenu.intent.action.AX360E"),
             listOf("iso", "xex", "zar")),
+        // XenDroid's EmulatorHostActivity declares a VIEW filter but only boots
+        // a ROM on its custom action — a VIEW with the content URI opens the
+        // activity to a black screen. Use the action its own build fires on.
         EmulatorSpec("xendroid.compose", "XenDroid",
             "xendroid.compose.EmulatorHostActivity",
+            RomLaunchContract.ContentUriView(action = "xendroid.intent.action.xendroid"),
             extensions = listOf("iso", "xex", "zar")),
         // Current X360 Mobile builds ship as emu.x360mobile.com, with the VIEW
         // filter on MainActivity. The older id is kept for existing installs.

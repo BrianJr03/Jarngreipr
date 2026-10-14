@@ -274,7 +274,7 @@ object EsdeCommandLauncher {
             "X360 Mobile" to
                 "%EMULATOR_X360MOBILE% %DATA%=%ROMSAF%",
             "XenDroid" to
-                "%EMULATOR_XENDROID% %DATA%=%ROMSAF%"
+                "%EMULATOR_XENDROID% %ACTION%=xendroid.intent.action.xendroid %DATA%=%ROMSAF%"
         ),
         "windows" to listOf(
             "Winlator Cmod" to
@@ -594,13 +594,13 @@ object EsdeCommandLauncher {
         withComponent: Boolean = true,
     ): Intent {
         val spec = EmulatorRegistry.resolve(packageName)
-        val declared = spec?.launchContract ?: RomLaunchContract.ContentUriView
+        val declared = spec?.launchContract ?: RomLaunchContract.ContentUriView()
         // An undocumented row still gets the ordinary contract tried. Refusing on
         // sight charges the table's ignorance to the user, and these are exactly
         // the builds most likely to have gained a VIEW filter since the row was
         // written. The hint survives as the message if every attempt fails.
         val contract = if (declared is RomLaunchContract.Undocumented) {
-            RomLaunchContract.ContentUriView
+            RomLaunchContract.ContentUriView()
         } else {
             declared
         }
@@ -620,6 +620,7 @@ object EsdeCommandLauncher {
         val action = when (contract) {
             RomLaunchContract.RetroArch -> Intent.ACTION_MAIN
             is RomLaunchContract.UriExtra -> contract.action
+            is RomLaunchContract.ContentUriView -> contract.action
             else -> Intent.ACTION_VIEW
         }
 
@@ -629,7 +630,7 @@ object EsdeCommandLauncher {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
             when (contract) {
-                RomLaunchContract.ContentUriView -> {
+                is RomLaunchContract.ContentUriView -> {
                     grant()
                     setDataAndType(contentUri, MIME_ANY)
                     // clipData carries the grant for receivers that read it there.

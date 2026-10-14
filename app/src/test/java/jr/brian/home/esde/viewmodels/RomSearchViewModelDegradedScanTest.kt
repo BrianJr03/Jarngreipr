@@ -1,6 +1,8 @@
 package jr.brian.home.esde.viewmodels
 
 import android.content.Context
+import io.mockk.every
+import io.mockk.mockk
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomIndexCache
 import jr.brian.home.esde.data.RomSearchStateHolder
@@ -10,6 +12,7 @@ import jr.brian.home.esde.data.SystemStamp
 import jr.brian.home.esde.data.addRomsPath
 import jr.brian.home.esde.data.setGamelistDecorationEnabled
 import jr.brian.home.esde.model.GameInfo
+import jr.brian.home.esde.scraper.ScraperCoordinator
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,6 +53,11 @@ class RomSearchViewModelDegradedScanTest {
     private lateinit var setupPrefs: SetupPreferences
     private lateinit var stateHolder: RomSearchStateHolder
     private lateinit var vm: RomSearchViewModel
+
+    // Used only for SEEDING the on-disk cache before each scan. Reads after the
+    // scan go through a fresh RomIndexCache(app) so they bypass this instance's
+    // in-memory snapshot — the VM owns its own cache instance, and its
+    // post-scan writes to disk never invalidate the snapshot on this one.
     private lateinit var cache: RomIndexCache
 
     // The ES-DE root the ViewModel derives from setupPreferences.scriptsPath.
@@ -78,11 +86,20 @@ class RomSearchViewModelDegradedScanTest {
 
         stateHolder = RomSearchStateHolder()
         cache = RomIndexCache(app)
+        // scrapedRoot() is the only ScraperCoordinator method the scan reads,
+        // and this test deliberately lives under tempFolder so it never leaks
+        // into real /storage paths or triggers the MANAGE_EXTERNAL_STORAGE
+        // branch inside the coordinator's real implementation.
+        val scraperCoordinator = mockk<ScraperCoordinator>(relaxed = true).also {
+            every { it.scrapedRoot() } returns
+                File(tempFolder.root, "Jarngreipr Media").absolutePath
+        }
         vm = RomSearchViewModel(
             context = app,
             esdePreferencesManager = esdePrefs,
             setupPreferences = setupPrefs,
             store = stateHolder,
+            scraperCoordinator = scraperCoordinator,
         )
     }
 
@@ -101,7 +118,7 @@ class RomSearchViewModelDegradedScanTest {
 
         vm.parseAndStore(rootPath = esdeRoot.absolutePath, forceRescan = false)
 
-        val persisted = cache.loadAll()
+        val persisted = RomIndexCache(app).loadAll()
         assertTrue("psx must survive on-disk", "psx" in persisted)
         assertTrue("nes must be indexed", "nes" in persisted)
         val allGames = stateHolder.allGames.value
@@ -129,7 +146,7 @@ class RomSearchViewModelDegradedScanTest {
 
         vm.parseAndStore(rootPath = esdeRoot.absolutePath, forceRescan = false)
 
-        val persisted = cache.loadAll()
+        val persisted = RomIndexCache(app).loadAll()
         assertNull("psx must be pruned when its root is present and directory is gone", persisted["psx"])
         assertTrue("nes must remain", "nes" in persisted)
     }
@@ -147,7 +164,10 @@ class RomSearchViewModelDegradedScanTest {
 
         // First pass: SD isn't mounted. psx is carried forward from cache.
         vm.parseAndStore(rootPath = esdeRoot.absolutePath, forceRescan = false)
-        assertTrue("psx must be carried forward while SD is missing", "psx" in cache.loadAll())
+        assertTrue(
+            "psx must be carried forward while SD is missing",
+            "psx" in RomIndexCache(app).loadAll(),
+        )
 
         // SD "mounts" — the directory becomes real and gains its psx system.
         File(sdRootPath).mkdirs()
@@ -157,7 +177,7 @@ class RomSearchViewModelDegradedScanTest {
         // AND nes must still be present.
         vm.parseAndStore(rootPath = esdeRoot.absolutePath, forceRescan = false)
 
-        val persisted = cache.loadAll()
+        val persisted = RomIndexCache(app).loadAll()
         assertEquals(setOf("nes", "psx"), persisted.keys)
         val psxGames = persisted["psx"]!!.games
         assertEquals(1, psxGames.size)
