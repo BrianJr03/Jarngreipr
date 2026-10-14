@@ -180,6 +180,11 @@ object EmulatorRegistry {
         EmulatorSpec("xendroid.compose", "XenDroid",
             "xendroid.compose.EmulatorHostActivity",
             extensions = listOf("iso", "xex", "zar")),
+        // Current X360 Mobile builds ship as emu.x360mobile.com, with the VIEW
+        // filter on MainActivity. The older id is kept for existing installs.
+        EmulatorSpec("emu.x360mobile.com", "X360 Mobile",
+            "emu.x360mobile.com.MainActivity",
+            extensions = listOf("iso", "xex", "zar")),
         EmulatorSpec("emu.x360.mobile", "X360 Mobile",
             "emu.x360.mobile.X360MobileGameLaunchActivity",
             extensions = listOf("iso", "xex", "zar")),

@@ -166,6 +166,7 @@ object EsdeCommandLauncher {
             "aenu.ax360e.free/aenu.ax360e.EmulatorActivity"
         ),
         "X360MOBILE" to listOf(
+            "emu.x360mobile.com/emu.x360mobile.com.MainActivity",
             "emu.x360.mobile/emu.x360.mobile.X360MobileGameLaunchActivity"
         ),
         "XENDROID" to listOf(

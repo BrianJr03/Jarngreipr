@@ -437,6 +437,7 @@ class EmulatorRegistryTest {
             "aenu.ax360e",
             "aenu.ax360e.free",
             "xendroid.compose",
+            "emu.x360mobile.com",
             "emu.x360.mobile",
         )
     }
@@ -506,6 +507,21 @@ class EmulatorRegistryTest {
         assertEquals(1, options.size)
         assertEquals("aX360e", options[0].displayName)
         assertEquals("aenu.ax360e.free", options[0].packageName)
+    }
+
+    @Test
+    fun `xbox360 resolves X360 Mobile under its current emu x360mobile com id`() {
+        val context = mockContextWithInstalled("emu.x360mobile.com")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "xbox360", NON_EXISTENT_FILE,
+        )
+        assertEquals(1, options.size)
+        assertEquals("X360 Mobile", options[0].displayName)
+        assertEquals("emu.x360mobile.com", options[0].packageName)
+        assertEquals(
+            "emu.x360mobile.com.MainActivity",
+            EmulatorRegistry.resolve("emu.x360mobile.com")!!.activityName,
+        )
     }
 
     @Test
