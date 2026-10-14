@@ -6,6 +6,6 @@
 - Steam and local games now launch into GameHub Lite correctly on the first tap, without needing to pre-pick a launch command
 - Scraped art and descriptions now show up for games whose game-list entry and on-disk file use different extensions
 - Games without a game-list entry now show cover art pulled from your media folders when available
-- Launching Xbox 360 games woth
+- Launching Xbox 360 games with XenDroid
 
 2.9.0

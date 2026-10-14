@@ -14,6 +14,16 @@ class RomSearchStateHolder @Inject constructor() {
     val query = MutableStateFlow("")
     val allGames = MutableStateFlow<List<GameInfo>>(emptyList())
     val isLoading = MutableStateFlow(false)
+
+    /**
+     * Progress of the in-flight system scan. `systemScanLoaded` increments as
+     * each candidate system finishes reconciling; `systemScanTotal` is set to
+     * the number of discovered candidates right before the per-system jobs
+     * fan out. Both reset to 0 at the start of a scan so the "Systems Loading
+     * (x/x)" badge in the frontend only renders during an active scan.
+     */
+    val systemScanLoaded = MutableStateFlow(0)
+    val systemScanTotal = MutableStateFlow(0)
     val dismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val screenDismissSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val gameLaunchSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)

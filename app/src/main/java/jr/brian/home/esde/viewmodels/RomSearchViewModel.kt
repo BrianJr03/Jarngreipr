@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
@@ -74,6 +75,8 @@ class RomSearchViewModel @Inject constructor(
     private var lastScanWasDegraded: Boolean = false
     val query: StateFlow<String> = store.query.asStateFlow()
     val isLoading: StateFlow<Boolean> = store.isLoading.asStateFlow()
+    val systemScanLoaded: StateFlow<Int> = store.systemScanLoaded.asStateFlow()
+    val systemScanTotal: StateFlow<Int> = store.systemScanTotal.asStateFlow()
     val focusedGame: StateFlow<GameInfo?> = store.focusedGame.asStateFlow()
     val screenDismissSignal: SharedFlow<Unit> = store.screenDismissSignal.asSharedFlow()
     val openEsdeSettingsSignal: SharedFlow<Unit> = store.openEsdeSettingsSignal.asSharedFlow()
@@ -366,6 +369,12 @@ class RomSearchViewModel @Inject constructor(
         rootPath: String,
         forceRescan: Boolean,
     ): Pair<Int, Int> = coroutineScope {
+        // Reset the scan progress counters up front so the frontend's loading
+        // badge only reflects *this* scan — a prior degraded scan's totals
+        // would otherwise linger and show stale progress.
+        store.systemScanLoaded.value = 0
+        store.systemScanTotal.value = 0
+
         val prefsState = esdePreferencesManager.state.value
         val decorationEnabled = prefsState.gamelistDecorationEnabled
         val invalidationKey = buildInvalidationKey(
@@ -417,7 +426,16 @@ class RomSearchViewModel @Inject constructor(
             File(root).listFiles()?.filter { it.isDirectory }?.map { it.name } ?: emptyList()
         }
         val mappingCandidates = prefsState.systemFolderMappings.map { it.systemName }
-        val candidateSystems = (rootCandidates + mappingCandidates + cached.keys).distinct()
+        // Skip systems the user has hidden from the frontend — reconciling them
+        // just to have the UI filter them out downstream is pure overhead on
+        // activity start. Their cached entries ride through untouched via the
+        // `nextCache` seed, so unhiding later still restores whatever was last
+        // scanned until the next natural reconcile replaces it.
+        val hiddenSystems = prefsState.hiddenSystems
+        val candidateSystems = (rootCandidates + mappingCandidates + cached.keys)
+            .distinct()
+            .filter { it !in hiddenSystems }
+        store.systemScanTotal.value = candidateSystems.size
 
         val perSystemExtensions = esSystemsFile
             .takeIf { it.exists() }
@@ -466,6 +484,7 @@ class RomSearchViewModel @Inject constructor(
                             decorationEnabled = decorationEnabled,
                         )
                     }.onFailure { Log.w(TAG, "Reconcile failed for $systemName", it) }
+                    store.systemScanLoaded.update { it + 1 }
                     publishIncremental()
                 }
             }

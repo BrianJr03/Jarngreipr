@@ -78,6 +78,7 @@
     <string name="frontend_no_systems">No systems found</string>
     <string name="frontend_no_games">No games found</string>
     <string name="frontend_loading_msg">Initializing Jarngreipr Frontend</string>
+    <string name="frontend_systems_loading_badge">Systems Loading (%1$d/%2$d)</string>
     <string name="frontend_open_search">Search</string>
     <string name="frontend_open_search_hint">Y • Search</string>
     <string name="frontend_open_settings_hint">START • Settings</string>

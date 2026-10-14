@@ -1,21 +1,30 @@
 package jr.brian.home.esde.ui.frontend
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,6 +87,7 @@ internal fun SystemGrid(
     backgroundTransparent: Boolean = false,
     customizations: Map<String, SystemCustomization> = emptyMap(),
     reorderingSystem: String? = null,
+    scanTotal: Int = 0,
     onSystemFocused: (SystemTile) -> Unit = {},
     onSystemSelected: (SystemTile) -> Unit = {},
     onSystemLongPressed: (SystemTile) -> Unit = {}
@@ -91,23 +101,16 @@ internal fun SystemGrid(
         )
     ) {
         when {
-            // Only show the spinner when there's nothing to render yet — the
-            // reconcile pass keeps `isLoading` true while it publishes systems
-            // incrementally, and sitting on a spinner over an already-painted
-            // cached list is exactly the "minutes to load" symptom we're fixing.
-            isLoading && systems.isEmpty() -> Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator(
-                    color = ThemeAccentColor
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.frontend_loading_msg),
-                    color = ThemeAccentColor
-                )
-            }
+            // While the scan is in flight and no systems have been published
+            // yet, paint a skeleton grid in the same layout as the real tiles
+            // so the UI shows structure rather than an empty screen. Once any
+            // system streams in we fall through to the real grid branch.
+            isLoading && systems.isEmpty() -> SystemSkeletonGrid(
+                layout = layout,
+                placeholderCount = skeletonPlaceholderCount(scanTotal),
+                tileScale = prefs.frontendSystemTileScale,
+                modifier = Modifier.fillMaxSize()
+            )
 
             systems.isEmpty() -> Text(
                 text = stringResource(R.string.frontend_no_systems),
@@ -339,4 +342,78 @@ private fun ReorderingHighlight() {
             .fillMaxSize()
             .background(ThemeAccentColor.copy(alpha = 0.18f))
     )
+}
+
+private const val DEFAULT_SKELETON_TILE_COUNT = 8
+
+private fun skeletonPlaceholderCount(scanTotal: Int): Int =
+    if (scanTotal > 0) scanTotal else DEFAULT_SKELETON_TILE_COUNT
+
+@Composable
+private fun SystemSkeletonGrid(
+    layout: FrontendLayout,
+    placeholderCount: Int,
+    tileScale: Float,
+    modifier: Modifier = Modifier
+) {
+    val count = placeholderCount.coerceAtLeast(1)
+    val shimmerAlpha = rememberSkeletonShimmerAlpha()
+    when (layout) {
+        FrontendLayout.Grid -> LazyVerticalGrid(
+            columns = GridCells.Fixed(gridColumnsForScale(tileScale)),
+            modifier = modifier,
+            contentPadding = PaddingValues(
+                horizontal = FrontendTokens.Spacing.L,
+                vertical = FrontendTokens.Spacing.XL
+            ),
+            userScrollEnabled = false
+        ) {
+            items(count = count) {
+                SystemSkeletonTile(shimmerAlpha = shimmerAlpha)
+            }
+        }
+
+        FrontendLayout.Row -> LazyRow(
+            modifier = modifier,
+            contentPadding = PaddingValues(
+                horizontal = FrontendTokens.Spacing.L,
+                vertical = FrontendTokens.Spacing.XL
+            ),
+            horizontalArrangement = Arrangement.spacedBy(FrontendTokens.Spacing.S),
+            userScrollEnabled = false
+        ) {
+            items(count = count) {
+                Box(modifier = Modifier.width(DEFAULT_ROW_TILE_WIDTH * tileScale)) {
+                    SystemSkeletonTile(shimmerAlpha = shimmerAlpha)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemSkeletonTile(shimmerAlpha: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .padding(TILE_INSET)
+            .clip(FrontendTokens.Radius.TileSmall)
+            .background(OledCardColor.copy(alpha = shimmerAlpha))
+    )
+}
+
+@Composable
+private fun rememberSkeletonShimmerAlpha(): Float {
+    val infinite = rememberInfiniteTransition(label = "systemSkeletonShimmer")
+    val alpha by infinite.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "systemSkeletonAlpha"
+    )
+    return alpha
 }

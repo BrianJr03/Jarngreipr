@@ -187,6 +187,8 @@ private fun FrontendRouteHost(
     val route by viewModel.currentRoute.collectAsStateWithLifecycle()
     val allGames by viewModel.allGames.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val scanLoaded by viewModel.systemScanLoaded.collectAsStateWithLifecycle()
+    val scanTotal by viewModel.systemScanTotal.collectAsStateWithLifecycle()
     val esdeState by esdePrefs.state.collectAsStateWithLifecycle()
 
     AnimatedContent(
@@ -245,6 +247,8 @@ private fun FrontendRouteHost(
                 is FrontendRoute.Systems -> SystemsRoute(
                     allGames = allGames,
                     isLoading = isLoading,
+                    scanLoaded = scanLoaded,
+                    scanTotal = scanTotal,
                     hiddenGames = esdeState.hiddenGames,
                     hiddenSystems = esdeState.hiddenSystems,
                     layout = esdeState.systemLayout,
@@ -474,6 +478,8 @@ private fun GamesRoute(
 private fun SystemsRoute(
     allGames: List<GameInfo>,
     isLoading: Boolean,
+    scanLoaded: Int,
+    scanTotal: Int,
     hiddenGames: Set<String>,
     hiddenSystems: Set<String>,
     layout: FrontendLayout,
@@ -612,6 +618,7 @@ private fun SystemsRoute(
             backgroundTransparent = useWallpaper || focusBackgroundActive,
             customizations = customizations,
             reorderingSystem = reorderingSystem,
+            scanTotal = scanTotal,
             onSystemFocused = { tile ->
                 focusedSystemName = tile.systemName
                 frontendSelectionStateHolder.selectSystem(tile.systemName)
@@ -628,6 +635,16 @@ private fun SystemsRoute(
             onSystemLongPressed = { tile -> customizingSystem = tile.systemName },
             modifier = Modifier.fillMaxSize()
         )
+
+        if (isLoading && scanTotal > 0) {
+            SystemsLoadingBadge(
+                loaded = scanLoaded,
+                total = scanTotal,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            )
+        }
 
         if (hintsVisible || reorderingSystem != null) {
             FrontendAffordanceHints(
@@ -804,6 +821,24 @@ internal fun rememberAllSystemNames(allGames: List<GameInfo>): List<String> =
             .sortedBy { it.lowercase() }
             .toList()
     }
+
+@Composable
+private fun SystemsLoadingBadge(
+    loaded: Int,
+    total: Int,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = stringResource(
+            R.string.frontend_systems_loading_badge,
+            loaded.coerceAtMost(total),
+            total
+        ),
+        modifier = modifier,
+        color = ThemeAccentColor,
+        style = MaterialTheme.typography.labelMedium
+    )
+}
 
 @Composable
 private fun FrontendAffordanceHints(
