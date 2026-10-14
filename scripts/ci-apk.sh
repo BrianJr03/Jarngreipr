@@ -122,7 +122,8 @@ fi
 
 # ---------- download ----------
 
-OUT_DIR="build/ci/${RUN_ID}"
+OUT_DIR="build/ci/${RUN_ID}/${VARIANT}"
+rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 log "downloading ${VARIANT}-apk to $OUT_DIR"
 gh run download "$RUN_ID" -n "${VARIANT}-apk" -D "$OUT_DIR"
@@ -172,8 +173,11 @@ detect_app_id() {
 }
 
 install_via_adb() {
-  local -a devs
-  mapfile -t devs < <(adb devices | awk 'NR>1 && $2=="device"{print $1}')
+  local -a devs=()
+  local line
+  while IFS= read -r line; do
+    [ -n "$line" ] && devs+=("$line")
+  done < <(adb devices | awk 'NR>1 && $2=="device"{print $1}')
   local n=${#devs[@]}
   if [ "$n" -eq 0 ]; then
     return 2
