@@ -155,6 +155,7 @@ private fun PermissionWarningCard(
 ) {
     val context = LocalContext.current
     val command = stringResource(R.string.volume_controls_command, packageName)
+    val volumeControlsCopiedMessage = stringResource(R.string.volume_controls_copied)
     
     Column(
         modifier = Modifier
@@ -216,7 +217,7 @@ private fun PermissionWarningCard(
                     clipboard.setPrimaryClip(clip)
                     Toast.makeText(
                         context,
-                        context.getString(R.string.volume_controls_copied),
+                        volumeControlsCopiedMessage,
                         Toast.LENGTH_SHORT
                     ).show()
                 }

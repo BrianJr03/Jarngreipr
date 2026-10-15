@@ -29,7 +29,9 @@ import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.scraper.ScraperCoordinator
+import jr.brian.home.di.ApplicationScope
 import jr.brian.home.model.rom.PinnedRomInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -55,6 +57,7 @@ class RomSearchViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder,
     private val scraperCoordinator: ScraperCoordinator,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val cache = RomIndexCache(context)
     /**
@@ -129,10 +132,18 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value || store.allGames.value.isNotEmpty()) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
+        // Scan on the application-scoped supervisor, not viewModelScope: the
+        // activity hosting the frontend gets finish()'d by RomGameLauncher
+        // every time a game launches, which cancels viewModelScope mid-parse
+        // and used to leave the @Singleton isLoading flag stuck at true for
+        // the life of the process. `invokeOnCompletion` is used instead of
+        // try/finally so the reset runs even if the launch is cancelled
+        // before its body ever starts (synchronous .value = true above is
+        // paired with the completion handler below).
+        val job = applicationScope.launch {
             parseAndStore(rootPath, forceRescan = false)
-            store.isLoading.value = false
         }
+        job.invokeOnCompletion { store.isLoading.value = false }
     }
 
     /**
@@ -147,10 +158,16 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            val (games, systems) = parseAndStore(rootPath, forceRescan = true)
+        var games = 0
+        var systems = 0
+        val job = applicationScope.launch {
+            val result = parseAndStore(rootPath, forceRescan = true)
+            games = result.first
+            systems = result.second
+        }
+        job.invokeOnCompletion { cause ->
             store.isLoading.value = false
-            onComplete(games, systems)
+            if (cause == null) onComplete(games, systems)
         }
     }
 
@@ -173,13 +190,13 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            val count = try {
-                rebuildSystemIntoCache(systemName, rootPath)
-            } finally {
-                store.isLoading.value = false
-            }
-            onComplete(count)
+        var count = 0
+        val job = applicationScope.launch {
+            count = rebuildSystemIntoCache(systemName, rootPath)
+        }
+        job.invokeOnCompletion { cause ->
+            store.isLoading.value = false
+            if (cause == null) onComplete(count)
         }
     }
 
@@ -586,10 +603,10 @@ class RomSearchViewModel @Inject constructor(
         if (store.isLoading.value) return
         val rootPath = esdeRootPath ?: return
         store.isLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
+        val job = applicationScope.launch {
             parseAndStore(rootPath, forceRescan = false)
-            store.isLoading.value = false
         }
+        job.invokeOnCompletion { store.isLoading.value = false }
     }
 
     /**

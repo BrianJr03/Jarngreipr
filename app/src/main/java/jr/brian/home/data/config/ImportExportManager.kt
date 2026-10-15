@@ -4,6 +4,7 @@ import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
 import androidx.media3.common.util.UnstableApi
+import androidx.annotation.VisibleForTesting
 import jr.brian.home.canvas.data.CanvasTabType
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.data.AppManagers
@@ -17,6 +18,7 @@ import jr.brian.home.data.PageManagers
 import jr.brian.home.data.SnapMode
 import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
 import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
+import jr.brian.home.esde.model.ESDEPrefsState
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
@@ -313,18 +315,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendSystemTileScale = f.esdePreferencesManager.state.value.frontendSystemTileScale,
                 frontendGameTileScale = f.esdePreferencesManager.state.value.frontendGameTileScale,
                 gamelistDecorationEnabled = f.esdePreferencesManager.state.value.gamelistDecorationEnabled,
-                scraper = ScraperConfig(
-                    screenScraperEnabled = f.esdePreferencesManager.state.value.screenScraperEnabled,
-                    screenScraperDevId = f.esdePreferencesManager.state.value.screenScraperDevId,
-                    screenScraperDevPassword = f.esdePreferencesManager.state.value.screenScraperDevPassword,
-                    screenScraperUserId = f.esdePreferencesManager.state.value.screenScraperUserId,
-                    screenScraperUserPassword = f.esdePreferencesManager.state.value.screenScraperUserPassword,
-                    screenScraperMediaTypes = f.esdePreferencesManager.state.value.screenScraperMediaTypes,
-                    steamGridDbEnabled = f.esdePreferencesManager.state.value.steamGridDbEnabled,
-                    steamGridDbApiKey = f.esdePreferencesManager.state.value.steamGridDbApiKey,
-                    steamGridDbMediaTypes = f.esdePreferencesManager.state.value.steamGridDbMediaTypes,
-                    concurrencyOverride = f.esdePreferencesManager.state.value.scraperConcurrencyOverride
-                )
+                scraper = buildScraperConfigForExport(f.esdePreferencesManager.state.value)
             )
         )
     }
@@ -613,21 +604,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendGameTileScale(config.romSearch.frontendGameTileScale)
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
 
-        val scraper = config.romSearch.scraper
-        f.esdePreferencesManager.setScreenScraperEnabled(scraper.screenScraperEnabled)
-        f.esdePreferencesManager.setScreenScraperDevId(scraper.screenScraperDevId)
-        f.esdePreferencesManager.setScreenScraperDevPassword(scraper.screenScraperDevPassword)
-        f.esdePreferencesManager.setScreenScraperUserId(scraper.screenScraperUserId)
-        f.esdePreferencesManager.setScreenScraperUserPassword(scraper.screenScraperUserPassword)
-        f.esdePreferencesManager.setScreenScraperMediaTypes(
-            scraper.screenScraperMediaTypes.ifEmpty { DEFAULT_SCREENSCRAPER_MEDIA_TYPES }
-        )
-        f.esdePreferencesManager.setSteamGridDbEnabled(scraper.steamGridDbEnabled)
-        f.esdePreferencesManager.setSteamGridDbApiKey(scraper.steamGridDbApiKey)
-        f.esdePreferencesManager.setSteamGridDbMediaTypes(
-            scraper.steamGridDbMediaTypes.ifEmpty { DEFAULT_STEAMGRIDDB_MEDIA_TYPES }
-        )
-        f.esdePreferencesManager.setScraperConcurrencyOverride(scraper.concurrencyOverride)
+        applyScraperConfigImport(config.romSearch.scraper, f.esdePreferencesManager)
 
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
         f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
@@ -672,4 +649,64 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
     private object PageCountRange {
         const val MAX = 6
     }
+}
+
+/**
+ * Builds the [ScraperConfig] slice of an export. Secrets (dev ID / password,
+ * user ID / password, SteamGridDB key) are intentionally emitted as empty
+ * strings so a user who shares their config.json never leaks credentials to
+ * the recipient. The empty strings keep the on-disk schema stable so a
+ * pre-v26 build can still decode the config.
+ */
+@VisibleForTesting
+internal fun buildScraperConfigForExport(prefs: ESDEPrefsState): ScraperConfig = ScraperConfig(
+    screenScraperEnabled = prefs.screenScraperEnabled,
+    screenScraperDevId = "",
+    screenScraperDevPassword = "",
+    screenScraperUserId = "",
+    screenScraperUserPassword = "",
+    screenScraperMediaTypes = prefs.screenScraperMediaTypes,
+    steamGridDbEnabled = prefs.steamGridDbEnabled,
+    steamGridDbApiKey = "",
+    steamGridDbMediaTypes = prefs.steamGridDbMediaTypes,
+    concurrencyOverride = prefs.scraperConcurrencyOverride,
+)
+
+/**
+ * Applies a [ScraperConfig] from an import to [prefs]. Credential fields are
+ * only written when non-empty: a config produced by [buildScraperConfigForExport]
+ * carries empty strings, meaning "the exporter chose not to share this";
+ * clobbering the user's stored secrets in that case would log them out of
+ * ScreenScraper on every import. Older configs that still carry credentials
+ * import normally.
+ */
+@VisibleForTesting
+internal fun applyScraperConfigImport(
+    scraper: ScraperConfig,
+    prefs: ESDEPreferencesManager,
+) {
+    prefs.setScreenScraperEnabled(scraper.screenScraperEnabled)
+    if (scraper.screenScraperDevId.isNotEmpty()) {
+        prefs.setScreenScraperDevId(scraper.screenScraperDevId)
+    }
+    if (scraper.screenScraperDevPassword.isNotEmpty()) {
+        prefs.setScreenScraperDevPassword(scraper.screenScraperDevPassword)
+    }
+    if (scraper.screenScraperUserId.isNotEmpty()) {
+        prefs.setScreenScraperUserId(scraper.screenScraperUserId)
+    }
+    if (scraper.screenScraperUserPassword.isNotEmpty()) {
+        prefs.setScreenScraperUserPassword(scraper.screenScraperUserPassword)
+    }
+    prefs.setScreenScraperMediaTypes(
+        scraper.screenScraperMediaTypes.ifEmpty { DEFAULT_SCREENSCRAPER_MEDIA_TYPES }
+    )
+    prefs.setSteamGridDbEnabled(scraper.steamGridDbEnabled)
+    if (scraper.steamGridDbApiKey.isNotEmpty()) {
+        prefs.setSteamGridDbApiKey(scraper.steamGridDbApiKey)
+    }
+    prefs.setSteamGridDbMediaTypes(
+        scraper.steamGridDbMediaTypes.ifEmpty { DEFAULT_STEAMGRIDDB_MEDIA_TYPES }
+    )
+    prefs.setScraperConcurrencyOverride(scraper.concurrencyOverride)
 }

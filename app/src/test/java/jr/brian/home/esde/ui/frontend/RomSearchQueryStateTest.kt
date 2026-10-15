@@ -131,7 +131,8 @@ class RomSearchQueryStateTest {
         // the compute path and confirm the resulting flag set produces the
         // same filter that the inline body used to emit.
         val cases = listOf(
-            "" to allGames,
+            // Empty query: visible-only, i.e. everything except hiddenPikmin.
+            "" to listOf(mario, zelda, kirby),
             "mario" to listOf(mario),
             "@hidden" to listOf(hiddenPikmin),
             "@n64" to listOf(mario, zelda),

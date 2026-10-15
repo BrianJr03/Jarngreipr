@@ -100,11 +100,12 @@ class ScreenScraperClient @Inject constructor(
         systemeid?.let { builder.addQueryParameter("systemeid", it.toString()) }
         crc32?.let { builder.addQueryParameter("crc", it) }
         romSizeBytes?.let { builder.addQueryParameter("romtaille", it.toString()) }
-        val body = try {
-            get(builder.build().toString())
-        } catch (_: IOException) {
-            return@runOnIo emptyList<ScrapedMedia>()
-        }
+        // IOException used to be swallowed into emptyList(), which hid
+        // quota (429), auth (401) and no-match (404) responses behind a
+        // "0 found" count in the UI. Let it propagate — runOnIo's
+        // runCatching captures it as Result.failure so the coordinator
+        // can turn the message into a user-visible ScrapeError.
+        val body = get(builder.build().toString())
         parseMedias(body)
     }
 

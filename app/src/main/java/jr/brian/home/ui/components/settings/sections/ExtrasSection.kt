@@ -42,6 +42,7 @@ fun ExtrasSection(
     onWhatsNewClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val floatyModeResetDoneMessage = stringResource(R.string.floaty_mode_reset_done)
     val randomMessage = remember { OverlayInfoUtil.getRandomFact() }
     val floatyModeManager = LocalFloatyModeManager.current
     val pageTypeManager = LocalPageTypeManager.current
@@ -162,7 +163,7 @@ fun ExtrasSection(
                         floatyModeManager.reset()
                         Toast.makeText(
                             context,
-                            context.getString(R.string.floaty_mode_reset_done),
+                            floatyModeResetDoneMessage,
                             Toast.LENGTH_SHORT
                         ).show()
                     }

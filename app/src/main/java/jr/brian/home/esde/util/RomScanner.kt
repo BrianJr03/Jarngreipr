@@ -77,6 +77,13 @@ object RomScanner {
      * @param context required to walk mapped folders via [DocumentFile]. When
      *   null the mappings are skipped so unit tests that only exercise the
      *   [File] path stay valid.
+     * @param systems when non-null, restricts the walk to the named systems only.
+     *   Root subdirectories whose name is not in the set are skipped, and
+     *   mappings whose [SystemFolderMapping.systemName] is not in the set are
+     *   skipped. The whole-library walk (one-system refresh triggered by a
+     *   scrape) used to run `scans × roots` even though its caller only kept
+     *   one system's result — passing this filter is how [RomIndexBuilder]
+     *   now avoids that.
      * @return games grouped by system name. Systems with no ROMs are omitted from
      *   the map so a caller iterating it does not see empty entries.
      */
@@ -85,6 +92,7 @@ object RomScanner {
         esSystemsFile: File? = null,
         systemFolderMappings: List<SystemFolderMapping> = emptyList(),
         context: Context? = null,
+        systems: Set<String>? = null,
     ): Map<String, List<ScannedRom>> = withContext(Dispatchers.IO) {
         val roots = romsPaths.distinct().map(::File).filter { it.exists() && it.isDirectory }
         val perSystemExtensions = esSystemsFile
@@ -99,7 +107,11 @@ object RomScanner {
         // roots.
         val systemsPerRoot: List<Pair<File, File>> = roots.flatMap { root ->
             root.listFiles()
-                ?.filter { it.isDirectory && it.name !in SKIPPED_NAMES }
+                ?.filter {
+                    it.isDirectory &&
+                        it.name !in SKIPPED_NAMES &&
+                        (systems == null || it.name in systems)
+                }
                 .orEmpty()
                 .map { root to it }
         }
@@ -114,9 +126,14 @@ object RomScanner {
             }.awaitAll()
         }.flatten()
 
-        val mappedScans = if (context != null && systemFolderMappings.isNotEmpty()) {
+        val eligibleMappings = if (systems == null) {
+            systemFolderMappings
+        } else {
+            systemFolderMappings.filter { it.systemName in systems }
+        }
+        val mappedScans = if (context != null && eligibleMappings.isNotEmpty()) {
             coroutineScope {
-                systemFolderMappings.map { mapping ->
+                eligibleMappings.map { mapping ->
                     async {
                         val extensions = extensionsFor(mapping.systemName, perSystemExtensions)
                         scanMapping(context, mapping, extensions)

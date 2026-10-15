@@ -13,8 +13,15 @@ import jr.brian.home.esde.data.addRomsPath
 import jr.brian.home.esde.data.setGamelistDecorationEnabled
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.scraper.ScraperCoordinator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -53,6 +60,7 @@ class RomSearchViewModelDegradedScanTest {
     private lateinit var setupPrefs: SetupPreferences
     private lateinit var stateHolder: RomSearchStateHolder
     private lateinit var vm: RomSearchViewModel
+    private lateinit var applicationScope: CoroutineScope
 
     // Used only for SEEDING the on-disk cache before each scan. Reads after the
     // scan go through a fresh RomIndexCache(app) so they bypass this instance's
@@ -94,13 +102,20 @@ class RomSearchViewModelDegradedScanTest {
             every { it.scrapedRoot() } returns
                 File(tempFolder.root, "Jarngreipr Media").absolutePath
         }
+        applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         vm = RomSearchViewModel(
             context = app,
             esdePreferencesManager = esdePrefs,
             setupPreferences = setupPrefs,
             store = stateHolder,
             scraperCoordinator = scraperCoordinator,
+            applicationScope = applicationScope,
         )
+    }
+
+    @After
+    fun tearDown() {
+        if (::applicationScope.isInitialized) applicationScope.cancel()
     }
 
     @Test
@@ -185,6 +200,36 @@ class RomSearchViewModelDegradedScanTest {
             "psx entry must reflect the newly mounted directory, not the seeded stub",
             psxGames.single().name == "Metal Gear",
         )
+    }
+
+    @Test
+    fun `cancelling the application scope still clears isLoading`() = runBlocking {
+        // Regression for the "stuck loading forever" bug: FrontEndActivity
+        // gets finish()'d every time RomGameLauncher launches a game. The
+        // scan used to run on viewModelScope and the @Singleton isLoading
+        // flag never flipped back when the scope was cancelled. The fix
+        // moves the scan to an app-scoped supervisor and uses
+        // Job.invokeOnCompletion so the reset runs regardless of whether
+        // the launched body ever started.
+        //
+        // No mid-flight observation here: with the per-system filter, the
+        // test scan can finish before any `first { it }` subscription gets
+        // a chance to see the mid-flight true, which turned this into a
+        // flake. The invariant we actually care about — "after cancel,
+        // isLoading is false whether the body ran or not" — survives
+        // either way.
+        val root = tempFolder.newFolder("Roms").also {
+            writeRom(it, "nes/Mario.nes")
+        }
+        esdePrefs.addRomsPath(root.absolutePath)
+
+        vm.loadGames()
+        applicationScope.cancel()
+
+        kotlinx.coroutines.withTimeout(5_000) {
+            stateHolder.isLoading.first { !it }
+        }
+        assertFalse("isLoading must be reset after cancellation", stateHolder.isLoading.value)
     }
 
     private fun psxEntry(sourceRoot: String): SystemCacheEntry = SystemCacheEntry(
