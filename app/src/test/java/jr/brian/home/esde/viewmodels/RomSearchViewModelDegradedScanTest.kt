@@ -3,6 +3,8 @@ package jr.brian.home.esde.viewmodels
 import android.content.Context
 import io.mockk.every
 import io.mockk.mockk
+import jr.brian.frontend.library.migrate.LibraryMigration
+import jr.brian.home.data.LibraryGameInfoAdapter
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomIndexCache
 import jr.brian.home.esde.data.RomSearchStateHolder
@@ -18,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -102,6 +105,14 @@ class RomSearchViewModelDegradedScanTest {
             every { it.scrapedRoot() } returns
                 File(tempFolder.root, "Jarngreipr Media").absolutePath
         }
+        // These tests exercise the legacy scan path only; the Room
+        // adapter and reimport hook are stubbed so the collector in
+        // the VM's init never produces, and `syncRoomFromLegacyScan`
+        // is a cheap no-op after each scan.
+        val libraryAdapter = mockk<LibraryGameInfoAdapter>(relaxed = true).also {
+            every { it.allGameInfos } returns flowOf(emptyList())
+        }
+        val libraryMigration = mockk<LibraryMigration>(relaxed = true)
         applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         vm = RomSearchViewModel(
             context = app,
@@ -109,6 +120,8 @@ class RomSearchViewModelDegradedScanTest {
             setupPreferences = setupPrefs,
             store = stateHolder,
             scraperCoordinator = scraperCoordinator,
+            libraryAdapter = libraryAdapter,
+            libraryMigration = libraryMigration,
             applicationScope = applicationScope,
         )
     }

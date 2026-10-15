@@ -28,6 +28,8 @@ import jr.brian.home.esde.util.RomMetadataSource
 import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
+import jr.brian.frontend.library.migrate.LibraryMigration
+import jr.brian.home.data.LibraryGameInfoAdapter
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.core.model.ApplicationScope
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -57,9 +59,43 @@ class RomSearchViewModel @Inject constructor(
     private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder,
     private val scraperCoordinator: ScraperCoordinator,
+    private val libraryAdapter: LibraryGameInfoAdapter,
+    private val libraryMigration: LibraryMigration,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val cache = RomIndexCache(context)
+
+    init {
+        // Phase 2.5: legacy UI now reads games from Room. Writes still
+        // flow through the legacy scanner → rom_index/*.json; we sync
+        // Room from those files in [syncRoomFromLegacyScan] after each
+        // scan. The `isLoading` guard prevents this collector from
+        // overwriting [parseAndStore]'s intermediate progress updates
+        // while a scan is in flight.
+        applicationScope.launch {
+            libraryAdapter.allGameInfos.collect { games ->
+                if (!store.isLoading.value) {
+                    store.allGames.value = games
+                }
+            }
+        }
+    }
+
+    /**
+     * Called from each scan path's completion to re-import the
+     * just-written rom_index JSON caches into Room. The Room
+     * collector above then emits the fresh list and lands it on
+     * [store.allGames]. Kept inside `isLoading = true` so the
+     * collector doesn't publish a stale list between the scan
+     * finishing and Room being updated.
+     */
+    private suspend fun syncRoomFromLegacyScan() {
+        try {
+            libraryMigration.reimportGames()
+        } catch (e: Exception) {
+            Log.w(TAG, "Room reimport after legacy scan failed", e)
+        }
+    }
     /**
      * Snapshot of the last known set of roots + decoration flag. When any of
      * these change we hard-invalidate the cache — a per-system stamp check is
@@ -143,7 +179,16 @@ class RomSearchViewModel @Inject constructor(
         val job = applicationScope.launch {
             parseAndStore(rootPath, forceRescan = false)
         }
-        job.invokeOnCompletion { store.isLoading.value = false }
+        job.invokeOnCompletion { cause ->
+            if (cause != null) {
+                store.isLoading.value = false
+                return@invokeOnCompletion
+            }
+            applicationScope.launch {
+                syncRoomFromLegacyScan()
+                store.isLoading.value = false
+            }
+        }
     }
 
     /**
@@ -166,8 +211,15 @@ class RomSearchViewModel @Inject constructor(
             systems = result.second
         }
         job.invokeOnCompletion { cause ->
-            store.isLoading.value = false
-            if (cause == null) onComplete(games, systems)
+            if (cause != null) {
+                store.isLoading.value = false
+                return@invokeOnCompletion
+            }
+            applicationScope.launch {
+                syncRoomFromLegacyScan()
+                store.isLoading.value = false
+                onComplete(games, systems)
+            }
         }
     }
 
@@ -195,8 +247,15 @@ class RomSearchViewModel @Inject constructor(
             count = rebuildSystemIntoCache(systemName, rootPath)
         }
         job.invokeOnCompletion { cause ->
-            store.isLoading.value = false
-            if (cause == null) onComplete(count)
+            if (cause != null) {
+                store.isLoading.value = false
+                return@invokeOnCompletion
+            }
+            applicationScope.launch {
+                syncRoomFromLegacyScan()
+                store.isLoading.value = false
+                onComplete(count)
+            }
         }
     }
 

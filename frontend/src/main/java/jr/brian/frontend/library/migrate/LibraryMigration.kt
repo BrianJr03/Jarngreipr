@@ -79,6 +79,17 @@ class LibraryMigration @Inject constructor(
         migrationPrefs.edit().remove(MIGRATION_VERSION_KEY).apply()
     }
 
+    /**
+     * Re-run just the game import step. The legacy scanner writes to
+     * `rom_index/<system>.json` on each refresh; this syncs those
+     * updates into Room so the UI (which now reads Room) sees them.
+     * Idempotent — [RomIndexImporter] upserts by (sourceId, systemId,
+     * relativePath).
+     */
+    suspend fun reimportGames() = withContext(Dispatchers.IO) {
+        romIndexImporter.run()
+    }
+
     private suspend fun runMigration() = withContext(Dispatchers.IO) {
         Log.i(TAG, "Running library migration v$CURRENT_VERSION")
         upsertCatalogSystems()
