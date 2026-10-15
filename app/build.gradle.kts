@@ -148,6 +148,13 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // WorkManager + Hilt — Phase 4 ScrapeWorker is defined in
+    // :frontend but WorkManager's Configuration.Provider must be on
+    // the Application, which lives in :app.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     // Color Picker
     implementation(libs.colorpicker.compose)
 
