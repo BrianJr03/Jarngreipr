@@ -15,4 +15,5 @@ object FrontendDestinations {
     fun detail(gameId: Long) = "detail/$gameId"
 
     const val Search = "search"
+    const val Settings = "settings"
 }

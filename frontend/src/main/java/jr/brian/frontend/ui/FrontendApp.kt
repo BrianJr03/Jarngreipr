@@ -10,6 +10,7 @@ import jr.brian.frontend.ui.games.GameDetailScreen
 import jr.brian.frontend.ui.games.GamesScreen
 import jr.brian.frontend.ui.home.HomeScreen
 import jr.brian.frontend.ui.search.SearchScreen
+import jr.brian.frontend.ui.settings.SettingsScreen
 import jr.brian.frontend.ui.theme.FrontendTheme
 
 /**
@@ -34,7 +35,7 @@ fun FrontendApp() {
                     onSystemSelected = { nav.navigate(FrontendDestinations.games(it.id)) },
                     onGameSelected = { nav.navigate(FrontendDestinations.detail(it.id)) },
                     onSearch = { nav.navigate(FrontendDestinations.Search) },
-                    onSettings = { /* Phase 3f */ },
+                    onSettings = { nav.navigate(FrontendDestinations.Settings) },
                 )
             }
             composable(
@@ -60,6 +61,9 @@ fun FrontendApp() {
                     onGameSelected = { nav.navigate(FrontendDestinations.detail(it.id)) },
                     onBack = { nav.popBackStack() },
                 )
+            }
+            composable(FrontendDestinations.Settings) {
+                SettingsScreen(onBack = { nav.popBackStack() })
             }
         }
     }
