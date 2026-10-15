@@ -15,6 +15,17 @@ fun gameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 fun hiddenGameKey(game: GameInfo) = "${game.systemName}/${game.path}"
 
 /**
+ * Lowercase + canonicalise fancy dashes to ASCII '-'. Lets the SAF
+ * fallback walk match files whose names drifted from the scanner's
+ * record in either direction.
+ */
+internal fun normalizeName(name: String): String {
+    val sb = StringBuilder(name.length)
+    for (ch in name) sb.append(if (ch == '–' || ch == '—' || ch == '−') '-' else ch)
+    return sb.toString().lowercase()
+}
+
+/**
  * Builds the ordered list of media roots the resolvers should search.
  * The primary (ES-DE) root always comes first; a non-blank secondary
  * (e.g. RetroHrai!) is appended when enabled. A non-blank tertiary
