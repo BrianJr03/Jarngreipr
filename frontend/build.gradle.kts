@@ -61,6 +61,10 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // kotlinx.serialization runtime — SystemDef is @Serializable so the
+    // SystemCatalog can decode assets/systems/*.json at load time.
+    implementation(libs.kotlinx.serialization.json)
+
     // Room — library engine lives here per plan §3.2.
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -72,4 +76,5 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.mockk)
 }
