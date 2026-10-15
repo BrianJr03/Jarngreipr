@@ -43,6 +43,7 @@ class LibraryMigration @Inject constructor(
     private val sourceDao: SourceDao,
     private val systemDao: SystemDao,
     private val catalog: SystemCatalog,
+    private val romIndexImporter: RomIndexImporter,
 ) {
     private val migrationPrefs by lazy {
         context.getSharedPreferences(MIGRATION_PREFS, Context.MODE_PRIVATE)
@@ -81,6 +82,7 @@ class LibraryMigration @Inject constructor(
         Log.i(TAG, "Running library migration v$CURRENT_VERSION")
         upsertCatalogSystems()
         importSources()
+        romIndexImporter.run()
         Log.i(TAG, "Library migration complete")
     }
 
@@ -179,6 +181,6 @@ class LibraryMigration @Inject constructor(
          * who ran migration v1 pick up v2's work on next launch
          * without re-doing v1.
          */
-        const val CURRENT_VERSION = 1
+        const val CURRENT_VERSION = 2
     }
 }
