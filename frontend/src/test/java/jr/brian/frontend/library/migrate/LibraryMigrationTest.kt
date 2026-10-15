@@ -75,13 +75,22 @@ class LibraryMigrationTest {
             ),
             scope = scope,
         )
+        val legacyPrefs = EsdeLegacyPrefs(app)
         migration = LibraryMigration(
             context = app,
-            legacyPrefs = EsdeLegacyPrefs(app),
+            legacyPrefs = legacyPrefs,
             repository = repo,
             sourceDao = db.sourceDao(),
             systemDao = db.systemDao(),
             catalog = catalog,
+            romIndexImporter = RomIndexImporter(
+                context = app,
+                legacyPrefs = legacyPrefs,
+                sourceDao = db.sourceDao(),
+                gameDao = db.gameDao(),
+                mediaDao = db.mediaDao(),
+                catalog = catalog,
+            ),
         )
     }
 
