@@ -90,6 +90,17 @@ class LibraryMigration @Inject constructor(
         romIndexImporter.run()
     }
 
+    /**
+     * Decorate scanned games with ES-DE gamelist.xml metadata.
+     * Called after a Phase 2 scanner run — the scanner itself only
+     * writes raw file metadata (name, path, size), so this is what
+     * fills in developer / publisher / rating / per-game favorites
+     * from the ES-DE XML.
+     */
+    suspend fun reimportGamelists() = withContext(Dispatchers.IO) {
+        importGamelists()
+    }
+
     private suspend fun runMigration() = withContext(Dispatchers.IO) {
         Log.i(TAG, "Running library migration v$CURRENT_VERSION")
         upsertCatalogSystems()
