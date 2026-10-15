@@ -187,4 +187,76 @@ class HomeLaunchPlannerTest {
             plan
         )
     }
+
+    // ─────────── Phase 5: ScreenAssignment-aware tests ───────────
+
+    @Test
+    fun `FRONTEND_ON_BOTTOM swaps display ids on a TOP target`() {
+        val plan = planHomeLaunches(
+            bottomDisplayId = bottomId,
+            target = HomeTarget.TOP,
+            mainScreen = MainScreen.BOTTOM,
+            frontendEnabled = true,
+            assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
+        )
+        // "TOP" now resolves to the external display because MAIN
+        // moved onto it when the frontend went to the primary.
+        assertEquals(
+            listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomId)),
+            plan,
+        )
+    }
+
+    @Test
+    fun `FRONTEND_ON_BOTTOM swaps display ids on a BOTTOM target`() {
+        val plan = planHomeLaunches(
+            bottomDisplayId = bottomId,
+            target = HomeTarget.BOTTOM,
+            mainScreen = MainScreen.BOTTOM,
+            frontendEnabled = true,
+            assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
+        )
+        assertEquals(
+            listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID)),
+            plan,
+        )
+    }
+
+    @Test
+    fun `FRONTEND_ON_BOTTOM with BOTH swaps both activities' display ids`() {
+        val plan = planHomeLaunches(
+            bottomDisplayId = bottomId,
+            target = HomeTarget.BOTH,
+            mainScreen = MainScreen.BOTTOM,
+            frontendEnabled = true,
+            assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
+        )
+        // With FRONTEND_ON_BOTTOM: user's "top" is the external
+        // display, "bottom" is primary. MainScreen=BOTTOM pins
+        // MainActivity on bottom (primary); frontend goes on top
+        // (external, bottomId).
+        assertEquals(
+            listOf(
+                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomId),
+                HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
+            ),
+            plan,
+        )
+    }
+
+    @Test
+    fun `launcher plan with FRONTEND_ON_BOTTOM swaps MainActivity to top and FrontEndActivity to bottom`() {
+        val plan = planLauncherHomeLaunches(
+            bottomDisplayId = bottomId,
+            frontendEnabled = true,
+            assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
+        )
+        assertEquals(
+            listOf(
+                HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomId),
+            ),
+            plan,
+        )
+    }
 }

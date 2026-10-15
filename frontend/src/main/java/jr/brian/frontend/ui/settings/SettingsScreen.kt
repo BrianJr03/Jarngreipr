@@ -46,6 +46,7 @@ fun SettingsScreen(
         onScrapeAll = {
             jr.brian.frontend.scrape.ScrapeWorker.enqueueAll(context.applicationContext)
         },
+        onSwapScreens = viewModel::swapScreens,
         onBack = onBack,
     )
 }
@@ -57,6 +58,7 @@ fun SettingsContent(
     onToggleShowHidden: (Boolean) -> Unit,
     onToggleGamelistDecoration: (Boolean) -> Unit,
     onScrapeAll: () -> Unit,
+    onSwapScreens: () -> Unit,
     onBack: () -> Unit,
 ) {
     Surface(
@@ -108,10 +110,19 @@ fun SettingsContent(
                         onClick = onScrapeAll,
                     )
                 }
-                item { SectionHeader("Appearance · Input · Dual-screen") }
+                item { SectionHeader("Dual-screen") }
+                item {
+                    ActionRow(
+                        label = "Swap screens",
+                        description = "Move the frontend to the other display and the launcher " +
+                            "to this one. Persisted — survives reboots and Home presses.",
+                        onClick = onSwapScreens,
+                    )
+                }
+                item { SectionHeader("Appearance · Input") }
                 item {
                     PlaceholderRow(
-                        label = "Theme, focus animation, screen swap",
+                        label = "Theme, focus animation",
                         description = "Settings for these groups land in later commits.",
                     )
                 }

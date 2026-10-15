@@ -3,6 +3,7 @@ package jr.brian.frontend.ui.settings
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +25,18 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @param:ApplicationContext context: Context,
+    private val swapController: ScreenSwapController,
 ) : ViewModel() {
 
     private val prefs = context.getSharedPreferences("frontend_settings_prefs", Context.MODE_PRIVATE)
 
     private val _state = MutableStateFlow(load())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
+
+    /** Fire a screen-swap. Scoped to the view model so it survives recomposition. */
+    fun swapScreens() {
+        swapController.requestSwap(viewModelScope)
+    }
 
     fun setFavoritesOnTop(v: Boolean) {
         _state.value = _state.value.copy(favoritesOnTop = v)
