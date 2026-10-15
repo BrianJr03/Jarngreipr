@@ -4,6 +4,7 @@ import android.content.Context
 import io.mockk.every
 import io.mockk.mockk
 import jr.brian.frontend.library.migrate.LibraryMigration
+import jr.brian.home.data.FavoritesGateway
 import jr.brian.home.data.LibraryGameInfoAdapter
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomIndexCache
@@ -113,6 +114,7 @@ class RomSearchViewModelDegradedScanTest {
             every { it.allGameInfos } returns flowOf(emptyList())
         }
         val libraryMigration = mockk<LibraryMigration>(relaxed = true)
+        val favoritesGateway = mockk<FavoritesGateway>(relaxed = true)
         applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         vm = RomSearchViewModel(
             context = app,
@@ -122,6 +124,7 @@ class RomSearchViewModelDegradedScanTest {
             scraperCoordinator = scraperCoordinator,
             libraryAdapter = libraryAdapter,
             libraryMigration = libraryMigration,
+            favoritesGateway = favoritesGateway,
             applicationScope = applicationScope,
         )
     }

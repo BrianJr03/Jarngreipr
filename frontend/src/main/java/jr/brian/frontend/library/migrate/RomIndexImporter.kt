@@ -104,10 +104,16 @@ class RomIndexImporter @Inject constructor(
                 publisher = game.publisher,
                 genre = game.genre,
                 players = game.players,
-                isFavorite = game.isFavorite,
-                playCount = game.playCount,
-                playTimeMinutes = game.playTimeMinutes,
-                lastPlayed = legacyLastPlayedToMillis(game.lastPlayed),
+                // Preserve user state that only exists in Room. The legacy
+                // rom_index JSON doesn't track Jarngreipr-side favorites, so
+                // a reimport that overwrites with the legacy value would clear
+                // a star the user set via the detail screen. OR-merging keeps
+                // ES-DE's own gamelist.xml favorite (which does round-trip
+                // through legacy's scanner) alongside ours.
+                isFavorite = existing?.isFavorite == true || game.isFavorite,
+                playCount = maxOf(existing?.playCount ?: 0, game.playCount),
+                playTimeMinutes = maxOf(existing?.playTimeMinutes ?: 0, game.playTimeMinutes),
+                lastPlayed = legacyLastPlayedToMillis(game.lastPlayed) ?: existing?.lastPlayed,
                 emulatorPackage = game.emulatorPackage,
                 launchCommand = game.launchCommand,
             )

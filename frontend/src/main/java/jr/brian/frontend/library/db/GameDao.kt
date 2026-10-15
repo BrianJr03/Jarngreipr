@@ -49,6 +49,12 @@ interface GameDao {
     @Update
     suspend fun update(game: GameEntity)
 
+    @Query("UPDATE games SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun setFavorite(id: Long, isFavorite: Boolean)
+
+    @Query("SELECT * FROM games WHERE absolutePath = :absolutePath LIMIT 1")
+    suspend fun findByAbsolutePath(absolutePath: String): GameEntity?
+
     @Delete
     suspend fun delete(game: GameEntity)
 
