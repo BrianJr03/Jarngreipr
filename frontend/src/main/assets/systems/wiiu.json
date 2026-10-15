@@ -1,0 +1,8 @@
+{
+  "id": "wiiu",
+  "displayName": "Nintendo Wii U",
+  "folderAliases": ["nintendo-wiiu"],
+  "extensions": ["wud", "wux", "wua", "rpx", "iso"],
+  "screenScraperSystemId": 18,
+  "retroArchSystemId": null
+}

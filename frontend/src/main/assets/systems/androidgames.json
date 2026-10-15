@@ -1,0 +1,8 @@
+{
+  "id": "androidgames",
+  "displayName": "Android",
+  "folderAliases": ["android", "androidapps"],
+  "extensions": ["apk", "app"],
+  "screenScraperSystemId": null,
+  "retroArchSystemId": null
+}

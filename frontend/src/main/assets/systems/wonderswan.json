@@ -1,0 +1,8 @@
+{
+  "id": "wonderswan",
+  "displayName": "Bandai WonderSwan",
+  "folderAliases": ["ws", "wsc", "wonderswancolor", "bandai-ws"],
+  "extensions": ["ws", "wsc", "zip", "7z"],
+  "screenScraperSystemId": 45,
+  "retroArchSystemId": null
+}

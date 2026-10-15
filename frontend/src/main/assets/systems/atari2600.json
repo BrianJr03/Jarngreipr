@@ -1,0 +1,8 @@
+{
+  "id": "atari2600",
+  "displayName": "Atari 2600",
+  "folderAliases": ["2600", "atari-2600"],
+  "extensions": ["a26", "bin", "rom", "zip", "7z"],
+  "screenScraperSystemId": 26,
+  "retroArchSystemId": "Atari2600"
+}

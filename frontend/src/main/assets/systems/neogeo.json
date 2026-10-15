@@ -1,0 +1,8 @@
+{
+  "id": "neogeo",
+  "displayName": "SNK Neo Geo",
+  "folderAliases": ["neo-geo", "snk-neogeo"],
+  "extensions": ["zip", "chd", "7z"],
+  "screenScraperSystemId": 142,
+  "retroArchSystemId": null
+}
