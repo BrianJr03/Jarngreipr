@@ -38,6 +38,9 @@ class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.P
     @Inject
     lateinit var screenSwapListener: jr.brian.home.data.ScreenSwapListener
 
+    @Inject
+    lateinit var sourcesSyncService: jr.brian.home.data.SourcesSyncService
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(hiltWorkerFactory)
@@ -52,6 +55,7 @@ class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.P
         // assignment flip + re-route. Kept alive for the lifetime of
         // the Application.
         screenSwapListener.start()
+        sourcesSyncService.start()
     }
 
     /**
