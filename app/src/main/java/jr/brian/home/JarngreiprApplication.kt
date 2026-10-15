@@ -35,6 +35,9 @@ class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.P
     @Inject
     lateinit var hiltWorkerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var screenSwapListener: jr.brian.home.data.ScreenSwapListener
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(hiltWorkerFactory)
@@ -45,6 +48,10 @@ class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.P
         CrashLogger.initialize(this)
         restoreHomeInterceptionKeepAlive()
         prewarmSingletons()
+        // Phase 5: wire FrontendCommand.SwapScreens → persisted
+        // assignment flip + re-route. Kept alive for the lifetime of
+        // the Application.
+        screenSwapListener.start()
     }
 
     /**

@@ -44,26 +44,47 @@ fun planHomeLaunches(
     target: HomeTarget,
     mainScreen: MainScreen,
     frontendEnabled: Boolean,
+    assignment: ScreenAssignment = ScreenAssignment.DEFAULT,
 ): List<HomeLaunch> {
     if (bottomDisplayId == null) {
         return listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
     }
     val effectiveTarget =
         if (target == HomeTarget.BOTH && !frontendEnabled) HomeTarget.BOTTOM else target
+    val (topId, bottomId) = displayIdsFor(bottomDisplayId, assignment)
     return when (effectiveTarget) {
-        HomeTarget.TOP -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID))
-        HomeTarget.BOTTOM -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId))
+        HomeTarget.TOP -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, topId))
+        HomeTarget.BOTTOM -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomId))
         HomeTarget.BOTH -> when (mainScreen) {
             MainScreen.TOP -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomDisplayId),
-                HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomId),
+                HomeLaunch(HomeLaunchActivity.MAIN, topId),
             )
             MainScreen.BOTTOM -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
-                HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, topId),
+                HomeLaunch(HomeLaunchActivity.MAIN, bottomId),
             )
         }
     }
+}
+
+/**
+ * Resolves which concrete display id MainActivity and the frontend
+ * each live on, given the user's [assignment]. The naming here keeps
+ * the planner readable — `topId` is wherever "top" means to the user,
+ * `bottomId` is "bottom" — rather than literal hardware primary/secondary.
+ *
+ * - [ScreenAssignment.FRONTEND_ON_TOP] (default): main gets primary,
+ *   frontend gets the external display.
+ * - [ScreenAssignment.FRONTEND_ON_BOTTOM]: main gets the external
+ *   display, frontend gets primary.
+ */
+private fun displayIdsFor(
+    externalDisplayId: Int,
+    assignment: ScreenAssignment,
+): Pair<Int, Int> = when (assignment) {
+    ScreenAssignment.FRONTEND_ON_TOP -> PRIMARY_DISPLAY_ID to externalDisplayId
+    ScreenAssignment.FRONTEND_ON_BOTTOM -> externalDisplayId to PRIMARY_DISPLAY_ID
 }
 
 /**
@@ -90,12 +111,19 @@ fun planHomeLaunches(
 fun planLauncherHomeLaunches(
     bottomDisplayId: Int?,
     frontendEnabled: Boolean,
+    assignment: ScreenAssignment = ScreenAssignment.DEFAULT,
 ): List<HomeLaunch> {
     if (bottomDisplayId == null || !frontendEnabled) {
         return listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
     }
-    return listOf(
-        HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
-        HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
-    )
+    return when (assignment) {
+        ScreenAssignment.FRONTEND_ON_TOP -> listOf(
+            HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
+            HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
+        )
+        ScreenAssignment.FRONTEND_ON_BOTTOM -> listOf(
+            HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
+            HomeLaunch(HomeLaunchActivity.FRONTEND, bottomDisplayId),
+        )
+    }
 }
