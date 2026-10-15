@@ -486,7 +486,10 @@ fun ESDESettingsContent(
                     // immediately. Callers watching allGames pick up the new
                     // list without a restart.
                     romSearchViewModel.refreshGames()
-                }
+                },
+                onScrapeAll = {
+                    jr.brian.frontend.scrape.ScrapeWorker.enqueueAll(context.applicationContext)
+                },
             )
         }
 
@@ -762,6 +765,7 @@ internal fun WallpaperToggleTargetChip(
 private fun LibrarySectionContent(
     gamelistDecorationEnabled: Boolean,
     onGamelistDecorationChange: (Boolean) -> Unit,
+    onScrapeAll: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ToggleSetting(
@@ -769,6 +773,13 @@ private fun LibrarySectionContent(
             description = stringResource(R.string.esde_settings_gamelist_decoration_description),
             checked = gamelistDecorationEnabled,
             onCheckedChange = onGamelistDecorationChange,
+        )
+        ToggleSetting(
+            title = stringResource(R.string.scrape_all_title),
+            description = stringResource(R.string.scrape_all_description),
+            checked = false,
+            showToggle = false,
+            onClick = onScrapeAll,
         )
     }
 }
