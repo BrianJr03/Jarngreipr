@@ -37,20 +37,10 @@ import jr.brian.home.data.database.CustomIconDao
 import jr.brian.home.data.database.RssFeedDao
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import kotlinx.coroutines.CoroutineScope
+import jr.brian.core.model.ApplicationScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-/**
- * Application-scoped supervisor coroutine scope. Use for background work that
- * must survive the activity that triggered it finishing — most notably the
- * library scan, which is kicked off from FrontEndActivity but has to keep
- * running after RomGameLauncher.activity.finish() launches a game.
- */
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
