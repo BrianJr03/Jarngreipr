@@ -37,11 +37,15 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     SettingsContent(
         state = state,
         onToggleFavoritesOnTop = viewModel::setFavoritesOnTop,
         onToggleShowHidden = viewModel::setShowHidden,
         onToggleGamelistDecoration = viewModel::setGamelistDecoration,
+        onScrapeAll = {
+            jr.brian.frontend.scrape.ScrapeWorker.enqueueAll(context.applicationContext)
+        },
         onBack = onBack,
     )
 }
@@ -52,6 +56,7 @@ fun SettingsContent(
     onToggleFavoritesOnTop: (Boolean) -> Unit,
     onToggleShowHidden: (Boolean) -> Unit,
     onToggleGamelistDecoration: (Boolean) -> Unit,
+    onScrapeAll: () -> Unit,
     onBack: () -> Unit,
 ) {
     Surface(
@@ -95,11 +100,19 @@ fun SettingsContent(
                         onChange = onToggleGamelistDecoration,
                     )
                 }
+                item {
+                    ActionRow(
+                        label = "Scrape all now",
+                        description = "Kicks a background scrape of every scanned game. " +
+                            "You can keep using the launcher while it runs.",
+                        onClick = onScrapeAll,
+                    )
+                }
                 item { SectionHeader("Appearance · Input · Dual-screen") }
                 item {
                     PlaceholderRow(
                         label = "Theme, focus animation, screen swap",
-                        description = "Settings for these groups land in later Phase 3 commits.",
+                        description = "Settings for these groups land in later commits.",
                     )
                 }
             }
@@ -134,6 +147,25 @@ private fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
                 checked = checked,
                 onCheckedChange = onChange,
                 modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionRow(label: String, description: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().focusable(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(10.dp),
+        onClick = onClick,
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(label, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                description,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
