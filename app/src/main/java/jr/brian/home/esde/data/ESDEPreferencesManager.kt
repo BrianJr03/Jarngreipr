@@ -139,6 +139,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_SYSTEM_LAYOUT
@@ -620,8 +622,15 @@ class ESDEPreferencesManager(context: Context) {
             secondarySystemLayout = prefs.getString(KEY_SECONDARY_SYSTEM_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
                 ?: FrontendLayout.Grid,
-            gameLayout = prefs.getString(KEY_GAME_LAYOUT, null)
+            primaryGameLayout = prefs.getString(KEY_PRIMARY_GAME_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: prefs.getString(KEY_GAME_LAYOUT, null)
+                    ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid,
+            secondaryGameLayout = prefs.getString(KEY_SECONDARY_GAME_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: prefs.getString(KEY_GAME_LAYOUT, null)
+                    ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
                 ?: FrontendLayout.Grid,
             systemCustomizations = systemCustomizations,
             systemOrder = systemOrder,

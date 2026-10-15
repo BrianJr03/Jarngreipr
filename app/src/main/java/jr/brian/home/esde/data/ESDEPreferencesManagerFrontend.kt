@@ -25,6 +25,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_SYSTEM_TILE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_MS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_SYSTEM_LAYOUT
@@ -60,9 +62,14 @@ fun ESDEPreferencesManager.setSecondarySystemLayout(layout: FrontendLayout) {
     prefs.edit { putString(KEY_SECONDARY_SYSTEM_LAYOUT, layout.name) }
 }
 
-fun ESDEPreferencesManager.setGameLayout(layout: FrontendLayout) {
-    _state.value = _state.value.copy(gameLayout = layout)
-    prefs.edit { putString(KEY_GAME_LAYOUT, layout.name) }
+fun ESDEPreferencesManager.setPrimaryGameLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(primaryGameLayout = layout)
+    prefs.edit { putString(KEY_PRIMARY_GAME_LAYOUT, layout.name) }
+}
+
+fun ESDEPreferencesManager.setSecondaryGameLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(secondaryGameLayout = layout)
+    prefs.edit { putString(KEY_SECONDARY_GAME_LAYOUT, layout.name) }
 }
 
 fun ESDEPreferencesManager.setSystemCustomization(systemName: String, customization: SystemCustomization) {

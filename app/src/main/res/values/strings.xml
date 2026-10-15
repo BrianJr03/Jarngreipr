@@ -1309,6 +1309,10 @@
     <string name="frontend_layout_primary_systems_row_description">Off uses the grid. Only applies when the frontend is on the top display.</string>
     <string name="frontend_layout_secondary_systems_row_title">Bottom screen: use row layout for systems</string>
     <string name="frontend_layout_secondary_systems_row_description">Off uses the grid. Only applies when the frontend is on the bottom display.</string>
+    <string name="frontend_layout_primary_games_row_title">Top screen: use row layout for games</string>
+    <string name="frontend_layout_primary_games_row_description">Off uses the grid. Only applies when the frontend is on the top display.</string>
+    <string name="frontend_layout_secondary_games_row_title">Bottom screen: use row layout for games</string>
+    <string name="frontend_layout_secondary_games_row_description">Off uses the grid. Only applies when the frontend is on the bottom display.</string>
     <string name="scrape_all_title">Scrape all now</string>
     <string name="scrape_all_description">Fetch artwork and metadata for every game in your library. Runs in the background with a notification; keep using the launcher while it works.</string>
     <string name="rom_detail_favorite">Favorite</string>
@@ -1914,16 +1918,20 @@
 
     <!-- Home press gestures info card -->
     <string name="home_gestures_card_title">Home Press Gestures</string>
-    <string name="home_gestures_card_description">Press the hardware Home button in different ways to pick which display wakes.</string>
+    <string name="home_gestures_card_description">Press the hardware Home button in different ways to pick which app takes focus.</string>
     <string name="home_gestures_card_disabled_interception_off">Enable Home Button Interception above to use these gestures.</string>
-    <string name="home_gestures_card_disabled_no_external">No external display connected — all gestures route to the primary display.</string>
-    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use the double-press and long-press gestures — otherwise double press does nothing and long press falls back to the bottom screen.</string>
+    <string name="home_gestures_card_disabled_no_external">No external display connected, all gestures route to the active display.</string>
+    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use the double-press and long-press gestures. Otherwise double press does nothing and long press just focuses the launcher.</string>
     <string name="home_gestures_single_press_label">Press once</string>
-    <string name="home_gestures_single_press_detail">Launcher on the bottom screen</string>
+    <string name="home_gestures_single_press_detail">Focus the launcher</string>
     <string name="home_gestures_double_press_label">Double press</string>
-    <string name="home_gestures_double_press_detail">Frontend on the top screen</string>
+    <string name="home_gestures_double_press_detail">Focus the frontend</string>
     <string name="home_gestures_long_press_label">Long press</string>
-    <string name="home_gestures_long_press_detail">Launcher on bottom + Frontend on top</string>
+    <string name="home_gestures_long_press_detail">Open both apps on their assigned displays</string>
+
+    <!-- Focus Lock (Thor dual-screen gamepad routing) -->
+    <string name="focus_lock_auto_manage_title">Auto-manage Focus Lock</string>
+    <string name="focus_lock_auto_manage_description">Automatically pin AYN\'s Focus Lock to the display you\'re on. Follows the frontend after a screen swap, follows apps you launch, and pins to the top during games.</string>
     <string name="home_main_screen_title">Main Screen</string>
     <string name="home_main_screen_description">Which screen the launcher occupies (and takes focus) in Both mode.</string>
     <string name="home_main_screen_option_top">Top</string>

@@ -28,6 +28,7 @@ import jr.brian.home.esde.ui.components.ToggleSetting
 import jr.brian.home.ui.components.InfoBox
 import jr.brian.home.ui.components.dock.PageVisibilityOption
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
+import jr.brian.home.ui.components.settings.FocusLockSettingItem
 import jr.brian.home.ui.components.settings.HomeGesturesInfoCard
 import jr.brian.home.ui.components.settings.HomeInterceptionSettingItem
 import jr.brian.home.ui.components.settings.SettingItem
@@ -68,6 +69,8 @@ fun ExtrasSection(
             HomeInterceptionSettingItem()
 
             HomeGesturesInfoCard()
+
+            FocusLockSettingItem()
 
             SettingItem(
                 title = stringResource(R.string.settings_whats_new_title),

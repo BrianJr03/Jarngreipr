@@ -390,4 +390,5 @@ private fun openResults(
     val options = ActivityOptions.makeBasic()
     options.launchDisplayId = PRIMARY_DISPLAY_ID
     context.startActivity(intent, options.toBundle())
+    jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(context, PRIMARY_DISPLAY_ID)
 }

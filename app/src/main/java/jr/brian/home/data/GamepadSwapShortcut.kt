@@ -6,9 +6,14 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import jr.brian.core.model.ApplicationScope
 import jr.brian.core.model.SwapCoordinator
+import jr.brian.home.ui.components.SWAP_FADE_MS
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import jr.brian.home.util.ThorDetection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * L3 or R3 (either thumbstick click) fires a screen swap on Thor
@@ -64,11 +69,20 @@ object GamepadSwapShortcut {
             .fromApplication(context.applicationContext, SwapShortcutEntryPoint::class.java)
         val store = entryPoint.screenAssignmentStore()
         val coordinator = entryPoint.swapCoordinator()
+        val scope = entryPoint.applicationScope()
         val next = store.assignment.flipped()
+        // Start the Leaving fade first, then wait a full fade duration
+        // before flipping the pref + routing. That means the layout
+        // change happens while both activities are at alpha 0, so the
+        // user never sees the row ↔ grid transition in-frame.
         coordinator.beginLeaving(next)
-        store.setAssignment(next)
-        routeHomeFromLauncher(context, frontendEnabled = true)
-        coordinator.markArriving()
+        scope.launch {
+            delay(SWAP_FADE_MS.toLong())
+            store.setAssignment(next)
+            ScreenFocusLockWriter.syncToAssignment(context, next)
+            routeHomeFromLauncher(context, frontendEnabled = true)
+            coordinator.markArriving()
+        }
     }
 
     @EntryPoint
@@ -76,5 +90,6 @@ object GamepadSwapShortcut {
     internal interface SwapShortcutEntryPoint {
         fun screenAssignmentStore(): ScreenAssignmentStore
         fun swapCoordinator(): SwapCoordinator
+        @ApplicationScope fun applicationScope(): CoroutineScope
     }
 }

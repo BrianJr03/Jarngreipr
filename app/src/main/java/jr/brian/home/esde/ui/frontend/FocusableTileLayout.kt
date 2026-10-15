@@ -304,19 +304,12 @@ private fun <T> RowLayout(
     var isRapidScroll by remember { mutableStateOf(false) }
 
     // Secondary display → each tile fills the viewport (one card at a
-    // time). On primary we keep the carousel with peek. LocalConfiguration
-    // is the recomposition trigger — a screen swap fires
-    // onConfigurationChanged (density / screenWidthDp differ between
-    // Thor's two displays) which invalidates the keyed remember, so the
-    // layout flips the same frame the activity reattaches to its new
-    // display instead of waiting for scroll to force a redraw.
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val composeView = androidx.compose.ui.platform.LocalView.current
-    val renderDisplayId = remember(configuration) {
-        composeView.display?.displayId
-            ?: jr.brian.core.model.PRIMARY_DISPLAY_ID
-    }
-    val onPrimaryDisplay = renderDisplayId == jr.brian.core.model.PRIMARY_DISPLAY_ID
+    // time). On primary we keep the carousel with peek. Driven by the
+    // swap coordinator's effective assignment rather than the view's
+    // attached display, so this spacing change happens under the fade-out
+    // instead of mid fade-in on the arriving activity.
+    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
+    val onPrimaryDisplay = assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP
 
     // Centre the focused tile horizontally on every focus change. Also covers the seed:
     // initialVirtualIndex change triggers this once on first composition.
@@ -363,12 +356,17 @@ private fun <T> RowLayout(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        // Secondary display: force full-viewport tiles so each system
-        // occupies the whole screen. Scrolling the row is then a clean
-        // page-at-a-time swipe between systems — no clipped edges, no
-        // centring math, no peek distraction on the smaller display.
-        val effectiveItemWidth = if (onPrimaryDisplay) rowItemWidth else maxWidth
-        val sidePadding = ((maxWidth - effectiveItemWidth) / 2).coerceAtLeast(0.dp)
+        val sidePadding = ((maxWidth - rowItemWidth) / 2).coerceAtLeast(0.dp)
+        // Secondary display: keep tiles their normal size (rowItemWidth
+        // stays what the caller passed) but inflate the spacing so the
+        // neighbours fall outside the viewport. With tile width T and
+        // viewport W, sidePadding is (W - T) / 2; a spacing of
+        // sidePadding puts the next tile's leading edge at
+        // sidePadding + T + sidePadding = W, which is one pixel past
+        // the viewport right. Result: only the focused tile is visible,
+        // one card at a time, same size as the primary carousel.
+        val effectiveItemSpacing =
+            if (onPrimaryDisplay) itemSpacing else sidePadding
         val verticalAlignment = when (rowAlignment) {
             FrontendRowAlignment.Top -> Alignment.Top
             FrontendRowAlignment.Center -> Alignment.CenterVertically
@@ -387,7 +385,7 @@ private fun <T> RowLayout(
                 top = contentPadding.calculateTopPadding(),
                 bottom = contentPadding.calculateBottomPadding()
             ),
-            horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+            horizontalArrangement = Arrangement.spacedBy(effectiveItemSpacing),
             verticalAlignment = verticalAlignment
         ) {
             if (header != null) {
@@ -414,7 +412,7 @@ private fun <T> RowLayout(
                 )
                 Box(
                     modifier = Modifier
-                        .width(effectiveItemWidth)
+                        .width(rowItemWidth)
                         .graphicsLayer {
                             scaleX = falloff
                             scaleY = falloff

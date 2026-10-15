@@ -31,9 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
@@ -254,20 +252,14 @@ private fun FrontendRouteHost(
                     hiddenGames = esdeState.hiddenGames,
                     hiddenSystems = esdeState.hiddenSystems,
                     layout = run {
-                        // Per-display systems layout. LocalConfiguration is read
-                        // as a recomposition trigger — a screen swap fires
-                        // onConfigurationChanged (density / screenWidthDp differ
-                        // between Thor's two displays) which invalidates the
-                        // read, so the display id refresh happens the same
-                        // frame the activity reattaches to its new display
-                        // instead of waiting for a scroll to force a redraw.
-                        val config = LocalConfiguration.current
-                        val composeView = LocalView.current
-                        val displayId = remember(config) {
-                            composeView.display?.displayId
-                                ?: jr.brian.core.model.PRIMARY_DISPLAY_ID
-                        }
-                        if (displayId == jr.brian.core.model.PRIMARY_DISPLAY_ID)
+                        // Per-display systems layout, driven by the swap
+                        // coordinator's phase so the Row ↔ Grid change
+                        // happens the moment beginLeaving fires (under
+                        // the alpha=0 fade-out) rather than when Android
+                        // finally reparents the window (mid fade-in,
+                        // which stalled both screens).
+                        val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
+                        if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
                             esdeState.primarySystemLayout
                         else esdeState.secondarySystemLayout
                     },
@@ -426,7 +418,12 @@ private fun GamesRoute(
                 gameMediaMap = esdeState.romSearchGameMediaMap,
                 systemMediaMap = esdeState.systemMediaMap,
                 focusResetKey = focusResetKey,
-                layout = esdeState.gameLayout,
+                layout = run {
+                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
+                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
+                        esdeState.primaryGameLayout
+                    else esdeState.secondaryGameLayout
+                },
                 esdePrefs = esdePrefs,
                 viewModel = viewModel,
                 romSearchStateHolder = romSearchStateHolder,

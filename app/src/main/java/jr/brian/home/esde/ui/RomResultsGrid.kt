@@ -65,7 +65,7 @@ import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.model.gridColumnsForScale
+import jr.brian.home.esde.model.gameGridColumnsForScale
 import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
 import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -192,7 +192,7 @@ internal fun RomResultsGrid(
                 FocusableTileLayout(
                     items = displayedGames,
                     layout = layout,
-                    columns = gridColumnsForScale(scale),
+                    columns = gameGridColumnsForScale(scale),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = contentPadding,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,

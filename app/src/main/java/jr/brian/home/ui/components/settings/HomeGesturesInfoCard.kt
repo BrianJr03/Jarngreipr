@@ -41,9 +41,14 @@ import jr.brian.home.util.ThorDetection
  * Extras-section info card that documents the three Home-press gestures
  * handled by [jr.brian.home.service.HomeInterceptorService]:
  *
- *  - press once  → launcher on bottom
- *  - double press → frontend on top (requires frontend to be enabled)
- *  - long press  → launcher on bottom + frontend on top
+ *  - press once  → focuses the launcher on its assigned display
+ *  - double press → focuses the frontend on its assigned display (requires
+ *    frontend to be enabled)
+ *  - long press  → opens both apps on their assigned displays
+ *
+ * "Assigned display" tracks the current screen-swap state, so these labels
+ * stay accurate whether or not the user has swapped which screen hosts which
+ * app.
  *
  * Replaces the earlier BOTTOM/BOTH chip selector — the three gestures are
  * always active while Home Button Interception is on, so the UI's job here is

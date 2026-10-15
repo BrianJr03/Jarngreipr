@@ -116,6 +116,8 @@ object ESDEPreferencesConstants {
     const val KEY_PRIMARY_SYSTEM_LAYOUT = "primary_system_layout"
     const val KEY_SECONDARY_SYSTEM_LAYOUT = "secondary_system_layout"
     const val KEY_GAME_LAYOUT = "game_layout"
+    const val KEY_PRIMARY_GAME_LAYOUT = "primary_game_layout"
+    const val KEY_SECONDARY_GAME_LAYOUT = "secondary_game_layout"
     const val KEY_SYSTEM_CUSTOMIZATIONS = "system_customizations"
     const val KEY_SYSTEM_ORDER = "system_order"
     const val KEY_FRONTEND_HINTS_VISIBLE = "frontend_hints_visible"

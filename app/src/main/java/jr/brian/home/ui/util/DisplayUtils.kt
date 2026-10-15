@@ -49,6 +49,24 @@ fun launchFrontend(context: Context, displayId: Int = PRIMARY_DISPLAY_ID) {
     context.startActivity(intent, options.toBundle())
 }
 
+/**
+ * Fires [FrontEndActivity] on whichever display the current
+ * [ScreenAssignment] has it live on. Use this when the caller just
+ * wants "surface the frontend wherever it belongs" rather than
+ * targeting a specific display — e.g. the Home-button double-press
+ * gesture after a user screen swap. Falls back to [PRIMARY_DISPLAY_ID]
+ * when the assignment points at an external display that isn't
+ * currently connected.
+ */
+fun launchFrontendForCurrentAssignment(context: Context) {
+    val displayId = when (currentAssignment(context)) {
+        ScreenAssignment.FRONTEND_ON_TOP -> PRIMARY_DISPLAY_ID
+        ScreenAssignment.FRONTEND_ON_BOTTOM ->
+            resolveBottomDisplayId(context) ?: PRIMARY_DISPLAY_ID
+    }
+    launchFrontend(context, displayId)
+}
+
 @dagger.hilt.EntryPoint
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 internal interface LaunchFrontendEntryPoint {

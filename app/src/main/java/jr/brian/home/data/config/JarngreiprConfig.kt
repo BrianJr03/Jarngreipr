@@ -105,7 +105,21 @@ data class JarngreiprConfig(
         //      The field is retained in the schema with its null default so
         //      older blobs still decode via ignoreUnknownKeys; the value is
         //      simply never consulted.
-        const val CONFIG_VERSION = 27
+        // v28: added HomeButtonConfig.focusLockAutoManageEnabled — the
+        //      "Auto-manage Focus Lock" toggle gating whether we write to
+        //      AYN's screen_focus_lock on swaps, app launches, game
+        //      launches, and boot. Older blobs decode with the default
+        //      (true) via ignoreUnknownKeys, matching the on-by-default
+        //      behaviour new installs ship with.
+        // v29: split RomSearchConfig.gameLayout into
+        //      primaryGameLayout / secondaryGameLayout so each display
+        //      can show games in Row or Grid independently (matches the
+        //      systems split from v26-ish). Legacy gameLayout retained
+        //      in the schema and still written on export so pre-split
+        //      builds restoring a current config get a sensible single-
+        //      layout fallback. Older blobs decode with both new fields
+        //      inheriting the legacy value on import.
+        const val CONFIG_VERSION = 29
     }
 }
 
@@ -253,7 +267,13 @@ data class HomeButtonConfig(
      */
     val homeTarget: String? = null,
     /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */
-    val mainScreen: String = "BOTTOM"
+    val mainScreen: String = "BOTTOM",
+    /**
+     * "Auto-manage Focus Lock" toggle — v28. Default true matches new
+     * installs. See [jr.brian.home.data.FocusLockPrefsManager] and
+     * [jr.brian.home.data.ScreenFocusLockWriter].
+     */
+    val focusLockAutoManageEnabled: Boolean = true
 )
 
 @Serializable
@@ -329,6 +349,8 @@ data class RomSearchConfig(
     val primarySystemLayout: String = "Row",
     val secondarySystemLayout: String = "Grid",
     val gameLayout: String = "Grid",
+    val primaryGameLayout: String = "Grid",
+    val secondaryGameLayout: String = "Grid",
     val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
     val systemOrder: List<String> = emptyList(),
     val frontendHintsVisible: Boolean = true,
