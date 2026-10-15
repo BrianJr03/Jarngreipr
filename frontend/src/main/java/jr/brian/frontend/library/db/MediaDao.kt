@@ -14,6 +14,9 @@ interface MediaDao {
     @Query("SELECT * FROM media WHERE gameId = :gameId LIMIT 1")
     suspend fun findByGameId(gameId: Long): MediaEntity?
 
+    @Query("SELECT * FROM media")
+    fun observeAll(): Flow<List<MediaEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(media: MediaEntity)
 
