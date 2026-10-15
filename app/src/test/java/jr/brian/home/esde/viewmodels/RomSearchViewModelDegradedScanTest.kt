@@ -222,24 +222,22 @@ class RomSearchViewModelDegradedScanTest {
         esdePrefs.addRomsPath(root.absolutePath)
 
         vm.loadGames()
-        // Give the launch a chance to flip isLoading to true before we cancel —
-        // otherwise we'd be asserting on the initial value, not the invariant.
-        var sawTrue = false
-        repeat(200) {
-            if (stateHolder.isLoading.value) { sawTrue = true; return@repeat }
-            kotlinx.coroutines.delay(5)
+        // Suspend until the scan has actually flipped the flag, then race in
+        // the cancel. Collecting on the flow with `first { it }` is more
+        // reliable than a polling loop under heavy JVM warmup.
+        kotlinx.coroutines.withTimeout(5_000) {
+            stateHolder.isLoading.first { it }
         }
-        assertTrue("loadGames must flip isLoading on before we test the finally", sawTrue)
 
         applicationScope.cancel()
 
-        // Reset ran under NonCancellable, so the state flow must settle to
-        // false. Pull it through `.first { !it }` with a generous bound to
-        // avoid relying on fuzzy sleeps.
-        val finalLoading = kotlinx.coroutines.withTimeout(5_000) {
+        // Reset ran under NonCancellable, so the state flow must settle back
+        // to false. Any amount of coroutine work can happen between the
+        // cancel and the finally — a direct subscribe is the right wait.
+        kotlinx.coroutines.withTimeout(5_000) {
             stateHolder.isLoading.first { !it }
         }
-        assertFalse("isLoading must be reset after cancellation", finalLoading)
+        assertFalse("isLoading must be reset after cancellation", stateHolder.isLoading.value)
     }
 
     private fun psxEntry(sourceRoot: String): SystemCacheEntry = SystemCacheEntry(
