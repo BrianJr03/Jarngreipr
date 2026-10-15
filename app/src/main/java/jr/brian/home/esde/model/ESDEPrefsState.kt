@@ -240,6 +240,7 @@ data class ESDEPrefsState(
     val systemBgVideoMuted: Boolean = true,
     val systemBgVideoLooping: Boolean = true,
     val gameEmulatorMap: Map<String, String> = emptyMap(),
+    val systemEmulatorMap: Map<String, String> = emptyMap(),
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
     val gameCompanionMap: Map<String, String> = emptyMap(),

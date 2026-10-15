@@ -242,6 +242,14 @@
     <string name="system_customize_scrape_running">Scraping %1$d / %2$d</string>
     <string name="system_customize_category_storage_title">Storage</string>
     <string name="system_customize_category_storage_summary">Point Jarngreipr at the same ROMs folder the emulator uses. When the two agree, launches read the file without a second prompt.</string>
+    <string name="system_customize_category_emulator_title">Emulator</string>
+    <string name="system_customize_category_emulator_summary">Pick a default emulator for every game in this system. Per game overrides from ROM detail still win.</string>
+    <string name="system_customize_emulator_pick_title">Pick emulator</string>
+    <string name="system_customize_emulator_pick_description">Choose which emulator launches games in this system by default.</string>
+    <string name="system_customize_emulator_pick_current">Current: %1$s. Tap to change.</string>
+    <string name="system_customize_emulator_pick_no_games">Scan at least one game for this system first.</string>
+    <string name="system_customize_emulator_clear_title">Clear default</string>
+    <string name="system_customize_emulator_clear_description">Fall back to per game choices and the picker again.</string>
     <string name="system_customize_storage_folder_title">ROM folder</string>
     <string name="system_customize_storage_folder_none">Not set</string>
     <string name="system_customize_storage_folder_choose">Choose folder</string>

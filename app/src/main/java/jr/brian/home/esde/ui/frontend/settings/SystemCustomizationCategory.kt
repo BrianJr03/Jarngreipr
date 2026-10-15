@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 import jr.brian.home.R
@@ -15,6 +16,12 @@ enum class SystemCustomizationCategory(
     @StringRes override val summaryRes: Int,
     override val icon: ImageVector
 ) : RailCategory {
+    ACTIONS(
+        id = "actions",
+        titleRes = R.string.system_customize_category_actions_title,
+        summaryRes = R.string.system_customize_category_actions_summary,
+        icon = Icons.Rounded.Tune
+    ),
     BACKGROUND(
         id = "background",
         titleRes = R.string.system_customize_category_background_title,
@@ -27,11 +34,11 @@ enum class SystemCustomizationCategory(
         summaryRes = R.string.system_customize_category_color_summary,
         icon = Icons.Rounded.Palette
     ),
-    ACTIONS(
-        id = "actions",
-        titleRes = R.string.system_customize_category_actions_title,
-        summaryRes = R.string.system_customize_category_actions_summary,
-        icon = Icons.Rounded.Tune
+    EMULATOR(
+        id = "emulator",
+        titleRes = R.string.system_customize_category_emulator_title,
+        summaryRes = R.string.system_customize_category_emulator_summary,
+        icon = Icons.Rounded.SportsEsports
     ),
     STORAGE(
         id = "storage",

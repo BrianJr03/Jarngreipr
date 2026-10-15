@@ -23,6 +23,7 @@ import jr.brian.home.esde.data.clearGameMediaType
 import jr.brian.home.esde.data.clearSystemMediaType
 import jr.brian.home.esde.data.getGameCore
 import jr.brian.home.esde.data.getGameEmulator
+import jr.brian.home.esde.data.getSystemEmulator
 import jr.brian.home.esde.data.getGameLaunchCommand
 import jr.brian.home.esde.data.hideGame
 import jr.brian.home.esde.data.setGameCore
@@ -135,7 +136,8 @@ internal fun FrontendRomGrid(
         },
         hasSavedEmulator = { game ->
             esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
-                    esdePrefs.getGameEmulator(gameKey(game)) != null
+                    esdePrefs.getGameEmulator(gameKey(game)) != null ||
+                    esdePrefs.getSystemEmulator(game.systemName) != null
         },
         onGameFocused = { game ->
             viewModel.updateFocusedGame(game)

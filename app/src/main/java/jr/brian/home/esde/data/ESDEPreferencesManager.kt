@@ -112,6 +112,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_TOP_SCREEN
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_MUTED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_BG_VIDEO_LOOPING
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMMAND_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMPANION_MAP
@@ -518,6 +519,14 @@ class ESDEPreferencesManager(context: Context) {
             hiddenGames = hiddenGames,
             hiddenSystems = hiddenSystems,
             gameEmulatorMap = prefs.getString(KEY_GAME_EMULATOR_MAP, null)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { json ->
+                    try {
+                        val obj = JSONObject(json)
+                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                    } catch (_: Exception) { emptyMap() }
+                } ?: emptyMap(),
+            systemEmulatorMap = prefs.getString(KEY_SYSTEM_EMULATOR_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
                     try {

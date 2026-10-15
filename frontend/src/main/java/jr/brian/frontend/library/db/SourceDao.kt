@@ -21,7 +21,15 @@ interface SourceDao {
     @Query("SELECT * FROM sources WHERE treeUri = :treeUri")
     suspend fun findByTreeUri(treeUri: String): SourceEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    /**
+     * IGNORE instead of REPLACE: SourceEntity's children (games,
+     * then media via games) are declared ON DELETE CASCADE. A naive
+     * REPLACE on a treeUri collision would silently nuke every game
+     * attributed to the existing source. Callers that need to
+     * update an existing row should call [findByTreeUri] + [update]
+     * explicitly rather than relying on this path.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(source: SourceEntity): Long
 
     @Update

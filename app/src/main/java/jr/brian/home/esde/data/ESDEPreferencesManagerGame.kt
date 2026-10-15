@@ -6,6 +6,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_COMPANION_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_CORE_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_EMULATOR_MAP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_HIDDEN_GAMES
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_EMULATOR_MAP
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -20,6 +21,32 @@ fun ESDEPreferencesManager.setGameEmulator(gameKey: String, packageName: String)
 
 fun ESDEPreferencesManager.getGameEmulator(gameKey: String): String? {
     return state.value.gameEmulatorMap[gameKey]
+}
+
+fun ESDEPreferencesManager.setSystemEmulator(systemName: String, packageName: String) {
+    val updated = _state.value.systemEmulatorMap.toMutableMap()
+    updated[systemName] = packageName
+    _state.value = _state.value.copy(systemEmulatorMap = updated)
+    val json = JSONObject()
+    updated.forEach { (k, v) -> json.put(k, v) }
+    prefs.edit { putString(KEY_SYSTEM_EMULATOR_MAP, json.toString()) }
+}
+
+fun ESDEPreferencesManager.clearSystemEmulator(systemName: String) {
+    val updated = _state.value.systemEmulatorMap.toMutableMap()
+    if (updated.remove(systemName) == null) return
+    _state.value = _state.value.copy(systemEmulatorMap = updated)
+    if (updated.isEmpty()) {
+        prefs.edit { remove(KEY_SYSTEM_EMULATOR_MAP) }
+    } else {
+        val json = JSONObject()
+        updated.forEach { (k, v) -> json.put(k, v) }
+        prefs.edit { putString(KEY_SYSTEM_EMULATOR_MAP, json.toString()) }
+    }
+}
+
+fun ESDEPreferencesManager.getSystemEmulator(systemName: String): String? {
+    return state.value.systemEmulatorMap[systemName]
 }
 
 fun ESDEPreferencesManager.setGameLaunchCommand(gameKey: String, command: String) {

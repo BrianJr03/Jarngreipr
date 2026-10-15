@@ -6,5 +6,9 @@
             android:name=".MainActivity"
             android:excludeFromRecents="true"
             tools:replace="android:excludeFromRecents" />
+        <activity
+            android:name=".esde.ui.FrontEndActivity"
+            android:excludeFromRecents="true"
+            tools:replace="android:excludeFromRecents" />
     </application>
 </manifest>
