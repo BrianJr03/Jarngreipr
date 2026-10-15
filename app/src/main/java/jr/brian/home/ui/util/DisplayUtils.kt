@@ -35,17 +35,52 @@ fun resolveBottomDisplayId(context: Context): Int? {
 }
 
 /**
- * Fires [FrontEndActivity] (Systems → Games browse experience). Defaults to the
- * top display; supply [displayId] to route it elsewhere (used by
- * [HomeTarget.BOTH] with [MainScreen.TOP], where the frontend hosts the
- * non-focused screen).
+ * Fires the Systems → Games browse experience. Which Activity actually
+ * launches depends on the "Legacy frontend" pref:
+ *  - `true` (current default) → [FrontEndActivity], same code path as
+ *    pre-Phase 3.
+ *  - `false` → the new `:frontend` [jr.brian.frontend.ui.FrontendActivity]
+ *    via [jr.brian.frontend.ui.FrontendEntry], while Phase 3's UI is
+ *    being built. Phase 3h flips the default and deletes the old
+ *    activity.
+ *
+ * The pref is read from Hilt-provided [jr.brian.home.data.LegacyFrontendPrefs].
+ * Call sites that run outside a Hilt-aware context fall back to the
+ * legacy path.
  */
 fun launchFrontend(context: Context, displayId: Int = PRIMARY_DISPLAY_ID) {
+    if (useNewFrontend(context)) {
+        jr.brian.frontend.ui.FrontendEntry.launch(context, displayId)
+        return
+    }
     val intent = Intent(context, FrontEndActivity::class.java).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
     }
     val options = ActivityOptions.makeBasic().apply { launchDisplayId = displayId }
     context.startActivity(intent, options.toBundle())
+}
+
+/**
+ * Read the legacy-frontend pref via Hilt's EntryPoint API so this
+ * top-level function can respect it without being injectable itself.
+ * Default is "use legacy" so an unavailable graph (unit test, early
+ * boot) collapses to pre-Phase-3 behaviour.
+ */
+private fun useNewFrontend(context: Context): Boolean = try {
+    val appContext = context.applicationContext
+    val entryPoint = dagger.hilt.android.EntryPointAccessors.fromApplication(
+        appContext,
+        LaunchFrontendEntryPoint::class.java,
+    )
+    !entryPoint.legacyFrontendPrefs().legacyFrontendEnabled.value
+} catch (_: Throwable) {
+    false
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+internal interface LaunchFrontendEntryPoint {
+    fun legacyFrontendPrefs(): jr.brian.home.data.LegacyFrontendPrefs
 }
 
 /**
