@@ -1,7 +1,6 @@
 package jr.brian.frontend.library.scan
 
 import android.app.Application
-import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -33,7 +32,7 @@ class FastWalkScannerTest {
     @get:Rule
     val tempFolder = TemporaryFolder()
 
-    private val catalog = StubCatalog(
+    private val catalog = StubSystemCatalog(
         SystemDef(
             id = "psx",
             displayName = "PlayStation",
@@ -165,14 +164,3 @@ class FastWalkScannerTest {
     }
 }
 
-private class StubCatalog(private vararg val systems: SystemDef) : SystemCatalog {
-    override fun all(): List<SystemDef> = systems.toList()
-    override fun findById(id: String): SystemDef? =
-        systems.firstOrNull { it.id.equals(id, ignoreCase = true) }
-    override fun findByFolderAlias(folderName: String): SystemDef? =
-        systems.firstOrNull { def ->
-            def.id.equals(folderName, ignoreCase = true) ||
-                def.folderAliases.any { it.equals(folderName, ignoreCase = true) }
-        }
-    override fun extensionsFor(id: String): Set<String> = findById(id)?.extensions.orEmpty()
-}
