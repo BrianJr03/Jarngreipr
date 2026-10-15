@@ -117,6 +117,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var libraryMigration: jr.brian.frontend.library.migrate.LibraryMigration
 
+    @Inject
+    lateinit var swapCoordinator: jr.brian.core.model.SwapCoordinator
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private var navigateToThemeShare by mutableStateOf(false)
@@ -222,6 +225,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
+                jr.brian.home.ui.components.SwapFade(swapCoordinator) {
                 managers.ManagerCompositionLocalProvider {
                 CompositionLocalProvider(
                     LocalImportExportManager provides importExportManager
@@ -326,6 +330,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     GameKonfettiOverlay(esdeViewModel = esdeViewModel)
+                }
                 }
                 }
             }
