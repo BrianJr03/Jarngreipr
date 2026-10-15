@@ -207,6 +207,14 @@ class RomSearchViewModel @Inject constructor(
         applicationScope.launch {
             awaitIdle()
             maybeReimportGamelists()
+            // Force one pull from the adapter so `store.allGames` reflects
+            // post-scan Room state. The init block's collector drops
+            // emissions while LibraryState is Scanning (preventing mid-scan
+            // blips during `replaceSystemGames`' delete+insert), so without
+            // this read the last emission the collector saw gets stuck as
+            // the published value — showing "No systems found" even though
+            // the scan actually populated games.
+            store.allGames.value = libraryAdapter.allGameInfos.first()
             val games = store.allGames.value.size
             val systems = store.allGames.value.map { it.systemName }.distinct().size
             onComplete(games, systems)
