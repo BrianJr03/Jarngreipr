@@ -1,0 +1,8 @@
+{
+  "id": "nds",
+  "displayName": "Nintendo DS",
+  "folderAliases": ["nintendo-ds"],
+  "extensions": ["nds", "bin", "zip"],
+  "screenScraperSystemId": 15,
+  "retroArchSystemId": "DS"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "wii",
+  "displayName": "Nintendo Wii",
+  "folderAliases": ["nintendo-wii"],
+  "extensions": ["gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz"],
+  "screenScraperSystemId": 16,
+  "retroArchSystemId": "wii"
+}

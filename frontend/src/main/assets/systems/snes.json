@@ -1,0 +1,8 @@
+{
+  "id": "snes",
+  "displayName": "Super Nintendo",
+  "folderAliases": ["snesna", "sfc", "sufami", "nintendo-snes"],
+  "extensions": ["sfc", "smc", "fig", "swc", "zip", "7z"],
+  "screenScraperSystemId": 4,
+  "retroArchSystemId": "snes"
+}

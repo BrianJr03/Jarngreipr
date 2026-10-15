@@ -1,0 +1,8 @@
+{
+  "id": "gba",
+  "displayName": "Game Boy Advance",
+  "folderAliases": ["nintendo-gba"],
+  "extensions": ["gba", "zip", "7z"],
+  "screenScraperSystemId": 12,
+  "retroArchSystemId": "gba"
+}

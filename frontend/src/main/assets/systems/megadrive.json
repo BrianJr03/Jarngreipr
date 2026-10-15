@@ -1,0 +1,8 @@
+{
+  "id": "megadrive",
+  "displayName": "Sega Mega Drive / Genesis",
+  "folderAliases": ["genesis", "md", "megadrivejp", "sega-md", "sega-genesis"],
+  "extensions": ["md", "smd", "gen", "bin", "32x", "zip", "7z"],
+  "screenScraperSystemId": 1,
+  "retroArchSystemId": "md"
+}
