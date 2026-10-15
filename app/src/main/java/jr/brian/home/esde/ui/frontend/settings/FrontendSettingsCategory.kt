@@ -16,6 +16,12 @@ enum class FrontendSettingsCategory(
     @StringRes override val summaryRes: Int,
     override val icon: ImageVector
 ) : RailCategory {
+    FEEL(
+        id = "feel",
+        titleRes = R.string.frontend_settings_category_feel_title,
+        summaryRes = R.string.frontend_settings_category_feel_summary,
+        icon = Icons.Rounded.Animation
+    ),
     LAYOUT(
         id = "layout",
         titleRes = R.string.frontend_settings_category_layout_title,
@@ -28,22 +34,16 @@ enum class FrontendSettingsCategory(
         summaryRes = R.string.frontend_settings_category_media_summary,
         icon = Icons.Rounded.Image
     ),
-    FEEL(
-        id = "feel",
-        titleRes = R.string.frontend_settings_category_feel_title,
-        summaryRes = R.string.frontend_settings_category_feel_summary,
-        icon = Icons.Rounded.Animation
+    SCRAPING(
+        id = "scraping",
+        titleRes = R.string.frontend_settings_scraping_title,
+        summaryRes = R.string.frontend_settings_scraping_summary,
+        icon = Icons.Rounded.Sync
     ),
     SYSTEMS(
         id = "systems",
         titleRes = R.string.frontend_settings_category_systems_title,
         summaryRes = R.string.frontend_settings_category_systems_summary,
         icon = Icons.Rounded.Tune
-    ),
-    SCRAPING(
-        id = "scraping",
-        titleRes = R.string.frontend_settings_scraping_title,
-        summaryRes = R.string.frontend_settings_scraping_summary,
-        icon = Icons.Rounded.Sync
     )
 }

@@ -58,6 +58,9 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.clearSafTreeUri
+import jr.brian.home.esde.data.clearSystemEmulator
+import jr.brian.home.esde.data.setSystemEmulator
+import jr.brian.home.esde.ui.EmulatorPickerDialog
 import jr.brian.home.esde.data.getSafTreeUri
 import jr.brian.home.esde.data.getSystemFolderMapping
 import jr.brian.home.esde.model.GameInfo
@@ -102,9 +105,12 @@ fun SystemCustomizationScreen(
     // clear rows on the storage tab. Reflect that in the row count so D-pad
     // navigation doesn't advance past what's rendered.
     val storageEditable = esdePrefs.getSystemFolderMapping(systemName) == null
+    val prefsStateFlow by esdePrefs.state.collectAsStateWithLifecycle()
+    val hasSystemEmulator = prefsStateFlow.systemEmulatorMap[systemName] != null
     val rowCount = rowCountFor(
         cursor.selectedCategory,
         storageRowState.hasTree && storageEditable,
+        hasSystemEmulator,
     )
     val rootFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { rootFocus.requestFocus() } }
@@ -161,6 +167,7 @@ fun SystemCustomizationScreen(
 private fun rowCountFor(
     category: SystemCustomizationCategory,
     storageHasTree: Boolean,
+    hasSystemEmulator: Boolean,
 ): Int = when (category) {
     SystemCustomizationCategory.BACKGROUND -> 3
     SystemCustomizationCategory.COLOR -> 6
@@ -168,6 +175,8 @@ private fun rowCountFor(
     SystemCustomizationCategory.ACTIONS -> 4
     // Pick row + optional Clear row.
     SystemCustomizationCategory.STORAGE -> if (storageHasTree) 2 else 1
+    // Pick row always; Clear row only when a system emulator is set.
+    SystemCustomizationCategory.EMULATOR -> if (hasSystemEmulator) 2 else 1
 }
 
 @Composable
@@ -269,6 +278,12 @@ private fun CustomizationRows(
             state = storageRowState,
             gamesForSystem = gamesForSystem,
             romsPaths = romsPaths,
+            esdePrefs = esdePrefs,
+            focusedRow = focusedRow,
+        )
+        SystemCustomizationCategory.EMULATOR -> EmulatorRows(
+            systemName = systemName,
+            gamesForSystem = gamesForSystem,
             esdePrefs = esdePrefs,
             focusedRow = focusedRow,
         )
@@ -1010,6 +1025,85 @@ private fun validateSafTree(
         if (exists) found++
     }
     return StorageValidation.Result(found = found, total = sample.size)
+}
+
+@Composable
+private fun EmulatorRows(
+    systemName: String,
+    gamesForSystem: List<GameInfo>,
+    esdePrefs: ESDEPreferencesManager,
+    focusedRow: Int,
+) {
+    val context = LocalContext.current
+    val prefsState by esdePrefs.state.collectAsStateWithLifecycle()
+    val savedPkg = prefsState.systemEmulatorMap[systemName]
+    val savedLabel = remember(savedPkg) {
+        savedPkg?.let { pkg ->
+            runCatching {
+                val info = context.packageManager.getApplicationInfo(pkg, 0)
+                context.packageManager.getApplicationLabel(info).toString()
+            }.getOrNull() ?: pkg
+        }
+    }
+
+    var showPicker by remember { mutableStateOf(false) }
+    val representative = remember(gamesForSystem) { gamesForSystem.firstOrNull() }
+
+    val pickFocused = focusedRow == 0
+    val clearFocused = focusedRow == 1
+
+    if (showPicker && representative != null) {
+        EmulatorPickerDialog(
+            game = representative,
+            onDismiss = { showPicker = false },
+            onEmulatorSelected = { pkg, _ ->
+                esdePrefs.setSystemEmulator(systemName, pkg)
+                showPicker = false
+            },
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .revealWhenFocused(pickFocused)
+    ) {
+        ActivateOnConfirm(focused = pickFocused) {
+            if (representative != null) showPicker = true
+        }
+        ActionRowCard(
+            title = stringResource(R.string.system_customize_emulator_pick_title),
+            description = if (representative == null) {
+                stringResource(R.string.system_customize_emulator_pick_no_games)
+            } else if (savedLabel != null) {
+                stringResource(R.string.system_customize_emulator_pick_current, savedLabel)
+            } else {
+                stringResource(R.string.system_customize_emulator_pick_description)
+            },
+            trailingLabel = null,
+            showProgress = false,
+            focused = pickFocused,
+        )
+    }
+
+    if (savedPkg != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .revealWhenFocused(clearFocused)
+        ) {
+            ActivateOnConfirm(focused = clearFocused) {
+                esdePrefs.clearSystemEmulator(systemName)
+            }
+            ActionRowCard(
+                title = stringResource(R.string.system_customize_emulator_clear_title),
+                description = stringResource(R.string.system_customize_emulator_clear_description),
+                trailingLabel = null,
+                showProgress = false,
+                focused = clearFocused,
+            )
+        }
+    }
 }
 
 // endregion

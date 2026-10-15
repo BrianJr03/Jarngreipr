@@ -1,9 +1,8 @@
 package jr.brian.frontend.library.db
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -17,7 +16,7 @@ interface MediaDao {
     @Query("SELECT * FROM media")
     fun observeAll(): Flow<List<MediaEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(media: MediaEntity)
 
     @Query("DELETE FROM media WHERE gameId = :gameId")

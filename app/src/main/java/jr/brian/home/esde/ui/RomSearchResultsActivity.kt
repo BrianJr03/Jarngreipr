@@ -630,7 +630,8 @@ class RomSearchResultsActivity : ComponentActivity() {
                                     },
                                     hasSavedEmulator = { game ->
                                         esdePrefs.getGameLaunchCommand(gameKey(game)) != null ||
-                                                esdePrefs.getGameEmulator(gameKey(game)) != null
+                                                esdePrefs.getGameEmulator(gameKey(game)) != null ||
+                                                esdePrefs.getSystemEmulator(game.systemName) != null
                                     },
                                     onGameFocused = { game ->
                                         viewModel.updateFocusedGame(game)

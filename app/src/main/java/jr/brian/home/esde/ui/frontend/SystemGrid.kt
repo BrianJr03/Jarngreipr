@@ -40,6 +40,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -211,6 +214,18 @@ private fun SystemTileCard(
                     if (hapticEnabled) view.emitFocusHapticIfReady()
                     onFocused()
                 }
+            }
+            .onKeyEvent { event ->
+                // Gamepad SELECT (back-of-the-pad "share" / "view" on many
+                // controllers) opens system customization — same action as
+                // long-press, surfaced on a dedicated button so users don't
+                // have to find and hold the tile.
+                if (event.type != KeyEventType.KeyUp) return@onKeyEvent false
+                val code = event.nativeKeyEvent.keyCode
+                if (code == android.view.KeyEvent.KEYCODE_BUTTON_SELECT) {
+                    onLongPress()
+                    true
+                } else false
             }
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },

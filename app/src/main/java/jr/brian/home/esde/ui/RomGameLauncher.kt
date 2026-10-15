@@ -141,6 +141,7 @@ class RomGameLauncher(
         }
 
         val pkg = esdePrefs.getGameEmulator(gameKey(game))
+            ?: esdePrefs.getSystemEmulator(game.systemName)
             ?: game.emulatorPackage
             ?: EmulatorRegistry
                 .candidatesForExtension(context, File(romPath).extension)

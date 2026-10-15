@@ -11,6 +11,7 @@ import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.LibraryRepository
 import jr.brian.frontend.library.LibraryState
 import jr.brian.frontend.library.migrate.LibraryMigration
+import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.data.FavoritesGateway
 import jr.brian.home.data.LibraryGameInfoAdapter
 import jr.brian.home.esde.data.ESDEPreferencesManager
@@ -87,6 +88,31 @@ class RomSearchViewModel @Inject constructor(
                 }
             }
         }
+
+        // Push media roots into the repository whenever the user's
+        // ES-DE / scraped-media prefs change. Without this the Phase 2
+        // scanner's MediaIndex returns Resolved.EMPTY for every game,
+        // which writeSystem interprets as "delete this game's media
+        // row" — wiping scraped art the migration importer had just
+        // written. Running on applicationScope so a game-launch
+        // finishing the frontend activity doesn't cancel it mid-set.
+        applicationScope.launch {
+            esdePreferencesManager.state.collect {
+                libraryRepository.setMediaRoots(currentMediaRoots())
+            }
+        }
+    }
+
+    private fun currentMediaRoots(): List<File> {
+        val state = esdePreferencesManager.state.value
+        val primary = state.customMediaPath ?: setupPreferences.mediaPath
+        val secondary = if (state.secondaryMediaEnabled)
+            SetupPreferences.RETRO_HRAI_PATH else null
+        val tertiary = if (state.jarngreiprMediaEnabled)
+            scraperCoordinator.scrapedRoot() else null
+        return mediaRoots(primary, secondary, tertiary)
+            .filter { it.isNotBlank() }
+            .map { File(it) }
     }
 
     val query: StateFlow<String> = store.query.asStateFlow()
