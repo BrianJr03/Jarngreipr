@@ -615,6 +615,8 @@ fun ESDESettingsContent(
             )
         }
 
+        DualScreenSectionContent(onSectionHeaderTap = onSectionHeaderTap)
+
         CollapsibleSection(
             title = stringResource(R.string.esde_settings_section_extras),
             onHeaderTap = onSectionHeaderTap
