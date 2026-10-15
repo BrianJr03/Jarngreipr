@@ -1297,6 +1297,8 @@
     <string name="screen_swap_title">Swap screens</string>
     <string name="screen_swap_description_top">Frontend is on the top display. Tap to move it to the bottom.</string>
     <string name="screen_swap_description_bottom">Frontend is on the bottom display. Tap to move it to the top.</string>
+    <string name="scrape_all_title">Scrape all now</string>
+    <string name="scrape_all_description">Fetch artwork and metadata for every game in your library. Runs in the background with a notification; keep using the launcher while it works.</string>
     <string name="esde_settings_animation_style">Animation Style</string>
     <string name="esde_settings_animation_none">@string/common_none</string>
     <string name="esde_settings_animation_fade">Fade</string>
