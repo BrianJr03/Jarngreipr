@@ -6,6 +6,7 @@ import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.LibraryDatabase
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.db.SystemEntity
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -30,6 +31,7 @@ class LibraryRepositoryTest {
 
     private lateinit var db: LibraryDatabase
     private lateinit var repo: LibraryRepository
+    private lateinit var scope: kotlinx.coroutines.CoroutineScope
 
     @Before
     fun setUp() {
@@ -37,6 +39,10 @@ class LibraryRepositoryTest {
         db = Room.inMemoryDatabaseBuilder(app, LibraryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        val catalog = jr.brian.frontend.library.scan.StubSystemCatalog()
+        scope = kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Unconfined
+        )
         repo = LibraryRepository(
             systemDao = db.systemDao(),
             sourceDao = db.sourceDao(),
@@ -44,11 +50,18 @@ class LibraryRepositoryTest {
             mediaDao = db.mediaDao(),
             scrapeJobDao = db.scrapeJobDao(),
             playHistoryDao = db.playHistoryDao(),
+            catalog = catalog,
+            scanner = jr.brian.frontend.library.scan.ScannerDispatcher(
+                fastWalk = jr.brian.frontend.library.scan.FastWalkScanner(catalog),
+                saf = jr.brian.frontend.library.scan.SafTreeScanner(app, catalog),
+            ),
+            scope = scope,
         )
     }
 
     @After
     fun tearDown() {
+        scope.cancel()
         db.close()
     }
 

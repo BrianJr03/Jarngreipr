@@ -20,6 +20,9 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE systemId = :systemId AND isHidden = 0 ORDER BY displayName COLLATE NOCASE")
     fun observeBySystem(systemId: String): Flow<List<GameEntity>>
 
+    @Query("SELECT * FROM games WHERE systemId = :systemId AND sourceId = :sourceId")
+    suspend fun getBySystemAndSource(systemId: String, sourceId: Long): List<GameEntity>
+
     @Query("SELECT * FROM games WHERE isFavorite = 1 AND isHidden = 0 ORDER BY displayName COLLATE NOCASE")
     fun observeFavorites(): Flow<List<GameEntity>>
 

@@ -12,6 +12,9 @@ interface SourceDao {
     @Query("SELECT * FROM sources ORDER BY displayPath COLLATE NOCASE")
     fun observeAll(): Flow<List<SourceEntity>>
 
+    @Query("SELECT * FROM sources ORDER BY displayPath COLLATE NOCASE")
+    suspend fun getAll(): List<SourceEntity>
+
     @Query("SELECT * FROM sources WHERE id = :id")
     suspend fun findById(id: Long): SourceEntity?
 
