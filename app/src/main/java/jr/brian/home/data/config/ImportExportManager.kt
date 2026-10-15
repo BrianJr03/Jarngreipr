@@ -288,7 +288,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
-                systemLayout = f.esdePreferencesManager.state.value.systemLayout.name,
+                // Legacy field — kept populated with the primary-display value
+                // so an older app version restoring this config still gets a
+                // sensible single-layout setting.
+                systemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
+                primarySystemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
+                secondarySystemLayout = f.esdePreferencesManager.state.value.secondarySystemLayout.name,
                 gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
                 systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
                 systemOrder = f.esdePreferencesManager.state.value.systemOrder,
@@ -560,8 +565,17 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
-        runCatching { FrontendLayout.valueOf(config.romSearch.systemLayout) }.getOrNull()
-            ?.let { f.esdePreferencesManager.setSystemLayout(it) }
+        // New per-display fields fall back to the legacy single value when
+        // restoring a config written by an older app version.
+        val legacySystemLayout = runCatching {
+            FrontendLayout.valueOf(config.romSearch.systemLayout)
+        }.getOrNull()
+        (runCatching { FrontendLayout.valueOf(config.romSearch.primarySystemLayout) }.getOrNull()
+            ?: legacySystemLayout)
+            ?.let { f.esdePreferencesManager.setPrimarySystemLayout(it) }
+        (runCatching { FrontendLayout.valueOf(config.romSearch.secondarySystemLayout) }.getOrNull()
+            ?: legacySystemLayout)
+            ?.let { f.esdePreferencesManager.setSecondarySystemLayout(it) }
         runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
             ?.let { f.esdePreferencesManager.setGameLayout(it) }
         f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)

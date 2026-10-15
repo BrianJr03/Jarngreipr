@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import jr.brian.core.model.ScreenAssignment
+import jr.brian.core.model.SwapCoordinator
 import jr.brian.home.R
 import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.esde.ui.components.ToggleSetting
@@ -33,11 +34,12 @@ fun ScreenSwapSettingItem() {
     if (!ThorDetection.isThor()) return
 
     val context = LocalContext.current
-    val store = remember(context) {
+    val entryPoint = remember(context) {
         EntryPointAccessors
             .fromApplication(context.applicationContext, ScreenSwapEntryPoint::class.java)
-            .screenAssignmentStore()
     }
+    val store = entryPoint.screenAssignmentStore()
+    val coordinator = entryPoint.swapCoordinator()
     val assignment by store.state.collectAsStateWithLifecycle()
 
     val description = when (assignment) {
@@ -53,8 +55,17 @@ fun ScreenSwapSettingItem() {
         checked = false,
         showToggle = false,
         onClick = {
-            store.flip()
+            // Full choreography: beginLeaving triggers the SwapFade
+            // out on both activities before the launch plan tears
+            // them down; markArriving flips the new activities into
+            // their fade-in. Matches [ScreenSwapListener] / the
+            // gamepad L3/R3 shortcut, so every swap trigger produces
+            // the same ~300ms handoff animation.
+            val next = store.assignment.flipped()
+            coordinator.beginLeaving(next)
+            store.setAssignment(next)
             routeHomeFromLauncher(context, frontendEnabled = true)
+            coordinator.markArriving()
         },
     )
 }
@@ -63,4 +74,5 @@ fun ScreenSwapSettingItem() {
 @InstallIn(SingletonComponent::class)
 internal interface ScreenSwapEntryPoint {
     fun screenAssignmentStore(): ScreenAssignmentStore
+    fun swapCoordinator(): SwapCoordinator
 }

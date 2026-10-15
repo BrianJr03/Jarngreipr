@@ -113,6 +113,8 @@ object ESDEPreferencesConstants {
     const val KEY_SECONDARY_MEDIA_ENABLED = "secondary_media_enabled"
     const val KEY_JARNGREIPR_MEDIA_ENABLED = "jarngreipr_media_enabled"
     const val KEY_SYSTEM_LAYOUT = "system_layout"
+    const val KEY_PRIMARY_SYSTEM_LAYOUT = "primary_system_layout"
+    const val KEY_SECONDARY_SYSTEM_LAYOUT = "secondary_system_layout"
     const val KEY_GAME_LAYOUT = "game_layout"
     const val KEY_SYSTEM_CUSTOMIZATIONS = "system_customizations"
     const val KEY_SYSTEM_ORDER = "system_order"
