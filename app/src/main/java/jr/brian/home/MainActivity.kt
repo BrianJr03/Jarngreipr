@@ -337,6 +337,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @android.annotation.SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (jr.brian.home.data.GamepadSwapShortcut.handle(event) {
+                jr.brian.home.data.GamepadSwapShortcut.fireSwap(this)
+            }) return true
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
     }
