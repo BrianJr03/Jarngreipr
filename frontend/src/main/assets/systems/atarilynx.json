@@ -1,0 +1,8 @@
+{
+  "id": "atarilynx",
+  "displayName": "Atari Lynx",
+  "folderAliases": ["lynx", "atari-lynx"],
+  "extensions": ["lnx", "lyx", "o"],
+  "screenScraperSystemId": 28,
+  "retroArchSystemId": "AtariLynx"
+}

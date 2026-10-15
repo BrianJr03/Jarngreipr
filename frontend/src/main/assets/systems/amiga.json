@@ -1,0 +1,8 @@
+{
+  "id": "amiga",
+  "displayName": "Commodore Amiga",
+  "folderAliases": ["commodore-amiga"],
+  "extensions": ["adf", "ipf", "hdf", "lha", "rp9", "uae", "zip", "7z"],
+  "screenScraperSystemId": 64,
+  "retroArchSystemId": null
+}

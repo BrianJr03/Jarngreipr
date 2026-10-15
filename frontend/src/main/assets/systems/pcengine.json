@@ -1,0 +1,8 @@
+{
+  "id": "pcengine",
+  "displayName": "NEC PC Engine / TurboGrafx-16",
+  "folderAliases": ["pce", "tg16", "turbografx", "tgfx16", "pcenginecd"],
+  "extensions": ["pce", "sgx", "cue", "ccd", "chd", "iso", "zip", "7z"],
+  "screenScraperSystemId": 31,
+  "retroArchSystemId": "PCEngine"
+}

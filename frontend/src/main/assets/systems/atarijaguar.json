@@ -1,0 +1,8 @@
+{
+  "id": "atarijaguar",
+  "displayName": "Atari Jaguar",
+  "folderAliases": ["jaguar", "atari-jaguar"],
+  "extensions": ["jag", "j64", "bin", "abs", "rom", "zip", "7z"],
+  "screenScraperSystemId": 27,
+  "retroArchSystemId": null
+}
