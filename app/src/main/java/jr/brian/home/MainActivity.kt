@@ -114,6 +114,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var esdePreferencesManager: ESDEPreferencesManager
 
+    @Inject
+    lateinit var libraryMigration: jr.brian.frontend.library.migrate.LibraryMigration
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private var navigateToThemeShare by mutableStateOf(false)
@@ -203,6 +206,12 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
         observeFrontendEnabledFlag()
+
+        // Phase 2d one-shot: migrate the legacy esde_prefs + rom_index
+        // caches + ES-DE gamelists into the new Room-backed library.
+        // Idempotent — second call on the same install is a no-op via
+        // the migration_version marker inside LibraryMigration.
+        lifecycleScope.launch { libraryMigration.runOnce() }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
