@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import jr.brian.frontend.ui.games.GameDetailScreen
 import jr.brian.frontend.ui.games.GamesScreen
 import jr.brian.frontend.ui.home.HomeScreen
+import jr.brian.frontend.ui.search.SearchScreen
 import jr.brian.frontend.ui.theme.FrontendTheme
 
 /**
@@ -32,7 +33,7 @@ fun FrontendApp() {
                 HomeScreen(
                     onSystemSelected = { nav.navigate(FrontendDestinations.games(it.id)) },
                     onGameSelected = { nav.navigate(FrontendDestinations.detail(it.id)) },
-                    onSearch = { /* Phase 3e */ },
+                    onSearch = { nav.navigate(FrontendDestinations.Search) },
                     onSettings = { /* Phase 3f */ },
                 )
             }
@@ -53,6 +54,12 @@ fun FrontendApp() {
             ) { entry ->
                 val gameId = entry.arguments?.getLong("gameId") ?: 0L
                 GameDetailScreen(gameId = gameId, onBack = { nav.popBackStack() })
+            }
+            composable(FrontendDestinations.Search) {
+                SearchScreen(
+                    onGameSelected = { nav.navigate(FrontendDestinations.detail(it.id)) },
+                    onBack = { nav.popBackStack() },
+                )
             }
         }
     }

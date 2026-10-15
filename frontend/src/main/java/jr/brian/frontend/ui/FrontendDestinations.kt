@@ -13,4 +13,6 @@ object FrontendDestinations {
 
     const val DetailRoute = "detail/{gameId}"
     fun detail(gameId: Long) = "detail/$gameId"
+
+    const val Search = "search"
 }
