@@ -223,10 +223,20 @@ class LibraryMigration @Inject constructor(
         const val MIGRATION_VERSION_KEY = "migration_version"
 
         /**
-         * Bumped whenever a new migration step is added. Lets a user
-         * who ran migration v1 pick up v2's work on next launch
-         * without re-doing v1.
+         * Bumped whenever a new migration step is added OR the
+         * shipped `assets/systems/[id].json` catalog grows. The game
+         * importer resolves a legacy `rom_index/[system].json` file
+         * to a canonical system via `catalog.findByFolderAlias` —
+         * folders unknown to the catalog at migration time silently
+         * drop their entries. #238 (steam) and #239 (19 more systems)
+         * grew the catalog; re-running the importer on next launch
+         * recovers games the earlier migration couldn't attribute.
+         *
+         * The scan path doesn't need this bump — a user who taps
+         * Refresh Library picks up the new systems directly via
+         * `FastWalkScanner`. Bumping covers users who upgrade
+         * without manually refreshing.
          */
-        const val CURRENT_VERSION = 3
+        const val CURRENT_VERSION = 4
     }
 }
