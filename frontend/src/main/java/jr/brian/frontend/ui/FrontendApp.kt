@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import jr.brian.frontend.ui.home.HomeScreen
 import jr.brian.frontend.ui.theme.FrontendTheme
 
 /**
@@ -24,7 +25,12 @@ fun FrontendApp() {
             startDestination = FrontendDestinations.Home,
         ) {
             composable(FrontendDestinations.Home) {
-                HomePlaceholderScreen()
+                HomeScreen(
+                    onSystemSelected = { /* Phase 3d wires Games route */ },
+                    onGameSelected = { /* Phase 3d wires Detail route */ },
+                    onSearch = { /* Phase 3e */ },
+                    onSettings = { /* Phase 3f */ },
+                )
             }
         }
     }
