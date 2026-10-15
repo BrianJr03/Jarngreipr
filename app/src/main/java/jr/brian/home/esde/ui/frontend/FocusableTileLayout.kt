@@ -420,27 +420,27 @@ private suspend fun centerOnFocused(
     layoutIndex: Int,
     snap: Boolean = false
 ) {
+    // Always route through animateScrollToItem(index, scrollOffset) so
+    // the target lands dead centre regardless of whether it was already
+    // visible, just entered the viewport, or hasn't been measured yet.
+    // The previous mixed scrollBy / scrollToItem path left edge tiles
+    // (first and last of a short row) pinned to the start / end of the
+    // viewport because scrollToItem alone offsets to item left edge.
     val info = rowState.layoutInfo
-    val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2
-    val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
-    if (target == null) {
-        rowState.scrollToItem(layoutIndex)
-        return
-    }
-    val itemCenter = target.offset + target.size / 2
-    val delta = (itemCenter - viewportCenter).toFloat()
-    if (abs(delta) < 1f) return
+    val viewportSize = info.viewportEndOffset - info.viewportStartOffset
+    val itemSize = info.visibleItemsInfo
+        .firstOrNull { it.index == layoutIndex }?.size
+        ?: info.visibleItemsInfo.firstOrNull()?.size
+        ?: 0
+    // Positive scrollOffset in animateScrollToItem places the item's
+    // leading edge at `scrollOffset` pixels past the viewport start.
+    // (W - T) / 2 puts the item dead centre.
+    val centerOffset = ((viewportSize - itemSize) / 2).coerceAtLeast(0)
     if (snap) {
-        rowState.scrollToItem(layoutIndex)
-        return
+        rowState.scrollToItem(layoutIndex, centerOffset)
+    } else {
+        rowState.animateScrollToItem(layoutIndex, centerOffset)
     }
-    rowState.animateScrollBy(
-        value = delta,
-        animationSpec = tween(
-            durationMillis = FrontendTokens.Motion.FocusMs,
-            easing = FrontendTokens.Motion.Easing
-        )
-    )
 }
 
 @Composable
