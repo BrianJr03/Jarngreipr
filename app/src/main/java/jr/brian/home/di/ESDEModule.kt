@@ -127,9 +127,10 @@ object ESDEModule {
     @Provides
     @Singleton
     fun provideESDEEventManager(
-        eventListener: ESDEEventListener
+        eventListener: ESDEEventListener,
+        setupPreferences: SetupPreferences,
     ): ESDEEventManager {
-        return ESDEEventManager(eventListener)
+        return ESDEEventManager(eventListener, setupPreferences)
     }
 
     @UnstableApi
