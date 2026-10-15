@@ -31,27 +31,27 @@ class LegacyFrontendPrefsTest {
     }
 
     @Test
-    fun `default is true so upgrades keep the old frontend`() {
+    fun `default is false so fresh installs land on the new frontend`() {
         val prefs = LegacyFrontendPrefs(app)
-        assertTrue(prefs.legacyFrontendEnabled.value)
-    }
-
-    @Test
-    fun `setting to false flips the StateFlow and persists`() {
-        val prefs = LegacyFrontendPrefs(app)
-        prefs.setLegacyFrontendEnabled(false)
         assertFalse(prefs.legacyFrontendEnabled.value)
-
-        // A fresh instance (next process boot) should still see false.
-        val fresh = LegacyFrontendPrefs(app)
-        assertEquals(false, fresh.legacyFrontendEnabled.value)
     }
 
     @Test
-    fun `toggling back to true is observable in the StateFlow`() {
+    fun `setting to true flips the StateFlow and persists`() {
         val prefs = LegacyFrontendPrefs(app)
-        prefs.setLegacyFrontendEnabled(false)
         prefs.setLegacyFrontendEnabled(true)
         assertTrue(prefs.legacyFrontendEnabled.value)
+
+        // A fresh instance (next process boot) should still see true.
+        val fresh = LegacyFrontendPrefs(app)
+        assertEquals(true, fresh.legacyFrontendEnabled.value)
+    }
+
+    @Test
+    fun `toggling back to false is observable in the StateFlow`() {
+        val prefs = LegacyFrontendPrefs(app)
+        prefs.setLegacyFrontendEnabled(true)
+        prefs.setLegacyFrontendEnabled(false)
+        assertFalse(prefs.legacyFrontendEnabled.value)
     }
 }
