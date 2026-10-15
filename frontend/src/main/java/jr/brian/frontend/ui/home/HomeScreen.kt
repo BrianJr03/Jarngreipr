@@ -51,6 +51,7 @@ fun HomeScreen(
     onGameSelected: (GameEntity) -> Unit,
     onSearch: () -> Unit,
     onSettings: () -> Unit,
+    onSetup: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -60,6 +61,7 @@ fun HomeScreen(
         onGameSelected = onGameSelected,
         onSearch = onSearch,
         onSettings = onSettings,
+        onSetup = onSetup,
     )
 }
 
@@ -71,6 +73,7 @@ fun HomeContent(
     onGameSelected: (GameEntity) -> Unit,
     onSearch: () -> Unit,
     onSettings: () -> Unit,
+    onSetup: () -> Unit = {},
 ) {
     Surface(
         modifier = Modifier
@@ -86,7 +89,7 @@ fun HomeContent(
         color = MaterialTheme.colorScheme.background,
     ) {
         if (state.isEmpty) {
-            EmptyLibraryState(onSetup = { /* Phase 3g wires setup wizard */ })
+            EmptyLibraryState(onSetup = onSetup)
             return@Surface
         }
         Column(
@@ -231,5 +234,9 @@ private fun EmptyLibraryState(onSetup: () -> Unit) {
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        Spacer(Modifier.height(16.dp))
+        androidx.compose.material3.Button(onClick = onSetup) {
+            Text("Set up")
+        }
     }
 }

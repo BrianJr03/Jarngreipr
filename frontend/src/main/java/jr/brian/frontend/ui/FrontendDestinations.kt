@@ -16,4 +16,5 @@ object FrontendDestinations {
 
     const val Search = "search"
     const val Settings = "settings"
+    const val Setup = "setup"
 }

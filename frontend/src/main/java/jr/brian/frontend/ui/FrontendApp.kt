@@ -11,6 +11,7 @@ import jr.brian.frontend.ui.games.GamesScreen
 import jr.brian.frontend.ui.home.HomeScreen
 import jr.brian.frontend.ui.search.SearchScreen
 import jr.brian.frontend.ui.settings.SettingsScreen
+import jr.brian.frontend.ui.setup.SetupScreen
 import jr.brian.frontend.ui.theme.FrontendTheme
 
 /**
@@ -36,6 +37,7 @@ fun FrontendApp() {
                     onGameSelected = { nav.navigate(FrontendDestinations.detail(it.id)) },
                     onSearch = { nav.navigate(FrontendDestinations.Search) },
                     onSettings = { nav.navigate(FrontendDestinations.Settings) },
+                    onSetup = { nav.navigate(FrontendDestinations.Setup) },
                 )
             }
             composable(
@@ -64,6 +66,16 @@ fun FrontendApp() {
             }
             composable(FrontendDestinations.Settings) {
                 SettingsScreen(onBack = { nav.popBackStack() })
+            }
+            composable(FrontendDestinations.Setup) {
+                SetupScreen(
+                    onDone = {
+                        nav.popBackStack()
+                        nav.navigate(FrontendDestinations.Home) {
+                            popUpTo(FrontendDestinations.Home) { inclusive = true }
+                        }
+                    },
+                )
             }
         }
     }
