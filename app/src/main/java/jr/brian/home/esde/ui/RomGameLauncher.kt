@@ -24,7 +24,7 @@ import jr.brian.home.esde.util.sdCardVolumeId
 import android.content.pm.PackageManager
 import android.hardware.display.DisplayManager
 import android.provider.DocumentsContract
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import jr.brian.home.util.launchApp
 import jr.brian.home.util.launchAppOnOppositeDisplay
 import java.io.File

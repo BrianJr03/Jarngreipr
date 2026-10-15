@@ -1,7 +1,5 @@
-package jr.brian.home.ui.util
+package jr.brian.core.model
 
-import jr.brian.home.model.HomeTarget
-import jr.brian.home.model.MainScreen
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

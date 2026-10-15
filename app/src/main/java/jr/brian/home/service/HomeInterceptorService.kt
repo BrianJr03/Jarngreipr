@@ -12,8 +12,8 @@ import android.view.accessibility.AccessibilityEvent
 import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.model.HomeTarget
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.HomeTarget
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.ui.util.routeHome
 import javax.inject.Inject

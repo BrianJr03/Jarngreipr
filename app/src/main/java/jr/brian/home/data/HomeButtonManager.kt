@@ -2,7 +2,7 @@ package jr.brian.home.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import jr.brian.home.model.MainScreen
+import jr.brian.core.model.MainScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

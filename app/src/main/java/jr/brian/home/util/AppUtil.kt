@@ -6,7 +6,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 
 fun launchApp(
     context: Context,

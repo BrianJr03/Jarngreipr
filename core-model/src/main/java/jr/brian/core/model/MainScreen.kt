@@ -1,4 +1,4 @@
-package jr.brian.home.model
+package jr.brian.core.model
 
 /**
  * Which display hosts `MainActivity` (and therefore receives input focus) when
@@ -9,10 +9,10 @@ package jr.brian.home.model
  * [HomeTarget] so its value is remembered when the user flips back to BOTH.
  */
 enum class MainScreen {
-    /** MainActivity on the primary/top display; FrontEndActivity on the bottom. */
+    /** MainActivity on the primary/top display; the frontend on the bottom. */
     TOP,
 
-    /** MainActivity on the external/bottom display; FrontEndActivity on the top. */
+    /** MainActivity on the external/bottom display; the frontend on the top. */
     BOTTOM;
 
     companion object {
