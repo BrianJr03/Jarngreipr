@@ -29,6 +29,7 @@ import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.frontend.library.migrate.LibraryMigration
+import jr.brian.home.data.FavoritesGateway
 import jr.brian.home.data.LibraryGameInfoAdapter
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.core.model.ApplicationScope
@@ -61,6 +62,7 @@ class RomSearchViewModel @Inject constructor(
     private val scraperCoordinator: ScraperCoordinator,
     private val libraryAdapter: LibraryGameInfoAdapter,
     private val libraryMigration: LibraryMigration,
+    private val favoritesGateway: FavoritesGateway,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
     private val cache = RomIndexCache(context)
@@ -94,6 +96,18 @@ class RomSearchViewModel @Inject constructor(
             libraryMigration.reimportGames()
         } catch (e: Exception) {
             Log.w(TAG, "Room reimport after legacy scan failed", e)
+        }
+    }
+
+    /**
+     * Flip the favorite flag for [game] in Room. The
+     * [LibraryGameInfoAdapter] collector picks up the new GameEntity
+     * row and republishes `store.allGames`, so the UI's `game.isFavorite`
+     * flips without an explicit refresh.
+     */
+    fun toggleFavorite(game: GameInfo) {
+        applicationScope.launch {
+            favoritesGateway.toggleFavorite(game)
         }
     }
     /**

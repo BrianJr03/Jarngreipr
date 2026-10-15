@@ -303,7 +303,8 @@ internal fun RomResultsGrid(
                             Toast.LENGTH_SHORT
                         ).show()
                     },
-                    onEditInfo = { onEditInfo(game) }
+                    onEditInfo = { onEditInfo(game) },
+                    onToggleFavorite = { romSearchViewModel.toggleFavorite(game) },
                 )
             }
         }

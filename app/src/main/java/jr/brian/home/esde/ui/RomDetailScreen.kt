@@ -95,6 +95,7 @@ internal fun RomDetailScreen(
     onPickCompanion: () -> Unit = {},
     onClearCompanion: () -> Unit = {},
     onEditInfo: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
     showActionRow: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -309,6 +310,15 @@ internal fun RomDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!isHidden) {
+                    TextButton(onClick = onToggleFavorite) {
+                        Text(
+                            text = stringResource(
+                                if (game.isFavorite) R.string.rom_detail_unfavorite
+                                else R.string.rom_detail_favorite
+                            ),
+                            color = ThemeAccentColor,
+                        )
+                    }
                     TextButton(
                         onClick = onChangeCore,
                         modifier = Modifier.focusRequester(focusRequester)
