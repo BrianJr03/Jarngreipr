@@ -5,6 +5,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -115,17 +116,24 @@ fun HomeContent(
             SystemsGrid(
                 systems = state.systems,
                 onSystemSelected = onSystemSelected,
+                // LazyVerticalGrid is itself vertically scrollable, so
+                // nesting it in a plain Column with no bounded height
+                // collapsed the grid to 0px — on-device you'd see
+                // only Favorites + Recent and nothing below. Giving
+                // it the remaining Column weight is the smallest fix.
+                modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
 @Composable
-private fun SystemsGrid(
+private fun ColumnScope.SystemsGrid(
     systems: List<SystemEntity>,
     onSystemSelected: (SystemEntity) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Systems",
             style = MaterialTheme.typography.titleLarge,
