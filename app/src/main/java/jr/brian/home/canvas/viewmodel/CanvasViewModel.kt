@@ -19,7 +19,7 @@ import jr.brian.home.canvas.model.GridRect
 import jr.brian.home.canvas.model.ResolvedCanvasItem
 import jr.brian.home.data.FolderManager
 import jr.brian.home.data.PinnedRomManager
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
 import jr.brian.home.model.rom.PinnedRomInfo

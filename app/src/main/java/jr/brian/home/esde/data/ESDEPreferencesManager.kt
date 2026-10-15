@@ -15,7 +15,7 @@ import jr.brian.home.esde.model.FRONTEND_TRANSITION_MS_MIN
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.LogoAlignment
 import jr.brian.home.esde.model.MusicVideoBehavior
 import jr.brian.home.esde.model.OverlayMediaType

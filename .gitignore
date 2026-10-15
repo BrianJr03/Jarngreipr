@@ -9,6 +9,7 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+build/
 /captures
 .externalNativeBuild
 .cxx
@@ -22,3 +23,4 @@ index.json
 create_track_pad.md
 CLAUDE.md
 .claude/
+docs/

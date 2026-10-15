@@ -2,6 +2,7 @@ package jr.brian.home.esde.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import jr.brian.core.model.GameImageType
 import jr.brian.home.model.Shortcut
 
 enum class PlatformImageFolderType { Smart, Default }
@@ -15,25 +16,6 @@ enum class SystemImageType(val folderName: String?) {
 
     companion object {
         fun randomizableTypes(): List<SystemImageType> =
-            entries.filter { it.folderName != null }
-    }
-}
-
-@kotlinx.serialization.Serializable
-enum class GameImageType(val folderName: String?) {
-    None(null),
-    All(null),
-    Screenshots("screenshots"),
-    Fanart("fanart"),
-    TitleScreens("titlescreens"),
-    Covers("covers"),
-    PhysicalMedia("physicalmedia"),
-    Marquee("marquees"),
-    MixImages("miximages"),
-    Description(null);
-
-    companion object {
-        fun randomizableTypes(): List<GameImageType> =
             entries.filter { it.folderName != null }
     }
 }

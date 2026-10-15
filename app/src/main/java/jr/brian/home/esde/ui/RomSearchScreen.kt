@@ -3,7 +3,7 @@ package jr.brian.home.esde.ui
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility

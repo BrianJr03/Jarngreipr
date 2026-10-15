@@ -23,7 +23,7 @@ import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.FrontendRowAlignment
 import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.model.BackButtonShortcut
-import jr.brian.home.model.MainScreen
+import jr.brian.core.model.MainScreen
 import jr.brian.home.model.PageType
 import jr.brian.home.model.PhysicalButton
 import jr.brian.home.model.WakeMethod

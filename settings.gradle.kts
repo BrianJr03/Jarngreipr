@@ -22,4 +22,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Home"
 include(":app")
+include(":core-model")
+include(":core-ui")
+include(":frontend")
  

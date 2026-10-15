@@ -4,7 +4,7 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import jr.brian.home.ui.util.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

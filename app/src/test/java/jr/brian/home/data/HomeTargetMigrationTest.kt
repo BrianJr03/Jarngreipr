@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import io.mockk.every
 import io.mockk.mockk
-import jr.brian.home.model.MainScreen
+import jr.brian.core.model.MainScreen
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
