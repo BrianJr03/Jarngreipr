@@ -17,7 +17,7 @@ import jr.brian.home.data.ESDECleanupManager
 import jr.brian.home.esde.data.MusicController
 import jr.brian.home.esde.data.MusicManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.OverlayMediaType
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.model.SystemImageType

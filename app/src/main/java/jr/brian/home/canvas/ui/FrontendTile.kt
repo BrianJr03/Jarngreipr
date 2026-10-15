@@ -38,7 +38,7 @@ import coil.request.ImageRequest
 import jr.brian.home.R
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.util.LocalESDEImageLoader
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.esde.util.imagePathFor

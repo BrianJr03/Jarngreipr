@@ -52,7 +52,7 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasScrollOrientation
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.home.canvas.model.ResolvedCanvasItem
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.ui.RomDetailScreen
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
 import jr.brian.home.canvas.viewmodel.CanvasViewModel

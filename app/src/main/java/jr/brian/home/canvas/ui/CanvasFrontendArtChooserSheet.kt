@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import jr.brian.home.R
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.ui.components.GameImageTypeSelector
 import jr.brian.home.ui.animations.animatedFocusedScale
 import jr.brian.home.ui.components.AutoLockingSlider

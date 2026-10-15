@@ -1,6 +1,6 @@
 package jr.brian.home.esde.util
 
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import jr.brian.home.esde.model.GameInfo
 
 /**

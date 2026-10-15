@@ -1,6 +1,6 @@
 package jr.brian.home.canvas.model
 
-import jr.brian.home.esde.model.GameImageType
+import jr.brian.core.model.GameImageType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
