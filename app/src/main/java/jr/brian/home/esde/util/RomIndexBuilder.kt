@@ -153,11 +153,16 @@ object RomIndexBuilder {
         launchCommand: String? = null,
         emulatorPackage: String? = null,
     ): List<GameInfo> = withContext(Dispatchers.IO) {
+        // Pass `systems = setOf(systemName)` so the scanner skips every root
+        // subdirectory and every mapping that doesn't match. Previously this
+        // walked every system under every root and threw away all but one
+        // result — a per-system refresh scaled with the whole library.
         val allScans = RomScanner.scan(
             romsPaths = romsPaths,
             esSystemsFile = esSystemsFile,
             systemFolderMappings = systemFolderMappings,
             context = context,
+            systems = setOf(systemName),
         )
         val systemScans = allScans[systemName] ?: return@withContext emptyList()
         val metadata = metadataSource.metadataFor(systemName, systemScans)

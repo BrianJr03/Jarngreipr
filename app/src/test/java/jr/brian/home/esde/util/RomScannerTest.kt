@@ -112,6 +112,33 @@ class RomScannerTest {
     }
 
     @Test
+    fun `scan honours the systems filter and skips directories outside it`() = runBlocking {
+        val root = tempFolder.newFolder("Roms")
+        writeRom(root, "psx/Metal Gear.chd")
+        writeRom(root, "nes/Mario.nes")
+        writeRom(root, "snes/Zelda.sfc")
+
+        val filtered = RomScanner.scan(
+            romsPaths = listOf(root.absolutePath),
+            systems = setOf("psx"),
+        )
+        // Only the filtered system should be scanned. The other directories
+        // must not even enter the result map.
+        assertEquals(setOf("psx"), filtered.keys)
+        assertEquals(1, filtered["psx"]!!.size)
+    }
+
+    @Test
+    fun `scan with a null systems filter sees every system (compat with pre-filter callers)`() = runBlocking {
+        val root = tempFolder.newFolder("Roms")
+        writeRom(root, "psx/Metal Gear.chd")
+        writeRom(root, "nes/Mario.nes")
+
+        val results = RomScanner.scan(listOf(root.absolutePath), systems = null)
+        assertEquals(setOf("psx", "nes"), results.keys)
+    }
+
+    @Test
     fun `scan uses es_systems xml extension element when provided`() = runBlocking {
         val root = tempFolder.newFolder("Roms")
         val fakeExtDir = File(root, "fakesys").also { it.mkdirs() }
