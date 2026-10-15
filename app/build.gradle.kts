@@ -102,6 +102,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core-model"))
+
     val composeBom = platform(libs.androidx.compose.bom)
 
     implementation(libs.androidx.core.ktx)
