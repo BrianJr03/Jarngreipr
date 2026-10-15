@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScraperMediaKind
+import jr.brian.home.esde.scraper.model.ScrapeError
 import jr.brian.home.esde.scraper.model.ScrapeRequest
 import jr.brian.home.esde.scraper.model.ScrapeState
 import jr.brian.home.esde.scraper.model.ScrapedMedia
@@ -66,23 +67,30 @@ class ScraperCoordinator @Inject constructor(
         if (_state.value is ScrapeState.Running) return
         val total = request.games.size
         _state.value = ScrapeState.Running(
-            done = 0, total = total, downloads = 0, errors = 0, currentTitle = null
+            done = 0, total = total, downloads = 0, errors = 0, currentTitle = null,
         )
         job = scope.launch {
             var downloads = 0
             var errors = 0
             var done = 0
+            val errorMessages = mutableListOf<ScrapeError>()
             for (game in request.games) {
                 if (!isActive) break
                 val displayTitle = game.path.substringAfterLast('/')
-                _state.value = ScrapeState.Running(done, total, downloads, errors, displayTitle)
+                _state.value = ScrapeState.Running(
+                    done, total, downloads, errors, displayTitle, errorMessages.toList(),
+                )
                 try {
-                    val medias = discoverMedia(
+                    val (medias, lookupErrors) = discoverMedia(
                         game = game,
                         request = request,
                         screenScraperCredentials = screenScraperCredentials,
                         steamGridDbApiKey = steamGridDbApiKey
                     )
+                    if (lookupErrors.isNotEmpty()) {
+                        errors += lookupErrors.size
+                        errorMessages += lookupErrors
+                    }
                     for (media in medias) {
                         if (!isActive) break
                         val dest = destinationFile(game, media) ?: continue
@@ -95,15 +103,29 @@ class ScraperCoordinator @Inject constructor(
                                 screenScraper.download(media.url, dest)
                             else -> steamGridDb.download(media.url, dest)
                         }
-                        if (ok) downloads++ else errors++
+                        if (ok) {
+                            downloads++
+                        } else {
+                            errors++
+                            errorMessages += ScrapeError(
+                                gameTitle = displayTitle,
+                                message = "Download failed: ${media.url}",
+                            )
+                        }
                     }
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     errors++
+                    errorMessages += ScrapeError(
+                        gameTitle = displayTitle,
+                        message = e.message ?: e.javaClass.simpleName,
+                    )
                 }
                 done++
-                _state.value = ScrapeState.Running(done, total, downloads, errors, displayTitle)
+                _state.value = ScrapeState.Running(
+                    done, total, downloads, errors, displayTitle, errorMessages.toList(),
+                )
             }
-            _state.value = ScrapeState.Finished(done, downloads, errors)
+            _state.value = ScrapeState.Finished(done, downloads, errors, errorMessages.toList())
             onFinished?.invoke()
         }
     }
@@ -122,13 +144,20 @@ class ScraperCoordinator @Inject constructor(
         }
     }
 
+    private data class DiscoverResult(
+        val medias: List<ScrapedMedia>,
+        val errors: List<ScrapeError>,
+    )
+
     private suspend fun discoverMedia(
         game: GameInfo,
         request: ScrapeRequest,
         screenScraperCredentials: ScreenScraperClient.Credentials?,
         steamGridDbApiKey: String?
-    ): List<ScrapedMedia> {
+    ): DiscoverResult {
         val wanted = mutableMapOf<ScraperMediaKind, ScrapedMedia>()
+        val errors = mutableListOf<ScrapeError>()
+        val displayTitle = game.path.substringAfterLast('/')
 
         if (request.screenScraperEnabled && screenScraperCredentials?.hasDev == true) {
             val romFile = game.romAbsolutePath?.let(::File)?.takeIf { it.isFile }
@@ -141,12 +170,22 @@ class ScraperCoordinator @Inject constructor(
                 crc32 = crc,
                 romName = romName,
                 romSizeBytes = romFile?.length()
-            ).getOrNull().orEmpty()
-            for (media in result) {
-                if (media.kind in request.mediaTypesScreenScraper) {
-                    wanted.putIfAbsent(media.kind, media)
-                }
-            }
+            )
+            result.fold(
+                onSuccess = { medias ->
+                    for (media in medias) {
+                        if (media.kind in request.mediaTypesScreenScraper) {
+                            wanted.putIfAbsent(media.kind, media)
+                        }
+                    }
+                },
+                onFailure = { cause ->
+                    errors += ScrapeError(
+                        gameTitle = displayTitle,
+                        message = "ScreenScraper: ${cause.message ?: cause.javaClass.simpleName}",
+                    )
+                },
+            )
         }
 
         if (request.steamGridDbEnabled && !steamGridDbApiKey.isNullOrBlank()) {
@@ -157,14 +196,24 @@ class ScraperCoordinator @Inject constructor(
                     apiKey = steamGridDbApiKey,
                     query = query,
                     wantedKinds = stillWanted
-                ).getOrNull().orEmpty()
-                for (media in result) {
-                    wanted.putIfAbsent(media.kind, media)
-                }
+                )
+                result.fold(
+                    onSuccess = { medias ->
+                        for (media in medias) {
+                            wanted.putIfAbsent(media.kind, media)
+                        }
+                    },
+                    onFailure = { cause ->
+                        errors += ScrapeError(
+                            gameTitle = displayTitle,
+                            message = "SteamGridDB: ${cause.message ?: cause.javaClass.simpleName}",
+                        )
+                    },
+                )
             }
         }
 
-        return wanted.values.toList()
+        return DiscoverResult(wanted.values.toList(), errors)
     }
 
     private fun deriveQuery(game: GameInfo): String {
