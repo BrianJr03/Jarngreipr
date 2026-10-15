@@ -29,7 +29,7 @@ import jr.brian.home.esde.util.RomScanner
 import jr.brian.home.esde.util.SidecarMetadataSource
 import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.esde.scraper.ScraperCoordinator
-import jr.brian.home.di.ApplicationScope
+import jr.brian.core.model.ApplicationScope
 import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
