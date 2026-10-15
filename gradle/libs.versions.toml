@@ -33,6 +33,8 @@ appcompat = "1.7.1"
 browser = "1.8.0"
 androidx-tv-foundation = "1.0.0-alpha11"
 okhttp = "4.12.0"
+workmanager = "2.10.1"
+hiltWork = "1.3.0"
 
 [libraries]
 colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
@@ -85,6 +87,9 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "androidx-tv-foundation" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workmanager" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

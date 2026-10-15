@@ -18,6 +18,7 @@ import jr.brian.core.model.HomeLaunchActivity
 import jr.brian.core.model.HomeTarget
 import jr.brian.core.model.MainScreen
 import jr.brian.core.model.PRIMARY_DISPLAY_ID
+import jr.brian.core.model.ScreenAssignment
 import jr.brian.core.model.planHomeLaunches
 import jr.brian.core.model.planLauncherHomeLaunches
 import jr.brian.home.MainActivity
@@ -46,6 +47,27 @@ fun launchFrontend(context: Context, displayId: Int = PRIMARY_DISPLAY_ID) {
     }
     val options = ActivityOptions.makeBasic().apply { launchDisplayId = displayId }
     context.startActivity(intent, options.toBundle())
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+internal interface LaunchFrontendEntryPoint {
+    fun screenAssignmentStore(): jr.brian.home.data.ScreenAssignmentStore
+}
+
+/**
+ * Current persisted [ScreenAssignment], consulted by every launch
+ * path. Collapses to [ScreenAssignment.DEFAULT] if Hilt isn't
+ * reachable (unit test, early boot) so pre-Phase-5 behaviour is
+ * preserved as the fallback.
+ */
+private fun currentAssignment(context: Context): ScreenAssignment = try {
+    dagger.hilt.android.EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        LaunchFrontendEntryPoint::class.java,
+    ).screenAssignmentStore().assignment
+} catch (_: Throwable) {
+    ScreenAssignment.DEFAULT
 }
 
 /**
@@ -95,6 +117,7 @@ fun routeHome(
             target = target,
             mainScreen = mainScreen,
             frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
         ),
     )
 }
@@ -110,6 +133,7 @@ fun routeHomeFromLauncher(context: Context, frontendEnabled: Boolean) {
         planLauncherHomeLaunches(
             bottomDisplayId = resolveBottomDisplayId(context),
             frontendEnabled = frontendEnabled,
+            assignment = currentAssignment(context),
         ),
     )
 }

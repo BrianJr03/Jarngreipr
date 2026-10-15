@@ -2,6 +2,8 @@ package jr.brian.home
 
 import android.app.Application
 import android.os.Build
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
@@ -16,7 +18,7 @@ import javax.inject.Inject
 import javax.inject.Provider
 
 @HiltAndroidApp
-class JarngreiprApplication : Application(), ImageLoaderFactory {
+class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.Provider {
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a
@@ -30,11 +32,26 @@ class JarngreiprApplication : Application(), ImageLoaderFactory {
     @Inject
     lateinit var homeButtonManager: HomeButtonManager
 
+    @Inject
+    lateinit var hiltWorkerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var screenSwapListener: jr.brian.home.data.ScreenSwapListener
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(hiltWorkerFactory)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
         CrashLogger.initialize(this)
         restoreHomeInterceptionKeepAlive()
         prewarmSingletons()
+        // Phase 5: wire FrontendCommand.SwapScreens → persisted
+        // assignment flip + re-route. Kept alive for the lifetime of
+        // the Application.
+        screenSwapListener.start()
     }
 
     /**

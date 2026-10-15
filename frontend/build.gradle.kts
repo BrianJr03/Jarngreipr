@@ -15,6 +15,22 @@ android {
     defaultConfig {
         minSdk = 33
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Dev-side ScreenScraper credentials. Populated at build time
+        // from the SCREENSCRAPER_DEV_ID / SCREENSCRAPER_DEV_PASSWORD
+        // env vars (set as GitHub Actions secrets); empty strings when
+        // unavailable. ScreenScraperConfig.hasDevCredentials gates the
+        // scraper so a build without them degrades gracefully to a
+        // "scraper not configured" state rather than hitting the API
+        // and failing on auth.
+        val devId = (project.findProperty("screenscraper.devId") as? String)
+            ?: System.getenv("SCREENSCRAPER_DEV_ID")
+            ?: ""
+        val devPassword = (project.findProperty("screenscraper.devPassword") as? String)
+            ?: System.getenv("SCREENSCRAPER_DEV_PASSWORD")
+            ?: ""
+        buildConfigField("String", "SCREENSCRAPER_DEV_ID", "\"$devId\"")
+        buildConfigField("String", "SCREENSCRAPER_DEV_PASSWORD", "\"$devPassword\"")
     }
 
     flavorDimensions += "mode"
@@ -29,7 +45,10 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = false
+        // Scraper dev creds (Phase 4a) ship via BuildConfig fields
+        // injected from CI secrets. Empty values must still compile so
+        // local / forked builds work without the secrets available.
+        buildConfig = true
     }
 
     testOptions {
@@ -61,5 +80,27 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // kotlinx.serialization runtime — SystemDef is @Serializable so the
+    // SystemCatalog can decode assets/systems/*.json at load time.
+    implementation(libs.kotlinx.serialization.json)
+
+    // Room — library engine lives here per plan §3.2.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Scraper (Phase 4) — OkHttp for the HTTP clients, WorkManager +
+    // hilt-work for the background scrape worker.
+    implementation(libs.okhttp)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.turbine)
+    testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.mockk)
 }

@@ -1,0 +1,8 @@
+{
+  "id": "gc",
+  "displayName": "Nintendo GameCube",
+  "folderAliases": ["gamecube", "ngc", "nintendo-gc"],
+  "extensions": ["gcm", "iso", "wbfs", "ciso", "gcz", "wad", "dol", "elf", "rvz"],
+  "screenScraperSystemId": 13,
+  "retroArchSystemId": "gc"
+}
