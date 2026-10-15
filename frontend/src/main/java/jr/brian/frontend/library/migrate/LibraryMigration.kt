@@ -44,6 +44,7 @@ class LibraryMigration @Inject constructor(
     private val systemDao: SystemDao,
     private val catalog: SystemCatalog,
     private val romIndexImporter: RomIndexImporter,
+    private val gamelistImporter: GamelistImporter,
 ) {
     private val migrationPrefs by lazy {
         context.getSharedPreferences(MIGRATION_PREFS, Context.MODE_PRIVATE)
@@ -83,7 +84,30 @@ class LibraryMigration @Inject constructor(
         upsertCatalogSystems()
         importSources()
         romIndexImporter.run()
+        importGamelists()
         Log.i(TAG, "Library migration complete")
+    }
+
+    /**
+     * Walk every registered file-path source's gamelists directory
+     * and decorate matching GameEntity rows with the XML metadata.
+     * SAF sources are skipped — reading XML across SAF is slow and
+     * the user can trigger it manually from a settings action in
+     * a later phase.
+     */
+    private suspend fun importGamelists() {
+        val sources = sourceDao.getAll()
+        for (source in sources) {
+            if (source.treeUri.startsWith("content://")) continue
+            val gamelistsDir = java.io.File(source.treeUri, "gamelists")
+            if (!gamelistsDir.exists() || !gamelistsDir.isDirectory) continue
+            val systemDirs = gamelistsDir.listFiles()?.filter { it.isDirectory }.orEmpty()
+            for (sysDir in systemDirs) {
+                val def = catalog.findByFolderAlias(sysDir.name) ?: continue
+                val file = java.io.File(sysDir, "gamelist.xml")
+                gamelistImporter.importFile(file, source.id, def.id)
+            }
+        }
     }
 
     /**
@@ -181,6 +205,6 @@ class LibraryMigration @Inject constructor(
          * who ran migration v1 pick up v2's work on next launch
          * without re-doing v1.
          */
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
     }
 }

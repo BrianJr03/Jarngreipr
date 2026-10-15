@@ -91,6 +91,7 @@ class LibraryMigrationTest {
                 mediaDao = db.mediaDao(),
                 catalog = catalog,
             ),
+            gamelistImporter = GamelistImporter(db.gameDao()),
         )
     }
 
