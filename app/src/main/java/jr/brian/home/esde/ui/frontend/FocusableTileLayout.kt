@@ -303,6 +303,21 @@ private fun <T> RowLayout(
     var lastFocusChangeMs by remember { mutableLongStateOf(0L) }
     var isRapidScroll by remember { mutableStateOf(false) }
 
+    // Secondary display → each tile fills the viewport (one card at a
+    // time). On primary we keep the carousel with peek. LocalConfiguration
+    // is the recomposition trigger — a screen swap fires
+    // onConfigurationChanged (density / screenWidthDp differ between
+    // Thor's two displays) which invalidates the keyed remember, so the
+    // layout flips the same frame the activity reattaches to its new
+    // display instead of waiting for scroll to force a redraw.
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val composeView = androidx.compose.ui.platform.LocalView.current
+    val renderDisplayId = remember(configuration) {
+        composeView.display?.displayId
+            ?: jr.brian.core.model.PRIMARY_DISPLAY_ID
+    }
+    val onPrimaryDisplay = renderDisplayId == jr.brian.core.model.PRIMARY_DISPLAY_ID
+
     // Centre the focused tile horizontally on every focus change. Also covers the seed:
     // initialVirtualIndex change triggers this once on first composition.
     LaunchedEffect(focusedIndex) {
@@ -348,7 +363,12 @@ private fun <T> RowLayout(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val sidePadding = ((maxWidth - rowItemWidth) / 2).coerceAtLeast(0.dp)
+        // Secondary display: force full-viewport tiles so each system
+        // occupies the whole screen. Scrolling the row is then a clean
+        // page-at-a-time swipe between systems — no clipped edges, no
+        // centring math, no peek distraction on the smaller display.
+        val effectiveItemWidth = if (onPrimaryDisplay) rowItemWidth else maxWidth
+        val sidePadding = ((maxWidth - effectiveItemWidth) / 2).coerceAtLeast(0.dp)
         val verticalAlignment = when (rowAlignment) {
             FrontendRowAlignment.Top -> Alignment.Top
             FrontendRowAlignment.Center -> Alignment.CenterVertically
@@ -394,7 +414,7 @@ private fun <T> RowLayout(
                 )
                 Box(
                     modifier = Modifier
-                        .width(rowItemWidth)
+                        .width(effectiveItemWidth)
                         .graphicsLayer {
                             scaleX = falloff
                             scaleY = falloff
@@ -418,29 +438,29 @@ private fun <T> RowLayout(
 private suspend fun centerOnFocused(
     rowState: androidx.compose.foundation.lazy.LazyListState,
     layoutIndex: Int,
-    snap: Boolean = false
+    snap: Boolean = false,
 ) {
-    // Always route through animateScrollToItem(index, scrollOffset) so
-    // the target lands dead centre regardless of whether it was already
-    // visible, just entered the viewport, or hasn't been measured yet.
-    // The previous mixed scrollBy / scrollToItem path left edge tiles
-    // (first and last of a short row) pinned to the start / end of the
-    // viewport because scrollToItem alone offsets to item left edge.
     val info = rowState.layoutInfo
-    val viewportSize = info.viewportEndOffset - info.viewportStartOffset
-    val itemSize = info.visibleItemsInfo
-        .firstOrNull { it.index == layoutIndex }?.size
-        ?: info.visibleItemsInfo.firstOrNull()?.size
-        ?: 0
-    // Positive scrollOffset in animateScrollToItem places the item's
-    // leading edge at `scrollOffset` pixels past the viewport start.
-    // (W - T) / 2 puts the item dead centre.
-    val centerOffset = ((viewportSize - itemSize) / 2).coerceAtLeast(0)
-    if (snap) {
-        rowState.scrollToItem(layoutIndex, centerOffset)
-    } else {
-        rowState.animateScrollToItem(layoutIndex, centerOffset)
+    val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2
+    val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
+    if (target == null) {
+        rowState.scrollToItem(layoutIndex)
+        return
     }
+    val itemCenter = target.offset + target.size / 2
+    val delta = (itemCenter - viewportCenter).toFloat()
+    if (abs(delta) < 1f) return
+    if (snap) {
+        rowState.scrollToItem(layoutIndex)
+        return
+    }
+    rowState.animateScrollBy(
+        value = delta,
+        animationSpec = tween(
+            durationMillis = FrontendTokens.Motion.FocusMs,
+            easing = FrontendTokens.Motion.Easing
+        )
+    )
 }
 
 @Composable

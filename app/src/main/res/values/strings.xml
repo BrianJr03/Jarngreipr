@@ -1305,6 +1305,10 @@
     <string name="screen_swap_title">Swap screens</string>
     <string name="screen_swap_description_top">Frontend is on the top display. Tap to move it to the bottom.</string>
     <string name="screen_swap_description_bottom">Frontend is on the bottom display. Tap to move it to the top.</string>
+    <string name="frontend_layout_primary_systems_row_title">Top screen: use row layout for systems</string>
+    <string name="frontend_layout_primary_systems_row_description">Off uses the grid. Only applies when the frontend is on the top display.</string>
+    <string name="frontend_layout_secondary_systems_row_title">Bottom screen: use row layout for systems</string>
+    <string name="frontend_layout_secondary_systems_row_description">Off uses the grid. Only applies when the frontend is on the bottom display.</string>
     <string name="scrape_all_title">Scrape all now</string>
     <string name="scrape_all_description">Fetch artwork and metadata for every game in your library. Runs in the background with a notification; keep using the launcher while it works.</string>
     <string name="rom_detail_favorite">Favorite</string>

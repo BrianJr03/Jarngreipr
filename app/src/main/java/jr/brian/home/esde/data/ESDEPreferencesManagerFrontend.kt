@@ -27,9 +27,10 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_TRANSITION_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_SYSTEM_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_CUSTOMIZATIONS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_HAPTIC_ENABLED
-import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SYSTEM_ORDER
 import kotlinx.serialization.encodeToString
 import org.json.JSONArray
@@ -49,9 +50,14 @@ fun ESDEPreferencesManager.setJarngreiprMediaEnabled(enabled: Boolean) {
     prefs.edit { putBoolean(KEY_JARNGREIPR_MEDIA_ENABLED, enabled) }
 }
 
-fun ESDEPreferencesManager.setSystemLayout(layout: FrontendLayout) {
-    _state.value = _state.value.copy(systemLayout = layout)
-    prefs.edit { putString(KEY_SYSTEM_LAYOUT, layout.name) }
+fun ESDEPreferencesManager.setPrimarySystemLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(primarySystemLayout = layout)
+    prefs.edit { putString(KEY_PRIMARY_SYSTEM_LAYOUT, layout.name) }
+}
+
+fun ESDEPreferencesManager.setSecondarySystemLayout(layout: FrontendLayout) {
+    _state.value = _state.value.copy(secondarySystemLayout = layout)
+    prefs.edit { putString(KEY_SECONDARY_SYSTEM_LAYOUT, layout.name) }
 }
 
 fun ESDEPreferencesManager.setGameLayout(layout: FrontendLayout) {

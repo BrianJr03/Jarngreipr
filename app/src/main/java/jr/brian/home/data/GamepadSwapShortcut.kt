@@ -6,6 +6,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import jr.brian.core.model.SwapCoordinator
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import jr.brian.home.util.ThorDetection
 
@@ -49,22 +50,31 @@ object GamepadSwapShortcut {
     }
 
     /**
-     * Flip [ScreenAssignmentStore] and re-fire the launch plan via
-     * [routeHomeFromLauncher]. Thor-only — a single-display device
-     * has no "other" screen for the swap to land on.
+     * Run the full swap choreography: begin the Leaving phase (so
+     * SwapFade animates out), flip [ScreenAssignmentStore], re-fire
+     * the launch plan, then transition to Arriving (so the new
+     * activities animate in). Same sequence [ScreenSwapListener]
+     * runs — this just shortcuts the FrontendBus hop for callers
+     * that already live inside :app. Thor-only — a single-display
+     * device has no "other" screen for the swap to land on.
      */
     fun fireSwap(context: Context) {
         if (!ThorDetection.isThor()) return
-        val store = EntryPointAccessors
+        val entryPoint = EntryPointAccessors
             .fromApplication(context.applicationContext, SwapShortcutEntryPoint::class.java)
-            .screenAssignmentStore()
-        store.flip()
+        val store = entryPoint.screenAssignmentStore()
+        val coordinator = entryPoint.swapCoordinator()
+        val next = store.assignment.flipped()
+        coordinator.beginLeaving(next)
+        store.setAssignment(next)
         routeHomeFromLauncher(context, frontendEnabled = true)
+        coordinator.markArriving()
     }
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     internal interface SwapShortcutEntryPoint {
         fun screenAssignmentStore(): ScreenAssignmentStore
+        fun swapCoordinator(): SwapCoordinator
     }
 }

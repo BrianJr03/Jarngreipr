@@ -1,5 +1,6 @@
 package jr.brian.home.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -10,13 +11,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.core.model.SwapCoordinator
 import jr.brian.core.model.SwapPhase
 import kotlinx.coroutines.delay
 
-const val SWAP_FADE_MS = 180
+const val SWAP_FADE_MS = 300
+private const val SWAP_SCALE_LEAVING = 0.94f
 
 /**
  * Phase 5 handoff animation. Observes [SwapCoordinator.phase]:
@@ -36,10 +38,10 @@ fun SwapFade(
     content: @Composable () -> Unit,
 ) {
     val phase by coordinator.phase.collectAsStateWithLifecycle()
-    val initialAlpha = remember { if (coordinator.phase.value is SwapPhase.Arriving) 0f else 1f }
-    val targetAlpha = remember { mutableFloatStateOf(initialAlpha) }
+    val initialProgress = remember { if (coordinator.phase.value is SwapPhase.Arriving) 0f else 1f }
+    val target = remember { mutableFloatStateOf(initialProgress) }
     LaunchedEffect(phase) {
-        targetAlpha.floatValue = when (phase) {
+        target.floatValue = when (phase) {
             is SwapPhase.Leaving -> 0f
             else -> 1f
         }
@@ -48,12 +50,24 @@ fun SwapFade(
             coordinator.markArrived()
         }
     }
-    val animated by animateFloatAsState(
-        targetValue = targetAlpha.floatValue,
-        animationSpec = tween(SWAP_FADE_MS),
+    val progress by animateFloatAsState(
+        targetValue = target.floatValue,
+        animationSpec = tween(SWAP_FADE_MS, easing = FastOutSlowInEasing),
         label = "swap-fade",
     )
-    Box(modifier = Modifier.fillMaxSize().alpha(animated)) {
+    // progress 1 = fully shown, 0 = fully leaving. Alpha tracks it directly;
+    // scale lerps between SWAP_SCALE_LEAVING and 1 so the content gently
+    // pulls back as it fades out and settles in as it fades back in.
+    val scale = SWAP_SCALE_LEAVING + (1f - SWAP_SCALE_LEAVING) * progress
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                alpha = progress
+                scaleX = scale
+                scaleY = scale
+            }
+    ) {
         content()
     }
 }

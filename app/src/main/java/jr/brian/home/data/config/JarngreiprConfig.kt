@@ -326,6 +326,8 @@ data class RomSearchConfig(
     val secondaryMediaEnabled: Boolean = true,
     val jarngreiprMediaEnabled: Boolean = true,
     val systemLayout: String = "Grid",
+    val primarySystemLayout: String = "Row",
+    val secondarySystemLayout: String = "Grid",
     val gameLayout: String = "Grid",
     val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
     val systemOrder: List<String> = emptyList(),
