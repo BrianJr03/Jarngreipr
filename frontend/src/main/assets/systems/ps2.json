@@ -1,0 +1,8 @@
+{
+  "id": "ps2",
+  "displayName": "Sony PlayStation 2",
+  "folderAliases": ["sony-ps2"],
+  "extensions": ["iso", "bin", "elf", "chd", "cso", "gz"],
+  "screenScraperSystemId": 58,
+  "retroArchSystemId": "ps2"
+}

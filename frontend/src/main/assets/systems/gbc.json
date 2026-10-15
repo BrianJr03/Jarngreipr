@@ -1,0 +1,8 @@
+{
+  "id": "gbc",
+  "displayName": "Game Boy Color",
+  "folderAliases": ["nintendo-gbc"],
+  "extensions": ["gbc", "gb", "zip", "7z"],
+  "screenScraperSystemId": 10,
+  "retroArchSystemId": "gbc"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "n64",
+  "displayName": "Nintendo 64",
+  "folderAliases": ["n64dd", "nintendo-n64"],
+  "extensions": ["n64", "v64", "z64", "zip"],
+  "screenScraperSystemId": 14,
+  "retroArchSystemId": "N64"
+}

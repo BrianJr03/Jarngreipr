@@ -1,0 +1,8 @@
+{
+  "id": "switch",
+  "displayName": "Nintendo Switch",
+  "folderAliases": ["nswitch", "nintendo-switch"],
+  "extensions": ["nsp", "xci", "nca", "nso"],
+  "screenScraperSystemId": 225,
+  "retroArchSystemId": null
+}
