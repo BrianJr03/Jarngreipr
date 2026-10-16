@@ -23,4 +23,10 @@ index.json
 create_track_pad.md
 CLAUDE.md
 .claude/
-docs/
+# Ignore everything in docs/ EXCEPT the README screenshots so GitHub
+# can render the hero shots. Excluding `docs/` as a directory wholesale
+# makes negation on children useless (git stops recursing), so this
+# pattern lists the contents and then re-includes the screenshots.
+docs/*
+!docs/screenshots/
+!docs/screenshots/**
