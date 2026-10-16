@@ -20,6 +20,12 @@ Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **
 
 ---
 
+<p align="center">
+  <img src="docs/screenshots/thor-combined.png" alt="AYN Thor: Frontend systems on top, Canvas on bottom" width="55%"/>
+</p>
+
+---
+
 ## 🚀 What is Jarngreipr
 
 Three things in one app, each usable alone.
@@ -148,16 +154,6 @@ Turn the frontend off and Jarngreipr becomes a live companion for ES-DE running 
 ### What is Ping?
 
 [Ping](https://github.com/BrianJr03/Ping) is an open-source library that powers `Theme Sharing` between two Jarngreipr devices. It uses Bluetooth Low Energy for themes and Google's Nearby Connections API for wallpapers. Open `Settings` → `Appearance` → `Theme Sharing` to get started.
-
----
-
-## 📸 Screenshots
-
-Captured live on an AYN Thor. Top screen running the Frontend's systems view; bottom screen running Canvas with a Frontend widget that mirrors the focused system, plus a battery widget, Now Playing tile, and the focused game's art.
-
-<p align="center">
-  <img src="docs/screenshots/thor-combined.png" alt="AYN Thor: Frontend systems on top, Canvas on bottom" width="55%"/>
-</p>
 
 ---
 
