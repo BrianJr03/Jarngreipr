@@ -7,10 +7,13 @@
 - Games grid now shows bigger logos with fewer columns per row
 
 **New Launcher Features**
-- Added Auto-manage Focus Lock under Extras, pins gamepad input to the screen you are using, follows the frontend on swap, follows apps you launch, and pins to the top during games
 - Double-press Home now opens the frontend on whichever screen it lives on, even after a swap
+- Auto-manage Focus Lock under Extras (requires Shizuku): keeps gamepad input on the frontend after swaps, follows apps you launch, and pins to the top screen when another app takes focus
+- The two app screens now pair back up automatically on boot or after one is dismissed
 
 **Jarngreipr Frontend Fixes**
 - Fixed the brief freeze and layout flash during a screen swap when the two displays use different layouts
+- Pressing Home no longer kicks you out of the app when the frontend is on the external display
+- Screen swap now plays a cross-slide animation (top screen slides down, bottom slides up) and no longer briefly shows the system wallpaper
 
 3.0

@@ -31,11 +31,18 @@ fun ESDEPreferencesManager.setScreenScraperDevPassword(value: String) {
 fun ESDEPreferencesManager.setScreenScraperUserId(value: String) {
     _state.value = _state.value.copy(screenScraperUserId = value)
     prefs.edit { putString(KEY_SCREENSCRAPER_USER_ID, value) }
+    syncScreenScraperUser()
 }
 
 fun ESDEPreferencesManager.setScreenScraperUserPassword(value: String) {
     _state.value = _state.value.copy(screenScraperUserPassword = value)
     prefs.edit { putString(KEY_SCREENSCRAPER_USER_PASSWORD, value) }
+    syncScreenScraperUser()
+}
+
+private fun ESDEPreferencesManager.syncScreenScraperUser() {
+    val s = _state.value
+    userScraperCredentials?.setScreenScraperUser(s.screenScraperUserId, s.screenScraperUserPassword)
 }
 
 fun ESDEPreferencesManager.setScreenScraperMediaTypes(types: Set<String>) {
@@ -51,6 +58,7 @@ fun ESDEPreferencesManager.setSteamGridDbEnabled(enabled: Boolean) {
 fun ESDEPreferencesManager.setSteamGridDbApiKey(value: String) {
     _state.value = _state.value.copy(steamGridDbApiKey = value)
     prefs.edit { putString(KEY_STEAMGRIDDB_API_KEY, value) }
+    userScraperCredentials?.setSteamGridDbKey(value)
 }
 
 fun ESDEPreferencesManager.setSteamGridDbMediaTypes(types: Set<String>) {

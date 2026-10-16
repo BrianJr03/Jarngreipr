@@ -23,6 +23,7 @@ import jr.brian.home.esde.data.ESDEEventManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.ui.video.VideoPresentationManager
+import jr.brian.frontend.scrape.UserScraperCredentials
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -105,9 +106,34 @@ object ESDEModule {
     @Provides
     @Singleton
     fun provideESDEPreferencesManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        userScraperCredentials: UserScraperCredentials,
     ): ESDEPreferencesManager {
-        return ESDEPreferencesManager(context)
+        return ESDEPreferencesManager(context).apply {
+            this.userScraperCredentials = userScraperCredentials
+            seedUserScraperCredentials(userScraperCredentials)
+        }
+    }
+
+    /**
+     * One-shot bridge for users who entered credentials before the
+     * UI/worker credential bridge existed. If the frontend-side store is
+     * empty but the legacy store has values, mirror them across so
+     * "Scrape all now" works on first launch after the upgrade.
+     */
+    private fun ESDEPreferencesManager.seedUserScraperCredentials(
+        store: UserScraperCredentials,
+    ) {
+        val legacy = state.value
+        val remote = store.state.value
+        if (!remote.hasScreenScraperUser &&
+            (legacy.screenScraperUserId.isNotEmpty() || legacy.screenScraperUserPassword.isNotEmpty())
+        ) {
+            store.setScreenScraperUser(legacy.screenScraperUserId, legacy.screenScraperUserPassword)
+        }
+        if (!remote.hasSteamGridDbKey && legacy.steamGridDbApiKey.isNotEmpty()) {
+            store.setSteamGridDbKey(legacy.steamGridDbApiKey)
+        }
     }
 
     @Provides

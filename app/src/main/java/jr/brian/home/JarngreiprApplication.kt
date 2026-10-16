@@ -59,9 +59,8 @@ class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.P
         // the Application.
         screenSwapListener.start()
         sourcesSyncService.start()
-        // Reconcile AYN's Focus Lock to the current screen assignment on
-        // boot. Guarded by FocusLockPrefsManager.autoManageEnabled inside
-        // the writer, so users who turn automation off aren't overridden.
+        // Reconcile AYN's Focus Lock to the current screen assignment
+        // on boot. No-op without Shizuku or when the toggle is off.
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
             this,
             screenAssignmentStore.assignment,

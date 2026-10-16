@@ -119,7 +119,28 @@ data class JarngreiprConfig(
         //      builds restoring a current config get a sensible single-
         //      layout fallback. Older blobs decode with both new fields
         //      inheriting the legacy value on import.
-        const val CONFIG_VERSION = 29
+        // v30: dropped HomeButtonConfig.focusLockAutoManageEnabled
+        //      (added in v28). AYN's SettingsProvider gates
+        //      `screen_focus_lock` behind a MOVED_TO_SECURE-style
+        //      whitelist that third-party apps can't bypass, so the
+        //      feature is removed. Older blobs that still carry the
+        //      field decode via `ignoreUnknownKeys`; the value is
+        //      ignored on import.
+        // v31: re-added HomeButtonConfig.focusLockAutoManageEnabled.
+        //      Writes now route through Shizuku's shell service, which
+        //      runs at the privileged UID AYN's SettingsProvider does
+        //      allow. Users opt in by installing Shizuku and granting
+        //      the app permission from the Extras section; without
+        //      Shizuku the toggle is inert and the write silently
+        //      no-ops. Default is true to match the pre-v30 behaviour.
+        // v32: replaced the boolean focusLockAutoManageEnabled with
+        //      focusLockMode (string: Off/Top/Bottom/Follow). The
+        //      legacy boolean is retained in the schema (true -> Follow,
+        //      false -> Off on import) so pre-v32 blobs upgrade
+        //      without data loss and so pre-v32 app versions still get
+        //      a sensible value if they restore a current config.
+        //      Default is Follow.
+        const val CONFIG_VERSION = 32
     }
 }
 
@@ -269,11 +290,19 @@ data class HomeButtonConfig(
     /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */
     val mainScreen: String = "BOTTOM",
     /**
-     * "Auto-manage Focus Lock" toggle — v28. Default true matches new
-     * installs. See [jr.brian.home.data.FocusLockPrefsManager] and
-     * [jr.brian.home.data.ScreenFocusLockWriter].
+     * Legacy boolean from v31. Retained so pre-v32 blobs still decode
+     * and so pre-v32 app versions reading a current export get a
+     * sensible value (true -> Follow, false -> Off). The v32-aware
+     * import prefers [focusLockMode] when non-null.
      */
-    val focusLockAutoManageEnabled: Boolean = true
+    val focusLockAutoManageEnabled: Boolean = true,
+    /**
+     * v32: name of a [jr.brian.home.data.FocusLockMode] entry
+     * (Off / Top / Bottom / Follow). Nullable so pre-v32 blobs
+     * decode without a value and fall back to the legacy boolean
+     * on import. Default on export is Follow.
+     */
+    val focusLockMode: String? = null
 )
 
 @Serializable

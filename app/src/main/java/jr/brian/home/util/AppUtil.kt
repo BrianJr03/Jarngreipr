@@ -39,13 +39,6 @@ fun launchApp(
     }
 }
 
-/**
- * Best-effort read of which display the current [context] is attached
- * to. Returns [PRIMARY_DISPLAY_ID] when the caller's display isn't
- * knowable (service/application context) — matches Android's own
- * fall-through behaviour for `startActivity` without an explicit
- * `launchDisplayId`.
- */
 private fun callerDisplayId(context: Context): Int {
     val display: Display? = runCatching { context.display }.getOrNull()
     return display?.displayId ?: PRIMARY_DISPLAY_ID

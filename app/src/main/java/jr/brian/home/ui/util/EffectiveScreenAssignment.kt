@@ -49,6 +49,36 @@ fun rememberEffectiveAssignment(): ScreenAssignment {
     }
 }
 
+/**
+ * The assignment that reflects where each activity is *physically
+ * rendered right now*, which during a swap is the pre-reparent
+ * position while leaving and the post-reparent position while
+ * arriving. Different semantics from [rememberEffectiveAssignment],
+ * which eagerly reports the destination so layout can settle under
+ * the fade-out.
+ *
+ * Use this for animations that depend on the activity's actual
+ * on-screen display (e.g. direction of a swap slide), not for layout
+ * decisions.
+ */
+@Composable
+fun rememberPhysicalAssignment(): ScreenAssignment {
+    val context = LocalContext.current
+    val entryPoint = remember(context) {
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            EffectiveAssignmentEntryPoint::class.java,
+        )
+    }
+    val phase by entryPoint.swapCoordinator().phase.collectAsStateWithLifecycle()
+    val current by entryPoint.screenAssignmentStore().state.collectAsStateWithLifecycle()
+    return when (val p = phase) {
+        is SwapPhase.Leaving -> current
+        is SwapPhase.Arriving -> p.targetAssignment
+        SwapPhase.Idle -> current
+    }
+}
+
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 internal interface EffectiveAssignmentEntryPoint {

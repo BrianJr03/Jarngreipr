@@ -1,7 +1,7 @@
 <h1 align="center">Járngreipr 🧤</h1>
 
 <p align="center">
-  <a href="https://ko-fi.com/U6U21UGZT3"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"/></a>
+  <a href="https://ko-fi.com/jarngreipr"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"/></a>
   <br/><br/>
   <a href="https://github.com/BrianJr03/Jarngreipr/releases"><img src="https://img.shields.io/github/downloads/BrianJr03/Jarngreipr/total?style=flat&label=downloads&color=4F8FD0" alt="Total downloads"/></a>
   &nbsp;&nbsp;
@@ -12,314 +12,208 @@
   <img src="https://img.shields.io/badge/Android-13%2B-brightgreen?style=flat" alt="Android 13+"/>
 </p>
 
-<!-- ![Build Status](https://github.com/BrianJr03/Jarngreipr/actions/workflows/android-ci.yml/badge.svg) -->
+**Designed with dual-screen devices in mind, Jarngreipr is a clean, powerful launcher that lets you decide exactly where your apps open, browse your game library, and drive an ES-DE setup from the second screen.**
 
-<!-- <a href = "https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true)](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22jr.brian.home%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FBrianJr03%2FJarngreipr%22%2C%22author%22%3A%22BrianJr03%22%2C%22name%22%3A%22Jarngreipr%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Afalse%2C%5C%22includeZips%5C%22%3Afalse%2C%5C%22zippedApkFilterRegEx%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D">
-<img
-    src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png?raw=true"
-    alt="Add ES-DE Companion to Obtainium"
-    width="182"
-  >
-</a> -->
-
-**Designed with dual-screen devices in mind, Jarngreipr is a clean, powerful launcher that lets you decide exactly where your apps open and much more.**
-
-Járngreipr is a modern, highly customizable launcher built with Jetpack Compose that combines beautiful aesthetics with powerful functionality. 
-Optimized for devices like the AYN Thor, it excels on bottom screens and dual-screen setups while working perfectly on any Android device.
-
-It is recommended to be used with [Mjolnir](https://github.com/blacksheepmvp/mjolnir), an app that transforms your Home button into a powerful dual-screen controller.
+Pairs with [Mjolnir](https://github.com/blacksheepmvp/mjolnir) on the AYN Thor to turn the Home button into a dual-screen controller. Works on any Android 13+ device; dual-screen features light up on devices with a second display.
 
 Just as **Thor** needs his iron gloves, **Járngreipr** 🧤, to safely wield **Mjolnir** 🔨, this launcher helps you grip control of your device's interface.
 
 ---
 
-## ✨ Features
+## 🚀 What is Jarngreipr
 
-### 🏠 **Multiple Home Screen Modes**
+Three things in one app, each usable alone.
 
-- **Apps Tab** - Traditional grid layout with apps only
-- **Apps & Widgets Tab** - Combine apps and Android widgets on the same page
-- **App Drawer** - Full app list with instant search and filtering
-- **Multiple Pages** - Create unlimited home screen pages with different layouts
-- **Page Customization** - Set different modes for each page independently
+- **A launcher.** A free-form `Canvas` page, folders, widgets, themes, RSS feeds, and full gamepad navigation.
+- **A game frontend.** Scans your ROM folders, scrapes artwork, launches the right emulator per system. Systems and games browse on the top screen; art mirrors to the bottom.
+- **An ES-DE companion.** Turns the second screen into a live wallpaper, marquee, music surface, and effects stage that reacts to whatever ES-DE is showing on top.
 
-### 📱 **Advanced App Management**
+---
 
-- **Folder Support** - Organize apps into folders with custom names
-- **Free-Positioned Apps** - Drag apps anywhere on the screen, not just in grid cells
-- **Drag Lock** - Lock app positions to prevent accidental moves
-- **App Visibility Control** - Show/hide specific apps on each page
-- **Custom Icons** - Set custom icons for individual apps
-- **App Display Preferences** - Choose between icon only, name only, or both
-- **App Size Control** - Adjust app icon sizes per your preference
-- **Recent Apps** - Quick access to recently used applications
-- **Quick Delete** - Batch uninstall multiple apps at once
+## ✨ Highlights
 
-### 🧩 **Widget Support**
+- **Canvas** — one continuous grid that holds apps, folders, ROMs, widgets, live game art, GIFs, and RSS tiles together.
+- **Frontend game library** — 40-system catalog, 204 built-in system logos, ~110 known emulators wired up with the right launch intent.
+- **Scraping** — ScreenScraper and SteamGridDB with per-game, per-system, and `Scrape all now` background jobs.
+- **Dual-screen swap** — click L3 or R3 anywhere to swap the top and bottom screens, with an animated hand-off.
+- **Per-app launch display** — pick `Primary`, `External`, or `Ask` for every app.
+- **ES-DE mode** — wallpaper, marquee logo, music, jingles, konfetti, and screensaver all react within half a second of an ES-DE event.
+- **Theme sharing** — broadcast your current theme over BLE to nearby Jarngreipr devices; receive wallpapers over Nearby Connections.
+- **Backup & Restore** — export your entire setup to JSON and bring it back on a new device.
 
-- **Android Widgets** - Add resizable Android widgets to any Apps & Widgets page
-- **Widget Picker** - Browse and add widgets from all installed apps
-- **Resize Mode** - Dynamically resize widgets to fit your layout
-- **Widget Positioning** - Place widgets anywhere on compatible pages
+---
 
-### 🎮 **Gamepad & Control Features**
+## 🧩 Canvas
 
-- **Full D-Pad Navigation** - Complete gamepad support throughout the UI
-- **Control Pad Settings** - Customize gamepad button mappings
-- **Joystick Mode** - Configure analog stick sensitivity and behavior
-- **Button Mapping** - Map specific gamepad buttons to custom actions
-- **Focus Management** - Intelligent focus handling for seamless navigation
-- **On-Screen Keyboard** - Built-in keyboard that doesn't overlap your apps
-- **Back Button Shortcuts** - Configure custom back button actions
+The flagship page type. `One continuous grid that holds apps, folders, ROMs, and widgets together.` Canvas is the default page on a fresh install.
 
-### 🎨 **Appearance & Themes**
+**What you can add** (from the `Add` menu): `App`, `Folder`, `ROM`, `Widget`, `Frontend widget`, `Photo container`, `RSS launcher`, `RSS widget`.
 
-- **6 Built-in Color Themes**
-    - Pink & Violet
-    - Blue & Yellow
-    - Green & Cyan
-    - Purple & Orange
-    - Red & Blue
-    - Magenta & Lime
+**What makes it different from the older tabs:**
 
-- **Custom Theme Creator** - Design your own themes with custom primary and secondary colors
-- **OLED Mode** - True black backgrounds for OLED displays to save battery
-- **Icon Pack Support** - Use any installed icon pack (Lawnicons, Arcticons, etc.)
-- **Icon Pack Browser** - Preview and switch between icon packs in-app
-- **Theme Sharing** - Share your current theme with nearby devices via Bluetooth (Ping)
+|                                       | Apps Tab | Apps & Widgets Tab | Canvas |
+|---------------------------------------|:--------:|:------------------:|:------:|
+| Apps                                  |    ✅    |         ✅         |   ✅   |
+| Widgets                               |    ❌    |         ✅         |   ✅   |
+| Folders                               |    ✅    |         ✅         |   ✅   |
+| Pinned ROMs                           |    ✅    |         ❌         |   ✅   |
+| Frontend widget (live game art)       |    ❌    |         ❌         |   ✅   |
+| Photo containers, GIFs                |    ❌    |         ❌         |   ✅   |
+| RSS launcher and now-playing tile     |    ❌    |         ❌         |   ✅   |
+| Separate portrait and landscape       |    ❌    |         ❌         |   ✅   |
+| Push-based move, resize, `Tidy now`   |    ❌    |         ❌         |   ✅   |
 
-### **What is Ping?**
-- Ping is an open sourced library developed to allow seemless `Theme Sharing` between two devices running `Jarngreipr`. It uses `bluetooth low energy (BLE)` to transfer Themes and Google's `Nearby Connections API` for transferring Wallpapers. Go to `Settings -> Appearance -> Theme Sharing` and accept the required permissions to get started. Want to know more about Ping? Here is the [GitHub repo](https://github.com/BrianJr03/Ping)!
+**More:** `Edit mode`, `Scroll orientation` (`Vertical` / `Horizontal`), 1 to 12 columns and rows, long-press empty space for the `Canvas Menu`, in-app `Welcome to Canvas` onboarding.
 
-### 🖼️ **Wallpaper Options**
+---
 
-- **System Wallpaper** - Use your device's current wallpaper
-- **Custom Images** - Set any image from your gallery
-- **Default Themes** - Beautiful gradient backgrounds
-- **Live Preview** - See changes instantly
+## 🎮 Frontend (game library)
 
-### ⚙️ **Layout Customization**
+Enable: `Settings` → `Extras` → `Enable frontend`. `Browse your library from a system → games screen on the top display, with art mirrored to the bottom.`
 
-- **Grid Settings** - Customize rows and columns for each page
-- **Unlimited Mode** - Disable grid limits for free-form layouts
-- **Header Visibility** - Show/hide top header bar
-- **Power Button** - Toggle power button visibility
-- **App Names** - Show/hide app names under icons
-- **Notification Badges** - Display notification counts on app icons
+**Library.** Point it at ROM folders (SAF). Scans run in the background and re-run when an SD card is mounted. 40 systems ship in the catalog (NES through Switch, DOS through Winlator); the catalog is JSON under `frontend/src/main/assets/systems/`, open to PRs.
 
-`Note: Notification Badges will only work if you download Jarngreipr from the Play Store.`
+**Browsing.** Systems view in `Row` or `Grid`, chosen separately for the top and bottom screen. Games view with per-system layouts. Search commands: `@android`, `@hidden`, `@{platform}`; plain text matches name, system, genre, developer, publisher. Hide systems or games. Reorder systems. Per-system customization: tile background, color, default emulator, ROM folder.
 
-### 🔧 **System Features**
+**Game details.** `Launch`, `Favorite`, `Hide`, `Pick Emulator`, `Change Core`, `Scrape`, `Edit Info`, `Companion`, media type per game. Stats include genre, developer, publisher, players, rating, play count, play time.
 
-- **Smart Search** - Fast app search across all pages and drawer
-- **Auto-Refresh** - Automatically updates when apps are installed/uninstalled
-- **Auto-Update Checker** - Get notified of new launcher versions
-- **Crash Logger** - Built-in crash reporting and log viewer
-- **Performance Monitor** - Track app performance metrics
-- **Shizuku Integration** - Enhanced system-level features with Shizuku
+**Emulators.** About 110 known emulators wired with the right launch intent per system: RetroArch cores, PPSSPP, AetherSX2 and NetherSX2, Dolphin, Azahar, Eden, Yuzu, aX360e, Winlator variants, and more. Resolution order: per-game → per-system → extension fallback → picker.
 
-### 🛠️ **Developer & Power User Features**
+**Scraping.** ScreenScraper (user account) and SteamGridDB (API key).
+- Per-game `Scrape` and per-system `Scrape Media` download artwork.
+- `Scrape all now` runs as a background job with a notification.
+- Output lands in `/storage/emulated/0/Jarngreipr Media/<system>/<kind>/`.
 
-- **Crash Logs Viewer** - View and export crash logs for debugging
-- **What's New Dialog** - See new features after updates
-- **FAQ & Help** - Built-in help documentation
-- **Export Settings** - Backup and restore your configuration
-- **Debug Mode** - Additional diagnostic information
+**ES-DE compatibility.** `Read gamelist.xml` pulls titles, descriptions, and ratings from an existing ES-DE setup. ES-DE's `downloaded_media` and RetroHrai! art folders are read automatically. You do not need ES-DE installed.
+
+---
+
+## 🖥️ Dual-screen
+
+- **Swap screens.** `Settings` → `ES-DE` → `Dual-screen` → `Swap screens`, or click L3 or R3 anywhere. Animated hand-off. The choice is remembered.
+- **Home button gestures** (Thor, via accessibility service). `Press once` opens the launcher on the bottom; `Double press` opens the frontend; `Long press` opens both. Disable Mjolnir's accessibility service first, since both apps bind the Home button.
+- **Per-app launch display.** `Launch on Primary Display`, `Launch on External Display`, or `Ask`.
+- **Companion apps.** Bind an app to a game; it launches on the opposite screen alongside the game (guides, Discord, a second emulator window).
+- **Frontend widget.** A Canvas tile that shows art for whatever is focused in the frontend: covers, marquee, fanart, screenshots, miximages, or description. Tap for game details.
+- **Audio.** `Top Screen Volume` and `Bottom Screen Volume` controlled independently.
+- **Game launch helpers.** `Wake Method`, `Persist Display on Game Launch`, `Control Power on Game Events`.
+
+---
+
+## 🎭 ES-DE companion mode
+
+Turn the frontend off and Jarngreipr becomes a live companion for ES-DE running on the other screen.
+
+**Setup.** `Settings` → `ES-DE` → `Run Setup Wizard`. Installs event scripts into `/storage/emulated/0/ES-DE/scripts`; ES-DE writes events, Jarngreipr reacts within half a second.
+
+**What reacts to ES-DE focus:**
+
+- **Wallpaper.** `Appearance` → `Wallpaper` → `ES-DE`, with blur, dim, and image-type choices.
+- **Marquee logo.** Size, alignment, `Logo Only Mode`, double-tap shortcut.
+- **Background music.** System, game, and screensaver tracks. `System-Specific Music` picks a different track per system folder.
+- **Jingles.** Collections pulled from GitHub repos, with regex priority rules.
+- **Konfetti.** Custom animations on select and launch.
+- **Screensaver.** `ShowContent` or `PowerOff` behaviors.
+- **Power.** Screen off on launch, on at exit.
+- **Video playback.** Uses the Presentation API to route video to the external display.
+
+**System Apps.** Link each ES-DE system folder to an Android app for one-tap launching.
+
+**Broadcasts** for scripts and automation: `jr.brian.SET_ESDE_WALLPAPER`, `jr.brian.SET_STANDARD_WALLPAPER`.
+
+**Extras.** `Hide UI When Browsing Games`, `Delete Empty Folders`, `Custom Paths`.
+
+---
+
+## 🏠 Launcher features
+
+**Pages.** Canvas (default), Apps Tab, Apps & Widgets Tab, App Drawer Tab, RSS Tab. Unlimited pages, per-page type.
+
+**Apps.** Folders, free positioning with `Snap Mode`, visibility per page, custom icons (PNG or GIF), icon packs (Lawnicons, Arcticons, any), name and size options, `Recent Apps`, `Quick Delete`, `Back Button Shortcut` (11 actions).
+
+**Widgets & Dock.** On Apps & Widgets pages: resizable Android widgets from any installed app, a pinned dock row.
+
+**Gamepad.** Full D-pad navigation, built-in on-screen keyboard, `GamePad` control of the main display via Shizuku, `Control Pad` button and joystick mappings.
+
+**Appearance.** 7 built-in themes plus `Create Custom`, `OLED Black Mode`, `Icon Shape`, wallpaper as image, GIF, video, system, or ES-DE.
+
+**RSS.** Add feeds (RSS 2.0 and Atom), audio and video playback, `Now Playing` shade with system equalizer support.
+
+**Audio.** Launcher `Background Audio` keeps music playing underneath.
+
+**Sharing.** `Theme Sharing` over Bluetooth (Ping) with a Quick Settings tile. Wallpaper sharing over Nearby Connections.
+
+**System.** `Backup` and `Restore` to JSON, `System Monitor`, `Crash Logs`, `Check for Updates`, in-app `FAQ`, `What's New`, `Floaty Mode` easter egg (tap the version 7 times).
+
+### What is Ping?
+
+[Ping](https://github.com/BrianJr03/Ping) is an open-source library that powers `Theme Sharing` between two Jarngreipr devices. It uses Bluetooth Low Energy for themes and Google's Nearby Connections API for wallpapers. Open `Settings` → `Appearance` → `Theme Sharing` to get started.
 
 ---
 
 ## 📸 Screenshots
-`Note: All screenshots were captured from an AYN Thor's bottom screen.`
-<p>
-  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 03 50 PM" src="https://github.com/user-attachments/assets/d6e00fcc-3b59-43dd-b87b-f0ba514323f4" style="vertical-align: middle;" />
-  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 21 PM" src="https://github.com/user-attachments/assets/d4830507-979d-40a2-87f9-b2d8620f5842" style="vertical-align: middle;" />
-  <img width="305" height="263" alt="Screenshot 2026-01-28 at 2 04 11 PM" src="https://github.com/user-attachments/assets/991ca9ec-e04f-4942-a078-e165a3a37ea4" style="vertical-align: middle;" />
-</p>
-<p>
-  <video src="https://github.com/user-attachments/assets/dc904362-1076-49ff-a968-812133a53b02" width="345" height="303" controls></video>
+
+Captured live on an AYN Thor. Top screen running the Frontend's systems view; bottom screen running Canvas with a Frontend widget that mirrors the focused system, plus a battery widget, Now Playing tile, and the focused game's art.
+
+<p align="center">
+  <img src="docs/screenshots/thor-top.png" alt="Top screen: Frontend systems view" width="48%"/>
+  &nbsp;
+  <img src="docs/screenshots/thor-bottom.png" alt="Bottom screen: Canvas with Frontend widget" width="48%"/>
 </p>
 
 ---
 
 ## 📋 Requirements
 
-- **Android 13 (API 33)** or higher
-- **Recommended:** 4GB+ RAM for smooth widget performance
-- **Optional:** Shizuku for advanced features
+- **Android 13 (API 33)** or higher.
+- **Dual-screen features** need a second display. Swap and Home gestures are Thor-only.
+- **Optional:** Shizuku (for `GamePad`), ES-DE (companion mode), RetroHrai! media packs.
 
 ---
 
-## 🚀 Installation
+## 🛠️ Install
 
-### From Releases (Recommended)
+### From Releases
 
-1. Download the latest APK from the [Releases](../../releases) page
-2. Transfer to your device if needed
-3. Enable "Install from Unknown Sources" in Settings → Security
-4. Install the APK
-5. Set Járngreipr as your default launcher when prompted
+1. Download the latest APK from the [Releases](../../releases) page.
+2. Enable installs from unknown sources if prompted.
+3. Install, then set Jarngreipr as your default launcher.
 
 ### From Source
 
 ```bash
-# Clone the repository
 git clone https://github.com/BrianJr03/Jarngreipr.git
 cd Jarngreipr
-
-# Build with Gradle
-./gradlew assembleRelease
-
-# Install to connected device
-adb install app/build/outputs/apk/release/app-release.apk
+./gradlew assembleStandardDebug
+adb install app/build/outputs/apk/standard/debug/*.apk
 ```
 
-**Requirements for building:**
-- Android Studio Ladybug or higher
-- JDK 11 or higher
-- Android SDK 36
+- JDK 17 required. Android Studio Ladybug or newer.
+- Flavors: `standard` and `hidden`. The `hidden` flavor removes the app from Recents and adds an `h` suffix to the package name.
+- Release builds are unsigned unless you pass `-Pandroid.injected.signing.*`.
+- ScreenScraper dev credentials are optional for local builds. Pass `-Pscreenscraper.devId` and `-Pscreenscraper.devPassword`, or set them as environment variables.
 
 ---
 
-## 🎯 Usage Guide
+## 🎯 Getting started
 
-### Basic Navigation
+Three paths, pick the one that fits.
 
-**Touch:**
-- Tap to select apps/options
-- Long press for context menus
-- Swipe left/right between pages
-- Pinch to zoom (where supported)
+**Just a launcher.** Install → set as default → the first page is already a Canvas → long-press empty space to add apps, folders, widgets, and ROMs.
 
-**Gamepad/D-Pad:**
-- **Arrow Keys/D-Pad** - Navigate between apps and UI elements
-- **Enter/A Button** - Launch app or select option
-- **Back/B Button** - Go back or cancel
-- **Menu/Start** - Open app options (long press)
-- **Triggers** - Page navigation (if configured)
+**Game frontend.** `Settings` → `Extras` → `Enable frontend` → `Settings` → `ES-DE` → `Systems` → `Add Systems` → pick ROM folder(s). On the top screen, press START for `Frontend Settings`, enter your ScreenScraper account, then `Scrape all now`.
 
-### Getting Started
-
-1. **First Launch**
-    - Grant necessary permissions (Accessibility, Usage Stats)
-    - Choose your preferred theme
-    - Set up your first home screen page
-
-2. **Adding Apps**
-    - Apps automatically appear on your first page
-    - Long press apps to move, hide, or add to folders
-    - Use the App Drawer to find and add apps
-
-3. **Creating Folders**
-    - Long press an app → "Create Folder"
-    - Name your folder and add multiple apps
-    - Tap folders to open, long press to edit
-
-4. **Adding Widgets**
-    - Create an "Apps & Widgets" page
-    - Tap "+" → Select widget
-    - Resize and position as needed
-
-### Customization
-
-**Themes & Appearance:**
-1. Tap **⚙️ Settings** icon
-2. **Appearance** section:
-    - **Theme Selector** - Choose from 6 themes or create custom
-    - **Icon Pack** - Browse and apply icon packs
-    - **OLED Mode** - Enable true black backgrounds
-    - **Wallpaper** - Set custom backgrounds
-
-**Layout Configuration:**
-1. **Settings** → **Layout** section:
-    - **Grid Settings** - Adjust columns/rows per page
-    - **Unlimited Mode** - Enable free-form positioning
-    - **Header Visibility** - Show/hide top bar
-    - **App Names** - Toggle name display
-
-**Control Pad (Gamepad):**
-1. **Settings** → **Extras** → **Control Pad**
-2. Configure button mappings
-3. Adjust joystick sensitivity
-4. Choose joystick mode (L/R/Both)
-
-### Advanced Features
-
-**Free Positioning:**
-- Enable "Unlimited Mode" in Grid Settings
-- Long press and drag apps anywhere
-- Use "Drag Lock" to prevent accidental moves
-
-**App Visibility:**
-- Long press background → "App Visibility"
-- Toggle which apps appear on current page
-- Different pages can show different apps
-
-**Quick Delete:**
-- **Settings** → **Extras** → **Quick Delete**
-- Select multiple apps to uninstall at once
-- Useful for cleaning up after gaming sessions
-
----
-
-## 🎨 Available Themes
-
-| Theme | Primary | Secondary | Description |
-|-------|---------|-----------|-------------|
-| **Pink & Violet** | Blue Violet | Hot Pink | Vibrant and playful |
-| **Blue & Yellow** | Royal Blue | Gold | Classic and bold |
-| **Green & Cyan** | Sea Green | Dark Cyan | Fresh and modern |
-| **Purple & Orange** | Dark Violet | Dark Orange | Energetic contrast |
-| **Red & Blue** | Royal Blue | Crimson | Patriotic vibes |
-| **Magenta & Lime** | Magenta | Lime Green | Maximum pop |
-| **Custom** | Your Choice | Your Choice | Design your own! |
-
----
-
-## 🔌 Shizuku Integration
-
-Járngreipr supports [Shizuku](https://shizuku.rikka.app/) for enhanced system features:
-
-1. Install Shizuku from Play Store or GitHub
-2. Grant Shizuku ADB permissions or root access
-3. Launch Járngreipr - it will detect Shizuku automatically
-4. Enjoy enhanced features like advanced app management
+**ES-DE companion.** Install ES-DE → `Settings` → `ES-DE` → `Run Setup Wizard` → enable scripts in ES-DE → set wallpaper to `ES-DE`.
 
 ---
 
 ## 📡 Theme Sharing (Ping)
 
-Járngreipr supports sharing themes and wallpapers wirelessly with nearby devices using the **[Ping](https://github.com/BrianJr03/Ping)** library (Bluetooth LE) and the **Nearby Connections API**.
+Jarngreipr supports sharing themes and wallpapers wirelessly with nearby devices using [Ping](https://github.com/BrianJr03/Ping) (Bluetooth LE) and the Nearby Connections API.
 
-### Theme Sharing via Bluetooth (Ping)
+**Theme sharing (BLE).** `Settings` → `Theme Share` → grant Bluetooth and battery-exempt permissions → tap `Start Sharing`. Enable auto-start to broadcast every time the launcher opens. A system Quick Settings tile toggles broadcasting without opening the app.
 
-Broadcasts your current theme to nearby Járngreipr devices over BLE so others can receive and apply it instantly.
-
-**Setup:**
-1. Navigate to **Settings** → **Theme Share**
-2. Grant Bluetooth permissions when prompted
-3. Grant battery optimization exemption for reliable background operation
-4. Tap **Start Sharing** in the **Theme Sharing** section to begin broadcasting
-
-**Auto-Start:** Enable auto-start in Theme Share Settings to begin broadcasting automatically every time the launcher opens.
-
-**Quick Settings Tile:** A system Quick Settings tile is available for toggling theme sharing without opening the app.
-
-### Wallpaper Sharing via Nearby Connections
-
-Discovers and receives wallpapers from nearby devices using the Nearby Connections API over Wi-Fi/Bluetooth.
-
-**Setup:**
-1. Navigate to **Settings** → **Theme Share**
-2. Grant Nearby/Wi-Fi permissions when prompted
-3. Toggle **Nearby Wallpaper** to start discovering
-
-Received wallpapers are saved and accessible in the **Received Wallpapers** list on the same screen.
-
-### Received Themes & Wallpapers
-
-Both received themes and wallpapers are stored locally and shown in the Theme Share screen, where you can apply or delete them.
-
-### Required Permissions
+**Wallpaper sharing (Nearby).** Same screen, toggle `Nearby Wallpaper` to discover senders. Received wallpapers appear in `Received Wallpapers`.
 
 | Permission | Purpose |
 |------------|---------|
@@ -332,112 +226,59 @@ Both received themes and wallpapers are stored locally and shown in the Theme Sh
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's bug fixes, new features, or documentation improvements.
+Fork, branch off `main`, open a PR against `dev`. The project uses Jetpack Compose, Hilt, Room, WorkManager, media3, Coil, and OkHttp; new features should ship with tests.
 
-**How to contribute:**
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-**Code Quality:**
-- The project uses Jetpack Compose and modern Android architecture (MVVM + Hilt)
-- Comprehensive test suite with 472+ tests
-- Clean code principles and consistent patterns
-- All PRs should maintain or improve test coverage
+System JSON lives under `frontend/src/main/assets/systems/` and is a good first contribution target.
 
 ---
 
-## 🐛 Bug Reports & Feature Requests
+## 🐛 Bug reports & feature requests
 
-Found a bug or have an idea? [Open an issue](../../issues) with:
-- **Bug Reports:** Device model, Android version, steps to reproduce
-- **Feature Requests:** Use case description and expected behavior
-- **Questions:** Check [FAQ](../../wiki/FAQ) first, then ask away!
+[Open an issue](../../issues). For bugs include device model, Android version, and reproduction steps. For questions, check the in-app `FAQ` first.
+
+---
+
+## 💖 Support
+
+If you enjoy using Jarngreipr, consider supporting development:
+
+- ☕ [Ko-fi](https://ko-fi.com/jarngreipr) — early builds and the main support channel.
+- 💬 Discord community (link in-app, under `Settings` → `About`).
+
+---
+
+## 🏗️ Tech stack
+
+- **Modules:** `:app`, `:core-model`, `:core-ui`, `:frontend`.
+- **Language:** Kotlin 2.3, Jetpack Compose BOM 2026.02, Material 3.
+- **Build:** AGP 9.0, JDK 17, Gradle Kotlin DSL.
+- **Architecture:** MVVM with Hilt DI, Kotlin Coroutines and Flow.
+- **Persistence:** SharedPreferences, DataStore, and two Room databases (launcher + library).
+- **Async work:** WorkManager (scraping, library scans).
+- **Media:** media3 for audio and video, Coil for images.
+- **Networking:** OkHttp.
+- **SDK:** `minSdk 33`, `targetSdk` / `compileSdk 37`.
+- **Testing:** JUnit, Turbine, MockK across unit and instrumented suites.
+
+CI runs unit tests and lint on every push; a dedicated `build-apks.yml` workflow produces sideload-friendly debug and release APKs on demand.
 
 ---
 
 ## 📝 License
 
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
-## 💖 Support the Project
-
-If you enjoy using Járngreipr, consider supporting development:
-
-☕ [Buy Me a Coffee](https://www.buymeacoffee.com/brianjr03)
-
-Your support helps maintain and improve the launcher with new features, bug fixes, and updates!
-
----
-
-## 🏗️ Architecture & Tech Stack
-
-**Built with modern Android development practices:**
-
-- **UI:** 100% Jetpack Compose
-- **Architecture:** MVVM with Clean Architecture
-- **DI:** Hilt/Dagger
-- **Async:** Kotlin Coroutines & Flow
-- **Persistence:** DataStore Preferences
-- **Testing:** JUnit, Turbine, MockK (472+ tests)
-- **Material Design 3** with custom theming
-- **Minimum SDK:** 33 (Android 13)
-- **Target SDK:** 36 (Android 14+)
-
----
-
-## 📚 Documentation
-
-- [FAQ & Help](../../wiki/FAQ) - Common questions and troubleshooting
-- [Changelog](../../releases) - Version history and updates
-- [API Documentation](../../wiki/API) - For developers extending the launcher
+MIT. See [LICENSE](LICENSE).
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **AYN** - For creating the Thor handheld that inspired this launcher
-- **Mjolnir** - The companion app for enhanced dual-screen control
-- **Icon Pack Creators** - For beautiful icon packs that work seamlessly
-- **Community Contributors** - For feedback, bug reports, and feature ideas
-- **You** - For using Járngreipr! 🧤
-- Ko-fi icon by Icons8
-  - https://icons8.com/icon/mP1WMboAU3cv/ko-fi
-- Discord icon by Icons8
-  - https://icons8.com/icon/Lvq129LtPFaK/discord
-- Buy Me a Coffee icon by Icons8
-  - https://icons8.com/icon/1LzgW8zTryyM/buy-me-a-coffee
-
----
-
-## 🗺️ Roadmap
-
-**Completed ✅**
-- [x] Full widget support
-- [x] Folder management
-- [x] Free positioning mode
-- [x] Custom theme creator
-- [x] Control pad configuration
-- [x] OLED mode
-- [x] Icon pack support
-- [x] Quick delete feature
-- [x] Auto-update checker
-- [x] Theme sharing via Bluetooth (Ping)
-- [x] Wallpaper sharing via Nearby Connections
-
-**Coming Soon 🚀**
-- [ ] Gesture customization
-- [ ] App groups/categories
-- [ ] Smart app suggestions
-- [ ] Backup/restore to cloud
-- [ ] Tablet-optimized layouts
-- [ ] Additional animation options
-- [ ] Plugin system for extensions
+- **AYN** — for the Thor handheld that shaped the dual-screen design.
+- **Mjolnir** — the companion app for Home-button dual-screen control.
+- **ScreenScraper** and **SteamGridDB** communities — for the art and metadata that make scraping possible.
+- **Icon pack creators** — for keeping things beautiful.
+- **Community contributors** — for feedback, bug reports, and feature ideas.
+- **You** — for using Jarngreipr! 🧤
+- Icons from [Icons8](https://icons8.com): Ko-fi, Discord, Buy Me a Coffee.
 
 ---
 

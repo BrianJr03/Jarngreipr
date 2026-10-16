@@ -177,6 +177,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_STEAMGRIDDB_MEDIA_TY
 import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
 import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
+import jr.brian.frontend.scrape.UserScraperCredentials
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -195,6 +196,17 @@ class ESDEPreferencesManager(context: Context) {
 
     internal val _state = MutableStateFlow(loadState())
     val state: StateFlow<ESDEPrefsState> = _state.asStateFlow()
+
+    /**
+     * Bridge to the frontend module's credential store. The scraper worker
+     * (`ScrapeWorker` → `LibraryScraper`) reads credentials from
+     * [UserScraperCredentials], but the Settings UI writes here. Wired by
+     * [jr.brian.home.di.ESDEModule.provideESDEPreferencesManager]; the
+     * scraper-setter extensions in `ESDEPreferencesManagerScraper.kt` push
+     * updates through so both stores stay in sync. Nullable because unit
+     * tests construct this class directly without Hilt.
+     */
+    internal var userScraperCredentials: UserScraperCredentials? = null
 
     private fun loadState(): ESDEPrefsState {
         val styleName = prefs.getString(KEY_ANIMATION_STYLE, AnimationStyle.Fade.name)

@@ -213,6 +213,28 @@ class ShizukuManager @Inject constructor() {
     }
     
     /**
+     * Write [value] to Settings.System's [key] via the Shizuku-bound
+     * [ShellService]. Used by [ScreenFocusLockWriter] to flip AYN's
+     * `screen_focus_lock` even though the SettingsProvider rejects
+     * third-party writes to that key — the shell process has the
+     * privilege the app itself cannot get. Returns true on success.
+     */
+    fun putSystemSetting(key: String, value: String): Boolean {
+        if (!_isShizukuPermissionGranted.value) return false
+        return try {
+            val service = shellService
+            if (service != null) {
+                service.putSetting("system", key, value) == 0
+            } else {
+                bindShellService()
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
      * Fallback: Kill background processes (doesn't require Shizuku).
      * This is less effective than force-stop but works without special permissions.
      */

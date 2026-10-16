@@ -1929,9 +1929,24 @@
     <string name="home_gestures_long_press_label">Long press</string>
     <string name="home_gestures_long_press_detail">Open both apps on their assigned displays</string>
 
-    <!-- Focus Lock (Thor dual-screen gamepad routing) -->
-    <string name="focus_lock_auto_manage_title">Auto-manage Focus Lock</string>
-    <string name="focus_lock_auto_manage_description">Automatically pin AYN\'s Focus Lock to the display you\'re on. Follows the frontend after a screen swap, follows apps you launch, and pins to the top during games.</string>
+    <!-- Focus Lock (Thor dual-screen gamepad routing via Shizuku) -->
+    <string name="focus_lock_mode_title">Focus Lock Mode</string>
+    <string name="focus_lock_mode_description">Decide where AYN\'s Focus Lock pins the gamepad. Writes require Shizuku, see below.</string>
+    <string name="focus_lock_mode_off_label">Off</string>
+    <string name="focus_lock_mode_off_detail">Manage Focus Lock yourself from the AYN tile.</string>
+    <string name="focus_lock_mode_top_label">Focus on top</string>
+    <string name="focus_lock_mode_top_detail">Gamepad is always locked to the top screen.</string>
+    <string name="focus_lock_mode_bottom_label">Focus on bottom</string>
+    <string name="focus_lock_mode_bottom_detail">Gamepad is always locked to the bottom screen.</string>
+    <string name="focus_lock_mode_follow_label">Follow focus</string>
+    <string name="focus_lock_mode_follow_detail">Gamepad follows the frontend, launched apps, and games automatically.</string>
+    <string name="focus_lock_shizuku_card_title">Requires Shizuku</string>
+    <string name="focus_lock_shizuku_card_description">The Focus Lock key is read-only for most apps. Shizuku runs a shell service that lets Jarngreipr set it on your behalf.</string>
+    <string name="focus_lock_shizuku_not_installed">Shizuku isn\'t installed.</string>
+    <string name="focus_lock_shizuku_not_granted">Shizuku is installed but not granted.</string>
+    <string name="focus_lock_shizuku_ready">Shizuku is ready.</string>
+    <string name="focus_lock_shizuku_install_action">Install from Play Store</string>
+    <string name="focus_lock_shizuku_grant_action">Grant permission</string>
     <string name="home_main_screen_title">Main Screen</string>
     <string name="home_main_screen_description">Which screen the launcher occupies (and takes focus) in Both mode.</string>
     <string name="home_main_screen_option_top">Top</string>
