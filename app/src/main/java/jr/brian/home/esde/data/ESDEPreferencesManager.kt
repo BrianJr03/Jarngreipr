@@ -139,6 +139,8 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_GAME_LAYOUT
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_JARNGREIPR_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_MEDIA_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_SYSTEM_LAYOUT
@@ -175,6 +177,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_STEAMGRIDDB_MEDIA_TY
 import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
 import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.PREFS_NAME
+import jr.brian.frontend.scrape.UserScraperCredentials
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -193,6 +196,17 @@ class ESDEPreferencesManager(context: Context) {
 
     internal val _state = MutableStateFlow(loadState())
     val state: StateFlow<ESDEPrefsState> = _state.asStateFlow()
+
+    /**
+     * Bridge to the frontend module's credential store. The scraper worker
+     * (`ScrapeWorker` → `LibraryScraper`) reads credentials from
+     * [UserScraperCredentials], but the Settings UI writes here. Wired by
+     * [jr.brian.home.di.ESDEModule.provideESDEPreferencesManager]; the
+     * scraper-setter extensions in `ESDEPreferencesManagerScraper.kt` push
+     * updates through so both stores stay in sync. Nullable because unit
+     * tests construct this class directly without Hilt.
+     */
+    internal var userScraperCredentials: UserScraperCredentials? = null
 
     private fun loadState(): ESDEPrefsState {
         val styleName = prefs.getString(KEY_ANIMATION_STYLE, AnimationStyle.Fade.name)
@@ -620,8 +634,15 @@ class ESDEPreferencesManager(context: Context) {
             secondarySystemLayout = prefs.getString(KEY_SECONDARY_SYSTEM_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
                 ?: FrontendLayout.Grid,
-            gameLayout = prefs.getString(KEY_GAME_LAYOUT, null)
+            primaryGameLayout = prefs.getString(KEY_PRIMARY_GAME_LAYOUT, null)
                 ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: prefs.getString(KEY_GAME_LAYOUT, null)
+                    ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: FrontendLayout.Grid,
+            secondaryGameLayout = prefs.getString(KEY_SECONDARY_GAME_LAYOUT, null)
+                ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
+                ?: prefs.getString(KEY_GAME_LAYOUT, null)
+                    ?.let { runCatching { FrontendLayout.valueOf(it) }.getOrNull() }
                 ?: FrontendLayout.Grid,
             systemCustomizations = systemCustomizations,
             systemOrder = systemOrder,

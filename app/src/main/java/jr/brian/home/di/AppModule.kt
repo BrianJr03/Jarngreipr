@@ -291,4 +291,12 @@ object AppModule {
     ): HomeButtonManager {
         return HomeButtonManager(context)
     }
+
+    @Provides
+    @Singleton
+    fun provideFocusLockPrefsManager(
+        @ApplicationContext context: Context
+    ): jr.brian.home.data.FocusLockPrefsManager {
+        return jr.brian.home.data.FocusLockPrefsManager(context)
+    }
 }

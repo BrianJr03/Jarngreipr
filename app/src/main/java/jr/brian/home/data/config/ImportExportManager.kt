@@ -283,6 +283,11 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             homeButton = HomeButtonConfig(
                 interceptionEnabled = f.homeButtonManager.interceptionEnabled.value,
                 mainScreen = f.homeButtonManager.mainScreen.value.name,
+                // Legacy boolean kept populated for pre-v32 app versions:
+                // Off -> false, anything else -> true.
+                focusLockAutoManageEnabled = f.focusLockPrefsManager.mode.value !=
+                    jr.brian.home.data.FocusLockMode.Off,
+                focusLockMode = f.focusLockPrefsManager.mode.value.name,
             ),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
@@ -294,7 +299,12 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 systemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
                 primarySystemLayout = f.esdePreferencesManager.state.value.primarySystemLayout.name,
                 secondarySystemLayout = f.esdePreferencesManager.state.value.secondarySystemLayout.name,
-                gameLayout = f.esdePreferencesManager.state.value.gameLayout.name,
+                // Legacy field — kept populated with the primary-display game
+                // layout so an older app version restoring this config still
+                // gets a sensible single-layout setting.
+                gameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
+                primaryGameLayout = f.esdePreferencesManager.state.value.primaryGameLayout.name,
+                secondaryGameLayout = f.esdePreferencesManager.state.value.secondaryGameLayout.name,
                 systemCustomizations = f.esdePreferencesManager.state.value.systemCustomizations,
                 systemOrder = f.esdePreferencesManager.state.value.systemOrder,
                 frontendHintsVisible = f.esdePreferencesManager.state.value.frontendHintsVisible,
@@ -473,7 +483,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
 
         val targetTypes = config.pageTypes
             .mapNotNull { runCatching { PageType.valueOf(it) }.getOrNull() }
-            .ifEmpty { listOf(PageType.APPS_TAB) }
+            .ifEmpty { listOf(PageType.UNIFIED_CANVAS) }
 
         page.pageTypeManager.reorderPages(targetTypes)
         page.pageCountManager.setPageCount(targetTypes.size)
@@ -576,8 +586,15 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         (runCatching { FrontendLayout.valueOf(config.romSearch.secondarySystemLayout) }.getOrNull()
             ?: legacySystemLayout)
             ?.let { f.esdePreferencesManager.setSecondarySystemLayout(it) }
-        runCatching { FrontendLayout.valueOf(config.romSearch.gameLayout) }.getOrNull()
-            ?.let { f.esdePreferencesManager.setGameLayout(it) }
+        val legacyGameLayout = runCatching {
+            FrontendLayout.valueOf(config.romSearch.gameLayout)
+        }.getOrNull()
+        (runCatching { FrontendLayout.valueOf(config.romSearch.primaryGameLayout) }.getOrNull()
+            ?: legacyGameLayout)
+            ?.let { f.esdePreferencesManager.setPrimaryGameLayout(it) }
+        (runCatching { FrontendLayout.valueOf(config.romSearch.secondaryGameLayout) }.getOrNull()
+            ?: legacyGameLayout)
+            ?.let { f.esdePreferencesManager.setSecondaryGameLayout(it) }
         f.esdePreferencesManager.setAllSystemCustomizations(config.romSearch.systemCustomizations)
         f.esdePreferencesManager.setSystemOrder(config.romSearch.systemOrder)
         f.esdePreferencesManager.setFrontendHintsVisible(config.romSearch.frontendHintsVisible)
@@ -622,6 +639,14 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
 
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
         f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))
+        val mode = config.homeButton.focusLockMode?.let {
+            jr.brian.home.data.FocusLockMode.fromNameOrDefault(it)
+        } ?: if (config.homeButton.focusLockAutoManageEnabled) {
+            jr.brian.home.data.FocusLockMode.Follow
+        } else {
+            jr.brian.home.data.FocusLockMode.Off
+        }
+        f.focusLockPrefsManager.setMode(mode)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

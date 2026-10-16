@@ -8,8 +8,10 @@ import jr.brian.core.model.bus.FrontendBus
 import jr.brian.core.model.bus.FrontendCommand
 import jr.brian.core.model.SwapCoordinator
 import jr.brian.core.model.SwapPhase
+import jr.brian.home.ui.components.SWAP_FADE_MS
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -53,13 +55,15 @@ class ScreenSwapListener @Inject constructor(
         }
 
         val next = store.assignment.flipped()
+        // Start Leaving first, then wait one fade duration before
+        // flipping the pref + routing. Layout changes (row ↔ grid
+        // when the user has different layouts configured per display)
+        // happen while both activities are at alpha 0, so the user
+        // never sees the layout transition in-frame.
         swap.beginLeaving(next)
+        delay(SWAP_FADE_MS.toLong())
         store.setAssignment(next)
-
-        // Fire the two-activity launch plan with the new assignment.
-        // The current activities finish themselves via normal flow;
-        // the arriving activity's observer transitions SwapPhase to
-        // Arriving once it hits onStart.
+        ScreenFocusLockWriter.syncToAssignment(context, next)
         routeHomeFromLauncher(context, frontendEnabled = true)
         swap.markArriving()
     }

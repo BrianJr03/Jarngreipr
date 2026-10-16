@@ -65,7 +65,7 @@ import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.model.RomSearchCardMediaType
-import jr.brian.home.esde.model.gridColumnsForScale
+import jr.brian.home.esde.model.gameGridColumnsForScale
 import jr.brian.home.esde.ui.frontend.DEFAULT_ROW_TILE_WIDTH
 import jr.brian.home.esde.ui.frontend.FocusableTileLayout
 import jr.brian.home.ui.animations.animatedFocusedScale
@@ -189,10 +189,16 @@ internal fun RomResultsGrid(
                     }
                 } else null
                 val scale = prefs.frontendGameTileScale
+                // Force 2 columns on the external (bottom) display so
+                // the smaller screen gets bigger game tiles. Mirrors
+                // the systems grid.
+                val onBottom = jr.brian.home.ui.util.rememberPhysicalAssignment() ==
+                    jr.brian.core.model.ScreenAssignment.FRONTEND_ON_BOTTOM
+                val columnCount = if (onBottom) 2 else gameGridColumnsForScale(scale)
                 FocusableTileLayout(
                     items = displayedGames,
                     layout = layout,
-                    columns = gridColumnsForScale(scale),
+                    columns = columnCount,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = contentPadding,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,

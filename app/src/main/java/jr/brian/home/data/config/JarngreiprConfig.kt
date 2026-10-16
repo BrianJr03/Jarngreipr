@@ -105,7 +105,42 @@ data class JarngreiprConfig(
         //      The field is retained in the schema with its null default so
         //      older blobs still decode via ignoreUnknownKeys; the value is
         //      simply never consulted.
-        const val CONFIG_VERSION = 27
+        // v28: added HomeButtonConfig.focusLockAutoManageEnabled — the
+        //      "Auto-manage Focus Lock" toggle gating whether we write to
+        //      AYN's screen_focus_lock on swaps, app launches, game
+        //      launches, and boot. Older blobs decode with the default
+        //      (true) via ignoreUnknownKeys, matching the on-by-default
+        //      behaviour new installs ship with.
+        // v29: split RomSearchConfig.gameLayout into
+        //      primaryGameLayout / secondaryGameLayout so each display
+        //      can show games in Row or Grid independently (matches the
+        //      systems split from v26-ish). Legacy gameLayout retained
+        //      in the schema and still written on export so pre-split
+        //      builds restoring a current config get a sensible single-
+        //      layout fallback. Older blobs decode with both new fields
+        //      inheriting the legacy value on import.
+        // v30: dropped HomeButtonConfig.focusLockAutoManageEnabled
+        //      (added in v28). AYN's SettingsProvider gates
+        //      `screen_focus_lock` behind a MOVED_TO_SECURE-style
+        //      whitelist that third-party apps can't bypass, so the
+        //      feature is removed. Older blobs that still carry the
+        //      field decode via `ignoreUnknownKeys`; the value is
+        //      ignored on import.
+        // v31: re-added HomeButtonConfig.focusLockAutoManageEnabled.
+        //      Writes now route through Shizuku's shell service, which
+        //      runs at the privileged UID AYN's SettingsProvider does
+        //      allow. Users opt in by installing Shizuku and granting
+        //      the app permission from the Extras section; without
+        //      Shizuku the toggle is inert and the write silently
+        //      no-ops. Default is true to match the pre-v30 behaviour.
+        // v32: replaced the boolean focusLockAutoManageEnabled with
+        //      focusLockMode (string: Off/Top/Bottom/Follow). The
+        //      legacy boolean is retained in the schema (true -> Follow,
+        //      false -> Off on import) so pre-v32 blobs upgrade
+        //      without data loss and so pre-v32 app versions still get
+        //      a sensible value if they restore a current config.
+        //      Default is Follow.
+        const val CONFIG_VERSION = 32
     }
 }
 
@@ -253,7 +288,21 @@ data class HomeButtonConfig(
      */
     val homeTarget: String? = null,
     /** Persisted [jr.brian.home.model.MainScreen] name; defaults to `BOTTOM`. */
-    val mainScreen: String = "BOTTOM"
+    val mainScreen: String = "BOTTOM",
+    /**
+     * Legacy boolean from v31. Retained so pre-v32 blobs still decode
+     * and so pre-v32 app versions reading a current export get a
+     * sensible value (true -> Follow, false -> Off). The v32-aware
+     * import prefers [focusLockMode] when non-null.
+     */
+    val focusLockAutoManageEnabled: Boolean = true,
+    /**
+     * v32: name of a [jr.brian.home.data.FocusLockMode] entry
+     * (Off / Top / Bottom / Follow). Nullable so pre-v32 blobs
+     * decode without a value and fall back to the legacy boolean
+     * on import. Default on export is Follow.
+     */
+    val focusLockMode: String? = null
 )
 
 @Serializable
@@ -329,6 +378,8 @@ data class RomSearchConfig(
     val primarySystemLayout: String = "Row",
     val secondarySystemLayout: String = "Grid",
     val gameLayout: String = "Grid",
+    val primaryGameLayout: String = "Grid",
+    val secondaryGameLayout: String = "Grid",
     val systemCustomizations: Map<String, SystemCustomization> = emptyMap(),
     val systemOrder: List<String> = emptyList(),
     val frontendHintsVisible: Boolean = true,

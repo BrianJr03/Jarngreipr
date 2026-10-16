@@ -132,10 +132,16 @@ internal fun SystemGrid(
                     }
                 }
                 val scale = prefs.frontendSystemTileScale
+                // Force 2 columns on the external (bottom) display so the
+                // smaller screen gets bigger system tiles. Keyed on the
+                // physical assignment so a swap re-counts correctly.
+                val onBottom = jr.brian.home.ui.util.rememberPhysicalAssignment() ==
+                    jr.brian.core.model.ScreenAssignment.FRONTEND_ON_BOTTOM
+                val columnCount = if (onBottom) 2 else gridColumnsForScale(scale)
                 FocusableTileLayout(
                     items = systems,
                     layout = layout,
-                    columns = gridColumnsForScale(scale),
+                    columns = columnCount,
                     contentPadding = PaddingValues(
                         horizontal = FrontendTokens.Spacing.L,
                         vertical = FrontendTokens.Spacing.XL

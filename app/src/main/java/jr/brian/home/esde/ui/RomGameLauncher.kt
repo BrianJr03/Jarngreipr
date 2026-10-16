@@ -323,6 +323,7 @@ class RomGameLauncher(
         val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
         Log.d(TAG, "launchGame (command) | cmd=$savedCommand rom=$romPath")
         onSignalGameLaunch()
+        jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(activity, PRIMARY_DISPLAY_ID)
         try {
             activity.startActivity(intent, options.toBundle())
             activity.finish()
@@ -352,6 +353,7 @@ class RomGameLauncher(
         val options = ActivityOptions.makeBasic()
             .apply { launchDisplayId = PRIMARY_DISPLAY_ID }
             .toBundle()
+        jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(activity, PRIMARY_DISPLAY_ID)
         var failure: LaunchFailure? = null
         for (intent in candidates) {
             failure = startOrNull(intent, options) ?: return null

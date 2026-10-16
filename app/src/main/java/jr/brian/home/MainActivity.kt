@@ -2,6 +2,7 @@ package jr.brian.home
 
 import jr.brian.home.esde.data.*
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -120,6 +121,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var swapCoordinator: jr.brian.core.model.SwapCoordinator
 
+    @Inject
+    lateinit var screenAssignmentStore: jr.brian.home.data.ScreenAssignmentStore
+
     private val esdeViewModel: ESDEViewModel by viewModels()
 
     private var navigateToThemeShare by mutableStateOf(false)
@@ -225,7 +229,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
-                jr.brian.home.ui.components.SwapFade(swapCoordinator) {
+                val physicalAssignment = jr.brian.home.ui.util.rememberPhysicalAssignment()
+                val onTop = physicalAssignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_BOTTOM
+                jr.brian.home.ui.components.SwapFade(swapCoordinator, onTopDisplay = onTop) {
                 managers.ManagerCompositionLocalProvider {
                 CompositionLocalProvider(
                     LocalImportExportManager provides importExportManager
@@ -342,6 +348,7 @@ class MainActivity : ComponentActivity() {
         if (jr.brian.home.data.GamepadSwapShortcut.handle(event) {
                 jr.brian.home.data.GamepadSwapShortcut.fireSwap(this)
             }) return true
+        if (jr.brian.home.data.HomeKeyFallback.handle(this, event)) return true
         return super.dispatchKeyEvent(event)
     }
 
@@ -355,7 +362,83 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        isRunning = true
         esdeViewModel.musicController.onActivityVisible()
+        registerCompanionDisplayListener()
+        ensureFrontendCompanion()
+        maybeResyncFocusLock()
+    }
+
+    /**
+     * Return Focus Lock to the frontend's resting position when we
+     * come back after an external app had focus. Guard with phase ==
+     * Idle so a swap-driven onStop/onStart doesn't fight the swap
+     * trigger's own sync (which was issued with the post-flip
+     * assignment).
+     */
+    private fun maybeResyncFocusLock() {
+        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
+        jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
+            this,
+            screenAssignmentStore.assignment,
+        )
+    }
+
+    /**
+     * Companion-activity watchdog. If this activity starts but the
+     * frontend side isn't running (crash, partial restart, single-
+     * activity cold boot), bring it along on its assigned display so
+     * the user ends up with both halves of the dual-screen launcher.
+     * No-op when the frontend is disabled or no external display is
+     * connected (nothing to pair with). Safe to call every onStart —
+     * [FrontEndActivity] is singleTop so a redundant launch just
+     * reorders to front.
+     */
+    private fun ensureFrontendCompanion() {
+        if (!esdePreferencesManager.state.value.frontendEnabled) return
+        if (jr.brian.home.esde.ui.FrontEndActivity.isRunning) return
+        if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
+        jr.brian.home.ui.util.launchFrontendForCurrentAssignment(this)
+    }
+
+    private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null
+
+    /**
+     * Catches the "external display becomes ready after cold boot"
+     * case. [HomeRouterActivity] fires its launch plan the moment
+     * Android dispatches the HOME intent, which can beat the
+     * secondary display's registration with [DisplayManager]. When
+     * that happens the frontend's intent is dropped and the user
+     * ends up with only the launcher. Re-running
+     * [ensureFrontendCompanion] whenever a display connects fixes
+     * both that race and any hot-plug afterwards.
+     */
+    private fun registerCompanionDisplayListener() {
+        if (companionDisplayListener != null) return
+        val displayManager =
+            getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        val listener = object : android.hardware.display.DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {
+                if (displayId != jr.brian.core.model.PRIMARY_DISPLAY_ID) {
+                    ensureFrontendCompanion()
+                }
+            }
+            override fun onDisplayRemoved(displayId: Int) = Unit
+            override fun onDisplayChanged(displayId: Int) = Unit
+        }
+        displayManager.registerDisplayListener(
+            listener,
+            android.os.Handler(android.os.Looper.getMainLooper()),
+        )
+        companionDisplayListener = listener
+    }
+
+    private fun unregisterCompanionDisplayListener() {
+        val listener = companionDisplayListener ?: return
+        val displayManager =
+            getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        displayManager.unregisterDisplayListener(listener)
+        companionDisplayListener = null
     }
 
 
@@ -369,9 +452,29 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        isRunning = false
+        unregisterCompanionDisplayListener()
+        maybeSyncFocusLockForExternalApp()
         esdeViewModel.musicController.onActivityInvisible()
         managers.feature.jinglesManager.stop()
         managers.feature.bgMusicManager.pausePlayback()
+    }
+
+    /**
+     * If both our activities have gone offscreen and we're not in the
+     * middle of a screen swap, an external app took focus from us.
+     * Launched apps always land on [PRIMARY_DISPLAY_ID], so pin the
+     * Focus Lock there so gamepad input follows. No-op during swap
+     * (both activities briefly stop as they're reparented) or when
+     * the frontend side is still up (dual-screen is intact).
+     */
+    private fun maybeSyncFocusLockForExternalApp() {
+        if (jr.brian.home.esde.ui.FrontEndActivity.isRunning) return
+        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
+        jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(
+            this,
+            jr.brian.core.model.PRIMARY_DISPLAY_ID,
+        )
     }
 
     override fun onDestroy() {
@@ -656,5 +759,9 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_OPEN_THEME_SHARE = "jr.brian.home.ACTION_OPEN_THEME_SHARE"
         val openThemeShareRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        @Volatile
+        var isRunning: Boolean = false
+            private set
     }
 }

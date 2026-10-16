@@ -3,7 +3,11 @@
 
     <style name="Theme.Home" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- Opaque black so the system wallpaper never flashes through
+             during a screen-swap reparent, when the window briefly has
+             no rendered content. The launcher draws its own wallpaper
+             layer in Compose on top of this. -->
+        <item name="android:windowBackground">@android:color/black</item>
         <item name="android:windowShowWallpaper">true</item>
     </style>
 

@@ -40,9 +40,10 @@ import jr.brian.home.esde.data.setFrontendSystemRowAlignment
 import jr.brian.home.esde.data.setFrontendSystemTileScale
 import jr.brian.home.esde.data.setFrontendTransition
 import jr.brian.home.esde.data.setFrontendTransitionMs
-import jr.brian.home.esde.data.setGameLayout
 import jr.brian.home.esde.data.setJarngreiprMediaEnabled
+import jr.brian.home.esde.data.setPrimaryGameLayout
 import jr.brian.home.esde.data.setPrimarySystemLayout
+import jr.brian.home.esde.data.setSecondaryGameLayout
 import jr.brian.home.esde.data.setSecondaryMediaEnabled
 import jr.brian.home.esde.data.setSecondarySystemLayout
 import jr.brian.home.esde.model.ESDEPrefsState
@@ -135,15 +136,18 @@ private fun LayoutRows(
     val secondaryLayoutFocused = focusedRow == 1
     val systemAlignFocused = focusedRow == 2
     val systemSizeFocused = focusedRow == 3
-    val gameLayoutFocused = focusedRow == 4
-    val gameAlignFocused = focusedRow == 5
-    val gameSizeFocused = focusedRow == 6
+    val primaryGameLayoutFocused = focusedRow == 4
+    val secondaryGameLayoutFocused = focusedRow == 5
+    val gameAlignFocused = focusedRow == 6
+    val gameSizeFocused = focusedRow == 7
 
     val primaryIsRow = prefsState.primarySystemLayout == FrontendLayout.Row
     val secondaryIsRow = prefsState.secondarySystemLayout == FrontendLayout.Row
-    val gameIsRow = prefsState.gameLayout == FrontendLayout.Row
+    val primaryGameIsRow = prefsState.primaryGameLayout == FrontendLayout.Row
+    val secondaryGameIsRow = prefsState.secondaryGameLayout == FrontendLayout.Row
     // Row-alignment / tile-size still apply when either display shows Row.
     val anySystemIsRow = primaryIsRow || secondaryIsRow
+    val anyGameIsRow = primaryGameIsRow || secondaryGameIsRow
 
     val togglePrimaryLayout: () -> Unit = {
         prefsManager.setPrimarySystemLayout(if (primaryIsRow) FrontendLayout.Grid else FrontendLayout.Row)
@@ -151,8 +155,11 @@ private fun LayoutRows(
     val toggleSecondaryLayout: () -> Unit = {
         prefsManager.setSecondarySystemLayout(if (secondaryIsRow) FrontendLayout.Grid else FrontendLayout.Row)
     }
-    val toggleGameLayout: () -> Unit = {
-        prefsManager.setGameLayout(if (gameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    val togglePrimaryGameLayout: () -> Unit = {
+        prefsManager.setPrimaryGameLayout(if (primaryGameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
+    }
+    val toggleSecondaryGameLayout: () -> Unit = {
+        prefsManager.setSecondaryGameLayout(if (secondaryGameIsRow) FrontendLayout.Grid else FrontendLayout.Row)
     }
 
     SettingsRowSlot(focused = primaryLayoutFocused, onActivate = togglePrimaryLayout) {
@@ -188,18 +195,27 @@ private fun LayoutRows(
         value = prefsState.frontendSystemTileScale,
         onChange = prefsManager::setFrontendSystemTileScale
     )
-    SettingsRowSlot(focused = gameLayoutFocused, onActivate = toggleGameLayout) {
+    SettingsRowSlot(focused = primaryGameLayoutFocused, onActivate = togglePrimaryGameLayout) {
         ToggleSetting(
-            title = stringResource(R.string.frontend_layout_games_row_title),
-            description = stringResource(R.string.frontend_layout_games_row_description),
-            checked = gameIsRow,
-            onCheckedChange = { toggleGameLayout() },
-            focused = gameLayoutFocused
+            title = stringResource(R.string.frontend_layout_primary_games_row_title),
+            description = stringResource(R.string.frontend_layout_primary_games_row_description),
+            checked = primaryGameIsRow,
+            onCheckedChange = { togglePrimaryGameLayout() },
+            focused = primaryGameLayoutFocused
+        )
+    }
+    SettingsRowSlot(focused = secondaryGameLayoutFocused, onActivate = toggleSecondaryGameLayout) {
+        ToggleSetting(
+            title = stringResource(R.string.frontend_layout_secondary_games_row_title),
+            description = stringResource(R.string.frontend_layout_secondary_games_row_description),
+            checked = secondaryGameIsRow,
+            onCheckedChange = { toggleSecondaryGameLayout() },
+            focused = secondaryGameLayoutFocused
         )
     }
     RowAlignmentChoiceRow(
         focused = gameAlignFocused,
-        enabled = gameIsRow,
+        enabled = anyGameIsRow,
         title = stringResource(R.string.frontend_settings_game_row_alignment_title),
         description = stringResource(R.string.frontend_settings_game_row_alignment_description),
         current = prefsState.frontendGameRowAlignment,

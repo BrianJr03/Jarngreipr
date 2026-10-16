@@ -138,7 +138,7 @@ fun FrontendSettingsScreen(
 }
 
 private fun rowCountFor(category: FrontendSettingsCategory): Int = when (category) {
-    FrontendSettingsCategory.LAYOUT -> 7
+    FrontendSettingsCategory.LAYOUT -> 8
     FrontendSettingsCategory.MEDIA -> 5
     FrontendSettingsCategory.FEEL -> 5
     FrontendSettingsCategory.SYSTEMS -> 2

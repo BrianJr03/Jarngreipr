@@ -4,8 +4,10 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.view.Display
 import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager.DisplayPreference
+import jr.brian.home.data.ScreenFocusLockWriter
 import jr.brian.core.model.PRIMARY_DISPLAY_ID
 
 fun launchApp(
@@ -17,21 +19,29 @@ fun launchApp(
     try {
         val intent = intent ?: context.packageManager.getLaunchIntentForPackage(packageName)
         if (intent != null) {
-            when (displayPreference) {
+            val launchedOn = when (displayPreference) {
                 DisplayPreference.PRIMARY_DISPLAY -> {
                     val options = ActivityOptions.makeBasic()
                     options.launchDisplayId = PRIMARY_DISPLAY_ID
                     context.startActivity(intent, options.toBundle())
+                    PRIMARY_DISPLAY_ID
                 }
 
                 DisplayPreference.CURRENT_DISPLAY -> {
                     context.startActivity(intent)
+                    callerDisplayId(context)
                 }
             }
+            ScreenFocusLockWriter.syncToDisplayId(context, launchedOn)
         }
     } catch (e: Exception) {
         e.printStackTrace()
     }
+}
+
+private fun callerDisplayId(context: Context): Int {
+    val display: Display? = runCatching { context.display }.getOrNull()
+    return display?.displayId ?: PRIMARY_DISPLAY_ID
 }
 
 /**
