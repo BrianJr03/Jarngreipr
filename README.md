@@ -156,10 +156,7 @@ Turn the frontend off and Jarngreipr becomes a live companion for ES-DE running 
 Captured live on an AYN Thor. Top screen running the Frontend's systems view; bottom screen running Canvas with a Frontend widget that mirrors the focused system, plus a battery widget, Now Playing tile, and the focused game's art.
 
 <p align="center">
-  <img src="docs/screenshots/thor-top.png" alt="Top screen: Frontend systems view" width="70%"/>
-</p>
-<p align="center">
-  <img src="docs/screenshots/thor-bottom.png" alt="Bottom screen: Canvas with Frontend widget" width="55%"/>
+  <img src="docs/screenshots/thor-combined.png" alt="AYN Thor: Frontend systems on top, Canvas on bottom" width="55%"/>
 </p>
 
 ---
