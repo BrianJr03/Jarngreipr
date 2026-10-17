@@ -11,12 +11,11 @@ import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.LibraryRepository
 import jr.brian.frontend.library.LibraryState
 import jr.brian.frontend.library.migrate.LibraryMigration
-import jr.brian.home.esde.util.mediaRoots
 import jr.brian.home.data.FavoritesGateway
 import jr.brian.home.data.LibraryGameInfoAdapter
+import jr.brian.home.data.LibraryStoreSync
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
-import jr.brian.home.esde.data.SetupPreferences
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.esde.scraper.sidecar.UserMetadataOverride
@@ -49,70 +48,18 @@ import javax.inject.Inject
 class RomSearchViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val esdePreferencesManager: ESDEPreferencesManager,
-    private val setupPreferences: SetupPreferences,
     private val store: RomSearchStateHolder,
     private val scraperCoordinator: ScraperCoordinator,
     private val libraryAdapter: LibraryGameInfoAdapter,
     private val libraryRepository: LibraryRepository,
     private val libraryMigration: LibraryMigration,
+    private val librarySync: LibraryStoreSync,
     private val favoritesGateway: FavoritesGateway,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     init {
-        // Mirror Room into legacy's state holder. The adapter publishes
-        // the full GameInfo list; the Scanning gate keeps intermediate
-        // emissions from flashing an empty list between a scan starting
-        // and the first system completing.
-        applicationScope.launch {
-            libraryAdapter.allGameInfos.collect { games ->
-                if (libraryRepository.state.value !is LibraryState.Scanning) {
-                    store.allGames.value = games
-                }
-            }
-        }
-
-        // Mirror LibraryState to the legacy loading / progress flags
-        // the UI already renders. Scanning → true + counts, else false.
-        applicationScope.launch {
-            libraryRepository.state.collect { state ->
-                when (state) {
-                    is LibraryState.Scanning -> {
-                        store.isLoading.value = true
-                        store.systemScanLoaded.value = state.systemsDone
-                        store.systemScanTotal.value = state.systemsTotal
-                    }
-                    is LibraryState.Idle, is LibraryState.Error -> {
-                        store.isLoading.value = false
-                    }
-                }
-            }
-        }
-
-        // Push media roots into the repository whenever the user's
-        // ES-DE / scraped-media prefs change. Without this the Phase 2
-        // scanner's MediaIndex returns Resolved.EMPTY for every game,
-        // which writeSystem interprets as "delete this game's media
-        // row" — wiping scraped art the migration importer had just
-        // written. Running on applicationScope so a game-launch
-        // finishing the frontend activity doesn't cancel it mid-set.
-        applicationScope.launch {
-            esdePreferencesManager.state.collect {
-                libraryRepository.setMediaRoots(currentMediaRoots())
-            }
-        }
-    }
-
-    private fun currentMediaRoots(): List<File> {
-        val state = esdePreferencesManager.state.value
-        val primary = state.customMediaPath ?: setupPreferences.mediaPath
-        val secondary = if (state.secondaryMediaEnabled)
-            SetupPreferences.RETRO_HRAI_PATH else null
-        val tertiary = if (state.jarngreiprMediaEnabled)
-            scraperCoordinator.scrapedRoot() else null
-        return mediaRoots(primary, secondary, tertiary)
-            .filter { it.isNotBlank() }
-            .map { File(it) }
+        librarySync.start()
     }
 
     val query: StateFlow<String> = store.query.asStateFlow()
@@ -214,7 +161,7 @@ class RomSearchViewModel @Inject constructor(
             // this read the last emission the collector saw gets stuck as
             // the published value — showing "No systems found" even though
             // the scan actually populated games.
-            store.allGames.value = libraryAdapter.allGameInfos.first()
+            store.allGames.value = libraryAdapter.snapshot()
             val games = store.allGames.value.size
             val systems = store.allGames.value.map { it.systemName }.distinct().size
             onComplete(games, systems)

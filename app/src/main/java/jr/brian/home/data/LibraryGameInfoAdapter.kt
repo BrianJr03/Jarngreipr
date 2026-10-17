@@ -1,5 +1,6 @@
 package jr.brian.home.data
 
+import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.LibraryRepository
 import jr.brian.frontend.library.db.GameEntity
 import jr.brian.frontend.library.db.MediaDao
@@ -8,8 +9,14 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.esde.scraper.sidecar.UserMetadataOverride
 import jr.brian.home.esde.scraper.sidecar.UserMetadataOverrideStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.shareIn
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,14 +36,22 @@ import javax.inject.Singleton
  * overrides authored through the Edit Info sheet are overlaid on top of
  * each row — written by [UserMetadataOverrideStore], picked up here so
  * the UI reflects edits without a schema migration into Room.
+ *
+ * [allGameInfos] is shared: every collector reads one upstream, so the
+ * full `games` + `media` reload and the GameInfo mapping run once per
+ * change no matter how many screens are listening. It's debounced so a
+ * scrape-all (one media upsert per game) doesn't rebuild the list for
+ * every row. Use [snapshot] when you need a fresh read of current Room
+ * state rather than the latest (possibly still-debouncing) emission.
  */
 @Singleton
 class LibraryGameInfoAdapter @Inject constructor(
     private val repository: LibraryRepository,
     private val mediaDao: MediaDao,
     private val scraperCoordinator: ScraperCoordinator,
+    @param:ApplicationScope private val scope: CoroutineScope,
 ) {
-    val allGameInfos: Flow<List<GameInfo>> = combine(
+    private val gameInfos: Flow<List<GameInfo>> = combine(
         repository.allGames,
         mediaDao.observeAll(),
     ) { games, media ->
@@ -46,6 +61,14 @@ class LibraryGameInfoAdapter @Inject constructor(
             game.toGameInfo(mediaByGameId[game.id], overridesBySystem[game.id])
         }
     }
+
+    @OptIn(FlowPreview::class)
+    val allGameInfos: Flow<List<GameInfo>> = gameInfos
+        .debounce(UPDATE_DEBOUNCE_MS)
+        .shareIn(scope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
+    /** One fresh read of Room, bypassing the shared flow's debounce and replay. */
+    suspend fun snapshot(): List<GameInfo> = gameInfos.first()
 
     private fun loadOverridesByGame(games: List<GameEntity>): Map<Long, UserMetadataOverride> {
         val scrapedRoot = scraperCoordinator.scrapedRoot()
@@ -63,6 +86,10 @@ class LibraryGameInfoAdapter @Inject constructor(
             overrides[basename]?.let { result[game.id] = it }
         }
         return result
+    }
+
+    private companion object {
+        const val UPDATE_DEBOUNCE_MS = 250L
     }
 }
 
