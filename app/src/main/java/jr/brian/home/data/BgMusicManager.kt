@@ -33,6 +33,7 @@ class BgMusicManager @Inject constructor(
         private const val KEY_SINGLE_FILE_URI = "bg_music_file_uri"
         private const val KEY_VOLUME = "bg_music_volume"
         private const val KEY_MODE = "bg_music_mode"
+        private const val KEY_MUTED = "bg_music_muted"
         private const val DUCK_FACTOR = 0.2f
         private val AUDIO_EXTENSIONS = setOf("mp3", "ogg", "flac", "m4a", "wav", "aac", "opus")
     }
@@ -50,7 +51,10 @@ class BgMusicManager @Inject constructor(
     // Whether the player was paused specifically because mute was enabled.
     // Guards against resumePlayback(), screen-on, or audio focus gain
     // accidentally restarting audio while the user still has mute on.
-    private var isMuted = false
+    // Persisted so that on next launch resumeIfConfigured() won't steal
+    // audio focus from other apps (e.g. YT Music) while mute is on.
+    private var isMuted = prefs.getBoolean(KEY_MUTED, false)
+    val muted: Boolean get() = isMuted
     private var isMutePaused = false
 
     private fun effectiveVolume() = when {
@@ -231,6 +235,7 @@ class BgMusicManager @Inject constructor(
     fun setMuted(muted: Boolean) {
         if (isMuted == muted) return
         isMuted = muted
+        prefs.edit { putBoolean(KEY_MUTED, muted) }
 
         if (muted) {
             // Pause the active player so no audio reaches the mixer
@@ -257,17 +262,20 @@ class BgMusicManager @Inject constructor(
         folderUri: String?,
         fileUri: String?,
         mode: Mode,
-        volume: Float
+        volume: Float,
+        muted: Boolean
     ) {
         this.folderUri = folderUri
         this.singleFileUri = fileUri
         this.mode = mode
         this.vol = volume.coerceIn(0f, 1f)
+        this.isMuted = muted
         prefs.edit {
             if (folderUri != null) putString(KEY_FOLDER_URI, folderUri) else remove(KEY_FOLDER_URI)
             if (fileUri != null) putString(KEY_SINGLE_FILE_URI, fileUri) else remove(KEY_SINGLE_FILE_URI)
             putString(KEY_MODE, mode.name)
             putFloat(KEY_VOLUME, this@BgMusicManager.vol)
+            putBoolean(KEY_MUTED, muted)
         }
     }
 
@@ -293,8 +301,10 @@ class BgMusicManager @Inject constructor(
 
     /** Called on app start to resume playback if a source is configured. */
     fun resumeIfConfigured() {
-        // Don't resume if muted
-        if (isMuted) return
+        // Skip entirely when effectively off, otherwise startPlayback() would
+        // request AUDIOFOCUS_GAIN and pause other apps' audio (e.g. YT Music)
+        // even though we'd produce no sound ourselves.
+        if (isMuted || vol == 0f) return
 
         val hasSource = when (mode) {
             Mode.FOLDER -> folderUri != null

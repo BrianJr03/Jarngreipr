@@ -278,7 +278,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 mode = f.bgMusicManager.mode.name,
                 folderUri = f.bgMusicManager.folderUri,
                 fileUri = f.bgMusicManager.singleFileUri,
-                volume = f.bgMusicManager.vol
+                volume = f.bgMusicManager.vol,
+                isMuted = f.bgMusicManager.muted
             ),
             homeButton = HomeButtonConfig(
                 interceptionEnabled = f.homeButtonManager.interceptionEnabled.value,
@@ -566,7 +567,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             folderUri = bgMusic.folderUri,
             fileUri = bgMusic.fileUri,
             mode = runCatching { BgMusicManager.Mode.valueOf(bgMusic.mode) }.getOrElse { BgMusicManager.Mode.SINGLE_FILE },
-            volume = bgMusic.volume
+            volume = bgMusic.volume,
+            muted = bgMusic.isMuted
         )
 
         // config.romSearch.hintsKbVisible intentionally ignored — the feature it

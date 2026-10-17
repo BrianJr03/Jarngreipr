@@ -362,7 +362,8 @@ data class BgMusicConfig(
     val mode: String = "SINGLE_FILE",
     val folderUri: String? = null,
     val fileUri: String? = null,
-    val volume: Float = 0.5f
+    val volume: Float = 0.5f,
+    val isMuted: Boolean = false
 )
 
 @Serializable

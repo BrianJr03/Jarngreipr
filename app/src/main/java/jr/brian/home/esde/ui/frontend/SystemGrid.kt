@@ -146,6 +146,11 @@ internal fun SystemGrid(
                         horizontal = FrontendTokens.Spacing.L,
                         vertical = FrontendTokens.Spacing.XL
                     ),
+                    // Tiles draw past their cell with clip=false while focused
+                    // (scale-up + lift), so the auto-scroll has to reserve
+                    // extra space per edge; otherwise a focused bottom-row
+                    // tile sits flush against the viewport.
+                    focusMargin = FOCUS_LIFT + FrontendTokens.Spacing.M,
                     rowItemWidth = DEFAULT_ROW_TILE_WIDTH * scale,
                     rowAlignment = prefs.frontendSystemRowAlignment,
                     initialRealIndex = initialRealIndex,
@@ -153,16 +158,23 @@ internal fun SystemGrid(
                     onItemFocused = { tile -> tile?.let(onSystemFocused) },
                     itemKey = { _, tile -> tile.systemName }
                 ) { _, tile, focusRequester, isFocused, onFocused ->
-                    SystemTileCard(
-                        tile = tile,
-                        isFocused = isFocused,
-                        focusRequester = focusRequester,
-                        customization = customizations[tile.systemName],
-                        isReordering = reorderingSystem == tile.systemName,
-                        onFocused = onFocused,
-                        onSelected = { onSystemSelected(tile) },
-                        onLongPress = { onSystemLongPressed(tile) }
-                    )
+                    // Shrink each card a touch on the external (bottom)
+                    // display. Keeps the 2-column grid but gives the
+                    // smaller screen some breathing room instead of
+                    // oversized tiles.
+                    val tileInset = if (onBottom) 16.dp else 0.dp
+                    Box(modifier = Modifier.padding(tileInset)) {
+                        SystemTileCard(
+                            tile = tile,
+                            isFocused = isFocused,
+                            focusRequester = focusRequester,
+                            customization = customizations[tile.systemName],
+                            isReordering = reorderingSystem == tile.systemName,
+                            onFocused = onFocused,
+                            onSelected = { onSystemSelected(tile) },
+                            onLongPress = { onSystemLongPressed(tile) }
+                        )
+                    }
                 }
             }
         }

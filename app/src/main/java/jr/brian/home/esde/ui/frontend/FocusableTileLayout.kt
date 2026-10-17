@@ -5,7 +5,10 @@ import android.view.KeyEvent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.BringIntoViewSpec
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +27,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -88,6 +92,15 @@ fun <T> FocusableTileLayout(
      */
     initialRealIndex: Int = 0,
     focusResetKey: Any? = Unit,
+    /**
+     * Extra breathing room (per edge) that the focus-driven scroll keeps around the
+     * focused tile. Compensates for visuals that overflow the cell bounds: tiles with
+     * `clip = false` plus a focus scale-up and lift translate their drawing outside
+     * their cell slot, so without this margin a bottom-row focused tile ends up
+     * flush against the viewport edge even though its cell technically respects
+     * `contentPadding`.
+     */
+    focusMargin: Dp = 0.dp,
     onItemFocused: (T?) -> Unit = {},
     header: (@Composable () -> Unit)? = null,
     itemKey: ((index: Int, item: T) -> Any)? = null,
@@ -106,6 +119,7 @@ fun <T> FocusableTileLayout(
             modifier = modifier,
             contentPadding = contentPadding,
             itemSpacing = itemSpacing,
+            focusMargin = focusMargin,
             initialIndex = initialRealIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0)),
             focusResetKey = focusResetKey,
             onItemFocused = onItemFocused,
@@ -132,6 +146,7 @@ fun <T> FocusableTileLayout(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun <T> GridLayout(
     items: List<T>,
@@ -139,6 +154,7 @@ private fun <T> GridLayout(
     modifier: Modifier,
     contentPadding: PaddingValues,
     itemSpacing: Dp,
+    focusMargin: Dp,
     initialIndex: Int,
     focusResetKey: Any?,
     onItemFocused: (T?) -> Unit,
@@ -158,6 +174,7 @@ private fun <T> GridLayout(
 
     val density = LocalDensity.current
     val verticalSpacingPx = with(density) { itemSpacing.roundToPx() }
+    val focusMarginPx = with(density) { focusMargin.roundToPx() }
 
     LaunchedEffect(focusedIndex) {
         val now = SystemClock.uptimeMillis()
@@ -168,8 +185,8 @@ private fun <T> GridLayout(
 
         val layoutIndex = focusedIndex + headerOffset
         val info = gridState.layoutInfo
-        val start = info.viewportStartOffset + info.beforeContentPadding
-        val end = info.viewportEndOffset - info.afterContentPadding
+        val start = info.viewportStartOffset + info.beforeContentPadding + focusMarginPx
+        val end = info.viewportEndOffset - info.afterContentPadding - focusMarginPx
         val target = info.visibleItemsInfo.firstOrNull { it.index == layoutIndex }
 
         when {
@@ -235,34 +252,65 @@ private fun <T> GridLayout(
         focusedIndex = next
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        state = gridState,
-        modifier = modifier
-            .fillMaxSize()
-            .focusRequester(containerFocus)
-            .focusable()
-            .gridDpadHandler(columns, ::moveFocus),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(itemSpacing),
-        horizontalArrangement = Arrangement.spacedBy(itemSpacing)
-    ) {
-        if (header != null) {
-            item(span = { GridItemSpan(maxLineSpan) }) { header() }
+    val bringIntoViewSpec = remember(focusMarginPx) {
+        PaddedBringIntoViewSpec(focusMarginPx.toFloat())
+    }
+    CompositionLocalProvider(LocalBringIntoViewSpec provides bringIntoViewSpec) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            state = gridState,
+            modifier = modifier
+                .fillMaxSize()
+                .focusRequester(containerFocus)
+                .focusable()
+                .gridDpadHandler(columns, ::moveFocus),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(itemSpacing),
+            horizontalArrangement = Arrangement.spacedBy(itemSpacing)
+        ) {
+            if (header != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) { header() }
+            }
+            itemsIndexed(
+                items,
+                key = itemKey?.let { keyFn -> { index, item -> keyFn(index, item) } }
+            ) { index, item ->
+                FocusableTileItem(
+                    index = index,
+                    item = item,
+                    focusRequesters = focusRequesters,
+                    focusedIndex = focusedIndex,
+                    onFocusedIndexChange = { focusedIndex = it },
+                    onItemFocused = onItemFocused,
+                    itemContent = itemContent
+                )
+            }
         }
-        itemsIndexed(
-            items,
-            key = itemKey?.let { keyFn -> { index, item -> keyFn(index, item) } }
-        ) { index, item ->
-            FocusableTileItem(
-                index = index,
-                item = item,
-                focusRequesters = focusRequesters,
-                focusedIndex = focusedIndex,
-                onFocusedIndexChange = { focusedIndex = it },
-                onItemFocused = onItemFocused,
-                itemContent = itemContent
-            )
+    }
+}
+
+/**
+ * Custom [BringIntoViewSpec] that reserves [insetPx] on both edges of the viewport so
+ * Compose's focus-driven auto-scroll keeps breathing room around the focused item.
+ * The default spec treats any item inside [0, containerSize] as "fully visible" and
+ * ignores content padding, so without this a focused bottom-row tile ends up flush
+ * against the scrollable edge.
+ */
+private class PaddedBringIntoViewSpec(private val insetPx: Float) : BringIntoViewSpec {
+    override fun calculateScrollDistance(
+        offset: Float,
+        size: Float,
+        containerSize: Float
+    ): Float {
+        val safeStart = insetPx
+        val safeEnd = containerSize - insetPx
+        val leadingEdge = offset - safeStart
+        val trailingEdge = (offset + size) - safeEnd
+        return when {
+            leadingEdge >= 0 && trailingEdge <= 0 -> 0f
+            leadingEdge < 0 && trailingEdge > 0 -> 0f
+            abs(leadingEdge) < abs(trailingEdge) -> leadingEdge
+            else -> trailingEdge
         }
     }
 }
