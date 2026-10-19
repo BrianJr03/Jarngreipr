@@ -8,7 +8,8 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import jr.brian.core.model.ApplicationScope
 import jr.brian.core.model.SwapCoordinator
-import jr.brian.home.ui.components.SWAP_FADE_MS
+import jr.brian.home.ui.components.SWAP_LAYOUT_FLIP_BUFFER_MS
+import jr.brian.home.ui.components.SWAP_LEAVE_MS
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import jr.brian.home.util.ThorDetection
 import kotlinx.coroutines.CoroutineScope
@@ -77,7 +78,7 @@ object GamepadSwapShortcut {
         // user never sees the row ↔ grid transition in-frame.
         coordinator.beginLeaving(next)
         scope.launch {
-            delay(SWAP_FADE_MS.toLong())
+            delay((SWAP_LEAVE_MS + SWAP_LAYOUT_FLIP_BUFFER_MS).toLong())
             store.setAssignment(next)
             ScreenFocusLockWriter.syncToAssignment(context, next)
             routeHomeFromLauncher(context, frontendEnabled = true)

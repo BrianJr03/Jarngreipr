@@ -81,6 +81,7 @@ import jr.brian.home.ui.screens.RssTab
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.LocalRecentlyPlayedManager
 import jr.brian.home.ui.theme.managers.LocalGridSettingsManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.ui.theme.managers.LocalOnboardingManager
@@ -118,6 +119,7 @@ fun UnifiedCanvasTab(
 ) {
     val context = LocalContext.current
     val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
+    val recentlyPlayedManager = LocalRecentlyPlayedManager.current
     val gridSettingsManager = LocalGridSettingsManager.current
     val notificationCountManager = LocalNotificationManager.current
     val onboardingManager = LocalOnboardingManager.current
@@ -179,6 +181,10 @@ fun UnifiedCanvasTab(
     var resizeRequest by remember { mutableStateOf<CanvasResizeRequest?>(null) }
     var appOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.App?>(null) }
     var romOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.Rom?>(null) }
+    var lastPlayedOptionsTarget by remember { mutableStateOf<ResolvedCanvasItem.LastPlayed?>(null) }
+    var lastPlayedRowTarget by remember {
+        mutableStateOf<Pair<CanvasItem.LastPlayedItem, jr.brian.home.data.RecentlyPlayedEntry>?>(null)
+    }
     var customIconTarget by remember { mutableStateOf<AppInfo?>(null) }
     var renameTarget by remember { mutableStateOf<AppInfo?>(null) }
     val hasExternalDisplay = rememberHasExternalDisplay()
@@ -291,6 +297,9 @@ fun UnifiedCanvasTab(
                     is ResolvedCanvasItem.EsdeArt ->
                         esdeArtRetypeTarget = resolved
 
+                    is ResolvedCanvasItem.LastPlayed ->
+                        lastPlayedOptionsTarget = resolved
+
                     else -> pendingRemoval = resolved
                 }
             },
@@ -333,7 +342,19 @@ fun UnifiedCanvasTab(
                 .fillMaxSize()
                 .onGloballyPositioned { canvasAreaCoordinates = it },
             appWidgetHost = appWidgetHost,
-            onAddTilePositioned = { menuButtonCoordinates = it }
+            onAddTilePositioned = { menuButtonCoordinates = it },
+            onLaunchRom = { rom ->
+                launchPinnedRom(
+                    context = context,
+                    rom = rom,
+                    romSearchViewModel = romSearchViewModel,
+                    displayPreference = appDisplayPreferenceManager
+                        .getAppDisplayPreference(rom.key)
+                )
+            },
+            onLastPlayedRowLongPress = { tileConfig, entry ->
+                lastPlayedRowTarget = tileConfig to entry
+            }
         )
 
         CanvasEditModeDoneFab(
@@ -428,7 +449,16 @@ fun UnifiedCanvasTab(
                     onAddRom = { pickRomVisible = true },
                     onAddWidget = { pickWidgetVisible = true },
                     onAddEsdeDisplay = { pickEsdeArtVisible = true },
-                    onAddPhotoContainer = { viewModel.addPhotoContainerItem() }
+                    onAddPhotoContainer = { viewModel.addPhotoContainerItem() },
+                    onAddLastPlayed = {
+                        viewModel.addLastPlayedItem(
+                            count = CanvasItem.LastPlayedItem.DEFAULT_DISPLAY_COUNT,
+                            showRandomButton = true,
+                            contentScale = EsdeContentScale.CROP,
+                            backgroundColorArgb = null,
+                            backgroundCornerRadiusDp = null
+                        )
+                    }
                 )
             },
             onOrientationChanged = viewModel::setOrientation,
@@ -496,6 +526,50 @@ fun UnifiedCanvasTab(
                 esdeArtRetypeTarget = null
             },
             onDismiss = { esdeArtRetypeTarget = null }
+        )
+    }
+
+    lastPlayedOptionsTarget?.let { target ->
+        CanvasLastPlayedOptionsSheet(
+            initialCount = target.raw.resolvedCount,
+            initialShowRandomButton = target.raw.resolvedShowRandomButton,
+            initialContentScale = target.raw.resolvedContentScale,
+            initialBackgroundColorArgb = target.raw.backgroundColorArgb,
+            initialBackgroundCornerRadiusDp = target.raw.backgroundCornerRadiusDp,
+            onConfirm = { count, showRandom, scale, bgArgb, cornerDp ->
+                viewModel.updateLastPlayedItem(
+                    id = target.raw.id,
+                    count = count,
+                    showRandomButton = showRandom,
+                    contentScale = scale,
+                    backgroundColorArgb = bgArgb,
+                    backgroundCornerRadiusDp = cornerDp
+                )
+            },
+            onRemove = {
+                pendingRemoval = target
+                lastPlayedOptionsTarget = null
+            },
+            onDismiss = { lastPlayedOptionsTarget = null }
+        )
+    }
+
+    lastPlayedRowTarget?.let { (_, entry) ->
+        LastPlayedRowOptionsSheet(
+            gameName = entry.rom.name,
+            onLaunch = {
+                launchPinnedRom(
+                    context = context,
+                    rom = entry.rom,
+                    romSearchViewModel = romSearchViewModel,
+                    displayPreference = appDisplayPreferenceManager
+                        .getAppDisplayPreference(entry.rom.key)
+                )
+            },
+            onRemoveFromList = {
+                recentlyPlayedManager.remove(entry.rom.key)
+            },
+            onDismiss = { lastPlayedRowTarget = null }
         )
     }
 
@@ -832,6 +906,10 @@ private fun handleTap(
             // system focused). Not handled here.
         }
         is ResolvedCanvasItem.PhotoContainer -> onPickPhotoContainer(resolved)
+        is ResolvedCanvasItem.LastPlayed -> {
+            // Row taps and Random button are handled inside the tile; there is
+            // no single-item tap target at the canvas level.
+        }
     }
 }
 
@@ -845,7 +923,8 @@ private fun handleAddChoice(
     onAddRom: () -> Unit,
     onAddWidget: () -> Unit,
     onAddEsdeDisplay: () -> Unit,
-    onAddPhotoContainer: () -> Unit
+    onAddPhotoContainer: () -> Unit,
+    onAddLastPlayed: () -> Unit
 ) {
     when (choice) {
         CanvasAddChoice.APP -> onPickApp()
@@ -856,6 +935,7 @@ private fun handleAddChoice(
         CanvasAddChoice.WIDGET -> onAddWidget()
         CanvasAddChoice.ESDE_DISPLAY -> onAddEsdeDisplay()
         CanvasAddChoice.PHOTO_CONTAINER -> onAddPhotoContainer()
+        CanvasAddChoice.LAST_PLAYED -> onAddLastPlayed()
     }
 }
 

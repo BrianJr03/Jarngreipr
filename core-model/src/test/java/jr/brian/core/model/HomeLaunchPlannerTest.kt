@@ -8,9 +8,12 @@ import org.junit.Test
  * actually do?" planner. Covers every combination the settings UI can produce:
  *
  *  - display id + explicit target for each of TOP / BOTTOM / BOTH
+ *  - TOP / BOTTOM resolve to the activity assigned to that slot under the
+ *    current [ScreenAssignment]
  *  - BOTH's focus-ordering rule for each [MainScreen] value
  *  - single-display fallback for every target
- *  - BOTH coerced to BOTTOM when the frontend is off
+ *  - BOTH coerced to BOTTOM, and TOP/BOTTOM coerced to MainActivity, when the
+ *    frontend is off
  *
  * Testing the planner instead of `routeHome()` itself keeps these tests free
  * of Robolectric / ActivityOptions plumbing while still guarding the branch
@@ -22,7 +25,7 @@ class HomeLaunchPlannerTest {
     private val bottomId = 7
 
     @Test
-    fun `TOP launches MainActivity on the primary display`() {
+    fun `TOP launches the frontend on primary under the default FRONTEND_ON_TOP assignment`() {
         val plan = planHomeLaunches(
             bottomDisplayId = bottomId,
             target = HomeTarget.TOP,
@@ -31,13 +34,14 @@ class HomeLaunchPlannerTest {
         )
 
         assertEquals(
-            listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID)),
+            "TOP resolves to whichever activity owns the top slot — FrontEndActivity under the default assignment",
+            listOf(HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID)),
             plan
         )
     }
 
     @Test
-    fun `BOTTOM launches MainActivity on the external display`() {
+    fun `BOTTOM launches MainActivity on the external display under the default FRONTEND_ON_TOP assignment`() {
         val plan = planHomeLaunches(
             bottomDisplayId = bottomId,
             target = HomeTarget.BOTTOM,
@@ -46,7 +50,24 @@ class HomeLaunchPlannerTest {
         )
 
         assertEquals(
+            "BOTTOM resolves to whichever activity owns the bottom slot — MainActivity under the default assignment",
             listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomId)),
+            plan
+        )
+    }
+
+    @Test
+    fun `TOP launches MainActivity when the frontend is disabled`() {
+        val plan = planHomeLaunches(
+            bottomDisplayId = bottomId,
+            target = HomeTarget.TOP,
+            mainScreen = MainScreen.BOTTOM,
+            frontendEnabled = false,
+        )
+
+        assertEquals(
+            "with the frontend off there is only MainActivity to restore on the top slot",
+            listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID)),
             plan
         )
     }
@@ -191,7 +212,7 @@ class HomeLaunchPlannerTest {
     // ─────────── Phase 5: ScreenAssignment-aware tests ───────────
 
     @Test
-    fun `FRONTEND_ON_BOTTOM swaps display ids on a TOP target`() {
+    fun `FRONTEND_ON_BOTTOM swaps TOP to MainActivity on the external display`() {
         val plan = planHomeLaunches(
             bottomDisplayId = bottomId,
             target = HomeTarget.TOP,
@@ -199,8 +220,8 @@ class HomeLaunchPlannerTest {
             frontendEnabled = true,
             assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
         )
-        // "TOP" now resolves to the external display because MAIN
-        // moved onto it when the frontend went to the primary.
+        // After swap: the user's top slot now hosts MainActivity, and that
+        // slot is physically the external display.
         assertEquals(
             listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomId)),
             plan,
@@ -208,7 +229,7 @@ class HomeLaunchPlannerTest {
     }
 
     @Test
-    fun `FRONTEND_ON_BOTTOM swaps display ids on a BOTTOM target`() {
+    fun `FRONTEND_ON_BOTTOM swaps BOTTOM to the frontend on the primary display`() {
         val plan = planHomeLaunches(
             bottomDisplayId = bottomId,
             target = HomeTarget.BOTTOM,
@@ -216,8 +237,10 @@ class HomeLaunchPlannerTest {
             frontendEnabled = true,
             assignment = ScreenAssignment.FRONTEND_ON_BOTTOM,
         )
+        // After swap: the user's bottom slot now hosts FrontEndActivity, and
+        // that slot is physically the primary display.
         assertEquals(
-            listOf(HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID)),
+            listOf(HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID)),
             plan,
         )
     }

@@ -111,10 +111,11 @@ private fun currentAssignment(context: Context): ScreenAssignment = try {
  * Callable from any [Context] — Activity, Service, or Application — because it
  * only uses [Intent.FLAG_ACTIVITY_NEW_TASK] and never touches Activity-only APIs.
  *
- *  - [HomeTarget.TOP] — MainActivity on the primary display; no frontend.
- *  - [HomeTarget.BOTTOM] — MainActivity on the external/bottom display; no
- *    frontend. Falls back to the primary display when no external display is
- *    connected.
+ *  - [HomeTarget.TOP] — restore whichever activity owns the top slot under
+ *    the current [ScreenAssignment]. On the default assignment that's the
+ *    frontend; after a screen swap it's MainActivity.
+ *  - [HomeTarget.BOTTOM] — mirror of TOP for the bottom slot. Falls back to
+ *    the primary display when no external display is connected.
  *  - [HomeTarget.BOTH] — MainActivity on the display named by [mainScreen] and
  *    FrontEndActivity on the other display. Coerced to [HomeTarget.BOTTOM]
  *    when [frontendEnabled] is false (BOTH's second activity is the frontend

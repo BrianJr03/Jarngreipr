@@ -205,6 +205,7 @@ class MainActivity : ComponentActivity() {
             activity = this,
             esdePrefs = esdePreferencesManager,
             appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+            recentlyPlayedManager = managers.feature.recentlyPlayedManager,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
@@ -229,9 +230,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
-                val physicalAssignment = jr.brian.home.ui.util.rememberPhysicalAssignment()
-                val onTop = physicalAssignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_BOTTOM
-                jr.brian.home.ui.components.SwapFade(swapCoordinator, onTopDisplay = onTop) {
+                jr.brian.home.ui.components.SwapFade(swapCoordinator) {
                 managers.ManagerCompositionLocalProvider {
                 CompositionLocalProvider(
                     LocalImportExportManager provides importExportManager

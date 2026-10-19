@@ -113,7 +113,7 @@ internal fun GameEntity.toGameInfo(
     systemName = systemId,
     artworkPath = override?.artworkPath ?: media?.coverPath,
     physicalMediaPath = media?.physicalMediaPath,
-    marqueeImagePath = media?.marqueePath,
+    marqueeImagePath = override?.marqueeImagePath ?: media?.marqueePath,
     screenshotPath = override?.screenshotPath ?: media?.screenshotPath,
     fanartPath = override?.fanartPath ?: media?.fanartPath,
     titlescreenPath = media?.titlescreenPath,

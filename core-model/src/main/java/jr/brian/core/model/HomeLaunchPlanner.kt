@@ -28,14 +28,23 @@ enum class HomeLaunchActivity { MAIN, FRONTEND }
  * Pure planner: given the display state and the user's preferences, returns
  * the ordered list of activity launches that `routeHome` will fire.
  *
- * Encapsulates the three coercion rules so they can be unit-tested without
+ * [HomeTarget.TOP] / [HomeTarget.BOTTOM] are *slot* targets, not activity
+ * targets — "restore whichever activity lives on the top (or bottom) screen
+ * under the current [ScreenAssignment]." That lets the Home-button gestures
+ * stay consistent across a user screen swap: single-press always brings back
+ * the bottom slot, double-press always brings back the top slot, regardless
+ * of whether the frontend or the launcher is physically there.
+ *
+ * Encapsulates the coercion rules so they can be unit-tested without
  * involving `Context` / `ActivityOptions`:
  *
  *  - No external display → single MainActivity launch with `displayId == null`
  *    (the manifest's default display resolution wins). All three targets
  *    collapse to this.
  *  - [HomeTarget.BOTH] with `frontendEnabled == false` → collapse to
- *    [HomeTarget.BOTTOM].
+ *    [HomeTarget.BOTTOM]; a disabled frontend also forces TOP/BOTTOM to
+ *    resolve to `MainActivity` for both slots (there is no other activity to
+ *    launch).
  *  - [HomeTarget.BOTH] → two launches, ordered so that the display named by
  *    [mainScreen] starts *last* and therefore takes input focus.
  */
@@ -52,9 +61,10 @@ fun planHomeLaunches(
     val effectiveTarget =
         if (target == HomeTarget.BOTH && !frontendEnabled) HomeTarget.BOTTOM else target
     val (topId, bottomId) = displayIdsFor(bottomDisplayId, assignment)
+    val (topActivity, bottomActivity) = activitiesFor(assignment, frontendEnabled)
     return when (effectiveTarget) {
-        HomeTarget.TOP -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, topId))
-        HomeTarget.BOTTOM -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomId))
+        HomeTarget.TOP -> listOf(HomeLaunch(topActivity, topId))
+        HomeTarget.BOTTOM -> listOf(HomeLaunch(bottomActivity, bottomId))
         HomeTarget.BOTH -> when (mainScreen) {
             MainScreen.TOP -> listOf(
                 HomeLaunch(HomeLaunchActivity.FRONTEND, bottomId),
@@ -65,6 +75,26 @@ fun planHomeLaunches(
                 HomeLaunch(HomeLaunchActivity.MAIN, bottomId),
             )
         }
+    }
+}
+
+/**
+ * Which activity owns each perceived slot under the given [assignment]. With
+ * the frontend disabled there is no second activity to place, so both slots
+ * collapse to [HomeLaunchActivity.MAIN] — a TOP or BOTTOM gesture still routes
+ * MainActivity to the requested display without trying to launch a disabled
+ * frontend.
+ */
+private fun activitiesFor(
+    assignment: ScreenAssignment,
+    frontendEnabled: Boolean,
+): Pair<HomeLaunchActivity, HomeLaunchActivity> {
+    if (!frontendEnabled) return HomeLaunchActivity.MAIN to HomeLaunchActivity.MAIN
+    return when (assignment) {
+        ScreenAssignment.FRONTEND_ON_TOP ->
+            HomeLaunchActivity.FRONTEND to HomeLaunchActivity.MAIN
+        ScreenAssignment.FRONTEND_ON_BOTTOM ->
+            HomeLaunchActivity.MAIN to HomeLaunchActivity.FRONTEND
     }
 }
 

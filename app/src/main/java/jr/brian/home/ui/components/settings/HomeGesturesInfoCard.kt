@@ -41,10 +41,9 @@ import jr.brian.home.util.ThorDetection
  * Extras-section info card that documents the three Home-press gestures
  * handled by [jr.brian.home.service.HomeInterceptorService]:
  *
- *  - press once  → focuses the launcher on its assigned display
- *  - double press → focuses the frontend on its assigned display (requires
- *    frontend to be enabled)
- *  - long press  → opens both apps on their assigned displays
+ *  - press once  → restores whichever app lives on the bottom display
+ *  - double press → restores whichever app lives on the top display
+ *  - long press  → restores both apps on their assigned displays
  *
  * "Assigned display" tracks the current screen-swap state, so these labels
  * stay accurate whether or not the user has swapped which screen hosts which

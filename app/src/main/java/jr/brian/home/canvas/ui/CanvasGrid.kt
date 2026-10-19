@@ -10,6 +10,7 @@ import jr.brian.home.canvas.grid.LayoutSnapshot
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasUiState
 import jr.brian.home.canvas.model.ResolvedCanvasItem
+import jr.brian.home.model.rom.PinnedRomInfo
 
 /**
  * Public entry point for the unified canvas page. Delegates to
@@ -36,7 +37,9 @@ fun CanvasGrid(
     appWidgetHost: AppWidgetHost? = null,
     scrollState: ScrollState = rememberScrollState(),
     onDoubleTap: (ResolvedCanvasItem) -> Unit = {},
-    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null
+    onAddTilePositioned: ((LayoutCoordinates) -> Unit)? = null,
+    onLaunchRom: (PinnedRomInfo) -> Unit = {},
+    onLastPlayedRowLongPress: (CanvasItem.LastPlayedItem, jr.brian.home.data.RecentlyPlayedEntry) -> Unit = { _, _ -> }
 ) {
     CanvasGridLayout(
         state = state,
@@ -52,6 +55,8 @@ fun CanvasGrid(
         modifier = modifier,
         appWidgetHost = appWidgetHost,
         scrollState = scrollState,
-        onAddTilePositioned = onAddTilePositioned
+        onAddTilePositioned = onAddTilePositioned,
+        onLaunchRom = onLaunchRom,
+        onLastPlayedRowLongPress = onLastPlayedRowLongPress
     )
 }

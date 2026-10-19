@@ -61,6 +61,7 @@ import java.io.File
 internal const val OVERRIDE_SLOT_COVER = "cover"
 internal const val OVERRIDE_SLOT_SCREENSHOT = "screenshot"
 internal const val OVERRIDE_SLOT_FANART = "fanart"
+internal const val OVERRIDE_SLOT_MARQUEE = "marquee"
 
 @Composable
 internal fun EditGameInfoDialog(
@@ -82,6 +83,7 @@ internal fun EditGameInfoDialog(
     var coverPath by remember { mutableStateOf<String?>(null) }
     var screenshotPath by remember { mutableStateOf<String?>(null) }
     var fanartPath by remember { mutableStateOf<String?>(null) }
+    var marqueePath by remember { mutableStateOf<String?>(null) }
     var ratingError by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -99,6 +101,7 @@ internal fun EditGameInfoDialog(
             coverPath = existing.artworkPath
             screenshotPath = existing.screenshotPath
             fanartPath = existing.fanartPath
+            marqueePath = existing.marqueeImagePath
         }
     }
 
@@ -214,6 +217,13 @@ internal fun EditGameInfoDialog(
                     onPicked = { uri -> pickFor(OVERRIDE_SLOT_FANART, uri) { fanartPath = it } },
                     onClear = { fanartPath = null }
                 )
+                OverrideImageSlot(
+                    label = stringResource(R.string.rom_edit_info_image_marquee),
+                    path = marqueePath,
+                    slotId = OVERRIDE_SLOT_MARQUEE,
+                    onPicked = { uri -> pickFor(OVERRIDE_SLOT_MARQUEE, uri) { marqueePath = it } },
+                    onClear = { marqueePath = null }
+                )
             }
 
             HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
@@ -258,6 +268,7 @@ internal fun EditGameInfoDialog(
                                 artworkPath = coverPath,
                                 screenshotPath = screenshotPath,
                                 fanartPath = fanartPath,
+                                marqueeImagePath = marqueePath,
                             )
                         )
                     },

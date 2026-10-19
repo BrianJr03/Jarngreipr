@@ -1,6 +1,7 @@
 package jr.brian.home.ui.components
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -9,15 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,44 +23,58 @@ import jr.brian.core.model.SwapCoordinator
 import jr.brian.core.model.SwapPhase
 import kotlinx.coroutines.delay
 
-const val SWAP_FADE_MS = 300
+const val SWAP_LEAVE_MS = 150
+const val SWAP_ARRIVE_MS = 300
+
+// Buffer between beginLeaving and the layout-flip call so the overlay
+// has actually rendered its final alpha=1 frame before the assignment
+// changes. animateFloatAsState adds one vsync of state propagation on
+// top of the tween, so delaying by this plus [SWAP_LEAVE_MS] keeps
+// the row ↔ grid flip hidden behind the opaque overlay.
+const val SWAP_LAYOUT_FLIP_BUFFER_MS = 48
 
 /**
- * Phase 5 handoff animation. Observes [SwapCoordinator.phase]: each
- * activity's content slides toward the other display during Leaving
- * and drops back in from the far side during Arriving. The top-screen
- * activity slides down and re-enters from above; the bottom-screen
- * activity slides up and re-enters from below. Together the two
- * screens visually swap places.
+ * Phase 5 handoff animation. Observes [SwapCoordinator.phase] and
+ * animates an opaque black overlay on TOP of [content] during a swap:
  *
- * [onTopDisplay] picks the direction. The caller computes it from
- * [jr.brian.home.ui.util.rememberPhysicalAssignment] plus its own
- * role (frontend vs launcher), so during Leaving the direction
- * follows the pre-reparent position and during Arriving it follows
- * the post-reparent position.
+ * - **Leaving** — overlay fades in to full black over [SWAP_LEAVE_MS].
+ *   Once opaque, the orchestrator flips the screen assignment and
+ *   reparents the activities. Any layout change on the content below
+ *   is invisible because the overlay fully covers it.
+ * - **Arriving** — overlay fades back out over [SWAP_ARRIVE_MS],
+ *   revealing the settled new content.
  *
- * A non-animated black backdrop sits behind the moving content so the
- * system wallpaper never flashes through the one-frame gap between
- * leaving and arriving.
- *
- * The composable keeps its `SwapFade` name for call-site compatibility;
- * the animation is a slide now.
+ * This is more robust than animating the content's own alpha: a
+ * dropped frame or a vsync-timing slip during the leave animation
+ * can't leak the layout flip, because the overlay sits above the
+ * content and reaches full opacity before anything underneath moves.
  */
 @Composable
 fun SwapFade(
     coordinator: SwapCoordinator,
-    onTopDisplay: Boolean,
     content: @Composable () -> Unit,
 ) {
     val phase by coordinator.phase.collectAsStateWithLifecycle()
-    val initialProgress = remember { if (coordinator.phase.value is SwapPhase.Arriving) 0f else 1f }
-    val target = remember { mutableFloatStateOf(initialProgress) }
+    val composedDuringLeaving = remember { coordinator.phase.value is SwapPhase.Leaving }
+
+    // If this SwapFade was composed while the swap was already in
+    // its Leaving window, we're the freshly-attached arriving
+    // activity. Signal first-frame readiness so the orchestrator
+    // can defer markArriving() until both displays actually have
+    // content to draw — otherwise Arriving fires during the dead
+    // reparent gap and the overlay reveal starts mid-tween.
+    LaunchedEffect(composedDuringLeaving) {
+        if (composedDuringLeaving) {
+            withFrameNanos { }
+            coordinator.notifyArrivingReady()
+        }
+    }
 
     // Nudge Compose's frame clock each time the lifecycle enters
     // STARTED (which fires on wake). Right after the screen comes back
     // on, the first vsync tick can arrive late because the display
     // driver and GPU are warming up — if a swap happens before that
-    // tick lands, the slide stalls on its first frame. Pulling two
+    // tick lands, the overlay stalls on its first frame. Pulling two
     // frames here gets Choreographer running before the user has a
     // chance to trigger the first post-wake swap.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -74,58 +85,27 @@ fun SwapFade(
         }
     }
     LaunchedEffect(phase) {
-        target.floatValue = when (phase) {
-            is SwapPhase.Leaving -> 0f
-            else -> 1f
-        }
         if (phase is SwapPhase.Arriving) {
-            delay(SWAP_FADE_MS.toLong())
+            delay(SWAP_ARRIVE_MS.toLong())
             coordinator.markArrived()
         }
     }
-    val progress by animateFloatAsState(
-        targetValue = target.floatValue,
-        animationSpec = tween(SWAP_FADE_MS, easing = FastOutSlowInEasing),
-        label = "swap-slide",
+    val targetOverlayAlpha = if (phase is SwapPhase.Leaving) 1f else 0f
+    val overlayAlpha by animateFloatAsState(
+        targetValue = targetOverlayAlpha,
+        animationSpec = tween(
+            durationMillis = if (phase is SwapPhase.Leaving) SWAP_LEAVE_MS else SWAP_ARRIVE_MS,
+            easing = if (phase is SwapPhase.Leaving) LinearEasing else FastOutSlowInEasing,
+        ),
+        label = "swap-overlay",
     )
-    // Resolve the slide distance from the current configuration so the
-    // animation doesn't rely on a BoxWithConstraints re-measure every
-    // frame. Right after a wake-up the GPU/display driver takes a
-    // beat to settle, and the per-frame re-measure was slowing the
-    // first swap. LocalConfiguration.screenHeightDp is available
-    // synchronously without a layout pass.
-    val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
-    val heightPx = remember(density, configuration.screenHeightDp) {
-        with(density) { configuration.screenHeightDp.dp.toPx() }
-    }
-    // Top display: content slides DOWN out of frame and the fresh
-    //   copy drops back IN from above.
-    // Bottom display: content slides UP out of frame and the fresh
-    //   copy rises back IN from below.
-    // Each activity passes its own [onTopDisplay] based on the pre-
-    // reparent position during Leaving and the post-reparent
-    // position during Arriving, which keeps the direction correct
-    // whichever side of the swap we're on.
-    val leavingDistance = if (onTopDisplay) heightPx else -heightPx
-    val arrivingDistance = if (onTopDisplay) -heightPx else heightPx
-    val translation = when (phase) {
-        is SwapPhase.Leaving -> (1f - progress) * leavingDistance
-        is SwapPhase.Arriving -> (1f - progress) * arrivingDistance
-        SwapPhase.Idle -> 0f
-    }
     Box(modifier = Modifier.fillMaxSize()) {
+        content()
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer { alpha = overlayAlpha }
                 .background(Color.Black)
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { translationY = translation }
-        ) {
-            content()
-        }
     }
 }

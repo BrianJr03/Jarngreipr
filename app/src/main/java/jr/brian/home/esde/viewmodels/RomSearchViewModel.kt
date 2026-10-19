@@ -132,6 +132,11 @@ class RomSearchViewModel @Inject constructor(
         applicationScope.launch {
             awaitIdle()
             maybeReimportGamelists()
+            // Same reason as decorateAfterScan: LibraryStoreSync drops
+            // emissions while LibraryState is Scanning, so without this
+            // forced pull the collector never republishes the post-scan
+            // Room state and the UI keeps rendering the stale list.
+            store.allGames.value = libraryAdapter.snapshot()
             val count = store.allGames.value.count { it.systemName == systemName }
             onComplete(count)
         }

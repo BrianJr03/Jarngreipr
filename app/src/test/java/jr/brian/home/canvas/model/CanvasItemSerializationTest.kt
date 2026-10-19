@@ -140,6 +140,37 @@ class CanvasItemSerializationTest {
     }
 
     @Test
+    fun `LastPlayedItem with all fields round trips through JSON`() {
+        val original: CanvasItem = CanvasItem.LastPlayedItem(
+            id = "last-played-1",
+            count = 7,
+            showRandomButton = false,
+            contentScale = EsdeContentScale.FIT,
+            backgroundColorArgb = 0xFF112233L,
+            backgroundCornerRadiusDp = 16
+        )
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<CanvasItem>(encoded)
+        assertEquals(original, decoded)
+        assertTrue(decoded is CanvasItem.LastPlayedItem)
+    }
+
+    @Test
+    fun `LastPlayedItem minimal blob decodes with resolved defaults`() {
+        val minimal = """{"type":"last_played","id":"lp-min"}"""
+        val decoded = json.decodeFromString<CanvasItem>(minimal)
+        assertTrue(decoded is CanvasItem.LastPlayedItem)
+        val lp = decoded as CanvasItem.LastPlayedItem
+        assertEquals(CanvasItem.LastPlayedItem.DEFAULT_DISPLAY_COUNT, lp.resolvedCount)
+        assertTrue(lp.resolvedShowRandomButton)
+        assertEquals(EsdeContentScale.CROP, lp.resolvedContentScale)
+        assertEquals(
+            CanvasItem.EsdeArtItem.DEFAULT_BACKGROUND_CORNER_RADIUS_DP,
+            lp.resolvedBackgroundCornerRadiusDp
+        )
+    }
+
+    @Test
     fun `CanvasLayout with heterogeneous items and arrangements round trips`() {
         val original = CanvasLayout(
             activeOrientation = CanvasScrollOrientation.HORIZONTAL,

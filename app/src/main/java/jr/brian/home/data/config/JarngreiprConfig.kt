@@ -1,6 +1,7 @@
 package jr.brian.home.data.config
 
 import jr.brian.home.canvas.model.CanvasLayout
+import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.model.rom.PinnedRomInfo
@@ -140,7 +141,11 @@ data class JarngreiprConfig(
         //      without data loss and so pre-v32 app versions still get
         //      a sensible value if they restore a current config.
         //      Default is Follow.
-        const val CONFIG_VERSION = 32
+        // v33: added CanvasItem.LastPlayedItem variant and
+        //      FeatureConfig.recentlyPlayed, the launch-history list the
+        //      Last Played widget binds to. Older blobs decode with the
+        //      empty default via ignoreUnknownKeys.
+        const val CONFIG_VERSION = 33
     }
 }
 
@@ -273,7 +278,8 @@ data class FeatureConfig(
     val jingles: JinglesConfig = JinglesConfig(),
     val bgMusic: BgMusicConfig = BgMusicConfig(),
     val romSearch: RomSearchConfig = RomSearchConfig(),
-    val homeButton: HomeButtonConfig = HomeButtonConfig()
+    val homeButton: HomeButtonConfig = HomeButtonConfig(),
+    val recentlyPlayed: List<RecentlyPlayedEntry> = emptyList()
 )
 
 @Serializable

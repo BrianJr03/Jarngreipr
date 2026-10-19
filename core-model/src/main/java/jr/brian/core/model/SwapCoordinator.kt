@@ -3,6 +3,8 @@ package jr.brian.core.model
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +41,9 @@ class SwapCoordinator @Inject constructor() {
     private val _phase = MutableStateFlow<SwapPhase>(SwapPhase.Idle)
     val phase: StateFlow<SwapPhase> = _phase.asStateFlow()
 
+    private val _arrivingReady = MutableStateFlow(0)
+    val arrivingReady: StateFlow<Int> = _arrivingReady.asStateFlow()
+
     /** Idempotent — a second call during Leaving / Arriving is a no-op. */
     fun beginLeaving(targetAssignment: ScreenAssignment) {
         if (_phase.value !is SwapPhase.Idle) return
@@ -69,6 +74,40 @@ class SwapCoordinator @Inject constructor() {
      */
     fun reset() {
         _phase.value = SwapPhase.Idle
+        _arrivingReady.value = 0
+    }
+
+    /**
+     * Called by the orchestrator right before launching the new
+     * activities on their flipped displays, so stale ready-signals
+     * from the previous swap don't carry over.
+     */
+    fun resetArrivingReady() {
+        _arrivingReady.value = 0
+    }
+
+    /**
+     * Called from each arriving activity's SwapFade on its first
+     * frame. The orchestrator waits for this to reach [expected]
+     * before transitioning to Arriving, so the slide-in animation
+     * starts only after both displays actually have content to draw.
+     */
+    fun notifyArrivingReady() {
+        _arrivingReady.value = _arrivingReady.value + 1
+    }
+
+    /**
+     * Suspends until [expected] arriving activities have signalled
+     * first-frame readiness, or [timeoutMs] elapses. Returns true if
+     * the signal arrived in time, false on timeout — callers should
+     * proceed with [markArriving] either way so a stuck activity
+     * can't permanently block the swap.
+     */
+    suspend fun awaitArrivingReady(expected: Int, timeoutMs: Long): Boolean {
+        val result = withTimeoutOrNull(timeoutMs) {
+            arrivingReady.first { it >= expected }
+        }
+        return result != null
     }
 }
 

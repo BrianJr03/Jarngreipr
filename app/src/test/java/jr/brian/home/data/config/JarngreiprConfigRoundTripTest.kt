@@ -1,7 +1,9 @@
 package jr.brian.home.data.config
 
+import jr.brian.home.data.RecentlyPlayedEntry
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.SystemFolderMapping
+import jr.brian.home.model.rom.PinnedRomInfo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -190,6 +192,44 @@ class JarngreiprConfigRoundTripTest {
         assertEquals(2, decoded.system.systemFolderMappings.size)
         val ps2 = decoded.system.systemFolderMappings.first { it.systemName == "ps2" }
         assertEquals("/storage/1A2B-3C4D/MyGames", ps2.displayPath)
+    }
+
+    @Test
+    fun `recentlyPlayed round-trips through the config`() {
+        val original = JarngreiprConfig(
+            feature = FeatureConfig(
+                recentlyPlayed = listOf(
+                    RecentlyPlayedEntry(
+                        rom = PinnedRomInfo(
+                            key = "snes/mario.smc",
+                            name = "Mario",
+                            systemName = "snes",
+                            path = "mario.smc"
+                        ),
+                        launchedAt = 10_000L,
+                        launchCount = 3
+                    )
+                )
+            )
+        )
+        val decoded = json.decodeFromString<JarngreiprConfig>(json.encodeToString(original))
+        assertEquals(1, decoded.feature.recentlyPlayed.size)
+        val entry = decoded.feature.recentlyPlayed[0]
+        assertEquals("Mario", entry.rom.name)
+        assertEquals(10_000L, entry.launchedAt)
+        assertEquals(3, entry.launchCount)
+    }
+
+    @Test
+    fun `pre-v33 config decodes with empty recentlyPlayed`() {
+        val preV33 = """
+            {
+              "version": 32,
+              "feature": {}
+            }
+        """.trimIndent()
+        val decoded = json.decodeFromString<JarngreiprConfig>(preV33)
+        assertTrue(decoded.feature.recentlyPlayed.isEmpty())
     }
 
     @Test

@@ -13,7 +13,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.home.data.HomeButtonManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.core.model.HomeTarget
-import jr.brian.home.ui.util.launchFrontendForCurrentAssignment
 import jr.brian.home.ui.util.routeHome
 import javax.inject.Inject
 
@@ -132,8 +131,7 @@ class HomeInterceptorService : AccessibilityService() {
     private fun route(gesture: HomeGestureStateMachine.Gesture) {
         when (gesture) {
             HomeGestureStateMachine.Gesture.SINGLE_PRESS -> routeViaHomeTarget(HomeTarget.BOTTOM)
-            HomeGestureStateMachine.Gesture.DOUBLE_PRESS ->
-                launchFrontendForCurrentAssignment(applicationContext)
+            HomeGestureStateMachine.Gesture.DOUBLE_PRESS -> routeViaHomeTarget(HomeTarget.TOP)
             HomeGestureStateMachine.Gesture.LONG_PRESS -> routeViaHomeTarget(HomeTarget.BOTH)
         }
     }

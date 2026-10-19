@@ -8,7 +8,8 @@ import jr.brian.core.model.bus.FrontendBus
 import jr.brian.core.model.bus.FrontendCommand
 import jr.brian.core.model.SwapCoordinator
 import jr.brian.core.model.SwapPhase
-import jr.brian.home.ui.components.SWAP_FADE_MS
+import jr.brian.home.ui.components.SWAP_LAYOUT_FLIP_BUFFER_MS
+import jr.brian.home.ui.components.SWAP_LEAVE_MS
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -61,14 +62,29 @@ class ScreenSwapListener @Inject constructor(
         // happen while both activities are at alpha 0, so the user
         // never sees the layout transition in-frame.
         swap.beginLeaving(next)
-        delay(SWAP_FADE_MS.toLong())
+        delay((SWAP_LEAVE_MS + SWAP_LAYOUT_FLIP_BUFFER_MS).toLong())
+        swap.resetArrivingReady()
         store.setAssignment(next)
         ScreenFocusLockWriter.syncToAssignment(context, next)
         routeHomeFromLauncher(context, frontendEnabled = true)
+        // Wait for both freshly-attached activities to report first-frame
+        // readiness before flipping to Arriving. Without this gate,
+        // markArriving() races the window reparent — the enter tween
+        // consumes against a blank display and the slide-in snaps in
+        // partway through. Fall through on timeout so a stuck activity
+        // can't permanently block the swap.
+        val ready = swap.awaitArrivingReady(expected = 2, timeoutMs = ARRIVING_READY_TIMEOUT_MS)
+        if (!ready) Log.w(TAG, "arriving-ready timed out, proceeding")
+        // Short vsync-aligned settle so both displays start their
+        // slide-in on the same frame instead of staggering by whatever
+        // the handoff happened to cost.
+        delay(SWAP_SETTLE_MS)
         swap.markArriving()
     }
 
     private companion object {
         const val TAG = "ScreenSwapListener"
+        const val ARRIVING_READY_TIMEOUT_MS = 400L
+        const val SWAP_SETTLE_MS = 32L
     }
 }

@@ -17,7 +17,8 @@ import jr.brian.home.R
 import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.data.ScreenFocusLockWriter
 import jr.brian.home.esde.ui.components.ToggleSetting
-import jr.brian.home.ui.components.SWAP_FADE_MS
+import jr.brian.home.ui.components.SWAP_LAYOUT_FLIP_BUFFER_MS
+import jr.brian.home.ui.components.SWAP_LEAVE_MS
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import jr.brian.home.util.ThorDetection
 import kotlinx.coroutines.delay
@@ -70,7 +71,7 @@ fun ScreenSwapSettingItem() {
             val next = store.assignment.flipped()
             coordinator.beginLeaving(next)
             scope.launch {
-                delay(SWAP_FADE_MS.toLong())
+                delay((SWAP_LEAVE_MS + SWAP_LAYOUT_FLIP_BUFFER_MS).toLong())
                 store.setAssignment(next)
                 ScreenFocusLockWriter.syncToAssignment(context, next)
                 routeHomeFromLauncher(context, frontendEnabled = true)

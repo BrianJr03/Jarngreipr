@@ -170,6 +170,7 @@ class RomSearchResultsActivity : ComponentActivity() {
             activity = this,
             esdePrefs = esdePrefs,
             appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+            recentlyPlayedManager = managers.feature.recentlyPlayedManager,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )

@@ -29,10 +29,12 @@ data class UserMetadataOverride(
     val artworkPath: String? = null,
     val screenshotPath: String? = null,
     val fanartPath: String? = null,
+    val marqueeImagePath: String? = null,
 ) {
     fun isEmpty(): Boolean =
         displayName == null && description == null && developer == null &&
             publisher == null && genre == null && players == null &&
             releaseDate == null && rating == null && artworkPath == null &&
-            screenshotPath == null && fanartPath == null
+            screenshotPath == null && fanartPath == null &&
+            marqueeImagePath == null
 }

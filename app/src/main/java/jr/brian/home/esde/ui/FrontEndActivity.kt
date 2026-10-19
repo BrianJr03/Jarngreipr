@@ -241,6 +241,7 @@ class FrontEndActivity : ComponentActivity() {
             activity = this,
             esdePrefs = esdePrefs,
             appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+            recentlyPlayedManager = managers.feature.recentlyPlayedManager,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
@@ -265,9 +266,7 @@ class FrontEndActivity : ComponentActivity() {
                         LocalEsdeWallpaperState provides wallpaperState
                     ) {
                         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                        val physicalAssignment = jr.brian.home.ui.util.rememberPhysicalAssignment()
-                        val onTop = physicalAssignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP
-                        SwapFade(swapCoordinator, onTopDisplay = onTop) {
+                        SwapFade(swapCoordinator) {
                             FrontendScreen(
                                 esdePrefs = esdePrefs,
                                 viewModel = viewModel,

@@ -27,8 +27,10 @@ import jr.brian.home.ui.util.routeHome
  *
  * [handle] runs *after* the accessibility path — if the service already
  * consumed the event it never reaches `dispatchKeyEvent`. When we do see
- * it here, we treat it as a plain single-press (route MainActivity to
- * the user-perceived bottom via [routeHome]). That keeps the user
+ * it here, we treat it as a plain single-press and route the user's
+ * bottom slot back on screen via [HomeTarget.BOTTOM] — the planner
+ * resolves "bottom" to whichever activity currently lives there under
+ * the active [jr.brian.core.model.ScreenAssignment]. That keeps the user
  * inside Jarngreipr on the swapped layout; the richer gestures still
  * require the accessibility path.
  *

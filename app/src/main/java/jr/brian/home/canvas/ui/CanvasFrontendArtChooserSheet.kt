@@ -172,7 +172,7 @@ fun CanvasFrontendArtChooserSheet(
 }
 
 @Composable
-private fun ChooserSheetHeader(
+internal fun ChooserSheetHeader(
     title: String,
     onDismiss: () -> Unit
 ) {
@@ -217,7 +217,7 @@ private fun HeaderCloseButton(onDismiss: () -> Unit) {
  * dialog reads as one coherent row of options.
  */
 @Composable
-private fun EsdeContentScaleSelector(
+internal fun EsdeContentScaleSelector(
     selected: EsdeContentScale,
     onSelected: (EsdeContentScale) -> Unit
 ) {
@@ -287,7 +287,7 @@ private fun EsdeContentScaleChip(
 }
 
 @Composable
-private fun BackgroundColorSelector(
+internal fun BackgroundColorSelector(
     selectedArgb: Long?,
     onColorSelected: (Long?) -> Unit
 ) {
@@ -390,7 +390,7 @@ private fun NoBackgroundSwatch(
 }
 
 @Composable
-private fun CornerRadiusSelector(
+internal fun CornerRadiusSelector(
     enabled: Boolean,
     valueDp: Int,
     onValueChange: (Int) -> Unit
@@ -432,7 +432,7 @@ private fun CornerRadiusSelector(
 }
 
 @Composable
-private fun HeaderActionButton(
+internal fun HeaderActionButton(
     label: String,
     isPrimary: Boolean,
     enabled: Boolean,

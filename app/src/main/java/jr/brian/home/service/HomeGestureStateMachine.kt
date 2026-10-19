@@ -13,10 +13,10 @@ package jr.brian.home.service
  * The three gestures are translated by the service's routing layer into:
  *
  *  - [Gesture.SINGLE_PRESS] → [jr.brian.home.model.HomeTarget.BOTTOM]
- *    (launcher on the bottom display)
- *  - [Gesture.DOUBLE_PRESS] → FrontEndActivity launched on the primary (top)
- *    display, bypassing [jr.brian.home.model.HomeTarget] so MainActivity
- *    (which is `singleTask`) is not yanked off the bottom display
+ *    (restore whichever activity owns the bottom slot under the current
+ *    screen assignment)
+ *  - [Gesture.DOUBLE_PRESS] → [jr.brian.home.model.HomeTarget.TOP]
+ *    (restore whichever activity owns the top slot)
  *  - [Gesture.LONG_PRESS]   → [jr.brian.home.model.HomeTarget.BOTH]
  *    (launcher + frontend on both displays, with focus governed by the
  *    user's main-screen setting)

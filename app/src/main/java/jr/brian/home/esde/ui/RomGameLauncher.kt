@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager
+import jr.brian.home.data.RecentlyPlayedManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.EmulatorRegistry
@@ -50,6 +51,7 @@ class RomGameLauncher(
     private val activity: ComponentActivity,
     private val esdePrefs: ESDEPreferencesManager,
     private val appDisplayPreferenceManager: AppDisplayPreferenceManager,
+    private val recentlyPlayedManager: RecentlyPlayedManager,
     private val onSignalGameLaunch: () -> Unit,
     private val onLaunchSafPicker: (Uri?) -> Unit
 ) {
@@ -121,6 +123,7 @@ class RomGameLauncher(
                 ?: resolveAndroidAppByLabel(key)
             if (intent != null) {
                 maybeLaunchCompanion(game, context)
+                recentlyPlayedManager.record(game)
                 onSignalGameLaunch()
                 launchApp(
                     context = context,
@@ -256,7 +259,7 @@ class RomGameLauncher(
             val savedCommand = esdePrefs.getGameLaunchCommand(gameKey(game))
             if (savedCommand != null) {
                 maybeLaunchCompanion(game, context)
-                launchWithSavedCommand(context, savedCommand, romPath, effectiveContentUri)
+                launchWithSavedCommand(game, context, savedCommand, romPath, effectiveContentUri)
                 return
             }
         }
@@ -275,7 +278,7 @@ class RomGameLauncher(
             if (autoCommand != null) {
                 Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
                 maybeLaunchCompanion(game, context)
-                launchWithSavedCommand(context, autoCommand, romPath, effectiveContentUri)
+                launchWithSavedCommand(game, context, autoCommand, romPath, effectiveContentUri)
                 return
             }
         }
@@ -291,6 +294,7 @@ class RomGameLauncher(
             ),
         )
         maybeLaunchCompanion(game, context)
+        recentlyPlayedManager.record(game)
         onSignalGameLaunch()
         val failure = startFirstThatOpens(candidates, pkg)
         if (failure != null) {
@@ -301,6 +305,7 @@ class RomGameLauncher(
     }
 
     private fun launchWithSavedCommand(
+        game: GameInfo,
         context: Context,
         savedCommand: String,
         romPath: String,
@@ -322,6 +327,7 @@ class RomGameLauncher(
         }
         val options = ActivityOptions.makeBasic().apply { launchDisplayId = PRIMARY_DISPLAY_ID }
         Log.d(TAG, "launchGame (command) | cmd=$savedCommand rom=$romPath")
+        recentlyPlayedManager.record(game)
         onSignalGameLaunch()
         jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(activity, PRIMARY_DISPLAY_ID)
         try {

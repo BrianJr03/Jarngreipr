@@ -64,4 +64,13 @@ sealed class ResolvedCanvasItem {
     data class PhotoContainer(
         override val raw: CanvasItem.PhotoContainer
     ) : ResolvedCanvasItem()
+
+    /**
+     * Last Played ROM list tile. Content is read live from
+     * [jr.brian.home.data.RecentlyPlayedManager] at render time, so no extra
+     * resolved payload is attached.
+     */
+    data class LastPlayed(
+        override val raw: CanvasItem.LastPlayedItem
+    ) : ResolvedCanvasItem()
 }

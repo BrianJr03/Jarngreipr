@@ -165,6 +165,47 @@ sealed class CanvasItem {
         val resolvedContentScale: EsdeContentScale
             get() = contentScale ?: EsdeContentScale.CROP
     }
+
+    /**
+     * Shows the last N ROMs the user launched through Jarngreipr, newest
+     * first, with a Random button that picks one of those N and launches it.
+     * Content is read live from
+     * [jr.brian.home.data.RecentlyPlayedManager.entries], so the tile has no
+     * resolved payload of its own — only configuration.
+     *
+     * All fields are nullable so a future field never breaks pre-existing
+     * saves; each has a `resolved*` getter folding the default in. Background
+     * colour/radius mirror the [EsdeArtItem] option for visual parity when
+     * both tiles live on the same canvas.
+     */
+    @Serializable
+    @SerialName("last_played")
+    data class LastPlayedItem(
+        override val id: String,
+        val count: Int? = null,
+        val showRandomButton: Boolean? = null,
+        val contentScale: EsdeContentScale? = null,
+        val backgroundColorArgb: Long? = null,
+        val backgroundCornerRadiusDp: Int? = null
+    ) : CanvasItem() {
+        val resolvedCount: Int
+            get() = count ?: DEFAULT_DISPLAY_COUNT
+
+        val resolvedShowRandomButton: Boolean
+            get() = showRandomButton ?: true
+
+        val resolvedContentScale: EsdeContentScale
+            get() = contentScale ?: EsdeContentScale.CROP
+
+        val resolvedBackgroundCornerRadiusDp: Int
+            get() = backgroundCornerRadiusDp ?: EsdeArtItem.DEFAULT_BACKGROUND_CORNER_RADIUS_DP
+
+        companion object {
+            const val DEFAULT_DISPLAY_COUNT = 5
+            const val MIN_DISPLAY_COUNT = 3
+            const val MAX_DISPLAY_COUNT = 10
+        }
+    }
 }
 
 @Serializable
@@ -189,6 +230,7 @@ fun defaultSpanFor(item: CanvasItem): Pair<Int, Int> = when (item) {
     is CanvasItem.EsdeArtItem -> 2 to 2
     is CanvasItem.RssMusicItem -> 2 to 2
     is CanvasItem.PhotoContainer -> 2 to 2
+    is CanvasItem.LastPlayedItem -> 2 to 3
     is CanvasItem.AppItem,
     is CanvasItem.FolderItem,
     is CanvasItem.RomItem,

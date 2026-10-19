@@ -290,6 +290,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                     jr.brian.home.data.FocusLockMode.Off,
                 focusLockMode = f.focusLockPrefsManager.mode.value.name,
             ),
+            recentlyPlayed = f.recentlyPlayedManager.entries.value,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
@@ -638,6 +639,8 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         f.esdePreferencesManager.setGamelistDecorationEnabled(config.romSearch.gamelistDecorationEnabled)
 
         applyScraperConfigImport(config.romSearch.scraper, f.esdePreferencesManager)
+
+        f.recentlyPlayedManager.restore(config.recentlyPlayed)
 
         f.homeButtonManager.setInterceptionEnabled(config.homeButton.interceptionEnabled)
         f.homeButtonManager.setMainScreen(MainScreen.fromNameOrDefault(config.homeButton.mainScreen))

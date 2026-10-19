@@ -43,6 +43,7 @@
     <string name="rom_edit_info_image_cover">Cover</string>
     <string name="rom_edit_info_image_screenshot">Screenshot</string>
     <string name="rom_edit_info_image_fanart">Fanart</string>
+    <string name="rom_edit_info_image_marquee">Marquee</string>
     <string name="rom_edit_info_pick_image">Pick image</string>
     <string name="rom_edit_info_replace_image">Replace image</string>
     <string name="rom_edit_info_clear_image">Clear image</string>
@@ -265,7 +266,7 @@
     <string name="esde_settings_gamelist_decoration_description">Decorate the scanned ROM list with titles, descriptions, and box art from ES-DE\'s gamelist.xml. When off the library is built from filenames alone — same games, no XML reads. Flip and refresh the library to apply.</string>
     <string name="frontend_reorder_hint">Reorder mode — D-pad to move • A to confirm • B to cancel</string>
     <string name="frontend_open_customize_hint">SELECT • Customize</string>
-    <string name="frontend_enable_title">Enable frontend</string>
+    <string name="frontend_enable_title">Enable Frontend</string>
     <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
     <string name="frontend_launch_cd">Launch frontend</string>
     <string name="canvas_launch_frontend_option">Launch Frontend</string>
@@ -841,9 +842,21 @@
     <string name="canvas_add_rss_music_option">RSS widget</string>
     <string name="canvas_rss_music_artwork_cd">RSS music artwork</string>
     <string name="canvas_rss_music_empty">No audio items</string>
-    <string name="canvas_add_esde_display_option">Frontend widget</string>
+    <string name="canvas_add_esde_display_option">Frontend Widget</string>
     <string name="canvas_esde_art_tile_description">Frontend game art</string>
     <string name="canvas_add_photo_container_option">Photo container</string>
+    <string name="canvas_add_last_played_option">Last Played Widget</string>
+    <string name="canvas_last_played_title">Last Played</string>
+    <string name="canvas_last_played_random">Random</string>
+    <string name="canvas_last_played_empty">Nothing played yet</string>
+    <string name="canvas_last_played_count_label">Rows shown</string>
+    <string name="canvas_last_played_random_label">Show Random button</string>
+    <string name="canvas_last_played_remove_from_list">Remove from list</string>
+    <string name="canvas_last_played_edit_title">Edit Last played</string>
+    <string name="canvas_last_played_row_launch">Launch</string>
+    <string name="canvas_last_played_apply">Apply</string>
+    <string name="canvas_last_played_count_decrement">Fewer rows</string>
+    <string name="canvas_last_played_count_increment">More rows</string>
     <string name="canvas_photo_container_tap_to_configure">Tap to configure</string>
     <string name="canvas_photo_container_pending">Loading…</string>
     <string name="canvas_photo_container_description">User photo tile</string>
@@ -1921,13 +1934,13 @@
     <string name="home_gestures_card_description">Press the hardware Home button in different ways to pick which app takes focus.</string>
     <string name="home_gestures_card_disabled_interception_off">Enable Home Button Interception above to use these gestures.</string>
     <string name="home_gestures_card_disabled_no_external">No external display connected, all gestures route to the active display.</string>
-    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use the double-press and long-press gestures. Otherwise double press does nothing and long press just focuses the launcher.</string>
+    <string name="home_gestures_card_frontend_disabled_note">Enable the frontend to use both displays. With the frontend off, every gesture just brings the launcher back.</string>
     <string name="home_gestures_single_press_label">Press once</string>
-    <string name="home_gestures_single_press_detail">Focus the launcher</string>
+    <string name="home_gestures_single_press_detail">Restore the bottom display</string>
     <string name="home_gestures_double_press_label">Double press</string>
-    <string name="home_gestures_double_press_detail">Focus the frontend</string>
+    <string name="home_gestures_double_press_detail">Restore the top display</string>
     <string name="home_gestures_long_press_label">Long press</string>
-    <string name="home_gestures_long_press_detail">Open both apps on their assigned displays</string>
+    <string name="home_gestures_long_press_detail">Restore both displays</string>
 
     <!-- Focus Lock (Thor dual-screen gamepad routing via Shizuku) -->
     <string name="focus_lock_mode_title">Focus Lock Mode</string>

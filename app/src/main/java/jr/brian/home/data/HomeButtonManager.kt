@@ -13,16 +13,18 @@ import kotlinx.coroutines.flow.asStateFlow
  *
  * The interception path is opt-in and defaults to `false`. When enabled, the
  * accessibility service intercepts hardware `KEYCODE_HOME` presses and routes
- * them according to a gesture:
+ * them according to a gesture. Each gesture targets a *slot* (bottom / top /
+ * both) rather than a specific activity, so the behaviour stays consistent
+ * after the user swaps which screen hosts which app:
  *
- *  - single press  → `MainActivity` on the external (bottom) display
- *  - double press  → `MainActivity` on the primary (top) display
- *  - long press    → `MainActivity` + `FrontEndActivity` on both displays
- *                    (coerced to bottom-only when the frontend feature is off)
+ *  - single press  → restore whichever activity owns the bottom slot
+ *  - double press  → restore whichever activity owns the top slot
+ *  - long press    → restore both slots (coerced to bottom-only when the
+ *                    frontend feature is off)
  *
  * [mainScreen] applies only to the long-press ("Both") routing and decides
- * which display `MainActivity` occupies — and therefore which display receives
- * input focus once both activities are up.
+ * which display `MainActivity` occupies — and therefore which display
+ * receives input focus once both activities are up.
  */
 class HomeButtonManager(context: Context) {
     private val prefs: SharedPreferences =

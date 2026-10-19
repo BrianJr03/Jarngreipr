@@ -111,6 +111,59 @@ class CanvasViewModel @Inject constructor(
     }
 
     /**
+     * Add a Last Played ROM list tile to the current page. Content binds live
+     * to [jr.brian.home.data.RecentlyPlayedManager]; this writes only the
+     * tile's configuration (count, random on/off, scale, background).
+     */
+    fun addLastPlayedItem(
+        count: Int,
+        showRandomButton: Boolean,
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
+    ) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.LastPlayedItem(
+                id = "last-played-${UUID.randomUUID()}",
+                count = count,
+                showRandomButton = showRandomButton,
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
+            )
+        )
+    }
+
+    /**
+     * Replace an existing Last Played tile's configuration in place, routed
+     * through [canvasLayoutManager.addItem] with the same id so per-orientation
+     * placements survive.
+     */
+    fun updateLastPlayedItem(
+        id: String,
+        count: Int,
+        showRandomButton: Boolean,
+        contentScale: EsdeContentScale,
+        backgroundColorArgb: Long?,
+        backgroundCornerRadiusDp: Int?
+    ) {
+        val pageIndex = boundPage() ?: return
+        canvasLayoutManager.addItem(
+            pageIndex = pageIndex,
+            item = CanvasItem.LastPlayedItem(
+                id = id,
+                count = count,
+                showRandomButton = showRandomButton,
+                contentScale = contentScale,
+                backgroundColorArgb = backgroundColorArgb,
+                backgroundCornerRadiusDp = backgroundCornerRadiusDp
+            )
+        )
+    }
+
+    /**
      * Replace an existing photo tile's [imageUri] in place. Routed through
      * [canvasLayoutManager.addItem] with the same id, preserving the tile's
      * per-orientation placements. Passing null clears the image and drops the
@@ -386,7 +439,8 @@ class CanvasViewModel @Inject constructor(
             is CanvasItem.WidgetItem,
             is CanvasItem.EsdeArtItem,
             is CanvasItem.RssLauncherItem,
-            is CanvasItem.RssMusicItem -> Unit
+            is CanvasItem.RssMusicItem,
+            is CanvasItem.LastPlayedItem -> Unit
         }
         canvasLayoutManager.removeItem(pageIndex, item.id)
     }
@@ -434,6 +488,8 @@ class CanvasViewModel @Inject constructor(
                     ResolvedCanvasItem.EsdeArt(item)
                 is CanvasItem.PhotoContainer ->
                     ResolvedCanvasItem.PhotoContainer(item)
+                is CanvasItem.LastPlayedItem ->
+                    ResolvedCanvasItem.LastPlayed(item)
             }
         }
     }
