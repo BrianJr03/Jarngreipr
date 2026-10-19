@@ -9,6 +9,8 @@
 **Launcher Fixes**
 - Opening the launcher no longer pauses audio from other apps when Jarngreipr's background music is muted or set to 0% volume
 - Mute toggle for background music now persists across app restarts
+- Swapping screens with L3/R3 or from Settings now animates in sync with the Frontend swap, no more half-way slide-ins
+- Backup and Restore now remembers which screen your Frontend is pinned to
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
