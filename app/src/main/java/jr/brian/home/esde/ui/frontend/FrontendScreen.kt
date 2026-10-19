@@ -252,15 +252,12 @@ private fun FrontendRouteHost(
                     hiddenGames = esdeState.hiddenGames,
                     hiddenSystems = esdeState.hiddenSystems,
                     layout = run {
-                        // Per-display systems layout, driven by the swap
-                        // coordinator's phase so the Row ↔ Grid change
-                        // happens the moment beginLeaving fires (under
-                        // the alpha=0 fade-out) rather than when Android
-                        // finally reparents the window (mid fade-in,
-                        // which stalled both screens).
-                        val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                        if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
-                            esdeState.primarySystemLayout
+                        // Per-slot systems layout. Pinned-slot design
+                        // means the host is always on the same display,
+                        // so this is a static read of LocalScreenSlot.
+                        val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                            jr.brian.core.model.ScreenSlot.TOP
+                        if (onTop) esdeState.primarySystemLayout
                         else esdeState.secondarySystemLayout
                     },
                     useWallpaper = esdeState.romSearchUseWallpaper,
@@ -419,9 +416,9 @@ private fun GamesRoute(
                 systemMediaMap = esdeState.systemMediaMap,
                 focusResetKey = focusResetKey,
                 layout = run {
-                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
-                        esdeState.primaryGameLayout
+                    val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                        jr.brian.core.model.ScreenSlot.TOP
+                    if (onTop) esdeState.primaryGameLayout
                     else esdeState.secondaryGameLayout
                 },
                 esdePrefs = esdePrefs,

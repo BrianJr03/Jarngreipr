@@ -15,8 +15,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.core.model.ScreenAssignment
 import jr.brian.core.model.ScreenSlot
 import jr.brian.core.model.SlotContent
-import jr.brian.core.model.SwapTransitionCoordinator
-import jr.brian.core.model.SwapTransitionPhase
+import jr.brian.core.model.SwapCoordinator
+import jr.brian.core.model.SwapPhase
 import jr.brian.core.model.contentFor
 import kotlin.math.PI
 import kotlin.math.sin
@@ -24,7 +24,7 @@ import kotlin.math.sin
 /**
  * The cross-fade shown during a seamless screen swap. Both the
  * outgoing and incoming [SlotContent] are composed simultaneously
- * while the coordinator sits in [SwapTransitionPhase.Swapping];
+ * while the coordinator sits in [SwapPhase.Swapping];
  * input is blocked at [ScreenSlotHost] above so the user can't tap
  * into a composable that is partway through fading out.
  *
@@ -38,7 +38,7 @@ import kotlin.math.sin
  */
 @Composable
 fun SwapTransition(
-    coordinator: SwapTransitionCoordinator,
+    coordinator: SwapCoordinator,
     slot: ScreenSlot,
     assignment: ScreenAssignment,
     content: @Composable (SlotContent) -> Unit,
@@ -46,21 +46,21 @@ fun SwapTransition(
     val phase by coordinator.phase.collectAsStateWithLifecycle()
 
     val progress by animateFloatAsState(
-        targetValue = if (phase is SwapTransitionPhase.Swapping) 1f else 0f,
+        targetValue = if (phase is SwapPhase.Swapping) 1f else 0f,
         animationSpec = tween(
-            durationMillis = SwapTransitionCoordinator.SWAP_MS,
+            durationMillis = SwapCoordinator.SWAP_MS,
             easing = FastOutSlowInEasing,
         ),
         label = "swap-progress",
     )
 
     when (val p = phase) {
-        SwapTransitionPhase.Idle -> {
+        SwapPhase.Idle -> {
             Box(modifier = Modifier.fillMaxSize()) {
                 content(contentFor(slot, assignment))
             }
         }
-        is SwapTransitionPhase.Swapping -> {
+        is SwapPhase.Swapping -> {
             val outgoing = contentFor(slot, p.from)
             val incoming = contentFor(slot, p.to)
             val hingeSign = if (slot == ScreenSlot.TOP) 1f else -1f

@@ -12,28 +12,26 @@ import org.junit.Test
 
 /**
  * Guards the single-flight, idempotent transition contract of
- * [SwapTransitionCoordinator]. The content-swap composition is
- * driven entirely by `phase` — any regression (double-trigger not
- * dropped, Idle not reached, from/to swapped) would corrupt the
- * running animation.
+ * [SwapCoordinator]. The content-swap composition is driven entirely
+ * by `phase` — any regression (double-trigger not dropped, Idle not
+ * reached, from/to swapped) would corrupt the running animation.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SwapTransitionCoordinatorTest {
+class SwapCoordinatorTest {
 
     private val totalMs: Long =
-        SwapTransitionCoordinator.SWAP_MS.toLong() +
-            SwapTransitionCoordinator.SWAP_SETTLE_MS.toLong()
+        SwapCoordinator.SWAP_MS.toLong() + SwapCoordinator.SWAP_SETTLE_MS.toLong()
 
     @Test
     fun `starts Idle`() = runTest {
-        val coordinator = SwapTransitionCoordinator()
+        val coordinator = SwapCoordinator()
 
-        assertEquals(SwapTransitionPhase.Idle, coordinator.phase.first())
+        assertEquals(SwapPhase.Idle, coordinator.phase.first())
     }
 
     @Test
     fun `run enters Swapping with the from and to and returns to Idle`() = runTest {
-        val coordinator = SwapTransitionCoordinator()
+        val coordinator = SwapCoordinator()
 
         val job = launch {
             coordinator.run(
@@ -44,21 +42,21 @@ class SwapTransitionCoordinatorTest {
 
         advanceTimeBy(1)
         val mid = coordinator.phase.value
-        assertTrue("expected Swapping, got $mid", mid is SwapTransitionPhase.Swapping)
+        assertTrue("expected Swapping, got $mid", mid is SwapPhase.Swapping)
         assertEquals(
             ScreenAssignment.FRONTEND_ON_TOP,
-            (mid as SwapTransitionPhase.Swapping).from,
+            (mid as SwapPhase.Swapping).from,
         )
         assertEquals(ScreenAssignment.FRONTEND_ON_BOTTOM, mid.to)
 
         advanceTimeBy(totalMs)
         job.join()
-        assertEquals(SwapTransitionPhase.Idle, coordinator.phase.value)
+        assertEquals(SwapPhase.Idle, coordinator.phase.value)
     }
 
     @Test
     fun `second run while Swapping is dropped`() = runTest {
-        val coordinator = SwapTransitionCoordinator()
+        val coordinator = SwapCoordinator()
 
         val first = launch {
             coordinator.run(
@@ -67,14 +65,14 @@ class SwapTransitionCoordinatorTest {
             )
         }
         advanceTimeBy(1)
-        val duringFirst = coordinator.phase.value as SwapTransitionPhase.Swapping
+        val duringFirst = coordinator.phase.value as SwapPhase.Swapping
 
         coordinator.run(
             from = ScreenAssignment.FRONTEND_ON_BOTTOM,
             to = ScreenAssignment.FRONTEND_ON_TOP,
         )
 
-        val afterSecond = coordinator.phase.value as SwapTransitionPhase.Swapping
+        val afterSecond = coordinator.phase.value as SwapPhase.Swapping
         assertEquals(duringFirst.from, afterSecond.from)
         assertEquals(duringFirst.to, afterSecond.to)
 
@@ -84,19 +82,19 @@ class SwapTransitionCoordinatorTest {
 
     @Test
     fun `run with same from and to is a no-op`() = runTest {
-        val coordinator = SwapTransitionCoordinator()
+        val coordinator = SwapCoordinator()
 
         coordinator.run(
             from = ScreenAssignment.FRONTEND_ON_TOP,
             to = ScreenAssignment.FRONTEND_ON_TOP,
         )
 
-        assertEquals(SwapTransitionPhase.Idle, coordinator.phase.value)
+        assertEquals(SwapPhase.Idle, coordinator.phase.value)
     }
 
     @Test
     fun `reset forces the phase back to Idle`() = runTest {
-        val coordinator = SwapTransitionCoordinator()
+        val coordinator = SwapCoordinator()
 
         val job = launch {
             coordinator.run(
@@ -105,11 +103,11 @@ class SwapTransitionCoordinatorTest {
             )
         }
         advanceTimeBy(1)
-        assertTrue(coordinator.phase.value is SwapTransitionPhase.Swapping)
+        assertTrue(coordinator.phase.value is SwapPhase.Swapping)
 
         coordinator.reset()
 
-        assertEquals(SwapTransitionPhase.Idle, coordinator.phase.value)
+        assertEquals(SwapPhase.Idle, coordinator.phase.value)
         advanceUntilIdle()
         job.join()
     }

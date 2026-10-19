@@ -356,8 +356,8 @@ private fun <T> RowLayout(
     // swap coordinator's effective assignment rather than the view's
     // attached display, so this spacing change happens under the fade-out
     // instead of mid fade-in on the arriving activity.
-    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-    val onPrimaryDisplay = assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP
+    val onPrimaryDisplay = jr.brian.home.ui.components.LocalScreenSlot.current ==
+        jr.brian.core.model.ScreenSlot.TOP
 
     // Centre the focused tile horizontally on every focus change. Also covers the seed:
     // initialVirtualIndex change triggers this once on first composition.

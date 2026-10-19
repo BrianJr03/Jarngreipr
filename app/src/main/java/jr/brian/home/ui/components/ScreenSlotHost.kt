@@ -11,8 +11,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.core.model.ScreenSlot
 import jr.brian.core.model.SlotContent
-import jr.brian.core.model.SwapTransitionCoordinator
-import jr.brian.core.model.SwapTransitionPhase
+import jr.brian.core.model.SwapCoordinator
+import jr.brian.core.model.SwapPhase
 import jr.brian.home.data.ScreenAssignmentStore
 
 /**
@@ -20,7 +20,7 @@ import jr.brian.home.data.ScreenAssignmentStore
  * model (PR 2). Supplies [LocalScreenSlot] to descendants so layout
  * branches read a static slot instead of peeking at the current
  * display, composes the [SwapTransition] cross-fade, and swallows
- * input while the coordinator is in [SwapTransitionPhase.Swapping]
+ * input while the coordinator is in [SwapPhase.Swapping]
  * so taps mid-animation can't reach a composable that is partway
  * through fading out.
  *
@@ -30,14 +30,14 @@ import jr.brian.home.data.ScreenAssignmentStore
 @Composable
 fun ScreenSlotHost(
     slot: ScreenSlot,
-    coordinator: SwapTransitionCoordinator,
+    coordinator: SwapCoordinator,
     store: ScreenAssignmentStore,
     launcherContent: @Composable () -> Unit,
     frontendContent: @Composable () -> Unit,
 ) {
     val assignment by store.state.collectAsStateWithLifecycle()
     val phase by coordinator.phase.collectAsStateWithLifecycle()
-    val swapping = phase is SwapTransitionPhase.Swapping
+    val swapping = phase is SwapPhase.Swapping
 
     CompositionLocalProvider(LocalScreenSlot provides slot) {
         Box(

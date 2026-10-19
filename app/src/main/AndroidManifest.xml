@@ -95,21 +95,13 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Home"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize">
-            <!-- Register as the SECONDARY_HOME candidate so Android's
-                 secondary-display home dispatch (triggered by a hardware
-                 Home press when the frontend is on the external screen)
-                 lands here instead of displacing us with the stock Thor
-                 launcher. singleTop + the manifest config-change list
-                 means the re-entry is a no-op onNewIntent, not a tear
-                 down. The HOME category stays on HomeRouterActivity for
-                 the primary display. -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.SECONDARY_HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|smallestScreenSize" />
+        <!-- SECONDARY_HOME lives on HomeRouterActivity, which routes to the
+             pinned slot (MainActivity on the external display). Under the
+             pinned-slot design FrontEndActivity never leaves the primary
+             display, so it has no reason to register for the external
+             display's home dispatch. -->
+
 
         <activity
             android:name=".HomeRouterActivity"

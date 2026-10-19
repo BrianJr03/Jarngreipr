@@ -50,38 +50,25 @@ fun launchFrontend(context: Context, displayId: Int = PRIMARY_DISPLAY_ID) {
 }
 
 /**
- * Fires [FrontEndActivity] on whichever display the current
- * [ScreenAssignment] has it live on. Use this when the caller just
- * wants "surface the frontend wherever it belongs" rather than
- * targeting a specific display — e.g. the Home-button double-press
- * gesture after a user screen swap. Falls back to [PRIMARY_DISPLAY_ID]
- * when the assignment points at an external display that isn't
- * currently connected.
+ * Fires [FrontEndActivity] on its pinned display ([PRIMARY_DISPLAY_ID]).
+ * The swap is a content flip inside the activity, not a window
+ * placement change — the activity never moves. Used by the companion
+ * watchdog in [MainActivity]'s `onStart` when the frontend side
+ * isn't up (crash, partial restart, cold boot before the external
+ * display finished attaching).
  */
-fun launchFrontendForCurrentAssignment(context: Context) {
-    val displayId = when (currentAssignment(context)) {
-        ScreenAssignment.FRONTEND_ON_TOP -> PRIMARY_DISPLAY_ID
-        ScreenAssignment.FRONTEND_ON_BOTTOM ->
-            resolveBottomDisplayId(context) ?: PRIMARY_DISPLAY_ID
-    }
-    launchFrontend(context, displayId)
+fun launchTopHost(context: Context) {
+    launchFrontend(context, PRIMARY_DISPLAY_ID)
 }
 
 /**
- * Fires [MainActivity] on whichever display the current
- * [ScreenAssignment] has it live on (the inverse of
- * [launchFrontendForCurrentAssignment]). Used by the companion
- * watchdog in [FrontEndActivity]'s `onStart` when it notices the
- * launcher side isn't up and needs to be brought along, so the user
- * doesn't end up with just one of the two activities after a crash
- * or partial restart.
+ * Fires [MainActivity] on its pinned display (the external bottom
+ * display when connected, otherwise `null` so Android resolves to
+ * the caller's display). Used by the companion watchdog in
+ * [FrontEndActivity]'s `onStart` when the launcher side isn't up.
  */
-fun launchMainForCurrentAssignment(context: Context) {
-    val displayId = when (currentAssignment(context)) {
-        ScreenAssignment.FRONTEND_ON_TOP -> resolveBottomDisplayId(context)
-        ScreenAssignment.FRONTEND_ON_BOTTOM -> PRIMARY_DISPLAY_ID
-    }
-    dispatchMain(context, displayId)
+fun launchBottomHost(context: Context) {
+    dispatchMain(context, resolveBottomDisplayId(context))
 }
 
 @dagger.hilt.EntryPoint

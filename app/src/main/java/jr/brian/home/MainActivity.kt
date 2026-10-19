@@ -96,7 +96,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -124,7 +124,23 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var screenAssignmentStore: jr.brian.home.data.ScreenAssignmentStore
 
+    @Inject
+    lateinit var wallpaperStateHolder: jr.brian.home.esde.data.WallpaperStateHolder
+
     private val esdeViewModel: ESDEViewModel by viewModels()
+
+    // Injected so this activity can render the frontend content when
+    // ScreenAssignment flips to FRONTEND_ON_BOTTOM — the pinned-slot
+    // design has the BOTTOM host (this one) show the frontend on swap.
+    private val romSearchResultsViewModel:
+        jr.brian.home.esde.viewmodels.RomSearchResultsViewModel by viewModels()
+    private val mainViewModel: jr.brian.home.viewmodels.MainViewModel by viewModels()
+
+    override val slot: jr.brian.core.model.ScreenSlot = jr.brian.core.model.ScreenSlot.BOTTOM
+
+    override fun finishIfOn(displayId: Int) {
+        if (display?.displayId == displayId) finish()
+    }
 
     private var navigateToThemeShare by mutableStateOf(false)
 
@@ -230,7 +246,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
-                jr.brian.home.ui.components.SwapFade(swapCoordinator) {
                 managers.ManagerCompositionLocalProvider {
                 CompositionLocalProvider(
                     LocalImportExportManager provides importExportManager
@@ -289,53 +304,80 @@ class MainActivity : ComponentActivity() {
                         onGameBrowsingUIVisibilityChanged = { hideLauncherUIForGameBrowsing = it }
                     )
 
-                    ESDEWallpaperContainer(
-                        state = wallpaperState,
-                        onOpenMarqueeShortcut = { triggerMarqueePressShortcut = true },
-                        onWallpaperClick = null,
-                        onWallpaperDoubleClick = when {
-                            wallpaperState.isScreensaverActive -> {
-                                { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
-                            }
+                    jr.brian.home.ui.components.ScreenSlotHost(
+                        slot = slot,
+                        coordinator = swapCoordinator,
+                        store = screenAssignmentStore,
+                        launcherContent = {
+                            ESDEWallpaperContainer(
+                                state = wallpaperState,
+                                onOpenMarqueeShortcut = { triggerMarqueePressShortcut = true },
+                                onWallpaperClick = null,
+                                onWallpaperDoubleClick = when {
+                                    wallpaperState.isScreensaverActive -> {
+                                        { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
+                                    }
 
-                            wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
-                                { powerViewModel.togglePower() }
-                            }
+                                    wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
+                                        { powerViewModel.togglePower() }
+                                    }
 
-                            else -> null
+                                    else -> null
+                                },
+                                hideMarquee = shouldHideMarquee || isPoweredOff,
+                                pagerScrollProgress = pagerScrollProgress,
+                                currentPageIndex = currentPageIndex,
+                                dockTopY = dockTopY,
+                                content = {
+                                    CompositionLocalProvider(
+                                        LocalEsdeWallpaperState provides wallpaperState
+                                    ) {
+                                        MainContent(
+                                            romSearchStateHolder = romSearchStateHolder,
+                                            managers = managers,
+                                            romLauncher = romLauncher,
+                                            onChangeFolder = ::launchSafPickerForGame,
+                                            triggerMarqueePressShortcut = triggerMarqueePressShortcut,
+                                            onMarqueePressShortcutHandled = {
+                                                triggerMarqueePressShortcut = false
+                                            },
+                                            navigateToThemeShare = navigateToThemeShare,
+                                            onNavigateToThemeShareHandled = { navigateToThemeShare = false },
+                                            onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
+                                            onCurrentPageChanged = { currentPageIndex = it },
+                                            onPagerScrollProgressChanged = { pagerScrollProgress = it },
+                                            onDockPositioned = { y -> dockTopY = y },
+                                            hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
+                                                    (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
+                                        )
+                                    }
+                                }
+                            )
                         },
-                        hideMarquee = shouldHideMarquee || isPoweredOff,
-                        pagerScrollProgress = pagerScrollProgress,
-                        currentPageIndex = currentPageIndex,
-                        dockTopY = dockTopY,
-                        content = {
+                        frontendContent = {
                             CompositionLocalProvider(
                                 LocalEsdeWallpaperState provides wallpaperState
                             ) {
-                                MainContent(
+                                jr.brian.home.esde.ui.frontend.FrontendScreen(
+                                    esdePrefs = esdePreferencesManager,
+                                    viewModel = romSearchResultsViewModel,
+                                    mainViewModel = mainViewModel,
                                     romSearchStateHolder = romSearchStateHolder,
+                                    frontendSelectionStateHolder = frontendSelectionStateHolder,
                                     managers = managers,
                                     romLauncher = romLauncher,
-                                    onChangeFolder = ::launchSafPickerForGame,
-                                    triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                    onMarqueePressShortcutHandled = {
-                                        triggerMarqueePressShortcut = false
+                                    appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+                                    onFinishImmediately = {
+                                        finishIfOn(jr.brian.core.model.PRIMARY_DISPLAY_ID)
                                     },
-                                    navigateToThemeShare = navigateToThemeShare,
-                                    onNavigateToThemeShareHandled = { navigateToThemeShare = false },
-                                    onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
-                                    onCurrentPageChanged = { currentPageIndex = it },
-                                    onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                    onDockPositioned = { y -> dockTopY = y },
-                                    hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
-                                            (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
+                                    onSignalGameLaunch = ::signalGameLaunch,
+                                    onChangeFolder = ::launchSafPickerForGame
                                 )
                             }
-                        }
+                        },
                     )
 
                     GameKonfettiOverlay(esdeViewModel = esdeViewModel)
-                }
                 }
                 }
             }
@@ -397,7 +439,7 @@ class MainActivity : ComponentActivity() {
         if (!esdePreferencesManager.state.value.frontendEnabled) return
         if (jr.brian.home.esde.ui.FrontEndActivity.isRunning) return
         if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
-        jr.brian.home.ui.util.launchFrontendForCurrentAssignment(this)
+        jr.brian.home.ui.util.launchTopHost(this)
     }
 
     private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null

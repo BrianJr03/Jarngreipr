@@ -18,7 +18,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.core.net.toUri
 import jr.brian.core.model.SwapCoordinator
-import jr.brian.home.ui.components.SwapFade
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -51,7 +50,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FrontEndActivity : ComponentActivity() {
+class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -76,6 +75,12 @@ class FrontEndActivity : ComponentActivity() {
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val romSearchViewModel: RomSearchViewModel by viewModels()
+
+    override val slot: jr.brian.core.model.ScreenSlot = jr.brian.core.model.ScreenSlot.TOP
+
+    override fun finishIfOn(displayId: Int) {
+        if (display?.displayId == displayId) finish()
+    }
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
@@ -158,7 +163,7 @@ class FrontEndActivity : ComponentActivity() {
     private fun ensureLauncherCompanion() {
         if (jr.brian.home.MainActivity.isRunning) return
         if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
-        jr.brian.home.ui.util.launchMainForCurrentAssignment(this)
+        jr.brian.home.ui.util.launchBottomHost(this)
     }
 
     private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null
@@ -266,21 +271,43 @@ class FrontEndActivity : ComponentActivity() {
                         LocalEsdeWallpaperState provides wallpaperState
                     ) {
                         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                        SwapFade(swapCoordinator) {
-                            FrontendScreen(
-                                esdePrefs = esdePrefs,
-                                viewModel = viewModel,
-                                mainViewModel = mainViewModel,
-                                romSearchStateHolder = romSearchStateHolder,
-                                frontendSelectionStateHolder = frontendSelectionStateHolder,
-                                managers = managers,
-                                romLauncher = romLauncher,
-                                appDisplayPreferenceManager = appDisplayPreferenceManager,
-                                onFinishImmediately = { finish() },
-                                onSignalGameLaunch = ::signalGameLaunch,
-                                onChangeFolder = ::launchSafPickerForGame
-                            )
-                        }
+                        jr.brian.home.ui.components.ScreenSlotHost(
+                            slot = slot,
+                            coordinator = swapCoordinator,
+                            store = screenAssignmentStore,
+                            launcherContent = {
+                                // The TOP host (this activity) renders the
+                                // launcher under FRONTEND_ON_BOTTOM. Minimal
+                                // wiring — the full launcher's wallpaper /
+                                // observer bindings live on MainActivity, so
+                                // under swap the launcher here renders
+                                // without the ES-DE wallpaper backdrop.
+                                // Polish follows in a later PR.
+                                jr.brian.home.MainContent(
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    onChangeFolder = ::launchSafPickerForGame,
+                                )
+                            },
+                            frontendContent = {
+                                FrontendScreen(
+                                    esdePrefs = esdePrefs,
+                                    viewModel = viewModel,
+                                    mainViewModel = mainViewModel,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    frontendSelectionStateHolder = frontendSelectionStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    appDisplayPreferenceManager = appDisplayPreferenceManager,
+                                    onFinishImmediately = {
+                                        finishIfOn(jr.brian.core.model.PRIMARY_DISPLAY_ID)
+                                    },
+                                    onSignalGameLaunch = ::signalGameLaunch,
+                                    onChangeFolder = ::launchSafPickerForGame
+                                )
+                            },
+                        )
                     }
                 }
             }
