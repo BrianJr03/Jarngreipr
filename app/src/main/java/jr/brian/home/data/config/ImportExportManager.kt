@@ -15,7 +15,9 @@ import jr.brian.home.data.FolderManager
 import jr.brian.home.data.JoystickMode
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.data.PageManagers
+import jr.brian.home.data.ScreenAssignmentStore
 import jr.brian.home.data.SnapMode
+import jr.brian.core.model.ScreenAssignment
 import jr.brian.home.esde.model.DEFAULT_SCREENSCRAPER_MEDIA_TYPES
 import jr.brian.home.esde.model.DEFAULT_STEAMGRIDDB_MEDIA_TYPES
 import jr.brian.home.esde.model.ESDEPrefsState
@@ -43,7 +45,10 @@ import javax.inject.Singleton
 
 @OptIn(UnstableApi::class)
 @Singleton
-class ImportExportManager @Inject constructor(private val managers: ManagerContainer) {
+class ImportExportManager @Inject constructor(
+    private val managers: ManagerContainer,
+    private val screenAssignmentStore: ScreenAssignmentStore,
+) {
     private val json = Json {
         ignoreUnknownKeys = true
         prettyPrint = true
@@ -291,6 +296,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 focusLockMode = f.focusLockPrefsManager.mode.value.name,
             ),
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
+            screenAssignment = screenAssignmentStore.assignment.name,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
@@ -652,6 +658,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             jr.brian.home.data.FocusLockMode.Off
         }
         f.focusLockPrefsManager.setMode(mode)
+
+        // Null means the imported blob predates v34 — leave the device's
+        // current assignment alone so a Backup → Restore from an older
+        // app version never silently flips a user's layout.
+        config.screenAssignment?.let {
+            screenAssignmentStore.setAssignment(ScreenAssignment.fromNameOrDefault(it))
+        }
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

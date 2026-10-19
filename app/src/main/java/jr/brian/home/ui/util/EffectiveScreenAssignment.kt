@@ -60,6 +60,13 @@ fun rememberEffectiveAssignment(): ScreenAssignment {
  * Use this for animations that depend on the activity's actual
  * on-screen display (e.g. direction of a swap slide), not for layout
  * decisions.
+ *
+ * During Leaving we derive physical position from the target's
+ * inverse (`target.flipped()`), not the store. The orchestrator
+ * persists the new assignment before entering Leaving so the pref is
+ * crash-safe; reading the store here would therefore report the
+ * post-swap value one frame before the window actually reparents and
+ * cause a visible layout re-count on the departing display.
  */
 @Composable
 fun rememberPhysicalAssignment(): ScreenAssignment {
@@ -73,7 +80,7 @@ fun rememberPhysicalAssignment(): ScreenAssignment {
     val phase by entryPoint.swapCoordinator().phase.collectAsStateWithLifecycle()
     val current by entryPoint.screenAssignmentStore().state.collectAsStateWithLifecycle()
     return when (val p = phase) {
-        is SwapPhase.Leaving -> current
+        is SwapPhase.Leaving -> p.targetAssignment.flipped()
         is SwapPhase.Arriving -> p.targetAssignment
         SwapPhase.Idle -> current
     }

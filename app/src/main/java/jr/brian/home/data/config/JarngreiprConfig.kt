@@ -145,7 +145,13 @@ data class JarngreiprConfig(
         //      FeatureConfig.recentlyPlayed, the launch-history list the
         //      Last Played widget binds to. Older blobs decode with the
         //      empty default via ignoreUnknownKeys.
-        const val CONFIG_VERSION = 33
+        // v34: added FeatureConfig.screenAssignment — persisted dual-
+        //      screen layout name (FRONTEND_ON_TOP / FRONTEND_ON_BOTTOM).
+        //      Nullable so pre-v34 blobs decode without a value; import
+        //      leaves the device's current assignment alone in that
+        //      case rather than reverting to the default, so restoring
+        //      an old backup never silently flips a user's layout.
+        const val CONFIG_VERSION = 34
     }
 }
 
@@ -279,7 +285,15 @@ data class FeatureConfig(
     val bgMusic: BgMusicConfig = BgMusicConfig(),
     val romSearch: RomSearchConfig = RomSearchConfig(),
     val homeButton: HomeButtonConfig = HomeButtonConfig(),
-    val recentlyPlayed: List<RecentlyPlayedEntry> = emptyList()
+    val recentlyPlayed: List<RecentlyPlayedEntry> = emptyList(),
+    /**
+     * v34: persisted [jr.brian.core.model.ScreenAssignment] name
+     * (`FRONTEND_ON_TOP` / `FRONTEND_ON_BOTTOM`). Null on pre-v34
+     * exports — import leaves the device's current assignment alone
+     * in that case rather than reverting to the default, so restoring
+     * an old backup never silently flips a user's dual-screen layout.
+     */
+    val screenAssignment: String? = null
 )
 
 @Serializable
