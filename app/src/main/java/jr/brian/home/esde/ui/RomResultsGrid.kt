@@ -53,9 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.ImageLoader
 import coil.compose.AsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
@@ -498,19 +496,20 @@ internal fun PlatformSuggestionsDropdown(
 
                         else -> {
                             val context = LocalContext.current
-                            val gifImageLoader = remember(context) {
-                                ImageLoader.Builder(context)
-                                    .components {
-                                        add(ImageDecoderDecoder.Factory())
-                                    }
-                                    .build()
-                            }
+                            // The app-wide loader already registers
+                            // ImageDecoderDecoder (JarngreiprApplication.
+                            // newImageLoader), so animated platform art
+                            // works without a per-tile ImageLoader. Each
+                            // ImageLoader.Builder().build() here used to
+                            // create its own memory cache, disk cache
+                            // handle and OkHttp client per tile, per
+                            // composition — and a swap now composes this
+                            // grid in the other window too.
                             AsyncImage(
                                 model = ImageRequest.Builder(context)
                                     .data(imageUri)
                                     .crossfade(true)
                                     .build(),
-                                imageLoader = gifImageLoader,
                                 contentDescription = item,
                                 contentScale = ContentScale.FillBounds,
                                 modifier = sharedModifier.clickable { onPlatformSelected(item) }
