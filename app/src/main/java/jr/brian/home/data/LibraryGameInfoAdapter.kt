@@ -2,9 +2,7 @@ package jr.brian.home.data
 
 import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.LibraryRepository
-import jr.brian.frontend.library.db.GameEntity
-import jr.brian.frontend.library.db.MediaDao
-import jr.brian.frontend.library.db.MediaEntity
+import jr.brian.frontend.library.db.GameInfoRow
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.scraper.ScraperCoordinator
 import jr.brian.home.esde.scraper.sidecar.UserMetadataOverride
@@ -13,9 +11,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import java.io.File
 import java.text.SimpleDateFormat
@@ -31,15 +29,16 @@ import javax.inject.Singleton
  * tree. Writes still go through the legacy scan path; [LibraryMigration]
  * keeps Room in sync.
  *
- * Combines the three observable flows (games, media, systems) into a
- * single `Flow<List<GameInfo>>` the ViewModel can collect once. User
- * overrides authored through the Edit Info sheet are overlaid on top of
- * each row — written by [UserMetadataOverrideStore], picked up here so
- * the UI reflects edits without a schema migration into Room.
+ * Reads one joined [GameInfoRow] stream from [LibraryRepository]
+ * (`games` LEFT JOIN `media`) and overlays [UserMetadataOverride]s
+ * authored through the Edit Info sheet on each row. Previously this
+ * combined two full-table flows (`allGames` + `observeAllMedia()`)
+ * which materialised both tables into cursors on every emission and
+ * OOM'd on large scraped libraries.
  *
  * [allGameInfos] is shared: every collector reads one upstream, so the
- * full `games` + `media` reload and the GameInfo mapping run once per
- * change no matter how many screens are listening. It's debounced so a
+ * single joined query and the GameInfo mapping run once per change no
+ * matter how many screens are listening. It's debounced so a
  * scrape-all (one media upsert per game) doesn't rebuild the list for
  * every row. Use [snapshot] when you need a fresh read of current Room
  * state rather than the latest (possibly still-debouncing) emission.
@@ -47,19 +46,12 @@ import javax.inject.Singleton
 @Singleton
 class LibraryGameInfoAdapter @Inject constructor(
     private val repository: LibraryRepository,
-    private val mediaDao: MediaDao,
     private val scraperCoordinator: ScraperCoordinator,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
-    private val gameInfos: Flow<List<GameInfo>> = combine(
-        repository.allGames,
-        mediaDao.observeAll(),
-    ) { games, media ->
-        val mediaByGameId = media.associateBy { it.gameId }
-        val overridesBySystem = loadOverridesByGame(games)
-        games.map { game ->
-            game.toGameInfo(mediaByGameId[game.id], overridesBySystem[game.id])
-        }
+    private val gameInfos: Flow<List<GameInfo>> = repository.allGameRows.map { rows ->
+        val overridesByGameId = loadOverridesByGame(rows)
+        rows.map { it.toGameInfo(overridesByGameId[it.gameId]) }
     }
 
     @OptIn(FlowPreview::class)
@@ -70,20 +62,20 @@ class LibraryGameInfoAdapter @Inject constructor(
     /** One fresh read of Room, bypassing the shared flow's debounce and replay. */
     suspend fun snapshot(): List<GameInfo> = gameInfos.first()
 
-    private fun loadOverridesByGame(games: List<GameEntity>): Map<Long, UserMetadataOverride> {
+    private fun loadOverridesByGame(rows: List<GameInfoRow>): Map<Long, UserMetadataOverride> {
         val scrapedRoot = scraperCoordinator.scrapedRoot()
         if (scrapedRoot.isBlank()) return emptyMap()
-        val perSystem = games
+        val perSystem = rows
             .map { it.systemId }
             .distinct()
             .associateWith { UserMetadataOverrideStore.readAllForSystem(scrapedRoot, it) }
         if (perSystem.values.all { it.isEmpty() }) return emptyMap()
         val result = HashMap<Long, UserMetadataOverride>()
-        for (game in games) {
-            val overrides = perSystem[game.systemId] ?: continue
+        for (row in rows) {
+            val overrides = perSystem[row.systemId] ?: continue
             if (overrides.isEmpty()) continue
-            val basename = File(game.absolutePath ?: game.relativePath).nameWithoutExtension
-            overrides[basename]?.let { result[game.id] = it }
+            val basename = File(row.absolutePath ?: row.relativePath).nameWithoutExtension
+            overrides[basename]?.let { result[row.gameId] = it }
         }
         return result
     }
@@ -93,8 +85,7 @@ class LibraryGameInfoAdapter @Inject constructor(
     }
 }
 
-internal fun GameEntity.toGameInfo(
-    media: MediaEntity?,
+internal fun GameInfoRow.toGameInfo(
     override: UserMetadataOverride? = null,
 ): GameInfo = GameInfo(
     path = absolutePath ?: relativePath,
@@ -111,13 +102,13 @@ internal fun GameEntity.toGameInfo(
     playTimeMinutes = playTimeMinutes,
     lastPlayed = lastPlayed?.let(::formatEsdeDate),
     systemName = systemId,
-    artworkPath = override?.artworkPath ?: media?.coverPath,
-    physicalMediaPath = media?.physicalMediaPath,
-    marqueeImagePath = override?.marqueeImagePath ?: media?.marqueePath,
-    screenshotPath = override?.screenshotPath ?: media?.screenshotPath,
-    fanartPath = override?.fanartPath ?: media?.fanartPath,
-    titlescreenPath = media?.titlescreenPath,
-    miximagePath = media?.miximagePath,
+    artworkPath = override?.artworkPath ?: coverPath,
+    physicalMediaPath = physicalMediaPath,
+    marqueeImagePath = override?.marqueeImagePath ?: marqueePath,
+    screenshotPath = override?.screenshotPath ?: screenshotPath,
+    fanartPath = override?.fanartPath ?: fanartPath,
+    titlescreenPath = titlescreenPath,
+    miximagePath = miximagePath,
     emulatorPackage = emulatorPackage,
     romAbsolutePath = absolutePath,
     launchCommand = launchCommand,

@@ -17,6 +17,50 @@ interface GameDao {
     @Query("SELECT * FROM games ORDER BY displayName COLLATE NOCASE")
     fun observeAll(): Flow<List<GameEntity>>
 
+    /**
+     * Projection-only join over games and media. Returns one row per
+     * visible game with the media columns the launcher's
+     * `toGameInfo` mapping consumes. Avoids the two full-table
+     * materialisations that `observeAllVisible` + `MediaDao.observeAll`
+     * used to combine in [LibraryGameInfoAdapter], which exhausted the
+     * CursorWindow on large libraries.
+     */
+    @Query(
+        """
+        SELECT
+            g.id AS gameId,
+            g.systemId AS systemId,
+            g.absolutePath AS absolutePath,
+            g.relativePath AS relativePath,
+            g.displayName AS displayName,
+            g.description AS description,
+            g.rating AS rating,
+            g.releaseDate AS releaseDate,
+            g.developer AS developer,
+            g.publisher AS publisher,
+            g.genre AS genre,
+            g.players AS players,
+            g.isFavorite AS isFavorite,
+            g.playCount AS playCount,
+            g.playTimeMinutes AS playTimeMinutes,
+            g.lastPlayed AS lastPlayed,
+            g.emulatorPackage AS emulatorPackage,
+            g.launchCommand AS launchCommand,
+            m.coverPath AS coverPath,
+            m.physicalMediaPath AS physicalMediaPath,
+            m.marqueePath AS marqueePath,
+            m.screenshotPath AS screenshotPath,
+            m.fanartPath AS fanartPath,
+            m.titlescreenPath AS titlescreenPath,
+            m.miximagePath AS miximagePath
+        FROM games g
+        LEFT OUTER JOIN media m ON m.gameId = g.id
+        WHERE g.isHidden = 0
+        ORDER BY g.displayName COLLATE NOCASE
+        """
+    )
+    fun observeAllVisibleWithMedia(): Flow<List<GameInfoRow>>
+
     @Query("SELECT * FROM games WHERE systemId = :systemId AND isHidden = 0 ORDER BY displayName COLLATE NOCASE")
     fun observeBySystem(systemId: String): Flow<List<GameEntity>>
 
