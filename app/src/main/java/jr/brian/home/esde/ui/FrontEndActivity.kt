@@ -141,11 +141,10 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
      * Mirror of the launcher-side resync. When the frontend returns
      * after an external app had focus, pin Focus Lock back to the
      * frontend's assigned display (or whatever the current
-     * [jr.brian.home.data.FocusLockMode] dictates). Skipped mid-swap
-     * since the swap trigger handles its own sync.
+     * [jr.brian.home.data.FocusLockMode] dictates). No phase guard
+     * needed — pinned-slot swap does not trigger onStop/onStart.
      */
     private fun maybeResyncFocusLock() {
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
             this,
             screenAssignmentStore.assignment,
@@ -211,13 +210,12 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
 
     /**
      * Mirror of the launcher-side guard. When the frontend goes
-     * offscreen with the launcher side also gone and we're not mid-
-     * swap, an external app took focus. Launched apps land on
-     * [PRIMARY_DISPLAY_ID] so pin Focus Lock there.
+     * offscreen with the launcher side also gone, an external app
+     * took focus. Launched apps land on [PRIMARY_DISPLAY_ID] so pin
+     * Focus Lock there.
      */
     private fun maybeSyncFocusLockForExternalApp() {
         if (jr.brian.home.MainActivity.isRunning) return
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(
             this,
             jr.brian.core.model.PRIMARY_DISPLAY_ID,
@@ -276,18 +274,23 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
                             coordinator = swapCoordinator,
                             store = screenAssignmentStore,
                             launcherContent = {
-                                // The TOP host (this activity) renders the
-                                // launcher under FRONTEND_ON_BOTTOM. Minimal
-                                // wiring — the full launcher's wallpaper /
-                                // observer bindings live on MainActivity, so
-                                // under swap the launcher here renders
-                                // without the ES-DE wallpaper backdrop.
-                                // Polish follows in a later PR.
-                                jr.brian.home.MainContent(
-                                    romSearchStateHolder = romSearchStateHolder,
+                                // Full launcher wiring via the shared
+                                // LauncherContent composable. State flows
+                                // through LauncherUiStateHolder (@Singleton),
+                                // so page index / dock Y / overlay flags
+                                // survive the swap from MainActivity. The
+                                // ES-DE event listeners that drive the hide-
+                                // UI flags still live on MainActivity's
+                                // setContent — this side just reads what
+                                // MainActivity has already pushed into the
+                                // holder.
+                                jr.brian.home.LauncherContent(
                                     managers = managers,
+                                    romSearchStateHolder = romSearchStateHolder,
                                     romLauncher = romLauncher,
                                     onChangeFolder = ::launchSafPickerForGame,
+                                    navigateToThemeShare = false,
+                                    onNavigateToThemeShareHandled = {},
                                 )
                             },
                             frontendContent = {
