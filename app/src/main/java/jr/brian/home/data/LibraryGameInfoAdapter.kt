@@ -90,13 +90,18 @@ internal fun GameInfoRow.toGameInfo(
 ): GameInfo = GameInfo(
     path = absolutePath ?: relativePath,
     name = override?.displayName ?: displayName,
-    description = override?.description ?: description,
+    // description / releaseDate / players are deliberately absent
+    // from [GameInfoRow] — see its KDoc. The user's Edit Info
+    // override still applies when present; the DB-sourced detail-
+    // only fields show as null in the all-games list until the
+    // detail view fetches them via a per-id query.
+    description = override?.description,
     rating = override?.rating ?: rating ?: 0f,
-    releaseDate = override?.releaseDate ?: releaseDate,
+    releaseDate = override?.releaseDate,
     developer = override?.developer ?: developer,
     publisher = override?.publisher ?: publisher,
     genre = override?.genre ?: genre,
-    players = override?.players ?: players,
+    players = override?.players,
     isFavorite = isFavorite,
     playCount = playCount,
     playTimeMinutes = playTimeMinutes,

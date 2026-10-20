@@ -19,11 +19,14 @@ interface GameDao {
 
     /**
      * Projection-only join over games and media. Returns one row per
-     * visible game with the media columns the launcher's
-     * `toGameInfo` mapping consumes. Avoids the two full-table
-     * materialisations that `observeAllVisible` + `MediaDao.observeAll`
-     * used to combine in [LibraryGameInfoAdapter], which exhausted the
-     * CursorWindow on large libraries.
+     * visible game with the browse-side columns [GameInfoRow]
+     * documents. Avoids the two full-table materialisations that
+     * `observeAllVisible` + `MediaDao.observeAll` used to combine in
+     * [LibraryGameInfoAdapter], which exhausted the CursorWindow on
+     * large libraries. Detail-only fields (`description`,
+     * `releaseDate`, `players`) are deliberately excluded; they
+     * dominated per-row cursor memory and have no browse-grid
+     * readers.
      */
     @Query(
         """
@@ -33,13 +36,10 @@ interface GameDao {
             g.absolutePath AS absolutePath,
             g.relativePath AS relativePath,
             g.displayName AS displayName,
-            g.description AS description,
             g.rating AS rating,
-            g.releaseDate AS releaseDate,
             g.developer AS developer,
             g.publisher AS publisher,
             g.genre AS genre,
-            g.players AS players,
             g.isFavorite AS isFavorite,
             g.playCount AS playCount,
             g.playTimeMinutes AS playTimeMinutes,
