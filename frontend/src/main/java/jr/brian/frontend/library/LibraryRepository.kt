@@ -4,6 +4,7 @@ import android.util.Log
 import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
+import jr.brian.frontend.library.db.GameInfoRow
 import jr.brian.frontend.library.db.MediaDao
 import jr.brian.frontend.library.db.MediaEntity
 import jr.brian.frontend.library.db.PlayHistoryDao
@@ -71,6 +72,14 @@ class LibraryRepository @Inject constructor(
     val sources: Flow<List<SourceEntity>> = sourceDao.observeAll()
     val allGames: Flow<List<GameEntity>> = gameDao.observeAllVisible()
     val favorites: Flow<List<GameEntity>> = gameDao.observeFavorites()
+
+    /**
+     * Thin joined projection: one row per visible game, with the
+     * media columns the launcher needs. Replaces the previous
+     * `combine(allGames, mediaDao.observeAll())` which materialised
+     * two full tables into cursors and OOM'd on large libraries.
+     */
+    val allGameRows: Flow<List<GameInfoRow>> = gameDao.observeAllVisibleWithMedia()
 
     fun gamesForSystem(systemId: String): Flow<List<GameEntity>> =
         gameDao.observeBySystem(systemId)
