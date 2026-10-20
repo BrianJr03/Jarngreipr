@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -35,15 +38,47 @@ import kotlin.math.sin
  * side and converges to centre as it fades in. A short black scrim
  * sits between the two layers so the midpoint reads as a smooth
  * hand-off instead of a flash.
+ *
+ * ### Why the content is wrapped in [movableContentOf]
+ *
+ * Idle and Swapping are different branches of a `when`, and the
+ * outgoing and incoming layers are different children of the
+ * Swapping branch. Without [movableContentOf], each phase change
+ * disposes the content in the old slot and composes it from scratch
+ * in the new one: a single swap composed the incoming screen
+ * **three** times per window (incoming layer, then again in the Idle
+ * branch) and the outgoing screen twice, with every `remember`,
+ * ViewModel collector and image request restarted each time. On a
+ * full [jr.brian.home.esde.ui.frontend.FrontendScreen] that was the
+ * transient heap spike that tipped the Thor's 256 MB heap over.
+ * Moving the composition instead means one new composition per
+ * swap per window, and the content keeps its state across the
+ * animation.
  */
 @Composable
 fun SwapTransition(
     coordinator: SwapCoordinator,
     slot: ScreenSlot,
     assignment: ScreenAssignment,
-    content: @Composable (SlotContent) -> Unit,
+    launcherContent: @Composable () -> Unit,
+    frontendContent: @Composable () -> Unit,
 ) {
     val phase by coordinator.phase.collectAsStateWithLifecycle()
+
+    // rememberUpdatedState so the hosts can pass fresh lambdas
+    // (they capture activity-level flags such as navigateToThemeShare)
+    // without the movable content being re-created — re-creating it
+    // would defeat the whole point.
+    val latestLauncher by rememberUpdatedState(launcherContent)
+    val latestFrontend by rememberUpdatedState(frontendContent)
+    val launcher = remember { movableContentOf { latestLauncher() } }
+    val frontend = remember { movableContentOf { latestFrontend() } }
+    val render: @Composable (SlotContent) -> Unit = { which ->
+        when (which) {
+            SlotContent.Launcher -> launcher()
+            SlotContent.Frontend -> frontend()
+        }
+    }
 
     val progress by animateFloatAsState(
         targetValue = if (phase is SwapPhase.Swapping) 1f else 0f,
@@ -57,7 +92,7 @@ fun SwapTransition(
     when (val p = phase) {
         SwapPhase.Idle -> {
             Box(modifier = Modifier.fillMaxSize()) {
-                content(contentFor(slot, assignment))
+                render(contentFor(slot, assignment))
             }
         }
         is SwapPhase.Swapping -> {
@@ -71,7 +106,7 @@ fun SwapTransition(
                     scale = SlotScale.outgoing(progress),
                     alpha = SlotAlpha.outgoing(progress),
                 ) {
-                    content(outgoing)
+                    render(outgoing)
                 }
                 Scrim(progress)
                 SlotLayer(
@@ -79,7 +114,7 @@ fun SwapTransition(
                     scale = SlotScale.incoming(progress),
                     alpha = SlotAlpha.incoming(progress),
                 ) {
-                    content(incoming)
+                    render(incoming)
                 }
             }
         }
