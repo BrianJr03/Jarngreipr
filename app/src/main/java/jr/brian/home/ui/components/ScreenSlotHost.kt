@@ -10,7 +10,6 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.core.model.ScreenSlot
-import jr.brian.core.model.SlotContent
 import jr.brian.core.model.SwapCoordinator
 import jr.brian.core.model.SwapPhase
 import jr.brian.home.data.ScreenAssignmentStore
@@ -49,12 +48,9 @@ fun ScreenSlotHost(
                 coordinator = coordinator,
                 slot = slot,
                 assignment = assignment,
-            ) { which ->
-                when (which) {
-                    SlotContent.Launcher -> launcherContent()
-                    SlotContent.Frontend -> frontendContent()
-                }
-            }
+                launcherContent = launcherContent,
+                frontendContent = frontendContent,
+            )
         }
     }
 }

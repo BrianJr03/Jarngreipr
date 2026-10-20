@@ -274,29 +274,32 @@ class LibraryRepository @Inject constructor(
         // because replaceSystemGames did a delete+insert and the ids
         // the DAO assigned are not the ones we constructed with.
         val persisted = gameDao.getBySystemAndSource(def.id, sourceId)
+        val deletes = ArrayList<Long>()
+        val upserts = ArrayList<MediaEntity>(persisted.size)
         for (game in persisted) {
             val resolved = mediaIndex.resolve(
                 systemFolder = def.id,
                 basename = File(game.relativePath).nameWithoutExtension,
             )
             if (resolved == MediaIndex.Resolved.EMPTY) {
-                mediaDao.deleteByGameId(game.id)
+                deletes += game.id
             } else {
-                mediaDao.upsert(
-                    MediaEntity(
-                        gameId = game.id,
-                        coverPath = resolved.cover,
-                        marqueePath = resolved.marquee,
-                        fanartPath = resolved.fanart,
-                        screenshotPath = resolved.screenshot,
-                        titlescreenPath = resolved.titlescreen,
-                        miximagePath = resolved.miximage,
-                        physicalMediaPath = resolved.physicalMedia,
-                        videoPath = resolved.video,
-                    )
+                upserts += MediaEntity(
+                    gameId = game.id,
+                    coverPath = resolved.cover,
+                    marqueePath = resolved.marquee,
+                    fanartPath = resolved.fanart,
+                    screenshotPath = resolved.screenshot,
+                    titlescreenPath = resolved.titlescreen,
+                    miximagePath = resolved.miximage,
+                    physicalMediaPath = resolved.physicalMedia,
+                    videoPath = resolved.video,
                 )
             }
         }
+        // One transaction per system: one `media` invalidation, not
+        // one per game (see MediaDao.replaceForSystem).
+        mediaDao.replaceForSystem(deletes, upserts)
     }
 
     private companion object {
