@@ -11,6 +11,7 @@
 - Mute toggle for background music now persists across app restarts
 - The bottom screen no longer falls back to the system launcher after a ROM search opens results on the top screen
 - Backup and Restore now preserves your dock and app drawer button colors
+- Backup no longer exports the dock colour as 0, so Restore no longer turns the dock transparent
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
