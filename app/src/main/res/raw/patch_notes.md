@@ -11,6 +11,8 @@
 - Mute toggle for background music now persists across app restarts
 - Swapping screens with L3/R3 or from Settings now animates in sync with the Frontend swap, no more half-way slide-ins
 - Backup and Restore now remembers which screen your Frontend is pinned to
+- The bottom screen no longer falls back to the system launcher after a ROM search opens results on the top screen
+- Backup and Restore now preserves your dock and app drawer button colors
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
