@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.util.UnstableApi
 import androidx.annotation.VisibleForTesting
 import jr.brian.home.canvas.data.CanvasTabType
@@ -234,7 +235,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         return FeatureConfig(
             dock = DockConfig(
                 apps = f.dockManager.dockApps.value,
-                colorArgb = f.dockManager.dockColor.value.value.toInt(),
+                colorArgb = f.dockManager.dockColor.value.toArgb(),
                 size = f.dockManager.dockSize.value.name,
                 visible = f.dockManager.isDockVisible.value,
                 visiblePages = f.dockManager.dockVisiblePages.value.toList(),
@@ -251,7 +252,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 joystickMode = f.controlPadManager.joystickMode.value.name
             ),
             appDrawerFab = AppDrawerFabConfig(
-                colorArgb = f.appDrawerFabManager.fabColor.value.value.toInt(),
+                colorArgb = f.appDrawerFabManager.fabColor.value.toArgb(),
                 enabled = f.appDrawerFabManager.isFabEnabled.value,
                 visiblePages = f.appDrawerFabManager.fabVisiblePages.value.toList(),
                 explicitPages = f.appDrawerFabManager.fabExplicitPages.value,

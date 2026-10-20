@@ -9,6 +9,8 @@
 **Launcher Fixes**
 - Opening the launcher no longer pauses audio from other apps when Jarngreipr's background music is muted or set to 0% volume
 - Mute toggle for background music now persists across app restarts
+- The bottom screen no longer falls back to the system launcher after a ROM search opens results on the top screen
+- Backup and Restore now preserves your dock and app drawer button colors
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
