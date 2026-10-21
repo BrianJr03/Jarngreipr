@@ -157,6 +157,7 @@ data class UiConfig(
     val powerSettings: PowerSettingsConfig = PowerSettingsConfig(),
     val selectedIconPackage: String? = null,
     val wallpaper: WallpaperConfig = WallpaperConfig(),
+    val frontendWallpaper: WallpaperConfig = WallpaperConfig(),
     val searchLayout: SearchLayoutConfig = SearchLayoutConfig(),
     val customAppNames: Map<String, String> = emptyMap()
 )

@@ -102,7 +102,14 @@ internal fun FrontendScreen(
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
     onFinishImmediately: () -> Unit,
     onSignalGameLaunch: () -> Unit,
-    onChangeFolder: (GameInfo) -> Unit
+    onChangeFolder: (GameInfo) -> Unit,
+    /**
+     * True when FrontEndActivity has mounted a [jr.brian.home.ui.components.wallpaper.WallpaperDisplay]
+     * underneath this screen — e.g. the user picked a frontend wallpaper or
+     * "Launcher" (mirror). Collapses the Surface/background backers so the
+     * wallpaper layer below shows through.
+     */
+    showFrontendWallpaper: Boolean = false,
 ) {
     RomSearchExperimentalDialogIfNeeded()
 
@@ -140,7 +147,8 @@ internal fun FrontendScreen(
             managers = managers,
             romLauncher = romLauncher,
             appDisplayPreferenceManager = appDisplayPreferenceManager,
-            onChangeFolder = onChangeFolder
+            onChangeFolder = onChangeFolder,
+            showFrontendWallpaper = showFrontendWallpaper,
         )
     }
 }
@@ -182,7 +190,8 @@ private fun FrontendRouteHost(
     managers: ManagerContainer,
     romLauncher: RomGameLauncher,
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
-    onChangeFolder: (GameInfo) -> Unit
+    onChangeFolder: (GameInfo) -> Unit,
+    showFrontendWallpaper: Boolean,
 ) {
     val route by viewModel.currentRoute.collectAsStateWithLifecycle()
     val allGames by viewModel.allGames.collectAsStateWithLifecycle()
@@ -206,12 +215,14 @@ private fun FrontendRouteHost(
         // is active, and during the Systems↔Games cross-fade both panels have
         // transparent regions. Without an opaque backer here the activity
         // window's underlying (system) wallpaper flashes through on scroll and
-        // during transition. Leave it transparent only when the user has
-        // explicitly opted into the ES-DE wallpaper as the frontend backdrop.
+        // during transition. Leave it transparent when the user explicitly
+        // opted into the ES-DE wallpaper OR has a frontend wallpaper layer
+        // mounted below us — in both cases there is something intentional for
+        // the user to see through to.
         modifier = Modifier
             .fillMaxSize()
             .background(
-                if (esdeState.romSearchUseWallpaper) Color.Transparent
+                if (esdeState.romSearchUseWallpaper || showFrontendWallpaper) Color.Transparent
                 else OledBackgroundColor
             )
     ) { currentRoute ->
@@ -241,7 +252,8 @@ private fun FrontendRouteHost(
                     managers = managers,
                     romLauncher = romLauncher,
                     appDisplayPreferenceManager = appDisplayPreferenceManager,
-                    onChangeFolder = onChangeFolder
+                    onChangeFolder = onChangeFolder,
+                    showFrontendWallpaper = showFrontendWallpaper,
                 )
 
                 is FrontendRoute.Systems -> SystemsRoute(
@@ -263,7 +275,7 @@ private fun FrontendRouteHost(
                             esdeState.primarySystemLayout
                         else esdeState.secondarySystemLayout
                     },
-                    useWallpaper = esdeState.romSearchUseWallpaper,
+                    useWallpaper = esdeState.romSearchUseWallpaper || showFrontendWallpaper,
                     customizations = esdeState.systemCustomizations,
                     systemOrder = esdeState.systemOrder,
                     hintsVisible = esdeState.frontendHintsVisible,
@@ -290,7 +302,8 @@ private fun GamesRoute(
     managers: ManagerContainer,
     romLauncher: RomGameLauncher,
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
-    onChangeFolder: (GameInfo) -> Unit
+    onChangeFolder: (GameInfo) -> Unit,
+    showFrontendWallpaper: Boolean,
 ) {
     LaunchedEffect(system) {
         frontendSelectionStateHolder.selectSystem(system)
@@ -368,7 +381,7 @@ private fun GamesRoute(
     } else null
 
     Surface(
-        color = if (esdeState.romSearchUseWallpaper) Color.Transparent else OledBackgroundColor,
+        color = if (esdeState.romSearchUseWallpaper || showFrontendWallpaper) Color.Transparent else OledBackgroundColor,
         modifier = Modifier
             .fillMaxSize()
             .frontendControlKeys(
@@ -410,7 +423,7 @@ private fun GamesRoute(
                 games = filteredGames,
                 isLoading = isLoading,
                 isHiddenMode = false,
-                backgroundTransparent = esdeState.romSearchUseWallpaper || focusBackgroundActive,
+                backgroundTransparent = esdeState.romSearchUseWallpaper || showFrontendWallpaper || focusBackgroundActive,
                 cardMediaType = esdeState.romSearchCardMediaType,
                 focusAnimationEnabled = esdeState.romSearchDiscSpin,
                 focusAnimationDelayMs = esdeState.romSearchFocusAnimationDelayMs,

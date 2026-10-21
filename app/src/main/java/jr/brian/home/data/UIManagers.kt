@@ -1,5 +1,6 @@
 package jr.brian.home.data
 
+import jr.brian.home.di.FrontendWallpaper
 import jr.brian.home.ui.theme.managers.GlobalIconRefreshManager
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import javax.inject.Inject
@@ -38,7 +39,10 @@ data class UIManagers @Inject constructor(
     
     /** Manages wallpaper settings (image, video, GIF, ESDE) */
     val wallpaperManager: WallpaperManager,
-    
+
+    /** Manages the wallpaper shown behind FrontEndActivity (bottom display) */
+    @FrontendWallpaper val frontendWallpaperManager: WallpaperManager,
+
     /** Manages search screen layout preferences (horizontal/vertical) */
     val searchLayoutManager: SearchLayoutManager,
 

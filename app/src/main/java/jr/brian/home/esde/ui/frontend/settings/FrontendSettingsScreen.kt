@@ -25,6 +25,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.graphics.Color
+import android.view.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -93,12 +94,20 @@ fun FrontendSettingsScreen(
                 .focusRequester(rootFocus)
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
-                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    cursor.handleKey(
-                        keyCode = event.nativeKeyEvent.keyCode,
-                        rowCount = rowCount,
-                        onClose = onDismiss
-                    )
+                    val code = event.nativeKeyEvent.keyCode
+                    val isNavKey = code in NAV_KEYCODES
+                    if (event.type == KeyEventType.KeyDown) {
+                        return@onPreviewKeyEvent cursor.handleKey(
+                            keyCode = code,
+                            rowCount = rowCount,
+                            onClose = onDismiss
+                        )
+                    }
+                    // Swallow the paired ACTION_UP for navigation keys so it
+                    // doesn't propagate out of the overlay and drive the
+                    // systems grid rendered beneath this screen (focus leak
+                    // reported on Scraping / Layout rows).
+                    isNavKey
                 }
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -137,9 +146,21 @@ fun FrontendSettingsScreen(
     }
 }
 
+private val NAV_KEYCODES: Set<Int> = setOf(
+    KeyEvent.KEYCODE_DPAD_UP,
+    KeyEvent.KEYCODE_DPAD_DOWN,
+    KeyEvent.KEYCODE_DPAD_LEFT,
+    KeyEvent.KEYCODE_DPAD_RIGHT,
+    KeyEvent.KEYCODE_DPAD_CENTER,
+    KeyEvent.KEYCODE_ENTER,
+    KeyEvent.KEYCODE_BUTTON_A,
+    KeyEvent.KEYCODE_BUTTON_B,
+    KeyEvent.KEYCODE_BACK,
+)
+
 private fun rowCountFor(category: FrontendSettingsCategory): Int = when (category) {
     FrontendSettingsCategory.LAYOUT -> 8
-    FrontendSettingsCategory.MEDIA -> 5
+    FrontendSettingsCategory.MEDIA -> 6
     FrontendSettingsCategory.FEEL -> 5
     FrontendSettingsCategory.SYSTEMS -> 2
     FrontendSettingsCategory.SCRAPING -> 5

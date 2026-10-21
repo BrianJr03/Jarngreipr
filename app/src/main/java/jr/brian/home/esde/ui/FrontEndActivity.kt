@@ -14,9 +14,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
+import androidx.media3.common.util.UnstableApi
 import jr.brian.core.model.SwapCoordinator
 import jr.brian.home.ui.components.SwapFade
 import androidx.core.view.WindowCompat
@@ -41,8 +45,12 @@ import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.theme.managers.effectiveFrontendWallpaper
+import jr.brian.home.ui.util.applyWallpaperWindowBackground
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -237,8 +245,14 @@ class FrontEndActivity : ComponentActivity() {
             private set
     }
 
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyWallpaperWindowBackground(
+            activity = this,
+            wallpaperManager = managers.ui.frontendWallpaperManager,
+            launcherSyncSource = managers.ui.wallpaperManager,
+        )
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
@@ -268,20 +282,33 @@ class FrontEndActivity : ComponentActivity() {
                         LocalEsdeWallpaperState provides wallpaperState
                     ) {
                         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                        SwapFade(swapCoordinator) {
-                            FrontendScreen(
-                                esdePrefs = esdePrefs,
-                                viewModel = viewModel,
-                                mainViewModel = mainViewModel,
-                                romSearchStateHolder = romSearchStateHolder,
-                                frontendSelectionStateHolder = frontendSelectionStateHolder,
-                                managers = managers,
-                                romLauncher = romLauncher,
-                                appDisplayPreferenceManager = appDisplayPreferenceManager,
-                                onFinishImmediately = { finish() },
-                                onSignalGameLaunch = ::signalGameLaunch,
-                                onChangeFolder = ::launchSafPickerForGame
+                        val effective = effectiveFrontendWallpaper(
+                            primary = managers.ui.frontendWallpaperManager,
+                            launcherSyncSource = managers.ui.wallpaperManager,
+                        )
+                        val showFrontendWallpaper = effective.type != WallpaperType.NONE
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            WallpaperDisplay(
+                                wallpaperUri = effective.uri,
+                                wallpaperType = effective.type,
+                                modifier = Modifier.fillMaxSize(),
                             )
+                            SwapFade(swapCoordinator) {
+                                FrontendScreen(
+                                    esdePrefs = esdePrefs,
+                                    viewModel = viewModel,
+                                    mainViewModel = mainViewModel,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    frontendSelectionStateHolder = frontendSelectionStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    appDisplayPreferenceManager = appDisplayPreferenceManager,
+                                    onFinishImmediately = { finish() },
+                                    onSignalGameLaunch = ::signalGameLaunch,
+                                    onChangeFolder = ::launchSafPickerForGame,
+                                    showFrontendWallpaper = showFrontendWallpaper,
+                                )
+                            }
                         }
                     }
                 }

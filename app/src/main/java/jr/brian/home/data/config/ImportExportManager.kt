@@ -102,6 +102,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 savedGifUri = ui.wallpaperManager.savedGifUri,
                 savedVideoUri = ui.wallpaperManager.savedVideoUri
             ),
+            frontendWallpaper = WallpaperConfig(
+                type = ui.frontendWallpaperManager.currentWallpaper.type.name,
+                activeUri = ui.frontendWallpaperManager.currentWallpaper.uri,
+                savedImageUri = ui.frontendWallpaperManager.savedImageUri,
+                savedGifUri = ui.frontendWallpaperManager.savedGifUri,
+                savedVideoUri = ui.frontendWallpaperManager.savedVideoUri
+            ),
             searchLayout = SearchLayoutConfig(
                 isHorizontalLayout = ui.searchLayoutManager.isHorizontalLayout
             ),
@@ -400,6 +407,14 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.wallpaperManager.updateSavedVideoUri(wc.savedVideoUri)
         runCatching {
             ui.wallpaperManager.setWallpaper(wc.activeUri, WallpaperType.valueOf(wc.type))
+        }
+
+        val fwc = config.frontendWallpaper
+        ui.frontendWallpaperManager.updateSavedImageUri(fwc.savedImageUri)
+        ui.frontendWallpaperManager.updateSavedGifUri(fwc.savedGifUri)
+        ui.frontendWallpaperManager.updateSavedVideoUri(fwc.savedVideoUri)
+        runCatching {
+            ui.frontendWallpaperManager.setWallpaper(fwc.activeUri, WallpaperType.valueOf(fwc.type))
         }
 
         ui.searchLayoutManager.setHorizontalLayout(config.searchLayout.isHorizontalLayout)

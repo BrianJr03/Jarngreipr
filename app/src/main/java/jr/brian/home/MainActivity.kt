@@ -78,6 +78,7 @@ import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalGameKonfettiManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalThemeManager
+import jr.brian.home.ui.util.applyWallpaperWindowBackground
 import jr.brian.home.ui.util.launchFrontend
 import jr.brian.home.ui.util.resolveBottomDisplayId
 import jr.brian.home.util.launchApp
@@ -214,6 +215,7 @@ class MainActivity : ComponentActivity() {
         managers.feature.esdeEventManager.startPolling()
         checkAndCreateScripts()
         observeFrontendEnabledFlag()
+        applyWallpaperWindowBackground(this, managers.ui.wallpaperManager)
 
         // Phase 2d one-shot: migrate the legacy esde_prefs + rom_index
         // caches + ES-DE gamelists into the new Room-backed library.
