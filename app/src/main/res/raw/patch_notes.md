@@ -20,6 +20,7 @@
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
+- Your wallpaper no longer flickers through the per-game or per-system background while scrolling
 
 **To try the Jarngreipr Frontend**
 - `Settings` -> `Extras` -> `Enable Frontend`
