@@ -337,7 +337,12 @@ private fun MediaRows(
             title = stringResource(R.string.frontend_wallpaper_title),
             description = stringResource(R.string.frontend_wallpaper_description),
             showEsdeOption = false,
-            showLauncherOption = true,
+            // Hidden on the frontend selector for now — Launcher-mirror flow
+            // and System Wallpaper backdrop still have the systems-grid
+            // glitch when toggled. Flip both back on once the overlay →
+            // NavHost refactor lands.
+            // showLauncherOption = true,
+            showSystemWallpaperOption = false,
             isExpanded = wallpaperExpanded,
             onExpandChanged = { wallpaperExpanded = it }
         )

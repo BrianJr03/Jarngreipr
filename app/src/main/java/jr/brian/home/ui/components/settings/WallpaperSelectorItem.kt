@@ -69,7 +69,8 @@ fun WallpaperSelectorItem(
     title: String? = null,
     description: String? = null,
     showEsdeOption: Boolean = true,
-    showLauncherOption: Boolean = false
+    showLauncherOption: Boolean = false,
+    showSystemWallpaperOption: Boolean = true,
 ) {
     val context = LocalContext.current
     val setupPreferences = remember { SetupPreferences(context) }
@@ -274,14 +275,16 @@ fun WallpaperSelectorItem(
                     }
                 )
 
-                WallpaperOptionButton(
-                    text = stringResource(id = R.string.settings_wallpaper_transparent),
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
-                    onClick = {
-                        wallpaperManager.setTransparent()
-                        onExpandChanged(false)
-                    }
-                )
+                if (showSystemWallpaperOption) {
+                    WallpaperOptionButton(
+                        text = stringResource(id = R.string.settings_wallpaper_transparent),
+                        isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
+                        onClick = {
+                            wallpaperManager.setTransparent()
+                            onExpandChanged(false)
+                        }
+                    )
+                }
 
                 if (showLauncherOption) {
                     WallpaperOptionButton(

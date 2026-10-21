@@ -1,3 +1,6 @@
+** 3.1.1 Hotfix**
+- "System Wallpaper" in Appearance now actually shows the Android wallpaper again instead of a black screen
+
 **New Jarngreipr Frontend Features**
 - Edit Info now has a Marquee slot so you can set a custom marquee image per game
 
@@ -21,4 +24,4 @@
 - `Settings` -> `Extras` -> `Enable Frontend`
 - Still a WIP but functional
 
-3.1.0
+3.1.1
