@@ -3,6 +3,7 @@ package jr.brian.home.data.config
 import jr.brian.home.esde.data.*
 import androidx.annotation.OptIn
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.media3.common.util.UnstableApi
 import androidx.annotation.VisibleForTesting
 import jr.brian.home.canvas.data.CanvasTabType
@@ -100,6 +101,13 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 savedImageUri = ui.wallpaperManager.savedImageUri,
                 savedGifUri = ui.wallpaperManager.savedGifUri,
                 savedVideoUri = ui.wallpaperManager.savedVideoUri
+            ),
+            frontendWallpaper = WallpaperConfig(
+                type = ui.frontendWallpaperManager.currentWallpaper.type.name,
+                activeUri = ui.frontendWallpaperManager.currentWallpaper.uri,
+                savedImageUri = ui.frontendWallpaperManager.savedImageUri,
+                savedGifUri = ui.frontendWallpaperManager.savedGifUri,
+                savedVideoUri = ui.frontendWallpaperManager.savedVideoUri
             ),
             searchLayout = SearchLayoutConfig(
                 isHorizontalLayout = ui.searchLayoutManager.isHorizontalLayout
@@ -234,7 +242,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         return FeatureConfig(
             dock = DockConfig(
                 apps = f.dockManager.dockApps.value,
-                colorArgb = f.dockManager.dockColor.value.value.toInt(),
+                colorArgb = f.dockManager.dockColor.value.toArgb(),
                 size = f.dockManager.dockSize.value.name,
                 visible = f.dockManager.isDockVisible.value,
                 visiblePages = f.dockManager.dockVisiblePages.value.toList(),
@@ -251,7 +259,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
                 joystickMode = f.controlPadManager.joystickMode.value.name
             ),
             appDrawerFab = AppDrawerFabConfig(
-                colorArgb = f.appDrawerFabManager.fabColor.value.value.toInt(),
+                colorArgb = f.appDrawerFabManager.fabColor.value.toArgb(),
                 enabled = f.appDrawerFabManager.isFabEnabled.value,
                 visiblePages = f.appDrawerFabManager.fabVisiblePages.value.toList(),
                 explicitPages = f.appDrawerFabManager.fabExplicitPages.value,
@@ -293,6 +301,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
                 // Legacy field — kept populated with the primary-display value
@@ -398,6 +407,14 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         ui.wallpaperManager.updateSavedVideoUri(wc.savedVideoUri)
         runCatching {
             ui.wallpaperManager.setWallpaper(wc.activeUri, WallpaperType.valueOf(wc.type))
+        }
+
+        val fwc = config.frontendWallpaper
+        ui.frontendWallpaperManager.updateSavedImageUri(fwc.savedImageUri)
+        ui.frontendWallpaperManager.updateSavedGifUri(fwc.savedGifUri)
+        ui.frontendWallpaperManager.updateSavedVideoUri(fwc.savedVideoUri)
+        runCatching {
+            ui.frontendWallpaperManager.setWallpaper(fwc.activeUri, WallpaperType.valueOf(fwc.type))
         }
 
         ui.searchLayoutManager.setHorizontalLayout(config.searchLayout.isHorizontalLayout)
@@ -576,6 +593,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         // gated was removed. The field stays on RomSearchConfig so older exports
         // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setCompanionLaunchWatchdogEnabled(config.romSearch.companionLaunchWatchdogEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
         // New per-display fields fall back to the legacy single value when

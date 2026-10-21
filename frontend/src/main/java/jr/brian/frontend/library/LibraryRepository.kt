@@ -4,6 +4,7 @@ import android.util.Log
 import jr.brian.core.model.ApplicationScope
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
+import jr.brian.frontend.library.db.GameInfoRow
 import jr.brian.frontend.library.db.MediaDao
 import jr.brian.frontend.library.db.MediaEntity
 import jr.brian.frontend.library.db.PlayHistoryDao
@@ -71,6 +72,14 @@ class LibraryRepository @Inject constructor(
     val sources: Flow<List<SourceEntity>> = sourceDao.observeAll()
     val allGames: Flow<List<GameEntity>> = gameDao.observeAllVisible()
     val favorites: Flow<List<GameEntity>> = gameDao.observeFavorites()
+
+    /**
+     * Thin joined projection: one row per visible game, with the
+     * media columns the launcher needs. Replaces the previous
+     * `combine(allGames, mediaDao.observeAll())` which materialised
+     * two full tables into cursors and OOM'd on large libraries.
+     */
+    val allGameRows: Flow<List<GameInfoRow>> = gameDao.observeAllVisibleWithMedia()
 
     fun gamesForSystem(systemId: String): Flow<List<GameEntity>> =
         gameDao.observeBySystem(systemId)
@@ -274,29 +283,32 @@ class LibraryRepository @Inject constructor(
         // because replaceSystemGames did a delete+insert and the ids
         // the DAO assigned are not the ones we constructed with.
         val persisted = gameDao.getBySystemAndSource(def.id, sourceId)
+        val deletes = ArrayList<Long>()
+        val upserts = ArrayList<MediaEntity>(persisted.size)
         for (game in persisted) {
             val resolved = mediaIndex.resolve(
                 systemFolder = def.id,
                 basename = File(game.relativePath).nameWithoutExtension,
             )
             if (resolved == MediaIndex.Resolved.EMPTY) {
-                mediaDao.deleteByGameId(game.id)
+                deletes += game.id
             } else {
-                mediaDao.upsert(
-                    MediaEntity(
-                        gameId = game.id,
-                        coverPath = resolved.cover,
-                        marqueePath = resolved.marquee,
-                        fanartPath = resolved.fanart,
-                        screenshotPath = resolved.screenshot,
-                        titlescreenPath = resolved.titlescreen,
-                        miximagePath = resolved.miximage,
-                        physicalMediaPath = resolved.physicalMedia,
-                        videoPath = resolved.video,
-                    )
+                upserts += MediaEntity(
+                    gameId = game.id,
+                    coverPath = resolved.cover,
+                    marqueePath = resolved.marquee,
+                    fanartPath = resolved.fanart,
+                    screenshotPath = resolved.screenshot,
+                    titlescreenPath = resolved.titlescreen,
+                    miximagePath = resolved.miximage,
+                    physicalMediaPath = resolved.physicalMedia,
+                    videoPath = resolved.video,
                 )
             }
         }
+        // One transaction per system: one `media` invalidation, not
+        // one per game (see MediaDao.replaceForSystem).
+        mediaDao.replaceForSystem(deletes, upserts)
     }
 
     private companion object {

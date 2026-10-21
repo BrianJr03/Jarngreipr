@@ -1,3 +1,7 @@
+** 3.1.1 Hotfix**
+- `System Wallpaper` in Appearance now actually shows the Android wallpaper again instead of a black screen
+- Pick a wallpaper (image, GIF, or video) for the Jarngreipr Frontend display from Frontend `Settings -> Media`, separate from the main launcher's wallpaper
+
 **New Jarngreipr Frontend Features**
 - Edit Info now has a Marquee slot so you can set a custom marquee image per game
 
@@ -9,12 +13,16 @@
 **Launcher Fixes**
 - Opening the launcher no longer pauses audio from other apps when Jarngreipr's background music is muted or set to 0% volume
 - Mute toggle for background music now persists across app restarts
+- The bottom screen no longer falls back to the system launcher after a ROM search opens results on the top screen
+- Backup and Restore now preserves your dock and app drawer button colors
+- Backup no longer exports the dock color as 0, so Restore no longer turns the dock transparent
+- Resuming one display no longer drags the other back to the front, each screen stays where you left it (new "Resume Companion Display" toggle in Settings -> Extras restores the old behavior if you want it)
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library
 
 **To try the Jarngreipr Frontend**
 - `Settings` -> `Extras` -> `Enable Frontend`
-- Still a WIP but very functional
+- Still a WIP but functional
 
-3.1.0
+3.1.1

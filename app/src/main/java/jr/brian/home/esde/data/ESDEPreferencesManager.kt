@@ -138,6 +138,7 @@ import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_PLATFORM_IMAGES_FOLDER_TYPE
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_PRIMARY_GAME_LAYOUT
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_SECONDARY_GAME_LAYOUT
@@ -624,6 +625,7 @@ class ESDEPreferencesManager(context: Context) {
                 ?: PlatformImageFolderType.Default,
             romSearchDetailImageHeightDp = prefs.getInt(KEY_ROM_SEARCH_DETAIL_IMAGE_HEIGHT_DP, 240),
             frontendEnabled = prefs.getBoolean(KEY_FRONTEND_ENABLED, false),
+            companionLaunchWatchdogEnabled = prefs.getBoolean(KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED, false),
             secondaryMediaEnabled = prefs.getBoolean(KEY_SECONDARY_MEDIA_ENABLED, true),
             jarngreiprMediaEnabled = prefs.getBoolean(KEY_JARNGREIPR_MEDIA_ENABLED, true),
             primarySystemLayout = prefs.getString(KEY_PRIMARY_SYSTEM_LAYOUT, null)

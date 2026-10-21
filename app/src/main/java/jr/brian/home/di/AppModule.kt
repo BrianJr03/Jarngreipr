@@ -35,6 +35,7 @@ import jr.brian.home.data.RssRepository
 import jr.brian.home.data.database.AppDatabase
 import jr.brian.home.data.database.CustomIconDao
 import jr.brian.home.data.database.RssFeedDao
+import jr.brian.home.ui.theme.managers.FRONTEND_WALLPAPER_PREFS
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import kotlinx.coroutines.CoroutineScope
 import jr.brian.core.model.ApplicationScope
@@ -258,6 +259,15 @@ object AppModule {
         @ApplicationContext context: Context
     ): WallpaperManager {
         return WallpaperManager(context)
+    }
+
+    @Provides
+    @Singleton
+    @FrontendWallpaper
+    fun provideFrontendWallpaperManager(
+        @ApplicationContext context: Context
+    ): WallpaperManager {
+        return WallpaperManager(context, prefsName = FRONTEND_WALLPAPER_PREFS)
     }
 
     @Provides

@@ -6,7 +6,9 @@ enum class WallpaperType {
     GIF,
     VIDEO,
     TRANSPARENT,
-    ESDE
+    ESDE,
+    /** Frontend-only: mirror the main launcher's current wallpaper. */
+    LAUNCHER
 }
 
 data class WallpaperInfo(
