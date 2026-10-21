@@ -5,7 +5,7 @@ const val FRONTEND_TRANSITION_MS_MIN = 150
 const val FRONTEND_TRANSITION_MS_MAX = 500
 const val FRONTEND_TRANSITION_MS_STEP = 25
 
-enum class FrontendTransition { None, Fade, Slide, Zoom, SlideUp;
+enum class FrontendTransition { None, Fade, Slide, SlideUp, SlideDown, Zoom, Scale, Pop;
 
     companion object {
         val Default: FrontendTransition = Fade

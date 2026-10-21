@@ -131,11 +131,16 @@ internal fun FrontendNavHost(
                 if (esdeState.romSearchUseWallpaper || showFrontendWallpaper) Color.Transparent
                 else OledBackgroundColor
             ),
+        // `forward` tracks hierarchy direction, not enter/exit role: true when
+        // we're drilling into Games, false when we're backing out to Systems.
+        // Keying it on the TARGET route makes it symmetric across all four
+        // callbacks (push → target=Games → forward=true; pop → target=Systems
+        // → forward=false), so Slide and SlideUp reverse properly on back-nav.
         enterTransition = {
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = initialState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .targetContentEnter
@@ -145,7 +150,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = initialState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .initialContentExit
@@ -155,7 +160,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = targetState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .targetContentEnter
@@ -165,7 +170,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = targetState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .initialContentExit

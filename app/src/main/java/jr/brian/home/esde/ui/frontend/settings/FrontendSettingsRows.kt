@@ -576,8 +576,11 @@ private fun labelResFor(transition: FrontendTransition): Int = when (transition)
     FrontendTransition.None -> R.string.frontend_transition_none
     FrontendTransition.Fade -> R.string.frontend_transition_fade
     FrontendTransition.Slide -> R.string.frontend_transition_slide
-    FrontendTransition.Zoom -> R.string.frontend_transition_zoom
     FrontendTransition.SlideUp -> R.string.frontend_transition_slide_up
+    FrontendTransition.SlideDown -> R.string.frontend_transition_slide_down
+    FrontendTransition.Zoom -> R.string.frontend_transition_zoom
+    FrontendTransition.Scale -> R.string.frontend_transition_scale
+    FrontendTransition.Pop -> R.string.frontend_transition_pop
 }
 
 @Composable

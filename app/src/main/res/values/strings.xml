@@ -101,6 +101,9 @@
     <string name="frontend_transition_slide">Slide</string>
     <string name="frontend_transition_zoom">Zoom</string>
     <string name="frontend_transition_slide_up">Slide up</string>
+    <string name="frontend_transition_slide_down">Slide down</string>
+    <string name="frontend_transition_scale">Scale</string>
+    <string name="frontend_transition_pop">Pop</string>
     <string name="frontend_settings_close">Close</string>
     <string name="frontend_settings_filter_systems_title">Filter Systems</string>
     <string name="frontend_settings_filter_systems_description">Choose which systems appear on the frontend.</string>
