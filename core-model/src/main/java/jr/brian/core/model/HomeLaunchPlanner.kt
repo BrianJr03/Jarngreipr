@@ -28,12 +28,12 @@ enum class HomeLaunchActivity { MAIN, FRONTEND }
  * Pure planner: given the display state and the user's preferences, returns
  * the ordered list of activity launches that `routeHome` will fire.
  *
- * [HomeTarget.TOP] / [HomeTarget.BOTTOM] are *slot* targets, not activity
- * targets — "restore whichever activity lives on the top (or bottom) screen
- * under the current [ScreenAssignment]." That lets the Home-button gestures
- * stay consistent across a user screen swap: single-press always brings back
- * the bottom slot, double-press always brings back the top slot, regardless
- * of whether the frontend or the launcher is physically there.
+ * Under the pinned-slot design (PR 2 of the seamless-swap work), each
+ * activity is permanently assigned to a display — [HomeLaunchActivity.FRONTEND]
+ * on [PRIMARY_DISPLAY_ID] and [HomeLaunchActivity.MAIN] on the external
+ * display. Which **content** each one shows is a composition decision inside
+ * the activity, not a routing decision here. [HomeTarget.TOP] / [BOTTOM]
+ * therefore map one-to-one onto the two activities.
  *
  * Encapsulates the coercion rules so they can be unit-tested without
  * involving `Context` / `ActivityOptions`:
@@ -42,12 +42,18 @@ enum class HomeLaunchActivity { MAIN, FRONTEND }
  *    (the manifest's default display resolution wins). All three targets
  *    collapse to this.
  *  - [HomeTarget.BOTH] with `frontendEnabled == false` → collapse to
- *    [HomeTarget.BOTTOM]; a disabled frontend also forces TOP/BOTTOM to
- *    resolve to `MainActivity` for both slots (there is no other activity to
- *    launch).
+ *    [HomeTarget.BOTTOM]; a disabled frontend means only MainActivity is
+ *    launched.
+ *  - [HomeTarget.TOP] with `frontendEnabled == false` → MainActivity on
+ *    primary (the top display becomes a plain launcher).
  *  - [HomeTarget.BOTH] → two launches, ordered so that the display named by
  *    [mainScreen] starts *last* and therefore takes input focus.
+ *
+ * The `assignment` parameter is unused by the planner itself (slot ↔
+ * activity is pinned) but kept to avoid breaking every caller in the same
+ * change — the swap is now a content flip, not a routing change.
  */
+@Suppress("UNUSED_PARAMETER")
 fun planHomeLaunches(
     bottomDisplayId: Int?,
     target: HomeTarget,
@@ -60,61 +66,22 @@ fun planHomeLaunches(
     }
     val effectiveTarget =
         if (target == HomeTarget.BOTH && !frontendEnabled) HomeTarget.BOTTOM else target
-    val (topId, bottomId) = displayIdsFor(bottomDisplayId, assignment)
-    val (topActivity, bottomActivity) = activitiesFor(assignment, frontendEnabled)
+    val topActivity =
+        if (frontendEnabled) HomeLaunchActivity.FRONTEND else HomeLaunchActivity.MAIN
     return when (effectiveTarget) {
-        HomeTarget.TOP -> listOf(HomeLaunch(topActivity, topId))
-        HomeTarget.BOTTOM -> listOf(HomeLaunch(bottomActivity, bottomId))
+        HomeTarget.TOP -> listOf(HomeLaunch(topActivity, PRIMARY_DISPLAY_ID))
+        HomeTarget.BOTTOM -> listOf(HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId))
         HomeTarget.BOTH -> when (mainScreen) {
             MainScreen.TOP -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, bottomId),
-                HomeLaunch(HomeLaunchActivity.MAIN, topId),
+                HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
             )
             MainScreen.BOTTOM -> listOf(
-                HomeLaunch(HomeLaunchActivity.FRONTEND, topId),
-                HomeLaunch(HomeLaunchActivity.MAIN, bottomId),
+                HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
+                HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
             )
         }
     }
-}
-
-/**
- * Which activity owns each perceived slot under the given [assignment]. With
- * the frontend disabled there is no second activity to place, so both slots
- * collapse to [HomeLaunchActivity.MAIN] — a TOP or BOTTOM gesture still routes
- * MainActivity to the requested display without trying to launch a disabled
- * frontend.
- */
-private fun activitiesFor(
-    assignment: ScreenAssignment,
-    frontendEnabled: Boolean,
-): Pair<HomeLaunchActivity, HomeLaunchActivity> {
-    if (!frontendEnabled) return HomeLaunchActivity.MAIN to HomeLaunchActivity.MAIN
-    return when (assignment) {
-        ScreenAssignment.FRONTEND_ON_TOP ->
-            HomeLaunchActivity.FRONTEND to HomeLaunchActivity.MAIN
-        ScreenAssignment.FRONTEND_ON_BOTTOM ->
-            HomeLaunchActivity.MAIN to HomeLaunchActivity.FRONTEND
-    }
-}
-
-/**
- * Resolves which concrete display id MainActivity and the frontend
- * each live on, given the user's [assignment]. The naming here keeps
- * the planner readable — `topId` is wherever "top" means to the user,
- * `bottomId` is "bottom" — rather than literal hardware primary/secondary.
- *
- * - [ScreenAssignment.FRONTEND_ON_TOP] (default): main gets primary,
- *   frontend gets the external display.
- * - [ScreenAssignment.FRONTEND_ON_BOTTOM]: main gets the external
- *   display, frontend gets primary.
- */
-private fun displayIdsFor(
-    externalDisplayId: Int,
-    assignment: ScreenAssignment,
-): Pair<Int, Int> = when (assignment) {
-    ScreenAssignment.FRONTEND_ON_TOP -> PRIMARY_DISPLAY_ID to externalDisplayId
-    ScreenAssignment.FRONTEND_ON_BOTTOM -> externalDisplayId to PRIMARY_DISPLAY_ID
 }
 
 /**
@@ -134,10 +101,12 @@ private fun displayIdsFor(
  *    with `displayId == null`. Because no explicit `launchDisplayId` is set,
  *    Android puts MainActivity on the same display HomeRouterActivity was
  *    started on — i.e. the display the external launcher targeted.
- *  - Frontend enabled + external display → MainActivity on the bottom
- *    display plus the frontend on the top display, matching v2.7.1's
- *    dual-launch behaviour when the frontend is on.
+ *  - Frontend enabled + external display → MainActivity on the external
+ *    display plus FrontEndActivity on the primary display, pinned regardless
+ *    of the current [ScreenAssignment]: the swap is a content change, not a
+ *    window change.
  */
+@Suppress("UNUSED_PARAMETER")
 fun planLauncherHomeLaunches(
     bottomDisplayId: Int?,
     frontendEnabled: Boolean,
@@ -146,14 +115,8 @@ fun planLauncherHomeLaunches(
     if (bottomDisplayId == null || !frontendEnabled) {
         return listOf(HomeLaunch(HomeLaunchActivity.MAIN, displayId = null))
     }
-    return when (assignment) {
-        ScreenAssignment.FRONTEND_ON_TOP -> listOf(
-            HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
-            HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
-        )
-        ScreenAssignment.FRONTEND_ON_BOTTOM -> listOf(
-            HomeLaunch(HomeLaunchActivity.MAIN, PRIMARY_DISPLAY_ID),
-            HomeLaunch(HomeLaunchActivity.FRONTEND, bottomDisplayId),
-        )
-    }
+    return listOf(
+        HomeLaunch(HomeLaunchActivity.MAIN, bottomDisplayId),
+        HomeLaunch(HomeLaunchActivity.FRONTEND, PRIMARY_DISPLAY_ID),
+    )
 }

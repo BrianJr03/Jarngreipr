@@ -6,21 +6,12 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import jr.brian.core.model.ApplicationScope
-import jr.brian.core.model.SwapCoordinator
-import jr.brian.home.ui.components.SWAP_LAYOUT_FLIP_BUFFER_MS
-import jr.brian.home.ui.components.SWAP_LEAVE_MS
-import jr.brian.home.ui.util.routeHomeFromLauncher
-import jr.brian.home.util.ThorDetection
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * L3 or R3 (either thumbstick click) fires a screen swap on Thor
  * hardware. Matches the same action the "Swap screens" row in
- * Frontend Settings → Dual-screen performs — flips
- * [ScreenAssignmentStore] and re-fires the two-activity launch plan.
+ * Frontend Settings → Dual-screen performs — both route through
+ * [ScreenSwapOrchestrator], so every trigger animates identically.
  *
  * Both [jr.brian.home.MainActivity] and
  * [jr.brian.home.esde.ui.FrontEndActivity] route their
@@ -56,41 +47,19 @@ object GamepadSwapShortcut {
     }
 
     /**
-     * Run the full swap choreography: begin the Leaving phase (so
-     * SwapFade animates out), flip [ScreenAssignmentStore], re-fire
-     * the launch plan, then transition to Arriving (so the new
-     * activities animate in). Same sequence [ScreenSwapListener]
-     * runs — this just shortcuts the FrontendBus hop for callers
-     * that already live inside :app. Thor-only — a single-display
-     * device has no "other" screen for the swap to land on.
+     * Delegates to [ScreenSwapOrchestrator.requestSwap]. The orchestrator
+     * owns the guards (Thor-only, phase-not-busy) so this stays a thin
+     * entry point.
      */
     fun fireSwap(context: Context) {
-        if (!ThorDetection.isThor()) return
         val entryPoint = EntryPointAccessors
             .fromApplication(context.applicationContext, SwapShortcutEntryPoint::class.java)
-        val store = entryPoint.screenAssignmentStore()
-        val coordinator = entryPoint.swapCoordinator()
-        val scope = entryPoint.applicationScope()
-        val next = store.assignment.flipped()
-        // Start the Leaving fade first, then wait a full fade duration
-        // before flipping the pref + routing. That means the layout
-        // change happens while both activities are at alpha 0, so the
-        // user never sees the row ↔ grid transition in-frame.
-        coordinator.beginLeaving(next)
-        scope.launch {
-            delay((SWAP_LEAVE_MS + SWAP_LAYOUT_FLIP_BUFFER_MS).toLong())
-            store.setAssignment(next)
-            ScreenFocusLockWriter.syncToAssignment(context, next)
-            routeHomeFromLauncher(context, frontendEnabled = true)
-            coordinator.markArriving()
-        }
+        entryPoint.screenSwapOrchestrator().requestSwap()
     }
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     internal interface SwapShortcutEntryPoint {
-        fun screenAssignmentStore(): ScreenAssignmentStore
-        fun swapCoordinator(): SwapCoordinator
-        @ApplicationScope fun applicationScope(): CoroutineScope
+        fun screenSwapOrchestrator(): ScreenSwapOrchestrator
     }
 }

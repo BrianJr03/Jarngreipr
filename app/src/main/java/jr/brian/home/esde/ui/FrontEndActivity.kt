@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import jr.brian.core.model.SwapCoordinator
-import jr.brian.home.ui.components.SwapFade
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -58,7 +57,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FrontEndActivity : ComponentActivity() {
+class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -83,6 +82,12 @@ class FrontEndActivity : ComponentActivity() {
     private val viewModel: RomSearchResultsViewModel by viewModels()
     private val mainViewModel: MainViewModel by viewModels()
     private val romSearchViewModel: RomSearchViewModel by viewModels()
+
+    override val slot: jr.brian.core.model.ScreenSlot = jr.brian.core.model.ScreenSlot.TOP
+
+    override fun finishIfOn(displayId: Int) {
+        if (display?.displayId == displayId) finish()
+    }
 
     private var pendingFolderChangeSystem: String? = null
     private lateinit var romLauncher: RomGameLauncher
@@ -145,11 +150,10 @@ class FrontEndActivity : ComponentActivity() {
      * Mirror of the launcher-side resync. When the frontend returns
      * after an external app had focus, pin Focus Lock back to the
      * frontend's assigned display (or whatever the current
-     * [jr.brian.home.data.FocusLockMode] dictates). Skipped mid-swap
-     * since the swap trigger handles its own sync.
+     * [jr.brian.home.data.FocusLockMode] dictates). No phase guard
+     * needed — pinned-slot swap does not trigger onStop/onStart.
      */
     private fun maybeResyncFocusLock() {
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
             this,
             screenAssignmentStore.assignment,
@@ -167,7 +171,7 @@ class FrontEndActivity : ComponentActivity() {
     private fun ensureLauncherCompanion() {
         if (jr.brian.home.MainActivity.isRunning) return
         if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
-        jr.brian.home.ui.util.launchMainForCurrentAssignment(this)
+        jr.brian.home.ui.util.launchBottomHost(this)
     }
 
     private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null
@@ -215,13 +219,12 @@ class FrontEndActivity : ComponentActivity() {
 
     /**
      * Mirror of the launcher-side guard. When the frontend goes
-     * offscreen with the launcher side also gone and we're not mid-
-     * swap, an external app took focus. Launched apps land on
-     * [PRIMARY_DISPLAY_ID] so pin Focus Lock there.
+     * offscreen with the launcher side also gone, an external app
+     * took focus. Launched apps land on [PRIMARY_DISPLAY_ID] so pin
+     * Focus Lock there.
      */
     private fun maybeSyncFocusLockForExternalApp() {
         if (jr.brian.home.MainActivity.isRunning) return
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(
             this,
             jr.brian.core.model.PRIMARY_DISPLAY_ID,
@@ -280,18 +283,31 @@ class FrontEndActivity : ComponentActivity() {
                         LocalEsdeWallpaperState provides wallpaperState
                     ) {
                         val appDisplayPreferenceManager = LocalAppDisplayPreferenceManager.current
-                        val effective = effectiveFrontendWallpaper(
-                            primary = managers.ui.frontendWallpaperManager,
-                            launcherSyncSource = managers.ui.wallpaperManager,
-                        )
-                        val showFrontendWallpaper = effective.type != WallpaperType.NONE
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            WallpaperDisplay(
-                                wallpaperUri = effective.uri,
-                                wallpaperType = effective.type,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                            SwapFade(swapCoordinator) {
+                        jr.brian.home.ui.components.ScreenSlotHost(
+                            slot = slot,
+                            coordinator = swapCoordinator,
+                            store = screenAssignmentStore,
+                            launcherContent = {
+                                // Full launcher wiring via the shared
+                                // LauncherContent composable. State flows
+                                // through LauncherUiStateHolder (@Singleton),
+                                // so page index / dock Y / overlay flags
+                                // survive the swap from MainActivity. The
+                                // ES-DE event listeners that drive the hide-
+                                // UI flags still live on MainActivity's
+                                // setContent — this side just reads what
+                                // MainActivity has already pushed into the
+                                // holder.
+                                jr.brian.home.LauncherContent(
+                                    managers = managers,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    romLauncher = romLauncher,
+                                    onChangeFolder = ::launchSafPickerForGame,
+                                    navigateToThemeShare = false,
+                                    onNavigateToThemeShareHandled = {},
+                                )
+                            },
+                            frontendContent = {
                                 FrontendScreen(
                                     esdePrefs = esdePrefs,
                                     viewModel = viewModel,
@@ -301,13 +317,14 @@ class FrontEndActivity : ComponentActivity() {
                                     managers = managers,
                                     romLauncher = romLauncher,
                                     appDisplayPreferenceManager = appDisplayPreferenceManager,
-                                    onFinishImmediately = { finish() },
+                                    onFinishImmediately = {
+                                        finishIfOn(jr.brian.core.model.PRIMARY_DISPLAY_ID)
+                                    },
                                     onSignalGameLaunch = ::signalGameLaunch,
-                                    onChangeFolder = ::launchSafPickerForGame,
-                                    showFrontendWallpaper = showFrontendWallpaper,
+                                    onChangeFolder = ::launchSafPickerForGame
                                 )
-                            }
-                        }
+                            },
+                        )
                     }
                 }
             }

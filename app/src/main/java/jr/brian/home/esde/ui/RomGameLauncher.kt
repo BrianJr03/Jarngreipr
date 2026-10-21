@@ -56,6 +56,18 @@ class RomGameLauncher(
     private val onLaunchSafPicker: (Uri?) -> Unit
 ) {
 
+    /**
+     * Pinned-slot game-launch rule: only the host that owns the
+     * primary display finishes so the game can land there; the other
+     * host stays visible. On FRONTEND_ON_BOTTOM that keeps the
+     * frontend interactive on the external display while the game
+     * runs on primary — the dual-screen value prop.
+     */
+    private fun finishIfOnPrimary() {
+        (activity as? jr.brian.core.model.ScreenHost)?.finishIfOn(PRIMARY_DISPLAY_ID)
+            ?: activity.finish()
+    }
+
     private fun maybeLaunchCompanion(game: GameInfo, context: Context) {
         val pkg = esdePrefs.getGameCompanion(gameKey(game)) ?: return
         val installed = runCatching {
@@ -133,7 +145,7 @@ class RomGameLauncher(
             } else {
                 Toast.makeText(context, "App not installed: $key", Toast.LENGTH_SHORT).show()
             }
-            activity.finish()
+            finishIfOnPrimary()
             return
         }
 
@@ -301,7 +313,7 @@ class RomGameLauncher(
             fail(context, failure)
             return
         }
-        activity.finish()
+        finishIfOnPrimary()
     }
 
     private fun launchWithSavedCommand(
@@ -332,7 +344,7 @@ class RomGameLauncher(
         jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(activity, PRIMARY_DISPLAY_ID)
         try {
             activity.startActivity(intent, options.toBundle())
-            activity.finish()
+            finishIfOnPrimary()
         } catch (e: Exception) {
             Log.e(TAG, "Saved-command launch failed", e)
             fail(context, LaunchFailure.Unknown(e))

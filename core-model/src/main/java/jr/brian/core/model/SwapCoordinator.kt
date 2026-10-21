@@ -1,39 +1,21 @@
 package jr.brian.core.model
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Lives in :core-model (plan §3.6). Both activities observe
- * [phase] during a screen-swap handoff so each can play its
- * leave/enter animation in sync without importing the other
- * module.
+ * State owner for the pinned-slot content-swap animation. Both host
+ * activities render both [SlotContent]s simultaneously during
+ * [SwapPhase.Swapping] and cross-fade off this single phase so the
+ * two displays stay in lockstep without needing a shared frame clock.
  *
- * ### Lifecycle
- *
- * 1. The initiator calls [requestSwap] on this coordinator or
- *    emits `FrontendCommand.SwapScreens` on the bus. Both routes
- *    end up invoking [beginLeaving].
- * 2. Both activities observe `phase = Leaving` and play the
- *    ~180ms scale/fade-out animation on their content (wallpaper
- *    stays per plan).
- * 3. Each side calls [planHomeLaunches] with the flipped
- *    [ScreenAssignment] and starts the other activity on its own
- *    display, then finishes itself. The planner is already Phase 5-
- *    aware from the HomeLaunchPlanner changes.
- * 4. Arriving activities read `phase = Arriving` and play the
- *    mirrored enter animation, then call [markArrived] which
- *    returns [SwapPhase] to Idle.
- *
- * This class is deliberately dumb: it owns the state transitions
- * but doesn't start any activities. The real orchestration lives
- * in :app's Phase 5 glue (which also persists the new assignment
- * via [ScreenAssignmentStore]).
+ * Compose integration lives in `:app` (`SwapTransition`). This class
+ * stays pure Kotlin so unit tests can drive it with a test
+ * dispatcher.
  */
 @Singleton
 class SwapCoordinator @Inject constructor() {
@@ -41,83 +23,55 @@ class SwapCoordinator @Inject constructor() {
     private val _phase = MutableStateFlow<SwapPhase>(SwapPhase.Idle)
     val phase: StateFlow<SwapPhase> = _phase.asStateFlow()
 
-    private val _arrivingReady = MutableStateFlow(0)
-    val arrivingReady: StateFlow<Int> = _arrivingReady.asStateFlow()
-
-    /** Idempotent — a second call during Leaving / Arriving is a no-op. */
-    fun beginLeaving(targetAssignment: ScreenAssignment) {
-        if (_phase.value !is SwapPhase.Idle) return
-        _phase.value = SwapPhase.Leaving(targetAssignment)
-    }
-
     /**
-     * Called by the new side after it starts drawing. Transitions
-     * from Leaving → Arriving so the arriving activity's observer
-     * can play its enter animation.
+     * Enters [SwapPhase.Swapping] for [SWAP_MS] + [SWAP_SETTLE_MS],
+     * then returns to Idle. The settle buffer lets
+     * `animateFloatAsState` tween converge before the phase flips
+     * back, so there is no one-frame flicker at the tail.
+     *
+     * Idempotent: a second [run] while already Swapping is dropped
+     * (not queued), and a [run] with equal `from == to` is a no-op.
      */
-    fun markArriving() {
-        val leaving = _phase.value as? SwapPhase.Leaving ?: return
-        _phase.value = SwapPhase.Arriving(leaving.targetAssignment)
-    }
-
-    /** Called by the arriving activity once its enter animation ends. */
-    fun markArrived() {
-        if (_phase.value is SwapPhase.Arriving) {
-            _phase.value = SwapPhase.Idle
-        }
+    suspend fun run(from: ScreenAssignment, to: ScreenAssignment) {
+        if (_phase.value !is SwapPhase.Idle) return
+        if (from == to) return
+        _phase.value = SwapPhase.Swapping(from, to)
+        delay(SWAP_MS.toLong() + SWAP_SETTLE_MS.toLong())
+        _phase.value = SwapPhase.Idle
     }
 
     /**
-     * Resets to Idle in response to a game-launch or user cancel.
-     * The arriving animation may have been skipped; the state must
-     * still land back at Idle so the next swap can begin.
+     * Force-reset to Idle. For the game-launch path, which finishes
+     * the top host mid-swap — the coordinator must land back at
+     * Idle so the next swap can begin.
      */
     fun reset() {
         _phase.value = SwapPhase.Idle
-        _arrivingReady.value = 0
     }
 
-    /**
-     * Called by the orchestrator right before launching the new
-     * activities on their flipped displays, so stale ready-signals
-     * from the previous swap don't carry over.
-     */
-    fun resetArrivingReady() {
-        _arrivingReady.value = 0
-    }
+    companion object {
+        /** Duration of the content cross-fade. */
+        const val SWAP_MS = 320
 
-    /**
-     * Called from each arriving activity's SwapFade on its first
-     * frame. The orchestrator waits for this to reach [expected]
-     * before transitioning to Arriving, so the slide-in animation
-     * starts only after both displays actually have content to draw.
-     */
-    fun notifyArrivingReady() {
-        _arrivingReady.value = _arrivingReady.value + 1
-    }
-
-    /**
-     * Suspends until [expected] arriving activities have signalled
-     * first-frame readiness, or [timeoutMs] elapses. Returns true if
-     * the signal arrived in time, false on timeout — callers should
-     * proceed with [markArriving] either way so a stuck activity
-     * can't permanently block the swap.
-     */
-    suspend fun awaitArrivingReady(expected: Int, timeoutMs: Long): Boolean {
-        val result = withTimeoutOrNull(timeoutMs) {
-            arrivingReady.first { it >= expected }
-        }
-        return result != null
+        /**
+         * Grace period after [SWAP_MS] before transitioning back to
+         * Idle, so the Compose tween commits its final value under
+         * the final [SwapPhase.Swapping] frame.
+         */
+        const val SWAP_SETTLE_MS = 50
     }
 }
 
-/** Observable state the choreography depends on. */
+/**
+ * Phase observed by the content-swap composition. Idle while nothing
+ * is happening; Swapping with both the previous and next
+ * [ScreenAssignment] for the duration of the cross-fade.
+ */
 sealed interface SwapPhase {
     data object Idle : SwapPhase
 
-    /** Both sides play the leave animation. */
-    data class Leaving(val targetAssignment: ScreenAssignment) : SwapPhase
-
-    /** Both sides play the enter animation. */
-    data class Arriving(val targetAssignment: ScreenAssignment) : SwapPhase
+    data class Swapping(
+        val from: ScreenAssignment,
+        val to: ScreenAssignment,
+    ) : SwapPhase
 }

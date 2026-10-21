@@ -190,8 +190,8 @@ internal fun RomResultsGrid(
                 // Force 2 columns on the external (bottom) display so
                 // the smaller screen gets bigger game tiles. Mirrors
                 // the systems grid.
-                val onBottom = jr.brian.home.ui.util.rememberPhysicalAssignment() ==
-                    jr.brian.core.model.ScreenAssignment.FRONTEND_ON_BOTTOM
+                val onBottom = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                    jr.brian.core.model.ScreenSlot.BOTTOM
                 val columnCount = if (onBottom) 2 else gameGridColumnsForScale(scale)
                 FocusableTileLayout(
                     items = displayedGames,

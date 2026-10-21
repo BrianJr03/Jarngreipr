@@ -97,7 +97,7 @@ import java.io.File
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
     @Inject
     lateinit var managers: ManagerContainer
 
@@ -125,7 +125,26 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var screenAssignmentStore: jr.brian.home.data.ScreenAssignmentStore
 
+    @Inject
+    lateinit var wallpaperStateHolder: jr.brian.home.esde.data.WallpaperStateHolder
+
+    @Inject
+    lateinit var launcherUiStateHolder: jr.brian.home.data.LauncherUiStateHolder
+
     private val esdeViewModel: ESDEViewModel by viewModels()
+
+    // Injected so this activity can render the frontend content when
+    // ScreenAssignment flips to FRONTEND_ON_BOTTOM — the pinned-slot
+    // design has the BOTTOM host (this one) show the frontend on swap.
+    private val romSearchResultsViewModel:
+        jr.brian.home.esde.viewmodels.RomSearchResultsViewModel by viewModels()
+    private val mainViewModel: jr.brian.home.viewmodels.MainViewModel by viewModels()
+
+    override val slot: jr.brian.core.model.ScreenSlot = jr.brian.core.model.ScreenSlot.BOTTOM
+
+    override fun finishIfOn(displayId: Int) {
+        if (display?.displayId == displayId) finish()
+    }
 
     private var navigateToThemeShare by mutableStateOf(false)
 
@@ -232,27 +251,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
-                jr.brian.home.ui.components.SwapFade(swapCoordinator) {
                 managers.ManagerCompositionLocalProvider {
                 CompositionLocalProvider(
                     LocalImportExportManager provides importExportManager
                 ) {
                     val context = LocalContext.current
                     val powerViewModel: PowerViewModel = hiltViewModel()
-                    val isPoweredOff by powerViewModel.isPoweredOff.collectAsStateWithLifecycle()
                     val wallpaperState by esdeViewModel.wallpaperState
                     val themeManager = LocalThemeManager.current
                     val esdePreferencesManager = LocalESDEPreferencesManager.current
-                    var triggerMarqueePressShortcut by remember { mutableStateOf(false) }
-                    var isAnyOverlayVisible by remember { mutableStateOf(false) }
-                    var currentPageIndex by remember { mutableIntStateOf(0) }
-                    var pagerScrollProgress by remember { mutableFloatStateOf(0f) }
-                    var hideLauncherUIForScreensaver by remember { mutableStateOf(false) }
-                    var hideLauncherUIForGameBrowsing by remember { mutableStateOf(false) }
-                    var dockTopY by remember { mutableStateOf<Float?>(null) }
-                    val prefsState by esdePreferencesManager.state.collectAsStateWithLifecycle()
-                    val isMarqueeVisibleOnPage = prefsState.isMarqueeVisibleOnPage(currentPageIndex)
-                    val shouldHideMarquee = isAnyOverlayVisible || !isMarqueeVisibleOnPage
 
                     LaunchedEffect(Unit) {
                         if (context.hasPingPermissions() && themeManager.isPingAutoStart) {
@@ -287,57 +294,52 @@ class MainActivity : ComponentActivity() {
                         esdeViewModel = esdeViewModel,
                         powerViewModel = powerViewModel,
                         esdePreferencesManager = esdePreferencesManager,
-                        onScreensaverUIVisibilityChanged = { hideLauncherUIForScreensaver = it },
-                        onGameBrowsingUIVisibilityChanged = { hideLauncherUIForGameBrowsing = it }
-                    )
-
-                    ESDEWallpaperContainer(
-                        state = wallpaperState,
-                        onOpenMarqueeShortcut = { triggerMarqueePressShortcut = true },
-                        onWallpaperClick = null,
-                        onWallpaperDoubleClick = when {
-                            wallpaperState.isScreensaverActive -> {
-                                { hideLauncherUIForScreensaver = !hideLauncherUIForScreensaver }
-                            }
-
-                            wallpaperState.isGameRunning && prefsState.persistOnGameLaunch -> {
-                                { powerViewModel.togglePower() }
-                            }
-
-                            else -> null
+                        onScreensaverUIVisibilityChanged = {
+                            launcherUiStateHolder.setHideLauncherUIForScreensaver(it)
                         },
-                        hideMarquee = shouldHideMarquee || isPoweredOff,
-                        pagerScrollProgress = pagerScrollProgress,
-                        currentPageIndex = currentPageIndex,
-                        dockTopY = dockTopY,
-                        content = {
-                            CompositionLocalProvider(
-                                LocalEsdeWallpaperState provides wallpaperState
-                            ) {
-                                MainContent(
-                                    romSearchStateHolder = romSearchStateHolder,
-                                    managers = managers,
-                                    romLauncher = romLauncher,
-                                    onChangeFolder = ::launchSafPickerForGame,
-                                    triggerMarqueePressShortcut = triggerMarqueePressShortcut,
-                                    onMarqueePressShortcutHandled = {
-                                        triggerMarqueePressShortcut = false
-                                    },
-                                    navigateToThemeShare = navigateToThemeShare,
-                                    onNavigateToThemeShareHandled = { navigateToThemeShare = false },
-                                    onAnyOverlayVisibleChanged = { isAnyOverlayVisible = it },
-                                    onCurrentPageChanged = { currentPageIndex = it },
-                                    onPagerScrollProgressChanged = { pagerScrollProgress = it },
-                                    onDockPositioned = { y -> dockTopY = y },
-                                    hideLauncherUI = (wallpaperState.isScreensaverActive && hideLauncherUIForScreensaver) ||
-                                            (prefsState.hideUIForGameBrowsing && hideLauncherUIForGameBrowsing)
-                                )
-                            }
+                        onGameBrowsingUIVisibilityChanged = {
+                            launcherUiStateHolder.setHideLauncherUIForGameBrowsing(it)
                         }
                     )
 
+                    jr.brian.home.ui.components.ScreenSlotHost(
+                        slot = slot,
+                        coordinator = swapCoordinator,
+                        store = screenAssignmentStore,
+                        launcherContent = {
+                            LauncherContent(
+                                managers = managers,
+                                romSearchStateHolder = romSearchStateHolder,
+                                romLauncher = romLauncher,
+                                onChangeFolder = ::launchSafPickerForGame,
+                                navigateToThemeShare = navigateToThemeShare,
+                                onNavigateToThemeShareHandled = { navigateToThemeShare = false },
+                            )
+                        },
+                        frontendContent = {
+                            CompositionLocalProvider(
+                                LocalEsdeWallpaperState provides wallpaperState
+                            ) {
+                                jr.brian.home.esde.ui.frontend.FrontendScreen(
+                                    esdePrefs = esdePreferencesManager,
+                                    viewModel = romSearchResultsViewModel,
+                                    mainViewModel = mainViewModel,
+                                    romSearchStateHolder = romSearchStateHolder,
+                                    frontendSelectionStateHolder = frontendSelectionStateHolder,
+                                    managers = managers,
+                                    romLauncher = romLauncher,
+                                    appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
+                                    onFinishImmediately = {
+                                        finishIfOn(jr.brian.core.model.PRIMARY_DISPLAY_ID)
+                                    },
+                                    onSignalGameLaunch = ::signalGameLaunch,
+                                    onChangeFolder = ::launchSafPickerForGame
+                                )
+                            }
+                        },
+                    )
+
                     GameKonfettiOverlay(esdeViewModel = esdeViewModel)
-                }
                 }
                 }
             }
@@ -374,13 +376,12 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Return Focus Lock to the frontend's resting position when we
-     * come back after an external app had focus. Guard with phase ==
-     * Idle so a swap-driven onStop/onStart doesn't fight the swap
-     * trigger's own sync (which was issued with the post-flip
-     * assignment).
+     * come back after an external app had focus. The pinned-slot
+     * swap is a content flip inside the activity, not a window
+     * reparent, so onStop/onStart no longer fires during a swap —
+     * no phase guard needed here.
      */
     private fun maybeResyncFocusLock() {
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToAssignment(
             this,
             screenAssignmentStore.assignment,
@@ -401,7 +402,7 @@ class MainActivity : ComponentActivity() {
         if (!esdePreferencesManager.state.value.frontendEnabled) return
         if (jr.brian.home.esde.ui.FrontEndActivity.isRunning) return
         if (jr.brian.home.ui.util.resolveBottomDisplayId(this) == null) return
-        jr.brian.home.ui.util.launchFrontendForCurrentAssignment(this)
+        jr.brian.home.ui.util.launchTopHost(this)
     }
 
     private var companionDisplayListener: android.hardware.display.DisplayManager.DisplayListener? = null
@@ -464,16 +465,14 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * If both our activities have gone offscreen and we're not in the
-     * middle of a screen swap, an external app took focus from us.
-     * Launched apps always land on [PRIMARY_DISPLAY_ID], so pin the
-     * Focus Lock there so gamepad input follows. No-op during swap
-     * (both activities briefly stop as they're reparented) or when
-     * the frontend side is still up (dual-screen is intact).
+     * If both our activities have gone offscreen, an external app
+     * took focus from us. Launched apps always land on
+     * [PRIMARY_DISPLAY_ID], so pin the Focus Lock there so gamepad
+     * input follows. No-op when the frontend side is still up
+     * (dual-screen is intact).
      */
     private fun maybeSyncFocusLockForExternalApp() {
         if (jr.brian.home.esde.ui.FrontEndActivity.isRunning) return
-        if (swapCoordinator.phase.value != jr.brian.core.model.SwapPhase.Idle) return
         jr.brian.home.data.ScreenFocusLockWriter.syncToDisplayId(
             this,
             jr.brian.core.model.PRIMARY_DISPLAY_ID,
