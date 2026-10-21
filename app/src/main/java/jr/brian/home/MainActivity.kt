@@ -364,7 +364,9 @@ class MainActivity : ComponentActivity() {
         isRunning = true
         esdeViewModel.musicController.onActivityVisible()
         registerCompanionDisplayListener()
-        ensureFrontendCompanion()
+        if (esdePreferencesManager.state.value.companionLaunchWatchdogEnabled) {
+            ensureFrontendCompanion()
+        }
         maybeResyncFocusLock()
     }
 

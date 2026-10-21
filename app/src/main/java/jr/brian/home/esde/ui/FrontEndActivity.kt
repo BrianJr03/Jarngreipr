@@ -128,7 +128,9 @@ class FrontEndActivity : ComponentActivity() {
         super.onStart()
         isRunning = true
         registerCompanionDisplayListener()
-        ensureLauncherCompanion()
+        if (esdePrefs.state.value.companionLaunchWatchdogEnabled) {
+            ensureLauncherCompanion()
+        }
         maybeResyncFocusLock()
     }
 

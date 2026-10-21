@@ -268,6 +268,8 @@
     <string name="frontend_open_customize_hint">SELECT • Customize</string>
     <string name="frontend_enable_title">Enable Frontend</string>
     <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
+    <string name="companion_launch_watchdog_title">Resume Companion Display</string>
+    <string name="companion_launch_watchdog_description">When on, bringing one display forward automatically pulls the other back too. Off by default so each display stays where you left it. The Home button still brings up both regardless.</string>
     <string name="frontend_launch_cd">Launch frontend</string>
     <string name="canvas_launch_frontend_option">Launch Frontend</string>
     <string name="secondary_media_title">Read RetroHrai! artwork</string>

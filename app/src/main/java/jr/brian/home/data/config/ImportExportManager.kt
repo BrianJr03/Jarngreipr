@@ -294,6 +294,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
                 // Legacy field — kept populated with the primary-display value
@@ -577,6 +578,7 @@ class ImportExportManager @Inject constructor(private val managers: ManagerConta
         // gated was removed. The field stays on RomSearchConfig so older exports
         // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setCompanionLaunchWatchdogEnabled(config.romSearch.companionLaunchWatchdogEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
         // New per-display fields fall back to the legacy single value when

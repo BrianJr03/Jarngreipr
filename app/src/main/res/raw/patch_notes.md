@@ -12,6 +12,7 @@
 - The bottom screen no longer falls back to the system launcher after a ROM search opens results on the top screen
 - Backup and Restore now preserves your dock and app drawer button colors
 - Backup no longer exports the dock colour as 0, so Restore no longer turns the dock transparent
+- Resuming one display no longer drags the other back to the front, each screen stays where you left it (new "Resume Companion Display" toggle in Settings -> Extras restores the old behavior if you want it)
 
 **Jarngreipr Frontend Fixes**
 - Game tiles now refresh automatically after scraping, no need to tap Refresh Library

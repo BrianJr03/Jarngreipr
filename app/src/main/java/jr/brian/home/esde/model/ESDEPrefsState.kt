@@ -263,6 +263,7 @@ data class ESDEPrefsState(
     val romSearchPlatformImagesFolderType: PlatformImageFolderType = PlatformImageFolderType.Default,
     val romSearchDetailImageHeightDp: Int = 240,
     val frontendEnabled: Boolean = false,
+    val companionLaunchWatchdogEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val jarngreiprMediaEnabled: Boolean = true,
     val primarySystemLayout: FrontendLayout = FrontendLayout.Row,

@@ -66,6 +66,13 @@ fun ExtrasSection(
                 onCheckedChange = { esdePreferencesManager.setFrontendEnabled(it) }
             )
 
+            ToggleSetting(
+                title = stringResource(R.string.companion_launch_watchdog_title),
+                description = stringResource(R.string.companion_launch_watchdog_description),
+                checked = esdePrefsState.companionLaunchWatchdogEnabled,
+                onCheckedChange = { esdePreferencesManager.setCompanionLaunchWatchdogEnabled(it) }
+            )
+
             HomeInterceptionSettingItem()
 
             HomeGesturesInfoCard()

@@ -379,6 +379,7 @@ data class RomSearchConfig(
     // read but no longer applied.
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
+    val companionLaunchWatchdogEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val jarngreiprMediaEnabled: Boolean = true,
     val systemLayout: String = "Grid",
