@@ -186,8 +186,9 @@ internal fun FrontendNavHost(
                 hiddenGames = esdeState.hiddenGames,
                 hiddenSystems = esdeState.hiddenSystems,
                 layout = run {
-                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
+                    val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                        jr.brian.core.model.ScreenSlot.TOP
+                    if (onTop)
                         esdeState.primarySystemLayout
                     else esdeState.secondarySystemLayout
                 },
@@ -409,8 +410,9 @@ private fun GamesRoute(
                 systemMediaMap = esdeState.systemMediaMap,
                 focusResetKey = system,
                 layout = run {
-                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
+                    val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                        jr.brian.core.model.ScreenSlot.TOP
+                    if (onTop)
                         esdeState.primaryGameLayout
                     else esdeState.secondaryGameLayout
                 },
