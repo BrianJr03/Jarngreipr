@@ -1,6 +1,6 @@
 ** 3.1.1 Hotfix**
-- "System Wallpaper" in Appearance now actually shows the Android wallpaper again instead of a black screen
-- Pick a wallpaper (image, GIF, or video) for the Jarngreipr Frontend display from Frontend Settings -> Media, separate from the main launcher's wallpaper
+- `System Wallpaper` in Appearance now actually shows the Android wallpaper again instead of a black screen
+- Pick a wallpaper (image, GIF, or video) for the Jarngreipr Frontend display from Frontend `Settings -> Media`, separate from the main launcher's wallpaper
 
 **New Jarngreipr Frontend Features**
 - Edit Info now has a Marquee slot so you can set a custom marquee image per game
