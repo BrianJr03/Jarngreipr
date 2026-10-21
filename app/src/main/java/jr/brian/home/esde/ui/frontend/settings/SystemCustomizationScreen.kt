@@ -42,6 +42,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.graphics.Color
+import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -131,12 +132,19 @@ fun SystemCustomizationScreen(
                 .focusRequester(rootFocus)
                 .focusTarget()
                 .onPreviewKeyEvent { event ->
-                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    cursor.handleKey(
-                        keyCode = event.nativeKeyEvent.keyCode,
-                        rowCount = rowCount,
-                        onClose = onDismiss
-                    )
+                    val code = event.nativeKeyEvent.keyCode
+                    val isNavKey = code in CUSTOMIZATION_NAV_KEYCODES
+                    if (event.type == KeyEventType.KeyDown) {
+                        return@onPreviewKeyEvent cursor.handleKey(
+                            keyCode = code,
+                            rowCount = rowCount,
+                            onClose = onDismiss
+                        )
+                    }
+                    // Swallow the paired ACTION_UP of navigation keys so it
+                    // doesn't leak out of this overlay and drive the systems
+                    // grid rendered beneath.
+                    isNavKey
                 }
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -1026,6 +1034,18 @@ private fun validateSafTree(
     }
     return StorageValidation.Result(found = found, total = sample.size)
 }
+
+private val CUSTOMIZATION_NAV_KEYCODES: Set<Int> = setOf(
+    AndroidKeyEvent.KEYCODE_DPAD_UP,
+    AndroidKeyEvent.KEYCODE_DPAD_DOWN,
+    AndroidKeyEvent.KEYCODE_DPAD_LEFT,
+    AndroidKeyEvent.KEYCODE_DPAD_RIGHT,
+    AndroidKeyEvent.KEYCODE_DPAD_CENTER,
+    AndroidKeyEvent.KEYCODE_ENTER,
+    AndroidKeyEvent.KEYCODE_BUTTON_A,
+    AndroidKeyEvent.KEYCODE_BUTTON_B,
+    AndroidKeyEvent.KEYCODE_BACK,
+)
 
 @Composable
 private fun EmulatorRows(

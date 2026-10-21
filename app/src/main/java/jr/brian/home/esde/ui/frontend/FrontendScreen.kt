@@ -1,94 +1,32 @@
 package jr.brian.home.esde.ui.frontend
 
-import jr.brian.home.esde.data.*
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import jr.brian.home.R
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
-import jr.brian.home.esde.model.FrontendLayout
-import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
-import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.ui.RomGameLauncher
-import jr.brian.home.esde.ui.frontend.settings.AddSystemsScreen
-import jr.brian.home.esde.ui.frontend.settings.ScreenScraperSettingsScreen
-import jr.brian.home.esde.ui.frontend.settings.SteamGridDbSettingsScreen
-import jr.brian.home.esde.ui.frontend.settings.FrontendSettingsScreen
-import jr.brian.home.esde.ui.frontend.settings.SystemCustomizationScreen
-import jr.brian.home.esde.util.heroBackgroundPath
-import jr.brian.home.esde.util.hiddenGameKey
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.model.rom.toGameInfo
-import jr.brian.home.ui.theme.OledBackgroundColor
-import jr.brian.home.ui.theme.ThemeAccentColor
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.delay
-import android.view.KeyEvent as AndroidKeyEvent
 
 private const val ANIM_ENTER_MS = 220
 private const val ANIM_EXIT_MS = 180
-private const val ANDROID_APPS_SYSTEM = "androidapps"
-
-private fun Modifier.frontendControlKeys(
-    overlayVisible: Boolean,
-    onSearch: () -> Unit,
-    onOpenSettings: () -> Unit
-): Modifier = onPreviewKeyEvent { keyEvent ->
-    if (overlayVisible) return@onPreviewKeyEvent false
-    val code = keyEvent.nativeKeyEvent.keyCode
-    if (code != AndroidKeyEvent.KEYCODE_BUTTON_Y &&
-        code != AndroidKeyEvent.KEYCODE_BUTTON_START
-    ) return@onPreviewKeyEvent false
-    if (keyEvent.type == KeyEventType.KeyDown) {
-        when (code) {
-            AndroidKeyEvent.KEYCODE_BUTTON_Y -> onSearch()
-            AndroidKeyEvent.KEYCODE_BUTTON_START -> onOpenSettings()
-        }
-    }
-    true
-}
 
 @Composable
 internal fun FrontendScreen(
@@ -102,7 +40,14 @@ internal fun FrontendScreen(
     appDisplayPreferenceManager: AppDisplayPreferenceManager,
     onFinishImmediately: () -> Unit,
     onSignalGameLaunch: () -> Unit,
-    onChangeFolder: (GameInfo) -> Unit
+    onChangeFolder: (GameInfo) -> Unit,
+    /**
+     * True when FrontEndActivity has mounted a [jr.brian.home.ui.components.wallpaper.WallpaperDisplay]
+     * underneath this screen — e.g. the user picked a frontend wallpaper or
+     * "Launcher" (mirror). Collapses the Surface/background backers so the
+     * wallpaper layer below shows through.
+     */
+    showFrontendWallpaper: Boolean = false,
 ) {
     RomSearchExperimentalDialogIfNeeded()
 
@@ -132,7 +77,7 @@ internal fun FrontendScreen(
         exit = fadeOut(tween(ANIM_EXIT_MS)) +
                 scaleOut(tween(ANIM_EXIT_MS), targetScale = 0.92f)
     ) {
-        FrontendRouteHost(
+        FrontendNavHost(
             esdePrefs = esdePrefs,
             viewModel = viewModel,
             romSearchStateHolder = romSearchStateHolder,
@@ -140,7 +85,8 @@ internal fun FrontendScreen(
             managers = managers,
             romLauncher = romLauncher,
             appDisplayPreferenceManager = appDisplayPreferenceManager,
-            onChangeFolder = onChangeFolder
+            onChangeFolder = onChangeFolder,
+            showFrontendWallpaper = showFrontendWallpaper,
         )
     }
 }

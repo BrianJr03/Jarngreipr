@@ -14,9 +14,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
+import androidx.media3.common.util.UnstableApi
 import jr.brian.core.model.SwapCoordinator
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,7 +35,6 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.FrontendSelectionStateHolder
 import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.data.WallpaperStateHolder
-import jr.brian.home.esde.model.FrontendRoute
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.ui.frontend.FrontendScreen
 import jr.brian.home.esde.util.LocalEsdeWallpaperState
@@ -40,8 +43,12 @@ import jr.brian.home.esde.util.persistSafTreeForSystem
 import jr.brian.home.esde.util.resolveRomPath
 import jr.brian.home.esde.viewmodels.RomSearchResultsViewModel
 import jr.brian.home.esde.viewmodels.RomSearchViewModel
+import jr.brian.home.ui.components.wallpaper.WallpaperDisplay
 import jr.brian.home.ui.theme.LauncherTheme
 import jr.brian.home.ui.theme.managers.LocalAppDisplayPreferenceManager
+import jr.brian.home.ui.theme.managers.WallpaperType
+import jr.brian.home.ui.theme.managers.effectiveFrontendWallpaper
+import jr.brian.home.ui.util.applyWallpaperWindowBackground
 import jr.brian.home.viewmodels.MainViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -133,7 +140,9 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
         super.onStart()
         isRunning = true
         registerCompanionDisplayListener()
-        ensureLauncherCompanion()
+        if (esdePrefs.state.value.companionLaunchWatchdogEnabled) {
+            ensureLauncherCompanion()
+        }
         maybeResyncFocusLock()
     }
 
@@ -238,8 +247,14 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
             private set
     }
 
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyWallpaperWindowBackground(
+            activity = this,
+            wallpaperManager = managers.ui.frontendWallpaperManager,
+            launcherSyncSource = managers.ui.wallpaperManager,
+        )
         romLauncher = RomGameLauncher(
             activity = this,
             esdePrefs = esdePrefs,
@@ -248,7 +263,6 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )
-        romSearchStateHolder.currentRoute.value = FrontendRoute.Systems
         romSearchViewModel.loadGames()
         registerMediaMountReceiver()
         observeFrontendEnabledFlag()

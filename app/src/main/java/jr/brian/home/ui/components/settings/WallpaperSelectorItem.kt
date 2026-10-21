@@ -55,6 +55,7 @@ import jr.brian.home.ui.components.wallpaper.WallpaperOptionButton
 import jr.brian.home.ui.theme.ThemePrimaryColor
 import jr.brian.home.ui.theme.ThemeSecondaryColor
 import jr.brian.home.ui.theme.managers.LocalWallpaperManager
+import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
 import jr.brian.home.util.WallpaperUtils
 
@@ -63,10 +64,15 @@ fun WallpaperSelectorItem(
     focusRequester: FocusRequester? = null,
     isExpanded: Boolean = false,
     onExpandChanged: (Boolean) -> Unit = {},
-    onESDESetupClick: () -> Unit = {}
+    onESDESetupClick: () -> Unit = {},
+    wallpaperManager: WallpaperManager = LocalWallpaperManager.current,
+    title: String? = null,
+    description: String? = null,
+    showEsdeOption: Boolean = true,
+    showLauncherOption: Boolean = false,
+    showSystemWallpaperOption: Boolean = true,
 ) {
     val context = LocalContext.current
-    val wallpaperManager = LocalWallpaperManager.current
     val setupPreferences = remember { SetupPreferences(context) }
     var isFocused by remember { mutableStateOf(false) }
     val mainCardFocusRequester = remember { FocusRequester() }
@@ -192,14 +198,14 @@ fun WallpaperSelectorItem(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(id = R.string.settings_wallpaper_title),
+                            text = title ?: stringResource(id = R.string.settings_wallpaper_title),
                             color = Color.White,
                             fontSize = if (isFocused) 18.sp else 16.sp,
                             fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = stringResource(id = R.string.settings_wallpaper_description),
+                            text = description ?: stringResource(id = R.string.settings_wallpaper_description),
                             color = if (isFocused) Color.White.copy(alpha = 0.9f) else Color.Gray,
                             fontSize = 14.sp,
                         )
@@ -269,28 +275,43 @@ fun WallpaperSelectorItem(
                     }
                 )
 
-                WallpaperOptionButton(
-                    text = stringResource(id = R.string.settings_wallpaper_transparent),
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
-                    onClick = {
-                        wallpaperManager.setTransparent()
-                        onExpandChanged(false)
-                    }
-                )
-
-                WallpaperOptionButton(
-                    text = stringResource(id = R.string.settings_wallpaper_esde),
-                    isSelected = wallpaperManager.getWallpaperType() == WallpaperType.ESDE,
-                    onClick = {
-                        if (setupPreferences.setupCompleted) {
-                            wallpaperManager.setESDE()
+                if (showSystemWallpaperOption) {
+                    WallpaperOptionButton(
+                        text = stringResource(id = R.string.settings_wallpaper_transparent),
+                        isSelected = wallpaperManager.getWallpaperType() == WallpaperType.TRANSPARENT,
+                        onClick = {
+                            wallpaperManager.setTransparent()
                             onExpandChanged(false)
-                        } else {
-                            onExpandChanged(false)
-                            onESDESetupClick()
                         }
-                    }
-                )
+                    )
+                }
+
+                if (showLauncherOption) {
+                    WallpaperOptionButton(
+                        text = stringResource(id = R.string.settings_wallpaper_launcher),
+                        isSelected = wallpaperManager.getWallpaperType() == WallpaperType.LAUNCHER,
+                        onClick = {
+                            wallpaperManager.setLauncher()
+                            onExpandChanged(false)
+                        }
+                    )
+                }
+
+                if (showEsdeOption) {
+                    WallpaperOptionButton(
+                        text = stringResource(id = R.string.settings_wallpaper_esde),
+                        isSelected = wallpaperManager.getWallpaperType() == WallpaperType.ESDE,
+                        onClick = {
+                            if (setupPreferences.setupCompleted) {
+                                wallpaperManager.setESDE()
+                                onExpandChanged(false)
+                            } else {
+                                onExpandChanged(false)
+                                onESDESetupClick()
+                            }
+                        }
+                    )
+                }
             }
         }
     }

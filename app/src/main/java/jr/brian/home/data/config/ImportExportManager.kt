@@ -107,6 +107,13 @@ class ImportExportManager @Inject constructor(
                 savedGifUri = ui.wallpaperManager.savedGifUri,
                 savedVideoUri = ui.wallpaperManager.savedVideoUri
             ),
+            frontendWallpaper = WallpaperConfig(
+                type = ui.frontendWallpaperManager.currentWallpaper.type.name,
+                activeUri = ui.frontendWallpaperManager.currentWallpaper.uri,
+                savedImageUri = ui.frontendWallpaperManager.savedImageUri,
+                savedGifUri = ui.frontendWallpaperManager.savedGifUri,
+                savedVideoUri = ui.frontendWallpaperManager.savedVideoUri
+            ),
             searchLayout = SearchLayoutConfig(
                 isHorizontalLayout = ui.searchLayoutManager.isHorizontalLayout
             ),
@@ -300,6 +307,7 @@ class ImportExportManager @Inject constructor(
             screenAssignment = screenAssignmentStore.assignment.name,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
+                companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
                 secondaryMediaEnabled = f.esdePreferencesManager.state.value.secondaryMediaEnabled,
                 jarngreiprMediaEnabled = f.esdePreferencesManager.state.value.jarngreiprMediaEnabled,
                 // Legacy field — kept populated with the primary-display value
@@ -405,6 +413,14 @@ class ImportExportManager @Inject constructor(
         ui.wallpaperManager.updateSavedVideoUri(wc.savedVideoUri)
         runCatching {
             ui.wallpaperManager.setWallpaper(wc.activeUri, WallpaperType.valueOf(wc.type))
+        }
+
+        val fwc = config.frontendWallpaper
+        ui.frontendWallpaperManager.updateSavedImageUri(fwc.savedImageUri)
+        ui.frontendWallpaperManager.updateSavedGifUri(fwc.savedGifUri)
+        ui.frontendWallpaperManager.updateSavedVideoUri(fwc.savedVideoUri)
+        runCatching {
+            ui.frontendWallpaperManager.setWallpaper(fwc.activeUri, WallpaperType.valueOf(fwc.type))
         }
 
         ui.searchLayoutManager.setHorizontalLayout(config.searchLayout.isHorizontalLayout)
@@ -583,6 +599,7 @@ class ImportExportManager @Inject constructor(
         // gated was removed. The field stays on RomSearchConfig so older exports
         // still decode without error.
         f.esdePreferencesManager.setFrontendEnabled(config.romSearch.frontendEnabled)
+        f.esdePreferencesManager.setCompanionLaunchWatchdogEnabled(config.romSearch.companionLaunchWatchdogEnabled)
         f.esdePreferencesManager.setSecondaryMediaEnabled(config.romSearch.secondaryMediaEnabled)
         f.esdePreferencesManager.setJarngreiprMediaEnabled(config.romSearch.jarngreiprMediaEnabled)
         // New per-display fields fall back to the legacy single value when

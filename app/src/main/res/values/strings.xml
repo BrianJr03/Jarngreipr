@@ -266,8 +266,13 @@
     <string name="esde_settings_gamelist_decoration_description">Decorate the scanned ROM list with titles, descriptions, and box art from ES-DE\'s gamelist.xml. When off the library is built from filenames alone — same games, no XML reads. Flip and refresh the library to apply.</string>
     <string name="frontend_reorder_hint">Reorder mode — D-pad to move • A to confirm • B to cancel</string>
     <string name="frontend_open_customize_hint">SELECT • Customize</string>
+    <string name="frontend_wallpaper_title">Frontend Wallpaper</string>
+    <string name="frontend_wallpaper_description">Pick a wallpaper for the frontend display, separate from the main launcher.</string>
+    <string name="settings_wallpaper_launcher">Launcher</string>
     <string name="frontend_enable_title">Enable Frontend</string>
     <string name="frontend_enable_description">Browse your library from a system → games screen on the top display, with art mirrored to the bottom. When off, the launcher stays single-screen and ES-DE handles browsing as before.</string>
+    <string name="companion_launch_watchdog_title">Resume Companion Display</string>
+    <string name="companion_launch_watchdog_description">When on, bringing one display forward automatically pulls the other back too. Off by default so each display stays where you left it. The Home button still brings up both regardless.</string>
     <string name="frontend_launch_cd">Launch frontend</string>
     <string name="canvas_launch_frontend_option">Launch Frontend</string>
     <string name="secondary_media_title">Read RetroHrai! artwork</string>

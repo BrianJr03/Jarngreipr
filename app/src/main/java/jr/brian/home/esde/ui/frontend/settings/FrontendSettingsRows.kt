@@ -16,6 +16,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -25,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jr.brian.home.R
+import jr.brian.home.ui.components.settings.WallpaperSelectorItem
+import jr.brian.home.ui.theme.managers.LocalFrontendWallpaperManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.setFrontendFloatIntensity
 import jr.brian.home.esde.data.setFrontendFocusBackgroundDimGames
@@ -312,12 +318,35 @@ private fun MediaRows(
     prefsManager: ESDEPreferencesManager,
     focusedRow: Int
 ) {
-    val focusBgFocused = focusedRow == 0
-    val useSystemsFocused = focusedRow == 1
-    val systemsDimFocused = focusedRow == 2
-    val useGamesFocused = focusedRow == 3
-    val gamesDimFocused = focusedRow == 4
+    val wallpaperFocused = focusedRow == 0
+    val focusBgFocused = focusedRow == 1
+    val useSystemsFocused = focusedRow == 2
+    val systemsDimFocused = focusedRow == 3
+    val useGamesFocused = focusedRow == 4
+    val gamesDimFocused = focusedRow == 5
     val focusBgEnabled = prefsState.frontendFocusBackgroundEnabled
+
+    var wallpaperExpanded by remember { mutableStateOf(false) }
+    val frontendWallpaperManager = LocalFrontendWallpaperManager.current
+    SettingsRowSlot(
+        focused = wallpaperFocused,
+        onActivate = { wallpaperExpanded = !wallpaperExpanded }
+    ) {
+        WallpaperSelectorItem(
+            wallpaperManager = frontendWallpaperManager,
+            title = stringResource(R.string.frontend_wallpaper_title),
+            description = stringResource(R.string.frontend_wallpaper_description),
+            showEsdeOption = false,
+            // Hidden on the frontend selector for now — Launcher-mirror flow
+            // and System Wallpaper backdrop still have the systems-grid
+            // glitch when toggled. Flip both back on once the overlay →
+            // NavHost refactor lands.
+            // showLauncherOption = true,
+            showSystemWallpaperOption = false,
+            isExpanded = wallpaperExpanded,
+            onExpandChanged = { wallpaperExpanded = it }
+        )
+    }
 
     SettingsRowSlot(
         focused = focusBgFocused,

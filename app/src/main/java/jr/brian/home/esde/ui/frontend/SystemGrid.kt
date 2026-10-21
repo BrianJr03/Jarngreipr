@@ -98,9 +98,15 @@ internal fun SystemGrid(
     val prefsManager = LocalESDEPreferencesManager.current
     val prefs by prefsManager.state.collectAsStateWithLifecycle()
 
+    // Always apply .background() with a varying color rather than
+    // conditionally including the modifier in the chain. A chain-shape
+    // change invalidates layout for the whole Box and cascades into the
+    // FocusableTileLayout below, which briefly loses focus and jitters
+    // the system cards while the user is picking a new frontend
+    // wallpaper (backgroundTransparent flips mid-pick).
     Box(
-        modifier = modifier.then(
-            if (backgroundTransparent) Modifier else Modifier.background(OledBackgroundColor)
+        modifier = modifier.background(
+            if (backgroundTransparent) Color.Transparent else OledBackgroundColor
         )
     ) {
         when {

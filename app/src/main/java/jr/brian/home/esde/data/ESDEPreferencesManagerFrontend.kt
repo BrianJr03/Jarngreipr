@@ -11,6 +11,7 @@ import jr.brian.home.esde.model.FrontendTransition
 import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_CANVAS_CONTINUOUS_SPIN_ROMS
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_ENABLED
+import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FLOAT_INTENSITY
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_GAMES
 import jr.brian.home.esde.util.ESDEPreferencesConstants.KEY_FRONTEND_FOCUS_BACKGROUND_DIM_SYSTEMS
@@ -40,6 +41,11 @@ import org.json.JSONArray
 fun ESDEPreferencesManager.setFrontendEnabled(enabled: Boolean) {
     _state.value = _state.value.copy(frontendEnabled = enabled)
     prefs.edit { putBoolean(KEY_FRONTEND_ENABLED, enabled) }
+}
+
+fun ESDEPreferencesManager.setCompanionLaunchWatchdogEnabled(enabled: Boolean) {
+    _state.value = _state.value.copy(companionLaunchWatchdogEnabled = enabled)
+    prefs.edit { putBoolean(KEY_COMPANION_LAUNCH_WATCHDOG_ENABLED, enabled) }
 }
 
 fun ESDEPreferencesManager.setSecondaryMediaEnabled(enabled: Boolean) {

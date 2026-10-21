@@ -163,6 +163,7 @@ data class UiConfig(
     val powerSettings: PowerSettingsConfig = PowerSettingsConfig(),
     val selectedIconPackage: String? = null,
     val wallpaper: WallpaperConfig = WallpaperConfig(),
+    val frontendWallpaper: WallpaperConfig = WallpaperConfig(),
     val searchLayout: SearchLayoutConfig = SearchLayoutConfig(),
     val customAppNames: Map<String, String> = emptyMap()
 )
@@ -393,6 +394,7 @@ data class RomSearchConfig(
     // read but no longer applied.
     val hintsKbVisible: Boolean = true,
     val frontendEnabled: Boolean = false,
+    val companionLaunchWatchdogEnabled: Boolean = false,
     val secondaryMediaEnabled: Boolean = true,
     val jarngreiprMediaEnabled: Boolean = true,
     val systemLayout: String = "Grid",
