@@ -191,7 +191,10 @@ fun MainContent(
         currentVersionName = versionName
         whatsNewManager.checkAndShowWhatsNew(versionName)
 
-        val update = UpdateChecker.checkForUpdate(versionName)
+        val update = UpdateChecker.checkForUpdate(
+            currentVersionName = versionName,
+            includePrereleases = appUpdateManager.rcNotificationsEnabled
+        )
         if (update.isUpdateAvailable && appUpdateManager.shouldShowUpdateDialog(context, update.latestVersion)
         ) {
             updateDialogState.show(update)

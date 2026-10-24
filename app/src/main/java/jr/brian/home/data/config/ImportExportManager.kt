@@ -356,7 +356,8 @@ class ImportExportManager @Inject constructor(
         badgesVisible = managers.system.notificationManager.badgesVisible,
         shadeTabPage = managers.system.notificationManager.shadeTabPage,
         hiddenSystems = managers.feature.esdePreferencesManager.state.value.hiddenSystems.toList(),
-        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings
+        systemFolderMappings = managers.feature.esdePreferencesManager.state.value.systemFolderMappings,
+        rcNotificationsEnabled = managers.system.appUpdateManager.rcNotificationsEnabled
     )
 
     // ── Import ──────────────────────────────────────────────────────────────
@@ -697,6 +698,7 @@ class ImportExportManager @Inject constructor(
         sys.notificationManager.saveShadeTabPage(config.shadeTabPage)
         managers.feature.esdePreferencesManager.setHiddenSystems(config.hiddenSystems)
         managers.feature.esdePreferencesManager.setAllSystemFolderMappings(config.systemFolderMappings)
+        sys.appUpdateManager.setRcNotificationsEnabled(config.rcNotificationsEnabled)
     }
 
     fun encodeToJson(config: JarngreiprConfig): String =

@@ -15,8 +15,11 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RestorePage
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ScheduleSend
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -34,6 +37,8 @@ import jr.brian.home.R
 import jr.brian.home.data.config.ImportExportManager
 import jr.brian.home.ui.components.settings.CollapsibleSettingsSection
 import jr.brian.home.ui.components.settings.SettingItem
+import jr.brian.home.ui.theme.ThemePrimaryColor
+import jr.brian.home.ui.theme.managers.LocalAppUpdateManager
 import jr.brian.home.ui.theme.managers.LocalImportExportManager
 import jr.brian.home.ui.theme.managers.LocalNotificationManager
 import jr.brian.home.util.SettingsTag
@@ -128,6 +133,28 @@ fun SystemSection(
                     )
                 }
             } else null
+        )
+
+        val appUpdateManager = LocalAppUpdateManager.current
+        SettingItem(
+            title = stringResource(id = R.string.settings_rc_notifications_title),
+            description = stringResource(id = R.string.settings_rc_notifications_description),
+            icon = Icons.Default.ScheduleSend,
+            onClick = {
+                appUpdateManager.setRcNotificationsEnabled(!appUpdateManager.rcNotificationsEnabled)
+            },
+            trailing = {
+                Switch(
+                    checked = appUpdateManager.rcNotificationsEnabled,
+                    onCheckedChange = { appUpdateManager.setRcNotificationsEnabled(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = ThemePrimaryColor,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = Color.DarkGray.copy(alpha = 0.3f)
+                    )
+                )
+            }
         )
 
         SettingItem(
