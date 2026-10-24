@@ -131,11 +131,16 @@ internal fun FrontendNavHost(
                 if (esdeState.romSearchUseWallpaper || showFrontendWallpaper) Color.Transparent
                 else OledBackgroundColor
             ),
+        // `forward` tracks hierarchy direction, not enter/exit role: true when
+        // we're drilling into Games, false when we're backing out to Systems.
+        // Keying it on the TARGET route makes it symmetric across all four
+        // callbacks (push → target=Games → forward=true; pop → target=Systems
+        // → forward=false), so Slide and SlideUp reverse properly on back-nav.
         enterTransition = {
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = initialState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .targetContentEnter
@@ -145,7 +150,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = initialState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .initialContentExit
@@ -155,7 +160,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = targetState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .targetContentEnter
@@ -165,7 +170,7 @@ internal fun FrontendNavHost(
             val fromBase = initialState.destination.route in BASE_ROUTES
             val toBase = targetState.destination.route in BASE_ROUTES
             if (fromBase && toBase) {
-                val forward = targetState.destination.route == Routes.SYSTEMS
+                val forward = targetState.destination.route == Routes.GAMES
                 esdeState.frontendTransition
                     .transform(forward, esdeState.frontendTransitionMs)
                     .initialContentExit
@@ -181,8 +186,9 @@ internal fun FrontendNavHost(
                 hiddenGames = esdeState.hiddenGames,
                 hiddenSystems = esdeState.hiddenSystems,
                 layout = run {
-                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
+                    val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                        jr.brian.core.model.ScreenSlot.TOP
+                    if (onTop)
                         esdeState.primarySystemLayout
                     else esdeState.secondarySystemLayout
                 },
@@ -404,8 +410,9 @@ private fun GamesRoute(
                 systemMediaMap = esdeState.systemMediaMap,
                 focusResetKey = system,
                 layout = run {
-                    val assignment = jr.brian.home.ui.util.rememberEffectiveAssignment()
-                    if (assignment == jr.brian.core.model.ScreenAssignment.FRONTEND_ON_TOP)
+                    val onTop = jr.brian.home.ui.components.LocalScreenSlot.current ==
+                        jr.brian.core.model.ScreenSlot.TOP
+                    if (onTop)
                         esdeState.primaryGameLayout
                     else esdeState.secondaryGameLayout
                 },

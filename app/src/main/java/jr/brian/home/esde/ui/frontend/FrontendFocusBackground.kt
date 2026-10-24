@@ -27,10 +27,11 @@ private const val FOCUS_DEBOUNCE_MS = 150L
 /**
  * Full-screen backdrop that follows focus. Pass [focusedUri] on every focus
  * change; the composable debounces internally so rapid D-pad scrolling only
- * decodes the item the user lands on. [fallbackColor] paints the null branch
- * when the feature is on but the focused item has no art — callers pass
- * OledBackgroundColor there so the grid can stay transparent without exposing
- * a black flash to whatever is behind.
+ * decodes the item the user lands on. [fallbackColor] is painted as a solid
+ * backer behind the hero image — it covers the window of time between
+ * crossfade frames (and the decode gap on first paint) so an underlying
+ * wallpaper never bleeds through while the feature is active. Pass
+ * [Color.Transparent] when the feature is off.
  */
 @Composable
 fun FrontendFocusBackground(
@@ -52,16 +53,16 @@ fun FrontendFocusBackground(
         }
     }
 
-    Crossfade(
-        targetState = debouncedUri,
-        animationSpec = tween(CROSSFADE_MS),
-        label = "frontendFocusBackground",
-        modifier = modifier.fillMaxSize()
-    ) { currentUri ->
-        if (currentUri == null) {
-            Box(modifier = Modifier.fillMaxSize().background(fallbackColor))
-        } else {
-            FocusBackgroundImage(uri = currentUri, dimAlpha = dimAlpha)
+    Box(modifier = modifier.fillMaxSize().background(fallbackColor)) {
+        Crossfade(
+            targetState = debouncedUri,
+            animationSpec = tween(CROSSFADE_MS),
+            label = "frontendFocusBackground",
+            modifier = Modifier.fillMaxSize()
+        ) { currentUri ->
+            if (currentUri != null) {
+                FocusBackgroundImage(uri = currentUri, dimAlpha = dimAlpha)
+            }
         }
     }
 }

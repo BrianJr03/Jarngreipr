@@ -210,6 +210,18 @@ class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
         romSearchStateHolder.gameLaunchSignal.tryEmit(Unit)
     }
 
+    private fun recordRecentlyPlayedFromEsde(
+        systemName: String,
+        gameFilename: String,
+        gameName: String?
+    ) {
+        val base = esdeViewModel.buildGameInfo(systemName, gameFilename)
+        val game = gameName?.takeIf { it.isNotBlank() }
+            ?.let { base.copy(name = it) }
+            ?: base
+        managers.feature.recentlyPlayedManager.record(game)
+    }
+
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -621,10 +633,11 @@ class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
                 launchSystemAppIfTriggered(systemName, SystemLaunchTrigger.GameSelect)
                 managers.feature.jinglesManager.onGameSelected(gameFilename)
             }
-            esdeEventListener.onGameStarted = { gameFilename, _, systemName ->
+            esdeEventListener.onGameStarted = { gameFilename, gameName, systemName ->
                 managers.feature.videoPresentationManager.dismiss()
                 managers.feature.jinglesManager.onGameLaunched()
                 esdeViewModel.handleGameStarted(gameFilename)
+                recordRecentlyPlayedFromEsde(systemName, gameFilename, gameName)
                 if (esdePreferencesManager.state.value.powerEventsEnabled) {
                     powerViewModel.powerOff()
                 } else if (esdePreferencesManager.state.value.persistOnGameLaunch) {
