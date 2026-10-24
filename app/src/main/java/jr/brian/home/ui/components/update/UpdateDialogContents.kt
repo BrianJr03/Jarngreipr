@@ -92,12 +92,20 @@ fun InfoContent(
                     modifier = Modifier.size(32.dp)
                 )
                 Column {
-                    Text(
-                        text = stringResource(R.string.update_available_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.update_available_title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        if (updateInfo.isPrerelease) {
+                            PrereleaseBadge()
+                        }
+                    }
                     Text(
                         text = stringResource(
                             R.string.update_version_format,
@@ -572,5 +580,22 @@ fun PermissionRequiredContent(
                 Text(stringResource(R.string.update_button_cancel))
             }
         }
+    }
+}
+
+@Composable
+private fun PrereleaseBadge() {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = ThemePrimaryColor.copy(alpha = 0.25f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, ThemePrimaryColor.copy(alpha = 0.6f))
+    ) {
+        Text(
+            text = stringResource(R.string.update_prerelease_badge),
+            color = Color.White,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }

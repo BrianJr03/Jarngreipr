@@ -151,7 +151,12 @@ data class JarngreiprConfig(
         //      leaves the device's current assignment alone in that
         //      case rather than reverting to the default, so restoring
         //      an old backup never silently flips a user's layout.
-        const val CONFIG_VERSION = 34
+        // v35: added SystemConfig.rcNotificationsEnabled — the "Get
+        //      notified about RC builds" toggle gating whether update
+        //      checks include GitHub pre-releases. Older blobs decode
+        //      with the default (false) via ignoreUnknownKeys, matching
+        //      stable-channel behaviour.
+        const val CONFIG_VERSION = 35
     }
 }
 
@@ -454,5 +459,6 @@ data class SystemConfig(
     val badgesVisible: Boolean = true,
     val shadeTabPage: Int = 0,
     val hiddenSystems: List<String> = emptyList(),
-    val systemFolderMappings: List<SystemFolderMapping> = emptyList()
+    val systemFolderMappings: List<SystemFolderMapping> = emptyList(),
+    val rcNotificationsEnabled: Boolean = false
 )

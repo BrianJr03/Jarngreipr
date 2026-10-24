@@ -250,7 +250,10 @@ fun SettingsScreen(
                                 appUpdateManager.clearSkippedVersion(context)
                                 appUpdateManager.clearDownloadedVersion(context)
 
-                                val update = UpdateChecker.checkForUpdate(currentVersionName)
+                                val update = UpdateChecker.checkForUpdate(
+                                    currentVersionName = currentVersionName,
+                                    includePrereleases = appUpdateManager.rcNotificationsEnabled
+                                )
                                 isCheckingForUpdates = false
 
                                 if (update.isUpdateAvailable) {

@@ -1181,6 +1181,9 @@
     <string name="update_button_skip">@string/common_skip</string>
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_description">Check for new versions</string>
+    <string name="settings_rc_notifications_title">Get notified about RC builds</string>
+    <string name="settings_rc_notifications_description">Also surface pre-release RC builds when checking for updates</string>
+    <string name="update_prerelease_badge">Pre-release</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_not_available">You\'re up to date!</string>
 
