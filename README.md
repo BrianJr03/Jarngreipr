@@ -53,21 +53,22 @@ Three things in one app, each usable alone.
 
 The flagship page type. `One continuous grid that holds apps, folders, ROMs, and widgets together.` Canvas is the default page on a fresh install.
 
-**What you can add** (from the `Add` menu): `App`, `Folder`, `ROM`, `Widget`, `Frontend widget`, `Photo container`, `RSS launcher`, `RSS widget`.
+**What you can add** (from the `Add` menu): `App`, `Folder`, `ROM`, `Widget`, `Frontend Tile`, `Photo container`, `RSS launcher`, `RSS widget`.
 
 **What makes it different from the older tabs:**
 
-|                                       | Apps Tab | Apps & Widgets Tab | Canvas |
-|---------------------------------------|:--------:|:------------------:|:------:|
-| Apps                                  |    ✅    |         ✅         |   ✅   |
-| Widgets                               |    ❌    |         ✅         |   ✅   |
-| Folders                               |    ✅    |         ✅         |   ✅   |
-| Pinned ROMs                           |    ✅    |         ❌         |   ✅   |
-| Frontend widget (live game art)       |    ❌    |         ❌         |   ✅   |
-| Photo containers, GIFs                |    ❌    |         ❌         |   ✅   |
-| RSS launcher and now-playing tile     |    ❌    |         ❌         |   ✅   |
-| Separate portrait and landscape       |    ❌    |         ❌         |   ✅   |
-| Push-based move, resize, `Tidy now`   |    ❌    |         ❌         |   ✅   |
+|                                   | Apps Tab | Apps & Widgets Tab | Canvas |
+|-----------------------------------|:--------:|:------------------:|:------:|
+| Apps                              |    ✅    |         ✅         |   ✅   |
+| Widgets                           |    ❌    |         ✅         |   ✅   |
+| Folders                           |    ✅    |         ✅         |   ✅   |
+| Pinned ROMs                       |    ✅    |         ❌         |   ✅   |
+| Frontend Tile     |    ❌    |         ❌         |   ✅   |
+| Last Played Tile   |    ❌    |         ❌         |   ✅   |
+| Photo containers, GIFs            |    ❌    |         ❌         |   ✅   |
+| RSS launcher and now-playing tile |    ❌    |         ❌         |   ✅   |
+| Separate portrait and landscape   |    ❌    |         ❌         |   ✅   |
+| Push-based move, resize, `Tidy now` |    ❌    |         ❌         |   ✅   |
 
 **More:** `Edit mode`, `Scroll orientation` (`Vertical` / `Horizontal`), 1 to 12 columns and rows, long-press empty space for the `Canvas Menu`, in-app `Welcome to Canvas` onboarding.
 
@@ -100,7 +101,7 @@ Enable: `Settings` → `Extras` → `Enable frontend`. `Browse your library from
 - **Home button gestures** (Thor, via accessibility service). `Press once` opens the launcher on the bottom; `Double press` opens the frontend; `Long press` opens both. Disable Mjolnir's accessibility service first, since both apps bind the Home button.
 - **Per-app launch display.** `Launch on Primary Display`, `Launch on External Display`, or `Ask`.
 - **Companion apps.** Bind an app to a game; it launches on the opposite screen alongside the game (guides, Discord, a second emulator window).
-- **Frontend widget.** A Canvas tile that shows art for whatever is focused in the frontend: covers, marquee, fanart, screenshots, miximages, or description. Tap for game details.
+- **Frontend Tile.** A Canvas tile that shows art for whatever is focused in the frontend: covers, marquee, fanart, screenshots, miximages, or description. Tap for game details.
 - **Audio.** `Top Screen Volume` and `Bottom Screen Volume` controlled independently.
 - **Game launch helpers.** `Wake Method`, `Persist Display on Game Launch`, `Control Power on Game Events`.
 

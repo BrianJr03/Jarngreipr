@@ -571,7 +571,7 @@ class ESDEViewModel @Inject constructor(
      * Only the path fields are filled — name/metadata are absent. The canvas
      * tile renderer treats this purely as a path bundle.
      */
-    private fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
+    fun buildGameInfo(systemName: String, gameFilename: String): GameInfo {
         val systemNames = listOf(systemName, getMediaSystemName(systemName)).distinct()
         val roots = mediaPaths
         fun media(folder: String) = findFirstMedia(

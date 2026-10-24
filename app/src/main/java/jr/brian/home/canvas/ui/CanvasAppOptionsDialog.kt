@@ -31,7 +31,8 @@ fun CanvasAppOptionsDialog(
     onEditCanvas: () -> Unit,
     onOpenCanvasMenu: () -> Unit,
     promptForDisplayOnLaunch: Boolean = false,
-    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null
+    onPromptForDisplayOnLaunchChange: ((Boolean) -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     AppOptionsDialog(
         app = app,
@@ -48,6 +49,7 @@ fun CanvasAppOptionsDialog(
         onEditCanvas = onEditCanvas,
         onOpenCanvasMenu = onOpenCanvasMenu,
         promptForDisplayOnLaunch = promptForDisplayOnLaunch,
-        onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange
+        onPromptForDisplayOnLaunchChange = onPromptForDisplayOnLaunchChange,
+        onNavigateToSettings = onNavigateToSettings
     )
 }

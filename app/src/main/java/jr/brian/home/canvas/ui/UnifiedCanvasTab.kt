@@ -441,7 +441,6 @@ fun UnifiedCanvasTab(
             onChoice = { choice ->
                 handleAddChoice(
                     choice = choice,
-                    context = context,
                     onPickApp = { pickAppVisible = true },
                     onAddRssLauncher = { viewModel.addItem(newRssLauncher()) },
                     onAddRssMusic = { viewModel.addItem(newRssMusic()) },
@@ -501,7 +500,8 @@ fun UnifiedCanvasTab(
             onConfirm = { imageType, scale, bgArgb, cornerDp ->
                 viewModel.addEsdeArtItem(imageType, scale, bgArgb, cornerDp)
             },
-            onDismiss = { pickEsdeArtVisible = false }
+            onDismiss = { pickEsdeArtVisible = false },
+            onNavigateToSettings = onSettingsClick
         )
     }
 
@@ -525,7 +525,8 @@ fun UnifiedCanvasTab(
                 pendingRemoval = target
                 esdeArtRetypeTarget = null
             },
-            onDismiss = { esdeArtRetypeTarget = null }
+            onDismiss = { esdeArtRetypeTarget = null },
+            onNavigateToSettings = onSettingsClick
         )
     }
 
@@ -550,7 +551,8 @@ fun UnifiedCanvasTab(
                 pendingRemoval = target
                 lastPlayedOptionsTarget = null
             },
-            onDismiss = { lastPlayedOptionsTarget = null }
+            onDismiss = { lastPlayedOptionsTarget = null },
+            onNavigateToSettings = onSettingsClick
         )
     }
 
@@ -723,7 +725,8 @@ fun UnifiedCanvasTab(
             continuousSpinEnabled = rom.key in esdePrefsState.canvasContinuousSpinRoms,
             onContinuousSpinChange = if (spinEligible) { enabled ->
                 esdePrefsManager.setCanvasContinuousSpin(rom.key, enabled)
-            } else null
+            } else null,
+            onNavigateToSettings = onSettingsClick
         )
     }
 
@@ -769,7 +772,8 @@ fun UnifiedCanvasTab(
             onPromptForDisplayOnLaunchChange = { enabled ->
                 appDisplayPreferenceManager
                     .setPromptForDisplayOnLaunch(app.packageName, enabled)
-            }
+            },
+            onNavigateToSettings = onSettingsClick
         )
     }
 
@@ -915,7 +919,6 @@ private fun handleTap(
 
 private fun handleAddChoice(
     choice: CanvasAddChoice,
-    context: android.content.Context,
     onPickApp: () -> Unit,
     onAddRssLauncher: () -> Unit,
     onAddRssMusic: () -> Unit,

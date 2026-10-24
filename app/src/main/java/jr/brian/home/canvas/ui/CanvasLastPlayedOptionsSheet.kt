@@ -64,7 +64,8 @@ fun CanvasLastPlayedOptionsSheet(
     initialBackgroundCornerRadiusDp: Int?,
     onConfirm: (count: Int, showRandomButton: Boolean, scale: EsdeContentScale, bgArgb: Long?, cornerDp: Int?) -> Unit,
     onRemove: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null
 ) {
     var count by remember(initialCount) { mutableIntStateOf(initialCount) }
     var showRandom by remember(initialShowRandomButton) { mutableStateOf(initialShowRandomButton) }
@@ -88,7 +89,8 @@ fun CanvasLastPlayedOptionsSheet(
         ) {
             ChooserSheetHeader(
                 title = stringResource(R.string.canvas_last_played_edit_title),
-                onDismiss = onDismiss
+                onDismiss = onDismiss,
+                onNavigateToSettings = onNavigateToSettings
             )
 
             RowCountStepper(
