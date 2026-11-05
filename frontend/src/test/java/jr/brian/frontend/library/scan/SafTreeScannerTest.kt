@@ -42,6 +42,12 @@ class SafTreeScannerTest {
             folderAliases = listOf("ps1"),
             extensions = setOf("iso", "bin", "cue", "chd", "pbp", "m3u"),
         ),
+        SystemDef(
+            id = "switch2",
+            displayName = "Nintendo Switch 2",
+            extensions = setOf("nup", "titleid"),
+            folderGameMarkers = listOf("base/exefs/main.npdm", "exefs/main.npdm"),
+        ),
     )
 
     private lateinit var context: Context
@@ -115,6 +121,25 @@ class SafTreeScannerTest {
         val results = SafTreeScanner(context, catalog).scan(treeUri.toString())
         assertEquals(1, results.size)
         assertEquals("Game.chd", results.single().relativePath)
+    }
+
+    @Test
+    fun `a folder holding a marker file is one game whatever its name`() = runBlocking {
+        provider.addDir("primary:Roms", "primary:Roms/switch2")
+        provider.addDir("primary:Roms/switch2", "primary:Roms/switch2/Donkey Kong Bananza")
+        provider.addDir("primary:Roms/switch2/Donkey Kong Bananza", "primary:Roms/switch2/Donkey Kong Bananza/base")
+        provider.addDir("primary:Roms/switch2/Donkey Kong Bananza/base", "primary:Roms/switch2/Donkey Kong Bananza/base/exefs")
+        provider.addFile("primary:Roms/switch2/Donkey Kong Bananza/base/exefs", "main.npdm", mime = "application/octet-stream")
+        provider.addDir("primary:Roms/switch2", "primary:Roms/switch2/Not A Game")
+        provider.addDir("primary:Roms/switch2/Not A Game", "primary:Roms/switch2/Not A Game/base")
+        provider.addFile("primary:Roms/switch2", "Packed.nup", mime = "application/octet-stream")
+
+        val results = SafTreeScanner(context, catalog).scan(treeUri.toString())
+        assertEquals(
+            setOf("Donkey Kong Bananza", "Packed.nup"),
+            results.map { it.relativePath }.toSet(),
+        )
+        assertTrue(results.single { it.relativePath == "Donkey Kong Bananza" }.isDirectoryAsFile)
     }
 
     @Test

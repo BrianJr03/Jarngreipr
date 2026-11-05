@@ -45,7 +45,48 @@ class FastWalkScannerTest {
             folderAliases = emptyList(),
             extensions = setOf("nes", "fds", "zip"),
         ),
+        SystemDef(
+            id = "switch2",
+            displayName = "Nintendo Switch 2",
+            extensions = setOf("nup", "titleid"),
+            folderGameMarkers = listOf("base/exefs/main.npdm", "exefs/main.npdm"),
+        ),
     )
+
+    @Test
+    fun `scan treats a folder holding a marker file as one game whatever its name`() = runBlocking {
+        val root = tempFolder.newFolder("Roms")
+        writeRom(root, "switch2/Donkey Kong Bananza v1.0/base/exefs/main.npdm")
+        writeRom(root, "switch2/Donkey Kong Bananza v1.0/updates/458752/exefs/main.npdm")
+        writeRom(root, "switch2/Mario Kart World/exefs/main.npdm")
+        writeRom(root, "switch2/Packed.nup")
+
+        val results = FastWalkScanner(catalog).scan(root.absolutePath)
+        assertEquals(
+            setOf("Donkey Kong Bananza v1.0", "Mario Kart World", "Packed.nup"),
+            results.map { it.relativePath }.toSet(),
+        )
+        assertTrue(results.single { it.relativePath == "Mario Kart World" }.isDirectoryAsFile)
+        assertFalse(results.single { it.relativePath == "Packed.nup" }.isDirectoryAsFile)
+    }
+
+    @Test
+    fun `scan descends into folders without a marker to find games below them`() = runBlocking {
+        val root = tempFolder.newFolder("Roms")
+        writeRom(root, "switch2/Nintendo/Donkey Kong Bananza/base/exefs/main.npdm")
+        writeRom(root, "switch2/Empty/base/romfs/data.bin")
+
+        val results = FastWalkScanner(catalog).scan(root.absolutePath)
+        assertEquals("Nintendo/Donkey Kong Bananza", results.single().relativePath)
+    }
+
+    @Test
+    fun `a marker that is a folder rather than a file does not make a game`() = runBlocking {
+        val root = tempFolder.newFolder("Roms")
+        File(root, "switch2/Odd/exefs/main.npdm").mkdirs()
+
+        assertTrue(FastWalkScanner(catalog).scan(root.absolutePath).isEmpty())
+    }
 
     @Test
     fun `scan returns one entry per real file in a system directory`() = runBlocking {

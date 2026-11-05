@@ -28,7 +28,6 @@
     <string name="rom_detail_companion_set">Companion: %1$s</string>
     <string name="rom_detail_companions_set">Companions: %1$s</string>
     <string name="rom_detail_companion_cleared">Companion cleared</string>
-    <string name="rom_detail_companion_pick_launch">Launch Companion</string>
     <string name="rom_detail_change_core">Change Core</string>
     <string name="rom_detail_change_folder">Change Folder</string>
     <string name="rom_detail_edit_info">Edit Info</string>

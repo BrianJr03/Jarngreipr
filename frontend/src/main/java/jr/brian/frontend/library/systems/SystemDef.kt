@@ -36,6 +36,12 @@ import kotlinx.serialization.Serializable
  * @property retroArchSystemId directory name under RetroArch's
  *   `system/` for bios/firmware (`gba`, `psx`, etc). Null when the
  *   system has no bios requirement.
+ * @property folderGameMarkers paths, relative to a folder, whose presence
+ *   makes that folder one game whatever its name. For systems whose dumps
+ *   are folders of files rather than one image (a Switch 2 dump is a
+ *   folder with `base/exefs/main.npdm`). The scanner does not descend
+ *   into a matched folder. Empty for every system that names its games
+ *   by extension only.
  */
 @Serializable
 data class SystemDef(
@@ -45,4 +51,5 @@ data class SystemDef(
     val extensions: Set<String> = emptySet(),
     val screenScraperSystemId: Int? = null,
     val retroArchSystemId: String? = null,
+    val folderGameMarkers: List<String> = emptyList(),
 )

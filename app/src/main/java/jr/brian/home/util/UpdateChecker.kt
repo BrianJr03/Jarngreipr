@@ -18,11 +18,11 @@ data class ApkVariant(
 
 enum class VariantType {
     STANDARD,
-    THOR;  // Variants ending in 'h' are for Thor device
+    THOR;  // Variants ending in 'h' (or 'h-rc' for a release candidate) are for Thor device
 
     companion object {
         fun fromFileName(fileName: String): VariantType {
-            val nameWithoutExtension = fileName.removeSuffix(".apk")
+            val nameWithoutExtension = fileName.removeSuffix(".apk").removeSuffix("-rc")
             return if (nameWithoutExtension.endsWith("h", ignoreCase = true)) {
                 THOR
             } else {
@@ -171,12 +171,13 @@ object UpdateChecker {
     private fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean {
         if (latestVersion.isBlank() || currentVersion.isBlank()) return false
 
-        // Remove any suffix like 'h' for comparison
-        val cleanLatest = latestVersion.replace(Regex("[a-zA-Z]+$"), "")
-        val cleanCurrent = currentVersion.replace(Regex("[a-zA-Z]+$"), "")
-
-        val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }
-        val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
+        // Compare only the leading numbers: "3.1.2h-rc", "v3.1.2-rc" and
+        // "3.1.2h" are all 3.1.2.
+        val numeric = Regex("""\d+(\.\d+)*""")
+        val latestParts = numeric.find(latestVersion)?.value.orEmpty()
+            .split(".").mapNotNull { it.toIntOrNull() }
+        val currentParts = numeric.find(currentVersion)?.value.orEmpty()
+            .split(".").mapNotNull { it.toIntOrNull() }
 
         val maxLength = maxOf(latestParts.size, currentParts.size)
 
@@ -188,6 +189,10 @@ object UpdateChecker {
             if (latestPart < currentPart) return false
         }
 
-        return false
+        // Same numbers: the final release is newer than its release candidate.
+        return isReleaseCandidate(currentVersion) && !isReleaseCandidate(latestVersion)
     }
+
+    private fun isReleaseCandidate(version: String): Boolean =
+        version.contains("-rc", ignoreCase = true)
 }

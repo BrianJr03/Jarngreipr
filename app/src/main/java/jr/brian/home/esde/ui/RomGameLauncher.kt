@@ -173,6 +173,7 @@ class RomGameLauncher(
                 .candidatesForExtension(context, File(romPath).extension)
                 .firstOrNull()
                 ?.packageName
+            ?: EsdeCommandLauncher.builtinSystemEmulator(context, game.systemName)
             ?: run { fail(context, LaunchFailure.NoEmulatorConfigured); return }
 
         val corePath =
@@ -287,23 +288,22 @@ class RomGameLauncher(
             }
         }
 
-        // Undocumented emulators (currently GameHub Lite) need a specific ID
-        // extra sourced from the ROM file's contents. The generic
-        // buildRomIntentFromPackage path below produces an ACTION_VIEW intent
-        // with no such extra — the activity opens empty ("Get Game"), which
-        // reads as "launched to the wrong screen". Pick the built-in command
-        // for this (system, pkg, extension) tuple instead.
-        if (EmulatorRegistry.resolve(pkg)?.launchContract is RomLaunchContract.Undocumented) {
-            val romExt = File(romPath).extension
-            val autoCommand = EsdeCommandLauncher.autoSelectBuiltinCommand(
-                game.systemName, pkg, romExt
-            )
-            if (autoCommand != null) {
-                Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
-                maybeLaunchCompanion(game, context)
-                launchWithSavedCommand(game, context, autoCommand, romPath, effectiveContentUri)
-                return
-            }
+        // ID files (.steam, .titleid) and undocumented emulators (currently
+        // GameHub Lite) need a specific ID extra sourced from the ROM file's
+        // contents. The generic buildRomIntentFromPackage path below hands over
+        // the file itself — the emulator opens empty ("Get Game") or refuses
+        // the file. Pick the built-in command for this (system, pkg, extension)
+        // tuple instead.
+        val romExt = File(romPath).extension
+        val autoCommand = EsdeCommandLauncher.builtinIdCommand(game.systemName, pkg, romExt)
+            ?: if (EmulatorRegistry.resolve(pkg)?.launchContract is RomLaunchContract.Undocumented) {
+                EsdeCommandLauncher.autoSelectBuiltinCommand(game.systemName, pkg, romExt)
+            } else null
+        if (autoCommand != null) {
+            Log.d(TAG, "Auto-selected built-in command for $pkg ($romExt): $autoCommand")
+            maybeLaunchCompanion(game, context)
+            launchWithSavedCommand(game, context, autoCommand, romPath, effectiveContentUri)
+            return
         }
 
         Log.d(TAG, "launchGame | pkg=$pkg rom=$romPath uri=$effectiveContentUri")

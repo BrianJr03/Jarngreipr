@@ -60,13 +60,11 @@ class FastWalkScanner @Inject constructor(
         def: SystemDef,
         out: MutableList<ScannedRom>,
     ) {
-        val extensions = def.extensions
-        if (extensions.isEmpty()) return
+        if (def.extensions.isEmpty() && def.folderGameMarkers.isEmpty()) return
         walk(
             dir = systemDir,
             systemDir = systemDir,
-            systemId = def.id,
-            extensions = extensions,
+            def = def,
             out = out,
             depthRemaining = ScanRules.WALK_MAX_DEPTH,
         )
@@ -75,11 +73,12 @@ class FastWalkScanner @Inject constructor(
     private fun walk(
         dir: File,
         systemDir: File,
-        systemId: String,
-        extensions: Set<String>,
+        def: SystemDef,
         out: MutableList<ScannedRom>,
         depthRemaining: Int,
     ) {
+        val systemId = def.id
+        val extensions = def.extensions
         if (depthRemaining < 0) return
         val children = dir.listFiles() ?: return
         for (child in children) {
@@ -87,12 +86,14 @@ class FastWalkScanner @Inject constructor(
             if (!ScanRules.shouldDescend(name)) continue
 
             if (child.isDirectory) {
-                if (ScanRules.matchesExtension(name, extensions)) {
+                if (def.folderGameMarkers.any { File(child, it).isFile }) {
+                    out += toScan(child, systemDir, systemId, isDirectoryAsFile = true)
+                } else if (ScanRules.matchesExtension(name, extensions)) {
                     // ES-DE's "directories interpreted as files" — a dir
                     // whose own name ends in a ROM extension is one game.
                     out += toScan(child, systemDir, systemId, isDirectoryAsFile = true)
                 } else {
-                    walk(child, systemDir, systemId, extensions, out, depthRemaining - 1)
+                    walk(child, systemDir, def, out, depthRemaining - 1)
                 }
             } else if (child.isFile && ScanRules.matchesExtension(name, extensions)) {
                 out += toScan(child, systemDir, systemId, isDirectoryAsFile = false)

@@ -527,6 +527,104 @@ class EmulatorRegistryTest {
     }
 
     @Test
+    fun `Banana Native rows use the Launch alias and game path extra`() {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.nxnative.android")) {
+            val spec = EmulatorRegistry.resolve(pkg)!!
+            assertEquals(pkg, spec.packageName)
+            assertEquals("$pkg.Launch", spec.activityName)
+            assertEquals(RomLaunchContract.PathExtra("game"), spec.launchContract)
+            assertEquals(listOf("nup", "titleid"), spec.extensions)
+        }
+    }
+
+    @Test
+    fun `systemExtensionsFallback for switch2 returns nup and titleid`() {
+        assertEquals(
+            setOf("nup", "titleid"),
+            EsdeCommandLauncher.systemExtensionsFallback("switch2"),
+        )
+    }
+
+    @Test
+    fun `switch2 system offers Banana Native path and URI commands in built-in order`() {
+        val context = mockContextWithInstalled("dev.bananative.android.plus")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf("Banana Native", "Banana Native (URI)", "Banana Native (Title ID)"),
+            options.map { it.displayName },
+        )
+        assertTrue(options.all { it.packageName == "dev.bananative.android.plus" })
+        assertTrue(options[0].command!!.contains("%EXTRA_game%=%ROM%"))
+    }
+
+    @Test
+    fun `switch2 falls back to the Banana Native test build`() {
+        val context = mockContextWithInstalled("dev.nxnative.android")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(3, options.size)
+        assertTrue(options.all { it.packageName == "dev.nxnative.android" })
+    }
+
+    @Test
+    fun `switch2 title ID command is marked for titleid files only`() {
+        val context = mockContextWithInstalled("dev.bananative.android.plus")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(
+            listOf(null, null, "titleid"),
+            options.map { it.requiredExtension },
+        )
+    }
+
+    @Test
+    fun `builtinSystemEmulator picks Banana Native for switch2 folder games`() {
+        assertEquals(
+            "dev.bananative.android.plus",
+            EsdeCommandLauncher.builtinSystemEmulator(
+                mockContextWithInstalled("dev.bananative.android.plus", "dev.nxnative.android"),
+                "switch2",
+            ),
+        )
+        assertEquals(
+            "dev.nxnative.android",
+            EsdeCommandLauncher.builtinSystemEmulator(
+                mockContextWithInstalled("dev.nxnative.android"),
+                "switch2",
+            ),
+        )
+        assertNull(EsdeCommandLauncher.builtinSystemEmulator(mockContextWithInstalled(), "switch2"))
+    }
+
+    @Test
+    fun `builtinIdCommand routes titleid files to the title_id command`() {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.nxnative.android")) {
+            assertEquals(
+                "%EMULATOR_BANANA-NATIVE% %EXTRA_title_id%=%INJECT%=%ROM%",
+                EsdeCommandLauncher.builtinIdCommand("switch2", pkg, "titleid"),
+            )
+        }
+    }
+
+    @Test
+    fun `builtinIdCommand leaves ordinary ROM extensions to the generic contract`() {
+        assertNull(EsdeCommandLauncher.builtinIdCommand("switch2", "dev.bananative.android.plus", "nup"))
+        assertNull(EsdeCommandLauncher.builtinIdCommand("ps2", "xyz.aethersx2.android", "iso"))
+    }
+
+    @Test
+    fun `builtinIdCommand still routes steam files for GameHub Lite`() {
+        assertEquals(
+            "%EMULATOR_GAMEHUB-LITE% %ACTION%=gamehub.lite.LAUNCH_GAME %EXTRABOOL_autoStartGame%=true %EXTRA_steamAppId%=%INJECT%=%ROM%",
+            EsdeCommandLauncher.builtinIdCommand("steam", "gamehub.lite", "steam"),
+        )
+    }
+
+    @Test
     fun `xendroid uses its custom intent action instead of ACTION_VIEW`() {
         // EmulatorHostActivity declares a VIEW filter but only boots a ROM on
         // its own action — a plain VIEW opens the activity to a black screen.

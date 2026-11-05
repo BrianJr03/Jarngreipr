@@ -273,7 +273,11 @@ class LibraryRepository @Inject constructor(
                 systemId = def.id,
                 relativePath = rom.relativePath,
                 absolutePath = rom.absolutePath,
-                displayName = File(rom.relativePath).nameWithoutExtension,
+                // A folder game found by its markers keeps its whole name:
+                // "Donkey Kong Bananza v1.0" has no ROM extension to strip.
+                displayName = File(rom.relativePath).let { f ->
+                    if (f.extension.lowercase() in def.extensions) f.nameWithoutExtension else f.name
+                },
                 fileSizeBytes = rom.fileSizeBytes.takeIf { it >= 0 },
             )
         }

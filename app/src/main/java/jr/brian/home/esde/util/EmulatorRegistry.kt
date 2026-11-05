@@ -265,6 +265,22 @@ object EmulatorRegistry {
         EmulatorSpec("skyline.emu", "Skyline",
             extensions = listOf("nsp", "xci", "nca", "nso")),
 
+        // ---- Switch 2 ----------------------------------------------------------
+        // Banana Native's frontend entry point is the `Launch` alias, which has no
+        // intent filters on purpose (Android 15 drops explicit intents that miss a
+        // declared filter). It opens games by path, so the `game` path extra is
+        // the most reliable form. A `.titleid` file holds the title ID of a game
+        // already on Banana Native's Home and goes through the built-in
+        // `title_id` command instead. The second row is the test build's id.
+        EmulatorSpec("dev.bananative.android.plus", "Banana Native",
+            "dev.bananative.android.plus.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
+        EmulatorSpec("dev.nxnative.android", "Banana Native (Test)",
+            "dev.nxnative.android.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
+
         // ---- Handhelds ---------------------------------------------------------
         EmulatorSpec("com.fastemulator.gba", "My Boy!",
             "com.fastemulator.gba.GPActivity", extensions = listOf("gba", "zip")),

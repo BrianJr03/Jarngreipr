@@ -17,7 +17,7 @@ android {
         minSdk = 33
         targetSdk = 37
         versionCode = 3
-        versionName = "3.1.2-rc"
+        versionName = "3.1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,7 +28,9 @@ android {
         }
         create("hidden") {
             dimension = "mode"
-            versionNameSuffix = "h"
+            // "h" goes before a release-candidate suffix: 3.1.2-rc -> 3.1.2h-rc, not 3.1.2-rch.
+            val base = defaultConfig.versionName!!
+            versionName = if (base.endsWith("-rc")) "${base.removeSuffix("-rc")}h-rc" else "${base}h"
         }
     }
 

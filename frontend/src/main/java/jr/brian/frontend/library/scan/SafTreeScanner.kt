@@ -74,12 +74,11 @@ class SafTreeScanner @Inject constructor(
                 continue
             }
             if (filter != null && def.id.lowercase() !in filter) continue
-            if (def.extensions.isEmpty()) continue
+            if (def.extensions.isEmpty() && def.folderGameMarkers.isEmpty()) continue
             walk(
                 treeUri = treeUri,
                 parentDocId = child.documentId,
-                systemId = def.id,
-                extensions = def.extensions,
+                def = def,
                 relativeSegments = emptyList(),
                 out = out,
                 depthRemaining = ScanRules.WALK_MAX_DEPTH,
@@ -91,12 +90,13 @@ class SafTreeScanner @Inject constructor(
     private fun walk(
         treeUri: Uri,
         parentDocId: String,
-        systemId: String,
-        extensions: Set<String>,
+        def: SystemDef,
         relativeSegments: List<String>,
         out: MutableList<ScannedRom>,
         depthRemaining: Int,
     ) {
+        val systemId = def.id
+        val extensions = def.extensions
         if (depthRemaining < 0) return
         val children = queryChildren(treeUri, parentDocId)
         for (child in children) {
@@ -105,14 +105,15 @@ class SafTreeScanner @Inject constructor(
             val childSegments = relativeSegments + name
 
             if (child.isDirectory) {
-                if (ScanRules.matchesExtension(name, extensions)) {
+                if (def.folderGameMarkers.any { hasFile(treeUri, child.documentId, it) }) {
+                    out += toScanned(treeUri, child, systemId, childSegments, isDirectoryAsFile = true)
+                } else if (ScanRules.matchesExtension(name, extensions)) {
                     out += toScanned(treeUri, child, systemId, childSegments, isDirectoryAsFile = true)
                 } else {
                     walk(
                         treeUri = treeUri,
                         parentDocId = child.documentId,
-                        systemId = systemId,
-                        extensions = extensions,
+                        def = def,
                         relativeSegments = childSegments,
                         out = out,
                         depthRemaining = depthRemaining - 1,
@@ -122,6 +123,24 @@ class SafTreeScanner @Inject constructor(
                 out += toScanned(treeUri, child, systemId, childSegments, isDirectoryAsFile = false)
             }
         }
+    }
+
+    /**
+     * Does [relativePath] (`base/exefs/main.npdm`) name a file under [dirDocId]?
+     * One query per path segment, and only for systems that declare
+     * [SystemDef.folderGameMarkers], so extension-only systems pay nothing.
+     */
+    private fun hasFile(treeUri: Uri, dirDocId: String, relativePath: String): Boolean {
+        val segments = relativePath.split('/')
+        var docId = dirDocId
+        for ((i, segment) in segments.withIndex()) {
+            val isLast = i == segments.lastIndex
+            val match = queryChildren(treeUri, docId)
+                .firstOrNull { it.displayName == segment && it.isDirectory != isLast }
+                ?: return false
+            docId = match.documentId
+        }
+        return true
     }
 
     private fun toScanned(

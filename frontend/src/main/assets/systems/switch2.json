@@ -1,0 +1,9 @@
+{
+  "id": "switch2",
+  "displayName": "Nintendo Switch 2",
+  "folderAliases": ["nswitch2", "nintendo-switch-2", "banananative"],
+  "extensions": ["nup", "titleid"],
+  "screenScraperSystemId": null,
+  "retroArchSystemId": null,
+  "folderGameMarkers": ["base/exefs/main.npdm", "exefs/main.npdm"]
+}
