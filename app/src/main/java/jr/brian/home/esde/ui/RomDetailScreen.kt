@@ -90,8 +90,8 @@ internal fun RomDetailScreen(
     onUnhide: () -> Unit = {},
     onSetMediaType: (RomSearchCardMediaType?) -> Unit = {},
     onSetMediaTypeForSystem: (RomSearchCardMediaType?) -> Unit = {},
-    companionPackage: String? = null,
-    companionLabel: String? = null,
+    companionPackages: List<String> = emptyList(),
+    companionLabels: List<String> = emptyList(),
     onPickCompanion: () -> Unit = {},
     onClearCompanion: () -> Unit = {},
     onEditInfo: () -> Unit = {},
@@ -394,8 +394,8 @@ internal fun RomDetailScreen(
                         )
                     }
                     CompanionRowButton(
-                        companionPackage = companionPackage,
-                        companionLabel = companionLabel,
+                        companionPackages = companionPackages,
+                        companionLabels = companionLabels,
                         onPickCompanion = onPickCompanion,
                         onClearCompanion = onClearCompanion
                     )
@@ -439,18 +439,21 @@ internal fun RomDetailScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CompanionRowButton(
-    companionPackage: String?,
-    companionLabel: String?,
+    companionPackages: List<String>,
+    companionLabels: List<String>,
     onPickCompanion: () -> Unit,
     onClearCompanion: () -> Unit
 ) {
-    val label = if (companionPackage != null) {
-        stringResource(
-            R.string.rom_detail_companion_set,
-            companionLabel ?: companionPackage
+    val display = companionPackages.mapIndexed { i, pkg ->
+        companionLabels.getOrNull(i) ?: pkg
+    }
+    val label = when (display.size) {
+        0 -> stringResource(R.string.rom_detail_companion)
+        1 -> stringResource(R.string.rom_detail_companion_set, display[0])
+        else -> stringResource(
+            R.string.rom_detail_companions_set,
+            display.joinToString(", ")
         )
-    } else {
-        stringResource(R.string.rom_detail_companion)
     }
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()

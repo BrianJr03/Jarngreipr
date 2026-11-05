@@ -32,7 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import jr.brian.home.data.ManagerContainer
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.RomSearchStateHolder
-import jr.brian.home.esde.data.setGameCompanion
+import jr.brian.home.esde.data.addGameCompanion
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.ScreensaverBehavior
 import jr.brian.home.esde.ui.RomGameLauncher
@@ -87,6 +87,7 @@ import jr.brian.home.util.Routes
 import jr.brian.home.util.UpdateChecker
 import jr.brian.home.util.UpdateInfo
 import jr.brian.home.util.launchApp
+import jr.brian.home.util.launchAppOnOppositeDisplay
 import jr.brian.home.viewmodels.MainViewModel
 import jr.brian.home.viewmodels.PowerViewModel
 import jr.brian.home.viewmodels.WidgetViewModel
@@ -235,7 +236,7 @@ fun MainContent(
         jr.brian.home.ui.components.dialog.AppSelectionDialog(
             apps = uiState.allAppsUnfiltered,
             onAppSelected = { app ->
-                esdePreferencesManager.setGameCompanion(
+                esdePreferencesManager.addGameCompanion(
                     jr.brian.home.esde.util.gameKey(game),
                     app.packageName
                 )
@@ -244,6 +245,47 @@ fun MainContent(
             onDismiss = { companionPickerFor = null },
             multiSelect = false
         )
+    }
+
+    // When a game launch resolves two installed companion apps, RomGameLauncher
+    // defers the companion launch to the user by emitting this signal. The
+    // picker reuses AppSelectionDialog, filtered down to the two mapped
+    // packages so the sheet shows exactly those two tiles.
+    var companionLaunchChoices by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        romSearchStateHolder.showCompanionLaunchPickerSignal.collect { packages ->
+            companionLaunchChoices = packages
+        }
+    }
+
+    if (companionLaunchChoices.isNotEmpty()) {
+        val choices = companionLaunchChoices
+        val appsForChoices = remember(uiState.allAppsUnfiltered, choices) {
+            val byPkg = uiState.allAppsUnfiltered.associateBy { it.packageName }
+            choices.mapNotNull { byPkg[it] }
+        }
+        if (appsForChoices.isNotEmpty()) {
+            jr.brian.home.ui.components.dialog.AppSelectionDialog(
+                apps = appsForChoices,
+                onAppSelected = { app ->
+                    val pref = managers.ui.appDisplayPreferenceManager
+                        .getAppDisplayPreference(app.packageName)
+                    val dm = context.getSystemService(android.content.Context.DISPLAY_SERVICE)
+                        as? android.hardware.display.DisplayManager
+                    val hasExternalDisplay = (dm?.displays?.size ?: 1) > 1
+                    if (hasExternalDisplay) {
+                        launchAppOnOppositeDisplay(context, app.packageName, pref)
+                    } else {
+                        launchApp(context, app.packageName, pref)
+                    }
+                    companionLaunchChoices = emptyList()
+                },
+                onDismiss = { companionLaunchChoices = emptyList() },
+                multiSelect = false
+            )
+        } else {
+            companionLaunchChoices = emptyList()
+        }
     }
 
     // Edit Info sheet is hosted here for the same reason — FrontEndActivity's

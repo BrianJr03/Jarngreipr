@@ -329,7 +329,13 @@ class ImportExportManager @Inject constructor(
                 canvasContinuousSpinRoms = f.esdePreferencesManager.state.value.canvasContinuousSpinRoms,
                 gameMediaMap = f.esdePreferencesManager.state.value.romSearchGameMediaMap,
                 systemMediaMap = f.esdePreferencesManager.state.value.systemMediaMap,
-                gameCompanionMap = f.esdePreferencesManager.state.value.gameCompanionMap,
+                // Legacy field intentionally retained in the export payload so a
+                // pre-v36 build still restores the first companion per ROM. Seeded
+                // from the new list by taking the first entry.
+                gameCompanionMap = f.esdePreferencesManager.state.value.gameCompanionsMap
+                    .mapNotNull { (k, v) -> v.firstOrNull()?.let { k to it } }
+                    .toMap(),
+                gameCompanionsMap = f.esdePreferencesManager.state.value.gameCompanionsMap,
                 frontendFocusHapticEnabled = f.esdePreferencesManager.state.value.frontendFocusHapticEnabled,
                 frontendFocusBackgroundEnabled = f.esdePreferencesManager.state.value.frontendFocusBackgroundEnabled,
                 frontendFocusBackgroundSystems = f.esdePreferencesManager.state.value.frontendFocusBackgroundSystems,
@@ -630,7 +636,12 @@ class ImportExportManager @Inject constructor(
         f.esdePreferencesManager.setAllCanvasContinuousSpin(config.romSearch.canvasContinuousSpinRoms)
         f.esdePreferencesManager.setAllGameMediaMap(config.romSearch.gameMediaMap)
         f.esdePreferencesManager.setAllSystemMediaMap(config.romSearch.systemMediaMap)
-        f.esdePreferencesManager.setAllGameCompanionMap(config.romSearch.gameCompanionMap)
+        // Prefer the v36 list field; fall back to converting the legacy single-
+        // value map so pre-v36 configs still restore companions.
+        @Suppress("DEPRECATION")
+        val companions = config.romSearch.gameCompanionsMap.takeIf { it.isNotEmpty() }
+            ?: config.romSearch.gameCompanionMap.mapValues { listOf(it.value) }
+        f.esdePreferencesManager.setAllGameCompanionsMap(companions)
         f.esdePreferencesManager.setFrontendFocusHapticEnabled(config.romSearch.frontendFocusHapticEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundEnabled(config.romSearch.frontendFocusBackgroundEnabled)
         f.esdePreferencesManager.setFrontendFocusBackgroundSystems(config.romSearch.frontendFocusBackgroundSystems)

@@ -243,7 +243,7 @@ data class ESDEPrefsState(
     val systemEmulatorMap: Map<String, String> = emptyMap(),
     val gameCommandMap: Map<String, String> = emptyMap(),
     val gameCoreMap: Map<String, String> = emptyMap(),
-    val gameCompanionMap: Map<String, String> = emptyMap(),
+    val gameCompanionsMap: Map<String, List<String>> = emptyMap(),
     val hiddenGames: Set<String> = emptySet(),
     val hiddenSystems: Set<String> = emptySet(),
     val romSearchUseWallpaper: Boolean = false,

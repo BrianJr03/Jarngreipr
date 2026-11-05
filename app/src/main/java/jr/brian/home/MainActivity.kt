@@ -238,6 +238,7 @@ class MainActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
             esdePrefs = esdePreferencesManager,
             appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
             recentlyPlayedManager = managers.feature.recentlyPlayedManager,
+            romSearchStateHolder = romSearchStateHolder,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )

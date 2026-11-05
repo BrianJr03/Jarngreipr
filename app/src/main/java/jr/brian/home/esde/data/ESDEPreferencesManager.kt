@@ -567,12 +567,22 @@ class ESDEPreferencesManager(context: Context) {
                         obj.keys().asSequence().associateWith { obj.getString(it) }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
-            gameCompanionMap = prefs.getString(KEY_GAME_COMPANION_MAP, null)
+            gameCompanionsMap = prefs.getString(KEY_GAME_COMPANION_MAP, null)
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { json ->
                     try {
                         val obj = JSONObject(json)
-                        obj.keys().asSequence().associateWith { obj.getString(it) }
+                        obj.keys().asSequence().associateWith { key ->
+                            // Legacy format stored a single packageName String per
+                            // game; new format stores a JSONArray of up to two.
+                            // Both coexist in the wild until users re-save.
+                            when (val raw = obj.get(key)) {
+                                is org.json.JSONArray ->
+                                    (0 until raw.length()).map { raw.getString(it) }
+                                is String -> listOf(raw)
+                                else -> emptyList()
+                            }
+                        }.filterValues { it.isNotEmpty() }
                     } catch (_: Exception) { emptyMap() }
                 } ?: emptyMap(),
             // Hardcoded off: ROM search has moved to the bottom-display sheet

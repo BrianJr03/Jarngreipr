@@ -63,6 +63,17 @@ class RomSearchStateHolder @Inject constructor() {
      * FrontEndActivity's hidden-system-bars window traps it.
      */
     val showEditInfoPickerSignal = MutableSharedFlow<GameInfo>(extraBufferCapacity = 1)
+
+    /**
+     * Emitted by [RomGameLauncher] on a game launch when the ROM has two
+     * companion apps mapped. The modal bottom-sheet picker that asks which
+     * companion to launch has to render on MainActivity for the same window-
+     * config reason as [showCompanionPickerSignal]. Payload is the list of
+     * package names (2 entries). The user's pick is launched by the sheet
+     * handler on the bottom display.
+     */
+    val showCompanionLaunchPickerSignal =
+        MutableSharedFlow<List<String>>(extraBufferCapacity = 1)
     val openedFromFrontend = MutableStateFlow(false)
     val focusedGame = MutableStateFlow<GameInfo?>(null)
 

@@ -156,7 +156,14 @@ data class JarngreiprConfig(
         //      checks include GitHub pre-releases. Older blobs decode
         //      with the default (false) via ignoreUnknownKeys, matching
         //      stable-channel behaviour.
-        const val CONFIG_VERSION = 35
+        // v36: a ROM can now have up to two companion apps. The schema
+        //      adds gameCompanionsMap (Map<String, List<String>>). The
+        //      legacy single-value gameCompanionMap is kept (deprecated)
+        //      and still written on export so pre-v36 builds restoring
+        //      a current config get the first companion. Import prefers
+        //      the new field; falls back to converting the legacy single
+        //      value to a one-element list.
+        const val CONFIG_VERSION = 36
     }
 }
 
@@ -415,7 +422,9 @@ data class RomSearchConfig(
     val canvasContinuousSpinRoms: Set<String> = emptySet(),
     val gameMediaMap: Map<String, String> = emptyMap(),
     val systemMediaMap: Map<String, String> = emptyMap(),
+    @Deprecated("Replaced by gameCompanionsMap in v36 (ROMs can now have up to two companions). Still written on export so pre-v36 builds get the first companion back, and still read on import as a fallback for pre-v36 configs.")
     val gameCompanionMap: Map<String, String> = emptyMap(),
+    val gameCompanionsMap: Map<String, List<String>> = emptyMap(),
     val frontendFocusHapticEnabled: Boolean = true,
     val frontendFocusBackgroundEnabled: Boolean = false,
     val frontendFocusBackgroundSystems: Boolean = true,

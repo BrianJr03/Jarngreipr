@@ -58,7 +58,7 @@ import coil.request.ImageRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
-import jr.brian.home.esde.data.clearGameCompanion
+import jr.brian.home.esde.data.clearGameCompanions
 import jr.brian.home.esde.model.FrontendLayout
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.gameKey
@@ -263,12 +263,12 @@ internal fun RomResultsGrid(
             exit = slideOutHorizontally(tween(200)) { it } + fadeOut(tween(200))
         ) {
             selectedGame?.let { game ->
-                val companionPkg = prefs.gameCompanionMap[gameKey(game)]
-                val companionLabel = companionPkg?.let { pkg ->
+                val companionPkgs = prefs.gameCompanionsMap[gameKey(game)].orEmpty()
+                val companionLabels = companionPkgs.map { pkg ->
                     runCatching {
                         val info = context.packageManager.getApplicationInfo(pkg, 0)
                         context.packageManager.getApplicationLabel(info).toString()
-                    }.getOrNull()
+                    }.getOrDefault(pkg)
                 }
                 RomDetailScreen(
                     game = game,
@@ -296,11 +296,11 @@ internal fun RomResultsGrid(
                     },
                     onSetMediaType = { type -> onSetGameMediaType(game, type) },
                     onSetMediaTypeForSystem = { type -> onSetMediaTypeForSystem(game, type) },
-                    companionPackage = companionPkg,
-                    companionLabel = companionLabel,
+                    companionPackages = companionPkgs,
+                    companionLabels = companionLabels,
                     onPickCompanion = { onPickCompanion(game) },
                     onClearCompanion = {
-                        prefsManager.clearGameCompanion(gameKey(game))
+                        prefsManager.clearGameCompanions(gameKey(game))
                         Toast.makeText(
                             context,
                             romDetailCompanionClearedMessage,

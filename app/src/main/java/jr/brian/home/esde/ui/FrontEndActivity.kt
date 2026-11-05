@@ -260,6 +260,7 @@ class FrontEndActivity : ComponentActivity(), jr.brian.core.model.ScreenHost {
             esdePrefs = esdePrefs,
             appDisplayPreferenceManager = managers.ui.appDisplayPreferenceManager,
             recentlyPlayedManager = managers.feature.recentlyPlayedManager,
+            romSearchStateHolder = romSearchStateHolder,
             onSignalGameLaunch = ::signalGameLaunch,
             onLaunchSafPicker = { uri -> safTreeLauncher.launch(uri) }
         )

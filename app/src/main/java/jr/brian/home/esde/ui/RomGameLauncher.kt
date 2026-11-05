@@ -13,6 +13,7 @@ import androidx.core.net.toUri
 import jr.brian.home.data.AppDisplayPreferenceManager
 import jr.brian.home.data.RecentlyPlayedManager
 import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.esde.data.RomSearchStateHolder
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.EmulatorRegistry
 import jr.brian.home.esde.util.EsdeCommandLauncher
@@ -52,6 +53,7 @@ class RomGameLauncher(
     private val esdePrefs: ESDEPreferencesManager,
     private val appDisplayPreferenceManager: AppDisplayPreferenceManager,
     private val recentlyPlayedManager: RecentlyPlayedManager,
+    private val romSearchStateHolder: RomSearchStateHolder,
     private val onSignalGameLaunch: () -> Unit,
     private val onLaunchSafPicker: (Uri?) -> Unit
 ) {
@@ -69,11 +71,20 @@ class RomGameLauncher(
     }
 
     private fun maybeLaunchCompanion(game: GameInfo, context: Context) {
-        val pkg = esdePrefs.getGameCompanion(gameKey(game)) ?: return
-        val installed = runCatching {
-            context.packageManager.getLaunchIntentForPackage(pkg) != null
-        }.getOrDefault(false)
-        if (!installed) return
+        val installed = esdePrefs.getGameCompanions(gameKey(game))
+            .filter {
+                runCatching {
+                    context.packageManager.getLaunchIntentForPackage(it) != null
+                }.getOrDefault(false)
+            }
+        when (installed.size) {
+            0 -> return
+            1 -> launchCompanionPkg(installed[0], context)
+            else -> romSearchStateHolder.showCompanionLaunchPickerSignal.tryEmit(installed)
+        }
+    }
+
+    private fun launchCompanionPkg(pkg: String, context: Context) {
         val pref = appDisplayPreferenceManager.getAppDisplayPreference(pkg)
         val hasExternalDisplay = runCatching {
             val dm = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager

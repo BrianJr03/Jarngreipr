@@ -75,39 +75,53 @@ fun ESDEPreferencesManager.getGameCore(gameKey: String): String? {
     return state.value.gameCoreMap[gameKey]
 }
 
-fun ESDEPreferencesManager.setGameCompanion(gameKey: String, packageName: String) {
-    val updated = _state.value.gameCompanionMap.toMutableMap()
-    updated[gameKey] = packageName
-    _state.value = _state.value.copy(gameCompanionMap = updated)
+private const val MAX_COMPANIONS_PER_GAME = 2
+
+private fun ESDEPreferencesManager.persistGameCompanions(map: Map<String, List<String>>) {
+    _state.value = _state.value.copy(gameCompanionsMap = map)
+    if (map.isEmpty()) {
+        prefs.edit { remove(KEY_GAME_COMPANION_MAP) }
+        return
+    }
     val json = JSONObject()
-    updated.forEach { (k, v) -> json.put(k, v) }
+    map.forEach { (k, v) ->
+        val arr = JSONArray()
+        v.forEach { arr.put(it) }
+        json.put(k, arr)
+    }
     prefs.edit { putString(KEY_GAME_COMPANION_MAP, json.toString()) }
 }
 
-fun ESDEPreferencesManager.clearGameCompanion(gameKey: String) {
-    val updated = _state.value.gameCompanionMap.toMutableMap()
+/**
+ * Append [packageName] to the companion list for [gameKey]. If the game already has
+ * [MAX_COMPANIONS_PER_GAME] companions, the list is replaced with a single-element
+ * list containing the new pick — the detail screen's click-adds-cycles UX relies on
+ * this: a tap when both slots are full starts the list over at one companion.
+ */
+fun ESDEPreferencesManager.addGameCompanion(gameKey: String, packageName: String) {
+    val current = _state.value.gameCompanionsMap[gameKey].orEmpty()
+    val updatedList = when {
+        current.contains(packageName) -> current
+        current.size >= MAX_COMPANIONS_PER_GAME -> listOf(packageName)
+        else -> current + packageName
+    }
+    val updated = _state.value.gameCompanionsMap.toMutableMap()
+    updated[gameKey] = updatedList
+    persistGameCompanions(updated)
+}
+
+fun ESDEPreferencesManager.clearGameCompanions(gameKey: String) {
+    val updated = _state.value.gameCompanionsMap.toMutableMap()
     if (updated.remove(gameKey) == null) return
-    _state.value = _state.value.copy(gameCompanionMap = updated)
-    if (updated.isEmpty()) {
-        prefs.edit { remove(KEY_GAME_COMPANION_MAP) }
-    } else {
-        val json = JSONObject()
-        updated.forEach { (k, v) -> json.put(k, v) }
-        prefs.edit { putString(KEY_GAME_COMPANION_MAP, json.toString()) }
-    }
+    persistGameCompanions(updated)
 }
 
-fun ESDEPreferencesManager.getGameCompanion(gameKey: String): String? {
-    return state.value.gameCompanionMap[gameKey]
+fun ESDEPreferencesManager.getGameCompanions(gameKey: String): List<String> {
+    return state.value.gameCompanionsMap[gameKey].orEmpty()
 }
 
-fun ESDEPreferencesManager.setAllGameCompanionMap(map: Map<String, String>) {
-    _state.value = _state.value.copy(gameCompanionMap = map)
-    if (map.isEmpty()) {
-        prefs.edit { remove(KEY_GAME_COMPANION_MAP) }
-    } else {
-        prefs.edit { putString(KEY_GAME_COMPANION_MAP, JSONObject(map).toString()) }
-    }
+fun ESDEPreferencesManager.setAllGameCompanionsMap(map: Map<String, List<String>>) {
+    persistGameCompanions(map.filterValues { it.isNotEmpty() })
 }
 
 fun ESDEPreferencesManager.hideGame(gameKey: String) {
