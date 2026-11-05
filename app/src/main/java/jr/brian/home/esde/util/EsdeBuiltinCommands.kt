@@ -104,6 +104,7 @@ internal object EsdeBuiltinCommands {
         ),
         "BANANA-NATIVE" to listOf(
             "dev.bananative.android.plus/dev.bananative.android.plus.Launch",
+            "dev.bananative.android/dev.bananative.android.Launch",
             "dev.nxnative.android/dev.nxnative.android.Launch"
         ),
         "GAMENATIVE" to listOf(

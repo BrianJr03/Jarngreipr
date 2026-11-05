@@ -271,9 +271,14 @@ object EmulatorRegistry {
         // declared filter). It opens games by path, so the `game` path extra is
         // the most reliable form. A `.titleid` file holds the title ID of a game
         // already on Banana Native's Home and goes through the built-in
-        // `title_id` command instead. The second row is the test build's id.
+        // `title_id` command instead. The alias follows the application id, and
+        // builds ship under three: `.plus`, the plain id, and the test build's.
         EmulatorSpec("dev.bananative.android.plus", "Banana Native",
             "dev.bananative.android.plus.Launch",
+            RomLaunchContract.PathExtra("game"),
+            listOf("nup", "titleid")),
+        EmulatorSpec("dev.bananative.android", "Banana Native",
+            "dev.bananative.android.Launch",
             RomLaunchContract.PathExtra("game"),
             listOf("nup", "titleid")),
         EmulatorSpec("dev.nxnative.android", "Banana Native (Test)",

@@ -528,7 +528,7 @@ class EmulatorRegistryTest {
 
     @Test
     fun `Banana Native rows use the Launch alias and game path extra`() {
-        for (pkg in listOf("dev.bananative.android.plus", "dev.nxnative.android")) {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.bananative.android", "dev.nxnative.android")) {
             val spec = EmulatorRegistry.resolve(pkg)!!
             assertEquals(pkg, spec.packageName)
             assertEquals("$pkg.Launch", spec.activityName)
@@ -557,6 +557,16 @@ class EmulatorRegistryTest {
         )
         assertTrue(options.all { it.packageName == "dev.bananative.android.plus" })
         assertTrue(options[0].command!!.contains("%EXTRA_game%=%ROM%"))
+    }
+
+    @Test
+    fun `switch2 resolves Banana Native under its plain application id`() {
+        val context = mockContextWithInstalled("dev.bananative.android")
+        val options = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
+            context, "switch2", NON_EXISTENT_FILE,
+        )
+        assertEquals(3, options.size)
+        assertTrue(options.all { it.packageName == "dev.bananative.android" })
     }
 
     @Test
@@ -602,7 +612,7 @@ class EmulatorRegistryTest {
 
     @Test
     fun `builtinIdCommand routes titleid files to the title_id command`() {
-        for (pkg in listOf("dev.bananative.android.plus", "dev.nxnative.android")) {
+        for (pkg in listOf("dev.bananative.android.plus", "dev.bananative.android", "dev.nxnative.android")) {
             assertEquals(
                 "%EMULATOR_BANANA-NATIVE% %EXTRA_title_id%=%INJECT%=%ROM%",
                 EsdeCommandLauncher.builtinIdCommand("switch2", pkg, "titleid"),
