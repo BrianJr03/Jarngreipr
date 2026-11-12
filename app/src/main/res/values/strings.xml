@@ -582,6 +582,8 @@
     <string name="back_button_shortcut_select_app">Select App</string>
     <string name="back_button_shortcut_selected_app">@string/common_selected_app</string>
     <string name="back_button_shortcut_no_app">@string/common_no_app_selected</string>
+    <string name="back_button_shortcut_slot_primary">Shortcut 1</string>
+    <string name="back_button_shortcut_slot_secondary">Shortcut 2</string>
 
     <!-- Generic Shortcut Strings -->
     <string name="shortcut_settings">@string/common_settings</string>

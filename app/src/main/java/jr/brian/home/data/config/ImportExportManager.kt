@@ -95,6 +95,8 @@ class ImportExportManager @Inject constructor(
                 backButtonShortcutEnabled = ps.backButtonShortcutEnabled.value,
                 backButtonShortcut = ps.backButtonShortcut.value.name,
                 backButtonShortcutAppPackage = ps.backButtonShortcutAppPackage.value,
+                secondaryBackButtonShortcut = ps.secondaryBackButtonShortcut.value.name,
+                secondaryBackButtonShortcutAppPackage = ps.secondaryBackButtonShortcutAppPackage.value,
                 poweredOffBrightness = ps.poweredOffBrightness.value,
                 appDrawerFilterByPage = ps.appDrawerFilterByPage.value,
                 pagerSwipeSensitivity = ps.pagerSwipeSensitivity.value
@@ -408,6 +410,11 @@ class ImportExportManager @Inject constructor(
         ui.powerSettingsManager.setBackButtonShortcutEnabled(ps.backButtonShortcutEnabled)
         runCatching { ui.powerSettingsManager.setBackButtonShortcut(BackButtonShortcut.valueOf(ps.backButtonShortcut)) }
         ui.powerSettingsManager.setBackButtonShortcutAppPackage(ps.backButtonShortcutAppPackage)
+        ui.powerSettingsManager.setSecondaryBackButtonShortcut(
+            runCatching { BackButtonShortcut.valueOf(ps.secondaryBackButtonShortcut) }
+                .getOrDefault(BackButtonShortcut.NONE)
+        )
+        ui.powerSettingsManager.setSecondaryBackButtonShortcutAppPackage(ps.secondaryBackButtonShortcutAppPackage)
         ui.powerSettingsManager.setPoweredOffBrightness(ps.poweredOffBrightness)
         ui.powerSettingsManager.setAppDrawerFilterByPage(ps.appDrawerFilterByPage)
         ui.powerSettingsManager.setPagerSwipeSensitivity(ps.pagerSwipeSensitivity)

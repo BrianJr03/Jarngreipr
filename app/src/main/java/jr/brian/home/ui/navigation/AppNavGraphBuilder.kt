@@ -28,6 +28,8 @@ import jr.brian.home.esde.ui.RomSearchScreen
 import jr.brian.home.esde.ui.SystemAppsScreen
 import jr.brian.home.model.BackButtonShortcut
 import jr.brian.home.ui.animations.SlideInVertically
+import jr.brian.home.ui.components.dialog.BackButtonShortcutChoice
+import jr.brian.home.ui.components.dialog.BackButtonShortcutPickerSheet
 import jr.brian.home.ui.screens.AppDockSettingsScreen
 import jr.brian.home.ui.screens.AppSearchScreen
 import jr.brian.home.ui.screens.BackButtonShortcutScreen
@@ -87,10 +89,12 @@ fun NavGraphBuilder.launcherScreen(
         var showControlPadSheet by remember { mutableStateOf(false) }
         var showBackButtonShortcutSheet by remember { mutableStateOf(false) }
         var showDockSettingsSheet by remember { mutableStateOf(false) }
+        var backButtonShortcutChoices by remember { mutableStateOf<List<BackButtonShortcutChoice>>(emptyList()) }
 
         val isAnySheetVisible = showAppSearchSheet ||
             showCustomThemeSheet || showQuickDeleteSheet || showMonitorSheet || 
-            showControlPadSheet || showBackButtonShortcutSheet || showDockSettingsSheet
+            showControlPadSheet || showBackButtonShortcutSheet || showDockSettingsSheet ||
+            backButtonShortcutChoices.isNotEmpty()
         
         LaunchedEffect(isAnySheetVisible) {
             onSheetVisibilityChanged(isAnySheetVisible)
@@ -100,6 +104,31 @@ fun NavGraphBuilder.launcherScreen(
         val backButtonShortcut by powerSettingsManager.backButtonShortcut.collectAsStateWithLifecycle()
         val isBackButtonShortcutEnabled by powerSettingsManager.backButtonShortcutEnabled.collectAsStateWithLifecycle()
         val backButtonShortcutAppPackage by powerSettingsManager.backButtonShortcutAppPackage.collectAsStateWithLifecycle()
+        val secondaryBackButtonShortcut by powerSettingsManager.secondaryBackButtonShortcut.collectAsStateWithLifecycle()
+        val secondaryBackButtonShortcutAppPackage by powerSettingsManager.secondaryBackButtonShortcutAppPackage.collectAsStateWithLifecycle()
+
+        fun runBackButtonShortcut(shortcut: BackButtonShortcut, appPackage: String?) {
+            when (shortcut) {
+                BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
+                BackButtonShortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
+                BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
+                BackButtonShortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
+                BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
+                BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
+                BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
+                BackButtonShortcut.MONITOR -> showMonitorSheet = true
+                BackButtonShortcut.CONTROL_PAD -> showControlPadSheet = true
+                BackButtonShortcut.VOLUME_CONTROLS -> navController.navigate(Routes.VOLUME_CONTROLS)
+                BackButtonShortcut.RECENT_APPS -> navController.navigate(Routes.RECENT_APPS)
+                BackButtonShortcut.APP -> appPackage?.let { packageName ->
+                    launchApp(
+                        context = context,
+                        packageName = packageName,
+                        displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(packageName)
+                    )
+                }
+            }
+        }
 
         LauncherPagerScreen(
             mainViewModel = mainViewModel,
@@ -118,29 +147,15 @@ fun NavGraphBuilder.launcherScreen(
             },
             onBackButtonShortcut = {
                 if (isBackButtonShortcutEnabled) {
-                    when (backButtonShortcut) {
-                        BackButtonShortcut.NONE -> showBackButtonShortcutSheet = true
-                        BackButtonShortcut.SETTINGS -> navController.navigate(Routes.SETTINGS)
-                        BackButtonShortcut.APP_SEARCH -> showAppSearchSheet = true
-                        BackButtonShortcut.ROM_SEARCH -> navController.navigate(Routes.ROM_SEARCH)
-                        BackButtonShortcut.POWERED_OFF -> powerViewModel.togglePower()
-                        BackButtonShortcut.QUICK_DELETE -> showQuickDeleteSheet = true
-                        BackButtonShortcut.CUSTOM_THEME -> showCustomThemeSheet = true
-                        BackButtonShortcut.MONITOR -> showMonitorSheet = true
-                        BackButtonShortcut.CONTROL_PAD -> showControlPadSheet = true
-                        BackButtonShortcut.VOLUME_CONTROLS -> navController.navigate(Routes.VOLUME_CONTROLS)
-                        BackButtonShortcut.RECENT_APPS -> navController.navigate(Routes.RECENT_APPS)
-                        BackButtonShortcut.APP -> {
-                            backButtonShortcutAppPackage?.let { packageName ->
-                                launchApp(
-                                    context = context,
-                                    packageName = packageName,
-                                    displayPreference = appDisplayPreferenceManager.getAppDisplayPreference(
-                                        packageName
-                                    )
-                                )
-                            }
-                        }
+                    val hasSecondary = backButtonShortcut != BackButtonShortcut.NONE &&
+                        secondaryBackButtonShortcut != BackButtonShortcut.NONE
+                    if (hasSecondary) {
+                        backButtonShortcutChoices = listOf(
+                            BackButtonShortcutChoice(backButtonShortcut, backButtonShortcutAppPackage),
+                            BackButtonShortcutChoice(secondaryBackButtonShortcut, secondaryBackButtonShortcutAppPackage)
+                        )
+                    } else {
+                        runBackButtonShortcut(backButtonShortcut, backButtonShortcutAppPackage)
                     }
                 }
             },
@@ -225,6 +240,18 @@ fun NavGraphBuilder.launcherScreen(
                     }
                 )
             }
+        }
+
+        if (backButtonShortcutChoices.isNotEmpty()) {
+            BackButtonShortcutPickerSheet(
+                choices = backButtonShortcutChoices,
+                allApps = uiState.allAppsUnfiltered,
+                onChoiceSelected = { choice ->
+                    backButtonShortcutChoices = emptyList()
+                    runBackButtonShortcut(choice.shortcut, choice.appPackage)
+                },
+                onDismiss = { backButtonShortcutChoices = emptyList() }
+            )
         }
 
         SlideInVertically(showControlPadSheet) {

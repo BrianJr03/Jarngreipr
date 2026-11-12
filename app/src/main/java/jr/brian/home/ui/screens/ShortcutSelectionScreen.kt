@@ -62,7 +62,8 @@ fun ShortcutSelectionScreen(
     shortcuts: List<ShortcutOption>,
     onShortcutSelected: (Shortcut) -> Unit,
     onAppSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    headerContent: @Composable () -> Unit = {}
 ) {
     val appSelectionDialogState = rememberDialogState<Unit>()
 
@@ -103,6 +104,8 @@ fun ShortcutSelectionScreen(
                         textAlign = TextAlign.Center
                     )
                 }
+
+                headerContent()
 
                 LazyColumn(
                     modifier = Modifier
@@ -167,7 +170,8 @@ fun ShortcutSelectionScreen(
 internal fun ShortcutOptionItem(
     label: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -180,7 +184,7 @@ internal fun ShortcutOptionItem(
     val borderWidth = if (isSelected || isFocused) 2.dp else 0.dp
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .scale(animatedFocusedScale(isFocused))
             .onFocusChanged {

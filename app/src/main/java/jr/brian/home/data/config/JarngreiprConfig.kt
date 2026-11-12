@@ -163,7 +163,13 @@ data class JarngreiprConfig(
         //      a current config get the first companion. Import prefers
         //      the new field; falls back to converting the legacy single
         //      value to a one-element list.
-        const val CONFIG_VERSION = 36
+        // v37: the back button shortcut can hold a second shortcut; when
+        //      both are set the back gesture opens a picker. Adds
+        //      PowerSettingsConfig.secondaryBackButtonShortcut and
+        //      secondaryBackButtonShortcutAppPackage. Older blobs decode
+        //      with NONE / null via ignoreUnknownKeys, keeping the
+        //      single-shortcut behaviour.
+        const val CONFIG_VERSION = 37
     }
 }
 
@@ -205,6 +211,8 @@ data class PowerSettingsConfig(
     val backButtonShortcutEnabled: Boolean = false,
     val backButtonShortcut: String = "NONE",
     val backButtonShortcutAppPackage: String? = null,
+    val secondaryBackButtonShortcut: String = "NONE",
+    val secondaryBackButtonShortcutAppPackage: String? = null,
     val poweredOffBrightness: Int = 40,
     val appDrawerFilterByPage: Boolean = false,
     val pagerSwipeSensitivity: Int = 0
