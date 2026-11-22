@@ -56,5 +56,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
+    debugImplementation(libs.androidx.ui.test.manifest)
+
     testImplementation(libs.junit)
+    testImplementation(composeBom)
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.robolectric)
 }

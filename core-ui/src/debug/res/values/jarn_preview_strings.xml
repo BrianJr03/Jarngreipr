@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarn_preview_play" translatable="false">Play</string>
+    <string name="jarn_preview_options" translatable="false">Options</string>
+    <string name="jarn_preview_delete" translatable="false">Delete</string>
+    <string name="jarn_preview_cancel" translatable="false">Cancel</string>
+    <string name="jarn_preview_back" translatable="false">Back</string>
+    <string name="jarn_preview_library" translatable="false">Library</string>
+    <string name="jarn_preview_canvas" translatable="false">Canvas</string>
+    <string name="jarn_preview_settings" translatable="false">Settings</string>
+    <string name="jarn_preview_favorites" translatable="false">Favorites</string>
+    <string name="jarn_preview_brightness" translatable="false">Brightness</string>
+    <string name="jarn_preview_percent" translatable="false">70%</string>
+    <string name="jarn_preview_hints" translatable="false">Button hints</string>
+    <string name="jarn_preview_empty_title" translatable="false">Let\'s find your games</string>
+    <string name="jarn_preview_empty_body" translatable="false">Add a folder and your library builds itself.</string>
+    <string name="jarn_preview_empty_action" translatable="false">Add a game folder</string>
+    <string name="jarn_preview_dialog_title" translatable="false">Delete this layout?</string>
+    <string name="jarn_preview_dialog_body" translatable="false">This cannot be undone.</string>
+</resources>
