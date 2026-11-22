@@ -169,7 +169,11 @@ data class JarngreiprConfig(
         //      secondaryBackButtonShortcutAppPackage. Older blobs decode
         //      with NONE / null via ignoreUnknownKeys, keeping the
         //      single-shortcut behaviour.
-        const val CONFIG_VERSION = 37
+        // v38: added FeatureConfig.experience, the Classic / JarnFE selector.
+        //      Nullable so pre-v38 blobs decode without a value; import
+        //      leaves the device's current experience alone in that case.
+        //      Separate from romSearch.frontendEnabled.
+        const val CONFIG_VERSION = 38
     }
 }
 
@@ -314,7 +318,14 @@ data class FeatureConfig(
      * in that case rather than reverting to the default, so restoring
      * an old backup never silently flips a user's dual-screen layout.
      */
-    val screenAssignment: String? = null
+    val screenAssignment: String? = null,
+    /**
+     * v38: persisted [jr.brian.core.model.Experience] name. Null on pre-v38
+     * exports. Import leaves the device's current experience alone in that
+     * case, so restoring an old backup never silently switches a user out
+     * of Jarn FE.
+     */
+    val experience: String? = null
 )
 
 @Serializable
