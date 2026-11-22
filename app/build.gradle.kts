@@ -106,6 +106,7 @@ kotlin {
 dependencies {
     implementation(project(":core-model"))
     implementation(project(":frontend"))
+    implementation(project(":jarnfe"))
 
     val composeBom = platform(libs.androidx.compose.bom)
 
