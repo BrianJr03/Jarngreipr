@@ -153,7 +153,7 @@ class CommandPanelControllerTest {
     }
 
     @Test
-    fun `transient failure falls back but keeps the cache`() = runTest {
+    fun `transient failure keeps the current colors and the cache`() = runTest {
         val port = FakePort()
         val store = FakeStore()
         val controller = controller(port, store)
@@ -162,7 +162,7 @@ class CommandPanelControllerTest {
         port.throwOnRead = true
         controller.refresh()
         advanceUntilIdle()
-        assertNull(controller.palette.value)
+        assertEquals(SAMPLE, controller.palette.value)
         assertEquals(SAMPLE, store.value)
         finish(controller)
     }

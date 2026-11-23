@@ -1,7 +1,10 @@
 package jr.brian.jarnfe.look.commandpanel
 
+import android.content.BroadcastReceiver
 import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.Signature
@@ -10,7 +13,9 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.PatternMatcher
 import android.os.UserManager
+import androidx.core.content.ContextCompat
 import jr.brian.core.model.CommandPanelPalette
 import java.security.MessageDigest
 
@@ -63,6 +68,13 @@ internal class AndroidCommandPanelThemePort(private val context: Context) : Comm
 
         @Deprecated("Deprecated in Java")
         override fun onLowMemory() = Unit
+    }
+
+    /** A read during an update looks untrusted, so the finished install triggers a fresh one. */
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            changeListener?.invoke()
+        }
     }
 
     override fun read(): CommandPanelRead = try {
@@ -139,10 +151,26 @@ internal class AndroidCommandPanelThemePort(private val context: Context) : Comm
     override fun listen(onChange: () -> Unit) {
         changeListener = onChange
         context.registerComponentCallbacks(configCallback)
+        ContextCompat.registerReceiver(
+            context,
+            packageReceiver,
+            commandPanelPackageFilter(),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun unlisten() {
         changeListener = null
         context.unregisterComponentCallbacks(configCallback)
+        context.unregisterReceiver(packageReceiver)
     }
+}
+
+private fun commandPanelPackageFilter() = IntentFilter().apply {
+    addAction(Intent.ACTION_PACKAGE_ADDED)
+    addAction(Intent.ACTION_PACKAGE_REPLACED)
+    addAction(Intent.ACTION_PACKAGE_CHANGED)
+    addAction(Intent.ACTION_PACKAGE_REMOVED)
+    addDataScheme("package")
+    addDataSchemeSpecificPart(CommandPanelThemeContract.PACKAGE, PatternMatcher.PATTERN_LITERAL)
 }

@@ -89,7 +89,7 @@ internal class CommandPanelThemeController(
                 port.setObserving(true)
                 forgetPalette()
             }
-            CommandPanelRead.Unavailable -> mutablePalette.value = null
+            CommandPanelRead.Unavailable -> Unit
         }
     }
 
