@@ -3,6 +3,8 @@ package jr.brian.jarnfe.shell
 import androidx.compose.runtime.Composable
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.deck.DeckScreen
+import jr.brian.jarnfe.firstrun.JarnFirstRunScreen
+import jr.brian.jarnfe.firstrun.rememberJarnFirstRun
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.ProvideJarnInput
 import jr.brian.jarnfe.look.rememberJarnAppearance
@@ -20,9 +22,11 @@ internal fun JarnShellRoot(screen: JarnScreen) {
         screenActive = state.isLit(screen),
     ) {
         ProvideJarnInput(JarnInput, screen) {
-            when (screen) {
-                JarnScreen.Stage -> StageScreen(state)
-                JarnScreen.Deck -> DeckScreen(state)
+            val firstRun = rememberJarnFirstRun(state.stageRoute)
+            when {
+                firstRun?.coversShell(state.stageRoute) == true -> JarnFirstRunScreen(screen, state, firstRun)
+                screen == JarnScreen.Stage -> StageScreen(state)
+                else -> DeckScreen(state)
             }
         }
     }

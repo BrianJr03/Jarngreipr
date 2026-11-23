@@ -43,7 +43,7 @@ internal fun JarnLookSection() {
 }
 
 @Composable
-private fun JarnLookPicker(chosen: JarnLook, onChoose: (JarnLook) -> Unit) {
+internal fun JarnLookPicker(chosen: JarnLook, onChoose: (JarnLook) -> Unit) {
     var focusedId by remember { mutableStateOf<String?>(null) }
     LiveLookPreview(focusedId)
     BoxWithConstraints(Modifier.fillMaxWidth()) {

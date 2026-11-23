@@ -202,7 +202,9 @@ data class JarngreiprConfig(
         //      show app names and undo timer choices. Null on older blobs, and import keeps them.
         // v48: added FeatureConfig.jarnPlayStats, play counts and time per game. Null on
         //      older blobs, and import keeps current totals. Import only ever raises them.
-        const val CONFIG_VERSION = 48
+        // v49: added FeatureConfig.jarnFirstRunDone, whether the Jarn FE tour was finished.
+        //      Null on older blobs, and import keeps the current value. Import only sets it.
+        const val CONFIG_VERSION = 49
     }
 }
 
@@ -383,7 +385,9 @@ data class FeatureConfig(
     /** v45: Jarn FE live wallpaper id or "off". Null on pre-v45 exports, and import keeps the current one. */
     val jarnLiveWallpaper: String? = null,
     /** v48: play totals per game. Null on pre-v48 exports, and import keeps current totals. */
-    val jarnPlayStats: List<JarnPlayStatConfig>? = null
+    val jarnPlayStats: List<JarnPlayStatConfig>? = null,
+    /** v49: Jarn FE tour finished. Null on pre-v49 exports. Import never turns it back off. */
+    val jarnFirstRunDone: Boolean? = null
 )
 
 @Serializable

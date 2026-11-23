@@ -59,6 +59,25 @@ class JarnLookStore @Inject constructor(
         }
     }
 
+    private val _firstRunDone = MutableStateFlow(prefs.getBoolean(KEY_FIRST_RUN_DONE, false))
+    val firstRunDoneState: StateFlow<Boolean> = _firstRunDone.asStateFlow()
+    val firstRunDone: Boolean get() = _firstRunDone.value
+
+    /** The tour's place on this device. Never backed up, since it only matters mid-tour. */
+    val firstRunStep: String? get() = prefs.getString(KEY_FIRST_RUN_STEP, null)
+
+    fun saveFirstRunStep(step: String) {
+        prefs.edit { putString(KEY_FIRST_RUN_STEP, step) }
+    }
+
+    fun markFirstRunDone() {
+        _firstRunDone.value = true
+        prefs.edit {
+            putBoolean(KEY_FIRST_RUN_DONE, true)
+            remove(KEY_FIRST_RUN_STEP)
+        }
+    }
+
     private fun readDisplay() = JarnDisplayPrefs(
         systemTileScale = prefs.getFloat(KEY_SYSTEM_TILE_SCALE, JarnDisplayPrefs.DEFAULT_TILE_SCALE),
         gameTileScale = prefs.getFloat(KEY_GAME_TILE_SCALE, JarnDisplayPrefs.DEFAULT_TILE_SCALE),
@@ -101,5 +120,7 @@ class JarnLookStore @Inject constructor(
         const val KEY_TAP_CONTROL = "tap_control"
         const val KEY_APP_NAMES_VISIBLE = "app_names_visible"
         const val KEY_UNDO_COUNTDOWN_VISIBLE = "undo_countdown_visible"
+        const val KEY_FIRST_RUN_DONE = "first_run_done"
+        const val KEY_FIRST_RUN_STEP = "first_run_step"
     }
 }

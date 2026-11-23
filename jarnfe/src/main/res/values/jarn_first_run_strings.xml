@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_first_run_counter">%1$d of %2$d</string>
+    <string name="jarnfe_first_run_skip">Skip tour</string>
+    <string name="jarnfe_first_run_skip_title">Skip the tour?</string>
+    <string name="jarnfe_first_run_skip_message">You can replay it anytime from Settings, General.</string>
+    <string name="jarnfe_first_run_keep_going">Keep going</string>
+    <string name="jarnfe_first_run_start">Get started</string>
+    <string name="jarnfe_first_run_next">Next</string>
+    <string name="jarnfe_first_run_do_it">Do it for me</string>
+    <string name="jarnfe_first_run_finish">Start playing</string>
+    <string name="jarnfe_first_run_nice">Nice, that\'s it.</string>
+    <string name="jarnfe_first_run_replay">Replay the tour</string>
+    <string name="jarnfe_first_run_replay_hint">Walk through the screens and buttons again.</string>
+
+    <string name="jarnfe_first_run_stage_cue">Follow along on the Deck.</string>
+    <string name="jarnfe_first_run_stage_welcome">Stage shows it. Deck does it.</string>
+    <string name="jarnfe_first_run_stage_practice">Try it on your controller</string>
+    <string name="jarnfe_first_run_stage_select">Select jumps between screens</string>
+    <string name="jarnfe_first_run_stage_other_tabs">These tabs move from the other screen</string>
+
+    <string name="jarnfe_first_run_welcome_title">Welcome to Jarn</string>
+    <string name="jarnfe_first_run_welcome_body">Your games live on the top screen, called Stage. What you can do with them lives down here on the Deck.</string>
+    <string name="jarnfe_first_run_welcome_body_single">Your games fill this screen, called Stage. The Deck opens as a panel whenever you need it.</string>
+
+    <string name="jarnfe_first_run_library_title">Your games</string>
+    <string name="jarnfe_first_run_library_why">Jarn only reads this folder to find your games.</string>
+    <string name="jarnfe_first_run_library_loading">Looking for your games. You can keep going while this finishes.</string>
+    <string name="jarnfe_first_run_library_later">You can add a game folder anytime from Settings, Library.</string>
+    <string name="jarnfe_first_run_existing_title">Your setup is already here</string>
+    <string name="jarnfe_first_run_existing_body">Nothing to import, and nothing was changed.</string>
+    <plurals name="jarnfe_first_run_existing_systems">
+        <item quantity="one">%1$d system</item>
+        <item quantity="other">%1$d systems</item>
+    </plurals>
+    <string name="jarnfe_first_run_existing_counts">%1$s, %2$s</string>
+    <plurals name="jarnfe_first_run_existing_games">
+        <item quantity="one">%1$d game</item>
+        <item quantity="other">%1$d games</item>
+    </plurals>
+
+    <string name="jarnfe_first_run_media_title">Your art</string>
+    <string name="jarnfe_first_run_media_intro">Jarn looks for box art you already have.</string>
+    <string name="jarnfe_first_run_media_checking">Checking for art</string>
+    <string name="jarnfe_first_run_media_found">Found %1$s, and using it</string>
+    <string name="jarnfe_first_run_media_in_use">Using %1$s</string>
+    <string name="jarnfe_first_run_media_elsewhere">Art found in %1$s</string>
+    <string name="jarnfe_first_run_media_elsewhere_hint">Switch to it in the Art setting below.</string>
+    <string name="jarnfe_first_run_media_none">No art found yet</string>
+    <string name="jarnfe_first_run_media_none_hint">Your games still work. You can add art later.</string>
+    <string name="jarnfe_first_run_media_esde_wins">RetroHrai art is here too. ES-DE comes first when both are found.</string>
+    <string name="jarnfe_first_run_media_open">Art setting</string>
+    <string name="jarnfe_first_run_media_open_hint">Switch your art source here. B brings you back.</string>
+    <string name="jarnfe_first_run_media_access">Allow file access</string>
+    <string name="jarnfe_first_run_media_access_why">Jarn needs file access to read art saved by other apps.</string>
+    <string name="jarnfe_first_run_art_cue">Pick your art source here. Press B to return to the tour.</string>
+
+    <string name="jarnfe_first_run_look_title">Pick a look</string>
+    <string name="jarnfe_first_run_look_body">Move up to try one on both screens, and press A to keep it. Fjord is the default.</string>
+
+    <string name="jarnfe_first_run_a_title">A selects</string>
+    <string name="jarnfe_first_run_a_body">Press A to open or confirm whatever is highlighted.</string>
+    <string name="jarnfe_first_run_b_title">B goes back</string>
+    <string name="jarnfe_first_run_b_body">Press B to step back one level. Try it now.</string>
+    <string name="jarnfe_first_run_x_title">X shows options</string>
+    <string name="jarnfe_first_run_x_body">Press X on a game to see what you can do with it on the Deck. Try it now.</string>
+    <string name="jarnfe_first_run_x_body_single">Press X on a game to open the Deck panel with its options. Try it now.</string>
+    <string name="jarnfe_first_run_select_title">Select switches screens</string>
+    <string name="jarnfe_first_run_select_body">Press Select to move your controller to the other screen. Try it now.</string>
+    <string name="jarnfe_first_run_tabs_title">L1 and R1 change tabs</string>
+    <string name="jarnfe_first_run_tabs_body">Press L1 or R1 to move between tabs on this screen.</string>
+    <string name="jarnfe_first_run_other_tabs_title">L2 and R2 reach across</string>
+    <string name="jarnfe_first_run_other_tabs_body">Press L2 or R2 to change tabs on the other screen without leaving this one.</string>
+
+    <string name="jarnfe_first_run_done_title">You\'re all set</string>
+    <string name="jarnfe_first_run_done_body">Here are your buttons. Replay this tour anytime from Settings, General.</string>
+    <string name="jarnfe_first_run_cheat_a">Open or confirm</string>
+    <string name="jarnfe_first_run_cheat_b">Go back</string>
+    <string name="jarnfe_first_run_cheat_select">Switch screens</string>
+    <string name="jarnfe_first_run_cheat_select_single">Open the Deck panel</string>
+    <string name="jarnfe_first_run_cheat_tabs">Change tabs</string>
+    <string name="jarnfe_first_run_cheat_other_tabs">Change tabs on the other screen</string>
+</resources>

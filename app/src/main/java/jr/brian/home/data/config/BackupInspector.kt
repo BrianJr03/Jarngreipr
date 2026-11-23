@@ -232,6 +232,7 @@ private fun JarngreiprConfig.otherSettings(current: JarngreiprConfig): Jarngreip
         jarnArtChoices = null,
         jarnPinnedApps = null,
         jarnDisplay = null,
+        jarnFirstRunDone = null,
         screenAssignment = feature.screenAssignment ?: current.feature.screenAssignment,
         experience = feature.experience ?: current.feature.experience,
         artSource = feature.artSource ?: current.feature.artSource,
