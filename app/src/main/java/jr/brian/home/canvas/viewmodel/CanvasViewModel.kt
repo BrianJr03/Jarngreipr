@@ -445,6 +445,8 @@ class CanvasViewModel @Inject constructor(
         canvasLayoutManager.removeItem(pageIndex, item.id)
     }
 
+    fun savedLayouts(): Collection<CanvasLayout> = canvasLayoutManager.layoutsByPage.value.values
+
     /**
      * Deletes a `file://` URI backed by our own `filesDir/canvas_photos/`
      * directory. No-op for content URIs (SAF fallback), malformed paths, or

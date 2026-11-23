@@ -46,6 +46,7 @@ import jr.brian.home.service.AppNotificationListenerService
 import jr.brian.home.ui.components.UpdateAvailableDialog
 import jr.brian.home.ui.components.WhatsNewDialog
 import jr.brian.home.ui.components.dialog.NotificationAccessDialog
+import jr.brian.home.ui.components.widget.RefreshUnavailableWidgetsEffect
 import jr.brian.home.ui.components.dialog.hasUserDeclinedNotificationAccess
 import jr.brian.home.ui.components.dialog.openAppSettings
 import jr.brian.home.ui.components.dialog.openNotificationAccessSettings
@@ -414,6 +415,8 @@ fun MainContent(
             context.unregisterReceiver(receiver)
         }
     }
+
+    RefreshUnavailableWidgetsEffect(widgetViewModel)
 
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(

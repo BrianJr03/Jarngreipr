@@ -682,10 +682,10 @@ fun UnifiedCanvasTab(
             confirmText = stringResource(R.string.canvas_remove_confirm),
             cancelText = stringResource(R.string.canvas_remove_cancel),
             onConfirm = {
-                if (resolved is ResolvedCanvasItem.Widget) {
-                    appWidgetHost?.deleteAppWidgetId(resolved.raw.widgetId)
-                }
                 viewModel.removeItemAndCleanup(resolved.raw)
+                if (resolved is ResolvedCanvasItem.Widget) {
+                    widgetViewModel.releaseWidgetIdIfUnreferenced(resolved.raw.widgetId, viewModel::savedLayouts)
+                }
                 pendingRemoval = null
             },
             onDismiss = { pendingRemoval = null }

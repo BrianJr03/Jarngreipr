@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import jr.brian.core.model.GameImageType
 import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.canvas.data.CanvasTabType
+import jr.brian.home.canvas.data.isWidgetIdReferenced
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.EsdeContentScale
@@ -63,15 +64,6 @@ private const val PHOTO_PREFIX = "photo_"
 private const val FILE_SCHEME = "file://"
 private const val WIDGET_CELL_PX = 80f
 private const val WIDGET_MAX_SPAN = 6
-
-/** True while any saved tile or widget page still points at [widgetId]. */
-internal fun isWidgetIdReferenced(
-    layouts: Collection<CanvasLayout>,
-    widgetPageIds: Collection<Int>,
-    widgetId: Int,
-): Boolean = widgetId in widgetPageIds || layouts.any { layout ->
-    layout.items.any { it is CanvasItem.WidgetItem && it.widgetId == widgetId }
-}
 
 internal fun isPhotoReferenced(layouts: Collection<CanvasLayout>, uri: String): Boolean =
     layouts.any { layout -> layout.items.any { it is CanvasItem.PhotoContainer && it.imageUri == uri } }

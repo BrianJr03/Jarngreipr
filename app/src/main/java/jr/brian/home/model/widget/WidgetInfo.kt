@@ -15,5 +15,6 @@ data class WidgetInfo(
 
 data class WidgetPage(
     val index: Int,
-    val widgets: List<WidgetInfo> = emptyList()
+    val widgets: List<WidgetInfo> = emptyList(),
+    val unavailableWidgets: List<WidgetConfig> = emptyList()
 )
