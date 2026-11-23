@@ -63,6 +63,7 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
 
     override fun requestDisallowInterceptTouchEvent(disallow: Boolean) {
         if (disallow) {
+            binding?.driver?.widgetClaimedFinger = true
             gesture.claimedElsewhere()
             removeCallbacks(lift)
         }
@@ -127,6 +128,7 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
         pressBoard = board
         lastBoard = board
         active.driver.activeWidget = this
+        active.driver.widgetClaimedFinger = false
         gesture.down(CanvasTouchStart.BrowseWidget, ev.rawX, ev.rawY, ev.eventTime)
         gesture.liftAtMs?.let { postDelayed(lift, (it - ev.eventTime).coerceAtLeast(1L)) }
         return true
@@ -170,14 +172,20 @@ internal class CanvasWidgetTouchFrame(context: Context) : FrameLayout(context), 
         if (claimDecided || gesture.phase != CanvasTouchPhase.Pressing) return
         val claim = canvasWidgetClaim(deltaX, deltaY, scrollAxes, claimPx) ?: return
         claimDecided = true
-        if (claim) parent?.requestDisallowInterceptTouchEvent(true)
+        if (claim) {
+            binding?.driver?.widgetClaimedFinger = true
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
     }
 
     private fun finish(effect: CanvasTouchEffect) {
         removeCallbacks(lift)
         apply(effect)
         if (effect == CanvasTouchEffect.Tap && !childTook) binding?.onBlankTap?.invoke()
-        binding?.driver?.takeIf { it.activeWidget === this }?.activeWidget = null
+        binding?.driver?.takeIf { it.activeWidget === this }?.let {
+            it.activeWidget = null
+            it.widgetClaimedFinger = false
+        }
         tracking = false
     }
 

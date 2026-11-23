@@ -38,13 +38,22 @@ internal fun rememberCanvasTouch(
     onGrabbed: (String) -> Unit,
     onDropped: (CanvasGrab, Map<String, GridRect>) -> Unit,
     removeTile: (CanvasGrab) -> Unit,
+    hasCarryTarget: (Int) -> Boolean,
+    carry: (Int) -> Boolean,
+    moveBetweenPages: (CanvasGrabDrop.BetweenPages) -> Unit,
 ): CanvasTouch {
     val density = LocalDensity.current.density
     val view = LocalView.current
     val context = LocalContext.current
     val touch = remember(editor, density) {
         val space = CanvasBoardSpace(density)
-        CanvasTouch(CanvasTouchDriver(editor, density = density, toWindow = space::toWindow), space)
+        val driver = CanvasTouchDriver(
+            editor = editor,
+            density = density,
+            toWindow = space::toWindow,
+            fromWindow = space::fromWindow,
+        )
+        CanvasTouch(driver, space)
     }
     val layout = page?.takeIf { it.kind == JarnCanvasPageKind.Canvas }?.layout
     val hapticsOn = { context.jarnLookStoreOrNull()?.display?.buttonHaptics != false }
@@ -61,6 +70,9 @@ internal fun rememberCanvasTouch(
             tick = { if (hapticsOn()) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK) },
             onDropped = onDropped,
             removeTile = removeTile,
+            hasCarryTarget = hasCarryTarget,
+            carry = carry,
+            moveBetweenPages = moveBetweenPages,
         )
     }
     return touch

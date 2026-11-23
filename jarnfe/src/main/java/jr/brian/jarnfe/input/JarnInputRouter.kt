@@ -182,7 +182,7 @@ class JarnInputRouter(private val longPressMs: Long = JARN_LONG_PRESS_MS) {
         if (press.route == Route.PassThrough) return false
         val binding = press.binding() ?: return true
         when {
-            binding.repeats -> binding.onPress?.invoke()
+            binding.repeats -> (binding.onRepeat ?: binding.onPress)?.invoke()
             binding.onLongPress != null && !press.fired && press.isLong(input) -> {
                 press.fired = true
                 binding.onLongPress.invoke()

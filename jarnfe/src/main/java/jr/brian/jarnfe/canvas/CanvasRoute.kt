@@ -1,9 +1,7 @@
 package jr.brian.jarnfe.canvas
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +19,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnEmptyState
@@ -32,19 +31,12 @@ import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.GridRect
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.apps.shouldAskDisplay
-import jr.brian.jarnfe.input.JarnAction
-import jr.brian.jarnfe.input.JarnBindingsBuilder
-import jr.brian.jarnfe.input.JarnInputLayer
-import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.LocalJarnInputRouter
 import jr.brian.jarnfe.input.LocalJarnScreen
 import jr.brian.jarnfe.rss.JarnRssRoute
 import jr.brian.jarnfe.rss.JarnRssSheetSlot
-import jr.brian.jarnfe.session.DeckTab
-import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.shell.JarnNotices
-import jr.brian.jarnfe.wallpaper.readableOverWallpaper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,19 +73,29 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
     var pendingGrab by remember { mutableStateOf<String?>(null) }
     var widgetRevision by remember { mutableIntStateOf(0) }
     var artPreview by remember { mutableStateOf<CanvasArtPreview?>(null) }
+    var arrival by remember { mutableStateOf<CanvasCarriedTile?>(null) }
+    var entryFocus by remember { mutableStateOf<String?>(null) }
     val selected = JarnCanvas.selectedPage
     val undo = JarnCanvas.undo
     val undoWrites = remember(data) { CanvasDataUndoWrites(data) }
-    val page = snapshot.pages.getOrNull(selected)?.let { it.withoutTiles(undo.hiddenOn(it.index)) }
+    val editor = remember { CanvasEditor(navigate = { JarnCanvas.selectedPage = it }) }
+    val shownPage = snapshot.pages.getOrNull(selected)?.let { it.withoutTiles(undo.hiddenOn(it.index)) }
+    editor.showPage(shownPage?.index)
+    val carried = editor.grab?.takeIf { it.isAwayFromHome }?.let { canvasCarriedTile(it, snapshot.pages) } ?: arrival
+    val page = shownPage?.withCarriedTile(carried)
     CanvasUndoExits(undo)
-    LaunchedEffect(selected) { undo.settle() }
+    LaunchedEffect(selected) { undo.settleForPageChange() }
+    LaunchedEffect(arrival, snapshot) {
+        val landing = arrival ?: return@LaunchedEffect
+        val saved = snapshot.pages.getOrNull(landing.pageIndex)?.layout?.items.orEmpty().any { it.id == landing.item.id }
+        if (!saved) delay(CANVAS_SETTLE_TIMEOUT_MS)
+        arrival = null
+    }
     LaunchedEffect(overlay != null) { if (overlay != null) undo.settle() }
     LaunchedEffect(page?.layout, overlay) {
         val settled = artPreview?.isSettled(page?.layout?.items.orEmpty()) == true
         if (overlay !is CanvasOverlay.ArtMedia && settled) artPreview = null
     }
-    val editor = remember { CanvasEditor(navigate = { JarnCanvas.selectedPage = it }) }
-    editor.showPage(page?.index)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
@@ -117,8 +119,9 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
         openTileMenu = { overlay = CanvasOverlay.TileMenu(it.id) },
     )
 
-    Box(Modifier.fillMaxSize()) {
-        key(page?.index) {
+    val pageMotion = rememberCanvasPageMotion(selected)
+    Box(Modifier.fillMaxSize().then(pageMotion)) {
+        key(editor.surfaceKey) {
             CanvasPageSurface(
                 editor = editor,
                 scope = scope,
@@ -133,6 +136,9 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
                 widgetRevision = widgetRevision,
                 artPreview = artPreview,
                 pendingGrab = pendingGrab,
+                entryFocus = entryFocus,
+                onEntryFocus = { entryFocus = it },
+                onArrival = { arrival = it },
                 onPendingGrabHandled = { pendingGrab = null },
                 onOptions = { overlay = CanvasOverlay.Options },
                 handlers = handlers,
@@ -200,17 +206,6 @@ private fun CanvasWorkspace(data: JarnCanvasData, snapshot: JarnCanvasSnapshot, 
     }
 }
 
-private class CanvasTileHandlers(
-    val onOpenList: (CanvasListTarget) -> Unit,
-    val openFolder: (String) -> Unit,
-    val launchApp: (JarnCanvasApp) -> Unit,
-    val launchRom: (JarnCanvasRom) -> Unit,
-    val choosePhoto: (CanvasItem.PhotoContainer) -> Unit,
-    val openMusic: () -> Unit,
-    val openRss: () -> Unit,
-    val openTileMenu: (CanvasItem) -> Unit,
-)
-
 private class CanvasSurfaceCommands(
     val editing: Boolean,
     val startEdit: () -> Unit,
@@ -233,6 +228,9 @@ private fun CanvasPageSurface(
     widgetRevision: Int,
     artPreview: CanvasArtPreview?,
     pendingGrab: String?,
+    entryFocus: String?,
+    onEntryFocus: (String?) -> Unit,
+    onArrival: (CanvasCarriedTile?) -> Unit,
     onPendingGrabHandled: () -> Unit,
     onOptions: () -> Unit,
     handlers: CanvasTileHandlers,
@@ -240,7 +238,8 @@ private fun CanvasPageSurface(
 ) {
     val rssSheets = remember { JarnRssSheetSlot() }
     val focus = remember { mutableMapOf<String, FocusRequester>() }
-    var lastFocused by remember { mutableStateOf<String?>(null) }
+    var lastFocused by remember { mutableStateOf(entryFocus) }
+    var boardHasFocus by remember { mutableStateOf(false) }
     var interactingId by remember { mutableStateOf<String?>(null) }
     var cellPx by remember { mutableFloatStateOf(0f) }
     val router = LocalJarnInputRouter.current
@@ -269,6 +268,10 @@ private fun CanvasPageSurface(
     val activate: (CanvasItem) -> Unit = { item ->
         page?.let { activateTile(item, it, snapshot, handlers, useWidget) }
     }
+    val carrier = remember(editor) { CanvasPageCarrier(editor) { JarnCanvas.snapshot?.pages.orEmpty() } }
+    val moveBetweenPages: (CanvasGrabDrop.BetweenPages) -> Unit = { drop ->
+        moveCanvasTile(drop, snapshot.pages, editor, undo, undoWrites, onArrival, onEntryFocus) { lastFocused = it }
+    }
     val touch = rememberCanvasTouch(
         editor = editor,
         page = page,
@@ -281,6 +284,13 @@ private fun CanvasPageSurface(
         onGrabbed = { lastFocused = it },
         onDropped = { finished, placements -> recordDrop(undo, undoWrites, finished, placements) },
         removeTile = { undo.removeTile(undoWrites, it.home.pageIndex, it.itemId) },
+        hasCarryTarget = carrier::hasTarget,
+        carry = { direction ->
+            val result = carrier.carry(direction, enterAtEdge = false)
+            result.showNotice()
+            result == CanvasCarryResult.Moved
+        },
+        moveBetweenPages = moveBetweenPages,
     )
     val tapTile: (CanvasItem, Float) -> Unit = tap@{ item, tileCellPx ->
         if (touch.driver.claimEditTap(item.id)) return@tap
@@ -327,7 +337,7 @@ private fun CanvasPageSurface(
     val focusTarget = page?.takeIf { it.kind != JarnCanvasPageKind.Rss }
         ?.let { canvasFocusTarget(it, lastFocused, editor.editing) }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(focusTarget, sheetOpen, isActive, editor.editing) {
+    LaunchedEffect(focusTarget, page?.index, sheetOpen, isActive, editor.editing) {
         if (focusTarget == null || sheetOpen || !isActive) return@LaunchedEffect
         withFrameNanos { }
         if (!tabsFocus.hasFocus) runCatching { requesterFor(focusTarget).requestFocus() }
@@ -335,20 +345,51 @@ private fun CanvasPageSurface(
 
     val focusedTile = page?.layout?.items?.firstOrNull { it.id == lastFocused }
     val restoreUndo: () -> Unit = {
-        undo.undo(page?.layout?.activeArrangement.orEmpty())?.let { editor.settled = it }
+        val restored = undo.undo(page?.layout?.activeArrangement.orEmpty()) { moved, undone ->
+            if (undone) {
+                onEntryFocus(moved.move.itemId)
+                JarnCanvas.selectedPage = moved.move.fromPage
+            } else {
+                JarnNotices.show(R.string.jarnfe_canvas_notice_move_failed)
+            }
+        }
+        restored?.let { editor.settled = it }
     }
+    val pagePush = canvasPagePush(
+        page = page.takeIf { boardHasFocus },
+        pages = snapshot.pages,
+        focusedId = lastFocused,
+        onPage = { target, entry ->
+            onEntryFocus(entry)
+            JarnCanvas.selectedPage = target
+        },
+        onCarry = { direction -> carrier.carry(direction, enterAtEdge = true).showNotice() },
+    )
+    val pageSwipe = rememberCanvasPageSwipe(
+        driver = touch.driver,
+        editor = editor,
+        enabled = !sheetOpen && interactingId == null,
+        hasPrevious = page != null && page.index > 0,
+        hasNext = page != null && page.index < pageCount - 1,
+        onPage = { direction ->
+            onEntryFocus(null)
+            page?.let { JarnCanvas.selectedPage = it.index + direction }
+            touch.driver.actions?.tick?.invoke()
+        },
+    )
     CanvasInputLayers(
         editor = editor,
         hasTiles = page?.layout?.items?.isNotEmpty() == true,
         confirmLabel = page?.let { focusedConfirmLabel(data, it, focusedTile) },
         sheetOpen = sheetOpen || interactingId != null || page?.kind == JarnCanvasPageKind.Rss,
+        pagePush = pagePush,
         onContext = { if (focusedTile != null) handlers.openTileMenu(focusedTile) else onOptions() },
         onOptions = onOptions,
         onUndo = restoreUndo.takeIf { undo.entry != null && editor.grab == null },
         onDrop = {
             val current = page ?: return@CanvasInputLayers
             val finished = editor.grab ?: return@CanvasInputLayers
-            editor.drop { placements ->
+            editor.drop(moveBetweenPages = moveBetweenPages) { placements ->
                 data.commitPlacements(current.index, current.layout.activeOrientation, placements)
                 recordDrop(undo, undoWrites, finished, placements)
             }
@@ -364,7 +405,9 @@ private fun CanvasPageSurface(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .onFocusChanged { boardHasFocus = it.hasFocus }
+                .canvasPageSwipe(pageSwipe),
             contentAlignment = Alignment.Center,
         ) {
             when {
@@ -414,6 +457,7 @@ private fun CanvasPageSurface(
             }
         }
     }
+    page?.let { CanvasPagePeek(pageSwipe, it.index) }
     CanvasTouchChrome(touch.driver, undo.entry.takeIf { editor.grab == null }, restoreUndo)
     rssSheets.Host()
     overlays(
@@ -488,142 +532,4 @@ private fun canvasFocusTarget(page: JarnCanvasPage, last: String?, editing: Bool
         hasMenu -> CANVAS_MENU_FOCUS_ID
         else -> null
     }
-}
-
-private fun activateTile(
-    item: CanvasItem,
-    page: JarnCanvasPage,
-    snapshot: JarnCanvasSnapshot,
-    handlers: CanvasTileHandlers,
-    useWidget: (CanvasItem.WidgetItem) -> Unit,
-) {
-    when (item) {
-        is CanvasItem.AppItem -> page.apps[item.packageName]?.let(handlers.launchApp) ?: showMissing()
-        is CanvasItem.FolderItem ->
-            if (item.folderId in page.folders) handlers.openFolder(item.id) else showMissing()
-        is CanvasItem.RomItem -> page.roms[item.romKey]?.let(handlers.launchRom) ?: showMissing()
-        is CanvasItem.LastPlayedItem ->
-            handlers.onOpenList(CanvasListTarget.LastPlayed(snapshot.recent.take(item.resolvedCount)))
-        is CanvasItem.EsdeArtItem -> JarnSession.update { copy(deckTab = DeckTab.Now) }
-        is CanvasItem.WidgetItem -> useWidget(item)
-        is CanvasItem.PhotoContainer -> handlers.choosePhoto(item)
-        is CanvasItem.RssLauncherItem -> handlers.openRss()
-        is CanvasItem.RssMusicItem -> handlers.openMusic()
-    }
-}
-
-private fun showMissing() = JarnNotices.show(R.string.jarnfe_canvas_notice_missing)
-
-private fun focusedConfirmLabel(data: JarnCanvasData, page: JarnCanvasPage, tile: CanvasItem?): Int? {
-    if (tile == null) return R.string.jarnfe_hint_open
-    val health = (tile as? CanvasItem.WidgetItem)?.let { data.widgetHealth(it.widgetId) }
-    return canvasConfirmHint(tile, canvasItemResolved(tile, page), health)
-}
-
-@Composable
-private fun CanvasInputLayers(
-    editor: CanvasEditor,
-    hasTiles: Boolean,
-    confirmLabel: Int?,
-    sheetOpen: Boolean,
-    onContext: () -> Unit,
-    onOptions: () -> Unit,
-    onUndo: (() -> Unit)?,
-    onDrop: () -> Unit,
-    onUndoAdd: () -> Unit,
-) {
-    val grab = editor.grab
-    JarnInputLayer(
-        enabled = !editor.editing && !sheetOpen,
-        bindings = {
-            if (hasTiles && confirmLabel != null) hint(JarnAction.Confirm, confirmLabel)
-            on(JarnAction.Context, R.string.jarnfe_hint_context, onPress = onContext)
-            on(JarnAction.Menu, R.string.jarnfe_canvas_options_title, onPress = onOptions)
-            onUndo?.let { on(JarnAction.Search, R.string.jarnfe_canvas_undo, onPress = it) }
-        },
-    )
-    JarnInputLayer(
-        mode = JarnLayerMode.Modal,
-        enabled = editor.editing && grab == null && !sheetOpen,
-        bindings = {
-            if (hasTiles) hint(JarnAction.Confirm, R.string.jarnfe_canvas_hint_grab)
-            on(JarnAction.Menu, R.string.jarnfe_canvas_options_title, onPress = onOptions)
-            on(JarnAction.Back, R.string.jarnfe_canvas_hint_done, onPress = editor::exit)
-            onUndo?.let { on(JarnAction.Search, R.string.jarnfe_canvas_undo, onPress = it) }
-        },
-    )
-    JarnInputLayer(
-        mode = JarnLayerMode.Capture,
-        enabled = grab != null,
-        bindings = {
-            if (grab?.driver == CanvasGrabDriver.Touch) {
-                grabCancelBinding(editor, grab.isNewTile, onUndoAdd)
-            } else {
-                grabBindings(editor, grab?.axis ?: CanvasResizeAxis.Width, grab?.isNewTile == true, onDrop, onUndoAdd)
-            }
-        },
-    )
-}
-
-private fun JarnBindingsBuilder.grabBindings(
-    editor: CanvasEditor,
-    axis: CanvasResizeAxis,
-    isNewTile: Boolean,
-    onDrop: () -> Unit,
-    onUndoAdd: () -> Unit,
-) {
-    on(JarnAction.MoveUp, R.string.jarnfe_hint_move) { editor.step { moved(0, -1) } }
-    on(JarnAction.MoveDown) { editor.step { moved(0, 1) } }
-    on(JarnAction.MoveLeft) { editor.step { moved(-1, 0) } }
-    on(JarnAction.MoveRight) { editor.step { moved(1, 0) } }
-    on(JarnAction.TabPrevious, R.string.jarnfe_canvas_hint_shrink) { editor.step { resized(-1) } }
-    on(JarnAction.TabNext, R.string.jarnfe_canvas_hint_grow) { editor.step { resized(1) } }
-    val axisLabel = when (axis) {
-        CanvasResizeAxis.Width -> R.string.jarnfe_canvas_hint_axis_width
-        CanvasResizeAxis.Height -> R.string.jarnfe_canvas_hint_axis_height
-    }
-    on(JarnAction.Context, axisLabel) { editor.step { axisToggled() } }
-    on(JarnAction.Confirm, R.string.jarnfe_canvas_hint_drop, onPress = onDrop)
-    grabCancelBinding(editor, isNewTile, onUndoAdd)
-}
-
-private fun JarnBindingsBuilder.grabCancelBinding(
-    editor: CanvasEditor,
-    isNewTile: Boolean,
-    onUndoAdd: () -> Unit,
-) {
-    if (isNewTile) {
-        on(JarnAction.Back, R.string.jarnfe_canvas_hint_undo_add, onPress = onUndoAdd)
-    } else {
-        on(JarnAction.Back, R.string.jarnfe_canvas_hint_cancel, onPress = editor::cancelGrab)
-    }
-}
-
-@Composable
-private fun CanvasPageHeader(page: JarnCanvasPage?, pageCount: Int, homePage: Int, editing: Boolean) {
-    if (page == null) return
-    val colors = JarnTheme.colors
-    val title = stringResource(R.string.jarnfe_canvas_page_of, page.index + 1, pageCount)
-    val detail = when {
-        editing -> stringResource(R.string.jarnfe_canvas_editing)
-        page.index == homePage -> stringResource(R.string.jarnfe_canvas_home)
-        else -> null
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JarnTheme.space.deckMargin, vertical = JarnTheme.space.xs),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        JarnText(title, JarnTheme.type.labelStrong, colors.textHigh, maxLines = 1)
-        detail?.let {
-            JarnText(it, JarnTheme.type.caption, colors.readableOverWallpaper(colors.accent), maxLines = 1)
-        }
-    }
-}
-
-@Composable
-private fun CanvasNotice(titleRes: Int, messageRes: Int) {
-    JarnEmptyState(title = stringResource(titleRes), message = stringResource(messageRes))
 }

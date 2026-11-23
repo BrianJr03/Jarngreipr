@@ -32,11 +32,15 @@ import jr.brian.jarnfe.canvas.JarnCanvasApp
 import jr.brian.jarnfe.canvas.JarnCanvasNewTile
 import jr.brian.jarnfe.canvas.JarnCanvasRom
 import jr.brian.jarnfe.canvas.JarnCanvasRssItem
+import jr.brian.jarnfe.canvas.JarnCanvasTileMove
+import jr.brian.jarnfe.canvas.JarnCanvasTileMoved
 import jr.brian.jarnfe.canvas.JarnCanvasTiles
 import jr.brian.jarnfe.canvas.JarnWidgetBind
 import jr.brian.jarnfe.canvas.JarnWidgetHealth
 import jr.brian.jarnfe.canvas.JarnWidgetLease
 import jr.brian.jarnfe.canvas.JarnWidgetProvider
+import jr.brian.jarnfe.canvas.jarnLayoutWithArrival
+import jr.brian.jarnfe.canvas.jarnTileMayChangePage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -154,6 +158,65 @@ class AppJarnCanvasTiles @Inject constructor(
         layouts.removeItem(pageIndex, itemId)
         releaseAfterRemoval(pageIndex, item)
     }
+
+    /** Never releases anything: the tile keeps its id, widget and photo on the new page. */
+    override suspend fun moveTile(move: JarnCanvasTileMove): JarnCanvasTileMoved? = edit {
+        if (move.fromPage == move.toPage || !isCanvasPage(move.fromPage) || !isCanvasPage(move.toPage)) {
+            return@edit null
+        }
+        val source = layouts.getLayout(move.fromPage)
+        val destination = layouts.getLayout(move.toPage)
+        val item = source.items.firstOrNull { it.id == move.itemId } ?: return@edit null
+        if (move.itemId !in move.placements || !jarnTileMayChangePage(item, destination)) return@edit null
+        val romKey = (item as? CanvasItem.RomItem)?.romKey
+        val rom = romKey?.let { key ->
+            pinOn(move.fromPage, key) ?: pinnedRoms.allPinnedRoms.first().firstOrNull { it.key == key }
+                ?: return@edit null
+        }
+        val pinAdded = romKey != null && pinOn(move.toPage, romKey) == null
+        if (pinAdded && rom != null) pinnedRoms.addPinnedRom(move.toPage, rom, CanvasTabType.VALUE)
+        layouts.replaceLayout(move.toPage, jarnLayoutWithArrival(destination, source, item, move))
+        layouts.removeItem(move.fromPage, move.itemId)
+        val sourceAfter = layouts.getLayout(move.fromPage)
+        val pinRemoved = romKey != null &&
+            sourceAfter.items.none { it is CanvasItem.RomItem && it.romKey == romKey }
+        if (pinRemoved && romKey != null) {
+            pinnedRoms.removePinnedRom(move.fromPage, romKey, CanvasTabType.VALUE)
+        }
+        JarnCanvasTileMoved(
+            move = move,
+            sourceBefore = source,
+            sourceAfter = sourceAfter,
+            destinationBefore = destination,
+            destinationAfter = layouts.getLayout(move.toPage),
+            romKey = romKey,
+            pinAdded = pinAdded,
+            pinRemoved = pinRemoved,
+        )
+    }
+
+    /** Restores the source first, so this direction can't lose the tile either. */
+    override suspend fun undoTileMove(moved: JarnCanvasTileMoved): Boolean = edit {
+        val move = moved.move
+        val untouched = isCanvasPage(move.fromPage) && isCanvasPage(move.toPage) &&
+            layouts.getLayout(move.fromPage) == moved.sourceAfter &&
+            layouts.getLayout(move.toPage) == moved.destinationAfter
+        if (!untouched) return@edit false
+        val romKey = moved.romKey
+        if (romKey != null && moved.pinRemoved) {
+            val rom = pinOn(move.toPage, romKey) ?: return@edit false
+            pinnedRoms.addPinnedRom(move.fromPage, rom, CanvasTabType.VALUE)
+        }
+        layouts.replaceLayout(move.fromPage, moved.sourceBefore)
+        layouts.replaceLayout(move.toPage, moved.destinationBefore)
+        if (romKey != null && moved.pinAdded) {
+            pinnedRoms.removePinnedRom(move.toPage, romKey, CanvasTabType.VALUE)
+        }
+        true
+    }
+
+    private suspend fun pinOn(pageIndex: Int, key: String) =
+        pinnedRoms.getPinnedRoms(pageIndex, CanvasTabType.VALUE).first().firstOrNull { it.key == key }
 
     /** Runs after the tile is gone, so a failure can never leave a tile on a released resource. */
     private suspend fun releaseAfterRemoval(pageIndex: Int, item: CanvasItem) {

@@ -24,6 +24,10 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
     /** Holds a dropped layout on screen until the saved one arrives, so tiles never jump back. */
     var settled by mutableStateOf<Map<String, GridRect>?>(null)
 
+    /** Changes only when the page changed without a carried tile, so a held finger survives a flip. */
+    var surfaceKey by mutableIntStateOf(0)
+        private set
+
     private var shownPage by mutableStateOf<Int?>(null)
     private var visiblePushCells by mutableIntStateOf(0)
 
@@ -40,6 +44,7 @@ internal class CanvasEditor(private val navigate: (Int) -> Unit = {}) {
         shownPage = index
         settled = null
         if (carried == null) {
+            surfaceKey += 1
             grab = null
             editing = false
             visiblePushCells = 0
