@@ -1987,4 +1987,8 @@
     <string name="settings_switch_to_jarn_title">Switch to Jarn FE</string>
     <string name="settings_switch_to_jarn_description">Your canvases, widgets, photos and settings stay as they are</string>
     <string name="settings_switch_to_jarn_failed">Couldn\'t open Jarn FE</string>
+    <string name="jarn_preview_title">Meet Jarn FE</string>
+    <string name="jarn_preview_description">A new controller-first home for your games and apps across both screens.</string>
+    <string name="jarn_preview_reassurance">Your setup stays as it is, and you can switch back to Classic any time in its Settings.</string>
+    <string name="jarn_preview_try">Try Jarn FE</string>
 </resources>

@@ -7,6 +7,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jr.brian.core.model.Experience
 import jr.brian.core.model.resolveLauncherExperience
 import jr.brian.home.data.ExperienceStore
+import jr.brian.home.data.JarnFeOffer
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.ui.util.launchJarnFe
 import jr.brian.home.ui.util.routeHomeFromLauncher
@@ -36,7 +37,7 @@ class HomeRouterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!openJarnFeInDebug()) {
+        if (!openJarnFeIfOffered()) {
             routeHomeFromLauncher(
                 context = this,
                 frontendEnabled = esdePreferencesManager.state.value.frontendEnabled,
@@ -49,11 +50,11 @@ class HomeRouterActivity : ComponentActivity() {
     }
 
     /**
-     * Debug builds follow the saved experience and open Jarn FE when none is saved. Release builds
-     * return before reading it. [EXTRA_CLASSIC] reaches Classic once without changing the choice.
+     * Builds with the Jarn FE offer follow the saved experience and open Jarn FE when none is saved.
+     * Others return before reading it. [EXTRA_CLASSIC] reaches Classic once without changing it.
      */
-    private fun openJarnFeInDebug(): Boolean {
-        if (!BuildConfig.DEBUG) return false
+    private fun openJarnFeIfOffered(): Boolean {
+        if (!JarnFeOffer.isOffered(this)) return false
         val store = experienceStore.get()
         val choice = resolveLauncherExperience(
             jarnAvailable = true,

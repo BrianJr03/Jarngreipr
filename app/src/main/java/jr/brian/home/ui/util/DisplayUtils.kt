@@ -180,6 +180,10 @@ fun launchJarnFe(context: Context): Boolean {
     return runCatching { context.startActivity(intent, options.toBundle()) }.isSuccess
 }
 
+fun hasJarnFeActivity(context: Context): Boolean =
+    Intent().setClassName(context, JARN_FE_ACTIVITY)
+        .resolveActivityInfo(context.packageManager, 0) != null
+
 private const val JARN_FE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
 
 private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
