@@ -1,10 +1,13 @@
 package jr.brian.home.canvas.jarn
 
+import android.net.Uri
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import jr.brian.home.canvas.data.CanvasLayoutManager
 import jr.brian.home.canvas.data.CanvasTabType
@@ -49,6 +52,31 @@ class AppJarnCanvasFoldersTest {
             ),
         )
         coEvery { folders.getFolder(PAGE, "id", CanvasTabType.VALUE) } returns folder
+        coEvery { folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE) } returns true
+        coEvery { folders.updateFolder(PAGE, any(), CanvasTabType.VALUE) } returns true
+    }
+
+    @Test
+    fun `a refused delete keeps every tile`() = runBlocking {
+        givenFolderOnPage()
+        coEvery { folders.deleteFolder(PAGE, "id", CanvasTabType.VALUE) } returns false
+        subject.deleteFolder(PAGE, "id")
+        verify(exactly = 0) { layouts.removeItem(any(), any()) }
+    }
+
+    @Test
+    fun `a refused image background discards the newly saved copy`() = runBlocking {
+        mockkStatic(Uri::class)
+        every { Uri.parse("content://image") } returns mockk()
+        coEvery { folders.saveFolderBackgroundImage("id", any()) } returns Result.success("/new.png")
+        coEvery {
+            folders.updateFolderBackground(PAGE, "id", null, "/new.png", CanvasTabType.VALUE)
+        } returns false
+
+        assertFalse(subject.setFolderBackgroundImage(PAGE, "id", "content://image"))
+
+        verify { folders.discardFolderBackgroundImage("/new.png") }
+        unmockkStatic(Uri::class)
     }
 
     @Test

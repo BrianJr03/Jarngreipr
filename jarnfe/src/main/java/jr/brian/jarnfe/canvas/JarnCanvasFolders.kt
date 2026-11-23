@@ -1,5 +1,7 @@
 package jr.brian.jarnfe.canvas
 
+import jr.brian.jarnfe.R
+import jr.brian.jarnfe.shell.JarnNotices
 import jr.brian.jarnfe.apps.JarnAppOptionsData
 
 enum class JarnAppDisplay { Current, Primary }
@@ -26,6 +28,8 @@ interface JarnCanvasFolders : JarnAppOptionsData {
     /** Returns false when the image could not be kept. */
     suspend fun setFolderBackgroundImage(pageIndex: Int, folderId: String, uri: String): Boolean
 }
+
+fun showJarnFolderEditFailed() = JarnNotices.show(R.string.jarnfe_canvas_notice_folder_failed)
 
 fun jarnFolderPackages(stored: List<String>, added: Set<String>, removed: Set<String>): List<String> =
     (stored.filterNot { it in removed } + added.filterNot { it in removed }).distinct()
