@@ -88,6 +88,12 @@ class LibraryStoreSync @Inject constructor(
         }
     }
 
+    /** For a scan started outside Classic, so it resolves art against the same roots. */
+    fun prepareForScan() {
+        start()
+        libraryRepository.setMediaRoots(currentMediaRoots())
+    }
+
     private fun currentMediaRoots(): List<File> {
         val state = esdePreferencesManager.state.value
         val primary = state.customMediaPath ?: setupPreferences.mediaPath

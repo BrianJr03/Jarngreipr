@@ -13,6 +13,8 @@ import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.connectJarnLibrary
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
 
@@ -24,6 +26,8 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         JarnSession.restoreIfFresh(savedInstanceState?.getString(KEY_SESSION))
+        JarnLibrary.restoreIfFresh(savedInstanceState?.getString(KEY_OPEN_SYSTEM))
+        connectJarnLibrary(this)
         JarnInput.setGlobalBindings(jarnGlobalBindings(JarnSession))
         if (!canHostOnCurrentDisplay()) {
             finish()
@@ -41,6 +45,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(KEY_SESSION, JarnSession.state.encode())
+        outState.putString(KEY_OPEN_SYSTEM, JarnLibrary.state.openSystemId)
     }
 
     override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
@@ -79,5 +84,6 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     private companion object {
         const val KEY_SESSION = "jarnfe_session"
+        const val KEY_OPEN_SYSTEM = "jarnfe_open_system"
     }
 }

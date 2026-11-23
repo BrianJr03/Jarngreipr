@@ -35,6 +35,7 @@ import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.model.RomSearchCardMediaType
 import jr.brian.home.esde.util.EmulatorOption
 import jr.brian.home.esde.util.EsdeCommandLauncher
+import jr.brian.home.esde.util.compatibleEmulators
 import jr.brian.home.ui.components.dialog.AppBottomSheet
 import jr.brian.home.ui.theme.OledBackgroundColor
 import jr.brian.home.ui.theme.ThemeAccentColor
@@ -53,25 +54,7 @@ internal fun EmulatorPickerDialog(
         File(game.romAbsolutePath ?: game.path).extension
     }
     val emulators = remember(game.systemName, romExtension) {
-        val findRulesFile =
-            File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_find_rules.xml").let { f ->
-                if (f.exists()) f
-                else File("/storage/emulated/0/ES-DE/custom_systems/es_find_rules.xml")
-            }
-        val customRules = EsdeCommandLauncher.parseCustomRules(findRulesFile)
-        val esSystemsFile =
-            File(context.filesDir.parent ?: "", "ES-DE/custom_systems/es_systems.xml").let { f ->
-                if (f.exists()) f
-                else File("/storage/emulated/0/ES-DE/custom_systems/es_systems.xml")
-            }
-        val fromSystem = EsdeCommandLauncher.getCompatibleEmulatorsFromSystem(
-            context, game.systemName, esSystemsFile, customRules
-        )
-        val fromExtension = EsdeCommandLauncher.getCompatibleEmulators(
-            context, romExtension
-        )
-        val seenPackages = fromSystem.map { it.packageName }.toHashSet()
-        fromSystem + fromExtension.filter { it.packageName !in seenPackages }
+        compatibleEmulators(context, game.systemName, romExtension)
     }
 
     if (showAppPicker) {

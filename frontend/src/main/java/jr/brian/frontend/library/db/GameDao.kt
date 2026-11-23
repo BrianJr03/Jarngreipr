@@ -75,6 +75,22 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE lastPlayed IS NOT NULL AND isHidden = 0 ORDER BY lastPlayed DESC LIMIT :limit")
     fun observeRecent(limit: Int = 20): Flow<List<GameEntity>>
 
+    @Query("SELECT sourceId, systemId, COUNT(*) AS gameCount FROM games GROUP BY sourceId, systemId")
+    fun observeSourceCounts(): Flow<List<SourceGameCount>>
+
+    @Query("SELECT systemId, absolutePath, relativePath FROM games WHERE isHidden = 0")
+    fun observeVisibleKeys(): Flow<List<GameKeyRow>>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE systemId = :systemId AND isHidden = 0
+            AND (absolutePath = :path OR relativePath = :path)
+        LIMIT 1
+        """
+    )
+    suspend fun findVisibleByLaunchPath(systemId: String, path: String): GameEntity?
+
     @Query("SELECT * FROM games WHERE id = :id")
     suspend fun findById(id: Long): GameEntity?
 

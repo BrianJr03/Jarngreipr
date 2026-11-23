@@ -50,6 +50,8 @@ class ExperienceConfigImportTest {
             managers = managers,
             screenAssignmentStore = mockk<ScreenAssignmentStore>(relaxed = true),
             experienceStore = experienceStore,
+            artSourceStore = mockk(relaxed = true),
+            libraryFolderBackup = mockk(relaxed = true),
         )
     }
 
@@ -60,7 +62,7 @@ class ExperienceConfigImportTest {
 
     @Test
     fun `schema version includes the experience field`() {
-        assertEquals(38, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(40, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test

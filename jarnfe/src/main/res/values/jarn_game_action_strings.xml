@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_game_favorite">Favorite</string>
+    <string name="jarnfe_game_companion">Companion</string>
+    <string name="jarnfe_game_emulator">Emulator</string>
+    <string name="jarnfe_game_core">RetroArch core</string>
+    <string name="jarnfe_game_none">None</string>
+    <string name="jarnfe_game_not_set">Not set</string>
+    <string name="jarnfe_game_current">Current</string>
+    <string name="jarnfe_game_loading">Loading options</string>
+    <string name="jarnfe_game_expects_extension">Expects .%1$s files</string>
+    <string name="jarnfe_game_choose_emulator">Choose an emulator</string>
+    <string name="jarnfe_game_choose_app">Choose another app</string>
+    <string name="jarnfe_game_choose_core">Choose a RetroArch core</string>
+    <string name="jarnfe_game_choose_companion">Choose a companion app</string>
+    <string name="jarnfe_game_companion_limit">A game can have two companions. Adding a third starts over.</string>
+    <string name="jarnfe_game_clear_companions">Clear companions</string>
+    <string name="jarnfe_game_open_companion">Open a companion</string>
+    <string name="jarnfe_game_no_emulators">No compatible emulators found.</string>
+    <string name="jarnfe_game_no_cores">No RetroArch cores found. Download them in RetroArch first.</string>
+    <string name="jarnfe_game_no_apps">No apps found.</string>
+    <string name="jarnfe_game_choice_saved">Saved. Press A on Play to start.</string>
+    <string name="jarnfe_game_favorite_failed">Couldn\'t update this favorite.</string>
+</resources>

@@ -90,6 +90,28 @@ class SafTreeScanner @Inject constructor(
         ScanReport(roms = out, unreadableSystems = unreadable)
     }
 
+    /** Walks the tree as one system's folder, with the same rules as a system subfolder. */
+    suspend fun scanSystemFolder(sourceRoot: String, def: SystemDef): ScanReport =
+        withContext(Dispatchers.IO) {
+            val treeUri = sourceRoot.toUri()
+            val rootDocId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+                ?: return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
+            val out = mutableListOf<ScannedRom>()
+            val unreadable = mutableSetOf<String>()
+            if (def.extensions.isNotEmpty() || def.folderGameMarkers.isNotEmpty()) {
+                walk(
+                    treeUri = treeUri,
+                    parentDocId = rootDocId,
+                    def = def,
+                    relativeSegments = emptyList(),
+                    out = out,
+                    unreadable = unreadable,
+                    depthRemaining = ScanRules.WALK_MAX_DEPTH,
+                )
+            }
+            ScanReport(roms = out, unreadableSystems = unreadable)
+        }
+
     private fun walk(
         treeUri: Uri,
         parentDocId: String,

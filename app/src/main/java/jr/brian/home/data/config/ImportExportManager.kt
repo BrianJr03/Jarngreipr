@@ -52,6 +52,8 @@ class ImportExportManager @Inject constructor(
     private val managers: ManagerContainer,
     private val screenAssignmentStore: ScreenAssignmentStore,
     private val experienceStore: ExperienceStore,
+    private val artSourceStore: jr.brian.frontend.library.art.ArtSourceStore,
+    private val libraryFolderBackup: jr.brian.frontend.library.setup.LibraryFolderBackup,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -65,7 +67,9 @@ class ImportExportManager @Inject constructor(
             ui = buildUiConfig(),
             app = buildAppConfig(),
             page = buildPageConfig(),
-            feature = buildFeatureConfig(),
+            feature = buildFeatureConfig().copy(
+                libraryFolders = libraryFolderBackup.export()?.map { it.toConfig() },
+            ),
             system = buildSystemConfig()
         )
     }
@@ -311,6 +315,8 @@ class ImportExportManager @Inject constructor(
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
             screenAssignment = screenAssignmentStore.assignment.name,
             experience = experienceStore.experience.name,
+            artSource = artSourceStore.source.name,
+            systemArtSource = artSourceStore.systemSource.name,
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -380,6 +386,9 @@ class ImportExportManager @Inject constructor(
         applyPageConfig(config.page)
         applyFeatureConfig(config.feature)
         applySystemConfig(config.system)
+        config.feature.libraryFolders?.let { folders ->
+            libraryFolderBackup.restore(folders.map { it.toBackedUpFolder() })
+        }
     }
 
     private suspend fun applyUiConfig(config: UiConfig) {
@@ -711,6 +720,14 @@ class ImportExportManager @Inject constructor(
         // current experience (same rule as screenAssignment above).
         config.experience?.let {
             experienceStore.setExperience(Experience.fromNameOrDefault(it))
+        }
+
+        // Null means the blob predates v39, so keep the current art source.
+        config.artSource?.let {
+            artSourceStore.setSource(jr.brian.core.model.ArtSource.fromNameOrDefault(it))
+        }
+        config.systemArtSource?.let {
+            artSourceStore.setSystemSource(jr.brian.core.model.SystemArtSource.fromNameOrDefault(it))
         }
     }
 

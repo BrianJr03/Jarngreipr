@@ -17,6 +17,9 @@ interface MediaDao {
     @Query("SELECT * FROM media")
     fun observeAll(): Flow<List<MediaEntity>>
 
+    @Query("SELECT * FROM media WHERE gameId IN (:gameIds)")
+    suspend fun findByGameIds(gameIds: List<Long>): List<MediaEntity>
+
     @Upsert
     suspend fun upsert(media: MediaEntity)
 

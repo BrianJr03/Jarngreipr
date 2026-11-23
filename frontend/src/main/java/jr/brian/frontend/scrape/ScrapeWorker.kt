@@ -12,8 +12,10 @@ import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import jr.brian.frontend.library.art.MissingArtScraper
 import jr.brian.frontend.library.db.GameDao
 import jr.brian.frontend.library.db.GameEntity
 import kotlinx.coroutines.flow.first
@@ -32,14 +34,19 @@ class ScrapeWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val scraper: LibraryScraper,
     private val gameDao: GameDao,
+    private val missingArtScraper: MissingArtScraper,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
         setForeground(makeForeground(doneLabel = null))
-        // One-shot read of every visible game; the Flow emits
-        // immediately with the current DB snapshot.
-        val games: List<GameEntity> = gameDao.observeAllVisible().first()
-        val summary = scraper.scrape(games = games, request = ScrapeRequest())
+        val summary = if (inputData.getBoolean(KEY_MISSING_ART, false)) {
+            missingArtScraper.run(inputData.getString(KEY_SYSTEM_ID))
+        } else {
+            // One-shot read of every visible game; the Flow emits
+            // immediately with the current DB snapshot.
+            val games: List<GameEntity> = gameDao.observeAllVisible().first()
+            scraper.scrape(games = games, request = ScrapeRequest())
+        }
         return if (summary.errors > 0 && summary.downloads == 0) Result.failure() else Result.success()
     }
 
@@ -70,6 +77,20 @@ class ScrapeWorker @AssistedInject constructor(
         private const val CHANNEL_ID = "frontend_scrape"
         private const val NOTIFICATION_ID = 1_942
         const val UNIQUE_WORK_NAME = "frontend_scrape_all"
+        private const val KEY_MISSING_ART = "missing_art"
+        private const val KEY_SYSTEM_ID = "system_id"
+
+        /** Enqueue a missing-art scrape. Keeps any scrape already running. */
+        fun enqueueMissingArt(context: Context, systemId: String?) {
+            val req = OneTimeWorkRequestBuilder<ScrapeWorker>()
+                .setInputData(workDataOf(KEY_MISSING_ART to true, KEY_SYSTEM_ID to systemId))
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                UNIQUE_WORK_NAME,
+                androidx.work.ExistingWorkPolicy.KEEP,
+                req,
+            )
+        }
 
         /** Enqueue the worker. Replaces any already-running scrape. */
         fun enqueueAll(context: Context) {

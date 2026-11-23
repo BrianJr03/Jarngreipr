@@ -62,6 +62,26 @@ class FastWalkScanner @Inject constructor(
         )
     }
 
+    /** Walks [path] as one system's folder, with the same rules as a system subfolder. */
+    suspend fun scanSystemFolder(path: String, def: SystemDef): ScanReport =
+        withContext(Dispatchers.IO) {
+            val dir = File(path)
+            if (!dir.isDirectory) {
+                return@withContext ScanReport(roms = emptyList(), listingTrusted = false)
+            }
+            val out = mutableListOf<ScannedRom>()
+            val unreadable = mutableSetOf<String>()
+            scanSystem(systemDir = dir, def = def, out = out, unreadable = unreadable)
+            ScanReport(
+                roms = out,
+                unreadableSystems = unreadable,
+                listingTrusted = ScanRules.isListingTrusted(
+                    path = dir.absolutePath,
+                    hasAllFilesAccess = { Environment.isExternalStorageManager() },
+                ),
+            )
+        }
+
     private fun scanSystem(
         systemDir: File,
         def: SystemDef,

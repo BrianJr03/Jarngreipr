@@ -58,6 +58,15 @@ fun ESDEPreferencesManager.setGameLaunchCommand(gameKey: String, command: String
     prefs.edit { putString(KEY_GAME_COMMAND_MAP, json.toString()) }
 }
 
+fun ESDEPreferencesManager.clearGameLaunchCommand(gameKey: String) {
+    val updated = _state.value.gameCommandMap.toMutableMap()
+    if (updated.remove(gameKey) == null) return
+    _state.value = _state.value.copy(gameCommandMap = updated)
+    val json = JSONObject()
+    updated.forEach { (k, v) -> json.put(k, v) }
+    prefs.edit { putString(KEY_GAME_COMMAND_MAP, json.toString()) }
+}
+
 fun ESDEPreferencesManager.getGameLaunchCommand(gameKey: String): String? {
     return state.value.gameCommandMap[gameKey]
 }

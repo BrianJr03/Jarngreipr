@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_canvas_loading">Loading your pages</string>
+    <string name="jarnfe_canvas_no_pages_title">No pages yet</string>
+    <string name="jarnfe_canvas_no_pages_message">Press X, then choose Pages to add one.</string>
+    <string name="jarnfe_canvas_other_page_title">This page opens in Classic</string>
+    <string name="jarnfe_canvas_other_page_message">You can still move it, delete it, or set it as Home from Pages.</string>
+    <string name="jarnfe_canvas_page_of">Page %1$d of %2$d</string>
+    <string name="jarnfe_canvas_home">Home</string>
+    <string name="jarnfe_canvas_editing">Editing layout</string>
+    <string name="jarnfe_canvas_menu_tile">Canvas options</string>
+
+    <string name="jarnfe_canvas_tile_widget">Widget</string>
+    <string name="jarnfe_canvas_tile_rss">RSS</string>
+    <string name="jarnfe_canvas_tile_music">Nothing playing</string>
+    <string name="jarnfe_canvas_tile_art">Game art</string>
+    <string name="jarnfe_canvas_tile_photo">Photo</string>
+    <string name="jarnfe_canvas_tile_last_played">Last played</string>
+    <string name="jarnfe_canvas_tile_missing">Not available</string>
+
+    <string name="jarnfe_canvas_notice_widget">Widgets work in Classic for now.</string>
+    <string name="jarnfe_canvas_notice_photo">Change this photo in Classic for now.</string>
+    <string name="jarnfe_canvas_notice_rss">RSS opens in Classic for now.</string>
+    <string name="jarnfe_canvas_notice_missing">This item is no longer available.</string>
+    <string name="jarnfe_canvas_folder_empty">This folder is empty.</string>
+    <string name="jarnfe_canvas_last_played_empty">Games you play will show up here.</string>
+
+    <string name="jarnfe_canvas_options_title">Canvas options</string>
+    <string name="jarnfe_canvas_option_edit">Edit layout</string>
+    <string name="jarnfe_canvas_option_edit_detail">Move and resize tiles</string>
+    <string name="jarnfe_canvas_option_pages">Pages</string>
+    <string name="jarnfe_canvas_option_pages_detail">Go to, add, move, delete, or set Home</string>
+
+    <string name="jarnfe_canvas_pages_title">Pages</string>
+    <string name="jarnfe_canvas_page_number">Page %1$d</string>
+    <string name="jarnfe_canvas_page_current">Showing now</string>
+    <string name="jarnfe_canvas_page_add">Add Canvas page</string>
+    <string name="jarnfe_canvas_page_limit">Page limit reached</string>
+    <string name="jarnfe_canvas_page_set_home">Set Home</string>
+    <string name="jarnfe_canvas_page_move">Move</string>
+    <string name="jarnfe_canvas_page_delete">Delete</string>
+    <string name="jarnfe_canvas_delete_title">Delete page %1$d?</string>
+    <string name="jarnfe_canvas_delete_message">Everything on this page is removed. Your other pages stay as they are.</string>
+    <string name="jarnfe_canvas_cancel">Cancel</string>
+    <string name="jarnfe_canvas_kind_apps">Apps</string>
+    <string name="jarnfe_canvas_kind_apps_widgets">Apps and widgets</string>
+    <string name="jarnfe_canvas_kind_drawer">App drawer</string>
+    <string name="jarnfe_canvas_kind_rss">RSS</string>
+
+    <string name="jarnfe_canvas_hint_grab">Grab</string>
+    <string name="jarnfe_canvas_hint_drop">Drop</string>
+    <string name="jarnfe_canvas_hint_cancel">Cancel</string>
+    <string name="jarnfe_canvas_hint_done">Done</string>
+    <string name="jarnfe_canvas_hint_shrink">Shrink</string>
+    <string name="jarnfe_canvas_hint_grow">Grow</string>
+    <string name="jarnfe_canvas_hint_axis_width">Resizing width</string>
+    <string name="jarnfe_canvas_hint_axis_height">Resizing height</string>
+</resources>

@@ -14,11 +14,61 @@ import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.service.HomeInterceptionKeepAliveService
 import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
+import jr.brian.home.canvas.jarn.AppJarnCanvasData
+import jr.brian.jarnfe.canvas.JarnCanvasData
+import jr.brian.jarnfe.canvas.JarnCanvasDataProvider
+import jr.brian.jarnfe.launch.JarnGameLauncher
+import jr.brian.jarnfe.launch.JarnGameLauncherProvider
+import jr.brian.jarnfe.launch.JarnGameOptions
+import jr.brian.jarnfe.launch.JarnGameOptionsProvider
+import jr.brian.jarnfe.library.JarnLibraryDataProvider
+import jr.brian.frontend.library.art.JarnLibraryData
+import jr.brian.frontend.library.setup.LibrarySetup
 import javax.inject.Inject
 import javax.inject.Provider
 
 @HiltAndroidApp
-class JarngreiprApplication : Application(), ImageLoaderFactory, Configuration.Provider {
+class JarngreiprApplication :
+    Application(),
+    ImageLoaderFactory,
+    Configuration.Provider,
+    JarnGameLauncherProvider,
+    JarnGameOptionsProvider,
+    JarnLibraryDataProvider,
+    JarnCanvasDataProvider {
+
+    /** A [Provider] so Classic never builds Jarn FE's library data. */
+    @Inject
+    lateinit var jarnLibraryDataProvider: Provider<JarnLibraryData>
+
+    override val jarnLibraryData: JarnLibraryData
+        get() = jarnLibraryDataProvider.get()
+
+    @Inject
+    lateinit var jarnLibrarySetupProvider: Provider<LibrarySetup>
+
+    override val jarnLibrarySetup: LibrarySetup
+        get() = jarnLibrarySetupProvider.get()
+
+    /** A [Provider] so nothing launch-related is built until Jarn FE asks for it. */
+    @Inject
+    lateinit var jarnGameLauncherProvider: Provider<JarnGameLauncher>
+
+    override val jarnGameLauncher: JarnGameLauncher
+        get() = jarnGameLauncherProvider.get()
+
+    @Inject
+    lateinit var jarnGameOptionsProvider: Provider<JarnGameOptions>
+
+    override val jarnGameOptions: JarnGameOptions
+        get() = jarnGameOptionsProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's canvas bridge. */
+    @Inject
+    lateinit var jarnCanvasDataProvider: Provider<AppJarnCanvasData>
+
+    override val jarnCanvasData: JarnCanvasData
+        get() = jarnCanvasDataProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a

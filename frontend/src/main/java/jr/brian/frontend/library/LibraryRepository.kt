@@ -16,6 +16,7 @@ import jr.brian.frontend.library.db.SystemEntity
 import jr.brian.frontend.library.media.EsdeLayout
 import jr.brian.frontend.library.media.JarngreiprLayout
 import jr.brian.frontend.library.media.MediaIndex
+import jr.brian.frontend.library.scan.ScanReport
 import jr.brian.frontend.library.scan.ScannedRom
 import jr.brian.frontend.library.scan.ScannerDispatcher
 import jr.brian.frontend.library.systems.SystemCatalog
@@ -30,6 +31,16 @@ import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * One source to scan. [systemFolder] marks a source that is a single system's
+ * folder. [excludedSystems] are already held by a folder inside this one.
+ */
+data class SourceScanTarget(
+    val source: SourceEntity,
+    val systemFolder: SystemDef? = null,
+    val excludedSystems: Set<String> = emptySet(),
+)
 
 /**
  * Public API over the library engine.
@@ -259,6 +270,63 @@ class LibraryRepository @Inject constructor(
                 sourceDao.markScanned(source.id, System.currentTimeMillis())
             }
         }
+    }
+
+    /**
+     * Scans only [targets], for Jarn FE's folder setup. [scanAll] and its
+     * path are untouched. Returns false when a scan is already running.
+     */
+    fun scanSources(targets: List<SourceScanTarget>): Boolean {
+        if (targets.isEmpty() || _state.value is LibraryState.Scanning) return false
+        _state.value = LibraryState.Scanning(systemsDone = 0, systemsTotal = targets.size)
+        launchGuarded { runTargets(targets) }
+        return true
+    }
+
+    private suspend fun runTargets(targets: List<SourceScanTarget>) {
+        upsertKnownSystems()
+        val catalogSystems = catalog.all().associateBy { it.id.lowercase() }
+        val mediaIndex = MediaIndex.build(
+            mediaRoots = mediaRoots,
+            layouts = listOf(EsdeLayout(), JarngreiprLayout()),
+            systems = catalogSystems.values.flatMapTo(HashSet()) { it.folderAliases + it.id },
+        )
+        var total = 0
+        var done = 0
+        for (target in targets) {
+            val report = scanTarget(target, catalogSystems.values)
+            if (report.roms.isEmpty()) continue
+            val bySystem = report.roms.groupBy { it.systemId }
+            total += bySystem.size
+            for ((systemId, roms) in bySystem) {
+                _state.value = LibraryState.Scanning(done, total, systemId)
+                writeSystem(
+                    sourceId = target.source.id,
+                    systemId = systemId,
+                    roms = roms,
+                    removeMissing = report.isComplete(systemId),
+                    mediaIndex = mediaIndex,
+                    catalogSystems = catalogSystems,
+                )
+                done++
+            }
+            if (report.listingTrusted && report.unreadableSystems.isEmpty()) {
+                sourceDao.markScanned(target.source.id, System.currentTimeMillis())
+            }
+        }
+    }
+
+    private suspend fun scanTarget(
+        target: SourceScanTarget,
+        systems: Collection<SystemDef>,
+    ): ScanReport {
+        target.systemFolder?.let { def ->
+            if (def.id in target.excludedSystems) return ScanReport(roms = emptyList())
+            return scanner.scanSystemFolder(target.source, def)
+        }
+        val filter = target.excludedSystems.takeIf { it.isNotEmpty() }
+            ?.let { excluded -> systems.mapTo(HashSet()) { it.id } - excluded }
+        return scanner.scanWithReport(target.source, systems = filter)
     }
 
     private suspend fun upsertKnownSystems() {

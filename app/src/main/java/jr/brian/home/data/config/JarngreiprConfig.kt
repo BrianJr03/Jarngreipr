@@ -6,6 +6,7 @@ import jr.brian.home.esde.model.SystemCustomization
 import jr.brian.home.esde.model.SystemFolderMapping
 import jr.brian.home.model.rom.PinnedRomInfo
 import jr.brian.home.ui.components.konfetti.GameKonfettiConfig
+import jr.brian.frontend.library.setup.BackedUpFolder
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -173,7 +174,14 @@ data class JarngreiprConfig(
         //      Nullable so pre-v38 blobs decode without a value; import
         //      leaves the device's current experience alone in that case.
         //      Separate from romSearch.frontendEnabled.
-        const val CONFIG_VERSION = 38
+        // v39: added FeatureConfig.artSource, Jarn FE's preferred art source.
+        //      Nullable so pre-v39 blobs decode without a value; import
+        //      leaves the device's current source alone in that case.
+        //      Also added FeatureConfig.systemArtSource, with the same rule.
+        // v40: added FeatureConfig.libraryFolders, the Jarn FE game folders.
+        //      Null on older blobs, and import then leaves folders alone.
+        //      Restored folders never carry a grant and never replace a row.
+        const val CONFIG_VERSION = 40
     }
 }
 
@@ -325,8 +333,34 @@ data class FeatureConfig(
      * case, so restoring an old backup never silently switches a user out
      * of Jarn FE.
      */
-    val experience: String? = null
+    val experience: String? = null,
+    /**
+     * v39: persisted [jr.brian.core.model.ArtSource] name. Null on pre-v39
+     * exports. Import leaves the device's current source alone in that case.
+     */
+    val artSource: String? = null,
+    /**
+     * v39: persisted [jr.brian.core.model.SystemArtSource] name. Null on
+     * pre-v39 exports. Import leaves the device's current source alone then.
+     */
+    val systemArtSource: String? = null,
+    /**
+     * v40: game folders, without their access grants. Null on pre-v40
+     * exports. Import only adds missing folders, so games and favorites stay.
+     */
+    val libraryFolders: List<LibraryFolderConfig>? = null
 )
+
+@Serializable
+data class LibraryFolderConfig(
+    val treeUri: String = "",
+    val displayPath: String = "",
+    val volumeId: String? = null
+)
+
+internal fun BackedUpFolder.toConfig() = LibraryFolderConfig(treeUri, displayPath, volumeId)
+
+internal fun LibraryFolderConfig.toBackedUpFolder() = BackedUpFolder(treeUri, displayPath, volumeId)
 
 @Serializable
 data class HomeButtonConfig(

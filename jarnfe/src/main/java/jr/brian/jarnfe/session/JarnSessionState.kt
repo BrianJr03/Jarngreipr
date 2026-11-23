@@ -73,6 +73,14 @@ data class JarnSessionState(
         else -> withDeckPanel(!deckPanelOpen)
     }
 
+    /** Moves control to the Deck's Now tab, as a panel when there is no second display. */
+    fun openDeckNow(): JarnSessionState =
+        copy(
+            deckTab = DeckTab.Now,
+            activeScreen = JarnScreen.Deck,
+            deckPanelOpen = !deckDisplayAvailable,
+        )
+
     fun withDeckPanel(open: Boolean): JarnSessionState {
         if (deckDisplayAvailable) return this
         return copy(

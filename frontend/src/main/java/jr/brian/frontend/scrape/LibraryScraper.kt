@@ -89,12 +89,12 @@ class LibraryScraper @Inject constructor(
 
             val startedAt = System.currentTimeMillis()
             try {
-                val medias = discoverMedia(game, request, errorMessages, displayTitle)
+                val medias = discoverMedia(game, request.narrowedFor(game), errorMessages, displayTitle)
                 val existing = mediaDao.findByGameId(game.id) ?: MediaEntity(gameId = game.id)
                 var updated = existing
                 var downloadsThisGame = 0
                 for (media in medias) {
-                    val dest = destinationFile(game, media) ?: continue
+                    val dest = destinationFile(game, media, request.isolatedRoot) ?: continue
                     if (!dest.exists() || dest.length() == 0L) {
                         val ok = if (media.url.contains("screenscraper.fr")) {
                             screenScraper.download(media.url, dest)
@@ -111,7 +111,7 @@ class LibraryScraper @Inject constructor(
                     downloadsThisGame++
                     updated = updated.applyMedia(media, dest.absolutePath)
                 }
-                if (updated != existing) mediaDao.upsert(updated)
+                if (request.isolatedRoot == null && updated != existing) mediaDao.upsert(updated)
                 scrapeJobDao.insert(
                     ScrapeJobEntity(
                         gameId = game.id,
@@ -198,10 +198,18 @@ class LibraryScraper @Inject constructor(
         return wanted.values.toList()
     }
 
-    private fun destinationFile(game: GameEntity, media: ScrapedMedia): File? {
+    private fun ScrapeRequest.narrowedFor(game: GameEntity): ScrapeRequest {
+        val allowed = kindsForGame?.invoke(game) ?: return this
+        return copy(
+            screenScraperKinds = screenScraperKinds intersect allowed,
+            steamGridDbKinds = steamGridDbKinds intersect allowed,
+        )
+    }
+
+    private fun destinationFile(game: GameEntity, media: ScrapedMedia, isolatedRoot: File?): File? {
         val basename = File(game.relativePath).nameWithoutExtension.ifBlank { return null }
         val ext = media.extensionHint?.lowercase() ?: "png"
-        val root = scrapedRoot()
+        val root = isolatedRoot ?: sharedScrapedRoot(context)
         return File(File(File(root, game.systemId), folderFor(media.kind)), "$basename.$ext")
     }
 
@@ -215,14 +223,6 @@ class LibraryScraper @Inject constructor(
         ScraperMediaKind.Videos -> "videos"
     }
 
-    private fun scrapedRoot(): File {
-        if (Environment.isExternalStorageManager()) {
-            return File(Environment.getExternalStorageDirectory(), "Jarngreipr Media")
-        }
-        val fallback = context.getExternalFilesDir(null) ?: context.filesDir
-        return File(fallback, "Jarngreipr Media")
-    }
-
     private fun deriveQuery(game: GameEntity): String {
         val name = File(game.relativePath).nameWithoutExtension
         return name
@@ -234,7 +234,7 @@ class LibraryScraper @Inject constructor(
             .replace(Regex("\\s+"), " ")
     }
 
-    private fun canScrape(request: ScrapeRequest): Boolean =
+    fun canScrape(request: ScrapeRequest = ScrapeRequest()): Boolean =
         (request.screenScraperEnabled && screenScraper.isReady()) ||
             (request.steamGridDbEnabled && steamGridDb.isReady())
 
@@ -258,12 +258,29 @@ class LibraryScraper @Inject constructor(
     }
 }
 
-/** The user's request shape, built by the scrape summary UI. */
+/** The folder Classic's scraper writes to and its media index reads. */
+internal fun sharedScrapedRoot(context: Context): File {
+    if (Environment.isExternalStorageManager()) {
+        return File(Environment.getExternalStorageDirectory(), "Jarngreipr Media")
+    }
+    val fallback = context.getExternalFilesDir(null) ?: context.filesDir
+    return File(fallback, "Jarngreipr Media")
+}
+
+/**
+ * The user's request shape, built by the scrape summary UI.
+ *
+ * @property isolatedRoot when set, files go here and the shared `media`
+ *   table is left alone, so Classic's art cannot change.
+ * @property kindsForGame when set, narrows the requested kinds per game.
+ */
 data class ScrapeRequest(
     val screenScraperEnabled: Boolean = true,
     val screenScraperKinds: Set<ScraperMediaKind> = ScraperMediaKind.entries.toSet(),
     val steamGridDbEnabled: Boolean = true,
     val steamGridDbKinds: Set<ScraperMediaKind> = ScraperMediaKind.entries.toSet(),
+    val isolatedRoot: File? = null,
+    val kindsForGame: ((GameEntity) -> Set<ScraperMediaKind>)? = null,
 )
 
 /** Terminal summary for a completed scrape run. */

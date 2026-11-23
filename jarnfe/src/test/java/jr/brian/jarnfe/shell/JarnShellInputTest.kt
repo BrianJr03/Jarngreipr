@@ -8,6 +8,10 @@ import jr.brian.jarnfe.input.JarnKeyPhase
 import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
 import jr.brian.jarnfe.input.jarnBindings
+import jr.brian.jarnfe.library.JarnLibraryFeed
+import jr.brian.jarnfe.library.JarnLibraryGame
+import jr.brian.jarnfe.library.JarnLibraryStore
+import jr.brian.jarnfe.library.JarnLibrarySystem
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
@@ -22,6 +26,9 @@ import org.junit.Test
 class JarnShellInputTest {
     private val router = JarnInputRouter()
     private val session = JarnSessionStore(router::activate)
+    private val library = JarnLibraryStore().apply {
+        update { copy(systems = JarnLibraryFeed.ready(emptyList())) }
+    }
     private val stageLayer = router.createLayer(JarnScreen.Stage)
     private val deckLayer = router.createLayer(JarnScreen.Deck)
     private val panelLayer = router.createLayer(JarnScreen.Stage, JarnLayerMode.Modal, depth = 1)
@@ -38,7 +45,7 @@ class JarnShellInputTest {
 
     private fun refreshLayers() {
         val state = session.state
-        stageLayer.update(jarnBindings { stageBindings(state, session) })
+        stageLayer.update(jarnBindings { stageBindings(state, session, library) })
         deckLayer.update(jarnBindings { deckBindings(state, session) })
         panelLayer.update(jarnBindings { deckPanelBindings(session) })
     }
@@ -116,12 +123,55 @@ class JarnShellInputTest {
     }
 
     @Test
+    fun `shoulders step systems in a game list and stop at the ends`() {
+        library.update {
+            copy(systems = JarnLibraryFeed.ready(listOf(system("a"), system("b")))).openSystem("a")
+        }
+        session.update { openRoute(StageRoute.GameList) }
+        refreshLayers()
+        press(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals("b", library.state.openSystemId)
+        press(KeyEvent.KEYCODE_BUTTON_R1)
+        assertEquals("b", library.state.openSystemId)
+        press(KeyEvent.KEYCODE_BUTTON_L1)
+        assertEquals("a", library.state.openSystemId)
+        assertEquals(LibrarySection.Systems, session.state.librarySection)
+    }
+
+    @Test
+    fun `a game shows a play hint only once launching is connected`() {
+        val game = JarnLibraryGame("g", "a", "Game")
+        library.update {
+            copy(
+                systems = JarnLibraryFeed.ready(listOf(system("a"))),
+                gamesBySystem = mapOf("a" to JarnLibraryFeed.ready(listOf(game))),
+            ).openSystem("a")
+        }
+        session.update { openRoute(StageRoute.GameList) }
+        refreshLayers()
+        assertFalse(JarnKey.A in hintKeys(JarnScreen.Stage))
+        library.onPlay = {}
+        refreshLayers()
+        assertTrue(JarnKey.A in hintKeys(JarnScreen.Stage))
+    }
+
+    private fun system(id: String) = JarnLibrarySystem(id, id, gameCount = 1)
+
+    @Test
     fun `hints only declare working actions`() {
-        assertEquals(listOf(JarnKey.A, JarnKey.Select), hintKeys(JarnScreen.Stage))
+        assertEquals(listOf(JarnKey.A, JarnKey.Start, JarnKey.Select), hintKeys(JarnScreen.Stage))
         assertEquals(listOf(JarnKey.Select), hintKeys(JarnScreen.Deck))
         session.update { openRoute(StageRoute.Settings) }
         refreshLayers()
         assertEquals(listOf(JarnKey.A, JarnKey.B, JarnKey.Select), hintKeys(JarnScreen.Stage))
+    }
+
+    @Test
+    fun `start opens settings from the library and back returns`() {
+        press(KeyEvent.KEYCODE_BUTTON_START)
+        assertEquals(StageRoute.Settings, session.state.stageRoute)
+        press(KeyEvent.KEYCODE_BACK)
+        assertEquals(StageRoute.Library, session.state.stageRoute)
     }
 
     @Test
