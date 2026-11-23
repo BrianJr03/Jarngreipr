@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import jr.brian.core.ui.components.JarnButton
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
@@ -118,39 +117,6 @@ internal fun CanvasAppPickerSheet(
         onClose = onClose,
     ) { app, modifier ->
         JarnNavigateRow(app.label, onClick = { onPicked(app) }, modifier = modifier.fillMaxWidth())
-    }
-}
-
-@Composable
-internal fun CanvasFolderPickerSheet(
-    data: JarnCanvasData,
-    onCreate: (List<String>) -> Unit,
-    onClose: () -> Unit,
-) {
-    var selected by remember { mutableStateOf(emptyList<String>()) }
-    CanvasLoadedPicker(
-        title = stringResource(R.string.jarnfe_canvas_pick_folder_title),
-        load = data::installedApps,
-        onClose = onClose,
-        footer = {
-            JarnButton(
-                label = stringResource(R.string.jarnfe_canvas_folder_create, selected.size),
-                onClick = { onCreate(selected) },
-                enabled = selected.isNotEmpty(),
-                focusableWhenDisabled = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-    ) { app, modifier ->
-        val isSelected = app.packageName in selected
-        JarnNavigateRow(
-            label = app.label,
-            supporting = if (isSelected) stringResource(R.string.jarnfe_canvas_app_selected) else null,
-            onClick = {
-                selected = if (isSelected) selected - app.packageName else selected + app.packageName
-            },
-            modifier = modifier.fillMaxWidth(),
-        )
     }
 }
 

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +32,7 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
 import jr.brian.jarnfe.R
+import java.io.File
 
 private const val FOLDER_PREVIEW_COUNT = 4
 private const val FOLDER_PREVIEW_COLUMNS = 2
@@ -111,7 +113,7 @@ private fun BoxScope.AppTile(app: JarnCanvasApp?) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
-        AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(AppIconSize))
+        CanvasAppIcon(app, Modifier.size(AppIconSize))
         JarnText(
             text = app.label,
             style = JarnTheme.type.caption,
@@ -122,12 +124,52 @@ private fun BoxScope.AppTile(app: JarnCanvasApp?) {
     }
 }
 
+/** Keyed on the file's version, because replacing a custom icon keeps the same path. */
+@Composable
+internal fun CanvasAppIcon(app: JarnCanvasApp, modifier: Modifier = Modifier) {
+    key(app.iconPath, app.iconVersion) {
+        AsyncImage(
+            model = app.iconPath?.let(::File) ?: app.icon,
+            contentDescription = null,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.FolderBackground(folder: JarnCanvasFolder) {
+    val color = folder.backgroundColorArgb?.let { Color(it) } ?: Color.Transparent
+    Box(
+        Modifier
+            .matchParentSize()
+            .background(color),
+    ) {
+        val image = remember(folder.backgroundImagePath) {
+            folder.backgroundImagePath?.let(::File)?.takeIf { it.exists() }
+        }
+        image?.let { file ->
+            AsyncImage(
+                model = file,
+                contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+            )
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(JarnTheme.colors.artScrim),
+            )
+        }
+    }
+}
+
 @Composable
 private fun BoxScope.FolderTile(folder: JarnCanvasFolder?) {
     if (folder == null) {
         MissingTile()
         return
     }
+    FolderBackground(folder)
     Column(
         modifier = Modifier
             .align(Alignment.Center)
@@ -138,11 +180,7 @@ private fun BoxScope.FolderTile(folder: JarnCanvasFolder?) {
         folder.apps.take(FOLDER_PREVIEW_COUNT).chunked(FOLDER_PREVIEW_COLUMNS).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs)) {
                 row.forEach { app ->
-                    AsyncImage(
-                        model = app.icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(FolderIconSize),
-                    )
+                    CanvasAppIcon(app, Modifier.size(FolderIconSize))
                 }
             }
         }

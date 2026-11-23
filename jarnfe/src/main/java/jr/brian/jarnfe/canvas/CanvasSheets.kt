@@ -21,13 +21,13 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnAction
+import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 
 internal val CanvasSheetListMaxHeight = 360.dp
 
 internal sealed interface CanvasListTarget {
-    data class Folder(val folder: JarnCanvasFolder) : CanvasListTarget
     data class LastPlayed(val games: List<JarnCanvasRom>) : CanvasListTarget
 }
 
@@ -37,12 +37,14 @@ internal fun CanvasModalSheet(
     title: String,
     initialFocus: FocusRequester?,
     onClose: () -> Unit,
+    extraBindings: JarnBindingsBuilder.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     JarnInputLayer(
         mode = JarnLayerMode.Modal,
         bindings = {
             hint(JarnAction.Confirm, R.string.jarnfe_hint_confirm)
+            extraBindings()
             on(JarnAction.Back, R.string.jarnfe_hint_back, onPress = onClose)
         },
     ) {
@@ -94,19 +96,11 @@ internal fun CanvasOptionsSheet(
 @Composable
 internal fun CanvasListSheet(
     target: CanvasListTarget,
-    onLaunchApp: (JarnCanvasApp) -> Unit,
     onLaunchRom: (JarnCanvasRom) -> Unit,
     onClose: () -> Unit,
 ) {
     val first = remember(target) { FocusRequester() }
     when (target) {
-        is CanvasListTarget.Folder -> CanvasRowsSheet(
-            title = target.folder.name,
-            emptyMessage = stringResource(R.string.jarnfe_canvas_folder_empty),
-            entries = target.folder.apps.map { app -> app.label to { onLaunchApp(app) } },
-            first = first,
-            onClose = onClose,
-        )
         is CanvasListTarget.LastPlayed -> CanvasRowsSheet(
             title = stringResource(R.string.jarnfe_canvas_tile_last_played),
             emptyMessage = stringResource(R.string.jarnfe_canvas_last_played_empty),

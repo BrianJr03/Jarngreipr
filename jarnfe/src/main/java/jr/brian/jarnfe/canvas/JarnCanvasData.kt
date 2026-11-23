@@ -18,6 +18,8 @@ data class JarnCanvasApp(
     val packageName: String,
     val label: String,
     val icon: Drawable? = null,
+    val iconPath: String? = null,
+    val iconVersion: Long = 0L,
 )
 
 @Immutable
@@ -25,6 +27,8 @@ data class JarnCanvasFolder(
     val id: String,
     val name: String,
     val apps: List<JarnCanvasApp>,
+    val backgroundColorArgb: Int? = null,
+    val backgroundImagePath: String? = null,
 )
 
 @Immutable
@@ -67,7 +71,7 @@ data class JarnCanvasSnapshot(
 )
 
 /** The saved pages Classic also reads. Writes keep the stored format exactly as it is. */
-interface JarnCanvasData : JarnCanvasTiles {
+interface JarnCanvasData : JarnCanvasTiles, JarnCanvasFolders {
     val snapshot: Flow<JarnCanvasSnapshot>
 
     /** Writes one solved arrangement in a single save. The other orientation is left alone. */
