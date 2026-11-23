@@ -41,7 +41,6 @@ data class JarnMotion(val reduced: Boolean = false) {
     val screen = if (reduced) ReducedFade else JarnMotionToken(320, JarnEasingEmphasized)
     val art = if (reduced) ReducedFade else JarnMotionToken(400, LinearEasing)
 
-    val focusScale: Float = if (reduced) 1f else 1.06f
     val pressScale: Float = if (reduced) 1f else 0.97f
     val depthOffset: Dp = if (reduced) 0.dp else 24.dp
     val deckFollowDelayMillis: Int = if (reduced) 0 else 40

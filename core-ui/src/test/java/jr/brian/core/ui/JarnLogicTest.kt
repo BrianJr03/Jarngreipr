@@ -6,8 +6,7 @@ import jr.brian.core.ui.components.jarnShoulderTabIndex
 import jr.brian.core.ui.components.jarnSliderStep
 import jr.brian.core.ui.components.jarnSliderValueAt
 import jr.brian.core.ui.components.jarnStepState
-import jr.brian.core.ui.focus.jarnCombinedScale
-import jr.brian.core.ui.focus.jarnFocusScale
+import jr.brian.core.ui.focus.jarnPressScale
 import jr.brian.core.ui.theme.JarnLooks
 import jr.brian.core.ui.theme.JarnMotion
 import jr.brian.core.ui.theme.jarnShouldReduceMotion
@@ -20,27 +19,14 @@ import org.junit.Test
 class JarnLogicTest {
 
     @Test
-    fun `small items use the full focus scale`() {
-        assertEquals(1.06f, jarnFocusScale(100f, 60f, 6f, 1.06f), 0.0001f)
+    fun `press shrinks an item in place`() {
+        assertEquals(0.97f, jarnPressScale(0.97f, 1f), 0.0001f)
+        assertEquals(1f, jarnPressScale(0.97f, 0f), 0f)
     }
 
     @Test
-    fun `wide items grow at most six dp per side`() {
-        val width = 800f
-        val scale = jarnFocusScale(width, 44f, 6f, 1.06f)
-        assertEquals(12f, width * scale - width, 0.01f)
-    }
-
-    @Test
-    fun `reduced target and empty bounds do not scale`() {
-        assertEquals(1f, jarnFocusScale(100f, 100f, 6f, 1f), 0f)
-        assertEquals(1f, jarnFocusScale(0f, 0f, 6f, 1.06f), 0f)
-    }
-
-    @Test
-    fun `press composes with focus`() {
-        assertEquals(1.06f * 0.97f, jarnCombinedScale(1.06f, 1f, 0.97f, 1f), 0.0001f)
-        assertEquals(1f, jarnCombinedScale(1.06f, 0f, 0.97f, 0f), 0f)
+    fun `an item never grows past its bounds`() {
+        assertEquals(1f, jarnPressScale(1.06f, 1f), 0f)
     }
 
     @Test
@@ -63,7 +49,6 @@ class JarnLogicTest {
         assertEquals(120, motion.panel.durationMillis)
         assertEquals(120, motion.screen.durationMillis)
         assertEquals(120, motion.art.durationMillis)
-        assertEquals(1f, motion.focusScale, 0f)
         assertEquals(1f, motion.pressScale, 0f)
         assertEquals(0.dp, motion.depthOffset)
         assertEquals(0, motion.deckFollowDelayMillis)
