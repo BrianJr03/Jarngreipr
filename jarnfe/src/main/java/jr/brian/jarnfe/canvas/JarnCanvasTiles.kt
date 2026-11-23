@@ -78,6 +78,15 @@ interface JarnCanvasTiles {
     /** The only path that releases a tile's widget id, folder, pin, or photo file. */
     suspend fun removeTile(pageIndex: Int, itemId: String)
 
+    /**
+     * Writes the destination first, then clears the source, so a failure can leave a second copy but
+     * never lose a tile. Returns null, with nothing written, when this tile can't change page.
+     */
+    suspend fun moveTile(move: JarnCanvasTileMove): JarnCanvasTileMoved?
+
+    /** Restores both pages, unless either changed since the move. Returns whether it did. */
+    suspend fun undoTileMove(moved: JarnCanvasTileMoved): Boolean
+
     suspend fun installedApps(): List<JarnCanvasApp>
 
     suspend fun pinnedRoms(): List<JarnCanvasRom>

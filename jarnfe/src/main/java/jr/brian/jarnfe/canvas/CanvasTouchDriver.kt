@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInWindow
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import jr.brian.home.canvas.model.GridRect
@@ -50,6 +52,9 @@ internal class CanvasTouchActions(
     val tick: () -> Unit = {},
     val onDropped: (CanvasGrab, Map<String, GridRect>) -> Unit = { _, _ -> },
     val removeTile: (CanvasGrab) -> Unit = {},
+    val hasCarryTarget: (Int) -> Boolean = { false },
+    val carry: (Int) -> Boolean = { false },
+    val moveBetweenPages: ((CanvasGrabDrop.BetweenPages) -> Unit)? = null,
 )
 
 /** Turns gesture effects into moves on the one shared grab in [CanvasEditor]. */
@@ -59,6 +64,7 @@ internal class CanvasTouchDriver(
     private val thresholds: CanvasTouchThresholds = CanvasTouchThresholds(),
     private val density: Float = 1f,
     private val toWindow: (Offset) -> Offset = { it },
+    private val fromWindow: (Offset) -> Offset = { it },
     private val clockMs: () -> Long = { System.nanoTime() / NANOS_PER_MS },
 ) {
     var actions: CanvasTouchActions? = null
@@ -66,6 +72,21 @@ internal class CanvasTouchDriver(
 
     /** The widget holding the finger, so a second finger elsewhere on the board can reach it. */
     var activeWidget: CanvasWidgetFinger? = null
+
+    /** True once a widget's own list took this finger, so it can't also swipe the page. */
+    var widgetClaimedFinger = false
+
+    var scrollPort: CanvasScrollPort? = null
+    var viewport: LayoutCoordinates? = null
+
+    /** True while a held tile is in an edge zone, the only time a frame loop needs to run. */
+    var inEdgeZone by mutableStateOf(false)
+        private set
+
+    private val edges = CanvasEdgeThresholds()
+    private val edgeDwell = CanvasEdgeDwell(edges.dwellMs)
+    private var fingerWindow = Offset.Unspecified
+    private var arrivalDirection = 0
 
     private val widgetFrames = mutableMapOf<String, CanvasWidgetFinger>()
 
@@ -263,6 +284,7 @@ internal class CanvasTouchDriver(
         }
         active.onGrabbed(id)
         dock.reset()
+        edgeDwell.reset()
         anchor(press)
         moveTo(point)
     }
@@ -274,6 +296,7 @@ internal class CanvasTouchDriver(
         }
         actions?.haptic?.invoke()
         anchor(press)
+        trackFinger(press)
     }
 
     private fun anchor(press: Offset) {
@@ -294,8 +317,67 @@ internal class CanvasTouchDriver(
         visual.follow(point.x - grabOffset.x, point.y - grabOffset.y)
     }
 
-    /** Every finger move lands here. It writes two floats and solves only on a new cell. */
     private fun moveTo(point: Offset) {
+        trackFinger(point)
+        place(point)
+    }
+
+    private fun trackFinger(point: Offset) {
+        fingerWindow = toWindow(point)
+        val inZone = fingerInEdgeZone()
+        if (!inZone) edgeDwell.reset()
+        inEdgeZone = inZone
+    }
+
+    private fun fingerInEdgeZone(): Boolean {
+        val port = scrollPort ?: return false
+        val bounds = viewport?.takeIf { it.isAttached }?.boundsInWindow() ?: return false
+        val finger = fingerWindow.takeIf { it.isSpecified } ?: return false
+        val edgePx = edges.edgeDp * density
+        return canvasEdgeDepth(finger.x, bounds.left, bounds.right, edgePx, edges.minDepth) != 0f ||
+            (!port.horizontal && canvasEdgeDepth(finger.y, bounds.top, bounds.bottom, edgePx, edges.minDepth) != 0f)
+    }
+
+    /**
+     * One frame of a held drag: scrolls at an edge, then flips after a dwell at the scroll end. The
+     * finger is still while this runs, so its board point is rebuilt from the window plus the scroll.
+     */
+    fun edgeFrame(nowMs: Long, dtMs: Long) {
+        val grab = editor.grab?.takeIf { it.driver == CanvasGrabDriver.Touch && it.resizeCorner == null } ?: return
+        val active = actions ?: return
+        val port = scrollPort ?: return
+        val bounds = viewport?.takeIf { it.isAttached }?.boundsInWindow() ?: return
+        val finger = fingerWindow.takeIf { it.isSpecified } ?: return
+        if (dock.armed) {
+            edgeDwell.reset()
+            return
+        }
+        val edgePx = edges.edgeDp * density
+        val side = canvasEdgeDepth(finger.x, bounds.left, bounds.right, edgePx, edges.minDepth)
+        val along = if (port.horizontal) side else canvasEdgeDepth(finger.y, bounds.top, bounds.bottom, edgePx, edges.minDepth)
+        val scrolled = if (along == 0f) 0f else port.scrollBy(along * edges.scrollDpPerMs * density * dtMs)
+        val board = fromWindow(finger)
+        if (board.isSpecified) {
+            place(board + if (port.horizontal) Offset(scrolled, 0f) else Offset(0f, scrolled))
+        }
+        val direction = if (side > 0f) 1 else if (side < 0f) -1 else 0
+        val atEnd = !port.horizontal || scrolled == 0f
+        val flip = edgeDwell.step(direction, atEnd, active.hasCarryTarget(direction), nowMs)
+        if (flip != 0 && editor.grab?.itemId == grab.itemId && active.carry(flip)) {
+            arrivalDirection = flip
+            editor.grab?.rect?.let {
+                cellCol = it.col
+                cellRow = it.row
+            }
+            active.tick()
+        }
+    }
+
+    /** The side a flip came in from, read once so the new page opens at the matching end. */
+    fun takeArrivalDirection(): Int = arrivalDirection.also { arrivalDirection = 0 }
+
+    /** Every finger move lands here. It writes two floats and solves only on a new cell. */
+    private fun place(point: Offset) {
         val board = geometry ?: return
         if (editor.grab?.driver != CanvasGrabDriver.Touch) return
         follow(point)
@@ -311,7 +393,7 @@ internal class CanvasTouchDriver(
     /** True while the tile is over the remove bar, where its neighbors go back and stay put. */
     private fun trackDock(point: Offset): Boolean {
         if (!showsDock) return false
-        val window = toWindow(point)
+        val window = fingerWindow
         if (!window.isSpecified) return dock.armed
         if (dock.update(window)) {
             actions?.haptic?.invoke()
@@ -339,7 +421,7 @@ internal class CanvasTouchDriver(
             return
         }
         dock.reset()
-        editor.drop { placements ->
+        editor.drop(moveBetweenPages = active.moveBetweenPages) { placements ->
             active.commit(layout, placements)
             active.onDropped(finished, placements)
         }

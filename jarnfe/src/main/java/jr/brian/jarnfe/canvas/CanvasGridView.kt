@@ -27,12 +27,14 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -132,7 +134,17 @@ internal fun CanvasGrid(
         PushDirection.DOWN -> Modifier.verticalScroll(scroll)
         PushDirection.RIGHT -> Modifier.horizontalScroll(scroll)
     }
-    BoxWithConstraints(Modifier.fillMaxSize().then(scrollModifier)) {
+    val port = remember(scroll, direction) { CanvasScrollPort(scroll, direction == PushDirection.RIGHT) }
+    SideEffect { driver.scrollPort = port }
+    CanvasEdgeDriveEffect(driver, touchHoldsGrab && !resizing && driver.inEdgeZone)
+    LaunchedEffect(page.index) {
+        val arrival = driver.takeArrivalDirection()
+        if (arrival != 0) {
+            withFrameNanos { }
+            scroll.scrollTo(if (arrival < 0) scroll.maxValue else 0)
+        }
+    }
+    BoxWithConstraints(Modifier.fillMaxSize().onPlaced { driver.viewport = it }.then(scrollModifier)) {
         val metrics = canvasMetrics(direction, crossAxisCount, pushAxisCells, maxWidth, maxHeight)
         val density = LocalDensity.current
         val cellPx = with(density) { metrics.cell.toPx() }

@@ -27,6 +27,11 @@ internal class CanvasBoardSpace(private val density: Float) {
         return board.localToWindow(boardPoint)
     }
 
+    fun fromWindow(window: Offset): Offset {
+        val board = coordinates?.takeIf { it.isAttached } ?: return Offset.Unspecified
+        return board.windowToLocal(window)
+    }
+
     /** [Offset.Unspecified] until the board is attached, so a move never boxes a nullable. */
     fun fromScreen(x: Float, y: Float): Offset {
         val board = coordinates ?: return Offset.Unspecified

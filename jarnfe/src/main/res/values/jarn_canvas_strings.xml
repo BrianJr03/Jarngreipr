@@ -18,6 +18,11 @@
     <string name="jarnfe_canvas_tile_last_played">Last played</string>
     <string name="jarnfe_canvas_tile_missing">Not available</string>
     <string name="jarnfe_canvas_notice_touch_moving_tile">Touch the moving tile to drag it, or press B to cancel.</string>
+    <string name="jarnfe_canvas_notice_folder_stays">Folders stay on their page for now.</string>
+    <string name="jarnfe_canvas_notice_already_on_page">That page already has this tile.</string>
+    <string name="jarnfe_canvas_notice_move_failed">That tile could not be moved.</string>
+    <string name="jarnfe_canvas_peek">Page %1$d</string>
+    <string name="jarnfe_canvas_peek_release">Let go: Page %1$d</string>
     <string name="jarnfe_canvas_notice_missing">This item is no longer available.</string>
     <string name="jarnfe_canvas_folder_empty">This folder is empty.</string>
     <string name="jarnfe_canvas_last_played_empty">Games you play will show up here.</string>

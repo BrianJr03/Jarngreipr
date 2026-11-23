@@ -42,10 +42,20 @@ internal data class CanvasPendingRemoval(
     override val kind: CanvasUndoKind get() = CanvasUndoKind.Removed
 }
 
+/** Already saved on both pages. Undo restores them, and letting the window end changes nothing. */
+internal data class CanvasTileMoveEntry(val moved: JarnCanvasTileMoved) : CanvasUndoEntry {
+    override val pageIndex: Int get() = moved.move.toPage
+    override val kind: CanvasUndoKind get() = CanvasUndoKind.Moved
+}
+
 internal interface CanvasUndoWrites {
     fun commit(pageIndex: Int, orientation: CanvasScrollOrientation, placements: Map<String, GridRect>)
 
     suspend fun remove(pageIndex: Int, itemId: String)
+
+    suspend fun moveTile(move: JarnCanvasTileMove): JarnCanvasTileMoved? = null
+
+    suspend fun undoTileMove(moved: JarnCanvasTileMoved): Boolean = false
 }
 
 internal class CanvasDataUndoWrites(private val data: JarnCanvasData) : CanvasUndoWrites {
@@ -56,6 +66,10 @@ internal class CanvasDataUndoWrites(private val data: JarnCanvasData) : CanvasUn
     ) = data.commitPlacements(pageIndex, orientation, placements)
 
     override suspend fun remove(pageIndex: Int, itemId: String) = data.removeTile(pageIndex, itemId)
+
+    override suspend fun moveTile(move: JarnCanvasTileMove) = data.moveTile(move)
+
+    override suspend fun undoTileMove(moved: JarnCanvasTileMoved) = data.undoTileMove(moved)
 }
 
 internal fun canvasUndoKind(
@@ -106,13 +120,42 @@ internal class CanvasUndoController(
     }
 
     /**
+     * Runs in [scope], so leaving Canvas can't stop it between the two pages. [onFinished] gets the
+     * saved move, or null when it failed, and an undo window opens for a move that succeeded.
+     */
+    fun moveTile(target: CanvasUndoWrites, move: JarnCanvasTileMove, onFinished: (JarnCanvasTileMoved?) -> Unit) {
+        settle()
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val moved = runCatching { target.moveTile(move) }.getOrNull()
+            if (moved != null) open(target, CanvasTileMoveEntry(moved))
+            onFinished(moved)
+        }
+    }
+
+    /** A move between pages is the one edit that stays undoable from another page. */
+    fun settleForPageChange() {
+        if (entry !is CanvasTileMoveEntry) settle()
+    }
+
+    /**
      * Returns the arrangement to show, or null when nothing needs placing. A layout that changed
      * some other way is left alone, because restoring over it would lose that newer edit.
+     * [onMoveUndone] reports whether a between-page move was restored.
      */
-    fun undo(current: Map<String, GridRect>): Map<String, GridRect>? {
+    fun undo(
+        current: Map<String, GridRect>,
+        onMoveUndone: (JarnCanvasTileMoved, Boolean) -> Unit = { _, _ -> },
+    ): Map<String, GridRect>? {
         val undone = entry ?: return null
         val target = writes
         close()
+        if (undone is CanvasTileMoveEntry && target != null) {
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                val restored = runCatching { target.undoTileMove(undone.moved) }.getOrDefault(false)
+                onMoveUndone(undone.moved, restored)
+            }
+            return null
+        }
         if (undone !is CanvasLayoutChange || target == null) return null
         val untouched = canvasPlacementsAgree(undone.after, current) || canvasPlacementsAgree(undone.before, current)
         if (!untouched) return null
