@@ -40,6 +40,18 @@ internal fun GameActionsDeck(
     controller: JarnGameActionsController,
     details: @Composable (actions: @Composable () -> Unit) -> Unit,
 ) {
+    GameActionsHost(game, controller) { playFocus ->
+        details { GameActionRows(game, controller, playFocus) }
+    }
+}
+
+/** Runs the action pages and lets [actionsPage] place Play, which must use the given requester. */
+@Composable
+internal fun GameActionsHost(
+    game: JarnLibraryGame,
+    controller: JarnGameActionsController,
+    actionsPage: @Composable (playFocus: FocusRequester) -> Unit,
+) {
     val state = JarnGameActions
     val firstFocus = remember { FocusRequester() }
     LaunchedEffect(game.id, controller) { controller.show(game) }
@@ -49,7 +61,7 @@ internal fun GameActionsDeck(
         bindings = { on(JarnAction.Back, R.string.jarnfe_hint_back) { controller.back() } },
     ) {
         if (state.page == GameActionsPage.Actions) {
-            details { GameActionRows(game, controller, firstFocus) }
+            actionsPage(firstFocus)
         } else {
             GameActionPicker(game, controller, firstFocus)
         }
@@ -106,24 +118,31 @@ private fun GameActionRows(
             onCheckedChange = { controller.toggleFavorite(game) },
             enabled = setup != null,
         )
-        JarnValueRow(
-            label = stringResource(R.string.jarnfe_game_companion),
-            value = setup?.companions?.takeIf { it.isNotEmpty() }
-                ?.joinToString(", ") { it.label }
-                ?: stringResource(R.string.jarnfe_game_none),
-            onClick = { controller.openPage(GameActionsPage.Companions) },
-        )
-        JarnValueRow(
-            label = stringResource(R.string.jarnfe_game_emulator),
-            value = setup?.currentEmulatorLabel ?: stringResource(R.string.jarnfe_game_not_set),
-            onClick = { controller.openPage(GameActionsPage.Emulators) },
-        )
-        JarnNavigateRow(
-            label = stringResource(R.string.jarnfe_game_edit),
-            onClick = { controller.openEdit(game) },
-        )
-        if (setup?.usesRetroArch == true) CoreRow(setup, controller)
+        GameSetupRows(game, controller)
     }
+}
+
+/** Every row after Play and Favorite. Place inside a Column. */
+@Composable
+internal fun GameSetupRows(game: JarnLibraryGame, controller: JarnGameActionsController) {
+    val setup = JarnGameActions.setup
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_game_companion),
+        value = setup?.companions?.takeIf { it.isNotEmpty() }
+            ?.joinToString(", ") { it.label }
+            ?: stringResource(R.string.jarnfe_game_none),
+        onClick = { controller.openPage(GameActionsPage.Companions) },
+    )
+    JarnValueRow(
+        label = stringResource(R.string.jarnfe_game_emulator),
+        value = setup?.currentEmulatorLabel ?: stringResource(R.string.jarnfe_game_not_set),
+        onClick = { controller.openPage(GameActionsPage.Emulators) },
+    )
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_game_edit),
+        onClick = { controller.openEdit(game) },
+    )
+    if (setup?.usesRetroArch == true) CoreRow(setup, controller)
 }
 
 @Composable
