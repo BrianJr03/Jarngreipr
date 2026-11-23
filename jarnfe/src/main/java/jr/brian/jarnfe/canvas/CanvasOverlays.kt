@@ -8,6 +8,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.apps.JarnAppOptionsFlow
+import jr.brian.jarnfe.apps.JarnAppOptionsTarget
 import jr.brian.jarnfe.shell.JarnNotices
 import kotlinx.coroutines.launch
 
@@ -26,11 +28,12 @@ internal sealed interface CanvasOverlay {
     data class ConfirmRemove(val itemId: String) : CanvasOverlay
     data class Items(val target: CanvasListTarget) : CanvasOverlay
     data class Folder(val itemId: String) : CanvasOverlay
+    data class AppOptions(val itemId: String) : CanvasOverlay
+    data class AskDisplay(val packageName: String) : CanvasOverlay
 }
 
 /** What a tile menu needs from the page on screen. */
 internal class CanvasTileCommands(
-    val activate: (CanvasItem) -> Unit,
     val useWidget: (CanvasItem.WidgetItem) -> Unit,
     val moveTile: (CanvasItem) -> Unit,
     val choosePhoto: (CanvasItem.PhotoContainer) -> Unit,
@@ -150,10 +153,6 @@ internal fun CanvasTileOverlays(
                     ),
                     onAction = { action ->
                         when (action) {
-                            CanvasTileAction.Open -> {
-                                close()
-                                commands.activate(item)
-                            }
                             CanvasTileAction.UseWidget -> {
                                 close()
                                 (item as? CanvasItem.WidgetItem)?.let(commands.useWidget)
@@ -175,13 +174,7 @@ internal fun CanvasTileOverlays(
                                     data.updateTile(page.index, it.withNextCount())
                                 }
                             CanvasTileAction.Scale -> data.updateTile(page.index, item.withFlippedScale())
-                            CanvasTileAction.AppInfo -> {
-                                close()
-                                val app = item as? CanvasItem.AppItem
-                                if (app != null && activity != null) {
-                                    data.openAppInfo(activity, app.packageName)
-                                }
-                            }
+                            CanvasTileAction.AppOptions -> onOverlay(CanvasOverlay.AppOptions(item.id))
                             CanvasTileAction.Move -> {
                                 close()
                                 commands.moveTile(item)
@@ -193,6 +186,29 @@ internal fun CanvasTileOverlays(
                 )
             }
         }
+        is CanvasOverlay.AppOptions -> {
+            val item = page?.layout?.items
+                ?.firstOrNull { it.id == overlay.itemId } as? CanvasItem.AppItem
+            val app = item?.let { page.apps[it.packageName] }
+            if (app == null) {
+                LaunchedEffect(overlay) { close() }
+            } else {
+                JarnAppOptionsFlow(
+                    data = data,
+                    target = JarnAppOptionsTarget(app.packageName, app.label, app.iconPath != null),
+                    extras = emptyList(),
+                    onClose = { onOverlay(CanvasOverlay.TileMenu(overlay.itemId)) },
+                    onLeave = close,
+                )
+            }
+        }
+        is CanvasOverlay.AskDisplay -> CanvasDisplayChoiceSheet(
+            onPick = { display ->
+                close()
+                activity?.let { data.launchAppOn(it, overlay.packageName, display) }
+            },
+            onClose = close,
+        )
         is CanvasOverlay.ConfirmRemove -> {
             val item = page?.layout?.items?.firstOrNull { it.id == overlay.itemId }
             if (item == null) {

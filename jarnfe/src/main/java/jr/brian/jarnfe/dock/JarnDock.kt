@@ -46,6 +46,8 @@ data class JarnDockApp(
     val packageName: String,
     val label: String,
     val icon: Drawable? = null,
+    val iconPath: String? = null,
+    val iconVersion: Long = 0L,
 )
 
 /** The dock the user already set up. Hidden or uninstalled apps are left out. */

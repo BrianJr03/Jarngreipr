@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Reads a uiautomator XML dump. Usage: uiquery.py FILE role|has TEXT|selected LABEL...|focused"""
+import sys
+import xml.etree.ElementTree as ET
+
+WORDMARK = "JARN"
+DECK_TABS = {"Now", "Apps", "Canvas"}
+SETTINGS_TABS = {"Library", "Art", "Look", "Display", "Data"}
+
+
+def label(node):
+    return node.get("text") or node.get("content-desc") or ""
+
+
+def labels_in(node):
+    return [text for text in (label(item) for item in node.iter("node")) if text]
+
+
+def role(root):
+    found = set(labels_in(root))
+    if WORDMARK in found:
+        return "stage"
+    if DECK_TABS <= found or SETTINGS_TABS <= found:
+        return "deck"
+    return "unknown"
+
+
+def selected(root, wanted):
+    for node in root.iter("node"):
+        if node.get("selected") != "true":
+            continue
+        for text in labels_in(node):
+            if text in wanted:
+                return text
+    return ""
+
+
+def focused(root):
+    for node in root.iter("node"):
+        if node.get("focused") == "true":
+            return " | ".join(labels_in(node))
+    return ""
+
+
+def main(argv):
+    if len(argv) < 3:
+        return 2
+    try:
+        root = ET.parse(argv[1]).getroot()
+    except (ET.ParseError, OSError):
+        return 2
+    command, args = argv[2], argv[3:]
+    if command == "role":
+        print(role(root))
+    elif command == "has":
+        return 0 if args and args[0] in labels_in(root) else 1
+    elif command == "selected":
+        print(selected(root, set(args)))
+    elif command == "focused":
+        print(focused(root))
+    else:
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

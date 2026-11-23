@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_utilities_title">Utilities</string>
+    <string name="jarnfe_utilities_settings_hint">System Monitor, crash logs, recent apps, FAQ and more</string>
+    <string name="jarnfe_utilities_unavailable">Utilities aren\'t available on this device.</string>
+    <string name="jarnfe_utilities_cancel">Cancel</string>
+    <string name="jarnfe_utilities_delete">Delete</string>
+    <string name="jarnfe_utilities_clear_all">Clear all</string>
+    <string name="jarnfe_utilities_loading">Loading…</string>
+    <string name="jarnfe_utilities_refresh">Refresh</string>
+    <string name="jarnfe_utilities_scroll">Scroll</string>
+    <string name="jarnfe_utilities_adjust">Adjust</string>
+    <string name="jarnfe_utilities_page_up">Page up</string>
+    <string name="jarnfe_utilities_page_down">Page down</string>
+    <string name="jarnfe_utilities_copy">Copy %1$s</string>
+    <string name="jarnfe_utilities_copied">Copied</string>
+    <string name="jarnfe_utilities_percent">%1$d%%</string>
+    <string name="jarnfe_utilities_duration">%1$dh %2$dm</string>
+    <string name="jarnfe_utilities_under_minute">Under 1m</string>
+    <string name="jarnfe_utilities_not_available">Not available</string>
+
+    <string name="jarnfe_utilities_monitor">System Monitor</string>
+    <string name="jarnfe_utilities_monitor_supporting">Memory, processor, battery and storage</string>
+    <string name="jarnfe_utilities_monitor_paused">Paused while another screen is in use</string>
+    <string name="jarnfe_utilities_ram">Memory</string>
+    <string name="jarnfe_utilities_cpu">Processor</string>
+    <string name="jarnfe_utilities_cpu_blocked">Android doesn\'t share this reading with apps on this device.</string>
+    <string name="jarnfe_utilities_measuring">Measuring…</string>
+    <string name="jarnfe_utilities_battery">Battery</string>
+    <string name="jarnfe_utilities_storage">Storage</string>
+    <string name="jarnfe_utilities_gb_used">%1$.1f GB of %2$.1f GB</string>
+    <string name="jarnfe_utilities_charging">Charging</string>
+    <string name="jarnfe_utilities_on_battery">On battery</string>
+    <string name="jarnfe_utilities_until_full">%1$s until full</string>
+    <string name="jarnfe_utilities_remaining">%1$s remaining</string>
+
+    <string name="jarnfe_utilities_crashes">Crash Logs</string>
+    <string name="jarnfe_utilities_crashes_supporting">Read or delete crash reports saved on this device</string>
+    <string name="jarnfe_utilities_crash_empty_title">No crash logs</string>
+    <string name="jarnfe_utilities_crash_empty_message">Jarngreipr hasn\'t crashed recently.</string>
+    <string name="jarnfe_utilities_crash_delete_title">Delete this crash log?</string>
+    <string name="jarnfe_utilities_crash_delete_message">This report will be removed from the device.</string>
+    <string name="jarnfe_utilities_crash_clear_title">Clear all crash logs?</string>
+    <string name="jarnfe_utilities_crash_clear_message">Every saved report will be removed from the device.</string>
+
+    <string name="jarnfe_utilities_recents">Recent Apps</string>
+    <string name="jarnfe_utilities_recents_supporting">Jump back into apps used in the last 10 minutes</string>
+    <string name="jarnfe_utilities_recents_empty_title">No recent apps</string>
+    <string name="jarnfe_utilities_recents_empty_message">Apps you used in the last 10 minutes show up here.</string>
+    <string name="jarnfe_utilities_usage_title">Usage access needed</string>
+    <string name="jarnfe_utilities_usage_message">Allow usage access for Jarngreipr to see recent apps.</string>
+    <string name="jarnfe_utilities_usage_grant">Open settings</string>
+
+    <string name="jarnfe_utilities_faq">FAQ</string>
+    <string name="jarnfe_utilities_faq_supporting">Answers to common questions</string>
+    <plurals name="jarnfe_utilities_faq_count">
+        <item quantity="one">%1$d question</item>
+        <item quantity="other">%1$d questions</item>
+    </plurals>
+
+    <string name="jarnfe_utilities_volume">Volume Controls</string>
+    <string name="jarnfe_utilities_volume_supporting">Set the media volume</string>
+    <string name="jarnfe_utilities_volume_media">Media volume</string>
+    <string name="jarnfe_utilities_volume_value">%1$d of %2$d</string>
+
+    <string name="jarnfe_utilities_floaty">Floaty Mode</string>
+    <string name="jarnfe_utilities_floaty_supporting">Bouncing apps and other playful effects</string>
+    <string name="jarnfe_utilities_floaty_classic_note">These effects appear in the Classic layout.</string>
+    <string name="jarnfe_utilities_floaty_locked_title">Floaty Mode is locked</string>
+    <string name="jarnfe_utilities_floaty_locked_message">Tap the version 7 times in Classic Settings to unlock it.</string>
+    <string name="jarnfe_utilities_floaty_active">Floaty Mode</string>
+    <string name="jarnfe_utilities_floaty_active_supporting">Apps float around and bounce</string>
+    <string name="jarnfe_utilities_floaty_konfetti">Section tap konfetti</string>
+    <string name="jarnfe_utilities_floaty_konfetti_supporting">Burst of konfetti when a section is tapped</string>
+    <string name="jarnfe_utilities_floaty_powered_off">Powered Off effect</string>
+    <string name="jarnfe_utilities_floaty_powered_off_supporting">Info floats around the Powered Off screen</string>
+    <string name="jarnfe_utilities_floaty_drawer">App drawer effect</string>
+    <string name="jarnfe_utilities_floaty_drawer_supporting">Apps float inside the app drawer</string>
+    <string name="jarnfe_utilities_floaty_count">Apps in the floaty drawer</string>
+    <string name="jarnfe_utilities_floaty_count_all">All</string>
+    <string name="jarnfe_utilities_floaty_bubble">Bubble pop</string>
+    <string name="jarnfe_utilities_floaty_bubble_supporting">Tap floating apps in the drawer to pop them</string>
+    <string name="jarnfe_utilities_floaty_tabs">Floaty tabs</string>
+    <string name="jarnfe_utilities_floaty_tabs_supporting">Choose which tabs use Floaty Mode</string>
+    <string name="jarnfe_utilities_floaty_tab">Tab %1$d</string>
+    <string name="jarnfe_utilities_floaty_reset">Reset Floaty Mode</string>
+    <string name="jarnfe_utilities_floaty_reset_supporting">Turn it off and lock it again</string>
+    <string name="jarnfe_utilities_floaty_reset_title">Reset Floaty Mode?</string>
+    <string name="jarnfe_utilities_floaty_reset_message">All Floaty settings go back to off and it locks until unlocked again.</string>
+</resources>

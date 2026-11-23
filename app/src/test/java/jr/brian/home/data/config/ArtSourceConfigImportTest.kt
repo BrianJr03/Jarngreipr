@@ -64,7 +64,7 @@ class ArtSourceConfigImportTest {
 
     @Test
     fun `schema version includes the art source field`() {
-        assertEquals(44, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(45, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test
@@ -93,6 +93,25 @@ class ArtSourceConfigImportTest {
     fun `importing a backup applies its source`() = runTest {
         assertImport(ArtSource.EsDe, backupWith("RetroHrai"), ArtSource.RetroHrai)
         assertImport(ArtSource.RetroHrai, backupWith("Scraped"), ArtSource.Scraped)
+    }
+
+    @Test
+    fun `an older backup does not count as a choice`() = runTest {
+        importExport.importFromStream(ByteArrayInputStream(V38_BACKUP.toByteArray()))
+
+        assertNull(store.savedSource)
+        assertTrue(store.saveDetected(ArtSource.RetroHrai))
+    }
+
+    @Test
+    fun `a backup with a source counts as a choice and clears detection`() = runTest {
+        store.saveDetected(ArtSource.RetroHrai)
+
+        importExport.importFromStream(ByteArrayInputStream(backupWith("EsDe").toByteArray()))
+
+        assertEquals(ArtSource.EsDe, store.savedSource)
+        assertNull(store.detectedState.value)
+        assertFalse(store.saveDetected(ArtSource.RetroHrai))
     }
 
     @Test

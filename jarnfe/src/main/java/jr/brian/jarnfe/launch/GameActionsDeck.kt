@@ -24,6 +24,7 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
+import jr.brian.jarnfe.wallpaper.jarnDisabledRowBacking
 
 internal data class PickerRow(
     val key: String,
@@ -299,7 +300,9 @@ private fun PickerRows(rows: List<PickerRow>, firstFocus: FocusRequester) {
                 supporting = row.supporting,
                 onClick = row.onClick,
                 enabled = row.enabled,
-                modifier = if (index == focusIndex) Modifier.focusRequester(firstFocus) else Modifier,
+                modifier = Modifier
+                    .jarnDisabledRowBacking(row.enabled)
+                    .then(if (index == focusIndex) Modifier.focusRequester(firstFocus) else Modifier),
             )
         }
     }

@@ -318,13 +318,14 @@ class ImportExportManager @Inject constructor(
             recentlyPlayed = f.recentlyPlayedManager.entries.value,
             screenAssignment = screenAssignmentStore.assignment.name,
             experience = experienceStore.experience.name,
-            artSource = artSourceStore.source.name,
+            artSource = artSourceStore.savedSource?.name,
             systemArtSource = artSourceStore.systemSource.name,
             jarnLook = jarnLookStore.lookId,
             jarnReducedMotion = jarnLookStore.reducedMotion,
             jarnArtChoices = artChoiceStore.choices.toConfig(),
             jarnPinnedApps = appPinStore.pinned,
             jarnDisplay = jarnLookStore.display.toConfig(),
+            jarnLiveWallpaper = jarnLookStore.liveWallpaperBackup(),
             romSearch = RomSearchConfig(
                 frontendEnabled = f.esdePreferencesManager.state.value.frontendEnabled,
                 companionLaunchWatchdogEnabled = f.esdePreferencesManager.state.value.companionLaunchWatchdogEnabled,
@@ -744,6 +745,7 @@ class ImportExportManager @Inject constructor(
         config.jarnArtChoices?.let { artChoiceStore.restore(it.toChoices()) }
         config.jarnPinnedApps?.let(appPinStore::restore)
         config.jarnDisplay?.let { jarnLookStore.updateDisplay(it::applyTo) }
+        jarnLookStore.restoreLiveWallpaper(config.jarnLiveWallpaper)
     }
 
     private fun resolveRowAlignment(stored: String): FrontendRowAlignment =

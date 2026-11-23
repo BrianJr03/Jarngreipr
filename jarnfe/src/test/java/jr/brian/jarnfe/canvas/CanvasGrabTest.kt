@@ -62,6 +62,113 @@ class CanvasGrabTest {
     }
 
     @Test
+    fun `a lone tile can travel to the last visible cell`() {
+        val page = layout(mapOf("a" to GridRect(1, 0, 1, 1)))
+        var grab = beginCanvasGrab(page, "a", visiblePushCells = 6)!!
+        repeat(50) { grab = grab.moved(1, 0) }
+        assertEquals(5, grab.rect.col)
+    }
+
+    @Test
+    fun `a lone tile can still move when the viewport is unknown`() {
+        val page = layout(mapOf("a" to GridRect(1, 0, 1, 1)))
+        assertEquals(2, beginCanvasGrab(page, "a")!!.moved(1, 0).rect.col)
+    }
+
+    @Test
+    fun `a wide tile stops with its far edge on the last visible cell`() {
+        val page = layout(mapOf("a" to GridRect(1, 0, 2, 1)))
+        var grab = beginCanvasGrab(page, "a", visiblePushCells = 6)!!
+        repeat(50) { grab = grab.moved(1, 0) }
+        assertEquals(4, grab.rect.col)
+    }
+
+    @Test
+    fun `travel reaches one past a neighbor beyond the visible cells`() {
+        val page = layout(mapOf("a" to GridRect(1, 0, 1, 1), "b" to GridRect(9, 1, 1, 1)))
+        var grab = beginCanvasGrab(page, "a", visiblePushCells = 4)!!
+        repeat(50) { grab = grab.moved(1, 0) }
+        assertEquals(10, grab.rect.col)
+    }
+
+    @Test
+    fun `visible cells count only whole cells inside the padding`() {
+        assertEquals(3, canvasVisibleCells(viewportPx = 330f, cellPx = 90f, spacingPx = 10f, paddingPx = 20f))
+        assertEquals(2, canvasVisibleCells(viewportPx = 329f, cellPx = 90f, spacingPx = 10f, paddingPx = 20f))
+        assertEquals(0, canvasVisibleCells(viewportPx = 0f, cellPx = 90f, spacingPx = 10f, paddingPx = 20f))
+        assertEquals(0, canvasVisibleCells(viewportPx = 340f, cellPx = 0f, spacingPx = 10f, paddingPx = 20f))
+    }
+
+    @Test
+    fun `the cursor stays on the tile when the reserved cell refuses it`() {
+        val page = layout(mapOf("a" to GridRect(1, 0, 1, 1)), menuVisible = true)
+        val refused = beginCanvasGrab(page, "a", visiblePushCells = 6)!!.moved(-1, 0)
+        assertEquals(GridRect(1, 0, 1, 1), refused.rect)
+        assertEquals(refused.rect, refused.cursor)
+        assertEquals(GridRect(2, 0, 1, 1), refused.moved(1, 0).rect)
+    }
+
+    @Test
+    fun `backing off a resize that hit the reserved cell restores the tile`() {
+        val page = CanvasLayout(
+            activeOrientation = CanvasScrollOrientation.VERTICAL,
+            verticalColumns = 4,
+            items = listOf(CanvasItem.AppItem("a", "pkg.a")),
+            verticalArrangement = mapOf("a" to GridRect(2, 0, 1, 1)),
+            horizontalArrangement = mapOf("a" to GridRect(2, 0, 1, 1)),
+            menuButtonVisible = true,
+        )
+        val grown = beginCanvasGrab(page, "a")!!.resized(1)
+        assertEquals(1, grown.rect.row)
+        assertEquals(GridRect(2, 0, 1, 1), grown.resized(-1).rect)
+    }
+
+    @Test
+    fun `undo add removes the new tile and returns to browsing`() {
+        val editor = CanvasEditor()
+        val removed = mutableListOf<String>()
+        editor.beginAdded(twoTiles, "a", 1, 1)
+        assertTrue(editor.grab!!.isNewTile)
+        editor.undoAdd { removed += it }
+        assertEquals(listOf("a"), removed)
+        assertNull(editor.grab)
+        assertFalse(editor.editing)
+    }
+
+    @Test
+    fun `undo add started in edit mode stays in edit mode`() {
+        val editor = CanvasEditor()
+        editor.enter()
+        editor.beginAdded(twoTiles, "a", 1, 1)
+        editor.undoAdd { }
+        assertTrue(editor.editing)
+    }
+
+    @Test
+    fun `undo add never removes a tile that already existed`() {
+        val editor = CanvasEditor()
+        val removed = mutableListOf<String>()
+        editor.enter()
+        editor.begin(twoTiles, "a", 1, 1)
+        assertFalse(editor.grab!!.isNewTile)
+        editor.undoAdd { removed += it }
+        assertTrue(removed.isEmpty())
+        assertEquals("a", editor.grab?.itemId)
+    }
+
+    @Test
+    fun `a dropped new tile is kept and is no longer undoable`() {
+        val editor = CanvasEditor()
+        val removed = mutableListOf<String>()
+        editor.beginAdded(twoTiles, "a", 1, 1)
+        editor.drop { }
+        editor.undoAdd { removed += it }
+        editor.begin(twoTiles, "a", 1, 1)
+        assertFalse(editor.grab!!.isNewTile)
+        assertTrue(removed.isEmpty())
+    }
+
+    @Test
     fun `resize follows the selected axis`() {
         val grab = beginCanvasGrab(twoTiles, "a")!!
         assertEquals(2, grab.resized(1).rect.colSpan)

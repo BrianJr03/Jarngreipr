@@ -1,20 +1,11 @@
 package jr.brian.jarnfe.canvas
 
-import android.app.Activity
-import androidx.compose.runtime.Immutable
+import jr.brian.jarnfe.apps.JarnAppOptionsData
 
 enum class JarnAppDisplay { Current, Primary }
 
-@Immutable
-data class JarnFolderAppOptions(
-    val display: JarnAppDisplay,
-    val askOnLaunch: Boolean,
-    val customName: String?,
-    val hasSecondDisplay: Boolean,
-)
-
-/** Folder and per-app edits, on the same stores Classic reads. */
-interface JarnCanvasFolders {
+/** Folder edits, on the same stores Classic reads. */
+interface JarnCanvasFolders : JarnAppOptionsData {
     suspend fun renameFolder(pageIndex: Int, folderId: String, name: String)
 
     /** Applies the change to the stored list, so apps not installed right now are kept. */
@@ -28,22 +19,6 @@ interface JarnCanvasFolders {
 
     /** Returns false when the image could not be kept. */
     suspend fun setFolderBackgroundImage(pageIndex: Int, folderId: String, uri: String): Boolean
-
-    fun folderAppOptions(packageName: String): JarnFolderAppOptions
-
-    fun setAppDisplay(packageName: String, display: JarnAppDisplay)
-
-    fun setAskDisplayOnLaunch(packageName: String, ask: Boolean)
-
-    /** A null [name] goes back to the app's own name. */
-    fun setAppName(packageName: String, name: String?)
-
-    /** Returns false when the image could not be used. */
-    suspend fun setAppIcon(packageName: String, uri: String): Boolean
-
-    suspend fun clearAppIcon(packageName: String)
-
-    fun launchAppOn(host: Activity, packageName: String, display: JarnAppDisplay)
 }
 
 fun jarnFolderPackages(stored: List<String>, added: Set<String>, removed: Set<String>): List<String> =

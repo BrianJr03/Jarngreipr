@@ -42,9 +42,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import jr.brian.core.ui.components.JarnEmptyState
-import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.focus.JarnRevealLazyItems
@@ -52,7 +50,8 @@ import jr.brian.core.ui.focus.LocalJarnTabsFocus
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
-import jr.brian.jarnfe.canvas.CanvasModalSheet
+import jr.brian.jarnfe.canvas.CanvasDisplayChoiceSheet
+import jr.brian.jarnfe.canvas.findActivity
 import jr.brian.jarnfe.dock.JarnDockApp
 import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnInputLayer
@@ -65,8 +64,7 @@ private val AppIconSize = 48.dp
 
 internal class JarnAppsCommands(
     val open: (String) -> Unit,
-    val setPinned: (String, Boolean) -> Unit,
-    val setHidden: (String, Boolean) -> Unit,
+    val options: JarnAppOptionsData,
 )
 
 @Stable
@@ -108,9 +106,8 @@ internal fun JarnAppsRoute() {
     val host = LocalActivity.current
     val commands = remember(data, host) {
         JarnAppsCommands(
-            open = { packageName -> host?.let { data.launch(it, packageName) } },
-            setPinned = data::setPinned,
-            setHidden = data::setHidden,
+            open = { packageName -> host?.let { data.launchApp(it, packageName) } },
+            options = data,
         )
     }
     snapshot?.let { JarnAppsDrawer(it, commands) }
@@ -152,6 +149,8 @@ private fun JarnAppsContent(
     var expandedState by remember { mutableStateOf(false) }
     val expanded = expandedState && sections.hidden.isNotEmpty()
     var menuKey by remember { mutableStateOf<String?>(null) }
+    var askKey by remember { mutableStateOf<String?>(null) }
+    val sheetOpen = menuKey != null || askKey != null
     val focus = remember { JarnAppsFocus() }
     val listState = rememberLazyListState()
     val rows = remember(sections, expanded, columns) { jarnAppRows(sections, expanded, columns) }
@@ -169,14 +168,14 @@ private fun JarnAppsContent(
         focus.pending = jarnAppsFocusAfter(orderAtMenu, order, gone)
     }
     LaunchedEffect(isActive, order.isEmpty()) {
-        if (isActive && !focus.listHasFocus && menuKey == null) {
+        if (isActive && !focus.listHasFocus && !sheetOpen) {
             focus.pending = focus.lastKey?.takeIf { it in order } ?: order.firstOrNull()
         }
     }
     val tabsFocus = LocalJarnTabsFocus.current
-    LaunchedEffect(focus.pending, rows, menuKey, isActive) {
+    LaunchedEffect(focus.pending, rows, sheetOpen, isActive) {
         val target = focus.pending ?: return@LaunchedEffect
-        if (menuKey != null || !isActive) return@LaunchedEffect
+        if (sheetOpen || !isActive) return@LaunchedEffect
         if (tabsFocus.hasFocus) {
             focus.pending = null
             return@LaunchedEffect
@@ -188,7 +187,7 @@ private fun JarnAppsContent(
     }
 
     JarnAppsInput(
-        focused = focus.current.takeIf { menuApp == null },
+        focused = focus.current.takeIf { !sheetOpen },
         expanded = expanded,
         hiddenPackages = remember(sections) { sections.hidden.mapTo(HashSet()) { it.packageName } },
         onContext = { menuKey = it },
@@ -202,7 +201,13 @@ private fun JarnAppsContent(
         columns = columns,
         listState = listState,
         focus = focus,
-        onOpen = commands.open,
+        onOpen = { packageName ->
+            if (commands.options.appOptions(packageName).shouldAskDisplay()) {
+                askKey = packageName
+            } else {
+                commands.open(packageName)
+            }
+        },
         onToggleHidden = { expandedState = !expanded },
     )
     menuApp?.let { app ->
@@ -210,22 +215,31 @@ private fun JarnAppsContent(
             focus.pending = jarnAppsFocusAfter(order, order - app.packageName, app.packageName) ?: app.packageName
             menuKey = null
         }
-        JarnAppMenu(
-            app = app,
-            pinned = app.packageName in snapshot.pinned,
-            hidden = app.packageName in snapshot.hidden,
-            onSetPinned = {
-                moveFocusAndClose()
-                commands.setPinned(app.packageName, it)
+        val closeOnApp = {
+            focus.pending = app.packageName
+            menuKey = null
+        }
+        JarnAppOptionsFlow(
+            data = commands.options,
+            target = JarnAppOptionsTarget(app.packageName, app.label, app.iconPath != null),
+            extras = emptyList(),
+            onClose = closeOnApp,
+            onLeave = closeOnApp,
+            onListChange = { moveFocusAndClose() },
+        )
+    }
+    askKey?.let { packageName ->
+        val activity = LocalContext.current.findActivity()
+        val closeAsk = {
+            focus.pending = packageName
+            askKey = null
+        }
+        CanvasDisplayChoiceSheet(
+            onPick = { display ->
+                closeAsk()
+                activity?.let { commands.options.launchAppOn(it, packageName, display) }
             },
-            onSetHidden = {
-                moveFocusAndClose()
-                commands.setHidden(app.packageName, it)
-            },
-            onClose = {
-                focus.pending = app.packageName
-                menuKey = null
-            },
+            onClose = closeAsk,
         )
     }
 }
@@ -356,7 +370,7 @@ private fun JarnAppTile(app: JarnDockApp, modifier: Modifier, onClick: () -> Uni
         verticalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
     ) {
         Box(Modifier.size(AppIconSize), contentAlignment = Alignment.Center) {
-            AsyncImage(model = app.icon, contentDescription = null, modifier = Modifier.size(AppIconSize))
+            JarnAppIcon(app.icon, app.iconPath, app.iconVersion, Modifier.size(AppIconSize))
         }
         JarnText(app.label, JarnTheme.type.label, JarnTheme.colors.textHigh, maxLines = 1)
     }
@@ -377,30 +391,6 @@ private fun JarnHiddenHeader(row: JarnAppsRow.HiddenHeader, focus: JarnAppsFocus
             .focusRequester(focus.requester(JARN_APPS_HIDDEN_KEY))
             .onFocusChanged { if (it.isFocused) focus.onFocused(JARN_APPS_HIDDEN_KEY) },
     )
-}
-
-@Composable
-private fun JarnAppMenu(
-    app: JarnDockApp,
-    pinned: Boolean,
-    hidden: Boolean,
-    onSetPinned: (Boolean) -> Unit,
-    onSetHidden: (Boolean) -> Unit,
-    onClose: () -> Unit,
-) {
-    val first = remember(app.packageName) { FocusRequester() }
-    CanvasModalSheet(app.label, first, onClose) {
-        JarnNavigateRow(
-            label = stringResource(if (pinned) R.string.jarnfe_apps_action_unpin else R.string.jarnfe_apps_action_pin),
-            onClick = { onSetPinned(!pinned) },
-            modifier = Modifier.fillMaxWidth().focusRequester(first),
-        )
-        JarnNavigateRow(
-            label = stringResource(if (hidden) R.string.jarnfe_apps_action_unhide else R.string.jarnfe_apps_action_hide),
-            onClick = { onSetHidden(!hidden) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
 }
 
 internal const val JARN_APPS_LIST_TAG = "jarnfe-apps-list"

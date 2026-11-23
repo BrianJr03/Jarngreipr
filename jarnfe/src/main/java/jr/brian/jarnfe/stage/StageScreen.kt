@@ -46,6 +46,7 @@ import jr.brian.jarnfe.library.LibraryOrphanGuard
 import jr.brian.jarnfe.library.LibrarySetupPanel
 import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
 import jr.brian.jarnfe.library.librarySetupPrompt
+import jr.brian.jarnfe.rss.JarnRssStageHost
 import jr.brian.jarnfe.search.JarnSearchResultsPanel
 import jr.brian.jarnfe.search.JarnSearchTabs
 import jr.brian.jarnfe.session.JarnSession
@@ -90,7 +91,10 @@ internal fun StageScreen(state: JarnSessionState) {
             JarnScreenFrame(
                 header = { StageHeader(state) },
                 background = Color.Transparent,
-            ) { StageRouteContent(state) }
+            ) {
+                StageRouteContent(state)
+                JarnRssStageHost(state)
+            }
             SingleScreenDeckPanel(state)
             JarnNoticeHost()
             JarnStageSplash()

@@ -1,6 +1,5 @@
 package jr.brian.jarnfe.canvas
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.compose.runtime.Immutable
@@ -83,8 +82,6 @@ interface JarnCanvasData : JarnCanvasTiles, JarnCanvasFolders {
 
     /** The smallest (columns, rows) a widget can shrink to at this cell size. */
     fun widgetMinSpans(widgetId: Int, cellSizePx: Float): Pair<Int, Int>
-
-    fun launchApp(host: Activity, packageName: String)
 
     fun setHomePage(index: Int)
 

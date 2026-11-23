@@ -3,6 +3,7 @@ package jr.brian.jarnfe.canvas
 import jr.brian.core.model.GameImageType
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.EsdeContentScale
+import jr.brian.jarnfe.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,6 +29,40 @@ class CanvasTileActionsTest {
             assertTrue(CanvasTileAction.Move in actions)
             assertEquals(CanvasTileAction.Remove, actions.last())
         }
+    }
+
+    @Test
+    fun `menus start with Move, end with Remove, and never repeat Open`() {
+        everyType.forEach { item ->
+            val actions = canvasTileActions(item, resolved = true, JarnWidgetHealth.Live, hasRecent = true)
+            assertEquals(CanvasTileAction.Move, actions.first())
+            assertEquals(CanvasTileAction.Remove, actions.last())
+            assertEquals(actions.distinct(), actions)
+        }
+        assertFalse(CanvasTileAction.entries.any { it.name == "Open" })
+    }
+
+    @Test
+    fun `the A hint names what A does on each tile`() {
+        val hint = { item: CanvasItem, health: JarnWidgetHealth? -> canvasConfirmHint(item, true, health) }
+        val widget = CanvasItem.WidgetItem("w", 7)
+        assertEquals(R.string.jarnfe_hint_open, hint(CanvasItem.AppItem("a", "pkg"), null))
+        assertEquals(R.string.jarnfe_hint_play, hint(CanvasItem.RomItem("r", "key"), null))
+        assertEquals(R.string.jarnfe_canvas_action_use_widget, hint(widget, JarnWidgetHealth.Live))
+        assertEquals(R.string.jarnfe_hint_context, hint(widget, JarnWidgetHealth.Gone))
+        assertEquals(R.string.jarnfe_canvas_action_choose_photo, hint(CanvasItem.PhotoContainer("p"), null))
+        assertEquals(
+            R.string.jarnfe_canvas_hint_change_photo,
+            hint(CanvasItem.PhotoContainer("p", imageUri = "file:///p.jpg"), null),
+        )
+        assertEquals(R.string.jarnfe_canvas_hint_go_to_now, hint(CanvasItem.EsdeArtItem("e"), null))
+    }
+
+    @Test
+    fun `a missing tile declares no A hint`() {
+        assertEquals(null, canvasConfirmHint(CanvasItem.AppItem("a", "pkg"), false, null))
+        assertEquals(null, canvasConfirmHint(CanvasItem.RomItem("r", "key"), false, null))
+        assertEquals(null, canvasConfirmHint(CanvasItem.FolderItem("f", "folder"), false, null))
     }
 
     @Test

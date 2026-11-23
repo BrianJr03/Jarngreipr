@@ -85,6 +85,13 @@ private fun canvasMetrics(
 private fun GridRect.pushEnd(direction: PushDirection): Int =
     if (direction == PushDirection.DOWN) bottom else right
 
+/** Whole cells that fit in [viewportPx] along the scroll axis, inside the outer padding. */
+internal fun canvasVisibleCells(viewportPx: Float, cellPx: Float, spacingPx: Float, paddingPx: Float): Int {
+    val pitch = cellPx + spacingPx
+    if (cellPx <= 0f || viewportPx <= 0f) return 0
+    return ((viewportPx - paddingPx * 2 + spacingPx) / pitch).toInt().coerceAtLeast(0)
+}
+
 @Composable
 internal fun CanvasGrid(
     page: JarnCanvasPage,
@@ -94,6 +101,7 @@ internal fun CanvasGrid(
     focusRequesterFor: (String) -> FocusRequester,
     onFocused: (String) -> Unit,
     onCellSize: (Float) -> Unit,
+    onVisibleCells: (Int) -> Unit,
     onTileClick: (CanvasItem, cellSizePx: Float) -> Unit,
     onMenuClick: () -> Unit,
     tileContent: @Composable BoxScope.(CanvasItem) -> Unit,
@@ -111,8 +119,20 @@ internal fun CanvasGrid(
     }
     BoxWithConstraints(Modifier.fillMaxSize().then(scrollModifier)) {
         val metrics = canvasMetrics(direction, crossAxisCount, pushAxisCells, maxWidth, maxHeight)
-        val cellPx = with(LocalDensity.current) { metrics.cell.toPx() }
-        SideEffect { onCellSize(cellPx) }
+        val density = LocalDensity.current
+        val cellPx = with(density) { metrics.cell.toPx() }
+        val visibleCells = with(density) {
+            canvasVisibleCells(
+                viewportPx = scroll.viewportSize.toFloat(),
+                cellPx = cellPx,
+                spacingPx = CanvasCellSpacing.toPx(),
+                paddingPx = CanvasOuterPadding.toPx(),
+            )
+        }
+        SideEffect {
+            onCellSize(cellPx)
+            onVisibleCells(visibleCells)
+        }
         val alignment = if (direction == PushDirection.DOWN) Alignment.TopCenter else Alignment.CenterStart
         Box(
             Modifier
@@ -130,6 +150,9 @@ internal fun CanvasGrid(
                         onClick = onMenuClick,
                     ) { CanvasMenuTileContent() }
                 }
+            }
+            if (menuRect != null && editing) {
+                CanvasSlot(menuRect, metrics, grabbed = false) { CanvasLockedCell() }
             }
             layout.items.forEach { item ->
                 val rect = placements[item.id] ?: return@forEach
@@ -176,6 +199,18 @@ private fun CanvasSlot(
             .bringIntoViewRequester(bringIntoView),
         content = content,
     )
+}
+
+/** Not focusable or clickable, so neither the cursor nor a press can stop on it. */
+@Composable
+private fun CanvasLockedCell() {
+    val shape = JarnTheme.tileShape
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(shape)
+            .border(EditOutlineWidth, JarnTheme.colors.line, shape),
+    ) { CanvasLockedCellContent() }
 }
 
 @Composable

@@ -17,12 +17,18 @@ import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
 import jr.brian.home.jarn.AppJarnAppsData
+import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
 import jr.brian.home.jarn.AppJarnInputTools
 import jr.brian.home.jarn.AppJarnScreenSwap
+import jr.brian.home.jarn.AppJarnUpdates
+import jr.brian.home.jarn.AppJarnUtilities
 import jr.brian.home.jarn.AppJarnWallpaperSource
 import jr.brian.jarnfe.apps.JarnAppsData
 import jr.brian.jarnfe.apps.JarnAppsDataProvider
+import jr.brian.jarnfe.backup.JarnBackup
+import jr.brian.jarnfe.backup.JarnDataProvider
+import jr.brian.jarnfe.backup.JarnUpdates
 import jr.brian.jarnfe.dock.JarnDockData
 import jr.brian.jarnfe.dock.JarnDockDataProvider
 import jr.brian.jarnfe.shell.JarnScreenSwap
@@ -35,6 +41,7 @@ import jr.brian.jarnfe.launch.JarnGameLauncher
 import jr.brian.jarnfe.launch.JarnGameLauncherProvider
 import jr.brian.jarnfe.launch.JarnGameOptions
 import jr.brian.jarnfe.launch.JarnGameOptionsProvider
+import jr.brian.jarnfe.library.JarnArtDetectorProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
 import jr.brian.jarnfe.systems.JarnSystemManager
@@ -43,6 +50,12 @@ import jr.brian.jarnfe.scraper.JarnScraperSetup
 import jr.brian.jarnfe.scraper.JarnScraperSetupProvider
 import jr.brian.jarnfe.tools.JarnInputTools
 import jr.brian.jarnfe.tools.JarnInputToolsProvider
+import jr.brian.home.jarn.AppJarnRssData
+import jr.brian.jarnfe.rss.JarnRssData
+import jr.brian.jarnfe.rss.JarnRssDataProvider
+import jr.brian.jarnfe.utilities.JarnUtilities
+import jr.brian.jarnfe.utilities.JarnUtilitiesProvider
+import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.setup.LibrarySetup
 import jr.brian.frontend.look.JarnLookStore
@@ -65,7 +78,11 @@ class JarngreiprApplication :
     JarnAppsDataProvider,
     JarnSystemManagerProvider,
     JarnScraperSetupProvider,
-    JarnInputToolsProvider {
+    JarnInputToolsProvider,
+    JarnDataProvider,
+    JarnUtilitiesProvider,
+    JarnRssDataProvider,
+    JarnArtDetectorProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
     @Inject
@@ -79,6 +96,13 @@ class JarngreiprApplication :
 
     override val jarnLibrarySetup: LibrarySetup
         get() = jarnLibrarySetupProvider.get()
+
+    /** A [Provider] so Classic never runs Jarn FE's art detection. */
+    @Inject
+    lateinit var jarnArtDetectorProvider: Provider<ArtSourceDetector>
+
+    override val jarnArtDetector: ArtSourceDetector
+        get() = jarnArtDetectorProvider.get()
 
     /** A [Provider] so nothing launch-related is built until Jarn FE asks for it. */
     @Inject
@@ -150,6 +174,33 @@ class JarngreiprApplication :
 
     override val jarnInputTools: JarnInputTools
         get() = jarnInputToolsProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's backup screens. */
+    @Inject
+    lateinit var jarnBackupProvider: Provider<AppJarnBackup>
+
+    override val jarnBackup: JarnBackup
+        get() = jarnBackupProvider.get()
+
+    @Inject
+    lateinit var jarnUpdatesProvider: Provider<AppJarnUpdates>
+
+    override val jarnUpdates: JarnUpdates
+        get() = jarnUpdatesProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's utility screens. */
+    @Inject
+    lateinit var jarnUtilitiesProvider: Provider<AppJarnUtilities>
+
+    override val jarnUtilities: JarnUtilities
+        get() = jarnUtilitiesProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's RSS bridge. */
+    @Inject
+    lateinit var jarnRssDataProvider: Provider<AppJarnRssData>
+
+    override val jarnRssData: JarnRssData
+        get() = jarnRssDataProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a

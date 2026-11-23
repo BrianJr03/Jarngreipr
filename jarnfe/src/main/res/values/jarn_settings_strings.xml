@@ -23,6 +23,10 @@
     <string name="jarnfe_wallpaper_choose">Choose image or GIF</string>
     <string name="jarnfe_wallpaper_custom">Custom</string>
     <string name="jarnfe_wallpaper_theme">Theme</string>
+    <string name="jarnfe_wallpaper_live">Live wallpaper</string>
+    <string name="jarnfe_wallpaper_live_hint">An animated background for the frontend.</string>
+    <string name="jarnfe_wallpaper_live_off">Off</string>
+    <string name="jarnfe_wallpaper_starstave">Starstave</string>
     <string name="jarnfe_wallpaper_use_theme">Use theme background</string>
     <string name="jarnfe_wallpaper_use_theme_hint">Removes the wallpaper from the frontend.</string>
     <string name="jarnfe_wallpaper_failed">That file can\'t be used as a wallpaper</string>

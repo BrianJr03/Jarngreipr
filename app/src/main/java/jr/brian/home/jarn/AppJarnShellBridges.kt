@@ -9,7 +9,6 @@ import jr.brian.core.model.ScreenAssignment
 import jr.brian.home.canvas.jarn.AppJarnCanvasData
 import jr.brian.home.data.DockManager
 import jr.brian.home.data.ScreenAssignmentStore
-import jr.brian.home.data.ScreenFocusLockWriter
 import jr.brian.home.di.FrontendWallpaper
 import jr.brian.home.ui.theme.managers.WallpaperManager
 import jr.brian.home.ui.theme.managers.WallpaperType
@@ -32,12 +31,11 @@ import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
- * Stage maps to Classic's frontend slot, so both experiences share one saved choice. Focus Lock
- * is left to [syncInputTo], which targets whichever screen is active rather than always Stage.
+ * Stage maps to Classic's frontend slot, so both experiences share one saved choice. Jarn FE
+ * leaves the Thor's Focus Lock setting alone and forwards controller input itself.
  */
 @Singleton
 class AppJarnScreenSwap @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val store: ScreenAssignmentStore,
 ) : JarnScreenSwap {
     override val isSwapped: Boolean
@@ -48,10 +46,6 @@ class AppJarnScreenSwap @Inject constructor(
 
     override fun requestSwap() {
         if (ThorDetection.isThor()) store.flip()
-    }
-
-    override fun syncInputTo(displayId: Int) {
-        ScreenFocusLockWriter.syncToDisplayId(context, displayId)
     }
 }
 

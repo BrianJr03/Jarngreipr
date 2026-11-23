@@ -192,7 +192,9 @@ data class JarngreiprConfig(
         //      Null on older blobs, and import then keeps the current pins.
         // v44: added FeatureConfig.jarnDisplay, the Jarn FE tile sizes, hints and
         //      button haptics. Null on older blobs or fields, and import keeps those.
-        const val CONFIG_VERSION = 44
+        // v45: added FeatureConfig.jarnLiveWallpaper, the Jarn FE live wallpaper id.
+        //      Null on older blobs, and import keeps the current choice. "off" clears it.
+        const val CONFIG_VERSION = 45
     }
 }
 
@@ -369,7 +371,9 @@ data class FeatureConfig(
     /** v43: Jarn FE pinned apps in order. Null on pre-v43 exports, and import keeps current pins. */
     val jarnPinnedApps: List<String>? = null,
     /** v44: Jarn FE display choices. Null on pre-v44 exports, and import keeps the current ones. */
-    val jarnDisplay: JarnDisplayConfig? = null
+    val jarnDisplay: JarnDisplayConfig? = null,
+    /** v45: Jarn FE live wallpaper id or "off". Null on pre-v45 exports, and import keeps the current one. */
+    val jarnLiveWallpaper: String? = null
 )
 
 /** Each field is nullable so a partial backup only changes what it carries. */

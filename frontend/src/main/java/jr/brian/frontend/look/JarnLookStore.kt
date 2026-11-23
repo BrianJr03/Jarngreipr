@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Written to backups when no live wallpaper is chosen, so a restore can turn one off. */
+const val JARN_LIVE_WALLPAPER_OFF = "off"
+
 /**
  * Persisted Jarn FE look and reduced-motion flag. The id is kept as written, so a backup from a
  * newer build keeps its look; [JarnLooks.fromId] shows the default until that look exists here.
@@ -29,6 +32,14 @@ class JarnLookStore @Inject constructor(
     private val _reducedMotion = MutableStateFlow(prefs.getBoolean(KEY_REDUCED_MOTION, false))
     val reducedMotionState: StateFlow<Boolean> = _reducedMotion.asStateFlow()
     val reducedMotion: Boolean get() = _reducedMotion.value
+
+    private val _liveWallpaperId = MutableStateFlow(
+        prefs.getString(KEY_LIVE_WALLPAPER, null).withoutOffValue(),
+    )
+
+    /** Kept as written, so a wallpaper from a newer build returns once this build has it. */
+    val liveWallpaperIdState: StateFlow<String?> = _liveWallpaperId.asStateFlow()
+    val liveWallpaperId: String? get() = _liveWallpaperId.value
 
     private val _display = MutableStateFlow(readDisplay())
     val displayState: StateFlow<JarnDisplayPrefs> = _display.asStateFlow()
@@ -62,10 +73,21 @@ class JarnLookStore @Inject constructor(
         prefs.edit { putBoolean(KEY_REDUCED_MOTION, enabled) }
     }
 
+    fun setLiveWallpaperId(id: String?) {
+        val next = id.withoutOffValue()
+        _liveWallpaperId.value = next
+        prefs.edit {
+            if (next == null) remove(KEY_LIVE_WALLPAPER) else putString(KEY_LIVE_WALLPAPER, next)
+        }
+    }
+
+    private fun String?.withoutOffValue() = takeUnless { it == JARN_LIVE_WALLPAPER_OFF }
+
     private companion object {
         const val PREFS_NAME = "jarnfe_look_prefs"
         const val KEY_LOOK = "look_id"
         const val KEY_REDUCED_MOTION = "reduced_motion"
+        const val KEY_LIVE_WALLPAPER = "live_wallpaper_id"
         const val KEY_SYSTEM_TILE_SCALE = "system_tile_scale"
         const val KEY_GAME_TILE_SCALE = "game_tile_scale"
         const val KEY_HINTS_VISIBLE = "hints_visible"

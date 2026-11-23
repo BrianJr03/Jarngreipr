@@ -16,10 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -32,8 +29,6 @@ import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnDialog
 import jr.brian.core.ui.components.JarnNavigateRow
 import jr.brian.core.ui.components.JarnSheet
-import jr.brian.core.ui.components.JarnToggleRow
-import jr.brian.core.ui.components.JarnValueRow
 import jr.brian.core.ui.focus.JarnRevealScrollTop
 import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
@@ -137,101 +132,6 @@ internal fun CanvasDisplayChoiceSheet(onPick: (JarnAppDisplay) -> Unit, onClose:
             onClick = { onPick(JarnAppDisplay.Current) },
             modifier = Modifier.fillMaxWidth(),
         )
-    }
-}
-
-@StringRes
-private fun JarnAppDisplay.labelRes(): Int = when (this) {
-    JarnAppDisplay.Primary -> R.string.jarnfe_folder_display_top
-    JarnAppDisplay.Current -> R.string.jarnfe_folder_display_bottom
-}
-
-@Composable
-internal fun CanvasFolderAppMenu(
-    data: JarnCanvasData,
-    app: JarnCanvasApp,
-    onOpenOther: (JarnAppDisplay) -> Unit,
-    onAppInfo: () -> Unit,
-    onChooseIcon: () -> Unit,
-    onClearIcon: () -> Unit,
-    onRename: () -> Unit,
-    onRemove: () -> Unit,
-    onClose: () -> Unit,
-) {
-    var options by remember(app.packageName, app.label) {
-        mutableStateOf(data.folderAppOptions(app.packageName))
-    }
-    val first = remember { FocusRequester() }
-    CanvasModalSheet(app.label, first, onClose) {
-        FolderSheetColumn {
-            JarnNavigateRow(
-                label = stringResource(R.string.jarnfe_canvas_action_app_info),
-                onClick = onAppInfo,
-                modifier = Modifier.fillMaxWidth().focusRequester(first),
-            )
-            if (options.hasSecondDisplay) {
-                JarnNavigateRow(
-                    label = stringResource(R.string.jarnfe_folder_open_other),
-                    onClick = { onOpenOther(options.display) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                JarnNavigateRow(
-                    label = stringResource(R.string.jarnfe_folder_launch_on),
-                    supporting = stringResource(options.display.labelRes()),
-                    onClick = {
-                        val next = options.display.opposite()
-                        data.setAppDisplay(app.packageName, next)
-                        options = options.copy(display = next)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                JarnToggleRow(
-                    label = stringResource(R.string.jarnfe_folder_ask_display),
-                    checked = options.askOnLaunch,
-                    onCheckedChange = { ask ->
-                        data.setAskDisplayOnLaunch(app.packageName, ask)
-                        options = options.copy(askOnLaunch = ask)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            JarnNavigateRow(
-                label = stringResource(R.string.jarnfe_folder_choose_icon),
-                onClick = onChooseIcon,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (app.iconPath != null) {
-                JarnNavigateRow(
-                    label = stringResource(R.string.jarnfe_folder_remove_icon),
-                    onClick = {
-                        first.requestFocus()
-                        onClearIcon()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            JarnNavigateRow(
-                label = stringResource(R.string.jarnfe_folder_rename_app),
-                onClick = onRename,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (options.customName != null) {
-                JarnNavigateRow(
-                    label = stringResource(R.string.jarnfe_folder_reset_name),
-                    onClick = {
-                        first.requestFocus()
-                        data.setAppName(app.packageName, null)
-                        options = options.copy(customName = null)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            JarnNavigateRow(
-                label = stringResource(R.string.jarnfe_folder_remove_app),
-                onClick = onRemove,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }
 

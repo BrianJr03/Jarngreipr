@@ -70,10 +70,10 @@ class JarnSessionStateTest {
     }
 
     @Test
-    fun `settings sections stop at the ends and skip the hidden slot`() {
+    fun `settings sections stop at the ends and include Data`() {
         assertEquals(SettingsSection.Library, dual.stepSettingsSection(-1).settingsSection)
         val last = VisibleSettingsSections.fold(dual) { state, _ -> state.stepSettingsSection(1) }
-        assertEquals(SettingsSection.Display, last.settingsSection)
+        assertEquals(SettingsSection.Data, last.settingsSection)
     }
 
     @Test

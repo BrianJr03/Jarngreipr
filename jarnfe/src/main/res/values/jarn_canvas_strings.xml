@@ -46,6 +46,10 @@
     <string name="jarnfe_canvas_hint_grab">Grab</string>
     <string name="jarnfe_canvas_hint_drop">Drop</string>
     <string name="jarnfe_canvas_hint_cancel">Cancel</string>
+    <string name="jarnfe_canvas_hint_undo_add">Undo add</string>
+    <string name="jarnfe_canvas_hint_change_photo">Change photo</string>
+    <string name="jarnfe_canvas_hint_go_to_now">Go to Now</string>
+    <string name="jarnfe_canvas_cell_locked">Menu stays here</string>
     <string name="jarnfe_canvas_hint_done">Done</string>
     <string name="jarnfe_canvas_hint_shrink">Shrink</string>
     <string name="jarnfe_canvas_hint_grow">Grow</string>
@@ -79,7 +83,6 @@
     <string name="jarnfe_canvas_pick_empty">Nothing to choose yet.</string>
     <string name="jarnfe_canvas_folder_default_name">New folder</string>
 
-    <string name="jarnfe_canvas_action_open">Open</string>
     <string name="jarnfe_canvas_action_use_widget">Use widget</string>
     <string name="jarnfe_canvas_action_choose_widget">Choose widget again</string>
     <string name="jarnfe_canvas_action_choose_photo">Choose photo</string>

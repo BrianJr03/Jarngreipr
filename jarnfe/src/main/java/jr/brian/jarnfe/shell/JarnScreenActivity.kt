@@ -27,6 +27,7 @@ import jr.brian.jarnfe.search.openJarnSearch
 import jr.brian.jarnfe.session.JarnInput
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.splash.JarnSplash
+import jr.brian.jarnfe.wallpaper.JarnWallpaperGate
 
 abstract class JarnScreenActivity : ComponentActivity() {
     /** The role this window shows when screens are not swapped. */
@@ -61,6 +62,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
             return
         }
         liveWindows += this
+        JarnWallpaperGate.track(this, screen)
         onBackPressedDispatcher.addCallback(this) { JarnInput.dispatchSystemBack() }
         setContent {
             val role = JarnSession.state.roleOn(screen)
@@ -86,6 +88,7 @@ abstract class JarnScreenActivity : ComponentActivity() {
     override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
         super.onTopResumedActivityChanged(isTopResumedActivity)
         JarnSession.update { onTopResumed(screen, isTopResumedActivity) }
+        JarnWallpaperGate.onTopResumedChanged(this, isTopResumedActivity)
     }
 
     override fun onDestroy() {
@@ -155,7 +158,6 @@ abstract class JarnScreenActivity : ComponentActivity() {
 
     private fun bringToFront() {
         val displayId = display?.displayId ?: return
-        swap?.syncInputTo(displayId)
         val intent = Intent(this, javaClass)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         startActivity(intent, ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle())

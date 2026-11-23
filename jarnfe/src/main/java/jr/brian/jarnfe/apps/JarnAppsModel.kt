@@ -1,6 +1,5 @@
 package jr.brian.jarnfe.apps
 
-import android.app.Activity
 import android.content.Context
 import androidx.compose.runtime.Immutable
 import jr.brian.jarnfe.dock.JarnDockApp
@@ -15,14 +14,8 @@ data class JarnAppsSnapshot(
     val hidden: Set<String>,
 )
 
-interface JarnAppsData {
+interface JarnAppsData : JarnAppOptionsData {
     val snapshot: Flow<JarnAppsSnapshot>
-
-    fun launch(host: Activity, packageName: String)
-
-    fun setPinned(packageName: String, pinned: Boolean)
-
-    fun setHidden(packageName: String, hidden: Boolean)
 }
 
 /** Implemented by the host Application so :jarnfe never depends on :app. */

@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.library
 
 import android.content.Context
+import jr.brian.frontend.library.art.ArtSourceDetector
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.art.LibraryGame
 import jr.brian.frontend.library.art.LibraryGameWithArt
@@ -19,6 +20,14 @@ interface JarnLibraryDataProvider {
     val jarnLibraryData: JarnLibraryData
     val jarnLibrarySetup: LibrarySetup
 }
+
+/** Implemented by the host Application so :jarnfe never depends on :app. */
+interface JarnArtDetectorProvider {
+    val jarnArtDetector: ArtSourceDetector
+}
+
+fun Context.jarnArtDetectorOrNull(): ArtSourceDetector? =
+    (applicationContext as? JarnArtDetectorProvider)?.jarnArtDetector
 
 fun Context.jarnLibraryDataOrNull(): JarnLibraryData? =
     (applicationContext as? JarnLibraryDataProvider)?.jarnLibraryData
