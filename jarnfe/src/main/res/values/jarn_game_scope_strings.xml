@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_game_edit">Edit</string>
+    <string name="jarnfe_game_scope_title">Apply to</string>
+    <string name="jarnfe_game_scope_this">This game</string>
+    <string name="jarnfe_game_scope_all">All %1$s games</string>
+    <string name="jarnfe_game_scope_confirm_title">Replace game choices?</string>
+    <string name="jarnfe_game_scope_cancel">Cancel</string>
+    <string name="jarnfe_game_scope_replace">Replace</string>
+    <string name="jarnfe_game_scope_failed">Couldn\'t save that choice.</string>
+    <plurals name="jarnfe_game_replace_emulators">
+        <item quantity="one">%1$d game has its own emulator setup. It will be replaced.</item>
+        <item quantity="other">%1$d games have their own emulator setup. They will be replaced.</item>
+    </plurals>
+    <plurals name="jarnfe_game_replace_art">
+        <item quantity="one">%1$d game has its own art choice for this screen. It will be replaced.</item>
+        <item quantity="other">%1$d games have their own art choice for this screen. They will be replaced.</item>
+    </plurals>
+    <string name="jarnfe_game_art_top">Top screen art</string>
+    <string name="jarnfe_game_art_bottom">Bottom screen art</string>
+    <string name="jarnfe_game_art_cover">Cover</string>
+    <string name="jarnfe_game_art_mixed">Mixed image</string>
+    <string name="jarnfe_game_art_marquee">Marquee</string>
+    <string name="jarnfe_game_art_physical">Physical media</string>
+    <string name="jarnfe_game_art_fanart">Fanart</string>
+    <string name="jarnfe_game_art_screenshot">Screenshot</string>
+    <string name="jarnfe_game_art_titlescreen">Title screen</string>
+    <string name="jarnfe_game_art_default">Default</string>
+    <string name="jarnfe_game_art_missing">Not available for this game</string>
+    <string name="jarnfe_game_art_saved">Art updated.</string>
+</resources>

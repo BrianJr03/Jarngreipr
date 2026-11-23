@@ -43,6 +43,16 @@ class GameArtResolver @Inject constructor(
 
     /** One image per game for tiles, batched so a large system stays one query per chunk. */
     suspend fun tileArt(games: List<LibraryGame>, preferred: ArtSource): Map<Long, String> =
+        displayArt(games, preferred, GameArtChoices())
+            .mapNotNull { (id, art) -> art.top?.let { id to it } }
+            .toMap()
+
+    /** Each screen's art for every game, in one batched pass. Never blank while any art exists. */
+    suspend fun displayArt(
+        games: List<LibraryGame>,
+        preferred: ArtSource,
+        choices: GameArtChoices,
+    ): Map<Long, GameDisplayArt> =
         withContext(Dispatchers.IO) {
             val built = indexes.current()
             val stored = games.map { it.id }.chunked(QUERY_CHUNK)
@@ -50,17 +60,27 @@ class GameArtResolver @Inject constructor(
                 .associateBy { it.gameId }
             val customBySystem = games.map { it.systemId }.distinct()
                 .associateWith(customArt::forSystem)
-            games.mapNotNull { game ->
+            games.associate { game ->
                 val names = artBasenames(game.relativePath)
                 val custom = customBySystem[game.systemId]
                     ?.get(customArtKey(game.absolutePath, game.relativePath))
-                val slot = TILE_KINDS.firstNotNullOfOrNull { kind ->
+                val found = HashMap<MediaKind, ArtSlot?>()
+                fun slot(kind: MediaKind): ArtSlot? = found.getOrPut(kind) {
                     fromCustom(custom, kind)
                         ?: fromSources(game.systemId, names, kind, preferred, built)
                         ?: fromLibraryRow(stored[game.id], kind)
                 }
-                slot?.let { game.id to it.path }
-            }.toMap()
+                fun first(screen: ArtScreen, choice: ArtChoice): String? =
+                    artChain(screen, choice).firstNotNullOfOrNull(::slot)?.path
+                game.id to GameDisplayArt(
+                    top = first(ArtScreen.Top, choices.effective(ArtScreen.Top, game.key, game.systemId)),
+                    bottom = first(
+                        ArtScreen.Bottom,
+                        choices.effective(ArtScreen.Bottom, game.key, game.systemId),
+                    ),
+                    default = first(ArtScreen.Top, ArtChoice.Default),
+                )
+            }
         }
 
     private fun fromCustom(custom: CustomGameArt?, kind: MediaKind): ArtSlot? =
@@ -90,13 +110,6 @@ class GameArtResolver @Inject constructor(
 
     private companion object {
         const val QUERY_CHUNK = 500
-        val TILE_KINDS = listOf(
-            MediaKind.Cover,
-            MediaKind.Miximage,
-            MediaKind.Screenshot,
-            MediaKind.Titlescreen,
-            MediaKind.Fanart,
-        )
     }
 }
 

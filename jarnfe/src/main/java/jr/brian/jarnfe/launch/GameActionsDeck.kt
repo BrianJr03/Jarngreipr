@@ -25,10 +25,11 @@ import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.library.JarnLibraryGame
 
-private data class PickerRow(
+internal data class PickerRow(
     val key: String,
     val label: String,
     val supporting: String? = null,
+    val enabled: Boolean = true,
     val onClick: () -> Unit,
 )
 
@@ -44,7 +45,7 @@ internal fun GameActionsDeck(
     PendingFocusEffect(firstFocus, pageIsReady(state.page))
     JarnInputLayer(
         enabled = state.page != GameActionsPage.Actions,
-        bindings = { on(JarnAction.Back, R.string.jarnfe_hint_back) { controller.closePage() } },
+        bindings = { on(JarnAction.Back, R.string.jarnfe_hint_back) { controller.back() } },
     ) {
         if (state.page == GameActionsPage.Actions) {
             details { GameActionRows(game, controller, firstFocus) }
@@ -56,9 +57,22 @@ internal fun GameActionsDeck(
 
 private fun pageIsReady(page: GameActionsPage): Boolean = when (page) {
     GameActionsPage.Actions -> true
-    GameActionsPage.Emulators, GameActionsPage.Cores -> JarnGameActions.setup != null
+    GameActionsPage.Emulators -> JarnGameActions.setup != null
+    GameActionsPage.Cores -> !coresLoading()
+    GameActionsPage.EditArt, GameActionsPage.ArtScope -> JarnGameActions.artKinds != null
     GameActionsPage.EmulatorApps, GameActionsPage.Companions -> JarnGameActions.apps != null
-    GameActionsPage.CompanionLaunch -> true
+    GameActionsPage.CompanionLaunch,
+    GameActionsPage.EmulatorScope,
+    GameActionsPage.EmulatorConfirm,
+    GameActionsPage.Edit,
+    GameActionsPage.ArtConfirm,
+    -> true
+}
+
+private fun coresLoading(): Boolean = if (JarnGameActions.pendingEmulator != null) {
+    JarnGameActions.pendingCores == null
+} else {
+    JarnGameActions.setup == null
 }
 
 @Composable
@@ -103,6 +117,10 @@ private fun GameActionRows(
             value = setup?.currentEmulatorLabel ?: stringResource(R.string.jarnfe_game_not_set),
             onClick = { controller.openPage(GameActionsPage.Emulators) },
         )
+        JarnNavigateRow(
+            label = stringResource(R.string.jarnfe_game_edit),
+            onClick = { controller.openEdit(game) },
+        )
         if (setup?.usesRetroArch == true) CoreRow(setup, controller)
     }
 }
@@ -143,9 +161,9 @@ private fun GameActionPicker(
         )
         GameActionsPage.Cores -> PickerList(
             titleRes = R.string.jarnfe_game_choose_core,
-            rows = coreRows(game, controller),
+            rows = coreRows(controller),
             emptyRes = R.string.jarnfe_game_no_cores,
-            loading = JarnGameActions.setup == null,
+            loading = coresLoading(),
             controller = controller,
             firstFocus = firstFocus,
         )
@@ -156,7 +174,7 @@ private fun GameActionPicker(
             loading = JarnGameActions.apps == null,
             controller = controller,
             firstFocus = firstFocus,
-            supportingRes = R.string.jarnfe_game_companion_limit,
+            supporting = stringResource(R.string.jarnfe_game_companion_limit),
         )
         GameActionsPage.CompanionLaunch -> PickerList(
             titleRes = R.string.jarnfe_game_open_companion,
@@ -168,6 +186,13 @@ private fun GameActionPicker(
             controller = controller,
             firstFocus = firstFocus,
         )
+        GameActionsPage.EmulatorScope,
+        GameActionsPage.EmulatorConfirm,
+        GameActionsPage.Edit,
+        GameActionsPage.EditArt,
+        GameActionsPage.ArtScope,
+        GameActionsPage.ArtConfirm,
+        -> GameScopePage(game, controller, firstFocus)
     }
 }
 
@@ -211,15 +236,14 @@ private fun emulatorAppRows(
 }
 
 @Composable
-private fun coreRows(
-    game: JarnLibraryGame,
-    controller: JarnGameActionsController,
-): List<PickerRow> {
-    val setup = JarnGameActions.setup ?: return emptyList()
+private fun coreRows(controller: JarnGameActionsController): List<PickerRow> {
+    val state = JarnGameActions
+    val setup = state.setup
+    val cores = state.pendingCores ?: setup?.cores.orEmpty()
     val current = stringResource(R.string.jarnfe_game_current)
-    return setup.cores.map { core ->
-        PickerRow(core.path, core.label, current.takeIf { core.path == setup.currentCore }) {
-            controller.chooseCore(game, core.path)
+    return cores.map { core ->
+        PickerRow(core.path, core.label, current.takeIf { core.path == setup?.currentCore }) {
+            controller.chooseCore(core.path)
         }
     }
 }
@@ -244,19 +268,19 @@ private fun companionRows(
 }
 
 @Composable
-private fun PickerList(
+internal fun PickerList(
     @StringRes titleRes: Int,
     rows: List<PickerRow>,
     @StringRes emptyRes: Int,
     loading: Boolean,
     controller: JarnGameActionsController,
     firstFocus: FocusRequester,
-    @StringRes supportingRes: Int? = null,
+    supporting: String? = null,
 ) {
     val colors = JarnTheme.colors
     JarnText(stringResource(titleRes), JarnTheme.type.heading, colors.textHigh, maxLines = 2)
-    supportingRes?.let {
-        JarnText(stringResource(it), JarnTheme.type.body, colors.textMid, maxLines = 2)
+    supporting?.let {
+        JarnText(it, JarnTheme.type.body, colors.textMid, maxLines = 3)
     }
     when {
         loading -> JarnText(stringResource(R.string.jarnfe_game_loading), JarnTheme.type.body, colors.textMid)
@@ -267,13 +291,15 @@ private fun PickerList(
 
 @Composable
 private fun PickerRows(rows: List<PickerRow>, firstFocus: FocusRequester) {
+    val focusIndex = rows.indexOfFirst { it.enabled }
     Column(verticalArrangement = Arrangement.spacedBy(JarnTheme.space.sm)) {
         rows.forEachIndexed { index, row ->
             JarnNavigateRow(
                 label = row.label,
                 supporting = row.supporting,
                 onClick = row.onClick,
-                modifier = if (index == 0) Modifier.focusRequester(firstFocus) else Modifier,
+                enabled = row.enabled,
+                modifier = if (index == focusIndex) Modifier.focusRequester(firstFocus) else Modifier,
             )
         }
     }
@@ -288,7 +314,7 @@ private fun PickerEmpty(
     JarnText(stringResource(messageRes), JarnTheme.type.body, JarnTheme.colors.textMid, maxLines = 3)
     JarnButton(
         label = stringResource(R.string.jarnfe_hint_back),
-        onClick = controller::closePage,
+        onClick = controller::back,
         modifier = Modifier.focusRequester(firstFocus),
         variant = JarnButtonVariant.Secondary,
     )

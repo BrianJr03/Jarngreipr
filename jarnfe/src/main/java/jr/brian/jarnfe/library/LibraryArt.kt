@@ -24,7 +24,12 @@ private const val SVG_SUFFIX = ".svg"
 
 /** Missing or unreadable art becomes a styled title card, never a broken image. */
 @Composable
-internal fun BoxScope.LibraryArt(path: String?, title: String) {
+internal fun BoxScope.LibraryArt(
+    path: String?,
+    title: String,
+    contentScale: ContentScale = ContentScale.Crop,
+    alignment: Alignment = Alignment.Center,
+) {
     var failed by remember(path) { mutableStateOf(false) }
     if (path.isNullOrBlank() || failed) {
         JarnArtPlaceholder(title, Modifier.matchParentSize())
@@ -33,8 +38,33 @@ internal fun BoxScope.LibraryArt(path: String?, title: String) {
             model = rememberStillImage(path),
             contentDescription = null,
             modifier = Modifier.matchParentSize(),
-            contentScale = ContentScale.Crop,
+            alignment = alignment,
+            contentScale = contentScale,
             onError = { failed = true },
+        )
+    }
+}
+
+/** A game's cover, shown whole whatever its shape. */
+@Composable
+internal fun BoxScope.LibraryCoverArt(game: JarnLibraryGame, alignment: Alignment = Alignment.Center) {
+    LibraryArt(game.artPath, game.title, ContentScale.Fit, alignment)
+}
+
+/** The art chosen for the Deck when it is readable, otherwise the game's whole tile art. */
+@Composable
+internal fun BoxScope.LibraryDeckArt(game: JarnLibraryGame) {
+    var deckArtFailed by remember(game.deckArtPath) { mutableStateOf(false) }
+    val deckArt = game.deckArtPath?.takeUnless { it.isBlank() || deckArtFailed }
+    if (deckArt == null) {
+        LibraryCoverArt(game)
+    } else {
+        AsyncImage(
+            model = rememberStillImage(deckArt),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Fit,
+            onError = { deckArtFailed = true },
         )
     }
 }

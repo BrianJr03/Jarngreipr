@@ -8,6 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.model.ArtSource
@@ -19,6 +21,7 @@ import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.art.ScrapeMissingArtResult
 import jr.brian.frontend.scrape.ScrapeState
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.scraper.JarnScraperFlow
 import jr.brian.jarnfe.shell.JarnNotices
 
 @StringRes
@@ -53,6 +56,7 @@ internal fun JarnArtSection(data: JarnLibraryData) {
             onSelect = { data.setArtSource(source) },
         )
     }
+    ScraperSetupRow()
     ScrapeMissingArtRow(data, scrape)
     SystemArtSection(data)
 }
@@ -113,22 +117,36 @@ private fun artAvailabilityText(status: ArtSourceStatus?): String = when {
 }
 
 @Composable
+private fun ScraperSetupRow() {
+    val focus = remember { FocusRequester() }
+    JarnNavigateRow(
+        label = stringResource(R.string.jarnfe_scraper_title),
+        onClick = { JarnScraperFlow.open(focus) },
+        modifier = Modifier.fillMaxWidth().focusRequester(focus),
+        supporting = stringResource(R.string.jarnfe_scraper_row_hint),
+    )
+}
+
+/** A blocked scrape opens setup or progress, so this row always has something to do. */
+@Composable
 private fun ScrapeMissingArtRow(data: JarnLibraryData, scrape: ScrapeState) {
-    val canScrape = remember(scrape) { data.canScrape() }
+    val focus = remember { FocusRequester() }
+    val canScrape = remember(scrape, JarnScraperFlow.isOpen) { data.canScrape() }
     val blocked = scrapeBlockedReason(canScrape, scrape)
     JarnNavigateRow(
         label = stringResource(R.string.jarnfe_art_scrape_missing),
-        onClick = { startScrape(data) },
-        modifier = Modifier.fillMaxWidth(),
+        onClick = { if (blocked == null) startScrape(data) else JarnScraperFlow.open(focus) },
+        modifier = Modifier.fillMaxWidth().focusRequester(focus),
         supporting = stringResource(blocked ?: scrapeIdleText(scrape)),
-        enabled = blocked == null,
-        focusableWhenDisabled = true,
     )
 }
 
 @StringRes
-private fun scrapeIdleText(state: ScrapeState): Int =
-    if (state is ScrapeState.Finished) R.string.jarnfe_art_scrape_finished else R.string.jarnfe_art_scrape_hint
+private fun scrapeIdleText(state: ScrapeState): Int = when (state) {
+    is ScrapeState.Finished -> R.string.jarnfe_art_scrape_finished
+    ScrapeState.Cancelled -> R.string.jarnfe_art_scrape_cancelled
+    else -> R.string.jarnfe_art_scrape_hint
+}
 
 private fun startScrape(data: JarnLibraryData) {
     JarnNotices.show(
