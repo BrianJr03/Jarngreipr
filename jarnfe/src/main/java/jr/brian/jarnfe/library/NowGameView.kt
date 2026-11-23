@@ -146,6 +146,12 @@ private fun NowGamePage(
     setupRows: (@Composable () -> Unit)? = null,
 ) {
     val art = rememberNowGameArt(game)
+    val marqueeBounds = rememberNowArtBounds(art.marqueePath)
+    val coverBounds = rememberNowArtBounds(art.coverPath)
+    NowRevealWhen(
+        art.isLoaded && (art.marqueePath == null || marqueeBounds != null) &&
+            (art.coverPath == null || coverBounds != null),
+    )
     val sizes = if (viewport != null && viewport < CompactHeight) CompactPoster else RegularPoster
     NowPoster(game, art, sizes, viewport, playRow)
     NowMoreSheet(game, setupRows, confirmHint)

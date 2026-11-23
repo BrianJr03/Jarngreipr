@@ -27,19 +27,24 @@ internal val NowTopZone = 240.dp
 @Composable
 internal fun LibraryNowPanel(selection: LibrarySelection) {
     val settled = rememberSettledSelection(selection)
-    val systemNow = settled.sceneSystemId()?.let { rememberSystemNow(it) }
-    NowScene(settled, systemNow) {
+    val sceneNow = settled.sceneSystemId()?.let { rememberSystemNow(it) }
+    val reveal = rememberNowReveal(settled) { it.focusKey() }
+    val shown = reveal.shown
+    val shownNow = rememberShownSystemNow(sceneNow, shown.sceneSystemId())
+    NowScene(settled, sceneNow) {
         NowShelfReturnLayer(settled) {
-            NowFocusKeeper(settled) {
-                when (settled) {
-                    LibrarySelection.None -> JarnEmptyState(
-                        title = stringResource(R.string.jarnfe_empty_now_title),
-                        message = stringResource(R.string.jarnfe_empty_now_message),
-                    )
-                    is LibrarySelection.System -> key(settled.system.id) {
-                        NowSystemView(settled.system, systemNow)
+            NowFocusKeeper(shown) {
+                NowRevealBox(reveal) {
+                    when (shown) {
+                        LibrarySelection.None -> JarnEmptyState(
+                            title = stringResource(R.string.jarnfe_empty_now_title),
+                            message = stringResource(R.string.jarnfe_empty_now_message),
+                        )
+                        is LibrarySelection.System -> key(shown.system.id) {
+                            NowSystemView(shown.system, shownNow)
+                        }
+                        is LibrarySelection.Game -> NowGameView(shown.game)
                     }
-                    is LibrarySelection.Game -> NowGameView(settled.game)
                 }
             }
         }

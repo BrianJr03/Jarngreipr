@@ -108,6 +108,8 @@ internal fun NowCoverRow(
             shelf.forEachIndexed { index, item ->
                 key(item.game.id) {
                     val groupGap = if (nowStartsGroup(shelf, index)) JarnTheme.space.sm else 0.dp
+                    val coverBounds = rememberNowArtBounds(item.game.artPath)
+                    NowRevealWhen(item.game.artPath == null || coverBounds != null)
                     JarnGameTile(
                         title = item.game.title,
                         onClick = { onCover(item.game) },
@@ -115,7 +117,7 @@ internal fun NowCoverRow(
                             .padding(start = groupGap)
                             .then(coverModifier(item.game))
                             .height(coverHeight),
-                        aspectRatio = nowCoverAspect(rememberNowArtBounds(item.game.artPath)),
+                        aspectRatio = nowCoverAspect(coverBounds),
                     ) { LibraryCoverArt(item.game) }
                 }
             }
