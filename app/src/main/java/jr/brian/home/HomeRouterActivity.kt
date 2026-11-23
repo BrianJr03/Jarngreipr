@@ -1,12 +1,14 @@
 package jr.brian.home
 
-import android.app.ActivityOptions
-import android.content.Intent
 import android.os.Bundle
-import android.view.Display
 import androidx.activity.ComponentActivity
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import jr.brian.core.model.Experience
+import jr.brian.core.model.resolveLauncherExperience
+import jr.brian.home.data.ExperienceStore
 import jr.brian.home.esde.data.ESDEPreferencesManager
+import jr.brian.home.ui.util.launchJarnFe
 import jr.brian.home.ui.util.routeHomeFromLauncher
 import javax.inject.Inject
 
@@ -28,6 +30,9 @@ class HomeRouterActivity : ComponentActivity() {
     @Inject
     lateinit var esdePreferencesManager: ESDEPreferencesManager
 
+    @Inject
+    lateinit var experienceStore: Lazy<ExperienceStore>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,18 +48,24 @@ class HomeRouterActivity : ComponentActivity() {
         overridePendingTransition(0, 0)
     }
 
-    /** Debug builds open Jarn FE by default. Pass [EXTRA_CLASSIC] to reach Classic. */
+    /**
+     * Debug builds follow the saved experience and open Jarn FE when none is saved. Release builds
+     * return before reading it. [EXTRA_CLASSIC] reaches Classic once without changing the choice.
+     */
     private fun openJarnFeInDebug(): Boolean {
-        if (!BuildConfig.DEBUG || intent.getBooleanExtra(EXTRA_CLASSIC, false)) return false
-        val jarnFe = Intent()
-            .setClassName(this, JARN_FE_ACTIVITY)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val options = ActivityOptions.makeBasic().setLaunchDisplayId(Display.DEFAULT_DISPLAY)
-        return runCatching { startActivity(jarnFe, options.toBundle()) }.isSuccess
+        if (!BuildConfig.DEBUG) return false
+        val store = experienceStore.get()
+        val choice = resolveLauncherExperience(
+            jarnAvailable = true,
+            stored = store.storedExperience,
+            forceClassic = intent.getBooleanExtra(EXTRA_CLASSIC, false),
+        )
+        if (choice != Experience.JarnFE || !launchJarnFe(this)) return false
+        store.adoptIfUnset(Experience.JarnFE)
+        return true
     }
 
     private companion object {
         const val EXTRA_CLASSIC = "classic"
-        const val JARN_FE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
     }
 }

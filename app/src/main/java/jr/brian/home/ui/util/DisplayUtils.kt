@@ -4,6 +4,7 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
+import android.view.Display
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +20,7 @@ import jr.brian.core.model.HomeTarget
 import jr.brian.core.model.MainScreen
 import jr.brian.core.model.PRIMARY_DISPLAY_ID
 import jr.brian.core.model.ScreenAssignment
+import jr.brian.core.model.planClassicReturnLaunches
 import jr.brian.core.model.planHomeLaunches
 import jr.brian.core.model.planLauncherHomeLaunches
 import jr.brian.home.MainActivity
@@ -160,6 +162,25 @@ fun routeHomeFromLauncher(context: Context, frontendEnabled: Boolean) {
         ),
     )
 }
+
+/** Opens Classic after Jarn FE, on the screens Classic normally uses. */
+fun routeToClassic(context: Context, frontendEnabled: Boolean) {
+    dispatchPlan(
+        context,
+        planClassicReturnLaunches(resolveBottomDisplayId(context), frontendEnabled),
+    )
+}
+
+/** False when this build has no Jarn FE, because its activities are debug-only. */
+fun launchJarnFe(context: Context): Boolean {
+    val intent = Intent()
+        .setClassName(context, JARN_FE_ACTIVITY)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val options = ActivityOptions.makeBasic().setLaunchDisplayId(Display.DEFAULT_DISPLAY)
+    return runCatching { context.startActivity(intent, options.toBundle()) }.isSuccess
+}
+
+private const val JARN_FE_ACTIVITY = "jr.brian.jarnfe.shell.JarnStageActivity"
 
 private fun dispatchPlan(context: Context, plan: List<HomeLaunch>) {
     plan.forEach { launch ->

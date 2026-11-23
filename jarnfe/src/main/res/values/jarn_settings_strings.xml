@@ -38,4 +38,7 @@
     <string name="jarnfe_wallpaper_use_theme_hint">Removes the wallpaper from the frontend.</string>
     <string name="jarnfe_wallpaper_failed">That file can\'t be used as a wallpaper</string>
     <string name="jarnfe_wallpaper_no_picker">No file picker is available</string>
+    <string name="jarnfe_switch_classic_title">Switch to Classic</string>
+    <string name="jarnfe_switch_classic_hint">Keeps your setup. Classic also has legacy pages, the shade, Control Pad, Quick Delete, Powered Off and theme sharing.</string>
+    <string name="jarnfe_switch_classic_failed">Couldn\'t open Classic</string>
 </resources>

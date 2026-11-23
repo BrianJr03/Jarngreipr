@@ -20,6 +20,8 @@ import jr.brian.home.jarn.AppJarnAppsData
 import jr.brian.home.jarn.AppJarnBackup
 import jr.brian.home.jarn.AppJarnDockData
 import jr.brian.home.jarn.AppJarnInputTools
+import jr.brian.home.jarn.AppJarnExperienceSwitch
+import jr.brian.home.jarn.AppJarnLauncherSettings
 import jr.brian.home.jarn.AppJarnScreenSwap
 import jr.brian.home.jarn.AppJarnUpdates
 import jr.brian.home.jarn.AppJarnUtilities
@@ -31,6 +33,8 @@ import jr.brian.jarnfe.backup.JarnDataProvider
 import jr.brian.jarnfe.backup.JarnUpdates
 import jr.brian.jarnfe.dock.JarnDockData
 import jr.brian.jarnfe.dock.JarnDockDataProvider
+import jr.brian.jarnfe.shell.JarnExperienceSwitch
+import jr.brian.jarnfe.shell.JarnExperienceSwitchProvider
 import jr.brian.jarnfe.shell.JarnScreenSwap
 import jr.brian.jarnfe.shell.JarnScreenSwapProvider
 import jr.brian.jarnfe.wallpaper.JarnWallpaperProvider
@@ -44,6 +48,8 @@ import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.library.JarnArtDetectorProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.jarnfe.look.JarnLookStoreProvider
+import jr.brian.jarnfe.settings.JarnLauncherSettings
+import jr.brian.jarnfe.settings.JarnLauncherSettingsProvider
 import jr.brian.jarnfe.systems.JarnSystemManager
 import jr.brian.jarnfe.systems.JarnSystemManagerProvider
 import jr.brian.jarnfe.scraper.JarnScraperSetup
@@ -73,6 +79,7 @@ class JarngreiprApplication :
     JarnCanvasDataProvider,
     JarnLookStoreProvider,
     JarnScreenSwapProvider,
+    JarnExperienceSwitchProvider,
     JarnWallpaperProvider,
     JarnDockDataProvider,
     JarnAppsDataProvider,
@@ -82,6 +89,8 @@ class JarngreiprApplication :
     JarnDataProvider,
     JarnUtilitiesProvider,
     JarnRssDataProvider,
+    JarnLauncherSettingsProvider,
+    jr.brian.jarnfe.audio.JarnAudioDataProvider,
     JarnArtDetectorProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
@@ -135,6 +144,12 @@ class JarngreiprApplication :
 
     override val jarnScreenSwap: JarnScreenSwap
         get() = jarnScreenSwapProvider.get()
+
+    @Inject
+    lateinit var jarnExperienceSwitchProvider: Provider<AppJarnExperienceSwitch>
+
+    override val jarnExperienceSwitch: JarnExperienceSwitch
+        get() = jarnExperienceSwitchProvider.get()
 
     @Inject
     lateinit var jarnWallpaperSourceProvider: Provider<AppJarnWallpaperSource>
@@ -195,12 +210,26 @@ class JarngreiprApplication :
     override val jarnUtilities: JarnUtilities
         get() = jarnUtilitiesProvider.get()
 
+    /** A [Provider] so Classic never builds Jarn FE's launcher settings. */
+    @Inject
+    lateinit var jarnLauncherSettingsProvider: Provider<AppJarnLauncherSettings>
+
+    override val jarnLauncherSettings: JarnLauncherSettings
+        get() = jarnLauncherSettingsProvider.get()
+
     /** A [Provider] so Classic never builds Jarn FE's RSS bridge. */
     @Inject
     lateinit var jarnRssDataProvider: Provider<AppJarnRssData>
 
     override val jarnRssData: JarnRssData
         get() = jarnRssDataProvider.get()
+
+    /** A [Provider] so Classic never builds Jarn FE's audio bridge. */
+    @Inject
+    lateinit var jarnAudioDataProvider: Provider<jr.brian.home.jarn.AppJarnAudioData>
+
+    override val jarnAudioData: jr.brian.jarnfe.audio.JarnAudioData
+        get() = jarnAudioDataProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a

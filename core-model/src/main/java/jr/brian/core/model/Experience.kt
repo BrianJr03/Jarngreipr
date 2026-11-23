@@ -18,3 +18,17 @@ enum class Experience {
             entries.firstOrNull { it.name == name } ?: DEFAULT
     }
 }
+
+/**
+ * Which experience a launcher entry opens. Builds without Jarn FE always open Classic, even when
+ * a restored backup stored [Experience.JarnFE]. With no saved choice, builds that include Jarn FE
+ * open it.
+ */
+fun resolveLauncherExperience(
+    jarnAvailable: Boolean,
+    stored: Experience?,
+    forceClassic: Boolean,
+): Experience = when {
+    !jarnAvailable || forceClassic -> Experience.Classic
+    else -> stored ?: Experience.JarnFE
+}
