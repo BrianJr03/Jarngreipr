@@ -36,7 +36,7 @@ internal fun JarnBindingsBuilder.searchKeyboardBindings(
         session.update { switchActiveScreen() }
     }
     if (search.query.isNotEmpty()) {
-        on(JarnAction.Context, R.string.jarnfe_search_hint_delete) { search.deleteLast() }
+        on(JarnAction.Context, R.string.jarnfe_search_hint_delete, repeats = true) { search.deleteLast() }
     }
     if (!search.results.isEmpty) {
         on(JarnAction.Search, R.string.jarnfe_search_hint_results) { session.update { back() } }

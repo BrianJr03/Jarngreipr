@@ -1,46 +1,41 @@
 package jr.brian.jarnfe.search
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import jr.brian.core.ui.components.JarnChip
 import jr.brian.core.ui.components.JarnSurface
 import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.focus.JarnRevealScrollTop
-import jr.brian.core.ui.focus.jarnInteractive
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
+import jr.brian.jarnfe.keyboard.JarnKeyboardAutoFocus
+import jr.brian.jarnfe.keyboard.JarnKeyboardGrid
+import jr.brian.jarnfe.keyboard.JarnKeyboardKey
+import jr.brian.jarnfe.keyboard.JarnKeyboardSize
+import jr.brian.jarnfe.keyboard.jarnKeyRow
 import jr.brian.jarnfe.library.JarnLibrary
 import jr.brian.jarnfe.session.JarnSession
 
-private val SearchKeyMinHeight = 44.dp
-private const val WIDE_KEY_WEIGHT = 2f
+private val SearchControls = listOf(JarnKeyboardKey.Space, JarnKeyboardKey.Delete, JarnKeyboardKey.Clear)
 
 /** The controller keyboard for Search. Results update live on Stage. */
 @Composable
 internal fun JarnSearchDeck(modifier: Modifier = Modifier, search: JarnSearchStore = JarnSearch) {
     val firstKey = remember { FocusRequester() }
-    LaunchedEffect(Unit) { firstKey.requestFocus() }
+    JarnKeyboardAutoFocus(firstKey)
     JarnInputLayer(
         mode = JarnLayerMode.Modal,
         bindings = { searchKeyboardBindings(JarnSession, search) },
@@ -93,67 +88,27 @@ private fun SearchScopeChip(search: JarnSearchStore, onRemoved: () -> Unit) {
 
 @Composable
 private fun SearchKeyboard(search: JarnSearchStore, firstKey: FocusRequester) {
-    val rows = stringArrayResource(R.array.jarnfe_search_keyboard_rows)
-    rows.forEachIndexed { rowIndex, row ->
-        SearchKeyRow {
-            row.forEachIndexed { keyIndex, character ->
-                val keyModifier = if (rowIndex == 0 && keyIndex == 0) Modifier.focusRequester(firstKey) else Modifier
-                SearchKey(
-                    label = character.uppercase(),
-                    onClick = { search.type(character.toString()) },
-                    modifier = keyModifier.weight(1f),
-                )
-            }
-        }
-    }
-    SearchActionKeys(search, firstKey)
-}
-
-@Composable
-private fun SearchActionKeys(search: JarnSearchStore, firstKey: FocusRequester) {
-    SearchKeyRow {
-        SearchKey(
-            label = stringResource(R.string.jarnfe_search_key_space),
-            onClick = { search.type(" ") },
-            modifier = Modifier.weight(WIDE_KEY_WEIGHT),
-        )
-        SearchKey(
-            label = stringResource(R.string.jarnfe_search_key_delete),
-            onClick = search::deleteLast,
-            modifier = Modifier.weight(1f),
-        )
-        SearchKey(
-            label = stringResource(R.string.jarnfe_search_key_clear),
-            onClick = {
-                search.clearQuery()
-                firstKey.requestFocus()
-            },
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun SearchKeyRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.xs),
-        content = content,
+    val rawRows = stringArrayResource(R.array.jarnfe_search_keyboard_rows)
+    val rows = remember(rawRows.toList()) { rawRows.map(::jarnKeyRow) }
+    JarnKeyboardGrid(
+        rows = rows,
+        controls = SearchControls,
+        firstKey = firstKey,
+        onKey = { key -> search.press(key, firstKey) },
+        size = JarnKeyboardSize.Roomy,
+        letterLabel = { it.uppercase() },
     )
 }
 
-@Composable
-private fun SearchKey(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = JarnTheme.colors
-    val shape = JarnTheme.radius.smShape
-    val source = remember { MutableInteractionSource() }
-    Box(
-        modifier = modifier
-            .jarnInteractive(shape, source, onClick = onClick)
-            .heightIn(min = SearchKeyMinHeight)
-            .background(colors.raised, shape),
-        contentAlignment = Alignment.Center,
-    ) {
-        JarnText(label, JarnTheme.type.labelStrong, colors.textHigh, maxLines = 1)
+private fun JarnSearchStore.press(key: JarnKeyboardKey, firstKey: FocusRequester) {
+    when (key) {
+        is JarnKeyboardKey.Letter -> type(key.char.toString())
+        JarnKeyboardKey.Space -> type(" ")
+        JarnKeyboardKey.Delete -> deleteLast()
+        JarnKeyboardKey.Clear -> {
+            clearQuery()
+            firstKey.requestFocus()
+        }
+        JarnKeyboardKey.Shift, JarnKeyboardKey.Symbols, JarnKeyboardKey.Done -> Unit
     }
 }
