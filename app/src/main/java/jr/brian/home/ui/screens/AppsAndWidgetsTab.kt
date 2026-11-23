@@ -523,7 +523,8 @@ fun AppsAndWidgetsTab(
     }
 
     if (addOptionsDialogState.isVisible || folderOptionsDialogState.isVisible) {
-        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty()
+        val isTabEmpty = widgets.isEmpty() && displayedApps.isEmpty() &&
+            uiState.unavailableWidgetsOn(pageIndex).isEmpty()
         AppsAndWidgetsOptionsDialog(
             onDismiss = {
                 addOptionsDialogState.dismiss()

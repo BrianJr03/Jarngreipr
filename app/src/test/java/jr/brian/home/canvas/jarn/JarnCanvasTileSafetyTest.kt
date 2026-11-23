@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import jr.brian.home.canvas.data.isWidgetIdReferenced
 import jr.brian.home.canvas.model.CanvasItem
 import jr.brian.home.canvas.model.CanvasLayout
 import org.junit.Assert.assertEquals

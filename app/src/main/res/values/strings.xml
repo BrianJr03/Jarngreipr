@@ -637,6 +637,10 @@
     <string name="widget_options_title">Widget Options</string>
     <string name="widget_delete_title">Delete Widget</string>
     <string name="widget_delete_description">Remove from this page</string>
+    <string name="widget_unavailable_title">Widget unavailable</string>
+    <string name="widget_unavailable_message">It will return when its app is available.</string>
+    <string name="widget_unavailable_remove_hint">Select to remove</string>
+    <string name="widget_unavailable_remove_message">Remove this unavailable widget? It can\'t be restored.</string>
     <string name="widget_move_section_title">Move to Another Page</string>
     <string name="widget_move_page_title">Widget Page %1$d</string>
     <string name="widget_move_description">Move widget here</string>

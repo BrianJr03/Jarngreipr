@@ -16,11 +16,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jr.brian.home.R
 import jr.brian.home.model.app.AppInfo
 import jr.brian.home.model.app.Folder
@@ -206,6 +208,8 @@ fun WidgetsAndAppsGrid(
     onRomClick: (PinnedRomInfo) -> Unit = {},
     onRomLongClick: (PinnedRomInfo) -> Unit = {}
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columns),
@@ -237,19 +241,28 @@ fun WidgetsAndAppsGrid(
                     onClick = onFolderClick
                 )
 
-                "widgets" -> renderWidgetItems(
-                    widgets = widgets,
-                    items = widgets,
-                    columns = columns,
-                    pageIndex = pageIndex,
-                    viewModel = viewModel,
-                    onNavigateToResize = onNavigateToResize,
-                    swapModeEnabled = swapModeEnabled,
-                    swapSourceWidgetId = swapSourceWidgetId,
-                    onSwapComplete = onSwapComplete,
-                    onSwapModeEnabled = onSwapModeEnabled,
-                    editModeEnabled = editModeEnabled
-                )
+                "widgets" -> {
+                    renderWidgetItems(
+                        widgets = widgets,
+                        items = widgets,
+                        columns = columns,
+                        pageIndex = pageIndex,
+                        viewModel = viewModel,
+                        onNavigateToResize = onNavigateToResize,
+                        swapModeEnabled = swapModeEnabled,
+                        swapSourceWidgetId = swapSourceWidgetId,
+                        onSwapComplete = onSwapComplete,
+                        onSwapModeEnabled = onSwapModeEnabled,
+                        editModeEnabled = editModeEnabled
+                    )
+                    renderUnavailableWidgetItems(
+                        configs = uiState.unavailableWidgetsOn(pageIndex),
+                        columns = columns,
+                        pageIndex = pageIndex,
+                        canRemove = editModeEnabled && !swapModeEnabled,
+                        onRemove = { widgetId -> viewModel.removeWidgetFromPage(widgetId, pageIndex) }
+                    )
+                }
 
                 "roms" -> renderRomItems(
                     pinnedRoms = pinnedRoms,
