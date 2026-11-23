@@ -5,6 +5,8 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -15,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import jr.brian.core.ui.focus.JarnBringIntoViewSpec
 
 val LocalJarnLook = staticCompositionLocalOf { JarnLooks.Default }
 val LocalJarnColors = staticCompositionLocalOf { JarnLooks.Default.resolvedColors }
@@ -35,6 +39,7 @@ object JarnTheme {
     val cardStyle: JarnCardStyle @Composable get() = look.cardStyle ?: JarnCardStyle.Tonal
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun JarnTheme(
     look: JarnLook = JarnLooks.Default,
@@ -46,11 +51,17 @@ fun JarnTheme(
     val shouldReduce = jarnShouldReduceMotion(reducedMotion, animatorScale)
     val colors = remember(look) { look.resolvedColors }
     val motion = remember(shouldReduce) { JarnMotion(reduced = shouldReduce) }
+    val focusEdgePx = with(LocalDensity.current) { LocalJarnSpacing.current.focusEdge.toPx() }
+    val baseScrollSpec = LocalBringIntoViewSpec.current
+    val scrollSpec = remember(focusEdgePx, baseScrollSpec) {
+        JarnBringIntoViewSpec(focusEdgePx, baseScrollSpec)
+    }
     CompositionLocalProvider(
         LocalJarnLook provides look,
         LocalJarnColors provides colors,
         LocalJarnMotion provides motion,
         LocalJarnScreenActive provides screenActive,
+        LocalBringIntoViewSpec provides scrollSpec,
         content = content,
     )
 }

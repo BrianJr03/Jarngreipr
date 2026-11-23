@@ -54,6 +54,15 @@ class FastWalkScanner @Inject constructor(
         out
     }
 
+    /** Walks [path] as one system's folder, with the same rules as a system subfolder. */
+    suspend fun scanSystemFolder(path: String, def: SystemDef): List<ScannedRom> =
+        withContext(Dispatchers.IO) {
+            val dir = File(path)
+            val out = mutableListOf<ScannedRom>()
+            if (dir.isDirectory) scanSystem(root = dir, systemDir = dir, def = def, out = out)
+            out
+        }
+
     private fun scanSystem(
         root: File,
         systemDir: File,

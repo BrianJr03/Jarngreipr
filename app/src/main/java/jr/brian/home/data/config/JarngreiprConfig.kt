@@ -173,7 +173,11 @@ data class JarngreiprConfig(
         //      Nullable so pre-v38 blobs decode without a value; import
         //      leaves the device's current experience alone in that case.
         //      Separate from romSearch.frontendEnabled.
-        const val CONFIG_VERSION = 38
+        // v39: added FeatureConfig.artSource, Jarn FE's preferred art source.
+        //      Nullable so pre-v39 blobs decode without a value; import
+        //      leaves the device's current source alone in that case.
+        //      Also added FeatureConfig.systemArtSource, with the same rule.
+        const val CONFIG_VERSION = 39
     }
 }
 
@@ -325,7 +329,17 @@ data class FeatureConfig(
      * case, so restoring an old backup never silently switches a user out
      * of Jarn FE.
      */
-    val experience: String? = null
+    val experience: String? = null,
+    /**
+     * v39: persisted [jr.brian.core.model.ArtSource] name. Null on pre-v39
+     * exports. Import leaves the device's current source alone in that case.
+     */
+    val artSource: String? = null,
+    /**
+     * v39: persisted [jr.brian.core.model.SystemArtSource] name. Null on
+     * pre-v39 exports. Import leaves the device's current source alone then.
+     */
+    val systemArtSource: String? = null
 )
 
 @Serializable

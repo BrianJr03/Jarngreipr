@@ -15,6 +15,8 @@ import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryNowPanel
 import jr.brian.jarnfe.session.DeckTab
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
@@ -32,9 +34,8 @@ private fun DeckTab.labelRes(): Int = when (this) {
 internal fun DeckScreen(state: JarnSessionState) {
     JarnInputLayer(bindings = { deckBindings(state, JarnSession) }) {
         JarnScreenFrame(
-            active = state.isLit(JarnScreen.Deck),
             header = { DeckTabStrip(state.deckTab) },
-        ) { DeckTabPlaceholder(state.deckTab) }
+        ) { DeckTabContent(state) }
     }
 }
 
@@ -43,7 +44,7 @@ internal fun DeckContent(state: JarnSessionState, modifier: Modifier = Modifier)
     Column(modifier) {
         DeckTabStrip(state.deckTab)
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            DeckTabPlaceholder(state.deckTab)
+            DeckTabContent(state)
         }
     }
 }
@@ -60,11 +61,18 @@ private fun DeckTabStrip(selected: DeckTab) {
 }
 
 @Composable
-private fun DeckTabPlaceholder(tab: DeckTab) {
-    val (titleRes, messageRes) = when (tab) {
-        DeckTab.Now -> R.string.jarnfe_empty_now_title to R.string.jarnfe_empty_now_message
-        DeckTab.Browse -> R.string.jarnfe_empty_browse_title to R.string.jarnfe_empty_browse_message
-        DeckTab.Canvas -> R.string.jarnfe_empty_canvas_title to R.string.jarnfe_empty_canvas_message
+private fun DeckTabContent(state: JarnSessionState) {
+    when (state.deckTab) {
+        DeckTab.Now -> LibraryNowPanel(
+            selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
+            recent = JarnLibrary.state.recent.items,
+        )
+        DeckTab.Browse -> DeckTabPlaceholder(R.string.jarnfe_empty_browse_title, R.string.jarnfe_empty_browse_message)
+        DeckTab.Canvas -> DeckTabPlaceholder(R.string.jarnfe_empty_canvas_title, R.string.jarnfe_empty_canvas_message)
     }
+}
+
+@Composable
+private fun DeckTabPlaceholder(@StringRes titleRes: Int, @StringRes messageRes: Int) {
     JarnEmptyState(title = stringResource(titleRes), message = stringResource(messageRes))
 }

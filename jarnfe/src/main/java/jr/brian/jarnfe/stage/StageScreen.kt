@@ -3,19 +3,20 @@ package jr.brian.jarnfe.stage
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import jr.brian.core.ui.components.JarnButton
@@ -30,10 +31,21 @@ import jr.brian.jarnfe.deck.DeckContent
 import jr.brian.jarnfe.input.JarnInputLayer
 import jr.brian.jarnfe.input.JarnLayerMode
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.library.JarnLibrary
+import jr.brian.jarnfe.library.LibraryGameList
+import jr.brian.jarnfe.library.LibraryGameListTitle
+import jr.brian.jarnfe.library.LibraryHome
+import jr.brian.jarnfe.library.LibraryOrphanGuard
+import jr.brian.jarnfe.library.LibrarySetupPanel
+import jr.brian.jarnfe.library.jarnLibraryDataOrNull
+import jr.brian.jarnfe.library.jarnLibrarySetupOrNull
+import jr.brian.jarnfe.library.librarySetupPrompt
 import jr.brian.jarnfe.session.JarnSession
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.LibrarySection
 import jr.brian.jarnfe.session.StageRoute
+import jr.brian.jarnfe.settings.JarnSettingsRoute
+import jr.brian.jarnfe.shell.JarnNoticeHost
 import jr.brian.jarnfe.shell.JarnScreenFrame
 import jr.brian.jarnfe.shell.JarnStatusReadout
 import jr.brian.jarnfe.shell.deckPanelBindings
@@ -48,13 +60,17 @@ private fun LibrarySection.labelRes(): Int = when (this) {
 
 @Composable
 internal fun StageScreen(state: JarnSessionState) {
-    JarnInputLayer(bindings = { stageBindings(state, JarnSession) }) {
+    LaunchedEffect(JarnLibrary.source) { JarnLibrary.observe() }
+    LibraryOrphanGuard(JarnLibrary.state.gameListIsOrphaned(state.stageRoute)) {
+        JarnSession.update { openRoute(StageRoute.Library) }
+    }
+    JarnInputLayer(bindings = { stageBindings(state, JarnSession, JarnLibrary) }) {
         Box(Modifier.fillMaxSize()) {
             JarnScreenFrame(
-                active = state.isLit(JarnScreen.Stage),
                 header = { StageHeader(state) },
             ) { StageRouteContent(state) }
             SingleScreenDeckPanel(state)
+            JarnNoticeHost()
         }
     }
 }
@@ -79,7 +95,7 @@ private fun StageHeader(state: JarnSessionState) {
 private fun StageHeaderTitle(state: JarnSessionState) {
     when (state.stageRoute) {
         StageRoute.Library -> LibrarySectionTabs(state.librarySection)
-        StageRoute.GameList -> StageRouteTitle(R.string.jarnfe_route_game_list)
+        StageRoute.GameList -> LibraryGameListTitle(JarnLibrary.state)
         StageRoute.Settings -> StageRouteTitle(R.string.jarnfe_route_settings)
     }
 }
@@ -108,29 +124,48 @@ private fun LibrarySectionTabs(selected: LibrarySection) {
 @Composable
 private fun StageRouteContent(state: JarnSessionState) {
     when (state.stageRoute) {
-        StageRoute.Library -> LibraryPlaceholder(state)
-        StageRoute.GameList -> StageSubRoutePlaceholder(
-            R.string.jarnfe_empty_games_title,
-            R.string.jarnfe_empty_games_message,
+        StageRoute.Library -> StageLibrary(state)
+        StageRoute.GameList -> LibraryGameList(JarnLibrary)
+        StageRoute.Settings -> StageSettings()
+    }
+}
+
+@Composable
+private fun StageLibrary(state: JarnSessionState) {
+    val context = LocalContext.current
+    val setup = remember(context) { context.jarnLibrarySetupOrNull() }
+    val setupState = setup?.state?.collectAsState()?.value
+    val prompt = librarySetupPrompt(setupState, JarnLibrary.state.systems)
+    if (prompt != null) {
+        LibrarySetupPanel(prompt)
+    } else {
+        LibraryHome(
+            section = state.librarySection,
+            library = JarnLibrary,
+            onOpenSystem = ::openSystem,
+            emptyActions = { LibraryRouteLinks(showDeckPanelLink = !state.deckDisplayAvailable) },
         )
-        StageRoute.Settings -> StageSubRoutePlaceholder(
+    }
+}
+
+@Composable
+private fun StageSettings() {
+    val context = LocalContext.current
+    val data = remember(context) { context.jarnLibraryDataOrNull() }
+    val setup = remember(context) { context.jarnLibrarySetupOrNull() }
+    if (data != null && setup != null) {
+        JarnSettingsRoute(data, setup)
+    } else {
+        StageSubRoutePlaceholder(
             R.string.jarnfe_empty_settings_title,
             R.string.jarnfe_empty_settings_message,
         )
     }
 }
 
-@Composable
-private fun LibraryPlaceholder(state: JarnSessionState) {
-    val (titleRes, messageRes) = when (state.librarySection) {
-        LibrarySection.Systems -> R.string.jarnfe_empty_systems_title to R.string.jarnfe_empty_systems_message
-        LibrarySection.Favorites -> R.string.jarnfe_empty_favorites_title to R.string.jarnfe_empty_favorites_message
-        LibrarySection.Recent -> R.string.jarnfe_empty_recent_title to R.string.jarnfe_empty_recent_message
-    }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        JarnEmptyState(title = stringResource(titleRes), message = stringResource(messageRes))
-        LibraryRouteLinks(showDeckPanelLink = !state.deckDisplayAvailable)
-    }
+private fun openSystem(systemId: String) {
+    JarnLibrary.update { openSystem(systemId) }
+    JarnSession.update { openRoute(StageRoute.GameList) }
 }
 
 @Composable
@@ -138,10 +173,7 @@ private fun LibraryRouteLinks(showDeckPanelLink: Boolean) {
     val firstLink = remember { FocusRequester() }
     LaunchedEffect(Unit) { firstLink.requestFocus() }
     Row(horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md)) {
-        StageLinkButton(R.string.jarnfe_route_game_list, Modifier.focusRequester(firstLink)) {
-            JarnSession.update { openRoute(StageRoute.GameList) }
-        }
-        StageLinkButton(R.string.jarnfe_route_settings) {
+        StageLinkButton(R.string.jarnfe_route_settings, Modifier.focusRequester(firstLink)) {
             JarnSession.update { openRoute(StageRoute.Settings) }
         }
         if (showDeckPanelLink) {

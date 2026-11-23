@@ -17,4 +17,14 @@
     <string name="jarn_preview_empty_action" translatable="false">Add a game folder</string>
     <string name="jarn_preview_dialog_title" translatable="false">Delete this layout?</string>
     <string name="jarn_preview_dialog_body" translatable="false">This cannot be undone.</string>
+    <string name="jarn_preview_system_title" translatable="false">16-bit</string>
+    <string name="jarn_preview_system_count" translatable="false">214 games</string>
+    <string name="jarn_preview_game_title" translatable="false">Glass Orchard and the Very Long Subtitle of Strange Fruit</string>
+    <string name="jarn_preview_game_body" translatable="false">Tend a greenhouse at the end of the world and coax strange fruit back to life.</string>
+    <string name="jarn_preview_meta_genre" translatable="false">Genre</string>
+    <string name="jarn_preview_meta_genre_value" translatable="false">Simulation</string>
+    <string name="jarn_preview_meta_players" translatable="false">Players</string>
+    <string name="jarn_preview_meta_players_value" translatable="false">1</string>
+    <string name="jarn_preview_meta_released" translatable="false">Released</string>
+    <string name="jarn_preview_meta_released_value" translatable="false">Mar 1994</string>
 </resources>

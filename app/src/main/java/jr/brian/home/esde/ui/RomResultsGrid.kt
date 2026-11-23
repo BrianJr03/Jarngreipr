@@ -60,6 +60,9 @@ import jr.brian.home.R
 import jr.brian.home.esde.data.LocalESDEPreferencesManager
 import jr.brian.home.esde.data.clearGameCompanions
 import jr.brian.home.esde.model.FrontendLayout
+import jr.brian.home.esde.launch.RomLaunchGate
+import jr.brian.home.esde.launch.isAndroidSystem
+import jr.brian.home.esde.launch.romLaunchGate
 import jr.brian.home.esde.model.GameInfo
 import jr.brian.home.esde.util.gameKey
 import jr.brian.home.esde.model.RomSearchCardMediaType
@@ -219,22 +222,22 @@ internal fun RomResultsGrid(
                             flipDisabledForGame = isFocusAnimationDisabled(game),
                             focusIndicationEnabled = focusIndicationEnabled,
                             onClick = {
-                                val isAndroid =
-                                    game.systemName.equals("androidgames", ignoreCase = true) ||
-                                            game.systemName.equals("androidapps", ignoreCase = true)
-                                val needsCore = isRetroArchGame(game) && !hasSavedCore(game)
-                                val hasEmulator = hasSavedEmulator(game) ||
-                                        game.launchCommand != null ||
-                                        game.emulatorPackage != null
-                                when {
-                                    isAndroid -> onLaunchGame(game)
-                                    needsCore -> {
+                                val gate = romLaunchGate(
+                                    isAndroid = isAndroidSystem(game.systemName),
+                                    isRetroArch = isRetroArchGame(game),
+                                    hasCore = hasSavedCore(game),
+                                    hasEmulator = hasSavedEmulator(game) ||
+                                            game.launchCommand != null ||
+                                            game.emulatorPackage != null,
+                                )
+                                when (gate) {
+                                    RomLaunchGate.Launch -> onLaunchGame(game)
+                                    RomLaunchGate.PickCore -> {
                                         selectedGame = game
                                         showCorePicker = true
                                     }
 
-                                    hasEmulator -> onLaunchGame(game)
-                                    else -> {
+                                    RomLaunchGate.PickEmulator -> {
                                         selectedGame = game
                                         showEmulatorPicker = true
                                     }

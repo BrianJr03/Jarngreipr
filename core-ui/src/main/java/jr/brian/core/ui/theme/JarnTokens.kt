@@ -22,6 +22,7 @@ data class JarnSpacing(
     val xxl: Dp = 32.dp,
     val stageMargin: Dp = 24.dp,
     val deckMargin: Dp = 16.dp,
+    val focusEdge: Dp = 20.dp,
     val hintBarHeight: Dp = 40.dp,
     val activeBarHeight: Dp = 3.dp,
 )

@@ -32,6 +32,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * One source to scan. [systemFolder] marks a source that is a single system's
+ * folder. [excludedSystems] are already held by a folder inside this one.
+ */
+data class SourceScanTarget(
+    val source: SourceEntity,
+    val systemFolder: SystemDef? = null,
+    val excludedSystems: Set<String> = emptySet(),
+)
+
+/**
  * Public API over the library engine.
  *
  * ### Phase 2c scope
@@ -243,6 +253,54 @@ class LibraryRepository @Inject constructor(
             }
             sourceDao.markScanned(source.id, System.currentTimeMillis())
         }
+    }
+
+    /**
+     * Scans only [targets], for Jarn FE's folder setup. [scanAll] and its
+     * path are untouched. Returns false when a scan is already running.
+     */
+    fun scanSources(targets: List<SourceScanTarget>): Boolean {
+        if (targets.isEmpty() || _state.value is LibraryState.Scanning) return false
+        _state.value = LibraryState.Scanning(systemsDone = 0, systemsTotal = targets.size)
+        launchGuarded { runTargets(targets) }
+        return true
+    }
+
+    private suspend fun runTargets(targets: List<SourceScanTarget>) {
+        upsertKnownSystems()
+        val catalogSystems = catalog.all().associateBy { it.id.lowercase() }
+        val mediaIndex = MediaIndex.build(
+            mediaRoots = mediaRoots,
+            layouts = listOf(EsdeLayout(), JarngreiprLayout()),
+            systems = catalogSystems.values.flatMapTo(HashSet()) { it.folderAliases + it.id },
+        )
+        var total = 0
+        var done = 0
+        for (target in targets) {
+            val scanned = scanTarget(target, catalogSystems.values)
+            if (scanned.isEmpty()) continue
+            val bySystem = scanned.groupBy { it.systemId }
+            total += bySystem.size
+            for ((systemId, roms) in bySystem) {
+                _state.value = LibraryState.Scanning(done, total, systemId)
+                writeSystem(target.source.id, systemId, roms, mediaIndex, catalogSystems)
+                done++
+            }
+            sourceDao.markScanned(target.source.id, System.currentTimeMillis())
+        }
+    }
+
+    private suspend fun scanTarget(
+        target: SourceScanTarget,
+        systems: Collection<SystemDef>,
+    ): List<ScannedRom> {
+        target.systemFolder?.let { def ->
+            if (def.id in target.excludedSystems) return emptyList()
+            return scanner.scanSystemFolder(target.source, def)
+        }
+        val filter = target.excludedSystems.takeIf { it.isNotEmpty() }
+            ?.let { excluded -> systems.mapTo(HashSet()) { it.id } - excluded }
+        return scanner.scan(target.source, systems = filter)
     }
 
     private suspend fun upsertKnownSystems() {

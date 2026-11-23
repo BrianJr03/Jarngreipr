@@ -1,0 +1,162 @@
+package jr.brian.jarnfe.library
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.BringIntoViewSpec
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import jr.brian.core.ui.theme.JarnTheme
+import kotlinx.coroutines.flow.first
+
+private const val HEADER_KEY = "library_header"
+private const val ITEM_KEY_PREFIX = "item:"
+private const val SKELETON_TILE_COUNT = 12
+private const val FIRST_ROW_BELOW_HEADER = 1
+
+/**
+ * A lazy grid that puts focus back on [focusedKey] whenever it enters composition, and again if
+ * the focused item disappears in a refresh.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun <T : Any> LibraryFocusGrid(
+    items: List<T>,
+    itemKey: (T) -> String,
+    focusedKey: String?,
+    onFocused: (String) -> Unit,
+    cellMinSize: Dp,
+    modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
+    itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
+) {
+    val gridState = rememberLazyGridState()
+    val requester = remember { FocusRequester() }
+    var lastFocused by remember { mutableStateOf<String?>(null) }
+    val keys = remember(items) { items.mapTo(HashSet(), itemKey) }
+    val focusLost = lastFocused?.let { it !in keys } ?: false
+    val target = remember(items.isEmpty(), focusLost) { focusedKey ?: items.firstOrNull()?.let(itemKey) }
+    val headerCount = if (header != null) 1 else 0
+    var headerHeight by remember { mutableIntStateOf(0) }
+    val spacingPx = with(LocalDensity.current) { JarnTheme.space.md.roundToPx() }
+    val baseSpec = LocalBringIntoViewSpec.current
+    val revealSpec = remember(gridState, baseSpec, spacingPx) {
+        HeaderRevealSpec(gridState, baseSpec) { if (headerHeight > 0) headerHeight + spacingPx else 0 }
+    }
+
+    LaunchedEffect(target) {
+        val index = items.indexOfFirst { itemKey(it) == target }
+        if (index >= 0) gridState.restoreFocus(index + headerCount, requester)
+    }
+
+    CompositionLocalProvider(LocalBringIntoViewSpec provides if (header != null) revealSpec else baseSpec) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(cellMinSize),
+            state = gridState,
+            modifier = modifier.fillMaxSize(),
+            contentPadding = libraryGridPadding(),
+            horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+        ) {
+            header?.let { content ->
+                item(key = HEADER_KEY, span = { GridItemSpan(maxLineSpan) }, contentType = HEADER_KEY) {
+                    Box(Modifier.onSizeChanged { headerHeight = it.height }) { content() }
+                }
+            }
+            items(items, key = { ITEM_KEY_PREFIX + itemKey(it) }, contentType = { ITEM_KEY_PREFIX }) { item ->
+                val id = itemKey(item)
+                val restore = if (id == target) Modifier.focusRequester(requester) else Modifier
+                itemContent(
+                    item,
+                    restore.onFocusChanged { focus ->
+                        if (focus.isFocused) {
+                            lastFocused = id
+                            onFocused(id)
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The header can't take focus, so a focused tile in the row below it scrolls far enough to show
+ * the whole header. Every other row keeps [base]'s behavior.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private class HeaderRevealSpec(
+    private val grid: LazyGridState,
+    private val base: BringIntoViewSpec,
+    private val headerExtent: () -> Int,
+) : BringIntoViewSpec by base {
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float {
+        val layout = grid.layoutInfo
+        val firstRow = layout.visibleItemsInfo.firstOrNull { it.row == FIRST_ROW_BELOW_HEADER }
+        val extent = headerExtent()
+        if (firstRow == null || extent == 0) return base.calculateScrollDistance(offset, size, containerSize)
+        val rowStart = (firstRow.offset.y - layout.viewportStartOffset).toFloat()
+        val rowEnd = rowStart + firstRow.size.height
+        val focusCenter = offset + size / 2
+        if (focusCenter !in rowStart..rowEnd) return base.calculateScrollDistance(offset, size, containerSize)
+        return (firstRow.offset.y - extent).toFloat()
+    }
+}
+
+private suspend fun LazyGridState.restoreFocus(index: Int, requester: FocusRequester) {
+    snapshotFlow { layoutInfo.totalItemsCount }.first { it > index }
+    if (layoutInfo.visibleItemsInfo.none { it.index == index }) scrollToItem(index)
+    snapshotFlow { layoutInfo.visibleItemsInfo.any { it.index == index } }.first { it }
+    withFrameNanos { }
+    requester.requestFocus()
+}
+
+@Composable
+private fun libraryGridPadding() = PaddingValues(
+    horizontal = JarnTheme.space.stageMargin,
+    vertical = JarnTheme.space.focusEdge,
+)
+
+@Composable
+internal fun LibrarySkeletonGrid(cellMinSize: Dp, tileRatio: Float, modifier: Modifier = Modifier) {
+    val shape = JarnTheme.radius.mdShape
+    val color = JarnTheme.colors.surface
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(cellMinSize),
+        modifier = modifier.fillMaxSize(),
+        userScrollEnabled = false,
+        contentPadding = libraryGridPadding(),
+        horizontalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+        verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+    ) {
+        items(SKELETON_TILE_COUNT) {
+            Box(Modifier.aspectRatio(tileRatio).background(color, shape))
+        }
+    }
+}

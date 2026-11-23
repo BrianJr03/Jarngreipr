@@ -66,6 +66,8 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     debugImplementation(libs.androidx.ui.test.manifest)
 
@@ -74,4 +76,5 @@ dependencies {
     testImplementation(libs.androidx.ui.test.junit4)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

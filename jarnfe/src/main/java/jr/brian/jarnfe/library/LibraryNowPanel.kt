@@ -1,0 +1,131 @@
+package jr.brian.jarnfe.library
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import jr.brian.core.ui.focus.JarnRevealScrollTop
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import jr.brian.core.ui.components.JarnEmptyState
+import jr.brian.core.ui.components.JarnText
+import jr.brian.core.ui.library.JarnMetadataPlate
+import jr.brian.core.ui.theme.JarnTheme
+import jr.brian.jarnfe.R
+import java.text.DateFormat
+import java.util.Date
+
+private const val MINUTES_PER_HOUR = 60L
+private const val NOW_RECENT_LIMIT = 3
+private const val DESCRIPTION_MAX_LINES = 5
+private val NowArtHeight = 132.dp
+
+@Composable
+internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibraryGame>) {
+    when (selection) {
+        LibrarySelection.None -> JarnEmptyState(
+            title = stringResource(R.string.jarnfe_empty_now_title),
+            message = stringResource(R.string.jarnfe_empty_now_message),
+        )
+        is LibrarySelection.System -> NowColumn { SystemSummary(selection.system, recent) }
+        is LibrarySelection.Game -> NowColumn { GameDetails(selection.game) }
+    }
+}
+
+@Composable
+private fun NowColumn(content: @Composable () -> Unit) {
+    val scroll = rememberScrollState()
+    JarnRevealScrollTop(scroll) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scroll)
+                .padding(horizontal = JarnTheme.space.deckMargin, vertical = JarnTheme.space.focusEdge),
+            verticalArrangement = Arrangement.spacedBy(JarnTheme.space.md),
+        ) { content() }
+    }
+}
+
+@Composable
+private fun SystemSummary(system: JarnLibrarySystem, recent: List<JarnLibraryGame>) {
+    val colors = JarnTheme.colors
+    val recentHere = remember(system.id, recent) {
+        recent.asSequence().filter { it.systemId == system.id }.take(NOW_RECENT_LIMIT).toList()
+    }
+    JarnText(system.title, JarnTheme.type.title, colors.textHigh, maxLines = 2)
+    JarnText(systemSubtitle(system), JarnTheme.type.body, colors.textMid, maxLines = 2)
+    if (recentHere.isNotEmpty()) RecentGames(recentHere)
+}
+
+@Composable
+private fun systemSubtitle(system: JarnLibrarySystem): String {
+    val count = gameCountText(system.gameCount)
+    val lastPlayed = system.lastPlayedAtMs ?: return count
+    return "$count, ${stringResource(R.string.jarnfe_library_last_played, formatDate(lastPlayed))}"
+}
+
+@Composable
+private fun RecentGames(games: List<JarnLibraryGame>) {
+    val colors = JarnTheme.colors
+    JarnText(stringResource(R.string.jarnfe_library_recent_games), JarnTheme.type.labelStrong, colors.textMid, maxLines = 1)
+    games.forEach { game ->
+        JarnText(game.title, JarnTheme.type.body, colors.textHigh, maxLines = 1)
+    }
+}
+
+@Composable
+private fun GameDetails(game: JarnLibraryGame) {
+    val colors = JarnTheme.colors
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(NowArtHeight)
+            .clip(JarnTheme.radius.mdShape),
+    ) { LibraryArt(game.artPath, game.title) }
+    JarnText(game.title, JarnTheme.type.heading, colors.textHigh, maxLines = 2)
+    game.metadata.description?.trim()?.takeIf { it.isNotEmpty() }?.let {
+        JarnText(it, JarnTheme.type.body, colors.textMid, maxLines = DESCRIPTION_MAX_LINES)
+    }
+    val entries = metadataEntries(game.metadata)
+    if (entries.isNotEmpty()) JarnMetadataPlate(entries)
+}
+
+@Composable
+private fun metadataEntries(metadata: JarnGameMetadata): List<Pair<String, String>> {
+    val text = metadata.textFields().map { stringResource(it.labelRes) to it.value }
+    val playtime = metadata.playtimeMinutes?.takeIf { it > 0 }?.let {
+        stringResource(R.string.jarnfe_library_meta_playtime) to playtimeText(it)
+    }
+    val lastPlayed = metadata.lastPlayedAtMs?.let {
+        stringResource(R.string.jarnfe_library_meta_last_played) to formatDate(it)
+    }
+    return text + listOfNotNull(playtime, lastPlayed)
+}
+
+@Composable
+internal fun playSummary(metadata: JarnGameMetadata): String? {
+    val playtime = metadata.playtimeMinutes?.takeIf { it > 0 }?.let { playtimeText(it) }
+    val lastPlayed = metadata.lastPlayedAtMs?.let {
+        stringResource(R.string.jarnfe_library_last_played, formatDate(it))
+    }
+    return listOfNotNull(playtime, lastPlayed).joinToString(". ").ifEmpty { null }
+}
+
+@Composable
+private fun playtimeText(minutes: Long): String = if (minutes >= MINUTES_PER_HOUR) {
+    stringResource(R.string.jarnfe_library_playtime_hours, minutes / MINUTES_PER_HOUR)
+} else {
+    stringResource(R.string.jarnfe_library_playtime_minutes, minutes)
+}
+
+@Composable
+private fun formatDate(epochMs: Long): String =
+    remember(epochMs) { DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epochMs)) }
