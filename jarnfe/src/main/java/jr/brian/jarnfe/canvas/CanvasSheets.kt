@@ -64,6 +64,7 @@ internal fun CanvasOptionsSheet(
     onEdit: () -> Unit,
     onPages: () -> Unit,
     canEdit: Boolean,
+    alreadyEditing: Boolean,
     onClose: () -> Unit,
 ) {
     val first = remember { FocusRequester() }
@@ -76,14 +77,16 @@ internal fun CanvasOptionsSheet(
             focusableWhenDisabled = true,
             modifier = Modifier.fillMaxWidth().focusRequester(first),
         )
-        JarnNavigateRow(
-            label = stringResource(R.string.jarnfe_canvas_option_edit),
-            supporting = stringResource(R.string.jarnfe_canvas_option_edit_detail),
-            onClick = onEdit,
-            enabled = canEdit,
-            focusableWhenDisabled = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (!alreadyEditing) {
+            JarnNavigateRow(
+                label = stringResource(R.string.jarnfe_canvas_option_edit),
+                supporting = stringResource(R.string.jarnfe_canvas_option_edit_detail),
+                onClick = onEdit,
+                enabled = canEdit,
+                focusableWhenDisabled = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         JarnNavigateRow(
             label = stringResource(R.string.jarnfe_canvas_option_pages),
             supporting = stringResource(R.string.jarnfe_canvas_option_pages_detail),
