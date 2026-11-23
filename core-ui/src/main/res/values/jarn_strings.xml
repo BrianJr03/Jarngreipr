@@ -19,6 +19,8 @@
     <string name="jarn_key_r1" translatable="false">R1</string>
     <string name="jarn_key_l2" translatable="false">L2</string>
     <string name="jarn_key_r2" translatable="false">R2</string>
+    <string name="jarn_key_l3" translatable="false">L3</string>
+    <string name="jarn_key_r3" translatable="false">R3</string>
     <string name="jarn_key_start">Start</string>
     <string name="jarn_key_select">Select</string>
     <string name="jarn_key_dpad">D-pad</string>
