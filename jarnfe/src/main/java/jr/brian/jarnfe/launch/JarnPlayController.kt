@@ -51,6 +51,8 @@ internal class JarnPlayController(
     private val activity: ComponentActivity,
     private val data: JarnLibraryData,
     private val launcher: JarnGameLauncher,
+    private val options: JarnGameOptions? = null,
+    private val actions: JarnGameActionsController? = null,
 ) {
     private var launching = false
     private var pendingGrant: JarnGameRef? = null
@@ -63,11 +65,11 @@ internal class JarnPlayController(
         launching = true
         activity.lifecycleScope.launch {
             try {
-                val ref = data.findGame(game.id)?.toGameRef(game.artPath)
+                val ref = data.findGame(game.id)?.toGameRef(game.artPath)?.let { located(it, game.id) }
                 if (ref == null) {
                     JarnNotices.show(R.string.jarnfe_launch_missing_rom)
                 } else {
-                    handle(ref, launch(ref))
+                    handle(game, ref, launch(ref))
                 }
             } finally {
                 launching = false
@@ -75,13 +77,24 @@ internal class JarnPlayController(
         }
     }
 
+    private suspend fun located(ref: JarnGameRef, libraryKey: String): JarnGameRef =
+        options?.let { runCatching { it.locate(ref, libraryKey) }.getOrNull() } ?: ref
+
     private fun launch(ref: JarnGameRef): JarnLaunchResult =
         runCatching { launcher.launch(activity, JarnLaunchRequest(ref)) }
             .getOrElse { JarnLaunchResult.Failed(JarnLaunchFailure.Unknown) }
 
-    private fun handle(ref: JarnGameRef, result: JarnLaunchResult) {
+    private fun handle(game: JarnLibraryGame, ref: JarnGameRef, result: JarnLaunchResult) {
         launchNoticeRes(result)?.let(JarnNotices::show)
-        if (result is JarnLaunchResult.NeedsFileAccess) requestFolder(ref, result.pickerHint)
+        when (result) {
+            is JarnLaunchResult.NeedsFileAccess -> requestFolder(ref, result.pickerHint)
+            is JarnLaunchResult.NeedsEmulatorChoice -> actions?.requestChoice(game, result.kind)
+            is JarnLaunchResult.Launched ->
+                if (result.companionChoices.isNotEmpty()) {
+                    actions?.offerCompanions(game, result.companionChoices)
+                }
+            else -> Unit
+        }
     }
 
     private fun requestFolder(ref: JarnGameRef, hint: String?) {

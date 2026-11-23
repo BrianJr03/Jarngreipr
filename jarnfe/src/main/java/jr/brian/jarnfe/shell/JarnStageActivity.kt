@@ -9,7 +9,10 @@ import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import jr.brian.jarnfe.input.JarnScreen
+import jr.brian.jarnfe.launch.JarnGameActions
+import jr.brian.jarnfe.launch.JarnGameActionsController
 import jr.brian.jarnfe.launch.JarnPlayController
+import jr.brian.jarnfe.launch.jarnGameOptionsOrNull
 import jr.brian.jarnfe.launch.jarnGameLauncherOrNull
 import jr.brian.jarnfe.library.JarnFolderController
 import jr.brian.jarnfe.library.JarnFolderPicker
@@ -28,6 +31,7 @@ class JarnStageActivity : JarnScreenActivity() {
     private val deckLaunchTimeout = Runnable { JarnSession.update { deckLaunchFailed() } }
     private var playHandler: ((JarnLibraryGame) -> Unit)? = null
     private var folderHandler: ((Uri?) -> Unit)? = null
+    private var actionsController: JarnGameActionsController? = null
 
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = syncDeck()
@@ -54,7 +58,11 @@ class JarnStageActivity : JarnScreenActivity() {
     private fun connectPlay() {
         val data = jarnLibraryDataOrNull() ?: return
         val launcher = jarnGameLauncherOrNull() ?: return
-        val controller = JarnPlayController(this, data, launcher)
+        val options = jarnGameOptionsOrNull()
+        val actions = options?.let { JarnGameActionsController(this, data, it) }
+        actionsController = actions
+        JarnGameActions.controller = actions
+        val controller = JarnPlayController(this, data, launcher, options, actions)
         playHandler = controller::play
         JarnLibrary.onPlay = playHandler
     }
@@ -69,6 +77,7 @@ class JarnStageActivity : JarnScreenActivity() {
     override fun onDestroy() {
         if (JarnLibrary.onPlay === playHandler) JarnLibrary.onPlay = null
         if (JarnFolderPicker.open === folderHandler) JarnFolderPicker.open = null
+        if (JarnGameActions.controller === actionsController) JarnGameActions.controller = null
         getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener)
         mainHandler.removeCallbacks(deckLaunchTimeout)
         JarnSession.update { deckLaunchFailed() }

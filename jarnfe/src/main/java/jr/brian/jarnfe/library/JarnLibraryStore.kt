@@ -1,6 +1,7 @@
 package jr.brian.jarnfe.library
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.coroutineScope
@@ -22,6 +23,14 @@ class JarnLibraryStore(source: JarnLibrarySource = EmptyJarnLibrarySource) {
     var onPlay by mutableStateOf<((JarnLibraryGame) -> Unit)?>(null)
 
     val canPlay: Boolean get() = onPlay != null
+
+    /** Grows each time Stage should take focus back on its current game. */
+    var stageRefocus by mutableIntStateOf(0)
+        private set
+
+    fun requestStageRefocus() {
+        stageRefocus += 1
+    }
 
     private val openSystemId = MutableStateFlow<String?>(null)
     private val retries = MutableStateFlow(0)

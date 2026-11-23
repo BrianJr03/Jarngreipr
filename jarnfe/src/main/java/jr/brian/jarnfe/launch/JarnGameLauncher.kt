@@ -11,6 +11,7 @@ data class JarnGameRef(
     val emulatorPackage: String? = null,
     val launchCommand: String? = null,
     val artworkPath: String? = null,
+    val sourceTreeUri: String? = null,
 )
 
 sealed interface JarnLaunchTarget {

@@ -69,10 +69,13 @@ interface RomLaunchHost {
  * @param displayOverride replaces the display Classic would pick.
  * @param strictAppStart starts Android games from the resolved intent and reports failure.
  *   Classic leaves this off to keep [launchApp]'s silent failure behavior.
+ * @param fallbackSafTreeUri a granted folder to use when the system has no saved one.
+ *   Classic never sets it.
  */
 data class RomLaunchOptions(
     val displayOverride: Int? = null,
     val strictAppStart: Boolean = false,
+    val fallbackSafTreeUri: String? = null,
 )
 
 enum class RomLaunchGate { Launch, PickCore, PickEmulator }
@@ -113,7 +116,7 @@ class RomLaunchEngine @Inject constructor(
         }
     }
 
-    private fun launchCompanionPkg(pkg: String, context: Context) {
+    fun launchCompanionPkg(pkg: String, context: Context) {
         val pref = appDisplayPreferenceManager.getAppDisplayPreference(pkg)
         val hasExternalDisplay = runCatching {
             val dm = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
@@ -139,11 +142,12 @@ class RomLaunchEngine @Inject constructor(
         game: GameInfo,
         romPath: String,
         context: Context,
+        safTreeFor: (String) -> String?,
     ): ContentUriResult {
         val volumeId = sdCardVolumeId(romPath)
         return if (volumeId != null) {
             val safUri =
-                buildSafDocumentUri(romPath, volumeId, game.systemName, esdePrefs::getSafTreeUri)
+                buildSafDocumentUri(romPath, volumeId, game.systemName, safTreeFor)
             if (safUri == null) {
                 Log.d(TAG, "Requesting SAF tree for system=${game.systemName}")
                 ContentUriResult.NeedsAccess
@@ -203,6 +207,7 @@ class RomLaunchEngine @Inject constructor(
             corePath = corePath,
             useSavedCommand = true,
             displayId = options.displayOverride ?: PRIMARY_DISPLAY_ID,
+            safTreeFor = { esdePrefs.getSafTreeUri(it) ?: options.fallbackSafTreeUri },
         )
     }
 
@@ -229,6 +234,7 @@ class RomLaunchEngine @Inject constructor(
             corePath = null,
             useSavedCommand = false,
             displayId = PRIMARY_DISPLAY_ID,
+            safTreeFor = esdePrefs::getSafTreeUri,
         )
     }
 
@@ -302,6 +308,7 @@ class RomLaunchEngine @Inject constructor(
         corePath: String?,
         useSavedCommand: Boolean,
         displayId: Int,
+        safTreeFor: (String) -> String?,
     ): RomLaunchOutcome {
         if (!EmulatorRegistry.isInstalled(context, pkg)) {
             return RomLaunchOutcome.Failed(LaunchFailure.EmulatorNotInstalled(pkg))
@@ -311,10 +318,10 @@ class RomLaunchEngine @Inject constructor(
             EmulatorRegistry.resolve(pkg)?.needsExternalStorageUri == true
 
         val effectiveContentUri: Uri = if (needsExternalStorageUri) {
-            buildAetherDocUri(game.systemName, romPath, esdePrefs::getSafTreeUri, context)
+            buildAetherDocUri(game.systemName, romPath, safTreeFor, context)
                 ?: return RomLaunchOutcome.NeedsFileAccess(game, safPickerHintFor(romPath))
         } else {
-            when (val resolved = resolveContentUri(game, romPath, context)) {
+            when (val resolved = resolveContentUri(game, romPath, context, safTreeFor)) {
                 is ContentUriResult.Resolved -> resolved.uri
                 ContentUriResult.NeedsAccess ->
                     return RomLaunchOutcome.NeedsFileAccess(game, safPickerHintFor(romPath))
@@ -326,7 +333,7 @@ class RomLaunchEngine @Inject constructor(
         // our persistable tree grant too — the emulator can then resolve references inside the
         // same ROM directory.
         if (needsExternalStorageUri) {
-            esdePrefs.getSafTreeUri(game.systemName)?.let { treeUriStr ->
+            safTreeFor(game.systemName)?.let { treeUriStr ->
                 try {
                     context.grantUriPermission(
                         pkg,

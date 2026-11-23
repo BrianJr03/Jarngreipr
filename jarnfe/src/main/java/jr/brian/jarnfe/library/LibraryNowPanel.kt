@@ -20,6 +20,8 @@ import jr.brian.core.ui.components.JarnText
 import jr.brian.core.ui.library.JarnMetadataPlate
 import jr.brian.core.ui.theme.JarnTheme
 import jr.brian.jarnfe.R
+import jr.brian.jarnfe.launch.GameActionsDeck
+import jr.brian.jarnfe.launch.JarnGameActions
 import java.text.DateFormat
 import java.util.Date
 
@@ -36,7 +38,7 @@ internal fun LibraryNowPanel(selection: LibrarySelection, recent: List<JarnLibra
             message = stringResource(R.string.jarnfe_empty_now_message),
         )
         is LibrarySelection.System -> NowColumn { SystemSummary(selection.system, recent) }
-        is LibrarySelection.Game -> NowColumn { GameDetails(selection.game) }
+        is LibrarySelection.Game -> NowColumn { GameNow(selection.game) }
     }
 }
 
@@ -82,7 +84,17 @@ private fun RecentGames(games: List<JarnLibraryGame>) {
 }
 
 @Composable
-private fun GameDetails(game: JarnLibraryGame) {
+private fun GameNow(game: JarnLibraryGame) {
+    val controller = JarnGameActions.controller
+    if (controller == null) {
+        GameDetails(game) {}
+    } else {
+        GameActionsDeck(game, controller) { actions -> GameDetails(game, actions) }
+    }
+}
+
+@Composable
+private fun GameDetails(game: JarnLibraryGame, actions: @Composable () -> Unit) {
     val colors = JarnTheme.colors
     Box(
         Modifier
@@ -91,6 +103,7 @@ private fun GameDetails(game: JarnLibraryGame) {
             .clip(JarnTheme.radius.mdShape),
     ) { LibraryArt(game.artPath, game.title) }
     JarnText(game.title, JarnTheme.type.heading, colors.textHigh, maxLines = 2)
+    actions()
     game.metadata.description?.trim()?.takeIf { it.isNotEmpty() }?.let {
         JarnText(it, JarnTheme.type.body, colors.textMid, maxLines = DESCRIPTION_MAX_LINES)
     }

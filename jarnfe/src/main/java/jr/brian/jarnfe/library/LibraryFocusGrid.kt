@@ -53,6 +53,7 @@ internal fun <T : Any> LibraryFocusGrid(
     onFocused: (String) -> Unit,
     cellMinSize: Dp,
     modifier: Modifier = Modifier,
+    refocusSignal: Int = 0,
     header: (@Composable () -> Unit)? = null,
     itemContent: @Composable (item: T, modifier: Modifier) -> Unit,
 ) {
@@ -61,7 +62,7 @@ internal fun <T : Any> LibraryFocusGrid(
     var lastFocused by remember { mutableStateOf<String?>(null) }
     val keys = remember(items) { items.mapTo(HashSet(), itemKey) }
     val focusLost = lastFocused?.let { it !in keys } ?: false
-    val target = remember(items.isEmpty(), focusLost) { focusedKey ?: items.firstOrNull()?.let(itemKey) }
+    val target = remember(items.isEmpty(), focusLost, refocusSignal) { focusedKey ?: items.firstOrNull()?.let(itemKey) }
     val headerCount = if (header != null) 1 else 0
     var headerHeight by remember { mutableIntStateOf(0) }
     val spacingPx = with(LocalDensity.current) { JarnTheme.space.md.roundToPx() }
@@ -70,7 +71,7 @@ internal fun <T : Any> LibraryFocusGrid(
         HeaderRevealSpec(gridState, baseSpec) { if (headerHeight > 0) headerHeight + spacingPx else 0 }
     }
 
-    LaunchedEffect(target) {
+    LaunchedEffect(target, refocusSignal) {
         val index = items.indexOfFirst { itemKey(it) == target }
         if (index >= 0) gridState.restoreFocus(index + headerCount, requester)
     }

@@ -156,6 +156,7 @@ private fun LibraryGames(
             focusedKey = focusedKey,
             onFocused = onFocused,
             cellMinSize = GameCellMinSize,
+            refocusSignal = library.stageRefocus,
         ) { game, modifier ->
             JarnGameTile(
                 title = game.title,

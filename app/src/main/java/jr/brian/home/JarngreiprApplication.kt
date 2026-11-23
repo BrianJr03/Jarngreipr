@@ -16,6 +16,8 @@ import jr.brian.home.util.CrashLogger
 import jr.brian.home.util.ThorDetection
 import jr.brian.jarnfe.launch.JarnGameLauncher
 import jr.brian.jarnfe.launch.JarnGameLauncherProvider
+import jr.brian.jarnfe.launch.JarnGameOptions
+import jr.brian.jarnfe.launch.JarnGameOptionsProvider
 import jr.brian.jarnfe.library.JarnLibraryDataProvider
 import jr.brian.frontend.library.art.JarnLibraryData
 import jr.brian.frontend.library.setup.LibrarySetup
@@ -28,6 +30,7 @@ class JarngreiprApplication :
     ImageLoaderFactory,
     Configuration.Provider,
     JarnGameLauncherProvider,
+    JarnGameOptionsProvider,
     JarnLibraryDataProvider {
 
     /** A [Provider] so Classic never builds Jarn FE's library data. */
@@ -49,6 +52,12 @@ class JarngreiprApplication :
 
     override val jarnGameLauncher: JarnGameLauncher
         get() = jarnGameLauncherProvider.get()
+
+    @Inject
+    lateinit var jarnGameOptionsProvider: Provider<JarnGameOptions>
+
+    override val jarnGameOptions: JarnGameOptions
+        get() = jarnGameOptionsProvider.get()
 
     /**
      * Injected as [Provider] so Dagger does NOT construct the singleton as a

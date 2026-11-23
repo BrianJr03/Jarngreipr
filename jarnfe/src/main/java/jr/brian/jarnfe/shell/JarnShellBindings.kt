@@ -5,8 +5,10 @@ import jr.brian.jarnfe.input.JarnAction
 import jr.brian.jarnfe.input.JarnBindings
 import jr.brian.jarnfe.input.JarnBindingsBuilder
 import jr.brian.jarnfe.input.jarnBindings
+import jr.brian.jarnfe.launch.JarnGameActions
 import jr.brian.jarnfe.library.JarnLibraryStore
 import jr.brian.jarnfe.library.LibraryConfirm
+import jr.brian.jarnfe.library.LibrarySelection
 import jr.brian.jarnfe.session.JarnSessionState
 import jr.brian.jarnfe.session.JarnSessionStore
 import jr.brian.jarnfe.session.StageRoute
@@ -29,6 +31,7 @@ internal fun JarnBindingsBuilder.stageBindings(
 ) {
     confirmHint(library.state.confirmFor(state.stageRoute, state.librarySection, library.canPlay))
     backHint(state, session)
+    gameActionsBinding(state, session, library)
     if (state.stageRoute != StageRoute.Settings) {
         on(JarnAction.Menu, R.string.jarnfe_route_settings) {
             session.update { openRoute(StageRoute.Settings) }
@@ -44,6 +47,19 @@ internal fun JarnBindingsBuilder.stageBindings(
             on(JarnAction.TabNext) { library.update { stepOpenSystem(1) } }
         }
         StageRoute.Settings -> Unit
+    }
+}
+
+private fun JarnBindingsBuilder.gameActionsBinding(
+    state: JarnSessionState,
+    session: JarnSessionStore,
+    library: JarnLibraryStore,
+) {
+    val selection = library.state.selection(state.stageRoute, state.librarySection)
+    if (selection !is LibrarySelection.Game || JarnGameActions.controller == null) return
+    on(JarnAction.Context, R.string.jarnfe_hint_context) {
+        JarnGameActions.focusActions()
+        session.update { openDeckNow() }
     }
 }
 

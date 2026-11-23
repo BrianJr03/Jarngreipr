@@ -78,7 +78,9 @@ class AppJarnGameLauncher @Inject constructor(
         val game = resolveGame(request.game)
         request.emulatorChoice?.let { saveChoice(game, it) }
         gateResult(game)?.let { return it }
-        if (isMissing(game)) return JarnLaunchResult.MissingRom
+        if (isMissing(game) || isMissingFromFolder(game, request.game)) {
+            return JarnLaunchResult.MissingRom
+        }
 
         val companionChoices = mutableListOf<String>()
         val outcome = engine.launchGame(
@@ -91,6 +93,7 @@ class AppJarnGameLauncher @Inject constructor(
             options = RomLaunchOptions(
                 displayOverride = (request.target as? JarnLaunchTarget.Display)?.displayId,
                 strictAppStart = true,
+                fallbackSafTreeUri = request.game.sourceTreeUri,
             ),
         )
         return outcome.toJarnResult(companionChoices)
@@ -120,7 +123,7 @@ class AppJarnGameLauncher @Inject constructor(
     private fun resolveGame(ref: JarnGameRef): GameInfo =
         romSearchStateHolder.allGames.value.firstOrNull {
             it.systemName == ref.systemName && it.path == ref.path
-        } ?: GameInfo(
+        }?.let { it.copy(romAbsolutePath = it.romAbsolutePath ?: ref.absolutePath) } ?: GameInfo(
             path = ref.path,
             name = ref.title,
             systemName = ref.systemName,
@@ -158,6 +161,13 @@ class AppJarnGameLauncher @Inject constructor(
             RomLaunchGate.PickEmulator ->
                 JarnLaunchResult.NeedsEmulatorChoice(JarnEmulatorChoiceKind.Emulator)
         }
+    }
+
+    /** A folder-picked game that could not be found there has no real path to hand an emulator. */
+    private fun isMissingFromFolder(game: GameInfo, ref: JarnGameRef): Boolean {
+        if (ref.sourceTreeUri == null || game.romAbsolutePath != null) return false
+        val guessed = resolveRomPath(game, esdePrefs.state.value.romsPaths) ?: return true
+        return !File(guessed).exists()
     }
 
     private fun isMissing(game: GameInfo): Boolean {
