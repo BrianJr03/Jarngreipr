@@ -117,7 +117,6 @@ private fun DeckTabContent(state: JarnSessionState) {
     when (state.deckTab) {
         DeckTab.Now -> LibraryNowPanel(
             selection = JarnLibrary.state.selection(state.stageRoute, state.librarySection),
-            recent = JarnLibrary.state.recent.items,
         )
         DeckTab.Apps -> JarnAppsRoute()
         DeckTab.Canvas -> CanvasRoute(state)

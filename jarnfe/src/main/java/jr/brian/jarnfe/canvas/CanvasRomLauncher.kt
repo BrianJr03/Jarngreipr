@@ -20,6 +20,7 @@ import jr.brian.jarnfe.launch.JarnLaunchRequest
 import jr.brian.jarnfe.launch.JarnLaunchResult
 import jr.brian.jarnfe.launch.jarnGameLauncherOrNull
 import jr.brian.jarnfe.launch.launchNoticeRes
+import jr.brian.jarnfe.launch.recordGameLaunched
 import jr.brian.jarnfe.shell.JarnNotices
 
 internal tailrec fun Context.findActivity(): Activity? = when (this) {
@@ -64,6 +65,7 @@ internal fun rememberCanvasRomLauncher(): (JarnCanvasRom) -> Unit {
             val result = runCatching { launcher.launch(activity, JarnLaunchRequest(ref)) }
                 .getOrElse { JarnLaunchResult.Failed(JarnLaunchFailure.Unknown) }
             launchNoticeRes(result)?.let(JarnNotices::show)
+            if (result is JarnLaunchResult.Launched) activity.recordGameLaunched(ref)
             if (result is JarnLaunchResult.NeedsFileAccess) {
                 pendingGrant = ref
                 try {

@@ -79,6 +79,44 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE lastPlayed IS NOT NULL AND isHidden = 0 ORDER BY lastPlayed DESC LIMIT :limit")
     fun observeRecent(limit: Int = 20): Flow<List<GameEntity>>
 
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE systemId = :systemId AND lastPlayed IS NOT NULL AND isHidden = 0
+        ORDER BY lastPlayed DESC LIMIT :limit
+        """
+    )
+    fun observeRecentInSystem(systemId: String, limit: Int): Flow<List<GameEntity>>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE systemId = :systemId AND playCount > 0 AND isHidden = 0
+        ORDER BY playCount DESC, playTimeMinutes DESC, displayName COLLATE NOCASE
+        LIMIT :limit
+        """
+    )
+    fun observeMostPlayedInSystem(systemId: String, limit: Int): Flow<List<GameEntity>>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE systemId = :systemId AND isHidden = 0
+        ORDER BY displayName COLLATE NOCASE LIMIT :limit
+        """
+    )
+    fun observePreviewInSystem(systemId: String, limit: Int): Flow<List<GameEntity>>
+
+    /** Only rows with activity, so per-system totals never load a whole large library. */
+    @Query(
+        """
+        SELECT systemId, absolutePath, relativePath, lastPlayed, playTimeMinutes, isFavorite
+        FROM games
+        WHERE isHidden = 0 AND (lastPlayed IS NOT NULL OR playTimeMinutes > 0 OR isFavorite = 1)
+        """
+    )
+    fun observePlayRows(): Flow<List<GamePlayRow>>
+
     @Query("SELECT sourceId, systemId, COUNT(*) AS gameCount FROM games GROUP BY sourceId, systemId")
     fun observeSourceCounts(): Flow<List<SourceGameCount>>
 

@@ -12,6 +12,8 @@ data class JarnLibrarySystem(
     val artPath: String? = null,
     val lastPlayedAtMs: Long? = null,
     val logoPath: String? = null,
+    val favoriteCount: Int = 0,
+    val playtimeMinutes: Long = 0,
 )
 
 /** Every field is optional because scraped metadata is often partial. Blank values are not shown. */
@@ -39,6 +41,20 @@ data class JarnLibraryGame(
     val deckArtPath: String? = null,
     /** The art this game has with no art choices applied. Launch records keep this one. */
     val defaultArtPath: String? = artPath,
+)
+
+enum class JarnShelfGroup { Recent, MostPlayed, InSystem }
+
+@Immutable
+data class JarnShelfGame(val game: JarnLibraryGame, val group: JarnShelfGroup)
+
+/** A system's capped Now data. [isLoaded] tells an empty shelf apart from one still loading. */
+@Immutable
+data class JarnSystemNow(
+    val systemId: String,
+    val shelf: List<JarnShelfGame> = emptyList(),
+    val sceneArtPath: String? = null,
+    val isLoaded: Boolean = false,
 )
 
 sealed interface JarnLibraryStatus {
@@ -70,6 +86,9 @@ interface JarnLibrarySource {
     fun observeGames(systemId: String): Flow<JarnLibraryFeed<JarnLibraryGame>>
     fun observeFavorites(): Flow<JarnLibraryFeed<JarnLibraryGame>>
     fun observeRecent(): Flow<JarnLibraryFeed<JarnLibraryGame>>
+    fun observeSystemNow(systemId: String): Flow<JarnSystemNow> =
+        flowOf(JarnSystemNow(systemId, isLoaded = true))
+    fun observeWideArt(gameId: String): Flow<String?> = flowOf(null)
     fun refresh()
 }
 

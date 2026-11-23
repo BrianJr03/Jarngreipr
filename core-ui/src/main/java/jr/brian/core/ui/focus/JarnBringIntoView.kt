@@ -88,6 +88,19 @@ fun JarnRevealScrollTop(
 }
 
 /**
+ * For a scroller nested inside a [JarnRevealScrollTop] page. That rule measures the page's axis,
+ * so a row running the other way needs its own, keeping focused items [margin] clear of each end.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun JarnEdgeScroll(margin: Dp = LocalJarnSpacing.current.focusEdge, content: @Composable () -> Unit) {
+    val marginPx = with(LocalDensity.current) { margin.toPx() }
+    val base = LocalBringIntoViewSpec.current
+    val spec = remember(marginPx, base) { JarnBringIntoViewSpec(marginPx, base) }
+    CompositionLocalProvider(LocalBringIntoViewSpec provides spec, content = content)
+}
+
+/**
  * Scroll for a focused lazy item, measured on the whole item so a title inside it stays visible.
  * [toTop] and [toBottom] are set on the first and last items, so the list's padding is reachable.
  */
