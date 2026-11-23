@@ -63,6 +63,7 @@ fun JarnInputLayer(
 fun JarnScreenHintBar(modifier: Modifier = Modifier) {
     val router = LocalJarnInputRouter.current
     val screen = LocalJarnScreen.current
-    val hints = router.hintsFor(screen).map { JarnHint(it.key, stringResource(it.labelRes)) }
+    val hints = (router.hintsFor(screen) + listOfNotNull(router.tabHintFor(screen)))
+        .map { JarnHint(it.key, stringResource(it.labelRes)) }
     JarnHintBar(hints, modifier, active = router.activeScreen == screen)
 }

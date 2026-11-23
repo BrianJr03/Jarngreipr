@@ -167,6 +167,14 @@ class JarnShellInputTest {
     }
 
     @Test
+    fun `each screen hints the shoulder pair that moves its tabs`() {
+        assertEquals(JarnKey.L1R1, router.tabHintFor(JarnScreen.Stage)?.key)
+        assertEquals(null, router.tabHintFor(JarnScreen.Deck))
+        router.oppositeTabsAvailable = { true }
+        assertEquals(JarnKey.L2R2, router.tabHintFor(JarnScreen.Deck)?.key)
+    }
+
+    @Test
     fun `start opens settings from the library and back returns`() {
         press(KeyEvent.KEYCODE_BUTTON_START)
         assertEquals(StageRoute.Settings, session.state.stageRoute)

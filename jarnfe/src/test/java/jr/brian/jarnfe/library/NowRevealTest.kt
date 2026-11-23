@@ -2,6 +2,7 @@ package jr.brian.jarnfe.library
 
 import android.app.Application
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,9 +33,11 @@ class NowRevealTest {
             JarnTheme {
                 val reveal = rememberNowReveal(value) { it }
                 gate = reveal.gate
-                NowRevealBox(reveal) {
-                    BasicText(reveal.shown)
-                    if (reveal.shown == "new") NowRevealWhen(partReady)
+                CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
+                    NowRevealBox(reveal) {
+                        BasicText(reveal.shown)
+                        if (reveal.shown == "new") NowRevealWhen(partReady)
+                    }
                 }
             }
         }

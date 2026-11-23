@@ -46,6 +46,19 @@ private fun JarnSessionState.deckTabStrip(searchActionsOnDeck: Boolean): JarnTab
 }
 
 /** Only tab state changes, so the active screen and its focused item stay where they are. */
+internal fun oppositeTabStripNow(
+    session: JarnSessionStore,
+    library: JarnLibraryStore,
+    search: JarnSearchStore,
+    router: JarnInputRouter,
+): JarnTabStrip? {
+    val state = session.state
+    val anyModalOpen = JarnScreen.entries.any(router::hasModalLayer)
+    val nowShowsGame = library.state.selection(state.stageRoute, state.librarySection) is LibrarySelection.Game
+    val gameActionPageOpen = nowShowsGame && JarnGameActions.page != GameActionsPage.Actions
+    return state.oppositeTabStrip(search.showingActions, anyModalOpen, gameActionPageOpen)
+}
+
 internal fun stepOppositeTabs(
     delta: Int,
     session: JarnSessionStore,
@@ -53,11 +66,7 @@ internal fun stepOppositeTabs(
     search: JarnSearchStore,
     router: JarnInputRouter,
 ) {
-    val state = session.state
-    val anyModalOpen = JarnScreen.entries.any(router::hasModalLayer)
-    val nowShowsGame = library.state.selection(state.stageRoute, state.librarySection) is LibrarySelection.Game
-    val gameActionPageOpen = nowShowsGame && JarnGameActions.page != GameActionsPage.Actions
-    when (state.oppositeTabStrip(search.showingActions, anyModalOpen, gameActionPageOpen)) {
+    when (oppositeTabStripNow(session, library, search, router)) {
         JarnTabStrip.LibrarySections -> session.update { stepLibrarySection(delta) }
         JarnTabStrip.GameListSystems -> library.update { stepOpenSystem(delta) }
         JarnTabStrip.SearchTabs -> search.stepTab(delta)

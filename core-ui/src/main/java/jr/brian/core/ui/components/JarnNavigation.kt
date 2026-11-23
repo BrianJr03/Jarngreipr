@@ -218,6 +218,8 @@ enum class JarnKey(@param:StringRes val labelRes: Int, val shape: JarnKeyShape) 
     R1(R.string.jarn_key_r1, JarnKeyShape.Shoulder),
     L2(R.string.jarn_key_l2, JarnKeyShape.Shoulder),
     R2(R.string.jarn_key_r2, JarnKeyShape.Shoulder),
+    L1R1(R.string.jarn_key_l1_r1, JarnKeyShape.Shoulder),
+    L2R2(R.string.jarn_key_l2_r2, JarnKeyShape.Shoulder),
     L3(R.string.jarn_key_l3, JarnKeyShape.Shoulder),
     R3(R.string.jarn_key_r3, JarnKeyShape.Shoulder),
     Start(R.string.jarn_key_start, JarnKeyShape.System),

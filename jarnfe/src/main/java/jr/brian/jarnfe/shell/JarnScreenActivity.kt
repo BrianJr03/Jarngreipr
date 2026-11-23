@@ -88,6 +88,9 @@ abstract class JarnScreenActivity : ComponentActivity() {
     }
 
     private fun installGlobalBindings(deckMissing: Boolean) {
+        JarnInput.oppositeTabsAvailable = {
+            oppositeTabStripNow(JarnSession, JarnLibrary, JarnSearch, JarnInput) != null
+        }
         JarnInput.setGlobalBindings(
             jarnGlobalBindings(
                 session = JarnSession,

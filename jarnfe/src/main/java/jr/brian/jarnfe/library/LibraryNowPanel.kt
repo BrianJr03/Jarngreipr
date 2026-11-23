@@ -4,6 +4,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -31,19 +32,21 @@ internal fun LibraryNowPanel(selection: LibrarySelection) {
     val reveal = rememberNowReveal(settled) { it.focusKey() }
     val shown = reveal.shown
     val shownNow = rememberShownSystemNow(sceneNow, shown.sceneSystemId())
-    NowScene(settled, sceneNow) {
-        NowShelfReturnLayer(settled) {
-            NowFocusKeeper(shown) {
-                NowRevealBox(reveal) {
-                    when (shown) {
-                        LibrarySelection.None -> JarnEmptyState(
-                            title = stringResource(R.string.jarnfe_empty_now_title),
-                            message = stringResource(R.string.jarnfe_empty_now_message),
-                        )
-                        is LibrarySelection.System -> key(shown.system.id) {
-                            NowSystemView(shown.system, shownNow)
+    CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
+        NowScene(settled, sceneNow) {
+            NowShelfReturnLayer(settled) {
+                NowFocusKeeper(shown) {
+                    NowRevealBox(reveal) {
+                        when (shown) {
+                            LibrarySelection.None -> JarnEmptyState(
+                                title = stringResource(R.string.jarnfe_empty_now_title),
+                                message = stringResource(R.string.jarnfe_empty_now_message),
+                            )
+                            is LibrarySelection.System -> key(shown.system.id) {
+                                NowSystemView(shown.system, shownNow)
+                            }
+                            is LibrarySelection.Game -> NowGameView(shown.game)
                         }
-                        is LibrarySelection.Game -> NowGameView(shown.game)
                     }
                 }
             }

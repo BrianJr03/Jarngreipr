@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -93,9 +92,7 @@ internal fun <T> rememberNowReveal(target: T, keyOf: (T) -> Any?): NowReveal<T> 
 
 @Composable
 internal fun NowRevealBox(reveal: NowReveal<*>, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalNowRevealGate provides reveal.gate) {
-        Box(reveal.modifier, contentAlignment = Alignment.Center) { content() }
-    }
+    Box(reveal.modifier, contentAlignment = Alignment.Center) { content() }
 }
 
 /** The shelf for the view on screen, held while the scene has already moved to the next system. */

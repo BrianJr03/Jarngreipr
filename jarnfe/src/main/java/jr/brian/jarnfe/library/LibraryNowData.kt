@@ -50,7 +50,7 @@ internal fun rememberSettledSelection(selection: LibrarySelection): LibrarySelec
         settleMillis = JarnTheme.motion.artDebounceMillis.toLong(),
         keyOf = { it.focusKey() },
         skipWait = { held, next ->
-            held::class != next::class ||
+            (held::class != next::class && next !is LibrarySelection.None) ||
                 (next is LibrarySelection.Game && next.game.id == actionsGameId)
         },
     )

@@ -13,6 +13,7 @@
     <string name="jarnfe_deck_recovery_restoring">Bringing the bottom screen back</string>
     <string name="jarnfe_hint_previous_tab">Previous</string>
     <string name="jarnfe_hint_next_tab">Next</string>
+    <string name="jarnfe_hint_tabs">Tabs</string>
     <string name="jarnfe_hint_move">Move</string>
     <string name="jarnfe_hint_swap">Swap screens</string>
 </resources>
