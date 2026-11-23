@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="jarnfe_rss_unavailable_title">RSS isn\'t available</string>
+    <string name="jarnfe_rss_unavailable_message">Open this page in Classic instead.</string>
+    <string name="jarnfe_rss_loading">Loading feeds</string>
+    <string name="jarnfe_rss_no_feeds_title">No feeds yet</string>
+    <string name="jarnfe_rss_no_feeds_message">Add a feed to start reading and listening.</string>
+    <string name="jarnfe_rss_no_articles_title">Nothing here</string>
+    <string name="jarnfe_rss_no_articles_message">Refresh your feeds or pick another list.</string>
+
+    <string name="jarnfe_rss_filter_all">All articles</string>
+    <string name="jarnfe_rss_filter_audio">Audio</string>
+    <string name="jarnfe_rss_filter_history">History</string>
+
+    <string name="jarnfe_rss_badge_audio">Audio</string>
+    <string name="jarnfe_rss_badge_video">Video</string>
+    <string name="jarnfe_rss_meta_separator">" · "</string>
+
+    <string name="jarnfe_rss_hint_select">Select</string>
+    <string name="jarnfe_rss_hint_read">Read</string>
+    <string name="jarnfe_rss_hint_menu">RSS menu</string>
+    <string name="jarnfe_rss_hint_player">Player</string>
+    <string name="jarnfe_rss_hint_scroll">Scroll</string>
+    <string name="jarnfe_rss_hint_seek">Seek</string>
+    <string name="jarnfe_rss_hint_play">Play</string>
+    <string name="jarnfe_rss_hint_pause">Pause</string>
+    <string name="jarnfe_rss_hint_watch">Watch</string>
+    <string name="jarnfe_rss_hint_listen">Listen</string>
+    <string name="jarnfe_rss_hint_browser">Open in browser</string>
+    <string name="jarnfe_rss_hint_previous">Previous article</string>
+    <string name="jarnfe_rss_hint_next">Next article</string>
+
+    <string name="jarnfe_rss_menu_title">RSS</string>
+    <string name="jarnfe_rss_menu_add">Add feed</string>
+    <string name="jarnfe_rss_menu_refresh_all">Refresh all feeds</string>
+    <string name="jarnfe_rss_menu_settings">RSS settings</string>
+    <string name="jarnfe_rss_menu_pages">Canvas pages</string>
+
+    <string name="jarnfe_rss_add_label">Feed URL</string>
+    <string name="jarnfe_rss_feed_refresh">Refresh now</string>
+    <string name="jarnfe_rss_feed_interval">Refresh interval</string>
+    <string name="jarnfe_rss_feed_move_up">Move up</string>
+    <string name="jarnfe_rss_feed_move_down">Move down</string>
+    <string name="jarnfe_rss_feed_remove">Remove feed</string>
+    <string name="jarnfe_rss_remove_title">Remove this feed?</string>
+    <string name="jarnfe_rss_remove_message">%1$s and its saved articles will be removed.</string>
+    <string name="jarnfe_rss_remove_confirm">Remove</string>
+    <string name="jarnfe_rss_cancel">Cancel</string>
+    <string name="jarnfe_rss_interval_current">Current</string>
+    <string name="jarnfe_rss_interval_manual">Manual only</string>
+    <string name="jarnfe_rss_interval_minutes">Every %1$d minutes</string>
+    <string name="jarnfe_rss_interval_hour">Every hour</string>
+    <string name="jarnfe_rss_interval_hours">Every %1$d hours</string>
+
+    <string name="jarnfe_rss_item_read">Read article</string>
+    <string name="jarnfe_rss_item_listen">Listen</string>
+    <string name="jarnfe_rss_item_watch">Watch video</string>
+    <string name="jarnfe_rss_item_browser">Open in browser</string>
+
+    <string name="jarnfe_rss_settings_day_first">Day before month</string>
+    <string name="jarnfe_rss_settings_24_hour">24-hour time</string>
+    <string name="jarnfe_rss_settings_clear">Clear saved play positions</string>
+    <string name="jarnfe_rss_settings_clear_title">Clear play positions?</string>
+    <string name="jarnfe_rss_settings_clear_message">Episodes will start from the beginning next time.</string>
+    <string name="jarnfe_rss_settings_clear_confirm">Clear</string>
+
+    <string name="jarnfe_rss_player_previous">Previous</string>
+    <string name="jarnfe_rss_player_next">Next</string>
+    <string name="jarnfe_rss_player_back">-15s</string>
+    <string name="jarnfe_rss_player_forward">+15s</string>
+    <string name="jarnfe_rss_player_quieter">Vol -</string>
+    <string name="jarnfe_rss_player_louder">Vol +</string>
+    <string name="jarnfe_rss_player_volume">Volume %1$d%%</string>
+    <string name="jarnfe_rss_player_buffering">Buffering</string>
+    <string name="jarnfe_rss_player_progress">%1$s / %2$s</string>
+    <string name="jarnfe_rss_player_other_app">Playing from another app</string>
+    <string name="jarnfe_rss_video_failed">This video can\'t be played.</string>
+
+    <string name="jarnfe_rss_notice_invalid_url">Enter a valid web address</string>
+    <string name="jarnfe_rss_notice_added">Feed added</string>
+    <string name="jarnfe_rss_notice_not_loaded">Feed added, but it couldn\'t load yet</string>
+    <string name="jarnfe_rss_notice_duplicate">You already have this feed</string>
+    <string name="jarnfe_rss_notice_add_failed">Couldn\'t add that feed</string>
+    <string name="jarnfe_rss_notice_removed">Feed removed</string>
+    <string name="jarnfe_rss_notice_refreshed">Feeds refreshed</string>
+    <string name="jarnfe_rss_notice_refresh_failed">Some feeds couldn\'t refresh</string>
+    <string name="jarnfe_rss_notice_play_failed">Couldn\'t play this item</string>
+    <string name="jarnfe_rss_notice_link_failed">No app can open this link</string>
+    <string name="jarnfe_rss_notice_cleared">Play positions cleared</string>
+</resources>
