@@ -53,6 +53,7 @@ class ImportExportManager @Inject constructor(
     private val screenAssignmentStore: ScreenAssignmentStore,
     private val experienceStore: ExperienceStore,
     private val artSourceStore: jr.brian.frontend.library.art.ArtSourceStore,
+    private val libraryFolderBackup: jr.brian.frontend.library.setup.LibraryFolderBackup,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -66,7 +67,9 @@ class ImportExportManager @Inject constructor(
             ui = buildUiConfig(),
             app = buildAppConfig(),
             page = buildPageConfig(),
-            feature = buildFeatureConfig(),
+            feature = buildFeatureConfig().copy(
+                libraryFolders = libraryFolderBackup.export()?.map { it.toConfig() },
+            ),
             system = buildSystemConfig()
         )
     }
@@ -383,6 +386,9 @@ class ImportExportManager @Inject constructor(
         applyPageConfig(config.page)
         applyFeatureConfig(config.feature)
         applySystemConfig(config.system)
+        config.feature.libraryFolders?.let { folders ->
+            libraryFolderBackup.restore(folders.map { it.toBackedUpFolder() })
+        }
     }
 
     private suspend fun applyUiConfig(config: UiConfig) {

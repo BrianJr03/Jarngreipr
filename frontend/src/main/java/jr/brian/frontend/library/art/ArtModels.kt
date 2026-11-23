@@ -6,7 +6,7 @@ import jr.brian.frontend.library.media.MediaKind
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 
-/** One resolved file. [source] is null when it came only from the library row. */
+/** One resolved file. [source] is null for the user's custom art or a library-only row. */
 data class ArtSlot(val path: String, val source: ArtSource?)
 
 /** Resolved art for one game, keyed by kind. A missing kind has no art anywhere. */

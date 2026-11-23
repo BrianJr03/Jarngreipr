@@ -45,8 +45,8 @@ sealed interface FolderSaveResult {
 /**
  * Connects game folders and scans the ones that have no games yet. Only those
  * sources are scanned, because a rescan replaces rows and would reset the
- * favorites and play stats of games already there. Reads folders only, and
- * never edits the stored grant flag.
+ * favorites and play stats of games already there. Reads folders only. The
+ * stored grant flag changes only when the user grants a folder here.
  */
 @Singleton
 class LibrarySetup @Inject constructor(
@@ -106,7 +106,8 @@ class LibrarySetup @Inject constructor(
             )
         }.isSuccess
         if (!granted) return@withContext FolderSaveResult.Failed
-        repository.addSource(treeUri, documentId, documentId.substringBefore(':'))
+        val sourceId = repository.addSource(treeUri, documentId, documentId.substringBefore(':'))
+        sourceDao.setGranted(sourceId, true)
         attempted.update { it - treeUri }
         recheck()
         FolderSaveResult.Found(match.systemIds.size)
@@ -115,7 +116,7 @@ class LibrarySetup @Inject constructor(
     private suspend fun isAlreadyConnected(treeUri: String): Boolean {
         val location = sourceLocation(treeUri)
         val sources = sourceDao.getAll()
-        val access = classifySources(sources, readGrants(), ::canReadPath)
+        val access = classifySources(sources, context.grantedTrees(), ::canReadFolder)
         return (access.scannable + access.covered).any { source ->
             source.treeUri == treeUri || (
                 location != null &&
@@ -126,7 +127,7 @@ class LibrarySetup @Inject constructor(
 
     private suspend fun evaluate(inputs: SetupInputs) {
         val access = withContext(Dispatchers.IO) {
-            classifySources(inputs.sources, readGrants(), ::canReadPath)
+            classifySources(inputs.sources, context.grantedTrees(), ::canReadFolder)
         }
         _folders.value = gameFolders(access, inputs.counts)
         val sourcesWithGames = inputs.counts.mapTo(HashSet()) { it.sourceId }
@@ -210,14 +211,6 @@ class LibrarySetup @Inject constructor(
             }
         }.orEmpty()
     }.getOrDefault(emptyList())
-
-    private fun readGrants(): Set<String> =
-        context.contentResolver.persistedUriPermissions
-            .filter { it.isReadPermission }
-            .mapTo(HashSet()) { it.uri.toString() }
-
-    private fun canReadPath(path: String): Boolean =
-        File(path).let { it.isDirectory && it.canRead() && it.list() != null }
 
     private data class SetupInputs(
         val sources: List<SourceEntity>,

@@ -1,11 +1,13 @@
 package jr.brian.frontend.library.setup
 
+import android.content.Context
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import jr.brian.frontend.library.LibraryState
 import jr.brian.frontend.library.db.SourceEntity
 import jr.brian.frontend.library.systems.SystemCatalog
 import jr.brian.frontend.library.systems.SystemDef
+import java.io.File
 
 private const val CONTENT_SCHEME = "content://"
 private const val EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.documents"
@@ -66,6 +68,14 @@ internal fun classifySources(
     }
     return SourceAccess(scannable, covered, unreadable)
 }
+
+internal fun Context.grantedTrees(): Set<String> =
+    contentResolver.persistedUriPermissions
+        .filter { it.isReadPermission }
+        .mapTo(HashSet()) { it.uri.toString() }
+
+internal fun canReadFolder(path: String): Boolean =
+    File(path).let { it.isDirectory && it.canRead() && it.list() != null }
 
 /** The storage path of a file path or external storage tree, or null for other providers. */
 internal fun sourceLocation(uri: String): String? {

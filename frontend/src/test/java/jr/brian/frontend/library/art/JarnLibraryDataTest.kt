@@ -82,7 +82,7 @@ class JarnLibraryDataTest {
         indexes = ArtIndexes(roots, catalog)
         store = ArtSourceStore(app)
         store.setSource(ArtSource.DEFAULT)
-        resolver = GameArtResolver(indexes, roots, db.mediaDao(), store)
+        resolver = GameArtResolver(indexes, roots, db.mediaDao(), store) { emptyMap() }
         every { scraper.state } returns MutableStateFlow<ScrapeState>(ScrapeState.Idle)
         library = JarnLibraryData(
             systemDao = db.systemDao(),

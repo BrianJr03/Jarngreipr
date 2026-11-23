@@ -80,7 +80,7 @@ class ArtResolutionTest {
         )
         indexes = ArtIndexes(roots, catalog)
         store = ArtSourceStore(app)
-        resolver = GameArtResolver(indexes, roots, db.mediaDao(), store)
+        resolver = GameArtResolver(indexes, roots, db.mediaDao(), store) { emptyMap() }
     }
 
     @After

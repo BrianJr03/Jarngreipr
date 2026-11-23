@@ -12,8 +12,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Picks each art kind from the chosen source, then the other sources, then
- * the existing library row. Per kind, so a RetroHrai user with no marquee
+ * Picks each art kind from the user's custom art, then the chosen source, then
+ * the other sources, then the existing library row. Per kind, so a RetroHrai user with no marquee
  * still gets one from ES-DE. Never writes to Room or the disk.
  */
 @Singleton
@@ -22,14 +22,19 @@ class GameArtResolver @Inject constructor(
     private val roots: ArtRoots,
     private val mediaDao: MediaDao,
     private val store: ArtSourceStore,
+    private val customArt: CustomArtSource,
 ) {
     suspend fun resolve(game: GameEntity, preferred: ArtSource = store.source): GameArt =
         withContext(Dispatchers.IO) {
             val built = indexes.current()
             val stored = mediaDao.findByGameId(game.id)
             val names = artBasenames(game.relativePath)
+            val custom = customArt.forSystem(game.systemId)[
+                customArtKey(game.absolutePath, game.relativePath),
+            ]
             val slots = MediaKind.entries.mapNotNull { kind ->
-                val slot = fromSources(game.systemId, names, kind, preferred, built)
+                val slot = fromCustom(custom, kind)
+                    ?: fromSources(game.systemId, names, kind, preferred, built)
                     ?: fromLibraryRow(stored, kind)
                 slot?.let { kind to it }
             }.toMap()
@@ -43,15 +48,23 @@ class GameArtResolver @Inject constructor(
             val stored = games.map { it.id }.chunked(QUERY_CHUNK)
                 .flatMap { mediaDao.findByGameIds(it) }
                 .associateBy { it.gameId }
+            val customBySystem = games.map { it.systemId }.distinct()
+                .associateWith(customArt::forSystem)
             games.mapNotNull { game ->
                 val names = artBasenames(game.relativePath)
+                val custom = customBySystem[game.systemId]
+                    ?.get(customArtKey(game.absolutePath, game.relativePath))
                 val slot = TILE_KINDS.firstNotNullOfOrNull { kind ->
-                    fromSources(game.systemId, names, kind, preferred, built)
+                    fromCustom(custom, kind)
+                        ?: fromSources(game.systemId, names, kind, preferred, built)
                         ?: fromLibraryRow(stored[game.id], kind)
                 }
                 slot?.let { game.id to it.path }
             }.toMap()
         }
+
+    private fun fromCustom(custom: CustomGameArt?, kind: MediaKind): ArtSlot? =
+        custom?.pathFor(kind)?.takeIf(::isReadable)?.let { ArtSlot(it, source = null) }
 
     private fun fromSources(
         systemId: String,

@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import jr.brian.frontend.library.art.CustomArtSource
 import jr.brian.frontend.library.art.EsdeMediaRootProvider
 import jr.brian.frontend.library.art.LibraryVisibility
 import jr.brian.frontend.library.art.LibraryVisibilitySource
@@ -12,8 +13,10 @@ import jr.brian.frontend.library.art.RecentLaunchSource
 import jr.brian.frontend.library.setup.LibraryScanPreparer
 import jr.brian.home.data.LibraryStoreSync
 import jr.brian.home.data.RecentlyPlayedManager
+import jr.brian.home.data.readUserOverrideArt
 import jr.brian.home.esde.data.ESDEPreferencesManager
 import jr.brian.home.esde.data.SetupPreferences
+import jr.brian.home.esde.scraper.ScraperCoordinator
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.io.File
@@ -44,6 +47,11 @@ object JarnArtModule {
                 .map { LibraryVisibility(it.hiddenSystems + ANDROID_APPS_SYSTEM, it.hiddenGames) }
                 .distinctUntilChanged()
         }
+
+    /** Read-only view of the art the user set through Classic's Edit Info. */
+    @Provides
+    fun provideCustomArt(coordinator: Provider<ScraperCoordinator>): CustomArtSource =
+        CustomArtSource { systemId -> readUserOverrideArt(coordinator.get().scrapedRoot(), systemId) }
 
     @Provides
     fun provideScanPreparer(sync: Provider<LibraryStoreSync>): LibraryScanPreparer =

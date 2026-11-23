@@ -50,6 +50,7 @@ class ArtSourceConfigImportTest {
             screenAssignmentStore = mockk<ScreenAssignmentStore>(relaxed = true),
             experienceStore = ExperienceStore(context),
             artSourceStore = store,
+            libraryFolderBackup = mockk(relaxed = true),
         )
     }
 
@@ -60,7 +61,7 @@ class ArtSourceConfigImportTest {
 
     @Test
     fun `schema version includes the art source field`() {
-        assertEquals(39, JarngreiprConfig.CONFIG_VERSION)
+        assertEquals(40, JarngreiprConfig.CONFIG_VERSION)
     }
 
     @Test
