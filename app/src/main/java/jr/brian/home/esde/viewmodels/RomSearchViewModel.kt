@@ -162,7 +162,7 @@ class RomSearchViewModel @Inject constructor(
             // Force one pull from the adapter so `store.allGames` reflects
             // post-scan Room state. The init block's collector drops
             // emissions while LibraryState is Scanning (preventing mid-scan
-            // blips during `replaceSystemGames`' delete+insert), so without
+            // blips while each system is reconciled), so without
             // this read the last emission the collector saw gets stuck as
             // the published value — showing "No systems found" even though
             // the scan actually populated games.

@@ -27,8 +27,13 @@ class ScannerDispatcher @Inject constructor(
         systems: Set<String>? = null,
     ): List<ScannedRom> = pickScanner(source).scan(source.treeUri, systems)
 
+    suspend fun scanWithReport(
+        source: SourceEntity,
+        systems: Set<String>? = null,
+    ): ScanReport = pickScanner(source).scanWithReport(source.treeUri, systems)
+
     /** For a source that is one system's folder. Classic's [scan] never comes here. */
-    suspend fun scanSystemFolder(source: SourceEntity, def: SystemDef): List<ScannedRom> =
+    suspend fun scanSystemFolder(source: SourceEntity, def: SystemDef): ScanReport =
         if (source.treeUri.startsWith("content://")) {
             saf.scanSystemFolder(source.treeUri, def)
         } else {

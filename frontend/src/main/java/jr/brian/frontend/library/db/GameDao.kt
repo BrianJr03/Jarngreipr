@@ -9,6 +9,8 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+private const val SQLITE_VARIABLE_CHUNK = 500
+
 @Dao
 interface GameDao {
     @Query("SELECT * FROM games WHERE isHidden = 0 ORDER BY displayName COLLATE NOCASE")
@@ -118,12 +120,50 @@ interface GameDao {
     @Delete
     suspend fun delete(game: GameEntity)
 
-    @Query("DELETE FROM games WHERE sourceId = :sourceId AND systemId = :systemId")
-    suspend fun deleteBySourceAndSystem(sourceId: Long, systemId: String)
+    @Query("DELETE FROM games WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(games: List<GameEntity>): List<Long>
+
+    @Update
+    suspend fun updateAll(games: List<GameEntity>)
+
+    /**
+     * Applies one system's scan in a single transaction. Surviving rows
+     * are updated in place, so their ids and every row that references
+     * them (media, play history, scrape jobs) stay valid. Reading the
+     * existing rows inside the transaction means a favorite toggled
+     * during a scan can't be overwritten.
+     *
+     * @param removeMissing false when the scan could not read the whole
+     *   system, so a game it didn't see may still be on disk.
+     */
     @Transaction
-    suspend fun replaceSystemGames(sourceId: Long, systemId: String, games: List<GameEntity>) {
-        deleteBySourceAndSystem(sourceId, systemId)
-        games.forEach { insert(it) }
+    suspend fun reconcileSystemGames(
+        sourceId: Long,
+        systemId: String,
+        scanned: List<GameEntity>,
+        removeMissing: Boolean,
+        keepImportedMetadata: Boolean,
+    ) {
+        val existing = getBySystemAndSource(systemId, sourceId).associateBy { it.relativePath }
+        val scannedByPath = scanned.associateBy { it.relativePath }
+
+        val changed = scannedByPath.mapNotNull { (path, scan) ->
+            val current = existing[path] ?: return@mapNotNull null
+            current.refreshedFrom(scan, keepImportedMetadata).takeIf { it != current }
+        }
+        if (changed.isNotEmpty()) updateAll(changed)
+
+        val added = scannedByPath.filterKeys { it !in existing }.values.toList()
+        if (added.isNotEmpty()) insertAll(added)
+
+        if (removeMissing) {
+            existing.filterKeys { it !in scannedByPath }.values
+                .map { it.id }
+                .chunked(SQLITE_VARIABLE_CHUNK)
+                .forEach { deleteByIds(it) }
+        }
     }
 }

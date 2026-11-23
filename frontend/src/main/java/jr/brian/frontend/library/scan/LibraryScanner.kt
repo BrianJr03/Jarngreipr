@@ -30,5 +30,31 @@ interface LibraryScanner {
     suspend fun scan(
         sourceRoot: String,
         systems: Set<String>? = null,
-    ): List<ScannedRom>
+    ): List<ScannedRom> = scanWithReport(sourceRoot, systems).roms
+
+    /** Same walk as [scan], and also says which results can be trusted to be whole. */
+    suspend fun scanWithReport(
+        sourceRoot: String,
+        systems: Set<String>? = null,
+    ): ScanReport
+}
+
+/**
+ * What a scan found and how much of it was actually readable. A game
+ * missing from [roms] only counts as removed when [isComplete] is true
+ * for its system; otherwise an unmounted card or lost grant would look
+ * exactly like the user deleting their library.
+ *
+ * @property unreadableSystems systems with at least one folder that
+ *   failed to list.
+ * @property listingTrusted false when listings can succeed yet hide
+ *   files, as shared storage does without all-files access.
+ */
+data class ScanReport(
+    val roms: List<ScannedRom>,
+    val unreadableSystems: Set<String> = emptySet(),
+    val listingTrusted: Boolean = true,
+) {
+    fun isComplete(systemId: String): Boolean =
+        listingTrusted && systemId !in unreadableSystems
 }

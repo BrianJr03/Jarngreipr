@@ -16,6 +16,7 @@ import jr.brian.frontend.library.db.SystemEntity
 import jr.brian.frontend.library.media.EsdeLayout
 import jr.brian.frontend.library.media.JarngreiprLayout
 import jr.brian.frontend.library.media.MediaIndex
+import jr.brian.frontend.library.scan.ScanReport
 import jr.brian.frontend.library.scan.ScannedRom
 import jr.brian.frontend.library.scan.ScannerDispatcher
 import jr.brian.frontend.library.systems.SystemCatalog
@@ -116,6 +117,17 @@ class LibraryRepository @Inject constructor(
         mediaRoots = roots
     }
 
+    @Volatile private var keepImportedMetadata: Boolean = true
+
+    /**
+     * Mirrors the "Read gamelist.xml" setting. When off, the next scan
+     * returns surviving games to filename titles and clears imported
+     * metadata. User-owned fields are kept either way.
+     */
+    fun setKeepImportedMetadata(keep: Boolean) {
+        keepImportedMetadata = keep
+    }
+
     // ──────────────────────── Sources ────────────────────────
 
     /**
@@ -151,8 +163,8 @@ class LibraryRepository @Inject constructor(
     /**
      * Scan every configured source. Walks each source, writes
      * discovered games + resolved media into Room. Idempotent —
-     * replaces each (sourceId, systemId) partition rather than
-     * appending.
+     * reconciles each (sourceId, systemId) partition in place, so
+     * surviving games keep their ids and user data.
      *
      * The caller observes [state] for progress; nothing is returned
      * from this call. The scan runs on `@ApplicationScope` so it
@@ -230,10 +242,12 @@ class LibraryRepository @Inject constructor(
         var done = 0
         for (source in sources) {
             if (!source.hasPersistedGrant) continue
-            val scanned = scanner.scan(source, systems = systemsFilter)
-            if (scanned.isEmpty()) continue
+            // No results is never treated as "everything was deleted":
+            // an unmounted card or lost grant looks the same.
+            val report = scanner.scanWithReport(source, systems = systemsFilter)
+            if (report.roms.isEmpty()) continue
 
-            val bySystem = scanned.groupBy { it.systemId }
+            val bySystem = report.roms.groupBy { it.systemId }
             totalSystems += bySystem.size
 
             for ((systemId, roms) in bySystem) {
@@ -246,12 +260,15 @@ class LibraryRepository @Inject constructor(
                     sourceId = source.id,
                     systemId = systemId,
                     roms = roms,
+                    removeMissing = report.isComplete(systemId),
                     mediaIndex = mediaIndex,
                     catalogSystems = catalogSystems,
                 )
                 done++
             }
-            sourceDao.markScanned(source.id, System.currentTimeMillis())
+            if (report.listingTrusted && report.unreadableSystems.isEmpty()) {
+                sourceDao.markScanned(source.id, System.currentTimeMillis())
+            }
         }
     }
 
@@ -277,30 +294,39 @@ class LibraryRepository @Inject constructor(
         var total = 0
         var done = 0
         for (target in targets) {
-            val scanned = scanTarget(target, catalogSystems.values)
-            if (scanned.isEmpty()) continue
-            val bySystem = scanned.groupBy { it.systemId }
+            val report = scanTarget(target, catalogSystems.values)
+            if (report.roms.isEmpty()) continue
+            val bySystem = report.roms.groupBy { it.systemId }
             total += bySystem.size
             for ((systemId, roms) in bySystem) {
                 _state.value = LibraryState.Scanning(done, total, systemId)
-                writeSystem(target.source.id, systemId, roms, mediaIndex, catalogSystems)
+                writeSystem(
+                    sourceId = target.source.id,
+                    systemId = systemId,
+                    roms = roms,
+                    removeMissing = report.isComplete(systemId),
+                    mediaIndex = mediaIndex,
+                    catalogSystems = catalogSystems,
+                )
                 done++
             }
-            sourceDao.markScanned(target.source.id, System.currentTimeMillis())
+            if (report.listingTrusted && report.unreadableSystems.isEmpty()) {
+                sourceDao.markScanned(target.source.id, System.currentTimeMillis())
+            }
         }
     }
 
     private suspend fun scanTarget(
         target: SourceScanTarget,
         systems: Collection<SystemDef>,
-    ): List<ScannedRom> {
+    ): ScanReport {
         target.systemFolder?.let { def ->
-            if (def.id in target.excludedSystems) return emptyList()
+            if (def.id in target.excludedSystems) return ScanReport(roms = emptyList())
             return scanner.scanSystemFolder(target.source, def)
         }
         val filter = target.excludedSystems.takeIf { it.isNotEmpty() }
             ?.let { excluded -> systems.mapTo(HashSet()) { it.id } - excluded }
-        return scanner.scan(target.source, systems = filter)
+        return scanner.scanWithReport(target.source, systems = filter)
     }
 
     private suspend fun upsertKnownSystems() {
@@ -321,6 +347,7 @@ class LibraryRepository @Inject constructor(
         sourceId: Long,
         systemId: String,
         roms: List<ScannedRom>,
+        removeMissing: Boolean,
         mediaIndex: MediaIndex,
         catalogSystems: Map<String, SystemDef>,
     ) {
@@ -339,12 +366,24 @@ class LibraryRepository @Inject constructor(
                 fileSizeBytes = rom.fileSizeBytes.takeIf { it >= 0 },
             )
         }
-        gameDao.replaceSystemGames(sourceId, def.id, games)
+        gameDao.reconcileSystemGames(
+            sourceId = sourceId,
+            systemId = def.id,
+            scanned = games,
+            removeMissing = removeMissing,
+            keepImportedMetadata = keepImportedMetadata,
+        )
 
-        // Resolve media per inserted row. We re-read the inserted ids
-        // because replaceSystemGames did a delete+insert and the ids
-        // the DAO assigned are not the ones we constructed with.
+        // Re-read for the ids of newly inserted games. Existing media
+        // rows must be matched up too: an upsert with id 0 would hit the
+        // unique gameId index and leave the old paths in place.
         val persisted = gameDao.getBySystemAndSource(def.id, sourceId)
+        val existingMedia = persisted.map { it.id }.chunked(MEDIA_LOOKUP_CHUNK)
+            .flatMap { mediaDao.getByGameIds(it) }
+            .associateBy { it.gameId }
+        // With a media root missing, "not found" says nothing about the
+        // art, so known paths are kept until the root is back.
+        val mediaRootsReadable = mediaRoots.isNotEmpty() && mediaRoots.all { it.isDirectory }
         val deletes = ArrayList<Long>()
         val upserts = ArrayList<MediaEntity>(persisted.size)
         for (game in persisted) {
@@ -352,21 +391,25 @@ class LibraryRepository @Inject constructor(
                 systemFolder = def.id,
                 basename = File(game.relativePath).nameWithoutExtension,
             )
+            val current = existingMedia[game.id]
             if (resolved == MediaIndex.Resolved.EMPTY) {
-                deletes += game.id
-            } else {
-                upserts += MediaEntity(
-                    gameId = game.id,
-                    coverPath = resolved.cover,
-                    marqueePath = resolved.marquee,
-                    fanartPath = resolved.fanart,
-                    screenshotPath = resolved.screenshot,
-                    titlescreenPath = resolved.titlescreen,
-                    miximagePath = resolved.miximage,
-                    physicalMediaPath = resolved.physicalMedia,
-                    videoPath = resolved.video,
-                )
+                if (mediaRootsReadable && current != null) deletes += game.id
+                continue
             }
+            val fallback = current.takeUnless { mediaRootsReadable }
+            val row = MediaEntity(
+                id = current?.id ?: 0L,
+                gameId = game.id,
+                coverPath = resolved.cover ?: fallback?.coverPath,
+                marqueePath = resolved.marquee ?: fallback?.marqueePath,
+                fanartPath = resolved.fanart ?: fallback?.fanartPath,
+                screenshotPath = resolved.screenshot ?: fallback?.screenshotPath,
+                titlescreenPath = resolved.titlescreen ?: fallback?.titlescreenPath,
+                miximagePath = resolved.miximage ?: fallback?.miximagePath,
+                physicalMediaPath = resolved.physicalMedia ?: fallback?.physicalMediaPath,
+                videoPath = resolved.video ?: fallback?.videoPath,
+            )
+            if (row != current) upserts += row
         }
         // One transaction per system: one `media` invalidation, not
         // one per game (see MediaDao.replaceForSystem).
@@ -375,6 +418,7 @@ class LibraryRepository @Inject constructor(
 
     private companion object {
         const val TAG = "LibraryRepository"
+        const val MEDIA_LOOKUP_CHUNK = 500
     }
 }
 

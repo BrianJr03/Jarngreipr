@@ -195,16 +195,6 @@ class LibraryScanIntegrationTest {
         assertEquals(1, db.sourceDao().observeAll().first().size)
     }
 
-    // NOTE: the "rescan swaps rows when files change" invariant is
-    // exercised directly by LibraryDatabaseTest's gameDao suite
-    // (replaceSystemGames does the delete+insert in one txn). A
-    // separate scanAll-level integration test that calls scanAll twice
-    // in sequence depends on the fine-grained dispatcher behaviour of
-    // scope.launch + StateFlow.first{Idle} and is prone to timing
-    // flakes under Robolectric without a TestCoroutineScheduler setup.
-    // Phase 3's instrumentation tests on real device will catch any
-    // divergence end-to-end.
-
     private suspend fun awaitIdle() {
         withTimeout(5_000) { repo.state.first { it is LibraryState.Idle } }
     }

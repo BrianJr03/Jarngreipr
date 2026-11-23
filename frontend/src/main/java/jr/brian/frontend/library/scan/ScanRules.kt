@@ -36,6 +36,16 @@ internal object ScanRules {
         !name.startsWith(".") && name !in SKIPPED_NAMES
 
     /**
+     * Can a successful listing of [path] be trusted to show every file?
+     * Shared storage without all-files access hides non-media files
+     * while still listing normally, so ROMs would look deleted.
+     */
+    fun isListingTrusted(path: String, hasAllFilesAccess: () -> Boolean): Boolean =
+        SHARED_STORAGE_PREFIXES.none { path.startsWith(it) } || hasAllFilesAccess()
+
+    private val SHARED_STORAGE_PREFIXES = listOf("/storage/", "/sdcard", "/mnt/")
+
+    /**
      * Does [fileName] match an extension this system accepts? Returns false
      * for empty extensions, for globally-skipped extensions, and when the
      * extension isn't in [extensions].
